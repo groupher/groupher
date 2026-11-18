@@ -134,7 +134,7 @@ describe('handleContentPublishRequest', () => {
     expect(JSON.stringify(payload)).not.toContain('bodyBag')
     expect(serviceAuthClient.getToken).toHaveBeenCalledWith({
       resource: 'https://api.groupher.com/content-publisher',
-      scopes: ['content:article:write'],
+      scopes: ['content:article:write', 'content:history:browser'],
     })
   })
 

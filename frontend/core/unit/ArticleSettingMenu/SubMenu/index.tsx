@@ -4,6 +4,7 @@ import { SUB_MENU } from '../constant'
 import type { TSubMenu } from '../spec'
 import CatSetting from './CatSetting'
 import Header from './Header'
+import HistorySetting from './HistorySetting'
 import useSalon from './salon'
 import SlugSetting from './SlugSetting'
 import TagsSetting from './TagsSetting'
@@ -41,6 +42,11 @@ const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
 
     case SUB_MENU.TAGS: {
       Content = TagsSetting
+      break
+    }
+
+    case SUB_MENU.HISTORY: {
+      Content = HistorySetting
       break
     }
 

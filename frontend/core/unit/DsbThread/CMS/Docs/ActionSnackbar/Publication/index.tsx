@@ -7,13 +7,23 @@ import BaseDrawer from '~/ui/Drawer'
 
 import useDocsEditor from '../../Editor/store/hooks'
 import type { TPublishQueueController } from '../Publish/usePublishQueue'
+import ArticleHistoryPane from './ArticleHistoryPane'
 import DiffPane from './DiffPane'
 import HistoryPane from './HistoryPane'
 import Notices from './Notices'
 import PreviewPane from './PreviewPane'
 import useSalon from './salon'
 import SettingsPane from './SettingsPane'
-import type { Comparison, Preview, ReleasePage, SnapshotPage, Policy } from './types'
+import type {
+  ArticleDiff,
+  ArticleEventDetail,
+  ArticleEventPage,
+  Comparison,
+  Preview,
+  ReleasePage,
+  SnapshotPage,
+  Policy,
+} from './types'
 import usePublication, { type Tab, type Detail } from './usePublication'
 
 const Publication: FC<{ queue: TPublishQueueController; onClose: () => void }> = ({
@@ -32,6 +42,7 @@ const Publication: FC<{ queue: TPublishQueueController; onClose: () => void }> =
   const [tab, setTab] = useState<Tab>('preview')
   const [baseline, setBaseline] = useState<'PUBLIC' | 'APPROVAL'>('APPROVAL')
   const [snapshotMode, setSnapshotMode] = useState(false)
+  const [articleHistoryMode, setArticleHistoryMode] = useState(false)
   const view = usePublication(community)
   const { read, cancel } = view
   useEffect(() => {
@@ -42,6 +53,7 @@ const Publication: FC<{ queue: TPublishQueueController; onClose: () => void }> =
     cancel()
     setTab(next)
     setSnapshotMode(false)
+    setArticleHistoryMode(false)
     setRestoreReady(false)
     void read(next, { baseline, refresh: true })
   }
@@ -51,6 +63,7 @@ const Publication: FC<{ queue: TPublishQueueController; onClose: () => void }> =
       baseline,
       refresh: true,
       articleId: snapshotMode ? docDraftInfo.id : undefined,
+      articleHistory: articleHistoryMode,
     })
   return (
     <BaseDrawer show onClose={onClose} type={TYPE.DRAWER.DOC_PUBLISH}>
@@ -127,6 +140,7 @@ const Publication: FC<{ queue: TPublishQueueController; onClose: () => void }> =
                   className={s.button}
                   onClick={() => {
                     setSnapshotMode(false)
+                    setArticleHistoryMode(false)
                     void read('history')
                   }}
                 >
@@ -138,13 +152,69 @@ const Publication: FC<{ queue: TPublishQueueController; onClose: () => void }> =
                   disabled={!docDraftInfo.id}
                   onClick={() => {
                     setSnapshotMode(true)
+                    setArticleHistoryMode(false)
                     void read('history', { articleId: docDraftInfo.id })
                   }}
                 >
                   {t('dsb.doc.publication.snapshots')}
                 </button>
+                <button
+                  type='button'
+                  className={s.button}
+                  disabled={!docDraftInfo.id}
+                  onClick={() => {
+                    setSnapshotMode(false)
+                    setArticleHistoryMode(true)
+                    void read('history', { articleId: docDraftInfo.id, articleHistory: true })
+                  }}
+                >
+                  {t('dsb.doc.publication.events')}
+                </button>
               </div>
-              {view.data && (
+              {view.data && articleHistoryMode && (
+                <ArticleHistoryPane
+                  data={view.data as ArticleEventPage | ArticleEventDetail | ArticleDiff}
+                  comparing={view.busy}
+                  onSelect={(eventId) =>
+                    void read('history', {
+                      articleId: docDraftInfo.id,
+                      articleHistory: true,
+                      eventId,
+                    })
+                  }
+                  onContributorNext={(eventId, cursor) =>
+                    void read('history', {
+                      articleId: docDraftInfo.id,
+                      articleHistory: true,
+                      eventId,
+                      cursor: { sequence: cursor },
+                    })
+                  }
+                  onFilterActor={(actorId) =>
+                    void read('history', {
+                      articleId: docDraftInfo.id,
+                      articleHistory: true,
+                      actorId,
+                    })
+                  }
+                  onNext={(cursor, actorId) =>
+                    void read('history', {
+                      articleId: docDraftInfo.id,
+                      articleHistory: true,
+                      actorId,
+                      cursor: { sequence: cursor },
+                    })
+                  }
+                  onCompare={(beforeSnapshotId, afterSnapshotId) =>
+                    void read('history', {
+                      articleId: docDraftInfo.id,
+                      beforeSnapshotId,
+                      afterSnapshotId,
+                    })
+                  }
+                />
+              )}
+              {view.data && !articleHistoryMode && (
                 <HistoryPane
                   data={view.data as ReleasePage | SnapshotPage | Detail}
                   onRelease={(releaseId, articleId) =>

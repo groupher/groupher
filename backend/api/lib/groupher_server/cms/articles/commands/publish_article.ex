@@ -14,12 +14,13 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
   alias CMS.Articles.Commands.PublishArticleConfirmation, as: Confirmation
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
   alias CMS.Articles.WorkingCopy.Publisher
+  alias CMS.Articles.WorkingCopy.History
   alias CMS.Model.{Article, ArticlePublic, ArticleSnapshot, Community}
 
   @pipeline operation: :article_publish_article,
             confirmation: Confirmation,
             target: :article,
-            params: [:source, :expected_public_snapshot_id]
+            params: [:source, :expected_public_snapshot_id, :history_context]
 
   receipt_pipeline run_receipt(
                      article,
@@ -27,13 +28,16 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
                      expected_public_snapshot_id,
                      community,
                      actor,
-                     command_id
+                     command_id,
+                     history_context
                    ) do
     gate(fn _article ->
       WorkingCopyAccess.check_in_transaction(actor, :publish, article, community)
     end)
 
-    change(fn canonical_article ->
+    change(fn canonical_article, %{operation_ref: operation_ref} ->
+      history_context = Map.put(history_context, :causation_command_id, command_id)
+
       with {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(canonical_article) do
         case Publisher.publish_in_transaction(
                canonical_article,
@@ -41,13 +45,31 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
                source,
                expected_public_snapshot_id,
                actor,
-               command_id
+               operation_ref,
+               {:operation, operation_ref},
+               history_context.causation_command_id
              ) do
           {:error, :revision_conflict} ->
             {:error, CMS.ErrorCat.article_working_copy_revision_conflict()}
 
-          result ->
-            result
+          {:ok, result} ->
+            event_attrs =
+              History.event_attrs(actor, operation_ref, community.id, history_context, 0)
+
+            case History.record_publish_in_transaction(
+                   canonical_article,
+                   expected_public_snapshot_id,
+                   result.snapshot.id,
+                   actor,
+                   operation_ref,
+                   event_attrs
+                 ) do
+              {:ok, _event} -> {:ok, result}
+              {:error, _reason} = error -> error
+            end
+
+          {:error, _reason} = error ->
+            error
         end
       end
     end)
@@ -69,14 +91,27 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
   end
 
   def execute(
+        article,
+        community,
+        source,
+        expected_public_snapshot_id,
+        actor,
+        command_id,
+        history_context \\ %{source: :browser, service_ref: nil}
+      )
+
+  def execute(
         %Article{} = article,
         %Community{} = community,
         source,
         expected_public_snapshot_id,
         %User{} = actor,
-        command_id
+        command_id,
+        %{source: history_source, service_ref: service_ref} = history_context
       )
-      when is_map(source) and is_binary(command_id) do
+      when is_map(source) and is_binary(command_id) and
+             history_source in [:browser, :import, :system] and
+             (is_nil(service_ref) or is_binary(service_ref)) do
     with {:ok, _binding} <- CMS.Articles.Bindings.get(article, community),
          {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(article) do
       run_receipt(
@@ -85,12 +120,13 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
         expected_public_snapshot_id,
         community,
         actor,
-        command_id
+        command_id,
+        history_context
       )
     end
   end
 
-  def execute(_article, _community, _source, _expected, _actor, _command_id) do
+  def execute(_article, _community, _source, _expected, _actor, _command_id, _history_context) do
     {:error, :invalid_publish_command}
   end
 

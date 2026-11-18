@@ -14,6 +14,7 @@ export enum SUB_MENU {
   MERGE = 'merge',
   ARCHIVE = 'archive',
   DELETE = 'delete',
+  HISTORY = 'history',
 }
 
 export const ICON = {

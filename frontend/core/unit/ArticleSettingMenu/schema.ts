@@ -44,6 +44,28 @@ const articleWorkingCopies = graphql(`
   }
 `)
 
+const articleHistoryEvents = graphql(`
+  query ArticleHistoryEventsFromMenu($articleId: ID!, $pagi: Json, $actorId: ID) {
+    pagedArticleEvents(articleId: $articleId, pagi: $pagi, actorId: $actorId)
+  }
+`)
+
+const articleHistoryEvent = graphql(`
+  query ArticleHistoryEventFromMenu($articleId: ID!, $eventId: ID!, $pagi: Json) {
+    articleEvent(articleId: $articleId, eventId: $eventId, pagi: $pagi)
+  }
+`)
+
+const articleHistoryDiff = graphql(`
+  query ArticleHistoryDiffFromMenu(
+    $articleId: ID!
+    $before: ArticleVersionRefInput!
+    $after: ArticleVersionRefInput!
+  ) {
+    articleDiff(articleId: $articleId, before: $before, after: $after)
+  }
+`)
+
 const setPostCat = graphql(`
   "Set cat for a post"
   mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {
@@ -90,6 +112,9 @@ const communityTagGroups = graphql(`
 export default {
   saveWorkingCopy,
   articleWorkingCopies,
+  articleHistoryEvents,
+  articleHistoryEvent,
+  articleHistoryDiff,
   setPostCat,
   pinPost,
   undoPinPost,

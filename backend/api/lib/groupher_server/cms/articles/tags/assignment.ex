@@ -175,6 +175,9 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
       {:command, command_id} when is_binary(command_id) ->
         {:ok, {:command, command_id}}
 
+      {:operation, operation_ref} when is_binary(operation_ref) ->
+        {:ok, {:operation, operation_ref}}
+
       {:workflow, workflow_ref} when is_binary(workflow_ref) and workflow_ref != "" ->
         {:ok, {:workflow, workflow_ref}}
 

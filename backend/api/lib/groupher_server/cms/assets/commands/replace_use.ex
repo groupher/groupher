@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   alias Accounts.Model.User
   alias CMS.Articles.{Bindings, WorkingCopy.Store}
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
+  alias CMS.Articles.WorkingCopy.History
   alias CMS.Assets.{Query, Refs}
   alias CMS.{ErrorCat, FrontDesk}
   alias CMS.Model.{Article, ArticleAssetRef, ArticleWorkingCopy, Community, CommunityAsset}
@@ -49,23 +50,46 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   end
 
   @doc false
-  def execute_for_workflow(article_or_projection, attrs, %User{} = user, workflow_ref)
-      when is_map(attrs) and is_binary(workflow_ref) and workflow_ref != "" do
+  def execute_for_workflow(
+        article_or_projection,
+        attrs,
+        %User{} = user,
+        workflow_ref,
+        operation_ref
+      )
+      when is_map(attrs) and is_binary(workflow_ref) and workflow_ref != "" and
+             is_binary(operation_ref) do
     with {:ok, article} <- load_article(article_or_projection),
          {:ok, %{community: %Community{} = community}} <-
            binding_context(article, article_or_projection) do
       params = Map.drop(attrs, [:command_id, :cur_user, :step_ref])
-      execute_workflow(article, community, params, user, workflow_ref)
+      execute_workflow(article, community, params, user, workflow_ref, operation_ref)
     end
   end
 
-  defp replace_with_workflow_recovery(article, community, params, user, workflow_ref) do
+  defp replace_with_workflow_recovery(
+         article,
+         community,
+         params,
+         user,
+         workflow_ref,
+         operation_ref
+       ) do
     case recover_existing_replacement(article, params, workflow_ref) do
       {:ok, result} ->
         {:ok, result}
 
       :not_applied ->
-        with {:ok, result} <- replace_loaded(article, community, params, user) do
+        with {:ok, result} <-
+               replace_loaded(
+                 article,
+                 community,
+                 params,
+                 user,
+                 operation_ref,
+                 :system,
+                 operation_ref
+               ) do
           {:ok, Map.put(result, :workflow_ref, workflow_ref)}
         end
     end
@@ -118,8 +142,8 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
       CMS.Gate.check_in_transaction(user, edit_action(candidate), candidate, community)
     end)
 
-    change(fn canonical ->
-      replace_loaded(canonical, community, params, user)
+    change(fn canonical, %{operation_ref: operation_ref} ->
+      replace_loaded(canonical, community, params, user, operation_ref, :browser, command_id)
     end)
 
     confirm(fn result ->
@@ -148,8 +172,9 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
 
   @pipeline operation: :article_replace_asset_workflow,
             target: :article,
-            params: :params
-  direct_pipeline execute_workflow(article, community, params, user, workflow_ref) do
+            params: :params,
+            operation_ref: :operation_ref
+  direct_pipeline execute_workflow(article, community, params, user, workflow_ref, operation_ref) do
     gate(fn candidate ->
       with {:ok, canonical} <- CMS.Gate.check_in_transaction(user, :edit, candidate, community) do
         case recover_existing_replacement(canonical, params, workflow_ref) do
@@ -163,7 +188,14 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end)
 
     change(fn canonical ->
-      replace_with_workflow_recovery(canonical, community, params, user, workflow_ref)
+      replace_with_workflow_recovery(
+        canonical,
+        community,
+        params,
+        user,
+        workflow_ref,
+        operation_ref
+      )
     end)
   end
 
@@ -173,7 +205,15 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
 
   defp edit_action(%Article{}), do: :edit
 
-  defp replace_loaded(canonical, community, attrs, user) do
+  defp replace_loaded(
+         canonical,
+         community,
+         attrs,
+         user,
+         operation_ref,
+         source,
+         causation_command_id
+       ) do
     with {:ok, %ArticleWorkingCopy{} = work} <- target_working_copy(canonical, attrs),
          {:ok, :pass} <- WorkingCopyAccess.generic_save(canonical, work),
          {:ok, :pass} <- expected_revision(attrs, work.revision),
@@ -183,7 +223,20 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
          {:ok, _} <- replacement_body_bag_required(ref, attrs),
          save_attrs <- replacement_attrs(work, ref, target_asset, attrs),
          {:ok, updated_work} <-
-           Store.save_loaded(work, save_attrs, user, work.revision, community.id) do
+           History.record_save_in_transaction(
+             canonical,
+             work,
+             user,
+             operation_ref,
+             History.event_attrs(
+               user,
+               operation_ref,
+               community.id,
+               %{source: source, service_ref: nil, causation_command_id: causation_command_id},
+               0
+             ),
+             fn -> Store.save_loaded(work, save_attrs, user, work.revision, community.id) end
+           ) do
       {:ok,
        %{
          article_id: canonical.id,

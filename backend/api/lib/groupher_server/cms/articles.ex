@@ -122,6 +122,21 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  @doc "Reads a paginated, Article-authorized immutable event history."
+  def history_events(article_id, actor, opts \\ []) do
+    CMS.Articles.WorkingCopy.History.Query.paged_events(article_id, actor, opts)
+  end
+
+  @doc "Reads one Article event and its stored-version Diff."
+  def history_event(article_id, event_id, actor, opts \\ []) do
+    CMS.Articles.WorkingCopy.History.Query.event(article_id, event_id, actor, opts)
+  end
+
+  @doc "Compares an Article Snapshot with another Snapshot or current WorkingCopy."
+  def history_diff(article_id, before, after_version, actor) do
+    CMS.Articles.WorkingCopy.History.Query.compare(article_id, before, after_version, actor)
+  end
+
   @doc "Loads one editable WorkingCopy owned by an Article."
   def working_copy(%Article{} = article, %Community{} = community, working_copy_id) do
     WorkingCopyQuery.working_copy(article, community, working_copy_id)
@@ -182,6 +197,29 @@ defmodule GroupherServer.CMS.Articles do
     )
   end
 
+  @doc "Saves a WorkingCopy with trusted history provenance."
+  def save_working_copy(
+        article,
+        community,
+        working_copy_id,
+        attrs,
+        revision,
+        actor,
+        command_id,
+        history_context
+      ) do
+    Commands.SaveWorkingCopy.execute(
+      article,
+      community,
+      working_copy_id,
+      attrs,
+      revision,
+      actor,
+      command_id,
+      history_context
+    )
+  end
+
   @doc "Creates an independent WorkingCopy from a frozen Snapshot under Article edit admission."
   def fork_snapshot(
         snapshot_id,
@@ -201,6 +239,27 @@ defmodule GroupherServer.CMS.Articles do
     )
   end
 
+  @doc "Forks a Snapshot using trusted history provenance."
+  def fork_snapshot(
+        snapshot_id,
+        community,
+        scope_type,
+        scope_id,
+        actor,
+        command_id,
+        history_context
+      ) do
+    Commands.ForkSnapshot.execute(
+      snapshot_id,
+      community,
+      scope_type,
+      scope_id,
+      actor,
+      command_id,
+      history_context
+    )
+  end
+
   @doc "Selects an immutable Snapshot as the public Article version through Gate and Receipt."
   def publish_article(
         %Article{} = article,
@@ -217,6 +276,27 @@ defmodule GroupherServer.CMS.Articles do
       expected_public_snapshot_id,
       actor,
       command_id
+    )
+  end
+
+  @doc "Publishes an Article with trusted history provenance."
+  def publish_article(
+        article,
+        community,
+        source,
+        expected_public_snapshot_id,
+        actor,
+        command_id,
+        history_context
+      ) do
+    Commands.PublishArticle.execute(
+      article,
+      community,
+      source,
+      expected_public_snapshot_id,
+      actor,
+      command_id,
+      history_context
     )
   end
 

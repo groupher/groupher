@@ -40,6 +40,25 @@ export const snapshots = graphql(`
     )
   }
 `)
+export const articleEvents = graphql(`
+  query ArticleHistoryEvents($articleId: ID!, $pagi: Json, $actorId: ID) {
+    pagedArticleEvents(articleId: $articleId, pagi: $pagi, actorId: $actorId)
+  }
+`)
+export const articleEvent = graphql(`
+  query ArticleHistoryEvent($articleId: ID!, $eventId: ID!, $pagi: Json) {
+    articleEvent(articleId: $articleId, eventId: $eventId, pagi: $pagi)
+  }
+`)
+export const articleDiff = graphql(`
+  query ArticleHistoryDiff(
+    $articleId: ID!
+    $before: ArticleVersionRefInput!
+    $after: ArticleVersionRefInput!
+  ) {
+    articleDiff(articleId: $articleId, before: $before, after: $after)
+  }
+`)
 export const notices = graphql(`
   query DocsPublicationNotices($community: String!) {
     docsPublicationNotices(community: $community)

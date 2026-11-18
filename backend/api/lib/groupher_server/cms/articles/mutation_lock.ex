@@ -17,9 +17,12 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
              -> advisory lock -> callback -> commit / rollback
   """
 
+  import Ecto.Query, except: [lock: 2]
+
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Model.{Article, Community}
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias Helper.{T, Transaction}
   alias Helper.ORM.AdvisoryLock
 
@@ -59,25 +62,104 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     end
   end
 
-  @doc "Locks all binding Communities before a global Article mutation acquires its Article lock."
-  def lock_community_admission(article_id) do
-    import Ecto.Query
+  @doc "Locks current binding Communities and explicit entry Communities in stable order."
+  def lock_community_plan(article_ids, entry_ids)
+      when is_list(article_ids) and is_list(entry_ids) do
+    if Repo.in_transaction?() do
+      do_lock_community_plan(article_ids, entry_ids)
+    else
+      {:error, :transaction_required}
+    end
+  end
 
-    ids =
-      from(binding in CMS.Model.ArticleBinding,
-        where: binding.article_id == ^article_id,
-        select: binding.community_id
+  defp do_lock_community_plan(article_ids, entry_ids) do
+    bindings = binding_community_ids(article_ids)
+    ids = Enum.sort(Enum.uniq(Enum.map(bindings, &elem(&1, 1)) ++ entry_ids))
+
+    locked =
+      Repo.all(
+        from(lifecycle in CMS.Model.CommunityLifecycle,
+          where: lifecycle.community_id in ^ids,
+          order_by: lifecycle.community_id,
+          lock: "FOR SHARE",
+          select: lifecycle.community_id
+        )
       )
 
+    if locked == ids,
+      do:
+        {:ok,
+         %{article_ids: article_ids, binding_ids: bindings, transaction_id: transaction_id()}},
+      else: {:error, :community_admission_missing}
+  end
+
+  @doc "Locks the planned Article rows in stable order before validating the Binding set."
+  def lock_article_rows(article_ids) when is_list(article_ids) do
+    if Repo.in_transaction?(),
+      do: do_lock_article_rows(article_ids),
+      else: {:error, :transaction_required}
+  end
+
+  defp do_lock_article_rows(article_ids) do
+    ids = article_ids |> Enum.uniq() |> Enum.sort()
+
+    locked =
+      Repo.all(
+        from(article in Article,
+          where: article.id in ^ids,
+          order_by: article.id,
+          lock: "FOR UPDATE",
+          select: article.id
+        )
+      )
+
+    if locked == ids, do: {:ok, :pass}, else: {:error, :article_not_found}
+  end
+
+  @doc "Rejects a changed Binding set after Article serialization; callers must retry the transaction."
+  def verify_community_plan(%{
+        article_ids: ids,
+        binding_ids: expected,
+        transaction_id: transaction_id
+      }) do
+    cond do
+      not Repo.in_transaction?() ->
+        {:error, :transaction_required}
+
+      transaction_id != transaction_id() ->
+        {:error, :invalid_lock_plan}
+
+      binding_community_ids(ids) != expected ->
+        {:error, GateErrorCat.community_admission_changed()}
+
+      true ->
+        {:ok, :pass}
+    end
+  end
+
+  defp transaction_id do
+    %{rows: [[id]]} = Repo.query!("SELECT txid_current()")
+    id
+  end
+
+  defp binding_community_ids(article_ids) do
     Repo.all(
-      from(lifecycle in CMS.Model.CommunityLifecycle,
-        where: lifecycle.community_id in subquery(ids),
-        order_by: lifecycle.community_id,
-        lock: "FOR SHARE"
+      from(binding in CMS.Model.ArticleBinding,
+        where: binding.article_id in ^article_ids,
+        distinct: true,
+        order_by: [asc: binding.article_id, asc: binding.community_id],
+        select: {binding.article_id, binding.community_id}
       )
     )
+  end
 
-    {:ok, :pass}
+  @doc "Locks all binding Communities before a global Article mutation acquires its Article lock."
+  def lock_community_admission(article_id) do
+    with {:ok, plan} <- lock_community_plan([article_id], []),
+         {:ok, :pass} <- lock_article_rows([article_id]),
+         {:ok, :pass} <- verify_community_plan(plan) do
+      {:ok, :pass}
+    end
   end
 
   @doc "Uses an already-loaded Article struct to select its aggregate lock identity."
@@ -85,12 +167,12 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
           {:ok, term()} | {:error, term()}
   def with_article(%Community{} = community, %Article{thread: thread, id: article_id}, fun)
       when thread in @article_threads and is_function(fun, 0) do
-    lock(key(community, thread, article_id), fun)
+    ordered_lock(community, [article_id], [key(community, thread, article_id)], fun)
   end
 
   def with_article(%Community{} = community, %Article{thread: :doc, id: article_id}, fun)
       when is_function(fun, 0) do
-    lock(key(community, :doc, article_id), fun)
+    ordered_lock(community, [article_id], [key(community, :doc, article_id)], fun)
   end
 
   @doc """
@@ -109,12 +191,12 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
           {:ok, term()} | {:error, term()}
   def transact_article(%Community{} = community, %Article{thread: thread, id: article_id}, fun)
       when thread in @article_threads and is_function(fun, 0) do
-    transact_lock(key(community, thread, article_id), fun)
+    transact_lock(community, article_id, key(community, thread, article_id), fun)
   end
 
   def transact_article(%Community{} = community, %Article{thread: :doc, id: article_id}, fun)
       when is_function(fun, 0) do
-    transact_lock(key(community, :doc, article_id), fun)
+    transact_lock(community, article_id, key(community, :doc, article_id), fun)
   end
 
   @doc "Locks one ordinary Article by its stable logical identity."
@@ -123,7 +205,7 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   def with_article(%Community{} = community, thread, article_id, fun)
       when thread in [:doc | @article_threads] and is_binary(article_id) and
              is_function(fun, 0) do
-    lock(key(community, thread, article_id), fun)
+    ordered_lock(community, [article_id], [key(community, thread, article_id)], fun)
   end
 
   @doc "Locks several ordinary Articles using stable key ordering."
@@ -132,10 +214,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   def with_articles(%Community{} = community, thread, article_ids, fun)
       when thread in [:doc | @article_threads] and is_list(article_ids) and
              is_function(fun, 0) do
-    article_ids
-    |> clean_identities()
-    |> Enum.map(&key(community, thread, &1))
-    |> lock_keys_in_order(fun)
+    article_ids = clean_identities(article_ids)
+    keys = Enum.map(article_ids, &key(community, thread, &1))
+    ordered_lock(community, article_ids, keys, fun)
   end
 
   @doc "Returns the logical lock key for one ordinary Article."
@@ -153,6 +234,23 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     |> Enum.reject(&is_nil/1)
     |> Enum.uniq()
     |> Enum.sort()
+  end
+
+  defp ordered_lock(community, article_ids, keys, fun) do
+    Repo.transaction(fn ->
+      with {:ok, plan} <- lock_community_plan(article_ids, [community.id]),
+           {:ok, result} <-
+             lock_keys_in_order(keys, fn ->
+               with {:ok, :pass} <- lock_article_rows(article_ids),
+                    {:ok, :pass} <- verify_community_plan(plan) do
+                 fun.()
+               end
+             end) do
+        result
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   defp lock_keys_in_order([], fun), do: fun.()
@@ -185,26 +283,34 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   # This strict transaction entry is intentionally private to aggregate
   # commands. The advisory xact lock is acquired after Repo.transact/2 starts,
   # so authorization and writes use the same checked-out connection.
-  defp transact_lock(lock_key, fun) do
+  defp transact_lock(community, article_id, lock_key, fun) do
     started_at = System.monotonic_time()
     metadata = lock_metadata(lock_key)
 
     Repo.transact(fn ->
-      AdvisoryLock.acquire!(lock_key)
-      acquired_at = System.monotonic_time()
-
-      :telemetry.execute(
-        [:groupher, :cms, :articles, :mutation_lock, :wait],
-        %{duration: acquired_at - started_at},
-        metadata
-      )
-
-      try do
-        fun.()
-      after
-        observe_hold(acquired_at, metadata)
+      with {:ok, plan} <- lock_community_plan([article_id], [community.id]),
+           {:ok, :acquired} <- AdvisoryLock.acquire!(lock_key),
+           {:ok, :pass} <- lock_article_rows([article_id]),
+           {:ok, :pass} <- verify_community_plan(plan) do
+        transact_locked(lock_key, fun, started_at, metadata)
       end
     end)
+  end
+
+  defp transact_locked(_lock_key, fun, started_at, metadata) do
+    acquired_at = System.monotonic_time()
+
+    :telemetry.execute(
+      [:groupher, :cms, :articles, :mutation_lock, :wait],
+      %{duration: acquired_at - started_at},
+      metadata
+    )
+
+    try do
+      fun.()
+    after
+      observe_hold(acquired_at, metadata)
+    end
   end
 
   defp observe_hold(acquired_at, metadata) do

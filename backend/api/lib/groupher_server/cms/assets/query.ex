@@ -129,54 +129,38 @@ defmodule GroupherServer.CMS.Assets.Query do
     {:ok, normalize_usage_result(result)}
   end
 
-  @doc """
-  Returns a page of article document refs for one active asset.
+  @doc "Returns a page of asset refs visible to the authenticated actor."
+  @spec refs(Community.t(), T.id(), Params.t() | nil, term()) :: T.domain_res(T.paged_data())
+  def refs(%Community{} = community, asset_id, pagi, actor) do
+    with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
+         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community),
+         {:ok, history_ids, draft_ids} <- article_usage_scope_ids(actor) do
+      query =
+        usage_query(
+          community.id,
+          asset_id,
+          ticket_scope_ids(community, actor),
+          history_ids,
+          draft_ids,
+          public_usage_ids(community.id)
+        )
+        |> exclude(:select)
+        |> select_merge([_ref, _work, _snapshot, article], %{
+          article_id: article.id,
+          thread: article.thread
+        })
 
-  The asset lookup is scoped to the supplied community before refs are loaded,
-  which prevents cross-community ref discovery.
-
-  ## Examples
-
-      Query.refs(community, asset.id, %{page: 1, size: 10})
-      #=> {:ok, %Helper.ORM.Pagi.Page.Offset{entries: refs}}
-
-  """
-  @spec refs(Community.t(), T.id(), Params.t() | nil) :: T.domain_res(T.paged_data())
-  def refs(%Community{id: community_id}, asset_id, pagi) do
-    with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community_id, asset_id) do
-      ArticleAssetRef
-      |> where([ref], ref.community_id == ^community_id and ref.asset_id == ^asset_id)
-      |> join(:left, [ref], working_copy in ArticleWorkingCopy,
-        on: working_copy.id == ref.working_copy_id
+      ORM.pagi(query, pagi,
+        for: ArticleAssetRef,
+        surface: "assets.refs",
+        query_fingerprint:
+          :erlang.term_to_binary({community.id, asset_id, actor.id}) |> Base.encode64(),
+        order: %Order{
+          fields: [:inserted_at, :id],
+          directions: [:desc, :desc],
+          cursor_fields: [:inserted_at, :id]
+        }
       )
-      |> join(:left, [ref, _work], snapshot in ArticleSnapshot,
-        on: snapshot.id == ref.snapshot_id
-      )
-      |> join(:inner, [_ref, work, snapshot], article in Article,
-        on: article.id == work.article_id or article.id == snapshot.article_id
-      )
-      |> select_merge([_ref, _work, _snapshot, article], %{
-        article_id: article.id,
-        thread: article.thread
-      })
-      |> then(fn query ->
-        with {:ok, paged} <-
-               ORM.pagi(
-                 query,
-                 pagi,
-                 for: ArticleAssetRef,
-                 surface: "assets.refs",
-                 query_fingerprint:
-                   :erlang.term_to_binary({community_id, asset_id}) |> Base.encode64(),
-                 order: %Order{
-                   fields: [:inserted_at, :id],
-                   directions: [:desc, :desc],
-                   cursor_fields: [:inserted_at, :id]
-                 }
-               ) do
-          {:ok, paged}
-        end
-      end)
     end
   end
 
@@ -201,11 +185,19 @@ defmodule GroupherServer.CMS.Assets.Query do
   @spec usages(Community.t(), T.id(), term()) :: T.domain_res([map()])
   def usages(%Community{} = community, asset_id, actor) do
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
-         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community) do
+         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community),
+         {:ok, history_ids, draft_ids} <- article_usage_scope_ids(actor) do
       ticket_ids = ticket_scope_ids(community, actor)
 
       collect_usage_batches(
-        usage_query(community.id, asset_id, ticket_ids),
+        usage_query(
+          community.id,
+          asset_id,
+          ticket_ids,
+          history_ids,
+          draft_ids,
+          public_usage_ids(community.id)
+        ),
         1,
         [],
         &format_usage_row/1
@@ -224,9 +216,17 @@ defmodule GroupherServer.CMS.Assets.Query do
   @spec replacement_usages(Community.t(), T.id(), term()) :: T.domain_res([map()])
   def replacement_usages(%Community{} = community, asset_id, actor) do
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
-         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community) do
+         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community),
+         {:ok, history_ids, draft_ids} <- article_usage_scope_ids(actor) do
       collect_usage_batches(
-        usage_query(community.id, asset_id, ticket_scope_ids(community, actor)),
+        usage_query(
+          community.id,
+          asset_id,
+          ticket_scope_ids(community, actor),
+          history_ids,
+          draft_ids,
+          public_usage_ids(community.id)
+        ),
         1,
         [],
         &format_replacement_usage_row/1
@@ -251,7 +251,43 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  defp usage_query(community_id, asset_id, ticket_ids) do
+  defp article_usage_scope_ids(actor) do
+    with {:ok, global_scope} <- CMS.Passport.load_global_scope(actor),
+         {:ok, history} <-
+           CMS.Passport.scope_articles(Article, actor, global_scope, "article.history.read"),
+         {:ok, draft} <-
+           CMS.Passport.scope_articles(Article, actor, global_scope, "article.read_draft") do
+      {:ok, select(history, [article], article.id), select(draft, [article], article.id)}
+    end
+  end
+
+  defp public_usage_ids(community_id) do
+    contexts = [
+      CMS.Gate.Context.Scope.Article.public(:post),
+      CMS.Gate.Context.Scope.Article.public(:blog),
+      CMS.Gate.Context.Scope.Article.public(:changelog),
+      CMS.Gate.Context.Scope.Doc.public()
+    ]
+
+    Enum.reduce(contexts, from(article in Article, where: false, select: article.id), fn context,
+                                                                                         acc ->
+      case CMS.Gate.scope(Article, nil, :read, context) do
+        %Ecto.Query{} = scoped ->
+          scoped =
+            from([article, gate_community: community] in scoped,
+              where: community.id == ^community_id,
+              select: article.id
+            )
+
+          union_all(acc, ^scoped)
+
+        {:error, _} ->
+          acc
+      end
+    end)
+  end
+
+  defp usage_query(community_id, asset_id, ticket_ids, history_ids, draft_ids, public_ids) do
     from(ref in ArticleAssetRef,
       where: ref.community_id == ^community_id and ref.asset_id == ^asset_id,
       left_join: work in ArticleWorkingCopy,
@@ -269,13 +305,13 @@ defmodule GroupherServer.CMS.Assets.Query do
       left_join: public in ArticlePublic,
       on: public.article_id == article.id,
       left_join: trash in TrashedArticle,
-      on: trash.article_id == article.id,
+      on: trash.article_id == article.id and trash.community_id == ref.community_id,
       where:
-        (not is_nil(ref.snapshot_id) or not is_nil(trash.id) or
-           (not is_nil(binding.id) and community_lifecycle.state == :active and
-              ((article.thread != :doc and article_lifecycle.state in [:draft, :published]) or
-                 (article.thread == :doc and
-                    article_lifecycle.state in [:draft, :published, :deleted])))) and
+        not is_nil(binding.id) and community_lifecycle.state in [:active, :read_only] and
+          ((not is_nil(ref.snapshot_id) and
+              (article.id in subquery(history_ids) or
+                 (ref.snapshot_id == public.snapshot_id and article.id in subquery(public_ids)))) or
+             (not is_nil(ref.working_copy_id) and article.id in subquery(draft_ids))) and
           (article.thread != :ticket or article.id in subquery(ticket_ids)),
       select:
         {ref, article, public, trash, article_lifecycle, community_lifecycle, work, snapshot}

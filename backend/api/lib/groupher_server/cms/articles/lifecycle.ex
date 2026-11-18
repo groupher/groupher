@@ -107,15 +107,14 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @doc "Locks and returns the Lifecycle row belonging to a stable Article."
   @spec lock(Article.t()) :: {:ok, ArticleLifecycle.t()} | {:error, ErrorCat.error()}
   def lock(%Article{id: article_id}) do
-    {:ok, :pass} = CMS.Articles.MutationLock.lock_community_admission(article_id)
-
-    ArticleLifecycle
-    |> where([lifecycle], lifecycle.article_id == ^article_id)
-    |> lock("FOR UPDATE")
-    |> Repo.one()
-    |> case do
-      %ArticleLifecycle{} = lifecycle -> {:ok, lifecycle}
-      nil -> {:error, ErrorCat.lifecycle_not_found()}
+    with {:ok, :pass} <- CMS.Articles.MutationLock.lock_community_admission(article_id) do
+      case ArticleLifecycle
+           |> where([lifecycle], lifecycle.article_id == ^article_id)
+           |> lock("FOR UPDATE")
+           |> Repo.one() do
+        %ArticleLifecycle{} = lifecycle -> {:ok, lifecycle}
+        nil -> {:error, ErrorCat.lifecycle_not_found()}
+      end
     end
   end
 

@@ -22,6 +22,12 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   """
   interface :article do
     # article 所包含的共同字段
+    field(:id, non_null(:id),
+      resolve: fn source, _, _ ->
+        {:ok, Map.get(source, :article_id) || Map.get(source, :id)}
+      end
+    )
+
     field(:inner_id, :id)
     field(:title, :string)
     field(:article_stats, :article_stats)

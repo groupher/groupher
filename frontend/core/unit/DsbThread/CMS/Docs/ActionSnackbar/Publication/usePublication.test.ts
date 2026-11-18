@@ -11,6 +11,9 @@ vi.mock('./schema', () => ({
   releases: 'releases',
   release: 'release',
   snapshots: 'snapshots',
+  articleEvents: 'article-events',
+  articleEvent: 'article-event',
+  articleDiff: 'article-diff',
   policy: 'policy',
   approve: 'approve',
   configure: 'configure',
@@ -94,6 +97,42 @@ describe('publication view consistency', () => {
     const view = renderHook(() => usePublication('home'))
     await act(() => view.result.current.read('settings'))
     expect(mocks.request.mock.calls[0][0]).toBe('policy')
+  })
+  it('compares selected immutable snapshots through the Article history query', async () => {
+    const articleDiff = { fields: { title: { before: 'old', after: 'new' } } }
+    mocks.request.mockResolvedValueOnce({ articleDiff })
+    const view = renderHook(() => usePublication('home'))
+    await act(() =>
+      view.result.current.read('history', {
+        articleId: 'article-1',
+        beforeSnapshotId: 'snapshot-1',
+        afterSnapshotId: 'snapshot-2',
+      }),
+    )
+    expect(mocks.request.mock.calls[0][0]).toBe('article-diff')
+    expect(mocks.request.mock.calls[0][1]).toMatchObject({
+      articleId: 'article-1',
+      before: { type: 'SNAPSHOT', snapshotId: 'snapshot-1' },
+      after: { type: 'SNAPSHOT', snapshotId: 'snapshot-2' },
+    })
+    expect(view.result.current.data).toEqual(articleDiff)
+  })
+  it('serializes Article event pagination for the Json GraphQL scalar', async () => {
+    mocks.request.mockResolvedValueOnce({
+      pagedArticleEvents: { items: [], next_cursor: null },
+    })
+    const view = renderHook(() => usePublication('home'))
+    await act(() =>
+      view.result.current.read('history', {
+        articleId: 'article-1',
+        articleHistory: true,
+        cursor: { sequence: 12 },
+      }),
+    )
+    expect(mocks.request.mock.calls[0][0]).toBe('article-events')
+    expect(mocks.request.mock.calls[0][1].pagi).toBe(
+      JSON.stringify({ limit: 20, cursor: { sequence: 12 } }),
+    )
   })
   it('keeps a newer view intact when an earlier mutation finishes late', async () => {
     let resolve!: (value: unknown) => void

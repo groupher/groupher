@@ -22,6 +22,7 @@ defmodule GroupherServer.CMS.Model.AssetWorkflowStep do
   schema "asset_workflow_steps" do
     belongs_to(:run, AssetWorkflowRun)
     field(:step_ref, :string)
+    field(:operation_ref, Ecto.UUID, read_after_writes: true)
     field(:resource_type, :string)
     field(:resource_id, :string)
     field(:status, Ecto.Enum, values: @states, default: :pending)

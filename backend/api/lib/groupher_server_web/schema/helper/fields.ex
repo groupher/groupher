@@ -22,6 +22,12 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   @doc "general article fields for GraphQL resolve fields"
   defmacro general_article_fields do
     quote do
+      field(:id, non_null(:id),
+        resolve: fn source, _, _ ->
+          {:ok, Map.get(source, :article_id) || Map.get(source, :id)}
+        end
+      )
+
       field(:inner_id, :id)
       field(:version, non_null(:integer))
       field(:title, :string)

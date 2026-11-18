@@ -34,8 +34,15 @@ import { createArticleThumbnail } from './thumbnail'
 import type { TArtimentBodyBag } from './types'
 import { assertValidArtimentValue } from './validate'
 
+const assertBodySchemaVersion = (): void => {
+  if (RICH_EDITOR_SCHEMA_VERSION !== CONTENT_BODY_SCHEMA_VERSION) {
+    throw new Error('Rich editor and content body schema versions differ')
+  }
+}
+
 /** Validates one Plate value and derives the complete canonical persistence BodyBag. */
 export const publishArtiment = async (value: unknown): Promise<TArtimentBodyBag> => {
+  assertBodySchemaVersion()
   assertValidArtimentValue(value)
 
   const htmlPromise = serializeHtmlUnsafe(value)

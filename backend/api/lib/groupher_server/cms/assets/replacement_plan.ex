@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
           -> StepContext
           -> replacement step completion
     """
-    @enforce_keys [:locator, :step_ref, :claimed_step]
+    @enforce_keys [:locator, :step_ref, :claimed_step, :operation_ref]
     defstruct @enforce_keys
   end
 
@@ -312,7 +312,12 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
               body_bag: body_bag,
               revision: revision
             },
-            %StepContext{locator: locator, step_ref: step_ref, claimed_step: nil}
+            %StepContext{
+              locator: locator,
+              step_ref: step_ref,
+              claimed_step: nil,
+              operation_ref: workflow_step.operation_ref
+            }
           )
 
         {:busy, seconds} ->
@@ -327,7 +332,12 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
               body_bag: body_bag,
               revision: revision
             },
-            %StepContext{locator: locator, step_ref: step_ref, claimed_step: claimed_step}
+            %StepContext{
+              locator: locator,
+              step_ref: step_ref,
+              claimed_step: claimed_step,
+              operation_ref: claimed_step.operation_ref
+            }
           )
       end
     end)
@@ -425,7 +435,8 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
                    },
                    attrs,
                    plan_context.actor,
-                   workflow_ref
+                   workflow_ref,
+                   step_context.operation_ref
                  ),
                next_version <- Map.get(result, :revision, article_context.revision),
                updated_item <-

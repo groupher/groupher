@@ -105,6 +105,15 @@ type RootQueryType {
   "One immutable Snapshot for an Article editor"
   articleSnapshot(articleId: ID!, snapshotId: ID!, community: String!): ArticleSnapshot
 
+  "Paged immutable editing and publication events for one Article"
+  pagedArticleEvents(articleId: ID!, pagi: Json, type: ArticleEventType, actorId: ID): Json!
+
+  "One immutable Article event and its before\/after Diff"
+  articleEvent(articleId: ID!, eventId: ID!, pagi: Json): Json
+
+  "Compares explicit saved Article versions"
+  articleDiff(articleId: ID!, before: ArticleVersionRefInput!, after: ArticleVersionRefInput!): Json
+
   "Safe product ArticleLog for one readable Article"
   articleLogs(article: ArticlePathInput!, pagi: PagiInput): ArticleLogPage!
 
@@ -1854,6 +1863,179 @@ type CmsArtimentReview {
   reviewMode: String
   systemOpinion: ArtimentReviewOpinion
   communityOpinion: ArtimentReviewOpinion
+}
+
+enum PassportAction {
+  ADMIN_INVITE
+  ADMIN_PERMISSIONS_UPDATE
+  ADMIN_REMOVE
+  ANALYSIS_WEB_READ
+  ARTICLE_AUTHOR_MANAGE
+  ARTICLE_HISTORY_READ
+  ARTICLE_HISTORY_RESTORE
+  ARTICLE_INSIGHTS_READ
+  ARTICLE_MIRROR
+  ARTICLE_MOVE
+  ARTICLE_PERMANENT_DELETE
+  ARTICLE_PUBLISH
+  ARTICLE_READ_DRAFT
+  ARTICLE_RESTORE
+  ARTICLE_TRASH
+  ARTICLE_TRASH_READ
+  ARTICLE_UNMIRROR
+  ARTICLE_UPDATE
+  ASSET_UPLOAD
+  AUDIT_READ
+  BLOG_LOCK_COMMENT
+  BLOG_PIN
+  BLOG_SINK
+  BLOG_UNDO_LOCK_COMMENT
+  BLOG_UNDO_PIN
+  BLOG_UNDO_SINK
+  CATEGORY_CREATE
+  CATEGORY_DELETE
+  CATEGORY_SET
+  CATEGORY_UNSET
+  CATEGORY_UPDATE
+  CHANGELOG_LOCK_COMMENT
+  CHANGELOG_PIN
+  CHANGELOG_SINK
+  CHANGELOG_UNDO_LOCK_COMMENT
+  CHANGELOG_UNDO_PIN
+  CHANGELOG_UNDO_SINK
+  COMMUNITY_APPLICATION_APPROVE
+  COMMUNITY_APPLICATION_REJECT
+  COMMUNITY_APPLICATION_RETRY_CREATION
+  COMMUNITY_APPLICATION_RETRY_SETUP
+  COMMUNITY_APPLICATION_REVIEW
+  COMMUNITY_ARTICLE_HIDE
+  COMMUNITY_ARTICLE_RESTORE
+  COMMUNITY_ARTICLE_TRASH_READ
+  COMMUNITY_CREATE
+  COMMUNITY_REQUEST_DESTROY
+  COMMUNITY_UPDATE
+  COMMUNITY_TAG_CREATE
+  COMMUNITY_TAG_DELETE
+  COMMUNITY_TAG_REINDEX
+  COMMUNITY_TAG_SET
+  COMMUNITY_TAG_UNSET
+  COMMUNITY_TAG_UPDATE
+  DASHBOARD_RSS_UPDATE
+  DASHBOARD_THEME_UPDATE
+  DOC_HISTORY_READ
+  DOC_IMPORT
+  DOC_LOCK_COMMENT
+  DOC_PIN
+  DOC_QUEUE_APPROVE
+  DOC_QUEUE_CONFIGURE
+  DOC_QUEUE_PREVIEW
+  DOC_QUEUE_PUBLISH
+  DOC_QUEUE_WRITE
+  DOC_SINK
+  DOC_UNDO_LOCK_COMMENT
+  DOC_UNDO_PIN
+  DOC_UNDO_SINK
+  POST_LOCK_COMMENT
+  POST_PIN
+  POST_SET_CATEGORY
+  POST_SINK
+  POST_UNDO_LOCK_COMMENT
+  POST_UNDO_PIN
+  POST_UNDO_SINK
+  REVIEW_CONFIGURE
+  REVIEW_DECIDE
+  REVIEW_PLATFORM_CONFIGURE
+  REVIEW_PLATFORM_DECIDE
+  REVIEW_PLATFORM_READ
+  REVIEW_READ
+  THREAD_CREATE
+  THREAD_SET
+  THREAD_UNSET
+  TICKET_ASSIGN
+  TICKET_CREATE
+  TICKET_LINK_SOURCE
+  TICKET_MANAGE_CASE
+  TICKET_MANAGE_VISIBILITY
+  TICKET_READ_INTERNAL
+  TICKET_TRANSITION
+  TICKET_UPDATE
+}
+
+enum CommunityArticleTrashThread {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+}
+
+enum CommunityArticleTrashStatus {
+  PENDING
+  EFFECTIVE
+}
+
+enum ArticleEventType {
+  CREATE
+  EDIT
+  RESTORE
+  FORK
+  PUBLISH
+}
+
+enum ArticleVersionType {
+  SNAPSHOT
+  WORKING_COPY
+}
+
+input ArticleVersionRefInput {
+  type: ArticleVersionType!
+  snapshotId: ID
+  workingCopyId: ID
+  revision: Int
+}
+
+interface CommunityArticleTrashItem {
+  id: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+}
+
+type CommunityArticleBindingTrashItem implements CommunityArticleTrashItem {
+  id: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+  bindingId: ID!
+  articleId: ID!
+  hiddenAt: DateTime!
+  title: String
+  commandId: ID
+}
+
+type CommunityDocTreeTrashItem implements CommunityArticleTrashItem {
+  id: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+  treePath: [CommunityDocTrashPathSegment!]!
+  pendingMemberCount: Int!
+  removedMemberCount: Int!
+}
+
+type CommunityDocTrashPathSegment {
+  nodeId: ID!
+  title: String!
+}
+
+type CommunityArticleTrashPage {
+  entries: [CommunityArticleTrashItem!]!
+  pageInfo: PageInfo!
 }
 
 enum ArtimentType {

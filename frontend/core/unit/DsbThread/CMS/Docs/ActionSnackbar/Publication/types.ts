@@ -65,6 +65,51 @@ export type SnapshotPage = {
   page: Content | null
 }
 
+export type ArticleEvent = {
+  id: string
+  sequence: number
+  type: 'create' | 'edit' | 'restore' | 'fork' | 'publish'
+  actor_type: 'user' | 'system'
+  actor_id: number | null
+  actor: { login?: string; nickname?: string; avatar?: string } | { type: 'system' }
+  occurred_at: string
+  before_snapshot_id: string | null
+  after_snapshot_id: string
+  before_revision: number | null
+  after_revision: number | null
+}
+
+export type ArticleEventPage = { items: ArticleEvent[]; next_cursor: number | null }
+export type ArticleDiff = {
+  fields: Record<string, { before: unknown; after: unknown }>
+  body: {
+    added: Array<{ id: string; after: unknown }>
+    removed: Array<{ id: string; before: unknown }>
+    changed: Array<{ id: string; before: unknown; after: unknown }>
+    moved: Array<{ id: string; from: number[]; to: number[] }>
+    duplicate_ids: string[]
+    degraded_ids: string[]
+    equal: boolean
+  }
+  tags: { added: number[]; removed: number[] }
+  cover: { before: unknown; after: unknown }
+  assetRefs: { added: unknown[]; removed: unknown[]; changed: unknown[] }
+}
+export type ArticleEventDetail = ArticleEvent & {
+  diff: ArticleDiff | null
+  contributors: {
+    items: Array<{
+      actor_type: 'user' | 'system'
+      actor_id: number | null
+      actor: { login?: string; nickname?: string; avatar?: string } | { type: 'system' }
+      event_ids: string[]
+      first_sequence: number
+    }>
+    next_cursor: number | null
+    unknown: boolean
+  }
+}
+
 export type Policy = {
   approval_required: boolean
   allow_self_approval: boolean

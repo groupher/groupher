@@ -32,7 +32,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       end
     end)
 
-    change(fn canonical -> TrashAgg.trash_loaded(canonical, actor, opts) end)
+    change(fn canonical, %{operation_ref: operation_ref} ->
+      TrashAgg.trash_loaded(canonical, actor, Keyword.put(opts, :operation_ref, operation_ref))
+    end)
 
     confirm(fn item ->
       {:ok,

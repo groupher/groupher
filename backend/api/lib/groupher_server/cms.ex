@@ -483,8 +483,18 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :save_working_copy
 
+  @doc "Delegates a WorkingCopy save with trusted history provenance."
+  defdelegate articles_save_working_copy(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8),
+    to: GroupherServer.CMS.Articles,
+    as: :save_working_copy
+
   @doc "Delegates Snapshot-based WorkingCopy creation through the CMS boundary."
   defdelegate articles_fork_snapshot(arg1, arg2, arg3, arg4, arg5, arg6),
+    to: GroupherServer.CMS.Articles,
+    as: :fork_snapshot
+
+  @doc "Delegates Snapshot fork with trusted history provenance."
+  defdelegate articles_fork_snapshot(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
     to: GroupherServer.CMS.Articles,
     as: :fork_snapshot
 
@@ -502,6 +512,21 @@ defmodule GroupherServer.CMS do
   defdelegate articles_snapshot(arg1, arg2, arg3),
     to: GroupherServer.CMS.Articles,
     as: :snapshot
+
+  @doc "Reads an Article event page through its history permission boundary."
+  defdelegate articles_history_events(article_id, actor, opts),
+    to: GroupherServer.CMS.Articles,
+    as: :history_events
+
+  @doc "Reads one Article history event through its history permission boundary."
+  defdelegate articles_history_event(article_id, event_id, actor, opts),
+    to: GroupherServer.CMS.Articles,
+    as: :history_event
+
+  @doc "Compares explicit Article versions through its history permission boundary."
+  defdelegate articles_history_diff(article_id, before, after_version, actor),
+    to: GroupherServer.CMS.Articles,
+    as: :history_diff
 
   @doc "Checks Article WorkingCopy admission through the owner capability."
   defdelegate articles_working_copy_access_check(actor, action, article, community),
@@ -914,6 +939,11 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates Snapshot-based Article publication through the CMS boundary."
   defdelegate articles_publish_article(arg1, arg2, arg3, arg4, arg5, arg6),
+    to: GroupherServer.CMS.Articles,
+    as: :publish_article
+
+  @doc "Delegates Article publication with trusted history provenance."
+  defdelegate articles_publish_article(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
     to: GroupherServer.CMS.Articles,
     as: :publish_article
 
@@ -1878,6 +1908,20 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.SaveQueue, as: :execute
 
+  @doc "Saves a Docs Queue copy with trusted history provenance."
+  defdelegate docs_queue_save(
+                community,
+                queue_revision,
+                article_id,
+                work_revision,
+                attrs,
+                actor,
+                command_id,
+                history_context
+              ),
+              to: GroupherServer.CMS.DocTree.Commands.SaveQueue,
+              as: :execute
+
   defdelegate docs_queue_merge(
                 community,
                 queue_revision,
@@ -1888,6 +1932,21 @@ defmodule GroupherServer.CMS do
                 actor,
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.MergeQueue, as: :execute
+
+  @doc "Merges a Docs Queue copy with trusted history provenance."
+  defdelegate docs_queue_merge(
+                community,
+                queue_revision,
+                article_id,
+                default_revision,
+                work_revision,
+                choices,
+                actor,
+                command_id,
+                history_context
+              ),
+              to: GroupherServer.CMS.DocTree.Commands.MergeQueue,
+              as: :execute
 
   defdelegate docs_editor_read(community, article_id, actor),
     to: GroupherServer.CMS.DocTree.DefaultCopy,
@@ -1983,7 +2042,24 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.DocTree.Commands.CreateWorkspaceNode,
     as: :execute
 
+  @doc "Creates a Docs workspace node with trusted history provenance."
+  defdelegate docs_workspace_create(
+                community,
+                revision,
+                attrs,
+                actor,
+                command_id,
+                history_context
+              ),
+              to: GroupherServer.CMS.DocTree.Commands.CreateWorkspaceNode,
+              as: :execute
+
   defdelegate docs_enqueue(community, revision, entries, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.Enqueue,
+    as: :execute
+
+  @doc "Enqueues Docs with trusted history provenance."
+  defdelegate docs_enqueue(community, revision, entries, actor, command_id, history_context),
     to: GroupherServer.CMS.DocTree.Commands.Enqueue,
     as: :execute
 
@@ -2004,6 +2080,11 @@ defmodule GroupherServer.CMS do
 
   @doc "Publishes the complete Docs queue under its expected revision."
   defdelegate docs_release_queue(community, revision, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.ReleaseQueue,
+    as: :execute
+
+  @doc "Releases a Docs Queue with trusted history provenance."
+  defdelegate docs_release_queue(community, revision, actor, command_id, history_context),
     to: GroupherServer.CMS.DocTree.Commands.ReleaseQueue,
     as: :execute
 
@@ -2810,4 +2891,18 @@ defmodule GroupherServer.CMS do
   defdelegate docs_restore_snapshot(site, article, snapshot, work, revision, actor, command),
     to: GroupherServer.CMS.DocTree.Commands.RestoreSnapshot,
     as: :execute
+
+  @doc "Restores a Docs Snapshot with trusted history provenance."
+  defdelegate docs_restore_snapshot(
+                site,
+                article,
+                snapshot,
+                work,
+                revision,
+                actor,
+                command,
+                history_context
+              ),
+              to: GroupherServer.CMS.DocTree.Commands.RestoreSnapshot,
+              as: :execute
 end

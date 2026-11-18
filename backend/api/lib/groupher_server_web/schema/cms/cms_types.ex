@@ -31,6 +31,82 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   import_types(Schema.CMS.Metrics)
 
+  enum :passport_action do
+    passport_action_values()
+  end
+
+  enum :community_article_trash_thread do
+    community_article_trash_thread_values()
+  end
+
+  enum :community_article_trash_status do
+    value(:pending)
+    value(:effective)
+  end
+
+  enum :article_event_type do
+    value(:create)
+    value(:edit)
+    value(:restore)
+    value(:fork)
+    value(:publish)
+  end
+
+  enum :article_version_type do
+    value(:snapshot)
+    value(:working_copy)
+  end
+
+  input_object :article_version_ref_input do
+    field(:type, non_null(:article_version_type))
+    field(:snapshot_id, :id)
+    field(:working_copy_id, :id)
+    field(:revision, :integer)
+  end
+
+  interface :community_article_trash_item do
+    community_article_trash_fields()
+
+    resolve_type(fn
+      %{thread: :doc}, _ ->
+        :community_doc_tree_trash_item
+
+      %{thread: thread}, _ when thread in [:post, :blog, :changelog] ->
+        :community_article_binding_trash_item
+
+      _, _ ->
+        nil
+    end)
+  end
+
+  object :community_article_binding_trash_item do
+    interface(:community_article_trash_item)
+    community_article_trash_fields()
+    field(:binding_id, non_null(:id))
+    field(:article_id, non_null(:id))
+    field(:hidden_at, non_null(:datetime))
+    field(:title, :string)
+    field(:command_id, :id)
+  end
+
+  object :community_doc_tree_trash_item do
+    interface(:community_article_trash_item)
+    community_article_trash_fields()
+    field(:tree_path, non_null(list_of(non_null(:community_doc_trash_path_segment))))
+    field(:pending_member_count, non_null(:integer))
+    field(:removed_member_count, non_null(:integer))
+  end
+
+  object :community_doc_trash_path_segment do
+    field(:node_id, non_null(:id))
+    field(:title, non_null(:string))
+  end
+
+  object :community_article_trash_page do
+    field(:entries, non_null(list_of(non_null(:community_article_trash_item))))
+    pagi_fields()
+  end
+
   enum :artiment_type do
     value(:post)
     value(:blog)

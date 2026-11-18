@@ -23,6 +23,10 @@ export const CONTENT_PUBLISH_SCOPE = {
   ARTICLE_WRITE: 'content:article:write',
   COMMENT_WRITE: 'content:comment:write',
 } as const
+export const CONTENT_HISTORY_ORIGIN_SCOPE = {
+  BROWSER: 'content:history:browser',
+  IMPORT: 'content:history:import',
+} as const
 export const CONTENT_PUBLISH_AUDIENCE = 'phoenix:content-publisher-api'
 export const CONTENT_PUBLISH_RESOURCE = 'https://api.groupher.com/content-publisher'
 

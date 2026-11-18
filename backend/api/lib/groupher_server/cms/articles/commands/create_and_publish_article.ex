@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
   alias Accounts.Model.User
   alias CMS.Articles.Commands.CreateAndPublishArticleConfirmation, as: Confirmation
   alias CMS.Articles.Tags.Assignment
-  alias CMS.Articles.WorkingCopy.{Publisher, Store}
+  alias CMS.Articles.WorkingCopy.{History, Publisher, Store}
   alias CMS.Model.{ArticleSnapshot, ArticleWorkingCopy, Community}
 
   @pipeline operation: :article_create_and_publish_article,
@@ -27,20 +27,37 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
                      attrs,
                      actor,
                      command_id,
+                     history_context,
                      check_publish_admission?,
                      command_target,
                      command_params
                    ) do
     gate(fn _target -> CMS.Gate.check_in_transaction(actor, :create_article, community) end)
 
-    change(fn canonical_community ->
+    change(fn canonical_community, %{operation_ref: operation_ref} ->
+      history_context = Map.put(history_context, :causation_command_id, command_id)
+
       if check_publish_admission? do
         with {:ok, _publish_admission} <-
                CMS.Gate.RateLimit.Publish.check_in_transaction(actor) do
-          create_and_publish(canonical_community, thread, attrs, actor, command_id)
+          create_and_publish(
+            canonical_community,
+            thread,
+            attrs,
+            actor,
+            operation_ref,
+            history_context
+          )
         end
       else
-        create_and_publish(canonical_community, thread, attrs, actor, command_id)
+        create_and_publish(
+          canonical_community,
+          thread,
+          attrs,
+          actor,
+          operation_ref,
+          history_context
+        )
       end
     end)
 
@@ -63,6 +80,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
       when is_map(attrs) and is_list(opts) and thread in [:post, :blog, :changelog] do
     command_id = Keyword.fetch!(opts, :command_id)
     check_publish_admission? = Keyword.get(opts, :check_publish_admission?, true)
+    history_context = Keyword.get(opts, :history_context, %{source: :browser, service_ref: nil})
 
     attrs =
       Map.drop(attrs, [
@@ -84,9 +102,10 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
       attrs,
       actor,
       command_id,
+      history_context,
       check_publish_admission?,
       {:article_create_and_publish_article, community.id},
-      %{thread: thread, attrs: attrs}
+      %{thread: thread, attrs: attrs, history_context: history_context}
     )
   end
 
@@ -94,7 +113,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
     {:error, :invalid_create_publish_command}
   end
 
-  defp create_and_publish(community, thread, attrs, actor, command_id) do
+  defp create_and_publish(community, thread, attrs, actor, command_id, history_context) do
     with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
          {:ok, article} <-
            CMS.Articles.Identity.create_loaded(
@@ -105,6 +124,15 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
            ),
          work_attrs <- Map.merge(attrs, %{scope_type: :default, scope_id: article.id}),
          {:ok, work} <- Store.create_loaded(article, work_attrs, actor, community.id),
+         event_attrs = History.event_attrs(actor, command_id, community.id, history_context, 0),
+         {:ok, _created} <-
+           History.record_initial_in_transaction(
+             article,
+             work,
+             actor,
+             command_id,
+             Map.put(event_attrs, :type, :create)
+           ),
          {:ok, published} <-
            Publisher.publish_in_transaction(
              article,
@@ -112,7 +140,18 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
              %{working_copy_id: work.id, revision: work.revision},
              nil,
              actor,
-             command_id
+             command_id,
+             {:operation, command_id},
+             history_context.causation_command_id
+           ),
+         {:ok, _published_event} <-
+           History.record_publish_in_transaction(
+             article,
+             nil,
+             published.snapshot.id,
+             actor,
+             command_id,
+             %{event_attrs | operation_index: 1}
            ),
          {:ok, _binding_tags} <- sync_community_tags(community, article, attrs, command_id) do
       {:ok, Map.put(published, :working_copy, work)}

@@ -251,7 +251,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
                    type: canonical.thread,
                    article_id: canonical.id
                  }),
-               {:ok, _history} <- CMS.Articles.RetainedHistory.remove_workspace(canonical),
+               {:ok, _history} <-
+                 CMS.Articles.RetainedHistory.remove_workspace(canonical, item.community_id),
                {:ok, _} <- delete_empty_action(action_id) do
             _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
             {:ok, %{done: true, article_id: canonical.id}}
@@ -300,7 +301,12 @@ defmodule GroupherServer.CMS.Articles.Trash do
              type: canonical.thread,
              article_id: canonical.id
            }),
-         {:ok, _history} <- CMS.Articles.RetainedHistory.remove_workspace(canonical),
+         {:ok, _history} <-
+           CMS.Articles.RetainedHistory.remove_workspace(canonical, item.community_id),
+         {:ok, _versions} <-
+           CMS.Articles.PermanentVersions.purge_in_transaction(canonical, item.community_id),
+         {:ok, _references} <- CMS.Articles.PermanentArticle.prepare_delete(canonical),
+         {:ok, _deleted_article} <- Repo.delete(canonical),
          {:ok, _} <- delete_empty_action(action_id) do
       _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
       {:ok, %{done: true, article_id: canonical.id}}
@@ -590,11 +596,19 @@ defmodule GroupherServer.CMS.Articles.Trash do
   defp resolve_item(%TrashedArticle{} = item), do: {:ok, Repo.preload(item, :trash_action)}
   defp resolve_item(hash_id), do: get(hash_id)
 
-  defp activity(article, action, actor, %TrashAction{} = trash_action, opts \\ []) do
+  defp activity(article, action, actor, %TrashAction{} = trash_action, opts) do
+    payload =
+      if action in [:trashed, :restored] do
+        %{operation_scope: "article", effect: "effective"}
+      else
+        %{}
+      end
+
     Effects.activity(article, action,
       actor: activity_actor(actor),
+      payload: payload,
       source: Keyword.get(opts, :source, :api),
-      operation_ref: trash_action.hash_id,
+      operation_ref: Keyword.get(opts, :operation_ref) || trash_action.hash_id,
       occurred_at: DateTime.utc_now(:second)
     )
   end

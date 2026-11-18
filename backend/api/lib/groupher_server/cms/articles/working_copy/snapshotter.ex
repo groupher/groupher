@@ -34,8 +34,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
   @snapshot_fields ~w(title digest slug)a
 
   @doc "Freezes the expected saved revision; callers must already have authorized the command."
-  def freeze_in_transaction(working_copy_id, revision, %User{} = actor, command_id)
-      when is_binary(working_copy_id) and is_integer(revision) and is_binary(command_id) do
+  def freeze_in_transaction(working_copy_id, revision, actor, command_id)
+      when is_binary(working_copy_id) and is_integer(revision) and is_binary(command_id) and
+             (is_struct(actor, User) or actor == :system) do
     with {:ok, :pass} <- require_transaction(),
          {:ok, article} <- lock_article_for_work(working_copy_id),
          {:ok, work} <- lock_work(working_copy_id),
@@ -56,9 +57,10 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
   def freeze_locked(
         %Article{} = article,
         %ArticleWorkingCopy{} = work,
-        %User{} = actor,
+        actor,
         command_id
-      ) do
+      )
+      when is_struct(actor, User) or actor == :system do
     with {:ok, existing} <- existing_snapshot(work) do
       case existing do
         %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
@@ -80,7 +82,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
              source_working_copy_id: work.id,
              source_revision: work.revision,
              cover_edit_snapshot_id: cover_snapshot_id,
-             captured_by_id: actor.id,
+             captured_by_id: captured_by_id(actor),
+             capture_actor_type: capture_actor_type(actor),
              captured_at: captured_at,
              causation_command_id: command_id
            }),
@@ -92,6 +95,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
       {:ok, snapshot}
     end
   end
+
+  defp captured_by_id(%User{id: id}), do: id
+  defp captured_by_id(:system), do: nil
+  defp capture_actor_type(%User{}), do: :user
+  defp capture_actor_type(:system), do: :system
 
   @doc "Creates a new independent WorkingCopy from a Snapshot; caller owns Gate and Receipt."
   def fork_snapshot_in_transaction(snapshot_id, target_scope, %User{} = actor)
@@ -289,23 +297,23 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
   end
 
   defp typed_extension(:post) do
-      {ArticleWorkingCopyPost, ArticleSnapshotPost,
-       ~w(copy_right link_addr cover_url cover_url_dark)a}
+    {ArticleWorkingCopyPost, ArticleSnapshotPost,
+     ~w(copy_right link_addr cover_url cover_url_dark)a}
   end
 
   defp typed_extension(:blog) do
-      {ArticleWorkingCopyBlog, ArticleSnapshotBlog,
-       ~w(copy_right link_addr cover_url cover_url_dark)a}
+    {ArticleWorkingCopyBlog, ArticleSnapshotBlog,
+     ~w(copy_right link_addr cover_url cover_url_dark)a}
   end
 
   defp typed_extension(:changelog) do
-      {ArticleWorkingCopyChangelog, ArticleSnapshotChangelog,
-       ~w(copy_right link_addr cover_url cover_url_dark)a}
+    {ArticleWorkingCopyChangelog, ArticleSnapshotChangelog,
+     ~w(copy_right link_addr cover_url cover_url_dark)a}
   end
 
   defp typed_extension(:doc) do
-      {ArticleWorkingCopyDoc, ArticleSnapshotDoc,
-       ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
+    {ArticleWorkingCopyDoc, ArticleSnapshotDoc,
+     ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
   end
 
   defp freeze_tags(work, snapshot) do

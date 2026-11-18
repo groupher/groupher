@@ -39,8 +39,13 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
       end
     end)
 
-    change(fn %{item: item, article: article} ->
-      TrashAgg.restore_loaded(item, article, actor, opts)
+    change(fn %{item: item, article: article}, %{operation_ref: operation_ref} ->
+      TrashAgg.restore_loaded(
+        item,
+        article,
+        actor,
+        Keyword.put(opts, :operation_ref, operation_ref)
+      )
     end)
 
     confirm(fn article ->

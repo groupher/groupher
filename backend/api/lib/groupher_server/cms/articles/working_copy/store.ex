@@ -52,6 +52,77 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     end
   end
 
+  @doc "Creates a Ticket WorkingCopy by copying an admitted stored Article body."
+  def create_ticket_from_stored_loaded(
+        %Article{thread: :ticket} = article,
+        source,
+        attrs,
+        %User{} = actor,
+        community_id
+      )
+      when (is_struct(source, ArticleWorkingCopy) or is_struct(source, ArticleSnapshot)) and
+             is_map(attrs) and is_integer(community_id) do
+    attrs = normalize_cover_attrs(attrs)
+
+    with {:ok, :pass} <- require_transaction(),
+         :missing <- fetch_present(attrs, :body_bag),
+         true <-
+           Repo.exists?(
+             from(b in CMS.Model.ArticleBinding,
+               where: b.article_id == ^source.article_id and b.community_id == ^community_id
+             )
+           ),
+         %Article{thread: thread} when thread in [:post, :ticket] <-
+           Repo.get(Article, source.article_id),
+         {:ok, locked_source} <- lock_ticket_copy_source(source),
+         {:ok, tags} <- requested_tags(attrs, article, attrs, community_id),
+         {:ok, cover_id} <- create_cover(attrs),
+         {:ok, work} <-
+           insert_work(
+             article,
+             attrs,
+             Map.put(Body.document(locked_source), :digest, locked_source.digest),
+             cover_id,
+             actor
+           ),
+         {:ok, _} <- insert_typed_work(work, :ticket, attrs),
+         {:ok, _} <- replace_tags(work, tags) do
+      {:ok, work}
+    else
+      {:present, _} -> {:error, :ambiguous_body_source}
+      {:error, _} = error -> error
+      _ -> {:error, :invalid_ticket_body_source}
+    end
+  end
+
+  defp lock_ticket_copy_source(%ArticleSnapshot{id: id, article_id: article_id}) do
+    case Repo.one(
+           from(s in ArticleSnapshot,
+             where: s.id == ^id and s.article_id == ^article_id,
+             lock: "FOR UPDATE"
+           )
+         ) do
+      %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
+      nil -> {:error, :invalid_ticket_body_source}
+    end
+  end
+
+  defp lock_ticket_copy_source(%ArticleWorkingCopy{
+         id: id,
+         article_id: article_id,
+         revision: revision
+       }) do
+    case Repo.one(
+           from(w in ArticleWorkingCopy,
+             where: w.id == ^id and w.article_id == ^article_id and w.revision == ^revision,
+             lock: "FOR UPDATE"
+           )
+         ) do
+      %ArticleWorkingCopy{} = work -> {:ok, work}
+      nil -> {:error, :invalid_ticket_body_source}
+    end
+  end
+
   @doc "Duplicates admitted saved Doc content into a new Article, preserving every stored body format."
   def duplicate_doc_loaded(
         %Article{thread: :doc} = article,

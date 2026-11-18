@@ -97,6 +97,14 @@ export const createServiceAuthClient = ({
       throw new Error(`Service token acquisition failed with status ${response.status}.`)
     }
 
+    const originScopes: readonly string[] = Object.values(CONTENT_HISTORY_ORIGIN_SCOPE)
+    if (request.scopes.some((scope) => originScopes.includes(scope))) {
+      const granted = new Set(typeof payload.scope === 'string' ? payload.scope.split(/\s+/) : [])
+      if (request.scopes.some((scope) => !granted.has(scope))) {
+        throw new Error('Service token is missing a requested content history capability.')
+      }
+    }
+
     cache.set(cacheKey(request), {
       expiresAt: Date.now() + payload.expires_in * 1_000,
       token: payload.access_token,

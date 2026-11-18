@@ -11,7 +11,6 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
 
   alias CMS.Model.{
     ArticleSnapshot,
-    ArticlePublic,
     ArticleSnapshotBlog,
     ArticleSnapshotChangelog,
     ArticleSnapshotDoc,
@@ -31,54 +30,18 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
   def compare(left_id, right_id) when is_binary(left_id) and is_binary(right_id) do
     with {:ok, left} <- load(left_id),
          {:ok, right} <- load(right_id),
-         true <- left.article_id == right.article_id do
-      {:ok, compare_content(left, right)}
-    else
-      false -> {:error, :snapshot_owner_mismatch}
-      {:error, _reason} = error -> error
+         {:ok, diff} <- compare_loaded(left, right) do
+      {:ok, diff}
     end
   end
 
-  @doc "Compares the default WorkingCopy with the currently selected public Snapshot."
-  def compare_public(%Article{id: article_id}) do
-    work =
-      Repo.one(
-        from(work in ArticleWorkingCopy,
-          where:
-            work.article_id == ^article_id and work.scope_type == :default and
-              work.scope_id == ^article_id
-        )
-      )
-
-    public = Repo.get(ArticlePublic, article_id)
-
-    case {work, public} do
-      {%ArticleWorkingCopy{id: work_id}, %ArticlePublic{snapshot_id: snapshot_id}} ->
-        compare(work_id, snapshot_id)
-
-      {%ArticleWorkingCopy{} = work, nil} ->
-        {:ok,
-         %{
-           body: %{added: [], removed: [], changed: [], moved: [], equal: false},
-           fields: %{title: %{before: nil, after: work.title}},
-           tags: %{added: [], removed: []},
-           cover_edit: false,
-           asset_refs: false,
-           left_kind: :snapshot,
-           right_kind: :working_copy
-         }}
-
-      {nil, _public} ->
-        {:error, :working_copy_not_found}
-    end
-  end
-
-  @doc "Reports whether the default WorkingCopy differs from the selected Snapshot."
-  def unpublished?(%Article{} = article) do
-    with {:ok, diff} <- compare_public(article) do
-      {:ok,
-       not diff.body.equal or map_size(diff.fields) > 0 or diff.tags.added != [] or
-         diff.tags.removed != [] or diff.cover_edit or diff.asset_refs}
+  @doc "Compares explicitly typed version records to avoid ambiguous cross-table UUID lookup."
+  def compare_versions(%ArticleSnapshot{} = left, right)
+      when is_struct(right, ArticleSnapshot) or is_struct(right, ArticleWorkingCopy) do
+    with {:ok, left} <- load_snapshot(left),
+         {:ok, right} <- load_version_record(right),
+         {:ok, diff} <- compare_loaded(left, right) do
+      {:ok, diff}
     end
   end
 
@@ -121,30 +84,88 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
       fields: changed_fields(left, right, ~w(title digest slug)a) |> Map.merge(typed_diff(l, r)),
       tags: %{added: right_tags -- left_tags, removed: left_tags -- right_tags},
       cover_edit: cover_edit_content(l) != cover_edit_content(r),
+      cover: %{before: cover_edit_content(l), after: cover_edit_content(r)},
       asset_refs: asset_refs_changed?(l, r),
+      assetRefs: asset_ref_diff(owner_refs(l), owner_refs(r)),
       left_kind: l.kind,
       right_kind: r.kind
     }
   end
 
+  defp compare_loaded(left, right) do
+    with {:ok, :pass} <- validate_typed_owner(left),
+         {:ok, :pass} <- validate_typed_owner(right),
+         true <- left.article_id == right.article_id do
+      {:ok, compare_content(left, right)}
+    else
+      false -> {:error, :snapshot_owner_mismatch}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp load_snapshot(%ArticleSnapshot{} = snapshot) do
+    {:ok,
+     %{
+       kind: :snapshot,
+       value: snapshot,
+       article_id: snapshot.article_id,
+       thread: thread(snapshot.article_id)
+     }}
+  end
+
+  defp load_version_record(%ArticleSnapshot{} = snapshot), do: load_snapshot(snapshot)
+
+  defp load_version_record(%ArticleWorkingCopy{} = work) do
+    {:ok,
+     %{
+       kind: :working_copy,
+       value: work,
+       article_id: work.article_id,
+       thread: thread(work.article_id)
+     }}
+  end
+
   defp body_diff(left, right) do
     left_nodes = index_nodes(left)
     right_nodes = index_nodes(right)
-    ids = Enum.uniq(Map.keys(left_nodes) ++ Map.keys(right_nodes))
+    ids = Enum.uniq(Map.keys(left_nodes) ++ Map.keys(right_nodes)) |> Enum.sort()
 
     %{
-      added: Enum.filter(ids, &(not Map.has_key?(left_nodes, &1))),
-      removed: Enum.filter(ids, &(not Map.has_key?(right_nodes, &1))),
+      added:
+        Enum.flat_map(ids, fn id ->
+          case {Map.get(left_nodes, id), Map.get(right_nodes, id)} do
+            {nil, %{value: value}} -> [%{id: id, after: value}]
+            _ -> []
+          end
+        end),
+      removed:
+        Enum.flat_map(ids, fn id ->
+          case {Map.get(left_nodes, id), Map.get(right_nodes, id)} do
+            {%{value: value}, nil} -> [%{id: id, before: value}]
+            _ -> []
+          end
+        end),
       changed:
-        Enum.filter(ids, fn id ->
-          Map.has_key?(left_nodes, id) and Map.has_key?(right_nodes, id) and
-            elem(left_nodes[id], 1) != elem(right_nodes[id], 1)
+        Enum.flat_map(ids, fn id ->
+          case {Map.get(left_nodes, id), Map.get(right_nodes, id)} do
+            {%{compare: before}, %{compare: after_value}} when before != after_value ->
+              [%{id: id, before: before, after: after_value}]
+
+            _ ->
+              []
+          end
         end),
-      moved:
-        Enum.filter(ids, fn id ->
-          Map.has_key?(left_nodes, id) and Map.has_key?(right_nodes, id) and
-            elem(left_nodes[id], 0) != elem(right_nodes[id], 0)
-        end),
+      moved: moved_nodes(left_nodes, right_nodes),
+      duplicate_ids:
+        (Map.keys(left_nodes) ++ Map.keys(right_nodes))
+        |> Enum.filter(&String.starts_with?(&1, "duplicate:"))
+        |> Enum.map(&(String.split(&1, ":", parts: 3) |> Enum.at(1)))
+        |> Enum.uniq()
+        |> Enum.sort(),
+      degraded_ids:
+        ids
+        |> Enum.filter(&String.starts_with?(&1, "position:"))
+        |> Enum.map(&String.replace_prefix(&1, "position:", "")),
       equal: left == right
     }
   end
@@ -152,42 +173,108 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
   defp index_nodes(nodes) when is_list(nodes) do
     nodes
     |> Enum.with_index()
-    |> Enum.reduce(%{}, fn {node, index}, acc -> index_node(node, [index], acc) end)
+    |> Enum.reduce(%{}, fn {node, index}, acc -> index_node(node, [index], acc, nil, index) end)
   end
 
   defp index_nodes(_), do: %{}
 
-  defp index_node(value, path, acc) when is_list(value) do
+  defp index_node(value, path, acc, parent_id, _sibling_index) when is_list(value) do
     value
     |> Enum.with_index()
     |> Enum.reduce(acc, fn {child, index}, current ->
-      index_node(child, path ++ [index], current)
+      index_node(child, path ++ [index], current, parent_id, index)
     end)
   end
 
-  defp index_node(value, path, acc) when is_map(value) do
+  defp index_node(value, path, acc, parent_id, sibling_index) when is_map(value) do
     id = Map.get(value, "id") || Map.get(value, :id)
     type = Map.get(value, "type") || Map.get(value, :type)
 
-    acc =
+    key =
       if is_binary(id) do
-        Map.put(acc, id, {path, value})
+        if Map.has_key?(acc, id), do: "duplicate:#{id}:#{Enum.join(path, ".")}", else: id
       else
         if is_binary(type) do
-          Map.put(acc, "position:#{Enum.join(path, ".")}", {path, value})
+          "position:#{Enum.join(path, ".")}"
         else
-          acc
+          nil
         end
       end
+
+    compare = comparable_node(value)
+
+    acc =
+      if key,
+        do:
+          Map.put(acc, key, %{
+            path: path,
+            value: value,
+            compare: compare,
+            parent_id: parent_id,
+            sibling_index: sibling_index
+          }),
+        else: acc
+
+    next_parent = if is_binary(id), do: id, else: parent_id
 
     value
     |> Enum.sort_by(fn {key, _child} -> to_string(key) end)
     |> Enum.reduce(acc, fn {key, child}, current ->
-      index_node(child, path ++ [to_string(key)], current)
+      index_node(child, path ++ [to_string(key)], current, next_parent, nil)
     end)
   end
 
-  defp index_node(_value, _path, acc), do: acc
+  defp index_node(_value, _path, acc, _parent_id, _sibling_index), do: acc
+
+  defp comparable_node(value) do
+    children = Map.get(value, "children") || Map.get(value, :children)
+
+    value
+    |> Map.drop(["children", :children])
+    |> Map.put("inline_children", inline_children(children))
+  end
+
+  defp inline_children(children) when is_list(children) do
+    Enum.filter(children, fn
+      %{"text" => _} = child -> not Map.has_key?(child, "type") and not Map.has_key?(child, "id")
+      %{text: _} = child -> not Map.has_key?(child, :type) and not Map.has_key?(child, :id)
+      child when not is_map(child) and not is_list(child) -> true
+      _ -> false
+    end)
+  end
+
+  defp inline_children(_), do: []
+
+  defp moved_nodes(left_nodes, right_nodes) do
+    common = Map.keys(left_nodes) -- (Map.keys(left_nodes) -- Map.keys(right_nodes))
+
+    Enum.flat_map(common, fn id ->
+      left = Map.fetch!(left_nodes, id)
+      right = Map.fetch!(right_nodes, id)
+
+      parent_changed? = left.parent_id != right.parent_id
+
+      order_changed? =
+        Enum.any?(common -- [id], fn other_id ->
+          other_left = Map.fetch!(left_nodes, other_id)
+          other_right = Map.fetch!(right_nodes, other_id)
+
+          is_integer(left.sibling_index) and is_integer(other_left.sibling_index) and
+            is_integer(right.sibling_index) and is_integer(other_right.sibling_index) and
+            left.parent_id == other_left.parent_id and right.parent_id == other_right.parent_id and
+            sign(left.sibling_index - other_left.sibling_index) !=
+              sign(right.sibling_index - other_right.sibling_index)
+        end)
+
+      if parent_changed? or order_changed?,
+        do: [%{id: id, from: left.path, to: right.path}],
+        else: []
+    end)
+  end
+
+  defp sign(value) when value < 0, do: -1
+  defp sign(value) when value > 0, do: 1
+  defp sign(_), do: 0
 
   defp decode_body(body_json) do
     case Jason.decode(body_json) do
@@ -221,7 +308,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
   end
 
   defp cover_edit_content(%{kind: :working_copy, value: work}) do
-      cover_values(GroupherServer.CMS.Model.CoverEditWorkingCopy, work.cover_edit_working_copy_id)
+    cover_values(GroupherServer.CMS.Model.CoverEditWorkingCopy, work.cover_edit_working_copy_id)
   end
 
   defp cover_edit_content(%{kind: :snapshot, value: snapshot}) do
@@ -244,17 +331,92 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
   defp owner_refs(%{kind: :working_copy, value: work}) do
     ArticleAssetRef
     |> where([ref], ref.working_copy_id == ^work.id)
-    |> order_by([ref], asc: ref.usage, asc: ref.position, asc: ref.id)
     |> select([ref], {ref.asset_id, ref.usage, ref.position, ref.block_id, ref.alt, ref.title})
     |> Repo.all()
+    |> Enum.sort()
   end
 
   defp owner_refs(%{kind: :snapshot, value: snapshot}) do
     ArticleAssetRef
     |> where([ref], ref.snapshot_id == ^snapshot.id)
-    |> order_by([ref], asc: ref.usage, asc: ref.position, asc: ref.id)
     |> select([ref], {ref.asset_id, ref.usage, ref.position, ref.block_id, ref.alt, ref.title})
     |> Repo.all()
+    |> Enum.sort()
+  end
+
+  defp asset_ref_diff(before, after_refs) do
+    before_by_key = Map.new(with_asset_occurrences(before))
+    after_by_key = Map.new(with_asset_occurrences(after_refs))
+    keys = Enum.uniq(Map.keys(before_by_key) ++ Map.keys(after_by_key)) |> Enum.sort()
+
+    %{
+      added:
+        Enum.flat_map(keys, fn key ->
+          case {Map.get(before_by_key, key), Map.get(after_by_key, key)} do
+            {nil, value} when not is_nil(value) -> [asset_ref_map(value)]
+            _ -> []
+          end
+        end),
+      removed:
+        Enum.flat_map(keys, fn key ->
+          case {Map.get(before_by_key, key), Map.get(after_by_key, key)} do
+            {value, nil} when not is_nil(value) -> [asset_ref_map(value)]
+            _ -> []
+          end
+        end),
+      changed:
+        Enum.flat_map(keys, fn key ->
+          case {Map.get(before_by_key, key), Map.get(after_by_key, key)} do
+            {before_ref, after_ref}
+            when not is_nil(before_ref) and not is_nil(after_ref) and before_ref != after_ref ->
+              [%{before: asset_ref_map(before_ref), after: asset_ref_map(after_ref)}]
+
+            _ ->
+              []
+          end
+        end)
+    }
+  end
+
+  defp with_asset_occurrences(refs) do
+    refs
+    |> Enum.group_by(&asset_ref_identity/1)
+    |> Enum.flat_map(fn {identity, values} ->
+      values
+      |> Enum.sort()
+      |> Enum.with_index()
+      |> Enum.map(fn {value, index} -> {{identity, index}, value} end)
+    end)
+  end
+
+  defp asset_ref_identity({asset_id, usage, _position, block_id, _alt, _title}),
+    do: {asset_id, usage, block_id}
+
+  defp asset_ref_map({asset_id, usage, position, block_id, alt, title}) do
+    %{
+      asset_id: asset_id,
+      usage: usage,
+      position: position,
+      block_id: block_id,
+      alt: alt,
+      title: title
+    }
+  end
+
+  defp validate_typed_owner(%{kind: kind, value: owner, thread: thread}) do
+    {working_copy_model, snapshot_model, _fields} = typed_models(thread)
+
+    case typed_model(kind, working_copy_model, snapshot_model) do
+      nil ->
+        {:ok, :pass}
+
+      model ->
+        if Repo.exists?(from(row in model, where: field(row, ^owner_field(kind)) == ^owner.id)) do
+          {:ok, :pass}
+        else
+          {:error, :missing_typed_content}
+        end
+    end
   end
 
   defp typed_diff(%{kind: left_kind, value: left, thread: thread}, %{
@@ -286,23 +448,23 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
   defp typed_model(:snapshot, _working_copy_model, snapshot_model), do: snapshot_model
 
   defp typed_models(:post) do
-      {ArticleWorkingCopyPost, ArticleSnapshotPost,
-       ~w(copy_right link_addr cover_url cover_url_dark)a}
+    {ArticleWorkingCopyPost, ArticleSnapshotPost,
+     ~w(copy_right link_addr cover_url cover_url_dark)a}
   end
 
   defp typed_models(:blog) do
-      {ArticleWorkingCopyBlog, ArticleSnapshotBlog,
-       ~w(copy_right link_addr cover_url cover_url_dark)a}
+    {ArticleWorkingCopyBlog, ArticleSnapshotBlog,
+     ~w(copy_right link_addr cover_url cover_url_dark)a}
   end
 
   defp typed_models(:changelog) do
-      {ArticleWorkingCopyChangelog, ArticleSnapshotChangelog,
-       ~w(copy_right link_addr cover_url cover_url_dark)a}
+    {ArticleWorkingCopyChangelog, ArticleSnapshotChangelog,
+     ~w(copy_right link_addr cover_url cover_url_dark)a}
   end
 
   defp typed_models(:doc) do
-      {ArticleWorkingCopyDoc, ArticleSnapshotDoc,
-       ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
+    {ArticleWorkingCopyDoc, ArticleSnapshotDoc,
+     ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
   end
 
   defp typed_models(_), do: {nil, nil, []}

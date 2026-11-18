@@ -1,10 +1,21 @@
+import type { DocumentNode } from 'graphql'
 import { useCallback, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 
 import * as S from './schema'
-import type { Comparison, Preview, ReleasePage, SnapshotPage, Policy, Versions } from './types'
+import type {
+  ArticleEventDetail,
+  ArticleEventPage,
+  ArticleDiff,
+  Comparison,
+  Preview,
+  ReleasePage,
+  SnapshotPage,
+  Policy,
+  Versions,
+} from './types'
 
 export type Tab = 'preview' | 'diff' | 'history' | 'settings'
 export type Detail = { id: number; nodes: Preview['nodes']; page: Preview['page'] }
@@ -13,7 +24,16 @@ export default function usePublication(community: string) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<
-    Preview | Comparison | ReleasePage | SnapshotPage | Policy | Detail | null
+    | Preview
+    | Comparison
+    | ReleasePage
+    | SnapshotPage
+    | ArticleEventPage
+    | ArticleEventDetail
+    | ArticleDiff
+    | Policy
+    | Detail
+    | null
   >(null)
   const versions = useRef<Versions | null>(null)
   const sequence = useRef(0)
@@ -26,6 +46,11 @@ export default function usePublication(community: string) {
         snapshotId?: string
         beforeId?: number
         cursor?: Record<string, unknown>
+        articleHistory?: boolean
+        actorId?: string
+        eventId?: string
+        beforeSnapshotId?: string
+        afterSnapshotId?: string
         baseline?: 'PUBLIC' | 'APPROVAL'
         refresh?: boolean
       } = {},
@@ -34,12 +59,24 @@ export default function usePublication(community: string) {
       if (options.refresh) versions.current = null
       setBusy(true)
       setError(null)
-      setData(null)
+      const appendContributors = Boolean(options.eventId && options.cursor)
+      if (!appendContributors) setData(null)
       try {
         const variables = {
           community,
           ...options,
+          actorId: options.actorId,
           cursor: options.cursor ? JSON.stringify(options.cursor) : undefined,
+          before: options.beforeSnapshotId
+            ? { type: 'SNAPSHOT', snapshotId: options.beforeSnapshotId }
+            : undefined,
+          after: options.afterSnapshotId
+            ? { type: 'SNAPSHOT', snapshotId: options.afterSnapshotId }
+            : undefined,
+          pagi: JSON.stringify({
+            limit: 20,
+            cursor: options.cursor,
+          }),
           versions: versions.current ? JSON.stringify(versions.current) : undefined,
         }
         const query =
@@ -49,18 +86,51 @@ export default function usePublication(community: string) {
               ? S.preview
               : tab === 'diff'
                 ? S.diff
-                : options.releaseId
-                  ? S.release
-                  : options.articleId
-                    ? S.snapshots
-                    : S.releases
+                : options.beforeSnapshotId && options.afterSnapshotId
+                  ? S.articleDiff
+                  : options.eventId
+                    ? S.articleEvent
+                    : options.articleHistory
+                      ? S.articleEvents
+                      : options.releaseId
+                        ? S.release
+                        : options.articleId
+                          ? S.snapshots
+                          : S.releases
         const response = await browserGraphQLRequest<
-          Record<string, Preview | Comparison | ReleasePage | SnapshotPage | Policy | Detail>
-        >(query, variables)
+          Record<
+            string,
+            | Preview
+            | Comparison
+            | ReleasePage
+            | SnapshotPage
+            | ArticleEventPage
+            | ArticleEventDetail
+            | ArticleDiff
+            | Policy
+            | Detail
+          >
+        >(query as DocumentNode, variables)
         if (current !== sequence.current) return
         const result = Object.values(response)[0]
         if ('versions' in result) versions.current = result.versions
-        setData(result)
+        setData((previous) => {
+          if (
+            appendContributors &&
+            previous &&
+            'contributors' in previous &&
+            'contributors' in result
+          ) {
+            return {
+              ...result,
+              contributors: {
+                ...result.contributors,
+                items: [...previous.contributors.items, ...result.contributors.items],
+              },
+            }
+          }
+          return result
+        })
       } catch {
         if (current === sequence.current) setError('dsb.doc.publication.changed_or_denied')
       } finally {

@@ -127,6 +127,34 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Articles.article_snapshot/3)
     end
 
+    @desc "Paged immutable editing and publication events for one Article"
+    field :paged_article_events, non_null(:json) do
+      arg(:article_id, non_null(:id))
+      arg(:pagi, :json)
+      arg(:type, :article_event_type)
+      arg(:actor_id, :id)
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.Articles.paged_article_events/3)
+    end
+
+    @desc "One immutable Article event and its before/after Diff"
+    field :article_event, :json do
+      arg(:article_id, non_null(:id))
+      arg(:event_id, non_null(:id))
+      arg(:pagi, :json)
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.Articles.article_event/3)
+    end
+
+    @desc "Compares explicit saved Article versions"
+    field :article_diff, :json do
+      arg(:article_id, non_null(:id))
+      arg(:before, non_null(:article_version_ref_input))
+      arg(:after, non_null(:article_version_ref_input))
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.Articles.article_diff/3)
+    end
+
     @desc "Safe product ArticleLog for one readable Article"
     field :article_logs, non_null(:article_log_page) do
       arg(:article, non_null(:article_path_input))

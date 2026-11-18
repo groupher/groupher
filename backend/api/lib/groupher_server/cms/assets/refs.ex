@@ -24,14 +24,11 @@ defmodule GroupherServer.CMS.Assets.Refs do
 
   alias CMS.Model.{
     Article,
-    ArticleBinding,
     ArticleAssetRef,
     ArticleWorkingCopy,
     Community,
     CommunityAsset
   }
-
-  alias Helper.T
 
   @cover_specs [
     %{
@@ -136,59 +133,6 @@ defmodule GroupherServer.CMS.Assets.Refs do
     |> where([ref], ref.snapshot_id == ^snapshot_id)
     |> order_by([ref], asc: ref.position, asc: ref.inserted_at, asc: ref.id)
     |> Repo.all()
-  end
-
-  @doc """
-  Removes WorkingCopy and Snapshot refs, plus legacy Docs-owned refs, for an Article.
-
-  The community asset rows remain intact; only usage projections are deleted.
-  This is used by article deletion cleanup.
-
-  ## Examples
-
-      Refs.purge_refs(:post, post.id)
-      #=> {:ok, {deleted_count, nil}}
-
-  """
-  @spec purge_refs(atom(), T.id()) :: T.domain_res(term())
-  def purge_refs(_thread, article_id) do
-    working_copy_ids =
-      from(work in ArticleWorkingCopy,
-        where: work.article_id == ^article_id,
-        select: work.id
-      )
-
-    snapshot_ids =
-      from(snapshot in CMS.Model.ArticleSnapshot,
-        where: snapshot.article_id == ^article_id,
-        select: snapshot.id
-      )
-
-    community_ids =
-      Repo.all(
-        from(binding in ArticleBinding,
-          where: binding.article_id == ^article_id,
-          select: binding.community_id
-        )
-      )
-
-    case Repo.get(Article, article_id) do
-      %Article{} ->
-        Repo.transaction(fn ->
-          Enum.each(community_ids, &Completeness.lock_scope/1)
-
-          ArticleAssetRef
-          |> where(
-            [ref],
-            ref.working_copy_id in subquery(working_copy_ids) or
-              ref.snapshot_id in subquery(snapshot_ids)
-          )
-          |> Repo.delete_all()
-        end)
-
-      nil ->
-        {:error, AssetErrorCat.custom("article not found")}
-    end
   end
 
   defp create_working_copy_ref(community_id, working_copy_id, input, user, index)
