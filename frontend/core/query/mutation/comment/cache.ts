@@ -18,6 +18,7 @@ import {
   mapCommentEntries,
   commentCacheEntries,
   commentCollectionOf,
+  withPageEntries,
 } from './pages'
 
 export type TCommentScope = {
@@ -74,8 +75,8 @@ const findComment = (entries: TComment[], innerId: string): TComment | null => {
     if (String(entry.innerId) === innerId) return entry
     const nested = entry.replies?.length ? findComment(entry.replies, innerId) : null
     if (nested) return nested
-    if (entry.replyToComment && String(entry.replyToComment.innerId) === innerId)
-      return entry.replyToComment
+    const contextual = entry.replyToComment ? findComment([entry.replyToComment], innerId) : null
+    if (contextual) return contextual
   }
   return null
 }
@@ -87,19 +88,22 @@ const commentLocations = (
   entries: TComment[],
   innerId: string,
   prefix: TCommentPath = [],
-): { path: TCommentPath; comment: TComment }[] =>
-  entries.flatMap((entry, index) => {
-    const path: TCommentPath = [...prefix, index]
+): { path: TCommentPath; comment: TComment }[] => {
+  const visit = (
+    entry: TComment,
+    path: TCommentPath,
+  ): { path: TCommentPath; comment: TComment }[] => {
     const own = String(entry.innerId) === innerId ? [{ path, comment: entry }] : []
     const replies = entry.replies?.length
-      ? commentLocations(entry.replies, innerId, [...path, 'replies'])
+      ? entry.replies.flatMap((reply, index) => visit(reply, [...path, 'replies', index]))
       : []
-    const target =
-      entry.replyToComment && String(entry.replyToComment.innerId) === innerId
-        ? [{ path: [...path, 'replyToComment'] as TCommentPath, comment: entry.replyToComment }]
-        : []
+    const target = entry.replyToComment
+      ? visit(entry.replyToComment, [...path, 'replyToComment'])
+      : []
     return [...own, ...replies, ...target]
-  })
+  }
+  return entries.flatMap((entry, index) => visit(entry, [...prefix, index]))
+}
 
 const restoreCommentAt = (value: unknown, path: TCommentPath, comment: TComment): unknown => {
   if (!path.length) return comment
@@ -211,12 +215,7 @@ const pendingChanges = (
         }
         const entries = append(page.entries)
         const pinnedEntries = page.pinnedEntries ? append(page.pinnedEntries) : undefined
-        if (entries === page.entries && pinnedEntries === page.pinnedEntries) return page
-        return {
-          ...page,
-          entries,
-          ...(page.pinnedEntries && pinnedEntries ? { pinnedEntries } : {}),
-        }
+        return withPageEntries(page, entries, pinnedEntries)
       })
       if (!inserted) continue
       changes.push({
@@ -402,12 +401,7 @@ export const deleteCommentChanges = (
         const pinnedEntries = page.pinnedEntries
           ? patchEntries(page.pinnedEntries, target.commentInnerId, () => null)
           : undefined
-        if (entries === page.entries && pinnedEntries === page.pinnedEntries) return page
-        return {
-          ...page,
-          entries,
-          ...(page.pinnedEntries && pinnedEntries ? { pinnedEntries } : {}),
-        }
+        return withPageEntries(page, entries, pinnedEntries)
       })
       if (!found) continue
       changes.push({
@@ -444,12 +438,7 @@ export const deleteCommentChanges = (
               const pinnedEntries = page.pinnedEntries
                 ? restore(page.pinnedEntries, oldPage?.pinnedEntries)
                 : undefined
-              if (entries === page.entries && pinnedEntries === page.pinnedEntries) return page
-              return {
-                ...page,
-                entries,
-                ...(page.pinnedEntries && pinnedEntries ? { pinnedEntries } : {}),
-              }
+              return withPageEntries(page, entries, pinnedEntries)
             }),
           ),
       })

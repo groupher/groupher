@@ -5,6 +5,21 @@ type TPage = {
   pinnedEntries?: TComment[]
   pageInfo?: { api: string; page?: number; hasNextPage?: boolean }
 }
+
+/** Rebuilds a page only when its entity arrays changed, preserving all page metadata. */
+export const withPageEntries = (
+  page: TPage,
+  entries: TComment[],
+  pinnedEntries?: TComment[],
+): TPage => {
+  if (entries === page.entries && pinnedEntries === page.pinnedEntries) return page
+  return {
+    ...page,
+    entries,
+    ...(page.pinnedEntries && pinnedEntries ? { pinnedEntries } : {}),
+  }
+}
+
 const record = (data: unknown): data is Record<string, unknown> =>
   !!data && typeof data === 'object'
 
@@ -35,12 +50,7 @@ export const mapCommentEntries = (
   mapCommentPages(data, (page) => {
     const entries = update(page.entries)
     const pinnedEntries = page.pinnedEntries ? update(page.pinnedEntries) : undefined
-    if (entries === page.entries && pinnedEntries === page.pinnedEntries) return page
-    return {
-      ...page,
-      entries,
-      ...(page.pinnedEntries && pinnedEntries ? { pinnedEntries } : {}),
-    }
+    return withPageEntries(page, entries, pinnedEntries)
   })
 /** Collects loaded root and pinned entries across offset or infinite cache pages. */
 export const commentCacheEntries = (data: unknown): TComment[] => {

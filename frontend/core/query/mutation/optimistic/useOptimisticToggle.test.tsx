@@ -118,7 +118,10 @@ describe('useOptimisticToggle', () => {
     act(() => hook.result.current.toggle(true))
     await waitFor(() => expect(rejectRequest).toBeTypeOf('function'))
     hook.unmount()
-    await act(async () => rejectRequest?.(new Error('late failure')))
+    await act(async () => {
+      rejectRequest?.(new Error('late failure'))
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
     expect(mocks.toast).not.toHaveBeenCalled()
   })
 

@@ -16,7 +16,10 @@ export const asOptimisticCacheError = (error: unknown): OptimisticCacheError =>
     ? error
     : new OptimisticCacheError('Optimistic cache preparation failed', { cause: error })
 
-/** Wraps only a domain-owned cache calculation, leaving unrelated operation errors untouched. */
+/**
+ * Explicitly classifies a cache-only domain calculation as degradable. Callers must validate
+ * business input and operation targets before entering this boundary.
+ */
 export const prepareOptimisticCache = <T>(prepare: () => T): T => {
   try {
     return prepare()

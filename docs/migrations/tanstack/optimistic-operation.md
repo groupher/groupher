@@ -14,18 +14,18 @@
 
 ### 1.1 当前问题
 
-当前 executor 在取消读取后调用领域 apply。apply 边计算边写缓存，返回 changes 后，
-executor 才登记 ownership marker，然后发送请求。
+在 A 实施前，executor 在取消读取后调用领域 apply；apply 边计算边写缓存，返回 changes 后，
+executor 才登记 ownership marker，然后发送请求。A 已改为先只读 prepare，再预登记 ownership，最后逐项提交。
 
-如果 apply 在修改第一份缓存后、处理第二份缓存时抛错，已写入位置缺少 marker，现有
-transport catch 也不会运行：请求没有发出，临时项或乐观值可能残留。执行器返回 rejected
-Promise；Action 会保存并抛出错误，Toggle 包装入口则会捕获后丢弃错误，不能把两者都描述为静默失败。
+旧路径若在修改第一份缓存后、处理第二份缓存时抛错，已写入位置缺少 marker，transport
+catch 也不会运行：请求没有发出，临时项或乐观值可能残留。当前 A 路径对逐项提交失败执行条件化清理，
+按错误标识决定是否跳过乐观效果继续发送，并安排必要校准。Action 与 Toggle 的错误消费合同见 B。
 
 另有两个需要明确的边界：
 
 - 取消读取发生在准备之前；准备失败后仍须有可用的校准目标。
-- 服务端已确认成功后，本地 reconcile、恢复读取或订阅通知失败，不得把业务结果改成失败。
-  当前 reconcile catch 中的校准调用也可能抛错，现有实现尚不构成完整保证。
+- 服务端已确认成功后，本地 reconcile、恢复读取或订阅通知失败，不得把业务结果改成失败；
+  executor 记录诊断并尝试安排校准。
 
 ### 1.2 本轮实际影响面
 
@@ -361,11 +361,12 @@ hook/页面测提示和交互。
 
 ### 5.3 既有测试入口
 
-既有验证入口如下。当前 dev 基线不存在 `dsbShell/tests/index.test.ts` 和
-`query/queryClient.test.ts`，因此从命令中移除；验收固定文件与场景，不固定用例数量：
+既有验证入口如下。当前 dev 基线不存在 `dsbShell/tests/index.test.ts`；
+`frontend/core/query/queryClient.test.ts` 存在且保留在验证命令中。验收固定文件与场景，不固定用例数量：
 
 ```sh
 pnpm exec vitest --config frontend/core/vitest.config.mts run \
+  frontend/core/query/queryClient.test.ts \
   frontend/core/query/mutation/optimistic/execute.test.ts \
   frontend/core/query/mutation/optimistic/useOptimisticToggle.test.tsx \
   frontend/core/query/mutation/article.test.ts \

@@ -8,7 +8,7 @@ import type { TComment } from '~/spec'
 import { commentQueries } from '../../comment'
 import { markChange, rollbackChanges } from '../optimistic/effects'
 import { deleteCommentChanges, patchCommentEverywhere, insertPendingReplyChanges } from './cache'
-import { mapCommentEntries, mapCommentPages } from './pages'
+import { mapCommentEntries, mapCommentPages, withPageEntries } from './pages'
 const article = { community: 'home', thread: 'POST' as const, innerId: '1' }
 const scope = { community: 'home', thread: 'POST' as const, articleInnerId: '1' }
 const config = {
@@ -168,6 +168,43 @@ describe('comment page cache ownership', () => {
     )
   })
 
+  it('restores a comment nested in a replyToComment chain', () => {
+    const client = new QueryClient()
+    const key = commentQueries.page(
+      { article, mode: 'TIMELINE' },
+      DEFAULT_EFFECTIVE_PAGI_CONFIG,
+    ).queryKey
+    const nested = { innerId: 'nested', replies: [] } as TComment
+    const middle = { innerId: 'middle', replyToComment: nested } as TComment
+    const top = { innerId: 'top', replyToComment: middle } as TComment
+    client.setQueryData(key, page([top]))
+    const changes = deleteCommentChanges(
+      client,
+      {
+        scope,
+        articlePath: article,
+        articleKey: 'home:POST:1',
+        commentInnerId: 'nested',
+        commentPath: { article, innerId: 'nested' },
+        comment: nested,
+      },
+      context(client),
+    )
+
+    expect(changes).toHaveLength(1)
+    for (const change of changes) {
+      markChange(client, change)
+      change.commit()
+    }
+    expect(
+      client.getQueryData<TCommentPage>(key)!.entries[0].replyToComment?.replyToComment,
+    ).toBeNull()
+    rollbackChanges(client, changes)
+    expect(
+      client.getQueryData<TCommentPage>(key)!.entries[0].replyToComment?.replyToComment?.innerId,
+    ).toBe('nested')
+  })
+
   it('restores a deleted comment by pageParam after an earlier page is removed', () => {
     const client = new QueryClient()
     const key = commentQueries.infinite({ article, mode: 'REPLIES' }, config).queryKey
@@ -250,6 +287,11 @@ describe('comment page cache ownership', () => {
     expect(mapped.pages[0].entries[0]).toBe(untouched)
     expect(mapped.pages[1]).toBe(secondPage)
     expect(mapped.pageParams).toBe(data.pageParams)
+  })
+
+  it('preserves page identity when its entity arrays are unchanged', () => {
+    const original = { entries: [root] }
+    expect(withPageEntries(original, original.entries)).toBe(original)
   })
 
   it('prepares pending replies without mutating frozen cached data', () => {

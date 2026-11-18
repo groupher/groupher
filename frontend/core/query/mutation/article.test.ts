@@ -6,7 +6,7 @@ import type { TArticle, TPagedPosts } from '~/spec'
 import { articleStats, articleStatsBatch } from '../articleStats'
 import { articleQueryKeys, viewerQueryKeys } from '../key'
 import { articleUpvoteOperation } from './article'
-import { setArticleCollected } from './article/collect'
+import { articleCollectOperation, setArticleCollected } from './article/collect'
 import { articleEmotionOperation, setArticleEmotion } from './article/emotion'
 import {
   clearArticleUpvoteReceipts,
@@ -613,6 +613,17 @@ describe('article query mutation helpers', () => {
     const targets = articleEmotionOperation.authorityTargets(
       { queryClient, accountScope: 'alice', commandId: 'emotion-targets' },
       { article, emotion: 'heart' },
+      true,
+    )
+
+    expect(targets.map(({ queryKey }) => queryKey)).toContainEqual(viewerKey)
+  })
+
+  it('includes private interaction state in collect authority targets', () => {
+    const queryClient = setupClient()
+    const targets = articleCollectOperation.authorityTargets(
+      { queryClient, accountScope: 'alice', commandId: 'collect-targets' },
+      { article, folderId: 'folder-1' },
       true,
     )
 
