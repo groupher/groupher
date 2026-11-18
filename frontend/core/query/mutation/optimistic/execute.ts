@@ -85,6 +85,7 @@ export const executeCommand = async <TVariables extends { commandId: string | nu
   request({ ...variables, commandId: commandId || createCommandId() } as TVariables)
 
 const operationQueues = new WeakMap<QueryClient, Map<string, Promise<unknown>>>()
+const pendingCalibrations = new WeakMap<QueryClient, Map<string, Promise<void>>>()
 
 const enqueue = <T>(queryClient: QueryClient, key: string, run: () => Promise<T>): Promise<T> => {
   let queues = operationQueues.get(queryClient)
@@ -129,6 +130,18 @@ const uniqueAuthorityTargets = (targets: readonly TAuthorityTarget[]): TAuthorit
   ...new Map(targets.map((target) => [JSON.stringify(target.queryKey), target])).values(),
 ]
 
+const waitForPendingCalibration = async (
+  queryClient: QueryClient,
+  targets: readonly { queryKey: readonly unknown[] }[],
+): Promise<void> => {
+  const calibrations = pendingCalibrations.get(queryClient)
+  if (!calibrations) return
+  const pending = targets
+    .map((target) => calibrations.get(JSON.stringify(target.queryKey)))
+    .filter((calibration): calibration is Promise<void> => calibration !== undefined)
+  await Promise.all(pending)
+}
+
 const calibrate = async (
   queryClient: QueryClient,
   targets: readonly TAuthorityTarget[],
@@ -172,11 +185,30 @@ export const executeOptimisticOperation = async <TTarget, TInput, TResult>({
       const pending = [...pendingCalibrationTargets.values()]
       if (pending.length === 0) return
       pendingCalibrationTargets.clear()
-      void calibrate(queryClient, pending, {
-        operation: operation.name,
-        commandId: context.commandId,
-      })
+      let calibrations = pendingCalibrations.get(queryClient)
+      if (!calibrations) {
+        calibrations = new Map()
+        pendingCalibrations.set(queryClient, calibrations)
+      }
+      const calibration = Promise.resolve().then(() =>
+        calibrate(queryClient, pending, {
+          operation: operation.name,
+          commandId: context.commandId,
+        }),
+      )
+      for (const target of pending) {
+        const key = JSON.stringify(target.queryKey)
+        const previous = calibrations.get(key)
+        const combined = previous
+          ? Promise.all([previous, calibration]).then(() => undefined)
+          : calibration
+        calibrations.set(key, combined)
+        void combined.then(() => {
+          if (calibrations?.get(key) === combined) calibrations.delete(key)
+        })
+      }
     }
+    await waitForPendingCalibration(queryClient, cancelTargets)
     await Promise.all(cancelTargets.map((target) => queryClient.cancelQueries(target)))
 
     let plan: TOptimisticPlan = { changes: [] }

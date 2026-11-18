@@ -320,6 +320,76 @@ describe('optimistic operation executor', () => {
     expect(invalidate).toHaveBeenCalledOnce()
   })
 
+  it('waits for a pending failure calibration before the next same-lane cancellation', async () => {
+    const queryClient = new QueryClient()
+    const events: string[] = []
+    let finishCalibration: (() => void) | undefined
+    vi.spyOn(queryClient, 'invalidateQueries').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          events.push('calibrate-start')
+          finishCalibration = () => {
+            events.push('calibrate-finish')
+            resolve(undefined as never)
+          }
+        }),
+    )
+    vi.spyOn(queryClient, 'cancelQueries').mockImplementation(async () => {
+      events.push('cancel')
+      return undefined as never
+    })
+    const operation: TOptimisticOperation<{ id: string }, 'fail' | 'succeed', string> = {
+      name: 'test.pending-calibration',
+      entityKey: ({ id }) => id,
+      queueKey: () => 'shared-lane',
+      queriesToCancel: () => [{ queryKey: ['authority'], exact: true }],
+      authorityTargets: () => [{ queryKey: ['authority'] }],
+      prepare: (_context, _target, input) =>
+        input === 'fail'
+          ? prepareOptimisticCache(() => {
+              throw new Error('malformed cached shape')
+            })
+          : { changes: [] },
+      execute: async (_context, _target, input) => {
+        events.push(`execute-${input}`)
+        if (input === 'fail') throw new Error('request failed')
+        return 'confirmed'
+      },
+      reconcile: () => undefined,
+    }
+
+    await expect(
+      executeOptimisticOperation({
+        queryClient,
+        accountScope: 'acct-a',
+        operation,
+        target: { id: '42' },
+        input: 'fail',
+      }),
+    ).rejects.toMatchObject({ message: 'request failed' })
+
+    const nextExecution = executeOptimisticOperation({
+      queryClient,
+      accountScope: 'acct-a',
+      operation,
+      target: { id: '43' },
+      input: 'succeed',
+    })
+
+    await vi.waitFor(() => expect(events).toContain('calibrate-start'))
+    expect(events).toEqual(['cancel', 'execute-fail', 'calibrate-start'])
+    finishCalibration?.()
+    await expect(nextExecution).resolves.toBe('confirmed')
+    expect(events).toEqual([
+      'cancel',
+      'execute-fail',
+      'calibrate-start',
+      'calibrate-finish',
+      'cancel',
+      'execute-succeed',
+    ])
+  })
+
   it('cleans multiple landed writes after the second commit throws, then sends the command', async () => {
     const queryClient = new QueryClient()
     const firstKey = ['first']
