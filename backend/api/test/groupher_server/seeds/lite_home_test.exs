@@ -14,7 +14,28 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
     TicketState
   }
 
+  defmodule TransactionProbe do
+    def create_batch(_capability) do
+      send(self(), {:wallpaper_seed_in_transaction, GroupherServer.Repo.in_transaction?()})
+      {:error, :asset_hub_unavailable}
+    end
+  end
+
   describe "[lite home seeds]" do
+    test "commits community data before external wallpaper work and allows retry" do
+      opts = [
+        command_id_factory: &Ecto.UUID.generate/0,
+        wallpaper_opts: [asset_hub: TransactionProbe]
+      ]
+
+      assert {:error, :asset_hub_unavailable} = LiteHome.seed(opts)
+      assert_received {:wallpaper_seed_in_transaction, false}
+      assert %Community{} = Repo.get_by(Community, slug: "home")
+
+      assert {:error, :asset_hub_unavailable} = LiteHome.seed(opts)
+      assert_received {:wallpaper_seed_in_transaction, false}
+    end
+
     test "resets home with minimal main and dashboard data" do
       seed_opts = [wallpaper: false, command_id_factory: &Ecto.UUID.generate/0]
       {:ok, seeded_community} = LiteHome.reset_and_seed(seed_opts)

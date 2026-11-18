@@ -8,7 +8,10 @@
 
 正式创建 Community 会写入默认的 Dashboard wallpaper 配置，例如 `gradient/amber_mauve`。这只是编辑器设置，不是公共页面使用的图片。
 
-公共页面读取的是以下发布产物：
+未初始化主题的公共页面现可直接读取随应用分发的内置默认图片；编辑器读取相同外观的 Backend 默认
+settings。这个默认展示无需先运行 seed。显式 NONE 仍不显示图片。
+
+Seed 的职责是创建真实的社区资产和发布历史，以验证下面这条正式发布链路：
 
 ```text
 community_wallpapers
@@ -127,6 +130,11 @@ seed 不能把本地生成的 `assetPublicRef` 直接复制到线上。每个环
   -> 更新 active light/dark snapshot pointer
   -> 继续 seed tags/posts/changelogs
 ```
+
+LiteHome 先在数据库事务内完成 Community 与内容数据，再在事务外运行 Wallpaper seed。每个上传 intent
+必须先提交，Assets Hub finalize 经另一条 Phoenix 连接回调时才能读取它。外部发布失败会保留已提交的
+Community/内容，重跑通过既有幂等检查收敛；不承诺跨数据库与 Assets Hub 的整批原子回滚。
+Batch create/cancel 使用 `ASSETS_HUB_BATCH_ENDPOINT`，presign/finalize 使用 `ASSETS_PUBLIC_ENDPOINT`。
 
 Wallpaper seed helper 应复用现有 domain changeset、profile 校验、snapshot 和 active pointer 逻辑，不直接对 `community_wallpapers`、`wallpaper_snapshots` 或 `wallpaper_snapshot_images` 写 raw SQL。
 

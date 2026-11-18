@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Wallpaper.Query do
     |> Kernel.!=(nil)
   end
 
-  @doc "Returns the published image tree used by ordinary pages."
+  @doc "Returns published images, or built-in defaults for themes without an active Snapshot."
   def wallpaper(community_id) do
     state = Repo.get_by(CommunityWallpaper, community_id: community_id)
     {light, light_source} = published_theme(state && state.active_light_snapshot_ref, :light)
@@ -113,7 +113,19 @@ defmodule GroupherServer.CMS.Wallpaper.Query do
   def state_version(nil), do: 0
   def state_version(state), do: state.version
 
-  defp published_theme(nil, _theme), do: {nil, nil}
+  defp published_theme(nil, theme) do
+    images =
+      Map.new(Upload.profile_specs(), fn profile ->
+        {profile.key,
+         %{
+           width: profile.width,
+           height: profile.height,
+           url: "/wallpaper/default-v1/#{theme}-#{profile.key}.webp"
+         }}
+      end)
+
+    {images, DashboardFields.wallpaper_default()[theme].source}
+  end
 
   defp published_theme(snapshot_ref, theme) do
     case Repo.get_by(WallpaperSnapshot, public_ref: snapshot_ref, theme: theme) do

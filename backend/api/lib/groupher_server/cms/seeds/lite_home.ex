@@ -55,6 +55,9 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   Pass `reset: true` to delete the existing home community first. Returns the
   fetched community with a `seed_summary` of per-thread counts.
 
+  Community and content commit before external Wallpaper uploads. If publication
+  fails, the committed data remains and a retry resumes the idempotent seed.
+
   ## Examples
 
       CMS.Seeds.LiteHome.seed(command_id_factory: &Ecto.UUID.generate/0)
@@ -64,12 +67,28 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   """
   @spec seed(keyword()) :: T.domain_res(Community.t())
   def seed(opts \\ []) when is_list(opts) do
+    result =
+      Repo.transaction(fn ->
+        case seed_in_transaction(opts) do
+          {:ok, value} -> value
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+
+    # Assets Hub finalizes uploads through a separate Phoenix connection. Commit
+    # the community first and let each upload intent commit before that callback.
+    with {:ok, community} <- result,
+         {:ok, _} <- maybe_seed_wallpaper(community, opts) do
+      {:ok, community}
+    end
+  end
+
+  defp seed_in_transaction(opts) do
     reset? = Keyword.get(opts, :reset, false)
 
     with {:ok, :ok} <- maybe_reset(reset?),
          {:ok, community} <- Communities.mock(@slug, title: "Home"),
          {:ok, _} <- configure_dashboard(community),
-         {:ok, _} <- maybe_seed_wallpaper(community, opts),
          {:ok, post_tag_ids} <- seed_tags(community, :post),
          {:ok, changelog_tag_ids} <- seed_tags(community, :changelog),
          {:ok, _posts} <- seed_posts(community, post_tag_ids, opts),

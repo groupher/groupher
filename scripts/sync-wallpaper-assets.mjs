@@ -14,6 +14,7 @@ const sourceDir = path.join(repoRoot, 'frontend/core/assets/wallpaper')
 const pictureDir = path.join(sourceDir, 'picture')
 const previewDir = path.join(sourceDir, 'picture-preview')
 const patternDir = path.join(sourceDir, 'pattern')
+const defaultDir = path.join(repoRoot, 'packages/contracts/fixtures/wallpaper/default-v1')
 const generatedFile = path.join(repoRoot, 'frontend/core/constant/wallpaper.generated.ts')
 const allowedApps = ['main', 'dashboard', 'dash', 'landing', 'community']
 const allowedTypes = ['picture', 'picture-preview', 'pattern']
@@ -283,6 +284,11 @@ for (const app of targetApps) {
   const targetRoot = path.join(repoRoot, `frontend/${app}/public/wallpaper`)
 
   mkdirSync(targetRoot, { recursive: true })
+
+  // Default Wallpaper is available before a community has any published assets.
+  syncDirectory(defaultDir, path.join(targetRoot, 'default-v1'), (entry) =>
+    entry.name.endsWith('.webp'),
+  )
 
   for (const type of allowedTypes) {
     const sourceTypeDir = path.join(sourceDir, type)
