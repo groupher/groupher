@@ -1,6 +1,6 @@
 # Command 与 Pipeline 的统一操作身份
 
-> 状态（2026-11-20）：Operation Identity 核心和 Passport 合同已分批本地提交。本文保留完整设计与未完成验收；**尚未满足第 9 节全链路签收标准**。当前状态只以 §9 的证据和缺口为准。
+> 状态（2026-11-20）：Operation Identity 与 Passport 的已验证部分已分批本地提交。本文保留完整设计与未完成验收；**尚未满足第 9 节全链路签收标准**。当前状态只以 §9 的证据和缺口为准。
 > Admin 浏览器验收按用户要求后置；Passport P4 单列，不计入本批完成。未 push。
 > 本方案不设计历史数据转换或旧协议兼容，也不授权清空已有业务数据。
 > 历史核查基线：`ff89cff5e9b3be9f4b6e8fd0667d6e2d47efbfba`；§3 仅描述该基线断点。
@@ -137,7 +137,7 @@ change(fn article, _operation_ref ->
 end)
 ```
 
-示例表达拟议接口，不是现成业务 helper 的调用说明。第二参数为已校验、规范化的 UUID
+示例说明阶段签名，不是现成业务 helper 的调用说明。第二参数为已校验、规范化的 UUID
 字符串；不新增单字段 Execution struct，不复制 actor、params、Receipt 或连接。
 业务参数仍通过现有函数参数和闭包传递。StageContext 只标识阶段；不增加供业务使用的
 `current_operation()` 隐式取值 API。
@@ -186,7 +186,8 @@ AssetWorkflowStep 已有数据库生成且读回的字段。不从字符串 work
 
 后台入口按下面三类处理。现有 `{:workflow, ...}` 文本不是 owner；相同字符串的重试和
 新的业务操作必须分清。表中“目标”是待实施合同，不能当作已有字段或调用链已完成。
-本表只定义身份来源；各事件的键、payload 和恢复范围集中见第 5.3 节。
+本表的“当前来源与缺口”记录改造前基线，目标列定义本次必须交付的来源规则，
+不表示这些缺口仍全部存在。本表只定义身份来源；各事件的键、payload 和恢复范围集中见第 5.3 节。
 
 | 分类 / 入口                                                | 当前来源与缺口                                                                           | operation_ref 的目标 owner / 传递                                                                               |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -395,6 +396,9 @@ active -> deleted -----------------------> provider delete / retry
 
 投递侧必须重新核对权威资产存在、status == deleted、deleted_at 非空，且 event 中冻结的
 public_ref/storage/storage_key 与当前目标一致；恢复侧通过检查不能替代消费侧检查。
+冻结的 asset_id/id、public_ref、storage、storage_key 都必须显式存在，再比较其值。
+public_ref 可以显式为 nil；缺失该字段不能被 Map 读取的 nil 值伪装成完整身份，
+消费端不能据当前资产补齐字段或把它写为成功。
 无效状态、缺失资产行或目标不符返回明确的不可重试领域错误，不发删除请求、不标 done，
 也不伪装成 enqueue_disabled/skipped 或 provider 已删除。具体稳定错误码在本节事件
 清单实施时点名。只有 provider 明确确认对象已不存在，才按删除目标已达成处理为幂等成功。
@@ -468,7 +472,7 @@ publish B (O3 / R3) -> K3 -> new intent; K3 != K1
 retry last publish -> same O3 / R3 -> same K3; no extra intent
 ```
 
-首次发布通知必须从可重建投影中拆出，拟定独立 event 为
+首次发布通知从可重建投影中拆出，独立 event 为
 `article.first_published_notification`，owner 仍为 Articles Effects，复用现有 Outbox/Job
 设施增加对应消费分支，不新增通知平台。WorkingCopy/DocTree 发布入口在领域持久的首次
 发布事实成立时，于同一发布事务登记该意图；不能仅因 Public 行被删除后重建就再次认定
@@ -615,7 +619,7 @@ fan-out 不承担这个保证。父 consumer 在子登记提交后、父 complet
 
 ### 5.7 一个重置事务，两个有实际用途的调用来源
 
-人工入口拟为 `CMS.retry_outbox_event(event_id, expected_failure_generation, actor, reason)`。
+人工入口为 `CMS.retry_outbox_event(event_id, expected_failure_generation, actor, reason)`。
 actor 来自既有认证边界，reason 必填；通过 `CMS.Passport.system_root?/1` 薄委托读取
 `CMS.Passport.Store.system_root?(actor.id)`，只有 `{:ok, true}` 放行。false、缺失、读取错误
 均拒绝，每次调用重新授权，不信任 User.role、cur_passport 或客户端布尔值。
@@ -723,7 +727,7 @@ old request expecting 1 -> stale; cannot reset gen 2
    人工 retry O 来自 direct Runner；自动恢复使用领域 Command/持久 step 的 O，不嵌套
    顶层 Runner、不改原意图 O。字段与唯一约束集中见第 7 节。
 
-Outbox 持有 `CMS.Outbox.Retry`（拟 `cms/outbox/retry.ex`），该表同时是成功重试凭据和
+Outbox 持有 `CMS.Outbox.Retry`（`cms/outbox/retry.ex`），该表同时是成功重试凭据和
 审计，不伪造 Community Activity。user 记录真实 actor/reason，owner 记录固定
 owner_ref/reason_code；同代次唯一约束跨两类生效，记录不覆盖。失败快照不随 reset 丢失，
 不保存完整 payload、provider 原始响应或凭据。不增加通用审计平台或管理产品页面。
@@ -784,7 +788,7 @@ false 才执行不变量检查。当前 test、seed_prod 就属于跳过环境�
 
 交付一个 Outbox owner 的有界定期检查（复用现有 Oban 运行设施），检查到期且超过
 宽限期的 waiting/retrying 及过期 running。宽限期使用明确配置
-`outbox_schedule_stale_after_seconds`，拟定默认 300 秒；按现有 timeout 规则校验配置。
+`outbox_schedule_stale_after_seconds`，默认 300 秒；按现有 timeout 规则校验配置。
 这比现有 Lifeline 的 180 秒救援窗口长，但不证明无竞争；实际 job/租约核查仍然必要。
 检查以 available_at/租约截止时间为起点，并核对实际 Oban 状态及 event_id，避免把队列
 拥堵或正在从 executing 转到 retryable 的短窗口误判为缺失。
@@ -862,7 +866,7 @@ telemetry 报告；锁下复查、重入队和 Oban job 写入处于同一事务
 | CMS 身份与 Outbox  | `cms/command.ex`、`cms/command_pipeline_adapter.ex`、`cms/command/receipt.ex`、`cms/command/receipt/{runner,store}.ex`、`cms/model/command_receipt.ex`、`cms/outbox.ex`、`cms/outbox/event.ex`（均在 `lib/groupher_server/`）                                                                                               |
 | 领域写与身份 owner | 第 3 节 Command；`cms/articles/working_copy/{history,publisher}.ex`、`cms/comments/{solution,states}.ex`、`cms/tickets/persist.ex`、`cms/press/commands/update_config.ex`、Admin Effects、资产 Workflow、`cms/review/{requests,effects}.ex`、`cms/model/artiment_review.ex`、Mention Effects、Tags Maintenance 与 seed/test |
 | 发布与独立通知     | `cms/doc_tree/publish/{queue_release,release}.ex`、`cms/articles/effects/{outbox,publish}.ex`、`cms/outbox/workflow/article.ex` 及第 6.1 节直接发布调用方                                                                                                                                                                   |
-| 恢复与调度         | CMS facade、`cms/passport.ex`、拟 `cms/outbox/retry.ex`、`cms/assets/{effects,provider_deletion,provider_reconciliation,persist}.ex`、`cms/assets/commands/restore.ex`、`cms/outbox/workflow/asset.ex`、调度检查 job、必要 migration                                                                                        |
+| 恢复与调度         | CMS facade、`cms/passport.ex`、`cms/outbox/retry.ex`、`cms/assets/{effects,provider_deletion,provider_reconciliation,persist}.ex`、`cms/assets/commands/restore.ex`、`cms/outbox/workflow/asset.ex`、调度检查 job、必要 migration                                                                                        |
 | 对象身份与执行验收 | `cms/assets/commands/register.ex`、`cms/assets/upload.ex`、生成资源登记/复用入口及存储身份 migration；`backend/assets-hub/src/worker.test.ts`（从仓库根目录定位）                                                                                                                                                           |
 
 除首行外的 cms 路径均相对 `lib/groupher_server/`。保留确有业务用途的
@@ -955,6 +959,16 @@ storage/storage_key，新守卫会按身份不完整拒绝并产生 dead/告警�
 Queue.consume_release 失败：公开内容/树、Release 成员及封存、public_release_id、queue、
 Receipt 和本次所有意图/唤醒均不留下半提交；成功后同 release 重放不重复登记。
 
+当前 `release_effects_test.exs` 的发布/移除矩阵对 Release 封存、publication/removal
+意图插入、Oban 唤醒、Queue 消费和 Receipt finalize 分别注入失败，并另测首次通知的
+意图/唤醒失败。触发器在故障点读取真实整数 Release.id、sealed/member、Public head、
+Receipt O、意图/唤醒及 Queue 的事务内事实，Repo telemetry 将该证据交给断言；
+失败后比较 34 个相关 schema 的完整行。没有用额外的外层手工 rollback 代替 Command
+本身的事务。Oban SQL 失败会断开 Sandbox 连接的三项用例使用已提交隔离 fixture，避免
+测试预置数据被 Sandbox 一起回滚后形成假证据；结束时按领域销毁 Community，清理本例
+job/event/Receipt，保留模型要求的账号和销毁留痕。成功用例核对 Release 成员、选中
+snapshot/Binding、O 和 job，以及 Receipt/同 owner 登记重放不新增数据。
+
 每个失败注入都检查数据库中的业务行、ArticleEvent、Activity、Outbox、Receipt 数量及身份；
 单看函数返回 `{:error, ...}` 不足以证明事务回滚。拒绝审计应保留，拒绝的领域写入应不存在。
 Outbox 测试区分“入队去重”和“外部效果幂等”，不以 mock 调用次数证明外部 exactly-once。
@@ -973,7 +987,7 @@ dead 用例必须先提交 O1 的意图并将其设为 :failed/dead，再以 O2 
 同版本同 key 的业务 actor/收件人等投影字段改变必须失败。Review 的 O 缺失由创建与重入队入口
 拒绝，并检查最终表约束为 NOT NULL，不增加历史 nil fallback。
 
-拟新增 `cms/outbox_recovery_test.exs` 覆盖以下完整边界：
+`cms/outbox_recovery_test.exs` 及其领域配套测试须覆盖以下完整边界：
 
 - 逐项断言第 5.7 节恢复结果表的 tagged tuple/outcome；skipped 使用 ok map，不出现裸
   `{:skipped, ...}` 第三分支；真实失败使用 error，框架回调保留框架要求的返回形状。
@@ -1113,7 +1127,8 @@ SQL 非零结果与发布步骤的阻断，确认原数据不变；零重复/空
 ```bash
 # cwd: backend/api；先完成 schema / 测试实现
 MIX_ENV=test mix ecto.migrate
-MIX_ENV=test mix test test/groupher_server/cms/doc_tree/release_effects_test.exs
+MIX_ENV=test mix test test/groupher_server/cms/doc_tree/release_effects_test.exs \
+  test/groupher_server/cms/assets/provider_failure_test.exs
 MIX_ENV=test mix test \
   test/groupher_server/cms/command/pipeline_compile_test.exs \
   test/groupher_server/cms/command/pipeline_runner_test.exs \
@@ -1127,7 +1142,7 @@ MIX_ENV=test mix test \
   test/groupher_server/cms/assets/replace_use_history_test.exs \
   test/groupher_server/cms/outbox_test.exs
 
-# 拟新增，必须随本次重构交付
+# 去重和恢复回归
 MIX_ENV=test mix test test/groupher_server/cms/outbox_dedupe_test.exs \
   test/groupher_server/cms/outbox_recovery_test.exs
 
@@ -1159,8 +1174,8 @@ CI 落点沿用 `.github/workflows/backend-tests.yml` 的编译、pipeline inven
 `backend/api/scripts/fresh_db_migrations.sh` 和后端测试步骤。核对新增/重写用例包含在既有测试范围中，
 同步更新生成清单；不新增运行 Dev Hub 或写入共享开发数据库的 CI job。
 Assets Hub 的执行用例纳入既有 `.github/workflows/deploy-assets-hub.yml` 的 validate job，
-增加上述 test:worker 命令；当前该 job 尚未运行这组测试，不能把 type-check/build/dry-run
-当作队列执行验收。使用隔离 Workers/R2 测试环境，不连接真实 bucket，也不新增部署流程。
+已增加上述 test:worker 命令；本地配置与测试通过不等同于远端 CI 已执行通过，
+type-check/build/dry-run 也不能替代队列执行验收。使用隔离 Workers/R2 测试环境，不连接真实 bucket，也不新增部署流程。
 
 ### 8.3 Hub 中的真实闭环
 
@@ -1195,6 +1210,8 @@ UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口�
 | `c7b520143` | 事件 owner 投影清单、每次操作的缓存/反应键、手工恢复调用图、新库 migration smoke 与 Worker CI         |
 | `5643b0c7b` | 版本/worker/资产目标与 live lease fence、纯投影 superseded 证明、root 有界诊断与并发恢复 |
 | `e4b66923b` | provider 暂时/永久/未知/配置错误分类、锁内自动恢复资格与并发凭据复用、Review 请求有效性守卫 |
+| `fa019b54e` | visibility/review fan-out、完整 CDN 去重范围、Outbox 未知状态拒绝及模块边界；别名风格与 context 扫描清零 |
+| `74490c6e5` | 28 处 wrapped-inline-do 转换，15 文件 AST 不变；完整 style 门禁闭合 |
 
 后续事件 owner 与缓存键收口批次由 Git 记录定位；不能仅因本表列有核心提交，就认为全部目标语义都已交付。并行 Co-author、Trash UI 及其他工作树改动不属于本批。
 
@@ -1210,16 +1227,19 @@ UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口�
 | Comment 回归              | 隔离快照 54 passed                                                                                                                                                                                                                                                                      |
 | 发布/fanout/version 回归  | 隔离快照 21 passed，包含 B→C→B、首次通知冻结、Public 重建、done/dead 混合子事件与登记后中断                                                                                                                                                                                             |
 | 最新 owner/缓存键合并验收 | 隔离快照 115 passed，覆盖具体事件 owner 唯一性、重复操作与独立操作缓存/反应键、手工重试调用图及前述身份验收                                                                                                                                                                             |
-| 最新合并回归 | 隔离快照 **280 passed、1 skipped**；包含 Passport/Admin 后端、恢复/诊断、provider 分类、Review 守卫、visibility/review fan-out、完整 CDN 去重范围及原 Operation Identity 验收。旧 global_facts_graphql 未纳入这组回归，其合同缺口仍见 P4；该跳过为需要 TEST_ADMIN_ISOLATED=1 的真实独立连接并发邀请用例，另在空任务库显式启用后单独执行该文件，5 passed；并发不再是未验收项。 |
+| 最新合并回归 | 隔离快照 **297 passed、1 skipped**；包含 Passport/Admin 后端、恢复/诊断、provider 分类、Review 守卫、visibility/review fan-out、完整 CDN 去重范围及原 Operation Identity 验收。旧 global_facts_graphql 未纳入这组回归，其合同缺口仍见 P4；该跳过为需要 TEST_ADMIN_ISOLATED=1 的真实独立连接并发邀请用例，另在空任务库显式启用后单独执行该文件，5 passed；并发不再是未验收项。 |
+| Docs Release 故障矩阵 | `cms/doc_tree/release_effects_test.exs` 15 passed；12 个实际故障点组合、publication/removal 成功与重放、原目录回滚。纳入最新 297 项合并验收，不与重叠计数相加。 |
+| Asset 实际消费守卫 | `cms/assets/provider_failure_test.exs` 新增实际 worker 负例：active、archived、deleted_at 空、资产缺失、public_ref/storage/key 不符，以及四个冻结身份字段缺失。另先复现 nullable public_ref 缺字段被误当 nil 而写 done，再补存在性守卫；显式 nil 可合法交付，缺字段首次即 dead/5605。其余无效目标均首次即 dead/5605，无 HTTP、无 done、无成功重试凭据，原资产及意图身份不变。 |
 | Admin 旧 GraphQL fixture | 额外复核发现 1 项失败：旧测试对 pagedCommunityAdmins 传 community，当前 SDL 要求 communityRef；失败发生在 GraphQL 参数校验，尚未进入 Admin 查询。P4 的共享工作树已有相应改动，本批仅整理该文件 alias，未将 P4 hunk 带入。Admin GraphQL 不能概称全通过。 |
 | Pipeline 调用图           | 143 pipelines reached；unresolved、unreached、internal、阶段/签名违规均为 0；新增手工恢复入口回归                                                                                                                                                                                       |
+| 既有开发库只读预检 | 本轮重新核对 groupher_server_dev：旧协议 Outbox 102 行，最新 migration 20261118100000；asset.provider_delete 总量/在途量/身份字段缺失量均为 0，provider 对象身份重复组和额外行均为 0。仅执行 READ ONLY 查询；不授权清理 102 行或应用迁移。 |
 | 新库迁移 smoke            | 通过完整 migration 链，至 `20261119110000_add_cms_outbox_worker_route`；数据库名探针使用 `--no-compile` 避免编译日志污染安全校验                                                                                                                                                        |
 | 生产编译                  | 隔离快照 `MIX_ENV=prod mix compile --warnings-as-errors` 通过，本次恢复/诊断批次也已复验                                                                                                                                                                                                |
 | Gate 合同/前端            | 合同校验器 5 passed、生成一致性通过；useGate 3 passed；contracts TypeScript 通过；SDL 导出和 GraphQL codegen 通过                                                                                                                                                                       |
 | Assets Hub                | Worker 17 passed；真实 HTTP handler 入队与 queue consumer 删除分层验证；validate CI 纳入 `test:worker`                                                                                                                                                                                  |
 | 客户端 command identity   | scanner 4 tests passed，扫描 23 个 Persist 文件通过；仅证明客户端 command_id 规则                                                                                                                                                                                                       |
 | 全量后端共享工作树        | **失败**：2301/2783 passed、482 failed、8 skipped、1 excluded。失败含 throttle、旧授权 fixture、GraphQL 合同及真实 Outbox 缺口；后者已定向修复，但没有再次取得全量通过，不能笼统归为无关失败                                                                                            |
-| style/context/docs | 本批隔离交付快照 **style 0、context 0**；通过既有规则修复 alias/Facade/Workflow 边界，没有降低门禁。共享工作树文档覆盖检查通过；隔离快照仍有 Auth JSDoc 与既有 Co-author 文档链接缺失（4 项）。共享工作树还含并行工作，不能据此宣称全仓 docs:check 通过。 |
+| style/context/docs | 本批隔离交付快照的完整 **mix lint.style、mix lint.context 均通过**；style 包含别名及全库 wrapped-inline-do 检查，context 包含单测和严格扫描。另修 28 处跨行 do，15 个文件逐一确认 AST 不变，没有降低门禁。共享工作树文档覆盖检查通过；隔离快照仍有 Auth JSDoc 与既有 Co-author 文档链接缺失（4 项）。共享工作树还含并行工作，不能据此宣称全仓 docs:check 通过。 |
 | Core/Dash 全量类型检查    | **未通过**：共享工作树还有 Docs 翻译、Emotion、Trash schema 与 content publisher 类型错误；useGate 定向通过不代表全 Core 通过                                                                                                                                                           |
 
 共享工作树 Git hooks 的全局 backend-context 检查仍未通过；隔离交付快照的既有 style/context 检查均已清零。本批按明确文件/局部 hunk 暂存、审查 cached diff、运行 commitlint 与隔离回归后使用 `LEFTHOOK=0` 提交；这是门禁例外，不能记为完整 hooks 通过。提交前后均保留其他任务的改动。
@@ -1228,11 +1248,12 @@ UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口�
 
 | 项目                              | 当前状态与下一步                                                                                                                                                                                                                                                                                                                                       |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 具体事件入口 API | **待收口**：事件 owner/worker/version/业务投影清单已有校验，但 `Articles.Effects.enqueue(event, resource_type, resource_id, O, data)` 仍接受业务调用方提供 event/resource 字段。须按 §5.3 收口到固定动作入口并迁移实际调用方；清单和 Pipeline 图通过不证明这项已完成。 |
 | 人工恢复领域守卫 | **部分闭合**：版本、固定路由、payload、资产冻结目标/Application upload、自动 run/step/O/live lease 与并发凭据已验证；Review 原请求身份、状态/过期/替代/目标与 completed 确认已交付。其余 owner 仍按消费语义逐项核对，root 不代替领域许可。 |
 | 纯投影 superseded 诊断            | **已交付本节合同**：恢复与 root 诊断复用同一持久事实判定，旧行不重置、不排 job、不写成功凭据，当前 pending 集合排除有完整替代证明的旧行；普通 History、Docs sealed Release 祖先链和必要负例已通过。首次通知仍保留，替代行 failed 仍进入 pending；不是全链路总签收。                                                                                    |
 | Provider 错误分类 | **已交付本节合同**：5603 仅限点名的暂时故障；HTTP 拒绝 5608、未知 5609、配置 5610 默认不自动重排。真实 HTTP consumer 与锁内恢复负例通过；并发凭据复用不受胜者清空失败码影响。 |
-| §8.1 全部故障注入矩阵             | **待逐项闭合**。人工/自动竞争、lease/版本/目标/替代证明本批已覆盖；Release/Queue/Oban 各失败点、文章 publication/removal 及全部外部删除交错仍须逐项核实，不能仅凭现有目录发布回滚测试判定全部交付。                                                                                                                                                    |
-| 门禁与全量测试 | 本批 style/context 已清零，文档覆盖在共享工作树通过；隔离快照的 Auth/Co-author 文档缺失、共享树并行模块 findings 及全量套件失败仍须按归属核对修复。280 项合并回归不能代替全量签收；不扩大排除或降低门禁。 |
+| §8.1 全部故障注入矩阵 | **部分闭合**：Docs publication/removal 的 Release/Queue/意图/Oban/Receipt 失败点、实际 Asset worker 永久目标守卫本批已补齐。仍须验证全部外部删除交错、各登记入口、DocTree 发布回切等剩余行为；15 项 Release 测试不代替整节验收。 |
+| 门禁与全量测试 | 本批 style/context 已清零，文档覆盖在共享工作树通过；隔离快照的 Auth/Co-author 文档缺失、共享树并行模块 findings 及全量套件失败仍须按归属核对修复。297 项合并回归不能代替全量签收；不扩大排除或降低门禁。 |
 | Hub Article / Assets 真实业务闭环 | **未验收**。本轮普通 local-debug 可登录并读取 Posts 列表；Assets 因缺管理权限拒绝，不能提升该账号或当作 Assets 实现故障。Community 曾在后端重编译时 SSR 超时；需要稳定进程、相应权限和实际写入后的 Receipt/History/Outbox 对照                                                                                                                         |
 | Admin 浏览器 UI                   | **用户明确后置**。Admin 后端定向通过；旧 GraphQL fixture 仍有 community/communityRef 合同缺口，浏览器流程没有签收；不继续扩大到 Admin UI 改造                                                                                                                                                                                                                                                    |
 | Passport P4                       | **单独后续阶段**：旧 fixture/旧 Passport 读取迁移与广泛消费者扫尾，见 [Passport 迁移](../migrations/passport-permissions-refactor.md)。不并入本批已完成项                                                                                                                                                                                              |

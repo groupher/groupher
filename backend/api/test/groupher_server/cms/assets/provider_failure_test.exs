@@ -21,9 +21,16 @@ defmodule GroupherServer.Test.CMS.Assets.ProviderFailureTest do
 
       status = Application.fetch_env!(:groupher_server, :provider_failure_test_status)
 
+      response =
+        if status in 200..299 do
+          ~s({"ok":true,"result":{"enqueued":true}})
+        else
+          ~s({"accepted":false})
+        end
+
       conn
       |> put_resp_content_type("application/json")
-      |> send_resp(status, ~s({"accepted":false}))
+      |> send_resp(status, response)
     end
   end
 
@@ -127,7 +134,93 @@ defmodule GroupherServer.Test.CMS.Assets.ProviderFailureTest do
     end
   end
 
-  defp intent(community) do
+  test "the real worker rejects each invalid deletion target on its first attempt without HTTP",
+       ctx do
+    with_endpoint(fn ->
+      Application.put_env(:groupher_server, :provider_failure_test_status, 200)
+
+      mutations = [
+        fn asset -> Repo.update!(Ecto.Changeset.change(asset, status: :active)) end,
+        fn asset -> Repo.update!(Ecto.Changeset.change(asset, status: :archived)) end,
+        fn asset -> Repo.update!(Ecto.Changeset.change(asset, deleted_at: nil)) end,
+        fn asset ->
+          Repo.update!(Ecto.Changeset.change(asset, public_ref: "other-" <> asset.public_ref))
+        end,
+        fn asset -> Repo.update!(Ecto.Changeset.change(asset, storage: "other-provider")) end,
+        fn asset ->
+          Repo.update!(Ecto.Changeset.change(asset, storage_key: "other/" <> asset.storage_key))
+        end,
+        fn asset -> Repo.delete!(asset) end
+      ]
+
+      for mutate <- mutations do
+        {asset, event} = intent(ctx.community)
+        mutate.(asset)
+        canonical = Repo.get(CommunityAsset, asset.id)
+        assert_permanent_guard(event)
+        assert Repo.get(CommunityAsset, asset.id) == canonical
+      end
+
+      refute_received {:provider_request, _payload}
+    end)
+  end
+
+  test "malformed frozen provider identity is never filled from the current asset", ctx do
+    with_endpoint(fn ->
+      Application.put_env(:groupher_server, :provider_failure_test_status, 200)
+
+      for field <- ["asset_id", "public_ref", "storage", "storage_key"] do
+        {asset, event} = intent(ctx.community)
+        malformed = Repo.update!(Event.changeset(event, %{data: Map.delete(event.data, field)}))
+        assert_permanent_guard(malformed)
+        assert Repo.get!(CommunityAsset, asset.id) == asset
+      end
+
+      refute_received {:provider_request, _payload}
+    end)
+  end
+
+  test "an explicit nullable public ref differs from a missing frozen field", ctx do
+    with_endpoint(fn ->
+      Application.put_env(:groupher_server, :provider_failure_test_status, 200)
+      {_asset, valid} = intent(ctx.community, public_ref: nil)
+      assert Map.has_key?(valid.data, "public_ref")
+      assert valid.data["public_ref"] == nil
+      assert {:ok, :pass} = perform(valid)
+      assert_receive {:provider_request, payload}
+      assert Map.has_key?(payload, "assetPublicRef")
+      assert payload["assetPublicRef"] == nil
+      assert Repo.get!(Event, valid.id).status == :done
+
+      {asset, event} = intent(ctx.community, public_ref: nil)
+
+      malformed =
+        Repo.update!(Event.changeset(event, %{data: Map.delete(event.data, "public_ref")}))
+
+      assert_permanent_guard(malformed)
+      assert Repo.get!(CommunityAsset, asset.id) == asset
+      refute_received {:provider_request, _payload}
+    end)
+  end
+
+  defp assert_permanent_guard(event) do
+    retries = Repo.all(Retry)
+    assert {:ok, :pass} = perform(event)
+    failed = Repo.get!(Event, event.id)
+    assert failed.status == :failed
+    assert failed.last_error_code == "5605"
+    assert failed.failure_generation == 1
+    assert failed.attempts == 1
+    assert failed.completed_at == nil
+
+    for key <- [:id, :operation_ref, :dedupe_key, :data] do
+      assert Map.fetch!(failed, key) == Map.fetch!(event, key)
+    end
+
+    assert Repo.all(Retry) == retries
+  end
+
+  defp intent(community, opts \\ []) do
     ref = Ecto.UUID.generate()
 
     asset =
@@ -138,7 +231,7 @@ defmodule GroupherServer.Test.CMS.Assets.ProviderFailureTest do
           size_bytes: 1,
           storage: "r2",
           storage_key: "provider-errors/#{ref}",
-          public_ref: "asset_#{ref}",
+          public_ref: Keyword.get(opts, :public_ref, "asset_#{ref}"),
           status: :deleted,
           deleted_at: DateTime.utc_now(:second)
         })

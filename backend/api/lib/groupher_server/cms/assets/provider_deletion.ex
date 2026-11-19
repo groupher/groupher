@@ -86,6 +86,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
 
   defp target_matches?(event, target, id_field) do
     event.worker == "GroupherServer.Jobs.CMSOutboxAsset" and
+      Enum.all?([id_field, "public_ref", "storage", "storage_key"], &Map.has_key?(event.data, &1)) and
       event.data[id_field] == target.id and event.data["public_ref"] == target.public_ref and
       event.data["storage"] == target.storage and event.data["storage_key"] == target.storage_key and
       event.dedupe_key ==
