@@ -98,24 +98,6 @@ defmodule GroupherServer.CMS.Comments.Effects do
     })
   end
 
-  @doc "Projects the immutable business fields compared when a Comment intent is repeated."
-  def payload_projection(event, data) do
-    fields =
-      case event do
-        "comment.created" -> ["article_id", "actor_id", "community_id"]
-        "comment.replied" -> ["article_id", "actor_id", "community_id"]
-        "comment.updated" -> ["article_id", "actor_id", "community_id", "body_version"]
-        "comment.deleted" -> ["article_id", "comment_id"]
-      end
-
-    Enum.reduce_while(fields, {:ok, %{}}, fn field, {:ok, projection} ->
-      case Map.fetch(data, field) do
-        {:ok, value} -> {:cont, {:ok, Map.put(projection, field, value)}}
-        :error -> {:halt, {:error, {:outbox_payload_field_missing, field}}}
-      end
-    end)
-  end
-
   defp enqueue(event, resource_type, resource_id, dimensions, operation_ref, data) do
     CMS.Outbox.send(%{
       event: event,
@@ -148,6 +130,42 @@ defmodule GroupherServer.CMS.Comments.Effects do
     case Repo.get(User, id) do
       %User{} = user -> {:ok, user}
       nil -> {:error, :comment_effect_actor_not_found}
+    end
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "comment.changed" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "article_id",
+          "community_id",
+          "community",
+          "inner_id",
+          "thread",
+          "comments_revision",
+          "count_changed"
+        ])
+
+      "comment.created" ->
+        CMS.Outbox.Event.project_fields(data, ["article_id", "actor_id", "community_id"])
+
+      "comment.deleted" ->
+        CMS.Outbox.Event.project_fields(data, ["article_id", "comment_id"])
+
+      "comment.replied" ->
+        CMS.Outbox.Event.project_fields(data, ["article_id", "actor_id", "community_id"])
+
+      "comment.updated" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "article_id",
+          "actor_id",
+          "community_id",
+          "body_version"
+        ])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
     end
   end
 end

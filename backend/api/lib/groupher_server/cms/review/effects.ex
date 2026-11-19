@@ -24,4 +24,12 @@ defmodule GroupherServer.CMS.Review.Effects do
       data: %{"request_id" => request_id}
     })
   end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "cms.artiment_review" -> CMS.Outbox.Event.project_fields(data, ["request_id"])
+      _ -> {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

@@ -31,16 +31,7 @@ defmodule GroupherServer.CMS.Dashboard.Effects do
   @spec enqueue_presentation_changed(Community.t(), Ecto.UUID.t()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
   def enqueue_presentation_changed(%Community{} = community, operation_ref) do
-    %{
-      operation_ref: operation_ref,
-      dedupe_key: DedupeKey.encode([community.id]),
-      event: "community.presentation_changed",
-      worker: GroupherServer.Jobs.CMSOutboxCommunity,
-      resource_type: "community",
-      resource_id: community.id,
-      data: %{community: community.slug, community_id: community.id}
-    }
-    |> CMS.Outbox.send()
+    CMS.Communities.Effects.enqueue_presentation_changed(community, operation_ref)
   end
 
   @doc "Enqueues cache invalidation for the community-wide list preference."
@@ -49,7 +40,7 @@ defmodule GroupherServer.CMS.Dashboard.Effects do
   def enqueue_pagi_mode_changed(%Community{} = community, operation_ref) do
     %{
       operation_ref: operation_ref,
-      dedupe_key: DedupeKey.encode([community.id]),
+      dedupe_key: DedupeKey.encode([community.id, operation_ref]),
       event: "community.pagi_mode_changed",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
@@ -60,5 +51,16 @@ defmodule GroupherServer.CMS.Dashboard.Effects do
       }
     }
     |> CMS.Outbox.send()
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "community.pagi_mode_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["community", "community_id"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
   end
 end

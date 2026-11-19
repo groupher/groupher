@@ -77,8 +77,9 @@ with {:ok, article} <- Persist.publish(...),
          worker: GroupherServer.Jobs.CMSOutboxArticle,
          resource_type: "article",
          resource_id: article.id,
-         identity: {:command, command_id},
-         effect_key: "publish",
+         operation_ref: operation_ref,
+         dedupe_key:
+           GroupherServer.CMS.Outbox.DedupeKey.encode([:publish, article.id, snapshot.id]),
          data: %{
            binding_id: binding.id,
            community: community.slug,
@@ -90,7 +91,9 @@ with {:ok, article} <- Persist.publish(...),
 end
 ```
 
-禁止在事务提交后再补写 Event：
+`operation_ref` 记录首次登记该效果的来源操作；`dedupe_key` 由具体 Effects 按固定顺序的
+业务维度生成。同一业务效果跨操作命中时复用首次 Event，不覆盖其来源。`send/1` 要求调用方
+已处于领域事务中，并在同一事务内写 Event 与 Oban wakeup。禁止在事务提交后再补写 Event：
 
 ```text
 domain COMMIT
@@ -195,7 +198,7 @@ done replay
 
 - Command Receipt 防止同一用户命令重复写入，并恢复 canonical result；
 - Outbox Event 保证已提交命令产生的外部副作用最终执行；
-- 两者可共享 `command_id/resource_type/resource_id`，但不能互相替代。
+- Command 与 Outbox 使用同一服务端 `operation_ref` 记录操作来源；Outbox 的业务去重键独立于该 UUID。
 
 ## 8. 测试合同
 

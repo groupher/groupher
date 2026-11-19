@@ -171,4 +171,14 @@ defmodule GroupherServer.Jobs do
       Jobs.create_community_new(%{application_ref: "application_ref"}, [queue: :community_application])
   """
   defdelegate create_community_new(arg1, arg2), to: GroupherServer.Jobs.CreateCommunity, as: :new
+
+  @doc """
+  Builds a wakeup only for a supported Outbox recovery worker.
+
+  ## Examples
+
+      Jobs.outbox_new(GroupherServer.Jobs.CMSOutboxArticle, %{event_id: Ecto.UUID.generate()})
+      #=> {:ok, %Ecto.Changeset{}}
+  """
+  defdelegate outbox_new(worker, args), to: GroupherServer.Jobs.Workflow
 end

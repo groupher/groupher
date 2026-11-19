@@ -193,4 +193,67 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
 
   @doc "Records one Article activity in the caller-owned transaction."
   def activity(resource, event, opts), do: Activity.log(resource, event, opts)
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "article.cdn_purge" ->
+        CMS.Outbox.Event.project_fields(data, ["source_event", "community_id", "snapshot_id"])
+
+      "article.first_published_notification" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "article_id",
+          "community_id",
+          "community_slug",
+          "thread",
+          "title",
+          "digest",
+          "author_id",
+          "author_name",
+          "published_by_id",
+          "notify_user_ids"
+        ])
+
+      "article.projections" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "first_publish?",
+          "community_id",
+          "inner_id",
+          "published_by_id",
+          "snapshot_id"
+        ])
+
+      "article.published" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "community",
+          "community_id",
+          "thread",
+          "inner_id",
+          "article_id",
+          "snapshot_id"
+        ])
+
+      "article.review_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["community_id", "inner_id"])
+
+      "article.search_sync" ->
+        CMS.Outbox.Event.project_fields(data, ["source_event", "community_id", "snapshot_id"])
+
+      "article.updated" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "community",
+          "community_id",
+          "thread",
+          "inner_id",
+          "article_id",
+          "snapshot_id"
+        ])
+
+      "article.visibility_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["community_id", "inner_id"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

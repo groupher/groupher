@@ -51,8 +51,9 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
     end
   end
 
-  def requeue(_event_id, _expected_generation, _operation_ref, _worker, _initiator),
-    do: {:error, :invalid_outbox_recovery_request}
+  def requeue(_event_id, _expected_generation, _operation_ref, _worker, _initiator) do
+    {:error, :invalid_outbox_recovery_request}
+  end
 
   defp lock_event(event_id) do
     case Repo.one(from(event in Event, where: event.id == ^event_id, lock: "FOR UPDATE")) do
@@ -62,8 +63,9 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
   end
 
   defp validate_generation(%Event{failure_generation: generation}, expected)
-       when generation != expected,
-       do: {:error, :outbox_recovery_stale_generation}
+       when generation != expected do
+    {:error, :outbox_recovery_stale_generation}
+  end
 
   defp validate_generation(%Event{} = event, _expected), do: {:ok, event}
 
@@ -128,9 +130,8 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
   end
 
   defp insert_job(worker, event_id) do
-    case worker.new(%{event_id: event_id}) |> Oban.insert() do
-      {:ok, job} -> {:ok, job}
-      {:error, reason} -> {:error, reason}
+    with {:ok, changeset} <- Jobs.outbox_new(worker, %{event_id: event_id}) do
+      Oban.insert(changeset)
     end
   end
 end

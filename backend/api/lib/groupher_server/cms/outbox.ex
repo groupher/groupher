@@ -23,103 +23,10 @@ defmodule GroupherServer.CMS.Outbox do
 
   @lease_seconds 120
 
-  @payload_fields %{
-    "community.analysis_provision" => ["community_id"],
-    "community.presentation_changed" => ["community", "community_id"],
-    "community.taxonomy_changed" => ["community", "community_id", "thread"],
-    "community.admin_request" => [
-      "community_ref",
-      "request_id",
-      "request_revision",
-      "request_type",
-      "request_action",
-      "event_type",
-      "recipient_id",
-      "actor"
-    ],
-    "article.co_author_request" => [
-      "article_id",
-      "request_id",
-      "request_revision",
-      "request_type",
-      "request_action",
-      "event_type",
-      "recipient_id",
-      "actor"
-    ],
-    "community.pagi_mode_changed" => ["community", "community_id"],
-    "press.cache_invalidation" => [],
-    "docs.approval_status" => [
-      "community_id",
-      "status",
-      "queue_revision",
-      "recipients"
-    ],
-    "mention.notify" => [
-      "source_endpoint_id",
-      "published_revision_identity",
-      "community_id",
-      "notify_user_ids"
-    ],
-    "comment.changed" => [
-      "article_id",
-      "community_id",
-      "community",
-      "inner_id",
-      "thread",
-      "comments_revision",
-      "count_changed"
-    ],
-    "doc_tree.changed" => ["community", "community_id"],
-    "ticket.notification" => ["source_type", "source_id"],
-    "ticket.cache_invalidation" => ["cache_tags"],
-    "asset.provider_delete" => ["asset_id", "public_ref", "storage", "storage_key"],
-    "asset.application_upload_provider_delete" => ["id", "public_ref", "storage", "storage_key"],
-    "cms.artiment_review" => ["request_id"],
-    "interaction.upvote_changed" => ["actor_id", "operation", "community_id"],
-    "interaction.collect_changed" => ["actor_id", "operation", "community_id"],
-    "interaction.emotion_changed" => ["actor_id", "operation", "emotion", "community_id"],
-    "article.published" => [
-      "community",
-      "community_id",
-      "thread",
-      "inner_id",
-      "article_id",
-      "snapshot_id"
-    ],
-    "article.updated" => [
-      "community",
-      "community_id",
-      "thread",
-      "inner_id",
-      "article_id",
-      "snapshot_id"
-    ],
-    "article.projections" => [
-      "first_publish?",
-      "community_id",
-      "inner_id",
-      "published_by_id",
-      "snapshot_id"
-    ],
-    "article.first_published_notification" => [
-      "article_id",
-      "community_id",
-      "community_slug",
-      "thread",
-      "title",
-      "digest",
-      "author_id",
-      "author_name",
-      "published_by_id",
-      "notify_user_ids"
-    ],
-    "article.visibility_changed" => ["community_id", "inner_id"],
-    "article.review_changed" => ["community_id", "inner_id"],
-    "article.search_sync" => ["source_event", "community_id", "snapshot_id"],
-    "article.cdn_purge" => ["source_event", "community_id", "snapshot_id"],
-    "article.application_cleanup" => ["upload_id", "storage", "storage_key"]
-  }
+  @doc "Retries a dead intent after current root admission in the manual recovery Command."
+  defdelegate retry_event(event_id, expected_failure_generation, actor, reason),
+    to: CMS.Outbox.ManualRetry,
+    as: :retry
 
   @type event_attrs :: %{
           required(:event) => String.t(),
@@ -546,28 +453,103 @@ defmodule GroupherServer.CMS.Outbox do
   end
 
   defp payload_projection(event, data)
-       when event in ["comment.created", "comment.replied", "comment.updated", "comment.deleted"] and
-              is_map(data) do
-    CMS.Comments.Effects.payload_projection(event, data)
+       when event in [
+              "article.cdn_purge",
+              "article.first_published_notification",
+              "article.projections",
+              "article.published",
+              "article.review_changed",
+              "article.search_sync",
+              "article.updated",
+              "article.visibility_changed"
+            ] do
+    GroupherServer.CMS.Articles.Effects.Outbox.payload_projection(event, data)
   end
 
-  defp payload_projection(event, data) when is_map(data) do
-    fields = Map.get(@payload_fields, event)
-
-    if is_list(fields) do
-      case Enum.reduce_while(fields, {:ok, %{}}, fn field, {:ok, projected} ->
-             case Map.fetch(data, field) do
-               {:ok, value} -> {:cont, {:ok, Map.put(projected, field, value)}}
-               :error -> {:halt, {:error, {:outbox_payload_field_missing, field}}}
-             end
-           end) do
-        {:ok, projection} -> {:ok, projection}
-        {:error, _reason} = error -> error
-      end
-    else
-      {:error, {:outbox_event_owner_missing, event}}
-    end
+  defp payload_projection(event, data) when event in ["mention.notify"] do
+    GroupherServer.CMS.ArtimentMentions.Effects.payload_projection(event, data)
   end
+
+  defp payload_projection(event, data)
+       when event in ["asset.application_upload_provider_delete", "asset.provider_delete"] do
+    GroupherServer.CMS.Assets.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data)
+       when event in [
+              "comment.changed",
+              "comment.created",
+              "comment.deleted",
+              "comment.replied",
+              "comment.updated"
+            ] do
+    GroupherServer.CMS.Comments.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["community.admin_request"] do
+    GroupherServer.CMS.Communities.Admins.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data)
+       when event in ["community.analysis_provision", "community.presentation_changed"] do
+    GroupherServer.CMS.Communities.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["community.taxonomy_changed"] do
+    GroupherServer.CMS.Communities.Tags.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["community.pagi_mode_changed"] do
+    GroupherServer.CMS.Dashboard.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["doc_tree.changed"] do
+    GroupherServer.CMS.DocTree.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["docs.approval_status"] do
+    GroupherServer.CMS.DocTree.Publication.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data)
+       when event in [
+              "interaction.collect_changed",
+              "interaction.emotion_changed",
+              "interaction.upvote_changed"
+            ] do
+    GroupherServer.CMS.Interactions.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["press.cache_invalidation"] do
+    GroupherServer.CMS.Press.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["cms.artiment_review"] do
+    GroupherServer.CMS.Review.Effects.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["ticket.cache_invalidation"] do
+    GroupherServer.CMS.Tickets.Effects.Cache.payload_projection(event, data)
+  end
+
+  defp payload_projection(event, data) when event in ["ticket.notification"] do
+    GroupherServer.CMS.Tickets.Effects.Notifications.payload_projection(event, data)
+  end
+
+  defp payload_projection("article.co_author_request", data) do
+    Event.project_fields(data, [
+      "article_id",
+      "request_id",
+      "request_revision",
+      "request_type",
+      "request_action",
+      "event_type",
+      "recipient_id",
+      "actor"
+    ])
+  end
+
+  defp payload_projection(event, _data), do: {:error, {:outbox_event_owner_missing, event}}
 
   defp normalize_data(%DateTime{} = value), do: DateTime.to_iso8601(value)
 

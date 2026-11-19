@@ -28,8 +28,19 @@ defmodule GroupherServer.CMS.Communities.Tags.Effects do
       resource_type: "community",
       resource_id: community.id,
       operation_ref: operation_ref,
-      dedupe_key: DedupeKey.encode([community.id, thread, effect_dimensions]),
+      dedupe_key: DedupeKey.encode([community.id, thread, effect_dimensions, operation_ref]),
       data: %{community: community.slug, community_id: community.id, thread: thread}
     })
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "community.taxonomy_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["community", "community_id", "thread", "thread"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
   end
 end

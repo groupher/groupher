@@ -151,8 +151,9 @@ GraphQL / CMS facade
 
 Claim、领域写入和 finalize 必须处于同一事务。失败时三者一起回滚；成功时一起提交。
 `CMS.Command.execute/2` 把已解析的 command context 传给 `action` callback；context 中的 `target` 是调用方声明的
-领域资源，canonical resource 仍由领域 Gate 在锁内解析。当前 context 字段固定为
-`actor/command_id/target/params`。`action` 返回
+领域资源，canonical resource 仍由领域 Gate 在锁内解析。action context 包含
+`actor/command_id/target/params/operation_ref`：前四项来自已解析命令，`operation_ref` 由
+Receipt 在 claim 事务中生成并传入，只供服务端执行链使用。`action` 返回
 `{:ok, %Confirmation{}} | {:error, reason}`；codec 只允许保存稳定的 Confirmation JSON。结果 projection
 不在 Receipt transaction 内运行，由领域 owner 在 execute 成功后调用 result builder。异常继续按 Elixir
 异常语义向外传播，不转换成领域错误。

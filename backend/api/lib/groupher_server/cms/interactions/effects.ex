@@ -48,6 +48,8 @@ defmodule GroupherServer.CMS.Interactions.Effects do
       operation_ref: operation_ref,
       dedupe_key:
         DedupeKey.encode([
+          operation_ref,
+          operation_ref,
           event,
           resource_type,
           resource_id,
@@ -67,5 +69,22 @@ defmodule GroupherServer.CMS.Interactions.Effects do
 
   def enqueue_reaction_changed(_event, _resource_type, _resource_id, _operation_ref, _data) do
     {:error, :interaction_effect_identity_required}
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "interaction.collect_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["actor_id", "operation", "community_id"])
+
+      "interaction.emotion_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["actor_id", "operation", "emotion", "community_id"])
+
+      "interaction.upvote_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["actor_id", "operation", "community_id"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
   end
 end

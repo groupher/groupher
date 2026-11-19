@@ -95,7 +95,7 @@ describe('Assets Hub readiness', () => {
 
     const response = await worker.fetch(new Request('http://assets.test/health/ready'), baseEnv)
 
-    expect(response.status).toBe(200)
+    expect(response.status, await response.clone().text()).toBe(200)
     expect(await response.json()).toMatchObject({
       status: 'ok',
       checks: [{ name: 'assets-service-auth', status: 'ok' }],
@@ -274,6 +274,56 @@ describe('Assets Hub generated-batch authorization', () => {
     vi.stubGlobal('fetch', fetcher)
     return fetcher
   }
+
+  it('enqueues through the authenticated HTTP route and deletes the isolated R2 object', async () => {
+    const key = `test-operation-identity/${crypto.randomUUID()}.png`
+    await env.ASSETS_BUCKET.put(key, 'queued-delete')
+
+    const { token, jwks } = await serviceToken(
+      ASSETS_HUB_INTERNAL_SCOPE.assetDelete,
+      'service:phoenix',
+    )
+    stubJwksFetch(jwks)
+
+    const messages: unknown[] = []
+    const runtime = {
+      ...authEnv,
+      ASSETS_BUCKET: env.ASSETS_BUCKET,
+      ASSET_DELETE_QUEUE: {
+        send: vi.fn(async (message: unknown) => messages.push(message)),
+      },
+    } as unknown as Env
+    const payload = {
+      assetId: 41,
+      assetPublicRef: `asset-${crypto.randomUUID()}`,
+      communityId: 9,
+      storage: 'r2',
+      storageKey: key,
+    }
+
+    const response = await worker.fetch(
+      new Request('http://assets.test/internal/assets/delete', {
+        body: JSON.stringify(payload),
+        headers: {
+          authorization: `Bearer ${token}`,
+          'content-type': 'application/json',
+        },
+        method: 'POST',
+      }),
+      runtime,
+    )
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ result: { enqueued: true } })
+    expect(messages).toEqual([payload])
+    expect(await env.ASSETS_BUCKET.get(key)).not.toBeNull()
+
+    await worker.queue({ messages: [{ body: messages[0] }] } as MessageBatch<unknown>, runtime)
+    expect(await env.ASSETS_BUCKET.get(key)).toBeNull()
+
+    await worker.queue({ messages: [{ body: messages[0] }] } as MessageBatch<unknown>, runtime)
+    expect(await env.ASSETS_BUCKET.get(key)).toBeNull()
+  })
 
   it('returns 401 for every internal generated-batch route without a bearer token', async () => {
     for (const route of internalRoutes) {

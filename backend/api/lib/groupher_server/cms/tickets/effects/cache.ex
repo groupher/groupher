@@ -109,4 +109,12 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
       ]
     end)
   end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "ticket.cache_invalidation" -> CMS.Outbox.Event.project_fields(data, ["cache_tags"])
+      _ -> {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

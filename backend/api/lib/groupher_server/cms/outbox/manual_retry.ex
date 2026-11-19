@@ -21,11 +21,12 @@ defmodule GroupherServer.CMS.Outbox.ManualRetry do
     run_direct(event_id, expected_failure_generation, actor, reason)
   end
 
-  def retry(_event_id, _expected_failure_generation, _actor, _reason),
-    do: {:error, :invalid_outbox_recovery_request}
+  def retry(_event_id, _expected_failure_generation, _actor, _reason) do
+    {:error, :invalid_outbox_recovery_request}
+  end
 
   @pipeline operation: :cms_outbox_manual_retry,
-            access: :internal,
+            access: :user,
             target: :event_id,
             params: [:expected_failure_generation, :reason]
   direct_pipeline run_direct(event_id, expected_failure_generation, actor, reason) do
@@ -60,9 +61,11 @@ defmodule GroupherServer.CMS.Outbox.ManualRetry do
   end
 
   defp validate_reason(reason) when is_binary(reason) do
-    if String.valid?(reason) and String.trim(reason) != "",
-      do: {:ok, :pass},
-      else: {:error, :outbox_retry_reason_required}
+    if String.valid?(reason) and String.trim(reason) != "" do
+      {:ok, :pass}
+    else
+      {:error, :outbox_retry_reason_required}
+    end
   end
 
   defp validate_reason(_reason), do: {:error, :outbox_retry_reason_required}

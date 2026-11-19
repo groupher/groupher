@@ -299,4 +299,12 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
   end
 
   defp parse_actor_id(_actor_ref), do: nil
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "ticket.notification" -> CMS.Outbox.Event.project_fields(data, ["source_type", "source_id"])
+      _ -> {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

@@ -74,4 +74,18 @@ defmodule GroupherServer.CMS.Assets.Effects do
   def deliver_application_upload_delete(data) when is_map(data) do
     CMS.Assets.Deletion.deliver_application_upload(data)
   end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "asset.application_upload_provider_delete" ->
+        CMS.Outbox.Event.project_fields(data, ["id", "public_ref", "storage", "storage_key"])
+
+      "asset.provider_delete" ->
+        CMS.Outbox.Event.project_fields(data, ["asset_id", "public_ref", "storage", "storage_key"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

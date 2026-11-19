@@ -32,4 +32,20 @@ defmodule GroupherServer.CMS.DocTree.Publication.Effects do
       }
     })
   end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "docs.approval_status" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "community_id",
+          "status",
+          "queue_revision",
+          "recipients"
+        ])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

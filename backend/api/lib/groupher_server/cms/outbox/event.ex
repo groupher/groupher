@@ -40,6 +40,16 @@ defmodule GroupherServer.CMS.Outbox.Event do
   end
 
   @doc false
+  def project_fields(data, fields) when is_map(data) and is_list(fields) do
+    Enum.reduce_while(fields, {:ok, %{}}, fn field, {:ok, projected} ->
+      case Map.fetch(data, field) do
+        {:ok, value} -> {:cont, {:ok, Map.put(projected, field, value)}}
+        :error -> {:halt, {:error, {:outbox_payload_field_missing, field}}}
+      end
+    end)
+  end
+
+  @doc false
   def changeset(event, attrs) do
     event
     |> cast(attrs, [

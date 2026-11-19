@@ -65,4 +65,20 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects do
   end
 
   def enqueue_notifications(_, _, _, _, _), do: {:error, :invalid_mention_notification_event}
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "mention.notify" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "source_endpoint_id",
+          "published_revision_identity",
+          "community_id",
+          "notify_user_ids"
+        ])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

@@ -87,4 +87,24 @@ defmodule GroupherServer.CMS.Communities.Admins.Effects do
 
   defp actor_data(:system), do: {:ok, %{type: :system}}
   defp actor_data(_), do: {:error, :invalid_admin_request_actor}
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "community.admin_request" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "community_ref",
+          "request_id",
+          "request_revision",
+          "request_type",
+          "request_action",
+          "event_type",
+          "recipient_id",
+          "actor"
+        ])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

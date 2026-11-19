@@ -44,6 +44,7 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
              CMS.Interactions,
              CMS.Press,
              CMS.Snapshot,
+             CMS.Outbox,
              CMS.Wallpaper,
              GroupherServer.AlertWall,
              GroupherServer.ReviewBot

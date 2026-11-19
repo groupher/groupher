@@ -512,7 +512,7 @@ defmodule GroupherServer.CMS do
         ) ::
           {:ok, map()} | {:error, term()}
   def retry_outbox_event(event_id, expected_failure_generation, actor, reason) do
-    GroupherServer.CMS.Outbox.ManualRetry.retry(
+    GroupherServer.CMS.Outbox.retry_event(
       event_id,
       expected_failure_generation,
       actor,

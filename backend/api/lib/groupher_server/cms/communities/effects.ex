@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Communities.Effects do
                nil,
                operation_ref
              ),
-           {:ok, _event} <- enqueue_public_cache_invalidation(community, operation_ref) do
+           {:ok, _event} <- enqueue_presentation_changed(community, operation_ref) do
         {:ok, :pass}
       end
     end
@@ -57,14 +57,15 @@ defmodule GroupherServer.CMS.Communities.Effects do
 
   def lifecycle_changed(_before, _after, _operation_ref), do: {:ok, :pass}
 
-  defp enqueue_public_cache_invalidation(%Community{} = community, operation_ref) do
+  @doc "Records presentation invalidation once per admitted change."
+  def enqueue_presentation_changed(%Community{} = community, operation_ref) do
     CMS.Outbox.send(%{
       event: "community.presentation_changed",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
       resource_id: community.id,
       operation_ref: operation_ref,
-      dedupe_key: DedupeKey.encode([community.id]),
+      dedupe_key: DedupeKey.encode([community.id, operation_ref]),
       data: %{community: community.slug, community_id: community.id}
     })
   end
@@ -73,6 +74,20 @@ defmodule GroupherServer.CMS.Communities.Effects do
     case Repo.get(Community, community_id) do
       %Community{} = community -> {:ok, community}
       nil -> {:error, CMS.Communities.ErrorCat.lifecycle_not_found()}
+    end
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "community.analysis_provision" ->
+        CMS.Outbox.Event.project_fields(data, ["community_id"])
+
+      "community.presentation_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["community", "community_id"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
     end
   end
 end

@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Press.Effects do
       resource_id: community_id,
       operation_ref: operation_ref,
       contract_version: 1,
-      dedupe_key: DedupeKey.encode([community_id, :config]),
+      dedupe_key: DedupeKey.encode([community_id, operation_ref]),
       data: %{}
     })
   end
@@ -37,6 +37,14 @@ defmodule GroupherServer.CMS.Press.Effects do
       enqueue_invalidation(community, operation_ref)
     else
       Repo.transact_result(fn -> enqueue_invalidation(community, operation_ref) end)
+    end
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "press.cache_invalidation" -> CMS.Outbox.Event.project_fields(data, [])
+      _ -> {:error, {:outbox_event_owner_missing, event}}
     end
   end
 end
