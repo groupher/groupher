@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreSnapshot do
 
     present(fn confirmation ->
       with {:ok, _} <- CMS.Gate.access_check(actor, :docs_history_read, community),
-           {:ok, :pass} <- QueueAccess.authorize(community, article_id, actor) do
+           {:ok, :pass} <- QueueAccess.authorize_after_commit(community, article_id, actor) do
         {:ok,
          %{
            working_copy_id: confirmation.data["working_copy_id"],

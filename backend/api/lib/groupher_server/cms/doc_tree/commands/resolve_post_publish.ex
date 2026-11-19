@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.ResolvePostPublish do
          actor
        ) do
     with {:ok, _} <- CMS.Gate.access_check(actor, :manage_docs, community),
-         {:ok, :pass} <- QueueAccess.authorize(community, article_id, actor) do
+         {:ok, :pass} <- QueueAccess.authorize_after_commit(community, article_id, actor) do
       {:ok, %{working_copy_revision: revision}}
     end
   end

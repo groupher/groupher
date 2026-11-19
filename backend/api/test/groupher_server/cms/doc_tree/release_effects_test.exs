@@ -647,4 +647,241 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
       assert proof["queue_changes"] > 0
     end
   end
+
+  test "SaveQueue returns after commit and replays a stale revision without another save" do
+    f = prepare_release(:publication)
+    q = queue_copy(f)
+    command_id = Ecto.UUID.generate()
+    attrs = %{title: "Queued presentation"}
+
+    args = [
+      f.community,
+      f.queue.queue_revision,
+      f.article.id,
+      q.revision,
+      attrs,
+      f.actor,
+      command_id
+    ]
+
+    assert {:ok, result} = apply(CMS.DocTree.Commands.SaveQueue, :execute, args)
+    assert Repo.get!(CMS.Model.ArticleWorkingCopy, q.id).title == "Queued presentation"
+    assert Repo.get_by!(CommandReceipt, command_id: command_id).confirmation
+    before = persistent_facts()
+    assert {:ok, ^result} = apply(CMS.DocTree.Commands.SaveQueue, :execute, args)
+    assert_unchanged(before)
+  end
+
+  test "MergeQueue returns after commit and replays its original Confirmation" do
+    f = prepare_release(:publication)
+    q = queue_copy(f)
+    d = default_copy(f)
+    assert {:ok, saved} = save_title(f, d, "New default title")
+    assert {:ok, queue} = Queue.read(f.community)
+    command_id = Ecto.UUID.generate()
+
+    args = [
+      f.community,
+      queue.queue_revision,
+      f.article.id,
+      saved.revision,
+      q.revision,
+      %{},
+      f.actor,
+      command_id
+    ]
+
+    assert {:ok, result} = apply(CMS.DocTree.Commands.MergeQueue, :execute, args)
+    assert Repo.get!(CMS.Model.ArticleWorkingCopy, q.id).title == "New default title"
+    assert Repo.get_by!(CommandReceipt, command_id: command_id).confirmation
+    before = persistent_facts()
+    assert {:ok, ^result} = apply(CMS.DocTree.Commands.MergeQueue, :execute, args)
+    assert_unchanged(before)
+  end
+
+  test "RestoreSnapshot presents a historical copy after commit and replay preserves later edits" do
+    f = prepare_release(:publication)
+    a = publish_pending(f)
+    publish_title(f, "A newer public title")
+    assert default_copy(f) == nil
+    command_id = Ecto.UUID.generate()
+    args = [f.community, f.article.id, a.snapshot_id, nil, nil, f.actor, command_id]
+    assert {:ok, result} = apply(CMS.DocTree.Commands.RestoreSnapshot, :execute, args)
+    work = Repo.get!(CMS.Model.ArticleWorkingCopy, result.working_copy_id)
+    assert work.title == "Atomic publication"
+    assert work.revision == result.revision
+    assert Repo.get_by!(CommandReceipt, command_id: command_id).confirmation
+    assert {:ok, _} = save_title(f, work, "Later unpublished edit")
+    before = persistent_facts()
+    assert {:ok, ^result} = apply(CMS.DocTree.Commands.RestoreSnapshot, :execute, args)
+    assert_unchanged(before)
+    assert default_copy(f).title == "Later unpublished edit"
+    assert Repo.get!(CMS.Model.ArticleSnapshot, a.snapshot_id).title == "Atomic publication"
+  end
+
+  test "RestoreSnapshot preserves an existing default before restoring and presents a replay" do
+    f = prepare_release(:publication)
+    a = publish_pending(f)
+
+    assert {:ok, opened} =
+             CMS.DocTree.Commands.BeginEdit.execute(
+               f.community,
+               f.article.id,
+               a.snapshot_id,
+               f.actor,
+               Ecto.UUID.generate()
+             )
+
+    work = Repo.get!(CMS.Model.ArticleWorkingCopy, opened.working_copy_id)
+    assert {:ok, edited} = save_title(f, work, "Preserved unpublished content")
+    command_id = Ecto.UUID.generate()
+
+    args = [
+      f.community,
+      f.article.id,
+      a.snapshot_id,
+      edited.id,
+      edited.revision,
+      f.actor,
+      command_id
+    ]
+
+    assert {:ok, result} = apply(CMS.DocTree.Commands.RestoreSnapshot, :execute, args)
+    assert result.working_copy_id == edited.id
+    assert result.revision == edited.revision + 1
+    assert default_copy(f).title == "Atomic publication"
+
+    preserved =
+      Repo.one!(
+        from(row in CMS.Model.ArticleSnapshot,
+          where:
+            row.source_working_copy_id == ^edited.id and row.source_revision == ^edited.revision
+        )
+      )
+
+    assert preserved.title == "Preserved unpublished content"
+    before = persistent_facts()
+    assert {:ok, ^result} = apply(CMS.DocTree.Commands.RestoreSnapshot, :execute, args)
+    assert_unchanged(before)
+  end
+
+  for choice <- [:source, :target] do
+    @choice choice
+    test "ResolvePostPublish #{@choice} presents and replays after the real conflict is removed" do
+      f = prepare_release(:publication)
+      q = queue_copy(f)
+      d = default_copy(f)
+
+      assert {:ok, _} =
+               CMS.DocTree.Commands.SaveQueue.execute(
+                 f.community,
+                 f.queue.queue_revision,
+                 f.article.id,
+                 q.revision,
+                 %{title: "Published Queue title"},
+                 f.actor,
+                 Ecto.UUID.generate()
+               )
+
+      assert {:ok, edited} = save_title(f, d, "Unpublished default title")
+      publication = publish_pending(f)
+      assert Repo.get_by!(CMS.Model.DocsPostPublishConflict, article_id: f.article.id)
+      command_id = Ecto.UUID.generate()
+
+      args = [
+        f.community,
+        f.article.id,
+        edited.id,
+        edited.revision,
+        publication.snapshot_id,
+        %{title: @choice},
+        f.actor,
+        command_id
+      ]
+
+      assert {:ok, result} = apply(CMS.DocTree.Commands.ResolvePostPublish, :execute, args)
+      refute Repo.get_by(CMS.Model.DocsPostPublishConflict, article_id: f.article.id)
+
+      case @choice do
+        :source ->
+          assert result.working_copy_revision == nil
+          assert default_copy(f) == nil
+
+        :target ->
+          assert result.working_copy_revision == edited.revision
+          assert default_copy(f).title == "Unpublished default title"
+      end
+
+      assert Repo.get!(CMS.Model.ArticlePublic, f.article.id).snapshot_id ==
+               publication.snapshot_id
+
+      assert Repo.get_by!(CommandReceipt, command_id: command_id).confirmation
+      before = persistent_facts()
+      assert {:ok, ^result} = apply(CMS.DocTree.Commands.ResolvePostPublish, :execute, args)
+      assert_unchanged(before)
+    end
+  end
+
+  defp default_copy(f) do
+    Repo.get_by(CMS.Model.ArticleWorkingCopy, article_id: f.article.id, scope_type: :default)
+  end
+
+  defp queue_copy(f) do
+    member =
+      Repo.get_by!(CMS.Model.DocsQueueArticle, queue_id: f.queue.id, article_id: f.article.id)
+
+    Repo.get!(CMS.Model.ArticleWorkingCopy, member.working_copy_id)
+  end
+
+  defp save_title(f, work, title) do
+    CMS.Articles.Commands.SaveWorkingCopy.execute(
+      f.article,
+      f.community,
+      work.id,
+      %{title: title},
+      work.revision,
+      f.actor,
+      Ecto.UUID.generate()
+    )
+  end
+
+  defp publish_pending(f) do
+    assert {:ok, queue} = Queue.read(f.community)
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, released} =
+             ReleaseQueue.execute(f.community, queue.queue_revision, f.actor, command_id)
+
+    public = Repo.get!(CMS.Model.ArticlePublic, f.article.id)
+    %{snapshot_id: public.snapshot_id, release_id: released.release_id, command_id: command_id}
+  end
+
+  defp publish_title(f, title) do
+    public = Repo.get!(CMS.Model.ArticlePublic, f.article.id)
+
+    assert {:ok, opened} =
+             CMS.DocTree.Commands.BeginEdit.execute(
+               f.community,
+               f.article.id,
+               public.snapshot_id,
+               f.actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, edited} =
+             save_title(f, Repo.get!(CMS.Model.ArticleWorkingCopy, opened.working_copy_id), title)
+
+    assert {:ok, queue} = Queue.read(f.community)
+
+    assert {:ok, _} =
+             Enqueue.execute(
+               f.community,
+               queue.queue_revision,
+               [%{article_id: f.article.id, default_revision: edited.revision}],
+               f.actor,
+               Ecto.UUID.generate()
+             )
+
+    publish_pending(f)
+  end
 end

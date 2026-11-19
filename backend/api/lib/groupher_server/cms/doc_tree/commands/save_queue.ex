@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.SaveQueue do
        ) do
     with {:ok, _} <- CMS.Gate.access_check(actor, :docs_queue_write, community),
          {:ok, _} <- CMS.Gate.access_check(actor, :docs_queue_preview, community),
-         {:ok, :pass} <- QueueAccess.authorize(community, article_id, actor) do
+         {:ok, :pass} <- QueueAccess.authorize_after_commit(community, article_id, actor) do
       {:ok, %{queue_revision: queue_revision, working_copy_revision: work_revision}}
     end
   end
