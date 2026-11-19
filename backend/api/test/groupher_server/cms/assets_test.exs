@@ -2941,11 +2941,13 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     end
   end
 
-  defp restore_application_env(key, nil),
-    do: Application.delete_env(:groupher_server, key)
+  defp restore_application_env(key, nil) do
+    Application.delete_env(:groupher_server, key)
+  end
 
-  defp restore_application_env(key, value),
-    do: Application.put_env(:groupher_server, key, value)
+  defp restore_application_env(key, value) do
+    Application.put_env(:groupher_server, key, value)
+  end
 
   defp restore_env(name, nil), do: System.delete_env(name)
   defp restore_env(name, value), do: System.put_env(name, value)

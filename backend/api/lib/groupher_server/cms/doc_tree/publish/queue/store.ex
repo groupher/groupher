@@ -63,8 +63,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
   end
 
   def advance(%Community{}, %DocsPublishQueue{}, expected, changes)
-      when is_map(expected) and is_list(changes) and changes != [],
-      do: {:error, :operation_ref_required}
+      when is_map(expected) and is_list(changes) and changes != [] do
+    {:error, :operation_ref_required}
+  end
 
   def advance(_community, _queue, _expected, _changes), do: {:error, :invalid_queue_versions}
 
@@ -86,8 +87,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
     end
   end
 
-  def advance(_community, _queue, _expected, _changes, _operation_ref),
-    do: {:error, :invalid_queue_versions}
+  def advance(_community, _queue, _expected, _changes, _operation_ref) do
+    {:error, :invalid_queue_versions}
+  end
 
   defp advance_locked(community, id, queue_id, expected, changes, operation_ref) do
     with {:ok, :pass} <- validate_versions(expected, changes),

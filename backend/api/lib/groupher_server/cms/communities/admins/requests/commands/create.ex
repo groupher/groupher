@@ -168,8 +168,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Create do
          _proposal,
          _actor,
          _operation
-       ),
-       do: {:ok, request}
+       ) do
+    {:ok, request}
+  end
 
   defp create_or_existing(locked, nil, subject, type, proposal, actor, operation) do
     members = locked.admins

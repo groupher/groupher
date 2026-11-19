@@ -266,9 +266,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
               sign(right.sibling_index - other_right.sibling_index)
         end)
 
-      if parent_changed? or order_changed?,
-        do: [%{id: id, from: left.path, to: right.path}],
-        else: []
+      if parent_changed? or order_changed? do
+        [%{id: id, from: left.path, to: right.path}]
+      else
+        []
+      end
     end)
   end
 
@@ -389,8 +391,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
     end)
   end
 
-  defp asset_ref_identity({asset_id, usage, _position, block_id, _alt, _title}),
-    do: {asset_id, usage, block_id}
+  defp asset_ref_identity({asset_id, usage, _position, block_id, _alt, _title}) do
+    {asset_id, usage, block_id}
+  end
 
   defp asset_ref_map({asset_id, usage, position, block_id, alt, title}) do
     %{

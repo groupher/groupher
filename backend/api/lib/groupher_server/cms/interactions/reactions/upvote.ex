@@ -156,8 +156,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     end
   end
 
-  defp enqueue_effect(_canonical, _operation, _actor, _operation_ref, :unchanged),
-    do: {:ok, :pass}
+  defp enqueue_effect(_canonical, _operation, _actor, _operation_ref, :unchanged) do
+    {:ok, :pass}
+  end
 
   defp enqueue_effect(canonical, operation, actor, operation_ref, :changed) do
     with {:ok, data} <-

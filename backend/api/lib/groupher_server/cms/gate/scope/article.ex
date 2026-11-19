@@ -76,8 +76,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     end
   end
 
-  def scope_with_review_policy(_query, _actor, _action, _context),
-    do: {:error, ErrorCat.scope_context_missing()}
+  def scope_with_review_policy(_query, _actor, _action, _context) do
+    {:error, ErrorCat.scope_context_missing()}
+  end
 
   @doc false
   def public_identity(%Ecto.Query{} = query, thread)
@@ -432,7 +433,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
                       is_nil(restriction.resolved_at),
                   select: 1
                 )
-           ) or exists(subquery(platform_read?)) or exists(subquery(community_read?))))
+              ) or exists(subquery(platform_read?)) or exists(subquery(community_read?))))
     )
   end
 

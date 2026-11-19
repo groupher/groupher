@@ -86,18 +86,20 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
         )
       )
 
-    if locked == ids,
-      do:
-        {:ok,
-         %{article_ids: article_ids, binding_ids: bindings, transaction_id: transaction_id()}},
-      else: {:error, :community_admission_missing}
+    if locked == ids do
+      {:ok, %{article_ids: article_ids, binding_ids: bindings, transaction_id: transaction_id()}}
+    else
+      {:error, :community_admission_missing}
+    end
   end
 
   @doc "Locks the planned Article rows in stable order before validating the Binding set."
   def lock_article_rows(article_ids) when is_list(article_ids) do
-    if Repo.in_transaction?(),
-      do: do_lock_article_rows(article_ids),
-      else: {:error, :transaction_required}
+    if Repo.in_transaction?() do
+      do_lock_article_rows(article_ids)
+    else
+      {:error, :transaction_required}
+    end
   end
 
   defp do_lock_article_rows(article_ids) do

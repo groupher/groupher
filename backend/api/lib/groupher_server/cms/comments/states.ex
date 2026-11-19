@@ -83,8 +83,9 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   @spec fold(T.id() | Comment.t(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
-  def fold(%Comment{} = comment, %User{} = _user, operation_ref),
-    do: do_fold_comment(comment, true, operation_ref)
+  def fold(%Comment{} = comment, %User{} = _user, operation_ref) do
+    do_fold_comment(comment, true, operation_ref)
+  end
 
   def fold(comment_id, %User{} = _user, operation_ref) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
@@ -93,8 +94,9 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   @spec unfold(Comment.t(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
-  def unfold(%Comment{} = comment, %User{} = _user, operation_ref),
-    do: do_fold_comment(comment, false, operation_ref)
+  def unfold(%Comment{} = comment, %User{} = _user, operation_ref) do
+    do_fold_comment(comment, false, operation_ref)
+  end
 
   @spec unfold(T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
   def unfold(comment_id, %User{} = _user, operation_ref) do

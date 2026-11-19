@@ -113,8 +113,9 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
 
       case recorded do
         nil ->
-          if admin.is_lord or admin.permissions != %{},
-            do: Repo.rollback(:seed_unexpected_permissions)
+          if admin.is_lord or admin.permissions != %{} do
+            Repo.rollback(:seed_unexpected_permissions)
+          end
 
           admin =
             admin
@@ -124,8 +125,9 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
           {slug, admin_snapshot(admin)}
 
         recorded ->
-          unless admin_snapshot(admin) == recorded,
-            do: Repo.rollback(:seed_unexpected_permissions)
+          unless admin_snapshot(admin) == recorded do
+            Repo.rollback(:seed_unexpected_permissions)
+          end
 
           {slug, recorded}
       end
@@ -155,8 +157,9 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
   def admins_valid?(_, _, _, _), do: false
 
   def clear_admins!(users, communities, expected) do
-    unless admins_valid?(users, communities, expected, false),
-      do: Repo.rollback(:seed_permissions_changed)
+    unless admins_valid?(users, communities, expected, false) do
+      Repo.rollback(:seed_permissions_changed)
+    end
 
     ids = Enum.map(Map.values(expected), & &1["id"])
 

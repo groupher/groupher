@@ -91,8 +91,9 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
     end
   end
 
-  defp community(slug, _value, _memberships, acc),
-    do: exception(acc, :invalid_community_scope, slug)
+  defp community(slug, _value, _memberships, acc) do
+    exception(acc, :invalid_community_scope, slug)
+  end
 
   defp community_keys(slug, value, scope, acc) do
     Enum.reduce(value, {scope, acc}, fn
@@ -138,9 +139,11 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
       {:same_scope_action, true, nil} ->
         acc = %{acc | global: Map.put(acc.global, key, true)}
 
-        if {scope, key} in @verified_same_scope,
-          do: acc,
-          else: exception(acc, :requires_semantic_review, key)
+        if {scope, key} in @verified_same_scope do
+          acc
+        else
+          exception(acc, :requires_semantic_review, key)
+        end
 
       {:same_scope_action, false, nil} ->
         acc
@@ -162,9 +165,11 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
 
   defp grant(key, _enabled, _scope, acc, nil), do: exception(acc, :invalid_boolean, key)
 
-  defp grant(key, _enabled, _scope, acc, {slug, member}),
-    do: {member, exception(acc, :invalid_boolean, "#{slug}.#{key}")}
+  defp grant(key, _enabled, _scope, acc, {slug, member}) do
+    {member, exception(acc, :invalid_boolean, "#{slug}.#{key}")}
+  end
 
-  defp exception(acc, reason, key),
-    do: %{acc | exceptions: [%{reason: reason, key: key} | acc.exceptions]}
+  defp exception(acc, reason, key) do
+    %{acc | exceptions: [%{reason: reason, key: key} | acc.exceptions]}
+  end
 end

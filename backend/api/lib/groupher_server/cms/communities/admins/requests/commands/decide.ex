@@ -118,8 +118,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Decide do
          _community,
          %CommunityAdminRequest{type: :invite, subject_user_id: id},
          %User{id: id}
-       ),
-       do: {:ok, :pass}
+       ) do
+    {:ok, :pass}
+  end
 
   defp authorize_decision(community, %CommunityAdminRequest{type: :apply}, %User{} = actor) do
     with {:ok, scope} <- CMS.Passport.load_community_scope(actor, community),
@@ -243,8 +244,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Decide do
     end
   end
 
-  defp member_activity(_community, _before, nil, _request, _actor, _operation, _old, _new),
-    do: {:ok, :pass}
+  defp member_activity(_community, _before, nil, _request, _actor, _operation, _old, _new) do
+    {:ok, :pass}
+  end
 
   defp member_activity(
          _community,
@@ -256,7 +258,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Decide do
          old,
          new
        )
-       when before.id == after_member.id and old == new, do: {:ok, :pass}
+       when before.id == after_member.id and old == new do
+    {:ok, :pass}
+  end
 
   defp member_activity(community, before, after_member, request, actor, operation, old, new) do
     action = if is_nil(before), do: :admin_joined, else: :admin_permissions_changed

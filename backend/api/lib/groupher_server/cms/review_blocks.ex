@@ -58,8 +58,9 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     end
   end
 
-  defp apply_visibility_change(false, _lifecycle, _target_attrs, _attrs, _operation_ref),
-    do: {:ok, :pass}
+  defp apply_visibility_change(false, _lifecycle, _target_attrs, _attrs, _operation_ref) do
+    {:ok, :pass}
+  end
 
   defp apply_visibility_change(true, lifecycle, target_attrs, _attrs, operation_ref) do
     with {:ok, :pass} <- recompute(lifecycle),

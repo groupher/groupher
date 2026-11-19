@@ -129,14 +129,18 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
   defp validate_storage_identity(changeset) do
     changeset
     |> validate_change(:storage, fn :storage, value ->
-      if is_binary(value) and String.trim(value) == "",
-        do: [storage: "must be non-blank"],
-        else: []
+      if is_binary(value) and String.trim(value) == "" do
+        [storage: "must be non-blank"]
+      else
+        []
+      end
     end)
     |> validate_change(:storage_key, fn :storage_key, value ->
-      if is_binary(value) and String.trim(value) == "",
-        do: [storage_key: "must be non-blank"],
-        else: []
+      if is_binary(value) and String.trim(value) == "" do
+        [storage_key: "must be non-blank"]
+      else
+        []
+      end
     end)
     |> check_constraint(:storage, name: :community_assets_storage_identity_non_blank_check)
   end

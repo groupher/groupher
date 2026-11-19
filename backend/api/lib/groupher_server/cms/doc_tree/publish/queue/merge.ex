@@ -122,8 +122,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Merge do
     member |> DocsQueueArticle.changeset(%{source_snapshot_id: id}) |> Repo.update()
   end
 
-  defp advance_if_changed(_community, queue, _revision, _article_id, _actor, [], _operation_ref),
-    do: {:ok, queue}
+  defp advance_if_changed(_community, queue, _revision, _article_id, _actor, [], _operation_ref) do
+    {:ok, queue}
+  end
 
   defp advance_if_changed(community, queue, revision, article_id, actor, _changed, operation_ref) do
     with {:ok, _} <- Queue.record_contribution(community, queue, revision, article_id, actor),
