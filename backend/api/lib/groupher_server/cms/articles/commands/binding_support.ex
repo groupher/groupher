@@ -82,23 +82,11 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
 
   def invalidate_scope(
         %Community{} = community,
-        %{article_id: article_id, inner_id: inner_id},
-        thread,
+        %ArticleBinding{} = binding,
+        _thread,
         operation_ref
       ) do
-    case Effects.enqueue(
-           "article.visibility_changed",
-           "article",
-           article_id,
-           operation_ref,
-           %{
-             community: community.slug,
-             community_id: community.id,
-             thread: thread,
-             inner_id: inner_id,
-             article_id: article_id
-           }
-         ) do
+    case Effects.visibility_changed(binding, community, operation_ref) do
       {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end

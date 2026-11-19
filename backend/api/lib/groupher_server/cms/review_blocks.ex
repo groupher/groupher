@@ -405,7 +405,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   defp enqueue_visibility_change(%_lifecycle{}, _target, _operation_ref), do: {:ok, :pass}
 
   defp enqueue_article_visibility(article_id, community_id, operation_ref) do
-    with %Article{thread: thread} <- Repo.get(Article, article_id) do
+    with %Article{} <- Repo.get(Article, article_id) do
       query = from(binding in ArticleBinding, where: binding.article_id == ^article_id)
 
       query =
@@ -422,18 +422,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
 
         case community do
           %Community{} = community ->
-            case CMS.Articles.Effects.enqueue(
-                   "article.visibility_changed",
-                   "article",
-                   article_id,
-                   operation_ref,
-                   %{
-                     "community" => community.slug,
-                     "community_id" => community.id,
-                     "thread" => Atom.to_string(thread),
-                     "inner_id" => binding.inner_id
-                   }
-                 ) do
+            case CMS.Articles.Effects.visibility_changed(binding, community, operation_ref) do
               {:ok, _event} -> {:cont, {:ok, :pass}}
               {:error, reason} -> {:halt, {:error, reason}}
             end

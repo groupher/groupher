@@ -15,10 +15,31 @@ defmodule GroupherServer.CMS.Articles.Effects do
   alias GroupherServer.CMS
   alias CMS.Articles.Effects.{Outbox, Publish}
 
-  @doc "Records one Article effect in the caller-owned transaction."
-  @spec enqueue(String.t(), String.t(), term(), Ecto.UUID.t(), map()) ::
-          {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  defdelegate enqueue(event, resource_type, resource_id, operation_ref, data), to: Outbox
+  @doc "Records first public selection for an admitted Article Binding."
+  defdelegate published(binding, community, snapshot, operation_ref), to: Outbox
+  @doc "Records a later public selection for an admitted Article Binding."
+  defdelegate updated(binding, community, snapshot, operation_ref), to: Outbox
+  @doc "Records first Docs publication under a sealed site Release."
+  defdelegate release_published(binding, community, snapshot, release, operation_ref), to: Outbox
+  @doc "Records later Docs publication under a sealed site Release."
+  defdelegate release_updated(binding, community, snapshot, release, operation_ref), to: Outbox
+  @doc "Records pure projection work for a selected Public head."
+  defdelegate projections_selected(binding, public, first_publish?, operation_ref), to: Outbox
+  @doc "Records one Binding visibility transition."
+  defdelegate visibility_changed(binding, community, operation_ref), to: Outbox
+  @doc "Records one Binding review transition."
+  defdelegate review_changed(binding, community, operation_ref), to: Outbox
+  @doc "Records a Docs removal under its sealed site Release."
+  defdelegate release_removed(binding, community, release, operation_ref), to: Outbox
+  @doc "Freezes first-publish notification facts in the owning publish transaction."
+  defdelegate enqueue_first_publish_notification(
+                article,
+                community,
+                snapshot,
+                actor_id,
+                operation_ref
+              ),
+              to: Outbox
 
   @doc "Records independent Press, Search and CDN intents for a committed Article event."
   defdelegate dispatch(event), to: Outbox

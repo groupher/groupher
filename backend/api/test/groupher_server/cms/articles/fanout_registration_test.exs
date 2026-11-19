@@ -113,18 +113,20 @@ defmodule GroupherServer.Test.CMS.Articles.FanoutRegistrationTest do
   end
 
   test "visibility and review transitions register children without a publication snapshot" do
-    for kind <- ["article.visibility_changed", "article.review_changed"] do
-      id = Ecto.UUID.generate()
+    for enqueue <- [&Effects.visibility_changed/3, &Effects.review_changed/3] do
+      binding = %CMS.Model.ArticleBinding{
+        article_id: Ecto.UUID.generate(),
+        community_id: 7,
+        thread: :post,
+        inner_id: 1
+      }
+
+      community = %CMS.Model.Community{id: 7, slug: "fanout"}
 
       assert {:ok, parent} =
-               Repo.transact_result(fn ->
-                 Effects.enqueue(kind, "article", id, Ecto.UUID.generate(), %{
-                   community: "fanout",
-                   community_id: 7,
-                   thread: :post,
-                   inner_id: 1
-                 })
-               end)
+               Repo.transact_result(fn -> enqueue.(binding, community, Ecto.UUID.generate()) end)
+
+      kind = parent.event
 
       assert {:ok, %{registered: children}} = Outbox.execute(parent.id, &Effects.dispatch/1)
       search = Repo.get!(Event, children.search)
@@ -171,22 +173,22 @@ defmodule GroupherServer.Test.CMS.Articles.FanoutRegistrationTest do
   defp parent do
     article_id = Ecto.UUID.generate()
 
-    send_event(%{
-      event: "article.updated",
-      worker: Jobs.CMSOutboxArticle,
-      resource_type: "article",
-      resource_id: article_id,
-      operation_ref: Ecto.UUID.generate(),
-      dedupe_key: DedupeKey.encode([article_id]),
-      data: %{
-        community: "fanout",
-        community_id: 7,
-        thread: :post,
-        inner_id: 1,
-        article_id: article_id,
-        snapshot_id: Ecto.UUID.generate()
-      }
-    })
+    binding = %CMS.Model.ArticleBinding{
+      article_id: article_id,
+      community_id: 7,
+      thread: :post,
+      inner_id: 1
+    }
+
+    community = %CMS.Model.Community{id: 7, slug: "fanout"}
+    snapshot = %CMS.Model.ArticleSnapshot{id: Ecto.UUID.generate(), article_id: article_id}
+
+    {:ok, parent} =
+      Repo.transact_result(fn ->
+        Effects.updated(binding, community, snapshot, Ecto.UUID.generate())
+      end)
+
+    parent
   end
 
   defp child(parent, event, worker, resource_type, resource_id, data) do

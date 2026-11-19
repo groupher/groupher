@@ -456,33 +456,13 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          operation_ref
        ) do
     with {:ok, cache_event} <-
-           CMS.Articles.Effects.enqueue(
-             if(first_publish?, do: "article.published", else: "article.updated"),
-             "article",
-             article.id,
-             operation_ref,
-             %{
-               community: community.slug,
-               community_id: community.id,
-               thread: article.thread,
-               inner_id: binding.inner_id,
-               article_id: article.id,
-               snapshot_id: snapshot.id
-             }
-           ),
+           enqueue_publication(binding, community, snapshot, first_publish?, operation_ref),
          {:ok, projection_event} <-
-           CMS.Articles.Effects.enqueue(
-             "article.projections",
-             "article",
-             article.id,
-             operation_ref,
-             %{
-               first_publish?: first_publish?,
-               community_id: community.id,
-               inner_id: binding.inner_id,
-               published_by_id: public.published_by_id,
-               snapshot_id: snapshot.id
-             }
+           CMS.Articles.Effects.projections_selected(
+             binding,
+             public,
+             first_publish?,
+             operation_ref
            ),
          {:ok, notification_event} <-
            maybe_enqueue_first_publish_notification(
@@ -498,6 +478,14 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
     end
   end
 
+  defp enqueue_publication(binding, community, snapshot, true, operation_ref) do
+    CMS.Articles.Effects.published(binding, community, snapshot, operation_ref)
+  end
+
+  defp enqueue_publication(binding, community, snapshot, false, operation_ref) do
+    CMS.Articles.Effects.updated(binding, community, snapshot, operation_ref)
+  end
+
   defp maybe_enqueue_first_publish_notification(
          article,
          community,
@@ -506,7 +494,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          true,
          operation_ref
        ) do
-    CMS.Articles.Effects.Outbox.enqueue_first_publish_notification(
+    CMS.Articles.Effects.enqueue_first_publish_notification(
       article,
       community,
       snapshot,

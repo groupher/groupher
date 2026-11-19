@@ -275,20 +275,23 @@ defmodule GroupherServer.Test.CMS.Articles.EffectRecoveryTest do
   defp doc_intent(doc, release_id) do
     {:ok, event} =
       Repo.transact_result(fn ->
-        CMS.Articles.Effects.enqueue(
-          "article.updated",
-          "article",
-          doc.article.id,
-          Ecto.UUID.generate(),
-          %{
-            community: doc.community.slug,
-            community_id: doc.community.id,
-            inner_id: doc.inner_id,
-            thread: :doc,
+        binding =
+          Repo.get_by!(CMS.Model.ArticleBinding,
             article_id: doc.article.id,
-            snapshot_id: doc.snapshot_id,
-            release_id: release_id
-          }
+            community_id: doc.community.id
+          )
+
+        snapshot = Repo.get!(CMS.Model.ArticleSnapshot, doc.snapshot_id)
+        # Negative diagnostic fixtures may refer to an unsealed stored Release.
+        # The recovery owner must verify the persisted fact rather than trust this DTO.
+        release = %{Repo.get!(DocsRelease, release_id) | sealed: true}
+
+        CMS.Articles.Effects.release_updated(
+          binding,
+          doc.community,
+          snapshot,
+          release,
+          Ecto.UUID.generate()
         )
       end)
 

@@ -324,29 +324,19 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
   defp initialize_stats(_article, false), do: {:ok, :pass}
 
   defp enqueue_publication(
-         article,
+         _article,
          community,
          binding,
          snapshot,
          first_publish?,
          operation_ref,
-         release_id
+         release
        ) do
-    CMS.Articles.Effects.enqueue(
-      if(first_publish?, do: "article.published", else: "article.updated"),
-      "article",
-      article.id,
-      operation_ref,
-      %{
-        community: community.slug,
-        community_id: community.id,
-        thread: :doc,
-        inner_id: binding.inner_id,
-        article_id: article.id,
-        snapshot_id: snapshot.id,
-        release_id: release_id
-      }
-    )
+    if first_publish? do
+      CMS.Articles.Effects.release_published(binding, community, snapshot, release, operation_ref)
+    else
+      CMS.Articles.Effects.release_updated(binding, community, snapshot, release, operation_ref)
+    end
   end
 
   defp enqueue_tree_change(_community, [], _operation_ref), do: {:ok, :pass}
@@ -460,7 +450,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
                       snapshot,
                       item.first_publish?,
                       operation_ref,
-                      release.id
+                      release
                     ),
                   {:ok, _} <-
                     enqueue_first_publish_notification(
@@ -481,19 +471,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
 
         case binding do
           %ArticleBinding{} ->
-            case CMS.Articles.Effects.enqueue(
-                   "article.visibility_changed",
-                   "article",
-                   id,
-                   operation_ref,
-                   %{
-                     community: community.slug,
-                     community_id: community.id,
-                     thread: :doc,
-                     inner_id: binding.inner_id,
-                     release_id: release.id
-                   }
-                 ) do
+            case CMS.Articles.Effects.release_removed(binding, community, release, operation_ref) do
               {:ok, _} -> {:cont, {:ok, :pass}}
               {:error, reason} -> {:halt, {:error, reason}}
             end
@@ -513,7 +491,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
          actor_id,
          operation_ref
        ) do
-    CMS.Articles.Effects.Outbox.enqueue_first_publish_notification(
+    CMS.Articles.Effects.enqueue_first_publish_notification(
       article,
       community,
       snapshot,

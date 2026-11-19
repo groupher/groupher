@@ -276,26 +276,25 @@ operation_ref 记录操作来源，dedupe_key 标识同一业务效果。两者�
 请求同一效果；同一操作也可以产生不同效果。受管链新建的 History、Activity 和意图
 使用本次 O；命中已有意图时不要求其首次来源 O 改成本次 O。
 
-业务 Command 只调用现有领域 Effects 中具体命名的事件入口。例如拟议接口：
+业务 Command 调用领域 Effects 的具体动作入口。Article 已交付的调用形式为：
 
 ```elixir
-# 业务只提供已校验的对象、业务参数和操作来源
-AdminEffects.request_decided(request, actor, recipient, operation_ref)
-
-# 入口内固定事件、资源范围、worker，并从业务参数生成键；以下为示意
-Outbox.send(%{
-  operation_ref: operation_ref,
-  event: "community.admin_request",
-  resource_type: "community_admin_request",
-  resource_id: request.id,
-  dedupe_key: dedupe_key,
-  data: payload,
-  worker: Worker
-})
+# 业务只提供已校验的对象和服务端操作 UUID
+ArticleEffects.updated(binding, community, snapshot, operation_ref)
+ArticleEffects.release_updated(binding, community, snapshot, sealed_release, operation_ref)
 ```
 
-入口命名与现有模块结构保持一致，示例不是当前可执行 API。Command、Job、seed 不得
-自行拼 key，也不接收 dedupe_key、identity tuple 或“按操作/按版本”模式参数。
+`CMS.Articles.Effects` 的实际入口为 `published/4`、`updated/4`、
+`projections_selected/4`、`visibility_changed/3`、`review_changed/3`、
+`release_published/5`、`release_updated/5`、`release_removed/4` 和
+`enqueue_first_publish_notification/5`。原 `enqueue/5` 已从 facade 和具体 owner 删除，
+没有兼容转发。Binding/Community、Snapshot/Public 的 Article 身份必须相符；Docs 入口
+要求同 Community、带真实整数 ID 且 sealed 的 Release 对象。实际发布路径传入
+Release.record 的返回值，故障注入与成功用例核对该对象对应的数据库事实。
+
+事件、资源类型/ID、worker、payload 字段和 key 都由 owner 构造；业务不能传 event、
+resource_type、dedupe_key、identity tuple 或“按操作/按版本”模式参数。其他事件入口
+按其固定动作维持相同边界，尚未闭合的 owner 见 §9.3。
 入口选择规则后只使用固定业务输入：
 
 | 固定事件合同                                   | 键的业务输入（不是可选模式）                                                                           | 预期行为                                                                                                                 |
@@ -319,14 +318,14 @@ Outbox.send(%{
 
 | Event                                      | Owner（省略 GroupherServer.）       | Worker（Jobs.）         | Version | Key inputs（资源列另参与唯一约束；O = operation_ref）                     | Payload projection                                                                                                                            |
 | ------------------------------------------ | ----------------------------------- | ----------------------- | ------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `article.cdn_purge`                        | `CMS.Articles.Effects.Outbox`       | `CMSOutboxCDN`          | 1       | parent event ID                                                           | `source_event`, `community`, `community_id`, `thread`, `inner_id`, `snapshot_id`                                                                                                 |
+| `article.cdn_purge`                        | `CMS.Articles.Effects.Outbox`       | `CMSOutboxCDN`          | 1       | parent event ID                                                           | `source_event`, `community`, `community_id`, `thread`, `inner_id`, `snapshot_id`, optional `release_id`                                                                                                 |
 | `article.first_published_notification`     | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Article + Community                                                       | `article_id`, `community_id`, `community_slug`, `thread`, `title`, `digest`, `author_id`, `author_name`, `published_by_id`, `notify_user_ids` |
 | `article.projections`                      | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + snapshot                                       | `first_publish?`, `community_id`, `inner_id`, `published_by_id`, `snapshot_id`                                                                |
-| `article.published`                        | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + snapshot + optional release                    | `community`, `community_id`, `thread`, `inner_id`, `article_id`, `snapshot_id`                                                                |
-| `article.review_changed`                   | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Article + O                                                               | `community`, `community_id`, `thread`, `inner_id`                                                                                                                    |
-| `article.search_sync`                      | `CMS.Articles.Effects.Outbox`       | `CMSOutboxSearch`       | 1       | parent event ID                                                           | `source_event`, `community_id`, `snapshot_id`                                                                                                 |
-| `article.updated`                          | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + snapshot + optional release                    | `community`, `community_id`, `thread`, `inner_id`, `article_id`, `snapshot_id`                                                                |
-| `article.visibility_changed`               | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + optional release                               | `community`, `community_id`, `thread`, `inner_id`                                                                                                                    |
+| `article.published`                        | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + snapshot + optional release                    | `community`, `community_id`, `thread`, `inner_id`, `article_id`, `snapshot_id`, optional `release_id`                                                                |
+| `article.review_changed`                   | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O                                                               | `community`, `community_id`, `thread`, `inner_id`                                                                                                                    |
+| `article.search_sync`                      | `CMS.Articles.Effects.Outbox`       | `CMSOutboxSearch`       | 1       | parent event ID                                                           | `source_event`, `community_id`, `snapshot_id`, optional `release_id`                                                                                                 |
+| `article.updated`                          | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + snapshot + optional release                    | `community`, `community_id`, `thread`, `inner_id`, `article_id`, `snapshot_id`, optional `release_id`                                                                |
+| `article.visibility_changed`               | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + optional release                               | `community`, `community_id`, `thread`, `inner_id`, optional `release_id`                                                                                                                    |
 | `asset.application_upload_provider_delete` | `CMS.Assets.Effects`                | `CMSOutboxAsset`        | 1       | public_ref + storage + storage_key                                        | `id`, `public_ref`, `storage`, `storage_key`                                                                                                  |
 | `asset.provider_delete`                    | `CMS.Assets.Effects`                | `CMSOutboxAsset`        | 1       | public_ref + storage + storage_key                                        | `asset_id`, `public_ref`, `storage`, `storage_key`                                                                                            |
 | `cms.artiment_review`                      | `CMS.Review.Effects`                | `CMSArtimentReview`     | 1       | request_id                                                                | `request_id`                                                                                                                                  |
@@ -538,6 +537,11 @@ owner 固定提供，表示 payload 编码合同，不是业务 revision。当�
 | 当前版本且同投影，`:waiting` / `:running` / `:retrying` | `{:ok, event}`                                            | 返回已有意图，不新增行或重复唤醒；投递调度由第 5.9 节检查，不代表外部已送达                       |
 | 当前版本且同投影，`:done`                               | `{:ok, event}`                                            | 效果已完成，保留原完成事实，禁止重置为待投递                                                      |
 | 同投影，`:failed`（数据库存为 `dead`）                  | `{:error, {:outbox_effect_dead, event_id}}`               | 普通入口传播错误；fan-out 按第 5.6 节确认登记；仅第 5.7 节受控人工/自动入口可恢复，不开放通用开关 |
+
+Article publication/visibility 及其 Search/CDN 子意图的比较投影包含可选 release_id，
+普通路径按 nil 比较。Release 是替代证明与来源判定的业务事实，不是可忽略的诊断字段；
+相同 key 下改变它必须报 payload 冲突。review_changed 按 Community/Binding/O 区分，
+同一次跨社区 Review 操作不能把两个目标合并成一个事件。
 
 当前状态映射中，数据库字符串 failed 对应应用 :retrying，而 dead 才对应终态 :failed；
 实现和测试使用明确的应用状态，不能将两个字符串当成相同失败状态。未知状态明确失败。
@@ -1212,6 +1216,7 @@ UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口�
 | `e4b66923b` | provider 暂时/永久/未知/配置错误分类、锁内自动恢复资格与并发凭据复用、Review 请求有效性守卫 |
 | `fa019b54e` | visibility/review fan-out、完整 CDN 去重范围、Outbox 未知状态拒绝及模块边界；别名风格与 context 扫描清零 |
 | `74490c6e5` | 28 处 wrapped-inline-do 转换，15 文件 AST 不变；完整 style 门禁闭合 |
+| `9bbb18962` | Release 12 个故障点组合与 15 项验收，实际 Asset worker 负例，nullable public_ref 冻结字段存在性修复 |
 
 后续事件 owner 与缓存键收口批次由 Git 记录定位；不能仅因本表列有核心提交，就认为全部目标语义都已交付。并行 Co-author、Trash UI 及其他工作树改动不属于本批。
 
@@ -1227,8 +1232,8 @@ UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口�
 | Comment 回归              | 隔离快照 54 passed                                                                                                                                                                                                                                                                      |
 | 发布/fanout/version 回归  | 隔离快照 21 passed，包含 B→C→B、首次通知冻结、Public 重建、done/dead 混合子事件与登记后中断                                                                                                                                                                                             |
 | 最新 owner/缓存键合并验收 | 隔离快照 115 passed，覆盖具体事件 owner 唯一性、重复操作与独立操作缓存/反应键、手工重试调用图及前述身份验收                                                                                                                                                                             |
-| 最新合并回归 | 隔离快照 **297 passed、1 skipped**；包含 Passport/Admin 后端、恢复/诊断、provider 分类、Review 守卫、visibility/review fan-out、完整 CDN 去重范围及原 Operation Identity 验收。旧 global_facts_graphql 未纳入这组回归，其合同缺口仍见 P4；该跳过为需要 TEST_ADMIN_ISOLATED=1 的真实独立连接并发邀请用例，另在空任务库显式启用后单独执行该文件，5 passed；并发不再是未验收项。 |
-| Docs Release 故障矩阵 | `cms/doc_tree/release_effects_test.exs` 15 passed；12 个实际故障点组合、publication/removal 成功与重放、原目录回滚。纳入最新 297 项合并验收，不与重叠计数相加。 |
+| 最新合并回归 | 隔离快照 **311 passed、1 skipped**；包含 Passport/Admin 后端、恢复/诊断、provider 分类、Review 守卫、visibility/review fan-out、完整 CDN 去重范围、具体 Article 入口/范围拒绝/Release 比较和 Binding 路径，以及原 Operation Identity 验收。旧 global_facts_graphql 未纳入这组回归，其合同缺口仍见 P4；该跳过为需要 TEST_ADMIN_ISOLATED=1 的真实独立连接并发邀请用例，另在空任务库显式启用后单独执行该文件，5 passed；并发不再是未验收项。 |
+| Docs Release 故障矩阵 | `cms/doc_tree/release_effects_test.exs` 15 passed；12 个实际故障点组合、publication/removal 成功与重放、原目录回滚。纳入最新 311 项合并验收，不与重叠计数相加。 |
 | Asset 实际消费守卫 | `cms/assets/provider_failure_test.exs` 新增实际 worker 负例：active、archived、deleted_at 空、资产缺失、public_ref/storage/key 不符，以及四个冻结身份字段缺失。另先复现 nullable public_ref 缺字段被误当 nil 而写 done，再补存在性守卫；显式 nil 可合法交付，缺字段首次即 dead/5605。其余无效目标均首次即 dead/5605，无 HTTP、无 done、无成功重试凭据，原资产及意图身份不变。 |
 | Admin 旧 GraphQL fixture | 额外复核发现 1 项失败：旧测试对 pagedCommunityAdmins 传 community，当前 SDL 要求 communityRef；失败发生在 GraphQL 参数校验，尚未进入 Admin 查询。P4 的共享工作树已有相应改动，本批仅整理该文件 alias，未将 P4 hunk 带入。Admin GraphQL 不能概称全通过。 |
 | Pipeline 调用图           | 143 pipelines reached；unresolved、unreached、internal、阶段/签名违规均为 0；新增手工恢复入口回归                                                                                                                                                                                       |
@@ -1248,12 +1253,12 @@ UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口�
 
 | 项目                              | 当前状态与下一步                                                                                                                                                                                                                                                                                                                                       |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 具体事件入口 API | **待收口**：事件 owner/worker/version/业务投影清单已有校验，但 `Articles.Effects.enqueue(event, resource_type, resource_id, O, data)` 仍接受业务调用方提供 event/resource 字段。须按 §5.3 收口到固定动作入口并迁移实际调用方；清单和 Pipeline 图通过不证明这项已完成。 |
+| 具体事件入口 API | **Article 已闭合**：9 个具体动作入口固定 event/resource/worker/payload/key，旧 enqueue/5 不再导出；实际发布、Release、Binding、Review 调用已迁移，模型范围和 Release 比较负例通过。其他 owner 仍须核对，当前 Interactions 的 event/resource 参数及 Tickets.Cache 的外部 effect_key 尚待收口；不能将 Article 通过写成全节完成。 |
 | 人工恢复领域守卫 | **部分闭合**：版本、固定路由、payload、资产冻结目标/Application upload、自动 run/step/O/live lease 与并发凭据已验证；Review 原请求身份、状态/过期/替代/目标与 completed 确认已交付。其余 owner 仍按消费语义逐项核对，root 不代替领域许可。 |
 | 纯投影 superseded 诊断            | **已交付本节合同**：恢复与 root 诊断复用同一持久事实判定，旧行不重置、不排 job、不写成功凭据，当前 pending 集合排除有完整替代证明的旧行；普通 History、Docs sealed Release 祖先链和必要负例已通过。首次通知仍保留，替代行 failed 仍进入 pending；不是全链路总签收。                                                                                    |
 | Provider 错误分类 | **已交付本节合同**：5603 仅限点名的暂时故障；HTTP 拒绝 5608、未知 5609、配置 5610 默认不自动重排。真实 HTTP consumer 与锁内恢复负例通过；并发凭据复用不受胜者清空失败码影响。 |
 | §8.1 全部故障注入矩阵 | **部分闭合**：Docs publication/removal 的 Release/Queue/意图/Oban/Receipt 失败点、实际 Asset worker 永久目标守卫本批已补齐。仍须验证全部外部删除交错、各登记入口、DocTree 发布回切等剩余行为；15 项 Release 测试不代替整节验收。 |
-| 门禁与全量测试 | 本批 style/context 已清零，文档覆盖在共享工作树通过；隔离快照的 Auth/Co-author 文档缺失、共享树并行模块 findings 及全量套件失败仍须按归属核对修复。297 项合并回归不能代替全量签收；不扩大排除或降低门禁。 |
+| 门禁与全量测试 | 本批 style/context 已清零，文档覆盖在共享工作树通过；隔离快照的 Auth/Co-author 文档缺失、共享树并行模块 findings 及全量套件失败仍须按归属核对修复。311 项合并回归不能代替全量签收；不扩大排除或降低门禁。 |
 | Hub Article / Assets 真实业务闭环 | **未验收**。本轮普通 local-debug 可登录并读取 Posts 列表；Assets 因缺管理权限拒绝，不能提升该账号或当作 Assets 实现故障。Community 曾在后端重编译时 SSR 超时；需要稳定进程、相应权限和实际写入后的 Receipt/History/Outbox 对照                                                                                                                         |
 | Admin 浏览器 UI                   | **用户明确后置**。Admin 后端定向通过；旧 GraphQL fixture 仍有 community/communityRef 合同缺口，浏览器流程没有签收；不继续扩大到 Admin UI 改造                                                                                                                                                                                                                                                    |
 | Passport P4                       | **单独后续阶段**：旧 fixture/旧 Passport 读取迁移与广泛消费者扫尾，见 [Passport 迁移](../migrations/passport-permissions-refactor.md)。不并入本批已完成项                                                                                                                                                                                              |

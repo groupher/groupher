@@ -341,13 +341,30 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
 
     assert {:ok, repeated} =
              Repo.transact_result(fn ->
-               CMS.Articles.Effects.enqueue(
-                 event.event,
-                 event.resource_type,
-                 event.resource_id,
-                 operation_ref,
-                 event.data
-               )
+               binding =
+                 Repo.get_by!(CMS.Model.ArticleBinding,
+                   article_id: f.article.id,
+                   community_id: f.community.id
+                 )
+
+               if f.action == :publication do
+                 snapshot = Repo.get!(CMS.Model.ArticleSnapshot, member.snapshot_id)
+
+                 CMS.Articles.Effects.release_published(
+                   binding,
+                   f.community,
+                   snapshot,
+                   release,
+                   operation_ref
+                 )
+               else
+                 CMS.Articles.Effects.release_removed(
+                   binding,
+                   f.community,
+                   release,
+                   operation_ref
+                 )
+               end
              end)
 
     assert repeated.id == event.id
