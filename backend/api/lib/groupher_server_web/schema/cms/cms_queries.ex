@@ -20,6 +20,49 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
+    @desc "Admin candidates excluding current members and pending requests"
+    field :admin_candidates, non_null(list_of(non_null(:common_user))) do
+      arg(:community_ref, non_null(:string))
+      arg(:name, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityAdmins.candidates/3)
+    end
+
+    @desc "Paged Community Admin memberships"
+    field :paged_community_admins, non_null(:community_admin_page) do
+      arg(:community_ref, non_null(:string))
+      arg(:pagi, :pagi_input)
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityAdmins.admins/3)
+    end
+
+    @desc "Paged Admin requests visible to the current user"
+    field :paged_community_admin_requests, non_null(:community_admin_request_page) do
+      arg(:community_ref, non_null(:string))
+      arg(:pagi, :pagi_input)
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityAdmins.requests/3)
+    end
+
+    @desc "Current viewer's Admin membership in a Community"
+    field :current_community_admin, :community_admin do
+      arg(:community_ref, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityAdmins.current/3)
+    end
+
+    @desc "Whether the viewer can manage Community Admin memberships"
+    field :community_admin_management_allowed, non_null(:boolean) do
+      arg(:community_ref, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityAdmins.management_allowed/3)
+    end
+
     field :docs_queue_policy, :json do
       arg(:community, non_null(:string))
       middleware(M.Authorize, :login)

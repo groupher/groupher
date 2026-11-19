@@ -10,6 +10,9 @@ defmodule GroupherServer.CMS.Gate.ErrorCat do
 
   use GroupherServer.ErrorCat, namespace: {:cms, :gate}
 
+  require GroupherServer.CMS.Gate.ErrorContract
+  GroupherServer.CMS.Gate.ErrorContract.define_errors()
+
   error(:resource_not_found, code: 4601)
   error(:gate_resource_mismatch, code: 4602)
 

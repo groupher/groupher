@@ -89,7 +89,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
 
   def paged_events(article_id, %User{} = actor, opts) when is_list(opts) do
     with {:ok, article} <- load_article(article_id),
-         :ok <- authorize(article, actor, CMS.GateAction.article_history_read()),
+         {:ok, :pass} <- authorize(article, actor, CMS.GateAction.article_history_read()),
          {:ok, cursor} <- cursor(opts[:cursor] || pagi_value(opts[:pagi], :cursor)),
          {:ok, actor_id} <- actor_id_filter(opts[:actor_id]),
          limit <- normalize_limit(opts[:limit] || pagi_value(opts[:pagi], :limit)) do
@@ -121,7 +121,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
 
   def event(article_id, event_id, %User{} = actor, opts) when is_list(opts) do
     with {:ok, article} <- load_article(article_id),
-         :ok <- authorize(article, actor, CMS.GateAction.article_history_read()),
+         {:ok, :pass} <- authorize(article, actor, CMS.GateAction.article_history_read()),
          {:ok, event_id} <- cast_uuid(event_id),
          %ArticleEvent{} = event <- Repo.get(ArticleEvent, event_id),
          true <- event.article_id == article.id,
@@ -136,10 +136,47 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
   def event(_article_id, _event_id, _actor, _opts),
     do: {:error, :article_history_unavailable}
 
+  @doc "Checks whether a user contributed content to one published Snapshot's same-Article lineage."
+  def contributor_to_snapshot?(article_id, snapshot_id, user_id)
+      when is_binary(article_id) and is_binary(snapshot_id) and is_integer(user_id) and
+             user_id > 0 do
+    publish =
+      Repo.one(
+        from(event in ArticleEvent,
+          where:
+            event.article_id == ^article_id and event.type == :publish and
+              event.after_snapshot_id == ^snapshot_id,
+          order_by: [desc: event.sequence],
+          limit: 1
+        )
+      )
+
+    case publish do
+      %ArticleEvent{} ->
+        with {:ok, events} <- contributor_events(publish),
+             true <- contributor_lineage_complete?(publish, events) do
+          {:ok,
+           Enum.any?(events, fn event ->
+             event.type in [:create, :edit, :restore] and event.actor_type == :user and
+               event.actor_id == user_id
+           end)}
+        else
+          false -> {:error, :article_history_unavailable}
+          {:error, _reason} = error -> error
+        end
+
+      nil ->
+        {:error, :article_history_unavailable}
+    end
+  end
+
+  def contributor_to_snapshot?(_article_id, _snapshot_id, _user_id),
+    do: {:error, :article_history_unavailable}
+
   @doc "Compares a fixed Snapshot with another Snapshot or the current WorkingCopy."
   def compare(article_id, before, after_version, %User{} = actor) do
     with {:ok, article} <- load_article(article_id),
-         :ok <- authorize(article, actor, CMS.GateAction.article_history_read()),
+         {:ok, :pass} <- authorize(article, actor, CMS.GateAction.article_history_read()),
          {:ok, before_id} <- snapshot_ref(before),
          %ArticleSnapshot{article_id: article_id} = before_snapshot <-
            Repo.get(ArticleSnapshot, before_id),
@@ -168,7 +205,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
   defp authorize(%Article{} = article, %User{} = actor, action) do
     with {:ok, scope} <- CMS.Passport.load_article_scope(actor, article),
          {:ok, true} <- CMS.Passport.allowed?(actor, scope, action) do
-      :ok
+      {:ok, :pass}
     else
       _ -> {:error, :article_history_unavailable}
     end
@@ -345,7 +382,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
   defp working_copy_ref(id, revision, article, actor) do
     with {:ok, id} <- cast_uuid(id),
          true <- is_integer(revision) and revision > 0,
-         :ok <- authorize(article, actor, CMS.GateAction.article_read_draft()),
+         {:ok, :pass} <- authorize(article, actor, CMS.GateAction.article_read_draft()),
          %ArticleWorkingCopy{article_id: article_id} = work <- Repo.get(ArticleWorkingCopy, id),
          true <- article_id == article.id do
       if work.revision == revision do

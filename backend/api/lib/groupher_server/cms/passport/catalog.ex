@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Passport.Catalog do
   @doc "Lists canonical permissions and metadata for a supported scope."
   def list(scope) when scope in @scopes do
     entries =
-      GateAction.all()
+      GateAction.actions()
       |> Enum.flat_map(fn action ->
         case GateAction.metadata(action) do
           %{scope: ^scope} = metadata -> [%{action: action, metadata: metadata}]
@@ -39,7 +39,10 @@ defmodule GroupherServer.CMS.Passport.Catalog do
   def requirements(action, thread \\ nil) do
     with {:ok, metadata} <- get(action),
          {:ok, thread_key} <- validate_thread(thread) do
-      {:ok, Enum.uniq(metadata.requires ++ Map.get(metadata.requires_thread, thread_key, []))}
+      thread_requirements =
+        if thread_key, do: Map.get(metadata.requires_thread, thread_key, []), else: []
+
+      {:ok, Enum.uniq(metadata.requires ++ thread_requirements)}
     end
   end
 

@@ -20,13 +20,12 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   alias Accounts.Model.User
   alias CMS.Gate.{ErrorCat, Scope.Policy}
-  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, ReviewRead}
+  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain}
 
   alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
-    CommentReviewBlock,
-    Community
+    CommentReviewBlock
   }
 
   @behaviour Policy
@@ -38,17 +37,17 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
           Ecto.Query.t() | {:error, ErrorCat.error()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, :read, %{policy_mode: :mentioned_target} = context) do
-    with {:ok, _} <- validate_thread(context) do
+    with {:ok, _} <- validate_thread(context),
+         %Ecto.Query{} = query <- CommunityChain.comment_parent(query) do
       from(comment in query,
         join: lifecycle in CommentLifecycle,
         as: :gate_comment_lifecycle,
         on: lifecycle.comment_id == comment.id,
-        join: community in Community,
-        as: :gate_community,
-        on: community.id == ^context.community_id,
         where: lifecycle.state == :visible
       )
       |> maybe_filter_thread(context)
+      |> filter_community(context)
+      |> public_parent(actor, context)
       |> public_comment(actor)
     end
   end
@@ -162,7 +161,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
           end
 
         binding_ids =
-          GroupherServer.CMS.Gate.Scope.Article.scope(
+          GroupherServer.CMS.Gate.Scope.Article.scope_with_review_policy(
             Ecto.Queryable.to_query(GroupherServer.CMS.Model.Article),
             actor,
             :read,
@@ -179,8 +178,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     where(query, ^allowed)
   end
 
-  defp public_comment(query, %User{id: user_id} = actor) do
-    %{platform?: platform_read?, community_slugs: community_slugs} = ReviewRead.grants(actor)
+  defp public_comment(query, %User{id: user_id}) do
+    {platform_read?, community_read?} = review_access_predicates(user_id)
 
     from(comment in query,
       where:
@@ -192,7 +191,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
                     is_nil(restriction.community_id) and is_nil(restriction.resolved_at),
                 select: 1
               )
-            ) or ^platform_read?) and
+            ) or exists(subquery(platform_read?))) and
              (comment.thread != :doc or
                 not exists(
                   from(restriction in CommentReviewBlock,
@@ -202,7 +201,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
                         is_nil(restriction.resolved_at),
                     select: 1
                   )
-                ) or as(:gate_community).slug in ^community_slugs))
+                ) or exists(subquery(platform_read?)) or
+                  exists(subquery(community_read?))))
     )
   end
 
@@ -228,5 +228,28 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
                )
              ))
     )
+  end
+
+  defp review_access_predicates(user_id) do
+    with {:ok, platform_read?} <-
+           CMS.Passport.Store.action_predicate(
+             user_id,
+             :global,
+             CMS.GateAction.review_platform_read()
+           ),
+         {:ok, community_read?} <-
+           CMS.Passport.Store.action_predicate(
+             user_id,
+             {:community_binding, :gate_community},
+             CMS.GateAction.review_read()
+           ) do
+      {platform_read?, community_read?}
+    else
+      _ -> {denied_action_query(), denied_action_query()}
+    end
+  end
+
+  defp denied_action_query do
+    from(passport in CMS.Model.GlobalPassport, where: false, select: 1)
   end
 end

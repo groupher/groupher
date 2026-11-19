@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     ArticleBinding,
     CommentLifecycle,
     Community,
+    CommunityAdmin,
     CommunityLifecycle,
     CommunityModerator,
     Author
@@ -165,10 +166,15 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
           community.user_id == ^actor_id or
           (community.slug in ^granted_community_slugs and
              exists(
-               from(moderator in CommunityModerator,
+               from(admin in CommunityAdmin,
                  where:
-                   moderator.community_id == parent_as(:gate_community).id and
-                     moderator.user_id == ^actor_id,
+                   admin.community_id == parent_as(:gate_community).id and
+                     admin.user_id == ^actor_id and
+                     (admin.is_lord or
+                        fragment(
+                          "? -> 'article.insights.read' = 'true'::jsonb",
+                          admin.permissions
+                        )),
                  select: 1
                )
              ))

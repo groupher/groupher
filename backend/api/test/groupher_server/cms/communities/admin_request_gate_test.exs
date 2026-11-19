@@ -30,4 +30,14 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestGateTest do
 
     assert {:error, _} = CMS.Gate.access_check(other, :admin_apply, community)
   end
+
+  test "Admin operation Gate actions leave membership authorization to their command" do
+    {:ok, actor} = db_insert(:user)
+    {:ok, community} = mock_community(actor)
+
+    for action <- [:admin_request_decide, :admin_permissions_update, :admin_remove] do
+      assert {:ok, _} = CMS.Gate.access_check(actor, action, community)
+      assert {:error, _} = CMS.Gate.access_check(nil, action, community)
+    end
+  end
 end

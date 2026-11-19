@@ -7,6 +7,7 @@ const entry = (action, scope = 'community', requires = [], requires_thread = {})
   action,
   scope,
   grantable: true,
+  owner_only: scope === 'article',
   requires,
   requires_thread,
 })
@@ -60,12 +61,43 @@ test('Article and Doc permissions retain their required scopes and dependencies'
     ]),
   )
   assert.equal(all.get('article.mirror').scope, 'community')
+  assert.equal(all.get('article.read_draft').scope, 'article')
+  assert.equal(all.get('article.read_draft').grantable, true)
+  assert.equal(all.get('article.read_draft').owner_only, true)
+  assert.equal(all.get('article.trash.read').grantable, false)
+  assert.equal(all.get('article.trash.read').owner_only, true)
   assert.deepEqual(all.get('article.history.restore').requires, [
     'article.history.read',
     'article.update',
     'article.read_draft',
   ])
+  assert.deepEqual(all.get('article.mirror').requires_thread, { doc: ['doc.queue.write'] })
   assert.deepEqual(all.get('community.article.hide').requires_thread, { doc: ['doc.queue.write'] })
+  assert.deepEqual(all.get('community.article.hide').requires, ['community.article.trash.read'])
+  assert.equal(all.get('community.article.hide').owner_only, false)
   assert.equal(all.get('article.author.manage').grantable, false)
+  assert.equal(all.get('article.author.manage').owner_only, true)
+  assert.equal(all.get('admin.invite').scope, 'community')
+  assert.equal(all.get('admin.invite').grantable, false)
   assert.equal(all.has('doc.update'), false)
+})
+
+test('permission contract is the only source and contains no alias metadata protocol', async () => {
+  const { readFile } = await import('node:fs/promises')
+  const source = JSON.parse(
+    await readFile(new URL('../gate.contract.json', import.meta.url), 'utf8'),
+  )
+  assert.deepEqual(Object.keys(source), ['permissions'])
+  assert.ok(
+    source.permissions.every(
+      (permission) =>
+        Object.keys(permission).sort().join(',') ===
+        'action,grantable,owner_only,requires,requires_thread,scope',
+    ),
+  )
+})
+
+test('rejects malformed owner-only metadata', () => {
+  const malformed = { ...entry('article.read_draft', 'article'), owner_only: 'true' }
+  assert.throws(() => validation([malformed]), /metadata/)
 })

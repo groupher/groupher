@@ -639,4 +639,29 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
             "enum_values/1 expects a compile-time list, got: #{Macro.to_string(expanded)}"
     end
   end
+
+  @doc "Generates the GraphQL PassportAction values from the canonical Gate contract."
+  defmacro passport_action_values do
+    CMS.passport_actions()
+    |> Enum.map(fn action ->
+      enum_name = action |> String.replace(".", "_") |> String.to_existing_atom()
+
+      quote do
+        value(unquote(enum_name), as: unquote(action))
+      end
+    end)
+  end
+
+  @doc false
+  defmacro community_article_trash_fields do
+    quote do
+      field(:id, non_null(:id))
+      field(:community_id, non_null(:id))
+      field(:thread, non_null(:community_article_trash_thread))
+      field(:status, non_null(:community_article_trash_status))
+      field(:public_visible, non_null(:boolean))
+      field(:record_revision, non_null(:string))
+      field(:created_at, non_null(:datetime))
+    end
+  end
 end

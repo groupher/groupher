@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.FrontDesk do
     to: CommentFrontDesk,
     as: :read_mentioned
 
-  @doc "Reads one Community by id or public slug in the default public mode."
+  @doc "Reads one Community by id, public slug, or explicit {:ref, stable_ref} locator."
   def community(ref), do: Community.read(ref)
 
   @doc "Reads one Community with an explicit mode and optional named view."
@@ -69,6 +69,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   ## Examples
 
       CMS.FrontDesk.community(community_slug, actor, mode: :management)
+      CMS.FrontDesk.community({:ref, stable_ref}, actor, mode: :management)
   """
   @spec community(term(), term(), keyword()) :: T.domain_res(CMS.Model.Community.t())
   def community(ref, actor, opts), do: Community.read(ref, actor, opts)

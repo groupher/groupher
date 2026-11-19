@@ -137,25 +137,13 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
        when action in [:edit, :delete, :pin] do
     with {:ok, passport_action} <- passport_action(action),
          {:ok, community} <- community(context) do
-      authorize_passport(
-        user,
-        passport_action,
-        Map.get(context, :comment_author_user_id) == user.id,
-        community,
-        context
-      )
+      authorize_passport(user, passport_action, community, context)
     end
   end
 
   defp action_allowed(%User{} = user, :undo_pin, context) do
     with {:ok, community} <- community(context) do
-      authorize_passport(
-        user,
-        CMS.GateAction.comment_undo_pin(),
-        Map.get(context, :comment_author_user_id) == user.id,
-        community,
-        context
-      )
+      authorize_passport(user, CMS.GateAction.comment_undo_pin(), community, context)
     end
   end
 
@@ -165,23 +153,20 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   defp passport_action(:delete), do: {:ok, CMS.GateAction.comment_delete()}
   defp passport_action(:pin), do: {:ok, CMS.GateAction.comment_pin()}
 
-  defp authorize_passport(user, action, owner?, community, context) do
-    case CMS.GateAction.requirement(action) do
-      nil ->
-        {:error, ErrorCat.unknown_action()}
-
-      requirement ->
-        if owner? and Map.get(requirement, :owner_fallback, false) do
-          {:ok, :pass}
-        else
-          passport_rules = Map.get(context, :passport_rules) || Map.get(user, :cur_passport)
-
-          case CMS.Passport.Authorization.allowed?(passport_rules, community.slug, action) do
-            {:ok, true} -> {:ok, :pass}
-            {:ok, false} -> {:error, ErrorCat.permission_denied()}
-            {:error, _} -> {:error, ErrorCat.permission_denied()}
-          end
-        end
+  defp authorize_passport(user, action, _community, context) do
+    with {:ok, %{scope: :article}} <- CMS.Passport.Catalog.get(action),
+         %CMS.Passport.Scope.Article{article_id: article_id} = scope <-
+           Map.get(context, :article_passport_scope),
+         true <- article_id == Map.get(Map.get(context, :article), :id),
+         allowed <-
+           Map.get(context, :comment_author_user_id) == user.id or
+             CMS.Passport.allowed?(user, scope, action) == {:ok, true},
+         true <- allowed do
+      {:ok, :pass}
+    else
+      {:error, :unknown_action} -> {:error, ErrorCat.unknown_action()}
+      {:ok, _metadata} -> {:error, ErrorCat.permission_denied()}
+      _ -> {:error, ErrorCat.permission_denied()}
     end
   end
 end

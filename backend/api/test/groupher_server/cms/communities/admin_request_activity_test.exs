@@ -33,6 +33,67 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestActivityTest do
     assert log.metadata["proposed_permissions"] == %{"doc.queue.write" => true}
   end
 
+  test "Admin membership Activity accepts the metadata produced by both decision paths" do
+    {:ok, actor} = db_insert(:user)
+    {:ok, subject} = db_insert(:user)
+    {:ok, community} = mock_community(actor)
+    request_id = Ecto.UUID.generate()
+
+    assert {:ok, joined} =
+             Activity.log(community, :admin_joined,
+               actor: actor,
+               metadata: %{
+                 subject_user_id: subject.id,
+                 request_id: request_id,
+                 member_id: 101,
+                 before_permissions: %{},
+                 after_permissions: %{"doc.queue.write" => true}
+               }
+             )
+
+    assert joined.action == :admin_joined
+
+    assert {:ok, changed_from_request} =
+             Activity.log(community, :admin_permissions_changed,
+               actor: actor,
+               metadata: %{
+                 subject_user_id: subject.id,
+                 request_id: request_id,
+                 member_id: 101,
+                 before_permissions: %{"doc.queue.write" => true},
+                 after_permissions: %{"doc.queue.write" => true, "doc.queue.approve" => true}
+               }
+             )
+
+    assert changed_from_request.action == :admin_permissions_changed
+
+    assert {:ok, changed_directly} =
+             Activity.log(community, :admin_permissions_changed,
+               actor: actor,
+               metadata: %{
+                 subject_user_id: subject.id,
+                 member_id: 101,
+                 before_permissions: %{"doc.queue.write" => true},
+                 after_permissions: %{"doc.queue.write" => true, "doc.queue.approve" => true}
+               }
+             )
+
+    assert changed_directly.action == :admin_permissions_changed
+
+    assert {:ok, removed} =
+             Activity.log(community, :admin_removed,
+               actor: actor,
+               metadata: %{
+                 subject_user_id: subject.id,
+                 member_id: 101,
+                 before_permissions: %{"doc.queue.write" => true},
+                 after_permissions: %{}
+               }
+             )
+
+    assert removed.action == :admin_removed
+  end
+
   test "private Admin events are filtered from list, stats, detail and export" do
     {:ok, owner} = db_insert(:user)
     {:ok, outsider} = db_insert(:user)

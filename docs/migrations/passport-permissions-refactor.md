@@ -1,6 +1,6 @@
 # Passport Permission、Admin 与 Messaging 收口
 
-> 状态：P1 基线、P2 Admin 请求 / 管理接口、P2B 非 Doc 本站 Trash 与 P3 Notices 已完成本地实现及定向验收，尚未发布。P4 全消费方清理 / 最终迁移验收未开始；它依赖 C3、D1 / D2 消费者切换和 D3 验收。四份文档边界与跨模块依赖复审记录见 §7.1。2026-11-17 更新。
+> 状态：P1–P3 / P2B 已有本地实现；本轮已实现部分的隔离编译与定向验收见 §8。Admin 浏览器验收后置，P4 全消费方清理及最终迁移验收未完成，尚未发布。
 >
 > 本文拥有权限目录 / Action 一一对应、Admin 命名、Community ref、Passport 并发写入、Community Admin 请求以及 Notices 接入。Article 成员合同见 [Co-Authors](../feature/article/co-authors.md)，内容追溯见 [修改历史 / Diff](../feature/article/edit-history-diff.md)，后续站点修复见 [Docs Mirror Fix](./docs-mirror-fix.md)。
 >
@@ -485,3 +485,18 @@ management_binding_allowed? / base_command_binding_allowed? 中仅凭成员身�
 执行 mix compile --warnings-as-errors、focused Passport / Gate / Admins / FrontDesk / Messaging 数据库与集成测试；make be.gen.schema、pnpm graphql:codegen、pnpm contract:graphql:generated、受影响 frontend type-check、pnpm run docs:check（文档链接 / 结构及现有静态门禁，不证明业务语义）。浏览器使用 /home/xx，验证 lord 发 invite、subject 接受、apply 决定及 badge。每批记录实际检查、环境、失败 / 未运行项；不得以计划表代替验收。
 
 P2B 验收记录（2026-11-17）：`mix compile --warnings-as-errors` 通过；Binding Trash 持久化 / CAS、社区命令、全局 Trash、永久删除历史保护、生成 parity 与 Gate Scope 本站隔离相关测试合计 31 项通过。`packages/contracts` 的 `pnpm test` 通过（4 个 Node 测试、30 个 Vitest 测试）；根 `pnpm run contract:community-article-trash`、`pnpm graphql:codegen`、`pnpm run contract:graphql:generated`（60 个源文件）、Core / Dash type-check 及 Trash hook 4 项测试均通过。合同 freshness 已加入 `.github/workflows/graphql-contract.yml` 并覆盖 `packages/contracts/**` 变更。`pnpm run docs:check` 未通过：唯一 finding 是 Docs 所有的 `backend/api/lib/groupher_server/cms/doc_tree/commands/queue_access.ex:22` `transaction_owner` 边界；这不是 P2B 代码，但全仓静态门禁仍待 Docs 处理后复验。P2B 尚未发布。
+
+## 8. 已实现部分收尾验收（2026-11-19）
+
+本轮签收 Passport 已实现的合同与接线，不代表 P4 或发布验收完成。
+
+- Pipeline / Receipt 前置提交：`3d8965e63`。`change/2` 接收服务端操作 UUID；既有 Command 回调、Receipt schema、事件身份与 Outbox 接入同批迁移。
+- 从 HEAD 和本轮暂存内容导出独立副本，`MIX_ENV=test mix compile --warnings-as-errors` 通过；在独立临时数据库上，Receipt / Runner / Operation Identity、Passport Catalog / Store / Authorization、middleware、Admin GraphQL 与 Activity 共 **79 项测试通过**。未使用其他未提交源码补齐运行依赖。
+- 合同验证器 **5 项通过**，Gate 生成物 freshness 通过；前端 `useGate` **3 项通过**，contracts 类型检查通过。
+- 当前工作区另外完成 Passport / Admin 定向回归 **74 项通过、1 项跳过**，以及 Operation Identity / Outbox / Assets / History 定向回归 **84 项通过**。这些结果分别记录，不相加成独立用例总数。
+- Admin 浏览器验收按用户决定后置。`currentGlobalPassport` 不是当前 schema 提供的字段；查询该草拟字段的旧测试仍是失败项，不以排除该用例宣称全量通过。
+- 全仓 Core type-check、Elixir style/context 与 docs 聚合门禁仍有其他工作区范围内的失败。本轮钩子的 query-invalidation 检查通过，backend-context 检查失败；保留失败记录后以隔离编译、定向测试、显式差异检查及 commitlint 完成本地提交，未将全仓门禁标为通过。
+
+### P4 单列未完成
+
+全消费方切换、旧 Registry / Assignment / Moderators 入口及旧 Passport 投影退役、jobs / seeds / generated / 文档无残留核验、最终 DDL / 数据迁移与正式切换验收仍属 P4。其前置条件维持 C3、D1 / D2 和 D3；本轮不把这些项目记为已交付，也不把 Admin 浏览器验收当作 P4 的前置。

@@ -23,6 +23,7 @@ defmodule GroupherServer.Support.Factory do
     Category,
     Comment,
     Community,
+    CommunityAdmin,
     CommunityTag,
     CommunityTagGroup
   }
@@ -418,12 +419,12 @@ defmodule GroupherServer.Support.Factory do
       thread: :post,
       article_id: post.id,
       title: post.title,
-      action: :upvote,
+      type: :upvote,
       user_id: user.id,
       read: false
     }
 
-    Messaging.send_notification(notify_attrs, from_user)
+    Messaging.send_notice(notify_attrs, from_user)
   end
 
   def mock_community do
@@ -488,14 +489,32 @@ defmodule GroupherServer.Support.Factory do
   end
 
   defp create_published_doc(community, attrs, user) do
-    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    doc_permissions = %{"doc.queue.publish" => true, "doc.queue.write" => true}
+
+    case Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) do
+      %CommunityAdmin{} = member ->
+        member
+        |> CommunityAdmin.changeset(%{
+          permissions: Map.merge(member.permissions, doc_permissions)
+        })
+        |> Repo.update!()
+
+      nil ->
+        %CommunityAdmin{}
+        |> CommunityAdmin.changeset(%{
+          user_id: user.id,
+          community_id: community.id,
+          permissions: doc_permissions
+        })
+        |> Repo.insert!()
+    end
 
     attrs =
       attrs
       |> with_body_bag()
       |> Map.take([:title, :slug, :digest, :body_bag, :cover, :cover_edit, :tag_ids])
 
-    CMS.Seeds.Docs.create(community, attrs, actor, Ecto.UUID.generate())
+    CMS.Seeds.Docs.create(community, attrs, user, Ecto.UUID.generate())
   end
 
   defp with_body_bag(%{body: body} = attrs) when is_binary(body) do

@@ -19,6 +19,13 @@ defmodule GroupherServer.Activity.Model.CommunityLog do
       :destroy_cancelled,
       :destroyed,
       :lifecycle_reconciled,
+      :admin_joined,
+      :admin_removed,
+      :admin_permissions_changed,
+      :admin_request_created,
+      :admin_request_decided,
+      :admin_request_cancelled,
+      :admin_request_expired,
       :docs_approval_policy_changed,
       :activity_exported
     ]

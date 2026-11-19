@@ -25,6 +25,90 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Communities,
     as: :moderator_candidates
 
+  @doc "Lists canonical Passport Actions for cross-context contract generation."
+  defdelegate passport_actions(), to: GroupherServer.CMS.GateAction, as: :actions
+
+  @doc "Returns candidate Users for a Community Admin invitation."
+  defdelegate communities_admins_candidates(community_ref, name, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :candidates
+
+  @doc "Pages Community Admins with their current Passport permissions."
+  defdelegate communities_admins_page(community_ref, pagi, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :page_admins
+
+  @doc "Pages readable Community Admin memberships."
+  defdelegate communities_admins_members(community_ref, filter, pagi, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :page_members
+
+  @doc "Pages Community Admin requests visible to the actor."
+  defdelegate communities_admins_requests(community_ref, pagi, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :page_requests
+
+  @doc "Creates a Community Admin invite or application."
+  defdelegate communities_admins_create(
+                community_ref,
+                subject_login,
+                type,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Communities.Admins,
+              as: :create
+
+  @doc "Decides a Community Admin request."
+  defdelegate communities_admins_decide(
+                request_id,
+                revision,
+                decision,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Communities.Admins,
+              as: :decide
+
+  @doc "Cancels a Community Admin request."
+  defdelegate communities_admins_cancel(request_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :cancel
+
+  @doc "Updates a Community Admin's Passport permissions."
+  defdelegate communities_admins_update_permissions(
+                community_ref,
+                member_id,
+                revision,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Communities.Admins,
+              as: :update_permissions
+
+  @doc "Removes a Community Admin membership."
+  defdelegate communities_admins_remove(community_ref, member_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :remove
+
+  @doc "Leaves the actor's Community Admin membership."
+  defdelegate communities_admins_leave(community_ref, revision, actor, command_id),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :leave
+
+  @doc "Returns the current actor's Community Admin membership."
+  defdelegate communities_admins_current(community_ref, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :current
+
+  @doc "Checks whether the actor can manage Community Admins."
+  defdelegate communities_admins_management_allowed(community_ref, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :management_allowed
+
   @doc "Builds the public Community query used by relation-backed collections."
   defdelegate communities_public_query(), to: GroupherServer.CMS.Communities, as: :public_query
 
@@ -418,6 +502,23 @@ defmodule GroupherServer.CMS do
   @doc "Delivers one committed CMS outbox event through its owning workflow."
   @spec deliver_outbox(atom(), Oban.Job.t()) :: Oban.Worker.result()
   def deliver_outbox(kind, job), do: GroupherServer.CMS.Outbox.Workflow.perform(kind, job)
+
+  @doc "Retries one dead Outbox event after checking the current system-root Passport."
+  @spec retry_outbox_event(
+          Ecto.UUID.t(),
+          pos_integer(),
+          GroupherServer.Accounts.Model.User.t(),
+          String.t()
+        ) ::
+          {:ok, map()} | {:error, term()}
+  def retry_outbox_event(event_id, expected_failure_generation, actor, reason) do
+    GroupherServer.CMS.Outbox.ManualRetry.retry(
+      event_id,
+      expected_failure_generation,
+      actor,
+      reason
+    )
+  end
 
   @doc "Executes a typed Article effect through the public CMS boundary."
   @spec articles_effect(map()) :: {:ok, term()} | {:error, term()}
@@ -1103,7 +1204,9 @@ defmodule GroupherServer.CMS do
   defdelegate assets_page(community, filter, pagi), to: GroupherServer.CMS.Assets, as: :page
 
   @doc "Pages version-owned asset references using Pagi parameters."
-  defdelegate assets_refs(community, asset_id, pagi), to: GroupherServer.CMS.Assets, as: :refs
+  defdelegate assets_refs(community, asset_id, pagi, actor),
+    to: GroupherServer.CMS.Assets,
+    as: :refs
 
   @doc "Delegates GroupherServer.CMS.Assets.register_to_community/3 through the CMS Context boundary."
   defdelegate assets_register_to_community(arg1, arg2, arg3),
@@ -1908,20 +2011,6 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.SaveQueue, as: :execute
 
-  @doc "Saves a Docs Queue copy with trusted history provenance."
-  defdelegate docs_queue_save(
-                community,
-                queue_revision,
-                article_id,
-                work_revision,
-                attrs,
-                actor,
-                command_id,
-                history_context
-              ),
-              to: GroupherServer.CMS.DocTree.Commands.SaveQueue,
-              as: :execute
-
   defdelegate docs_queue_merge(
                 community,
                 queue_revision,
@@ -1932,21 +2021,6 @@ defmodule GroupherServer.CMS do
                 actor,
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.MergeQueue, as: :execute
-
-  @doc "Merges a Docs Queue copy with trusted history provenance."
-  defdelegate docs_queue_merge(
-                community,
-                queue_revision,
-                article_id,
-                default_revision,
-                work_revision,
-                choices,
-                actor,
-                command_id,
-                history_context
-              ),
-              to: GroupherServer.CMS.DocTree.Commands.MergeQueue,
-              as: :execute
 
   defdelegate docs_editor_read(community, article_id, actor),
     to: GroupherServer.CMS.DocTree.DefaultCopy,
@@ -2042,24 +2116,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.DocTree.Commands.CreateWorkspaceNode,
     as: :execute
 
-  @doc "Creates a Docs workspace node with trusted history provenance."
-  defdelegate docs_workspace_create(
-                community,
-                revision,
-                attrs,
-                actor,
-                command_id,
-                history_context
-              ),
-              to: GroupherServer.CMS.DocTree.Commands.CreateWorkspaceNode,
-              as: :execute
-
   defdelegate docs_enqueue(community, revision, entries, actor, command_id),
-    to: GroupherServer.CMS.DocTree.Commands.Enqueue,
-    as: :execute
-
-  @doc "Enqueues Docs with trusted history provenance."
-  defdelegate docs_enqueue(community, revision, entries, actor, command_id, history_context),
     to: GroupherServer.CMS.DocTree.Commands.Enqueue,
     as: :execute
 
@@ -2080,11 +2137,6 @@ defmodule GroupherServer.CMS do
 
   @doc "Publishes the complete Docs queue under its expected revision."
   defdelegate docs_release_queue(community, revision, actor, command_id),
-    to: GroupherServer.CMS.DocTree.Commands.ReleaseQueue,
-    as: :execute
-
-  @doc "Releases a Docs Queue with trusted history provenance."
-  defdelegate docs_release_queue(community, revision, actor, command_id, history_context),
     to: GroupherServer.CMS.DocTree.Commands.ReleaseQueue,
     as: :execute
 
@@ -2891,18 +2943,4 @@ defmodule GroupherServer.CMS do
   defdelegate docs_restore_snapshot(site, article, snapshot, work, revision, actor, command),
     to: GroupherServer.CMS.DocTree.Commands.RestoreSnapshot,
     as: :execute
-
-  @doc "Restores a Docs Snapshot with trusted history provenance."
-  defdelegate docs_restore_snapshot(
-                site,
-                article,
-                snapshot,
-                work,
-                revision,
-                actor,
-                command,
-                history_context
-              ),
-              to: GroupherServer.CMS.DocTree.Commands.RestoreSnapshot,
-              as: :execute
 end

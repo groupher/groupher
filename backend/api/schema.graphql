@@ -73,6 +73,21 @@ type RootQueryType {
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: ArticlePageFilter, pagi: PagiInput, thread: DocThread): DocPage
 
+  "Admin candidates excluding current members and pending requests"
+  adminCandidates(communityRef: String!, name: String!): [CommonUser!]!
+
+  "Paged Community Admin memberships"
+  pagedCommunityAdmins(communityRef: String!, pagi: PagiInput): CommunityAdminPage!
+
+  "Paged Admin requests visible to the current user"
+  pagedCommunityAdminRequests(communityRef: String!, pagi: PagiInput): CommunityAdminRequestPage!
+
+  "Current viewer's Admin membership in a Community"
+  currentCommunityAdmin(communityRef: String!): CommunityAdmin
+
+  "Whether the viewer can manage Community Admin memberships"
+  communityAdminManagementAllowed(communityRef: String!): Boolean!
+
   docsQueuePolicy(community: String!): Json
 
   "Authorized Docs publication read"
@@ -581,6 +596,30 @@ type RootMutationType {
 
   "delete a tag by thread"
   deleteCommunityTag(commandId: ID!, id: ID!, community: String!, thread: Thread): CommunityTag
+
+  "Create an Admin invitation or submit the current user's application"
+  createCommunityAdminRequest(
+    communityRef: String!, type: String!, subjectLogin: String, permissions: Json!, commandId: ID!
+  ): CommunityAdminRequest!
+
+  "Accept or reject an Admin invitation or application"
+  decideCommunityAdminRequest(
+    requestId: ID!, revision: Int!, decision: String!, approvedPermissions: Json, commandId: ID!
+  ): CommunityAdminRequest!
+
+  "Cancel an Admin request at its current revision"
+  cancelCommunityAdminRequest(requestId: ID!, revision: Int!, commandId: ID!): CommunityAdminRequest!
+
+  "Replace one Admin's grantable permissions at its current revision"
+  updateCommunityAdminPermissions(
+    communityRef: String!, memberId: ID!, revision: Int!, permissions: Json!, commandId: ID!
+  ): CommunityAdmin!
+
+  "Remove one Admin membership at its current revision"
+  removeCommunityAdmin(communityRef: String!, memberId: ID!, revision: Int!, commandId: ID!): Boolean!
+
+  "Leave the current user's ordinary Admin membership"
+  leaveCommunityAdmins(communityRef: String!, revision: Int!, commandId: ID!): Boolean!
 
   "Create a stable Article and its default mutable WorkingCopy"
   createArticle(
@@ -1865,10 +1904,49 @@ type CmsArtimentReview {
   communityOpinion: ArtimentReviewOpinion
 }
 
+type CommunityAdmin {
+  memberId: ID!
+  revision: Int!
+  isLord: Boolean!
+  permissions: [PassportAction!]!
+  user: CommonUser!
+}
+
+type CommunityAdminPage {
+  entries: [CommunityAdmin!]!
+  pageInfo: PageInfo!
+}
+
+type CommunityAdminRequest {
+  id: ID!
+  communityId: ID!
+  subjectUserId: ID!
+  createdById: ID!
+  type: String!
+  status: String!
+  decision: String
+  revision: Int!
+  proposedPermissions: Json
+  approvedPermissions: Json
+  expiresAt: DateTime
+  decidedAt: DateTime
+  cancelledAt: DateTime
+  expiredAt: DateTime
+  subjectUser: CommonUser
+  createdBy: CommonUser
+}
+
+type CommunityAdminRequestPage {
+  entries: [CommunityAdminRequest!]!
+  pageInfo: PageInfo!
+}
+
 enum PassportAction {
+  ADMIN_APPLY
   ADMIN_INVITE
   ADMIN_PERMISSIONS_UPDATE
   ADMIN_REMOVE
+  ADMIN_REQUEST_DECIDE
   ANALYSIS_WEB_READ
   ARTICLE_AUTHOR_MANAGE
   ARTICLE_HISTORY_READ
@@ -1886,23 +1964,39 @@ enum PassportAction {
   ARTICLE_UPDATE
   ASSET_UPLOAD
   AUDIT_READ
+  BLOG_DRAFT_PUBLISH
+  BLOG_DRAFT_UPDATE
   BLOG_LOCK_COMMENT
+  BLOG_PERMANENT_DELETE
   BLOG_PIN
+  BLOG_RESTORE
   BLOG_SINK
+  BLOG_TRASH
   BLOG_UNDO_LOCK_COMMENT
   BLOG_UNDO_PIN
   BLOG_UNDO_SINK
+  BLOG_UPDATE
   CATEGORY_CREATE
   CATEGORY_DELETE
   CATEGORY_SET
   CATEGORY_UNSET
   CATEGORY_UPDATE
+  CHANGELOG_DRAFT_PUBLISH
+  CHANGELOG_DRAFT_UPDATE
   CHANGELOG_LOCK_COMMENT
+  CHANGELOG_PERMANENT_DELETE
   CHANGELOG_PIN
+  CHANGELOG_RESTORE
   CHANGELOG_SINK
+  CHANGELOG_TRASH
   CHANGELOG_UNDO_LOCK_COMMENT
   CHANGELOG_UNDO_PIN
   CHANGELOG_UNDO_SINK
+  CHANGELOG_UPDATE
+  COMMENT_DELETE
+  COMMENT_PIN
+  COMMENT_UNDO_PIN
+  COMMENT_UPDATE
   COMMUNITY_APPLICATION_APPROVE
   COMMUNITY_APPLICATION_REJECT
   COMMUNITY_APPLICATION_RETRY_CREATION
@@ -1925,23 +2019,35 @@ enum PassportAction {
   DOC_HISTORY_READ
   DOC_IMPORT
   DOC_LOCK_COMMENT
+  DOC_PERMANENT_DELETE
   DOC_PIN
   DOC_QUEUE_APPROVE
   DOC_QUEUE_CONFIGURE
   DOC_QUEUE_PREVIEW
   DOC_QUEUE_PUBLISH
   DOC_QUEUE_WRITE
+  DOC_RESTORE
   DOC_SINK
+  DOC_TRASH
   DOC_UNDO_LOCK_COMMENT
   DOC_UNDO_PIN
   DOC_UNDO_SINK
+  MODERATOR_SET
+  MODERATOR_UNSET
+  MODERATOR_UPDATE
+  POST_DRAFT_PUBLISH
+  POST_DRAFT_UPDATE
   POST_LOCK_COMMENT
+  POST_PERMANENT_DELETE
   POST_PIN
+  POST_RESTORE
   POST_SET_CATEGORY
   POST_SINK
+  POST_TRASH
   POST_UNDO_LOCK_COMMENT
   POST_UNDO_PIN
   POST_UNDO_SINK
+  POST_UPDATE
   REVIEW_CONFIGURE
   REVIEW_DECIDE
   REVIEW_PLATFORM_CONFIGURE
@@ -1959,18 +2065,6 @@ enum PassportAction {
   TICKET_READ_INTERNAL
   TICKET_TRANSITION
   TICKET_UPDATE
-}
-
-enum CommunityArticleTrashThread {
-  POST
-  BLOG
-  CHANGELOG
-  DOC
-}
-
-enum CommunityArticleTrashStatus {
-  PENDING
-  EFFECTIVE
 }
 
 enum ArticleEventType {
@@ -1991,51 +2085,6 @@ input ArticleVersionRefInput {
   snapshotId: ID
   workingCopyId: ID
   revision: Int
-}
-
-interface CommunityArticleTrashItem {
-  id: ID!
-  thread: CommunityArticleTrashThread!
-  status: CommunityArticleTrashStatus!
-  publicVisible: Boolean!
-  recordRevision: String!
-  createdAt: DateTime!
-}
-
-type CommunityArticleBindingTrashItem implements CommunityArticleTrashItem {
-  id: ID!
-  thread: CommunityArticleTrashThread!
-  status: CommunityArticleTrashStatus!
-  publicVisible: Boolean!
-  recordRevision: String!
-  createdAt: DateTime!
-  bindingId: ID!
-  articleId: ID!
-  hiddenAt: DateTime!
-  title: String
-  commandId: ID
-}
-
-type CommunityDocTreeTrashItem implements CommunityArticleTrashItem {
-  id: ID!
-  thread: CommunityArticleTrashThread!
-  status: CommunityArticleTrashStatus!
-  publicVisible: Boolean!
-  recordRevision: String!
-  createdAt: DateTime!
-  treePath: [CommunityDocTrashPathSegment!]!
-  pendingMemberCount: Int!
-  removedMemberCount: Int!
-}
-
-type CommunityDocTrashPathSegment {
-  nodeId: ID!
-  title: String!
-}
-
-type CommunityArticleTrashPage {
-  entries: [CommunityArticleTrashItem!]!
-  pageInfo: PageInfo!
 }
 
 enum ArtimentType {
@@ -3426,6 +3475,7 @@ type ArtimentBody {
 }
 
 type Post implements Article {
+  id: ID!
   innerId: ID
   version: Int!
   title: String
@@ -3459,6 +3509,7 @@ type Post implements Article {
 }
 
 type Changelog implements Article {
+  id: ID!
   innerId: ID
   version: Int!
   title: String
@@ -3488,6 +3539,7 @@ type Changelog implements Article {
 }
 
 type Doc implements Article {
+  id: ID!
   innerId: ID
   version: Int!
   title: String
@@ -3518,6 +3570,7 @@ type Doc implements Article {
 }
 
 type Blog implements Article {
+  id: ID!
   innerId: ID
   version: Int!
   title: String
@@ -4004,6 +4057,9 @@ type AllRules {
 }
 
 type Community {
+  "Stable, immutable Community identity."
+  ref: String!
+
   "Community display title."
   title: String!
 
@@ -4505,6 +4561,7 @@ enum DocsDiffBaseline {
 }
 
 interface Article {
+  id: ID!
   innerId: ID
   title: String
   articleStats: ArticleStats

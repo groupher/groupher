@@ -40,4 +40,20 @@ defmodule GroupherServer.Test.CMS.Passport.CatalogTest do
     assert {:ok, ["community.article.trash.read"]} =
              Catalog.requirements("community.article.hide", nil)
   end
+
+  test "Admin operation Gate actions are registered but never grants" do
+    actions = [
+      {GroupherServer.CMS.GateAction.admin_request_decide(), "admin.request.decide"},
+      {GroupherServer.CMS.GateAction.admin_permissions_update(), "admin.permissions.update"},
+      {GroupherServer.CMS.GateAction.admin_remove(), "admin.remove"}
+    ]
+
+    for {action, expected} <- actions do
+      assert action == expected
+      assert {:ok, %{scope: :community, grantable: false}} = Catalog.get(action)
+
+      assert {:error, :permission_not_grantable} =
+               Catalog.validate_permissions(:community, %{action => true})
+    end
+  end
 end

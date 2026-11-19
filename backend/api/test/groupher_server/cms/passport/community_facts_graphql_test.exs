@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityFactsGraphqlTest do
   alias GroupherServer.CMS.Model.CommunityAdmin
   alias GroupherServerWeb.Schema
 
-  @query "query($ref: String!) { currentCommunityPassport(communityRef: $ref) { isLord permissions } }"
+  @query "query($communityRef: String!) { currentCommunityAdmin(communityRef: $communityRef) { isLord permissions } }"
 
   test "reads only the viewer's facts for the requested visible community" do
     {:ok, owner} = db_insert(:user)
@@ -21,20 +21,19 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityFactsGraphqlTest do
       })
     )
 
-    vars = %{"ref" => community.ref}
+    vars = %{"communityRef" => community.ref}
 
-    assert {:ok, %{data: %{"currentCommunityPassport" => %{"isLord" => true}}}} =
+    assert {:ok, %{data: %{"currentCommunityAdmin" => %{"isLord" => true}}}} =
              Absinthe.run(@query, Schema, variables: vars, context: %{cur_user: viewer})
 
-    assert {:ok,
-            %{data: %{"currentCommunityPassport" => %{"isLord" => false, "permissions" => []}}}} =
+    assert {:ok, %{data: %{"currentCommunityAdmin" => nil}}} =
              Absinthe.run(@query, Schema, variables: vars, context: %{cur_user: other})
 
     assert {:ok, %{errors: [_ | _]}} = Absinthe.run(@query, Schema, variables: vars)
 
     assert {:ok, %{errors: [_ | _]}} =
              Absinthe.run(@query, Schema,
-               variables: %{"ref" => "cm_nonexistent"},
+               variables: %{"communityRef" => "cm_nonexistent"},
                context: %{cur_user: viewer}
              )
   end
@@ -48,12 +47,12 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityFactsGraphqlTest do
       Repo.get_by!(GroupherServer.CMS.Model.CommunityLifecycle, community_id: community.id)
 
     lifecycle |> Ecto.Changeset.change(state: :suspended) |> Repo.update!()
-    vars = %{"ref" => community.ref}
+    vars = %{"communityRef" => community.ref}
 
     assert {:ok, %{errors: [_ | _]}} =
              Absinthe.run(@query, Schema, variables: vars, context: %{cur_user: outsider})
 
-    assert {:ok, %{data: %{"currentCommunityPassport" => %{"isLord" => _}}}} =
+    assert {:ok, %{data: %{"currentCommunityAdmin" => %{"isLord" => _}}}} =
              Absinthe.run(@query, Schema, variables: vars, context: %{cur_user: owner})
   end
 end

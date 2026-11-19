@@ -9,12 +9,13 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Community do
       Gate.access_check -> Community loader -> this context -> policy
   """
 
-  @enforce_keys [:community, :community_lifecycle, :passport_rules]
-  defstruct [:community, :community_lifecycle, :passport_rules]
+  @enforce_keys [:community, :community_lifecycle]
+  defstruct [:community, :community_lifecycle, :passport_global_scope, :community_passport_scope]
 
   @type t :: %__MODULE__{
           community: struct(),
           community_lifecycle: struct(),
-          passport_rules: map()
+          passport_global_scope: struct() | nil,
+          community_passport_scope: struct() | nil
         }
 end

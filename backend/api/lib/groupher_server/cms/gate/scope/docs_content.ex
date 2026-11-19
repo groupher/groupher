@@ -10,15 +10,25 @@ defmodule GroupherServer.CMS.Gate.Scope.DocsContent do
   import Ecto.Query
   alias GroupherServer.CMS
   alias CMS.Gate.Context.Access.Community, as: Context
-  alias CMS.Gate.Scope.ReviewRead
   alias CMS.Model.{Article, ArticleBinding, ArticleLifecycle, ArticleReviewBlock, Author}
 
   @doc "Builds a batched Doc visibility query from admitted site facts."
-  def query(actor, %Context{community: site, passport_rules: rules}, mode)
+  def query(
+        actor,
+        %Context{
+          community: site,
+          passport_global_scope: global_scope,
+          community_passport_scope: community_scope
+        },
+        mode
+      )
       when mode in [:preview, :comparison, :history] do
-    grants = ReviewRead.grants(%{actor | cur_passport: rules})
-    platform = grants.platform?
-    local = site.slug in grants.community_slugs
+    platform =
+      CMS.Passport.allowed?(actor, global_scope, CMS.GateAction.review_platform_read()) ==
+        {:ok, true}
+
+    local =
+      CMS.Passport.allowed?(actor, community_scope, CMS.GateAction.review_read()) == {:ok, true}
 
     blocked =
       from(b in ArticleReviewBlock,

@@ -27,6 +27,7 @@ defmodule GroupherServerWeb.Schema do
 
   # cms
   import_types(CMS.Types)
+  import_types(CMS.AdminTypes)
   import_types(CMS.Review.Types)
   import_types(CMS.Review.Mutations)
   import_types(CMS.Press.Types)
@@ -44,6 +45,7 @@ defmodule GroupherServerWeb.Schema do
   import_types(CMS.Review.Queries)
   import_types(CMS.ContentImport)
   import_types(CMS.Mutations.Community)
+  import_types(CMS.Mutations.CommunityAdmins)
   import_types(CMS.Mutations.Operation)
 
   import_types(CMS.Mutations.Comment)
@@ -68,6 +70,7 @@ defmodule GroupherServerWeb.Schema do
     import_fields(:account_mutations)
     # cms
     import_fields(:cms_mutation_community)
+    import_fields(:cms_community_admin_mutations)
     import_fields(:cms_operation_mutations)
 
     import_article_fields(:mutations)

@@ -17,10 +17,11 @@ export function validateGateContract(source, knownThreads) {
   for (const item of source.permissions) {
     if (
       !item ||
-      Object.keys(item).sort().join(',') !== 'action,grantable,requires,requires_thread,scope'
+      Object.keys(item).sort().join(',') !==
+        'action,grantable,owner_only,requires,requires_thread,scope'
     )
       throw new Error('invalid entry shape')
-    const { action, scope, grantable, requires, requires_thread } = item
+    const { action, scope, grantable, owner_only, requires, requires_thread } = item
     if (typeof action !== 'string' || !/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(action))
       throw new Error(`invalid action ${action}`)
     const generated = action.replaceAll('.', '_')
@@ -29,7 +30,9 @@ export function validateGateContract(source, knownThreads) {
     if (
       !['global', 'community', 'article'].includes(scope) ||
       typeof grantable !== 'boolean' ||
+      typeof owner_only !== 'boolean' ||
       !Array.isArray(requires) ||
+      requires.some((dependency) => typeof dependency !== 'string') ||
       !requires_thread ||
       typeof requires_thread !== 'object' ||
       Array.isArray(requires_thread)
@@ -42,7 +45,12 @@ export function validateGateContract(source, knownThreads) {
   }
   for (const item of entries.values()) {
     for (const [thread, deps] of Object.entries(item.requires_thread)) {
-      if (!knownThreads.has(thread) || !Array.isArray(deps) || new Set(deps).size !== deps.length)
+      if (
+        !knownThreads.has(thread) ||
+        !Array.isArray(deps) ||
+        deps.some((dependency) => typeof dependency !== 'string') ||
+        new Set(deps).size !== deps.length
+      )
         throw new Error(`invalid thread dependency ${item.action}:${thread}`)
     }
     for (const dep of [...item.requires, ...Object.values(item.requires_thread).flat()]) {

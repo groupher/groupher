@@ -53,6 +53,57 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
              Passport.allowed?(actor, scope, "article.update")
   end
 
+  test "authorization reads actual Global and Community rows with thread dependencies" do
+    {:ok, actor} = db_insert(:user)
+    {:ok, other} = db_insert(:user)
+    {:ok, owner} = db_insert(:user)
+    {:ok, community} = mock_community(owner)
+
+    global =
+      Repo.insert!(%GlobalPassport{
+        user_id: actor.id,
+        permissions: %{"community.application.review" => true}
+      })
+
+    admin =
+      Repo.insert!(
+        CMS.Model.CommunityAdmin.changeset(%CMS.Model.CommunityAdmin{}, %{
+          user_id: actor.id,
+          community_id: community.id,
+          permissions: %{
+            "community.article.hide" => true,
+            "community.article.trash.read" => true
+          }
+        })
+      )
+
+    assert {:ok, global_scope} = Passport.load_global_scope(actor)
+    assert {:ok, community_scope} = Passport.load_community_scope(actor, community)
+    assert global_scope.global.permissions == global.permissions
+    assert community_scope.community.member_id == admin.id
+
+    assert {:ok, true} =
+             Passport.allowed?(actor, global_scope, "community.application.review")
+
+    assert {:ok, true} =
+             Passport.allowed?(actor, community_scope, "community.article.hide", :post)
+
+    assert {:ok, false} =
+             Passport.allowed?(actor, community_scope, "community.article.hide", :doc)
+
+    assert {:error, :thread_required} =
+             Passport.allowed?(actor, community_scope, "community.article.hide")
+
+    assert {:error, :unknown_thread} =
+             Passport.allowed?(actor, community_scope, "community.article.hide", :unknown)
+
+    assert {:error, :unknown_action} =
+             Passport.allowed?(actor, community_scope, "community.article.unknown")
+
+    assert {:error, :invalid_scope} =
+             Passport.allowed?(other, community_scope, "community.article.hide", :post)
+  end
+
   test "catalog is filtered by scope and unknown scopes fail closed" do
     assert {:ok, entries} = Passport.catalog(:article)
     assert Enum.any?(entries, &(&1.action == "article.update"))
@@ -60,9 +111,16 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
     assert {:error, :invalid_scope} = Passport.catalog(:unknown)
   end
 
+  test "public authorization facade rejects unsupported scope values" do
+    assert {:error, :invalid_scope} = Passport.allowed?(nil, %{}, "article.update")
+    assert {:error, :invalid_scope} = Passport.allowed?(nil, %{}, "community.article.hide", :post)
+  end
+
   test "Gate refuses malformed loaded Global facts rather than dropping them" do
     {community, public, _, actor} = mock_article(:post)
     article = Repo.get!(Article, public.article_id)
+
+    Repo.insert!(%GlobalPassport{user_id: actor.id})
 
     actor.id
     |> then(&Repo.get_by!(GlobalPassport, user_id: &1))
@@ -134,6 +192,14 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
              end)
 
     fresh_scope = %{scope | member: updated}
+
+    assert {:error, :invalid_scope} =
+             Passport.revoke_in_transaction(subject, fresh_scope, %{}, updated.revision)
+
+    assert {:ok, {:error, :unknown_action}} =
+             Repo.transaction(fn ->
+               Passport.revoke_in_transaction(subject, fresh_scope, [%{}], updated.revision)
+             end)
 
     assert {:ok, {:ok, revoked}} =
              Repo.transaction(fn ->

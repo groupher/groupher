@@ -28,7 +28,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   alias CMS.Model.CoverBackground
 
   alias GroupherServerWeb.Schema
-
   import_types(Schema.CMS.Metrics)
 
   enum :passport_action do
@@ -36,7 +35,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   enum :community_article_trash_thread do
-    community_article_trash_thread_values()
+    value(:post)
+    value(:blog)
+    value(:changelog)
+    value(:doc)
   end
 
   enum :community_article_trash_status do
@@ -2156,6 +2158,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :community do
     meta(:cache, max_age: 30)
+    @desc "Stable, immutable Community identity."
+    field(:ref, non_null(:string))
     @desc "Community display title."
     field(:title, non_null(:string))
     @desc "Community introduction text."
