@@ -26,12 +26,16 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   }
 
   @doc "Adds a restriction and its effective Comment summary delta in one transaction."
-  def apply(lifecycle, attrs) when is_map(attrs) do
-    CMS.Comments.Summary.for_lifecycle(
-      lifecycle,
-      Map.get(attrs, :operation_ref),
-      fn -> apply_fact(lifecycle, attrs, Map.get(attrs, :operation_ref)) end
-    )
+  def apply(lifecycle, %{operation_ref: operation_ref} = attrs) when is_binary(operation_ref) do
+    case Ecto.UUID.cast(operation_ref) do
+      {:ok, operation_ref} ->
+        CMS.Comments.Summary.for_lifecycle(lifecycle, operation_ref, fn ->
+          apply_fact(lifecycle, attrs, operation_ref)
+        end)
+
+      :error ->
+        {:error, CMS.ErrorCat.invalid_review_block()}
+    end
   end
 
   def apply(_lifecycle, _attrs), do: {:error, CMS.ErrorCat.invalid_review_block()}
@@ -66,11 +70,20 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   end
 
   @doc "Resolves restrictions and their effective Comment summary delta in one transaction."
-  def end_blocks(lifecycle, scope_key, ids, operation_ref, resolution) do
-    CMS.Comments.Summary.for_lifecycle(lifecycle, operation_ref, fn ->
-      end_block_facts(lifecycle, scope_key, ids, operation_ref, resolution)
-    end)
+  def end_blocks(lifecycle, scope_key, ids, operation_ref, resolution)
+      when is_binary(operation_ref) do
+    case Ecto.UUID.cast(operation_ref) do
+      {:ok, operation_ref} ->
+        CMS.Comments.Summary.for_lifecycle(lifecycle, operation_ref, fn ->
+          end_block_facts(lifecycle, scope_key, ids, operation_ref, resolution)
+        end)
+
+      :error ->
+        {:error, CMS.ErrorCat.invalid_review_block()}
+    end
   end
+
+  def end_blocks(_, _, _, _, _), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp end_block_facts(lifecycle, scope_key, ids, operation_ref, resolution)
        when is_binary(scope_key) and is_list(ids) and is_binary(operation_ref) and

@@ -100,8 +100,8 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
   ## Examples
 
-      Comments.Lifecycle.transition(comment.id, :deleted)
-      Comments.Lifecycle.transition(locked_lifecycle, :deleted)
+      Comments.Lifecycle.transition(comment.id, :deleted, operation_ref)
+      Comments.Lifecycle.transition(locked_lifecycle, :deleted, operation_ref)
   """
   @spec transition(integer(), CommentLifecycle.state(), Ecto.UUID.t()) ::
           {:ok, CommentLifecycle.t()}

@@ -605,16 +605,17 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          operation_ref
        ) do
     with {:ok, _inner_id} <- article_inner_id(article, community),
-         {:ok, _event} <-
-           Effects.enqueue(
-             "comment.#{action}",
-             "comment",
-             comment.id,
-             operation_ref,
-             %{article_id: article.id, actor_id: actor.id, community_id: community.id}
-           ) do
+         {:ok, _event} <- comment_effect(action, comment, actor, community, operation_ref) do
       {:ok, :pass}
     end
+  end
+
+  defp comment_effect(:created, comment, actor, community, operation_ref) do
+    Effects.created(comment, actor, community, operation_ref)
+  end
+
+  defp comment_effect(:replied, comment, actor, community, operation_ref) do
+    Effects.replied(comment, actor, community, operation_ref)
   end
 
   defp article_inner_id(%Article{} = article, %Community{} = community) do

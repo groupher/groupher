@@ -335,6 +335,7 @@ defmodule GroupherServer.Test.CMS.Comments.SummaryTest do
           type: :human_review_hold,
           source: :request,
           source_ref: source,
+          operation_ref: Ecto.UUID.generate(),
           applied_at: DateTime.utc_now(:second)
         })
       end)

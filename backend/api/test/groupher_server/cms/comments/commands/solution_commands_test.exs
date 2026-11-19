@@ -202,7 +202,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert {:error, %{reason: :comment_deleted}} =
              CMS.Comments.accept_solution(first, actor, Ecto.UUID.generate())
 
-    {:ok, _} = Lifecycle.transition(second.id, :destroy)
+    {:ok, _} = Lifecycle.transition(second.id, :destroy, Ecto.UUID.generate())
 
     assert {:error, %{reason: :comment_destroyed}} =
              CMS.Comments.accept_solution(second, actor, Ecto.UUID.generate())

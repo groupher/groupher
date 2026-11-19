@@ -409,6 +409,7 @@ defmodule GroupherServer.Test.CMS.Press do
                  scope_key: "platform",
                  type: :manual_hold,
                  source_ref: "press-doc-feed-review",
+                 operation_ref: Ecto.UUID.generate(),
                  source: :human,
                  applied_at: DateTime.utc_now(:second)
                })

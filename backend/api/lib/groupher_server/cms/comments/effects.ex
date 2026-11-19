@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Comments.Effects do
 
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Model.{Article, Community}
+  alias CMS.Model.{Article, Comment, CommentBody, Community}
   alias CMS.Outbox.DedupeKey
 
   @doc "Persists summary invalidation for every public binding in the owner transaction."
@@ -57,27 +57,75 @@ defmodule GroupherServer.CMS.Comments.Effects do
     end)
   end
 
-  @doc "Records one Comment effect in the caller-owned transaction."
-  @spec enqueue(String.t(), String.t(), term(), Ecto.UUID.t(), map(), keyword()) ::
-          {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue(event, resource_type, resource_id, operation_ref, data, opts \\ [])
+  @doc "Records the creation's frozen subscription Community."
+  def created(%Comment{} = comment, %User{} = actor, %Community{} = community, operation_ref) do
+    enqueue("comment.created", "comment", comment.id, [community.id], operation_ref, %{
+      article_id: comment.article_id,
+      actor_id: actor.id,
+      community_id: community.id
+    })
+  end
 
-  def enqueue(event, resource_type, resource_id, operation_ref, data, opts)
-      when is_binary(event) and is_binary(resource_type) and is_binary(operation_ref) and
-             is_map(data) and is_list(opts) do
+  @doc "Records a reply once for its creation Community."
+  def replied(%Comment{} = comment, %User{} = actor, %Community{} = community, operation_ref) do
+    enqueue("comment.replied", "comment", comment.id, [community.id], operation_ref, %{
+      article_id: comment.article_id,
+      actor_id: actor.id,
+      community_id: community.id
+    })
+  end
+
+  @doc "Records an edit at its durable body version instead of reusing the first edit's key."
+  def updated(
+        %Comment{body: %CommentBody{version: version}} = comment,
+        %User{} = actor,
+        community_id,
+        operation_ref
+      ) do
+    enqueue("comment.updated", "comment", comment.id, [version, community_id], operation_ref, %{
+      article_id: comment.article_id,
+      actor_id: actor.id,
+      community_id: community_id,
+      body_version: version
+    })
+  end
+
+  @doc "Records metrics refresh independently for each deleted Comment on the same Article."
+  def deleted(%Comment{} = comment, %Article{} = article, operation_ref) do
+    enqueue("comment.deleted", "article", article.id, [comment.id], operation_ref, %{
+      article_id: article.id,
+      comment_id: comment.id
+    })
+  end
+
+  @doc "Projects the immutable business fields compared when a Comment intent is repeated."
+  def payload_projection(event, data) do
+    fields =
+      case event do
+        "comment.created" -> ["article_id", "actor_id", "community_id"]
+        "comment.replied" -> ["article_id", "actor_id", "community_id"]
+        "comment.updated" -> ["article_id", "actor_id", "community_id", "body_version"]
+        "comment.deleted" -> ["article_id", "comment_id"]
+      end
+
+    Enum.reduce_while(fields, {:ok, %{}}, fn field, {:ok, projection} ->
+      case Map.fetch(data, field) do
+        {:ok, value} -> {:cont, {:ok, Map.put(projection, field, value)}}
+        :error -> {:halt, {:error, {:outbox_payload_field_missing, field}}}
+      end
+    end)
+  end
+
+  defp enqueue(event, resource_type, resource_id, dimensions, operation_ref, data) do
     CMS.Outbox.send(%{
       event: event,
       worker: GroupherServer.Jobs.CMSOutboxComment,
       resource_type: resource_type,
       resource_id: resource_id,
       operation_ref: operation_ref,
-      dedupe_key: DedupeKey.encode([event, resource_type, resource_id]),
+      dedupe_key: DedupeKey.encode(dimensions),
       data: data
     })
-  end
-
-  def enqueue(_event, _resource_type, _resource_id, _operation_ref, _data, _opts) do
-    {:error, :comment_effect_identity_required}
   end
 
   @doc "Records one Comment activity in the caller-owned transaction."

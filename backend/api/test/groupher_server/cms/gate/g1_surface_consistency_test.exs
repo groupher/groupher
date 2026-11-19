@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
     assert {:ok, loaded} = CMS.FrontDesk.comment(path)
     assert loaded.id == comment.id
 
-    assert {:ok, _} = Lifecycle.transition(comment.id, :destroy)
+    assert {:ok, _} = Lifecycle.transition(comment.id, :destroy, Ecto.UUID.generate())
     assert {:error, %ErrorCat.Error{reason: :not_exist}} = CMS.FrontDesk.comment(path)
   end
 end

@@ -200,13 +200,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
          community_id,
          operation_ref
        ) do
-    case Effects.enqueue(
-           "comment.updated",
-           "comment",
-           comment.id,
-           operation_ref,
-           %{actor_id: actor.id, article_id: comment.article_id, community_id: community_id}
-         ) do
+    case Effects.updated(comment, actor, community_id, operation_ref) do
       {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end

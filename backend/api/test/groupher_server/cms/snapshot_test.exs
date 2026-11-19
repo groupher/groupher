@@ -331,7 +331,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, _deleted_lifecycle} = Lifecycle.transition(comment.id, :deleted)
+      {:ok, _deleted_lifecycle} = Lifecycle.transition(comment.id, :deleted, Ecto.UUID.generate())
 
       snapshot = %{id: comment.id, body_digest: "old digest", article_id: post.id, thread: :post}
 

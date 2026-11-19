@@ -170,14 +170,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
     end
   end
 
-  defp enqueue_delete_effects(comment, article, actor, operation_ref) do
-    case Effects.enqueue(
-           "comment.deleted",
-           "article",
-           article.id,
-           operation_ref,
-           %{actor_id: actor.id, article_id: article.id, comment_id: comment.id}
-         ) do
+  defp enqueue_delete_effects(comment, article, _actor, operation_ref) do
+    case Effects.deleted(comment, article, operation_ref) do
       {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end

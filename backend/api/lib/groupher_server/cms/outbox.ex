@@ -70,8 +70,6 @@ defmodule GroupherServer.CMS.Outbox do
       "comments_revision",
       "count_changed"
     ],
-    "comment.created" => ["article_id", "actor_id", "community_id"],
-    "comment.replied" => ["article_id", "actor_id", "community_id"],
     "doc_tree.changed" => ["community", "community_id"],
     "ticket.notification" => ["source_type", "source_id"],
     "ticket.cache_invalidation" => ["cache_tags"],
@@ -516,6 +514,12 @@ defmodule GroupherServer.CMS.Outbox do
       nil ->
         {:error, :outbox_conflict_row_missing}
     end
+  end
+
+  defp payload_projection(event, data)
+       when event in ["comment.created", "comment.replied", "comment.updated", "comment.deleted"] and
+              is_map(data) do
+    CMS.Comments.Effects.payload_projection(event, data)
   end
 
   defp payload_projection(event, data) when is_map(data) do

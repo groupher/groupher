@@ -84,6 +84,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
           type: :human_review_hold,
           source: :request,
           source_ref: "owner-test",
+          operation_ref: Ecto.UUID.generate(),
           applied_at: DateTime.utc_now(:second)
         })
       end)
