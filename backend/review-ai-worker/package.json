@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "pnpm --dir ../.. devhub start review-ai-worker",
+    "dev:managed": "wrangler dev --port 8794 --env-file \"$DEV_HUB_WORKER_ENV_FILE\" --persist-to \"$DEV_HUB_WORKER_STATE_DIR\"",
     "types": "wrangler types --include-runtime false",
     "type-check": "tsc --noEmit",
     "test": "vitest run",

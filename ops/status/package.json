@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler d1 migrations apply groupher-status --local && wrangler dev",
+    "dev": "pnpm --dir ../.. devhub start status",
+    "dev:managed": "wrangler dev --port 8793 --env-file \"$DEV_HUB_WORKER_ENV_FILE\" --persist-to \"$DEV_HUB_WORKER_STATE_DIR\"",
+    "db:migrate:local": "wrangler d1 migrations apply groupher-status --local",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "deploy:dry-run": "wrangler deploy --dry-run",

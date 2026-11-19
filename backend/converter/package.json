@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cf dev --mode development",
+    "dev": "pnpm --dir ../.. devhub start converter",
+    "dev:managed": "cf dev --mode development",
     "deploy": "cf deploy --mode production",
     "deploy:dry-run": "cf deploy --dry-run --mode production",
     "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.json",

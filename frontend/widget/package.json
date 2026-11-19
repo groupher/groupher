@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build && node scripts/verify-build.mjs",
-    "dev": "vite --host 127.0.0.1",
+    "dev": "pnpm --dir ../.. devhub start widget-sandbox",
+    "dev:managed": "vite --host 127.0.0.1 --port 3011 --strictPort",
     "format": "pnpm exec oxfmt -c ../core/config/oxfmt.json src test vite.config.ts",
     "format:check": "pnpm exec oxfmt -c ../core/config/oxfmt.json --check src test vite.config.ts",
     "preview": "vite preview --host 127.0.0.1",

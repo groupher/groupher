@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "generate:data": "node scripts/generate-feedback-data.mjs",
-    "dev": "pnpm run generate:data && vite --config app.config.ts --host 127.0.0.1",
+    "dev": "pnpm --dir ../.. devhub start inspire-me",
+    "dev:managed": "pnpm run generate:data && vite --config app.config.ts --host 127.0.0.1",
     "type-check": "pnpm run generate:data && pnpm run generate:routes && pnpm exec tsc --noEmit --project ./tsconfig.json",
     "build": "pnpm run generate:data && pnpm run generate:routes && vite build --config app.config.ts",
     "start": "cf dev",

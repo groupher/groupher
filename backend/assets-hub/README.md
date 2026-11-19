@@ -35,13 +35,17 @@ after their contracts are implemented.
 ## Local development and validation
 
 ```sh
-pnpm --filter @groupher/assets-hub run dev:local
+pnpm devhub start assets-hub
+pnpm devhub start assets-read-worker
 pnpm --filter @groupher/assets-hub run type-check
 pnpm --filter @groupher/assets-hub run format:check
 ```
 
-Use `.env.example` as the configuration inventory. Secrets belong in local or
-deployment environment bindings and must not be committed.
+The Node upload provider and Cloudflare read Worker are separate Hub services.
+The Node provider is the default local runtime; start `assets-read-worker`
+explicitly when validating Cloudflare R2/Queue/DO integration. Its local service
+identity comes from Dev Hub private state. Use `.env.example` only to identify
+optional external R2 credentials; never commit them.
 
 ## Related documentation
 

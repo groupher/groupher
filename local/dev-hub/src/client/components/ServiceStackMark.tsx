@@ -6,6 +6,7 @@ import {
   siElixir,
   siFastapi,
   siGraphql,
+  siLit,
   siNodedotjs,
   siOpenid,
   siPhoenixframework,
@@ -96,6 +97,7 @@ const TECHNOLOGY_ICONS: Record<Exclude<TTechnology, 'authjs' | 'uvicorn'>, TIcon
     assetUrl: honoLogoUrl,
   },
   nodejs: fromSimpleIcon(siNodedotjs),
+  lit: fromSimpleIcon(siLit),
   oauth: {
     ...fromSimpleIcon(siOpenid),
     title: 'OAuth',

@@ -8,6 +8,10 @@
 - Select checks based on the changed behavior and its consumers. Start with [the validation matrix](docs/infra/tooling/validation.md); report checks that failed, were blocked, or were not run.
 - Local Git hooks are focused checks, not a substitute for relevant tests or CI. Inspect the staged diff before committing, especially after hooks that modify files.
 
+## Local Application Runtime
+
+- When starting, stopping, restarting, diagnosing, or browser-checking local applications, follow [the Dev Hub skill](.agents/skills/dev-hub/SKILL.md) and use `pnpm devhub` or the public Make entrypoints. Do not launch Vite, Phoenix, Workers, or another application server directly, choose an alternate port, or background an unmanaged process. `.managed` commands are for Dev Hub; documented test runners may own isolated listeners for their tests.
+
 ## Backend Time Fields
 
 - Treat application time as UTC. Use `DateTime.utc_now()` directly or `Helper.Datetime` helpers for current datetimes, dates, shifts, and date-window boundaries.

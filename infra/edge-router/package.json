@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cf dev --mode production",
-    "dev:local": "cf dev --mode development",
+    "dev": "pnpm --dir ../.. devhub start edge-router",
+    "dev:local": "pnpm --dir ../.. devhub start edge-router",
+    "dev:managed": "cf dev --mode development --port 8788 --persist-to \"$DEV_HUB_WORKER_STATE_DIR\"",
     "test": "pnpm exec vitest --config vitest.config.mts run",
     "type-check": "pnpm run types && pnpm --workspace-root exec tsc --noEmit --project infra/edge-router/tsconfig.json",
     "types": "cf workers types --mode production",

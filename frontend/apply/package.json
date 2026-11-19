@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --config app.config.ts --host 127.0.0.1",
+    "dev": "pnpm --dir ../.. devhub start apply",
+    "dev:managed": "vite --config app.config.ts --host 127.0.0.1",
     "build": "CLOUDFLARE_ENV=production vite build --config app.config.ts",
     "preview": "vite preview --config app.config.ts",
     "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) pnpm run build && cf deploy --prebuilt --mode production",

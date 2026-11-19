@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node ./src/index.js",
+    "dev": "pnpm --dir ../.. devhub start mock-server",
+    "dev:managed": "node ./src/index.js",
     "start": "node ./src/index.js"
   },
   "dependencies": {

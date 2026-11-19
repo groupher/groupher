@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "pnpm --dir ../.. devhub start dev-gateway",
+    "dev:managed": "tsx watch src/server.ts",
     "ci": "cross-env NODE_ENV=ci tsx src/server.ts",
     "test": "pnpm exec vitest --root ../.. --config frontend/core/vitest.config.mts run infra/dev-gateway",
     "type-check": "pnpm --workspace-root exec tsc --noEmit --project infra/dev-gateway/tsconfig.json",

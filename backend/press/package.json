@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "pnpm --dir ../.. devhub start press",
+    "dev:managed": "tsx watch src/server.ts",
     "dev:worker": "cf dev --mode development",
     "test": "pnpm exec vitest --config vitest.config.mts run",
     "type-check": "pnpm run types && pnpm exec tsc --noEmit --project ./tsconfig.json",

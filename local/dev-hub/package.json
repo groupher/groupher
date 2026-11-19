@@ -12,6 +12,7 @@
     "desktop:icon": "tauri icon public/favicon.svg",
     "build": "vite build",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "test:local-environment": "tsx test/local-environment.smoke.ts",
     "type-check": "tsc --noEmit --project ./tsconfig.json",
     "format": "oxfmt -c ./oxfmt.json ./src ./*.json ./*.ts",
     "format:check": "oxfmt -c ./oxfmt.json --check ./src ./*.json ./*.ts"

@@ -14,6 +14,12 @@ const observability = {
 export default defineConfig(({ mode }) => {
   const production = mode === 'production'
   const name = production ? 'assets-hub' : 'assets-hub-dev'
+  const localValue = (key: string, productionValue: string): string => {
+    if (production) return productionValue
+    const value = process.env[key]?.trim()
+    if (!value) throw new Error(`Dev Hub did not provide required local binding ${key}.`)
+    return value
+  }
 
   return {
     worker: {
@@ -33,27 +39,23 @@ export default defineConfig(({ mode }) => {
       ],
       env: {
         ASSETS_PUBLIC_ENDPOINT: bindings.text(
-          production ? 'https://assets.groupher.com' : 'https://assets.groupher.localhost',
+          localValue('ASSETS_PUBLIC_ENDPOINT', 'https://assets.groupher.com'),
         ),
         ASSETS_HUB_BATCH_ENDPOINT: bindings.text(
-          production ? 'https://assets.groupher.com' : 'https://assets.groupher.localhost',
+          localValue('ASSETS_HUB_BATCH_ENDPOINT', 'https://assets.groupher.com'),
         ),
-        ENVIRONMENT: bindings.text(production ? 'production' : 'development'),
+        ENVIRONMENT: bindings.text(localValue('ENVIRONMENT', 'production')),
         PHOENIX_GRAPHQL_ENDPOINT: bindings.text(
-          production ? 'https://api.groupher.com/graphiql' : 'http://127.0.0.1:4001/graphiql',
+          localValue('PHOENIX_GRAPHQL_ENDPOINT', 'https://api.groupher.com/graphiql'),
         ),
         SERVICE_AUTH_ISSUER: bindings.text(
-          production ? 'https://auth.groupher.com' : 'https://auth.groupher.localhost',
+          localValue('SERVICE_AUTH_ISSUER', 'https://auth.groupher.com'),
         ),
         SERVICE_AUTH_JWKS_URL: bindings.text(
-          production
-            ? 'https://auth.groupher.com/.well-known/jwks.json'
-            : 'http://127.0.0.1:3004/.well-known/jwks.json',
+          localValue('SERVICE_AUTH_JWKS_URL', 'https://auth.groupher.com/.well-known/jwks.json'),
         ),
         SERVICE_AUTH_TOKEN_ENDPOINT: bindings.text(
-          production
-            ? 'https://auth.groupher.com/oauth2/token'
-            : 'http://127.0.0.1:3004/oauth2/token',
+          localValue('SERVICE_AUTH_TOKEN_ENDPOINT', 'https://auth.groupher.com/oauth2/token'),
         ),
         ASSETS_HUB_CAPABILITY_SECRET: bindings.secret(),
         SERVICE_AUTH_CLIENT_ID: bindings.secret(),

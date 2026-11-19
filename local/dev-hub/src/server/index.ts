@@ -24,9 +24,16 @@ import {
 } from './browser-origins.ts'
 import { ServiceConfigError, ServiceConfigReader } from './config-reader.ts'
 import { GitMonitor, GitMonitorError } from './git-monitor.ts'
+import { prepareLocalEnvironment } from './local-environment.ts'
 import { MetricsStore } from './metrics-store.ts'
+import { PortlessManager } from './portless.ts'
 import { ServiceManager, ServiceManagerError } from './process-manager.ts'
 import { ProcessMetricsMonitor } from './process-metrics-monitor.ts'
+import {
+  buildHubHostAllowlist,
+  isAllowedHubHost,
+  isAllowedRequestOrigin,
+} from './request-guards.ts'
 import { REPO_ROOT, SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts'
 
 const host = '127.0.0.1'
@@ -47,9 +54,23 @@ const hubOrigins = new Set([
 ])
 const browserOriginsByService = buildBrowserOriginsByService(SERVICE_DEFINITIONS)
 const browserOrigins = collectBrowserOrigins(browserOriginsByService)
+const hubHosts = buildHubHostAllowlist(port, webPort)
 const serviceIds = new Set(SERVICE_DEFINITIONS.map((definition) => definition.id))
 
-const manager = new ServiceManager(SERVICE_DEFINITIONS, origin)
+const portless = new PortlessManager()
+console.info('Checking Portless HTTPS proxy and canonical aliases…')
+await portless.ensure()
+const manager = new ServiceManager(
+  SERVICE_DEFINITIONS,
+  origin,
+  undefined,
+  undefined,
+  undefined,
+  async () => {
+    await portless.ensure()
+    return prepareLocalEnvironment()
+  },
+)
 const configReader = new ServiceConfigReader(SERVICE_DEFINITIONS)
 const gitMonitor = new GitMonitor(REPO_ROOT)
 const metricsStore = new MetricsStore(metricsRoot, SERVICE_DEFINITIONS)
@@ -58,6 +79,13 @@ const processMetricsMonitor = new ProcessMetricsMonitor(manager, metricsStore)
 processMetricsMonitor.start()
 
 const app = new Hono()
+
+app.use('*', async (context, next) => {
+  if (!isAllowedHubHost(context.req.header('host'), hubHosts)) {
+    return context.json({ error: 'Host is not allowed.' }, 403)
+  }
+  await next()
+})
 
 app.use(
   '/api/browser-metrics',
@@ -70,16 +98,23 @@ app.use(
 )
 
 app.use('/api/*', async (context, next) => {
-  if (context.req.method !== 'GET') {
-    const requestOrigin = context.req.header('origin')
-    const allowed = context.req.path === '/api/browser-metrics' ? browserOrigins : hubOrigins
-
-    if (requestOrigin && !allowed.has(requestOrigin)) {
-      return context.json({ error: 'Cross-origin process control is not allowed.' }, 403)
-    }
+  const requestOrigin = context.req.header('origin')
+  const allowed = context.req.path === '/api/browser-metrics' ? browserOrigins : hubOrigins
+  if (!isAllowedRequestOrigin(requestOrigin, allowed)) {
+    return context.json({ error: 'Cross-origin Dev Hub access is not allowed.' }, 403)
   }
-
   await next()
+})
+
+app.get('/api/identity', (context) => context.json({ repoRoot: REPO_ROOT, apiOrigin: origin }))
+
+app.post('/api/environment/ensure', async (context) => {
+  try {
+    await portless.ensure()
+    return context.json({ ready: true })
+  } catch (error) {
+    return respondWithError(context, error)
+  }
 })
 
 app.post('/api/browser-metrics', async (context) => {
@@ -149,11 +184,7 @@ app.get('/api/services/:id/config', async (context) => {
 app.get('/api/services/:id/config/:fileId', async (context) => {
   try {
     return context.json(
-      await configReader.getContent(
-        context.req.param('id'),
-        context.req.param('fileId'),
-        context.req.query('reveal') === 'true',
-      ),
+      await configReader.getContent(context.req.param('id'), context.req.param('fileId')),
     )
   } catch (error) {
     return respondWithError(context, error)

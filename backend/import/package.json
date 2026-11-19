@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cf dev --mode development --port 8001",
+    "dev": "pnpm --dir ../.. devhub start import",
+    "dev:managed": "cf dev --mode development --port 8001",
     "test": "pnpm exec vitest --config vitest.config.mts run",
     "test:worker": "node ./scripts/worker-smoke.mjs",
     "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.json",

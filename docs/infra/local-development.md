@@ -90,7 +90,8 @@ landing.groupher.localhost     -> Dev Gateway, port 3003
 auth.groupher.localhost        -> Auth, port 3004
 api.groupher.localhost         -> Phoenix, port 4001
 assets-hub.groupher.localhost  -> Assets Hub, port 8002
-assets.groupher.localhost      -> Assets read Worker, port 8787
+assets.groupher.localhost      -> Assets local provider, port 8002
+assets-worker.groupher.localhost -> Assets Cloudflare read Worker, port 8787
 ```
 
 前端产品流程通常应通过 `https://groupher.localhost` 进入，而不是直接通过每个前端监听器。直接的子应用 URL 适合隔离调试。
@@ -126,32 +127,25 @@ Assets 和 `edge-router` 的 dry-run/development 流程；现有 Dev Gateway 仍
 然后进行冒烟测试：
 
 ```bash
-curl -i http://127.0.0.1:8788/health
-curl -i http://127.0.0.1:8788/pricing
-curl -i http://127.0.0.1:8788/home
-curl -i http://127.0.0.1:8788/api/auth/providers
-curl -i http://127.0.0.1:8788/api/graphql
+pnpm devhub start edge-router
+curl -i https://edge-router.groupher.localhost/health
 ```
 
 ## Edge Router 本地一致性模式
 
-独立 `edge-router` 已落地。生产一致性 smoke 应使用 `cf dev` 和 Service Bindings 同时启动
-Router、Landing、Community、Auth 等目标；日常产品开发仍使用 Dev Gateway，避免强制所有
-下游都运行在 Cloudflare runtime 中。
+独立 `edge-router` 已落地。通过 Dev Hub 启动固定端口的 development mode Worker；不要从
+终端直接运行 `cf dev`。生产一致性 smoke 仍需分别启动其 Cloudflare Worker 下游，不能把
+日常 Community Vite 开发服务当作 Community Worker。
 
 Community 由 Cloudflare Vite 插件直接读取 `cloudflare.config.ts`：
 
 ```bash
-cd frontend/community
-pnpm --dir ../.. run sync:assets:community
-pnpm run build:revision-worker
-pnpm exec cf dev --mode development --port 8790
+pnpm devhub start community
+pnpm devhub start edge-router
 ```
 
-随后分别启动 Landing Worker、Auth Worker 和 Edge Router；当四个 Worker 使用各自的
-`cf` 配置运行时，Edge Router 的 Service Bindings 会显示为 `local [connected]`。
-本地 smoke 入口固定为 `http://127.0.0.1:8787`，至少验证 `/health`、`/pricing`、`/home`、
-`/api/auth/providers` 和 `/api/graphql`。
+该流程只启动 Dev Hub 当前已登记的 Community Vite 与 Edge Router 服务；Service Binding
+端到端 parity 仍依赖单独登记的 Worker build variant，不能用上述两项声称通过。
 
 该模式用于验证 route contract、Service Binding、header/cookie/redirect 和自定义 host
 语义；日常开发仍可使用 Dev Hub + Dev Gateway。长期结构是：

@@ -64,14 +64,14 @@ test('env manifests follow development precedence and redact values by default',
 
   const sensitiveFile = manifest.files[0]
   assert.equal(sensitiveFile.sensitive, true)
-  const redacted = await reader.getContent('fixture', sensitiveFile.id, false)
+  const redacted = await reader.getContent('fixture', sensitiveFile.id)
   assert.equal(redacted.redacted, true)
   assert.match(redacted.content, /TOKEN=••••••/)
   assert.doesNotMatch(redacted.content, /top-secret/)
 
-  const revealed = await reader.getContent('fixture', sensitiveFile.id, true)
-  assert.equal(revealed.redacted, false)
-  assert.match(revealed.content, /TOKEN=top-secret/)
+  const repeated = await reader.getContent('fixture', sensitiveFile.id)
+  assert.equal(repeated.redacted, true)
+  assert.doesNotMatch(repeated.content, /top-secret/)
 })
 
 test('Elixir manifests identify the active environment and omit symbolic links', async (t) => {
@@ -121,11 +121,11 @@ test('Elixir manifests identify the active environment and omit symbolic links',
   const secret = manifest.files.find((file) => file.name === 'dev.secret.exs')
   assert.ok(secret)
   assert.equal(secret.sensitive, true)
-  const redacted = await reader.getContent('fixture', secret.id, false)
+  const redacted = await reader.getContent('fixture', secret.id)
   assert.equal(redacted.content, '# ••••••\n')
 
   await assert.rejects(
-    () => reader.getContent('fixture', 'unknown', false),
+    () => reader.getContent('fixture', 'unknown'),
     (error: unknown) => error instanceof ServiceConfigError && error.statusCode === 404,
   )
 })

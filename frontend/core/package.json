@@ -23,7 +23,8 @@
     "format": "pnpm exec oxfmt -c ./config/oxfmt.json .",
     "format:check": "pnpm exec oxfmt -c ./config/oxfmt.json --check .",
     "poc:vgpu:build": "vite build --config ./render/BgRenderer/vgpu-poc/vite.config.mts",
-    "poc:vgpu:dev": "vite --config ./render/BgRenderer/vgpu-poc/vite.config.mts",
+    "poc:vgpu:dev": "pnpm --dir ../.. devhub start core-vgpu-poc",
+    "poc:vgpu:dev:managed": "vite --config ./render/BgRenderer/vgpu-poc/vite.config.mts --host 127.0.0.1 --port 3012 --strictPort",
     "build": "echo 'skip build'"
   },
   "dependencies": {
