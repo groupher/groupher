@@ -108,6 +108,17 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
     CMS.Review.Requests.validate_recovery_event(event)
   end
 
+  defp validate_effect(%Event{event: kind} = event, _operation_ref, _initiator)
+       when kind in [
+              "interaction.upvote_changed",
+              "interaction.collect_changed",
+              "interaction.emotion_changed"
+            ] do
+    with {:ok, _context} <- CMS.Interactions.Effects.delivery_context(event) do
+      {:ok, :pass}
+    end
+  end
+
   defp validate_effect(_event, _operation_ref, _initiator), do: {:ok, :pass}
 
   defp validate_recovery_owner(target, _event, operation_ref, %{

@@ -2,9 +2,9 @@ defmodule GroupherServer.CMS.Interactions.Effects do
   @moduledoc """
   Owns in-transaction effects emitted by Interaction commands.
 
-  This module records durable intent only. The caller owns the surrounding
+  The caller owns the surrounding
   `CMS.Command` transaction; the shared Interaction outbox worker owns
-  post-commit delivery.
+  post-commit delivery. Recovery and delivery share current target and actor checks.
 
       Interaction Command
         -> Interactions.Effects
@@ -12,10 +12,10 @@ defmodule GroupherServer.CMS.Interactions.Effects do
         -> Interaction cleanup worker
   """
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Interactions.Config
-  alias CMS.Model.{Article, Comment}
+  alias CMS.Interactions.{Config, ErrorCat}
+  alias CMS.Model.{Article, Comment, Community}
   alias CMS.Outbox.DedupeKey
 
   @doc "Records one Article or Comment upvote change in the caller transaction."
@@ -84,6 +84,11 @@ defmodule GroupherServer.CMS.Interactions.Effects do
     {:error, :interaction_effect_identity_required}
   end
 
+  defp target(%{__struct__: Article, id: id, community: %Community{id: community_id}})
+       when is_binary(id) do
+    {:ok, "article", id, community_id}
+  end
+
   defp target(%Article{id: id}) when is_binary(id), do: {:ok, "article", id, nil}
 
   defp target(%Comment{id: id} = comment) when is_integer(id) do
@@ -93,6 +98,53 @@ defmodule GroupherServer.CMS.Interactions.Effects do
   end
 
   defp target(_resource), do: {:error, :interaction_effect_identity_required}
+
+  @doc "Loads the current target and original actor before recovery or delivery."
+  def delivery_context(event) do
+    with {:ok, target} <- load_target(event.resource_type, event.resource_id),
+         {:ok, actor} <- load_actor(event.data["actor_id"]),
+         {:ok, target} <- request_context(target, event) do
+      {:ok, %{target: target, actor: actor}}
+    end
+  end
+
+  defp request_context(%Article{} = article, %{event: kind, data: data})
+       when kind in ["interaction.upvote_changed", "interaction.collect_changed"] do
+    with id when is_integer(id) <- data["community_id"],
+         %Community{} = community <- Repo.get(Community, id),
+         {:ok, _view} <- CMS.Articles.Store.load_article_for_notification(article.id, community) do
+      {:ok, Map.put(article, :community, community)}
+    else
+      _ -> {:error, ErrorCat.interaction_target_invalid()}
+    end
+  end
+
+  defp request_context(target, _event), do: {:ok, target}
+
+  defp load_target("article", id) do
+    case Repo.get(Article, id) do
+      %Article{} = article -> {:ok, article}
+      nil -> {:error, ErrorCat.interaction_target_not_found()}
+    end
+  end
+
+  defp load_target("comment", id) do
+    case Repo.get(Comment, id) do
+      %Comment{} = comment -> {:ok, comment}
+      nil -> {:error, ErrorCat.interaction_target_not_found()}
+    end
+  end
+
+  defp load_target(_, _), do: {:error, ErrorCat.interaction_target_invalid()}
+
+  defp load_actor(id) when is_integer(id) or is_binary(id) do
+    case Repo.get(User, id) do
+      %User{} = actor -> {:ok, actor}
+      nil -> {:error, ErrorCat.interaction_actor_not_found()}
+    end
+  end
+
+  defp load_actor(_), do: {:error, ErrorCat.interaction_actor_invalid()}
 
   @doc "Projects immutable business fields for duplicate Outbox comparison."
   def payload_projection(event, data) do
