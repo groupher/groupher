@@ -503,6 +503,18 @@ defmodule GroupherServer.CMS do
   @spec deliver_outbox(atom(), Oban.Job.t()) :: Oban.Worker.result()
   def deliver_outbox(kind, job), do: GroupherServer.CMS.Outbox.Workflow.perform(kind, job)
 
+  @doc """
+  Diagnoses failed effects from immutable publication facts without resetting them.
+
+  ## Examples
+
+      CMS.diagnose_outbox_failures(root_user, 50)
+      #=> {:ok, %{scanned: 0, pending: [], superseded: []}}
+  """
+  def diagnose_outbox_failures(actor, limit \\ 50) do
+    GroupherServer.CMS.Outbox.diagnose_failures(actor, limit)
+  end
+
   @doc "Retries one dead Outbox event after checking the current system-root Passport."
   @spec retry_outbox_event(
           Ecto.UUID.t(),

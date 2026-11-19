@@ -11,9 +11,9 @@ defmodule GroupherServer.CMS.Outbox.ManualRetry do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.Outbox.{Event, Recovery, WorkerRegistry}
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
 
   @doc "Retries one dead event with a current root check and auditable user reason."
   def retry(event_id, expected_failure_generation, %User{id: actor_id} = actor, reason)
@@ -31,10 +31,7 @@ defmodule GroupherServer.CMS.Outbox.ManualRetry do
             params: [:expected_failure_generation, :reason]
   direct_pipeline run_direct(event_id, expected_failure_generation, actor, reason) do
     gate(fn _event_id ->
-      case CMS.Passport.system_root?(actor.id) do
-        {:ok, true} -> {:ok, :authorized}
-        _ -> {:error, :permission_denied}
-      end
+      authorize_root(actor)
     end)
 
     change(fn _authorized, operation_ref ->
@@ -58,6 +55,13 @@ defmodule GroupherServer.CMS.Outbox.ManualRetry do
         {:error, _reason} = error -> error
       end
     end)
+  end
+
+  defp authorize_root(actor) do
+    case CMS.Passport.system_root?(actor.id) do
+      {:ok, true} -> {:ok, :authorized}
+      _ -> {:error, :permission_denied}
+    end
   end
 
   defp validate_reason(reason) when is_binary(reason) do

@@ -10,10 +10,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Asset do
         -> complete / retry / snooze / terminal failure
   """
 
-  alias GroupherServer.{CMS, ErrorCat, Repo}
+  alias GroupherServer.{CMS, ErrorCat}
   alias CMS.Assets.Effects
-  alias CMS.Assets.ErrorCat, as: AssetErrorCat
-  alias CMS.Model.CommunityAsset
 
   @doc """
   Delivers one asset-provider deletion event under the Outbox lease.
@@ -48,39 +46,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Asset do
   end
 
   defp delete_provider_object(event) do
-    deliver_provider_object(event.resource_type, event)
-  end
-
-  defp deliver_provider_object("community_asset", event) do
-    case Repo.get(CommunityAsset, event.resource_id) do
-      %CommunityAsset{
-        id: id,
-        status: :deleted,
-        deleted_at: deleted_at,
-        public_ref: public_ref,
-        storage: storage,
-        storage_key: storage_key
-      } = asset ->
-        if not is_nil(deleted_at) and id == event.data["asset_id"] and
-             public_ref == event.data["public_ref"] and storage == event.data["storage"] and
-             storage_key == event.data["storage_key"] and is_binary(storage) and
-             storage != "" and is_binary(storage_key) and storage_key != "" do
-          normalize_delete_result(Effects.deliver_provider_delete(asset))
-        else
-          {:error, AssetErrorCat.provider_delete_target_invalid()}
-        end
-
-      _asset ->
-        {:error, AssetErrorCat.provider_delete_target_invalid()}
+    with {:ok, target} <- CMS.Assets.Deletion.provider_delete_target(event) do
+      normalize_delete_result(Effects.deliver_provider_delete(target))
     end
-  end
-
-  defp deliver_provider_object("application_logo_upload", event) do
-    normalize_delete_result(Effects.deliver_application_upload_delete(event.data))
-  end
-
-  defp deliver_provider_object(resource_type, _event) do
-    {:error, AssetErrorCat.unsupported_asset_cleanup_resource(%{resource_type: resource_type})}
   end
 
   defp normalize_delete_result({:ok, :pass}), do: {:ok, :enqueued}

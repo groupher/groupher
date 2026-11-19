@@ -29,4 +29,6 @@ defmodule GroupherServer.CMS.Articles.Effects do
 
   @doc "Records one Article activity in the caller-owned transaction."
   defdelegate activity(resource, event, opts), to: Outbox
+  @doc "Derives a pure failed effect's replacement from committed publication facts."
+  defdelegate recovery_status(event), to: CMS.Articles.Effects.Recovery, as: :status
 end

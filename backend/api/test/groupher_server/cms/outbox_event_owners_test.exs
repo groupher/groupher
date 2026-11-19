@@ -10,6 +10,26 @@ defmodule GroupherServer.CMS.OutboxEventOwnersTest do
       Regex.scan(~r/^\|\s*`([^`]+)`\s*\|\s*`([^`]+)`\s*\|/m, inventory)
       |> Map.new(fn [_, event, owner] -> {event, owner} end)
 
+    routes = Regex.scan(~r/^\|\s*`([^`]+)`\s*\|\s*`[^`]+`\s*\|\s*`([^`]+)`\s*\|/m, inventory)
+
+    for [_, event, worker] <- routes do
+      expected_worker = "GroupherServer.Jobs." <> worker
+
+      assert {:ok, :pass} =
+               GroupherServer.CMS.Outbox.WorkerRegistry.validate_route(%{
+                 event: event,
+                 worker: expected_worker
+               })
+
+      wrong_worker = if worker == "CMSOutboxAsset", do: "CMSOutboxArticle", else: "CMSOutboxAsset"
+
+      assert {:error, :outbox_worker_invalid} =
+               GroupherServer.CMS.Outbox.WorkerRegistry.validate_route(%{
+                 event: event,
+                 worker: "GroupherServer.Jobs." <> wrong_worker
+               })
+    end
+
     actual =
       (Path.wildcard("lib/groupher_server/cms/**/*effects*.ex") ++
          Path.wildcard("lib/groupher_server/cms/**/effects/*.ex"))

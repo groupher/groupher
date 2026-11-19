@@ -24,12 +24,86 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Assets.{Effects, ErrorCat, Persist, Workflow}
-  alias CMS.Model.{AssetWorkflowRun, Community, CommunityAsset}
+  alias CMS.Model.{AssetWorkflowRun, Community, CommunityApplicationLogoUpload, CommunityAsset}
+  alias CMS.Outbox.DedupeKey
 
   @timeout 10_000
 
   plug(Tesla.Middleware.JSON, engine: Jason)
   plug(Tesla.Middleware.Timeout, timeout: @timeout)
+
+  @doc "Checks the frozen provider target before both recovery and external delivery."
+  def provider_delete_target(
+        %{
+          event: "asset.provider_delete",
+          resource_type: "community_asset"
+        } = event
+      ) do
+    case load_provider_target(CommunityAsset, event.resource_id) do
+      %CommunityAsset{status: :deleted, deleted_at: %DateTime{}} = asset ->
+        if target_matches?(event, asset, "asset_id") do
+          {:ok, asset}
+        else
+          {:error, ErrorCat.provider_delete_target_invalid()}
+        end
+
+      _ ->
+        {:error, ErrorCat.provider_delete_target_invalid()}
+    end
+  end
+
+  def provider_delete_target(
+        %{
+          event: "asset.application_upload_provider_delete",
+          resource_type: "application_logo_upload"
+        } = event
+      ) do
+    case load_provider_target(CommunityApplicationLogoUpload, event.resource_id) do
+      %CommunityApplicationLogoUpload{status: :expired} = upload ->
+        if target_matches?(event, upload, "id") do
+          {:ok,
+           %CommunityAsset{
+             id: upload.id,
+             public_ref: upload.public_ref,
+             storage: upload.storage,
+             storage_key: upload.storage_key
+           }}
+        else
+          {:error, ErrorCat.provider_delete_target_invalid()}
+        end
+
+      _ ->
+        {:error, ErrorCat.provider_delete_target_invalid()}
+    end
+  end
+
+  def provider_delete_target(%{resource_type: resource_type})
+      when resource_type not in ["community_asset", "application_logo_upload"] do
+    {:error, ErrorCat.unsupported_asset_cleanup_resource(%{resource_type: resource_type})}
+  end
+
+  def provider_delete_target(_event), do: {:error, ErrorCat.provider_delete_target_invalid()}
+
+  defp target_matches?(event, target, id_field) do
+    event.worker == "GroupherServer.Jobs.CMSOutboxAsset" and
+      event.data[id_field] == target.id and event.data["public_ref"] == target.public_ref and
+      event.data["storage"] == target.storage and event.data["storage_key"] == target.storage_key and
+      event.dedupe_key ==
+        DedupeKey.encode([target.public_ref, target.storage, target.storage_key]) and
+      is_binary(target.storage) and target.storage != "" and
+      is_binary(target.storage_key) and target.storage_key != ""
+  end
+
+  defp load_provider_target(schema, resource_id) do
+    case Ecto.Type.cast(:id, resource_id) do
+      {:ok, id} ->
+        query = from(row in schema, where: row.id == ^id)
+        Repo.one(query)
+
+      :error ->
+        nil
+    end
+  end
 
   @doc "Builds the provider-deletion projection for an expired Application upload."
   @spec delete_application_upload_object(map()) :: {:ok, :pass}

@@ -12,8 +12,8 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
 
   import Ecto.Query
 
-  alias GroupherServer.{Jobs, Repo}
-  alias GroupherServer.CMS.Outbox.{Event, Retry}
+  alias GroupherServer.{CMS, Jobs, Repo}
+  alias CMS.Outbox.{Event, Retry, WorkerRegistry}
 
   @active_job_states ["available", "scheduled", "retryable", "executing"]
 
@@ -26,18 +26,18 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
     else
       Repo.transact_result(fn ->
         with {:ok, event} <- lock_event(event_id),
-             {:ok, event} <- validate_generation(event, expected_generation) do
+             {:ok, event} <- validate_generation(event, expected_generation),
+             {:ok, :pass} <- CMS.Outbox.validate_event_contract(event),
+             {:ok, :pass} <- validate_worker(event, worker),
+             {:ok, :pass} <- validate_effect(event, operation_ref, initiator) do
           case {event.status, existing_receipt(event)} do
             {_status, {:ok, :existing}} ->
               {:ok, %{outcome: :already_retried, event: event}}
 
             {:failed, {:ok, :new}} ->
               with {:ok, :pass} <- require_dead(event),
-                   {:ok, :pass} <- ensure_no_active_job(event, worker),
-                   {:ok, updated} <- reset_event(event),
-                   {:ok, _retry} <- record_retry(event, operation_ref, initiator),
-                   {:ok, _job} <- insert_job(worker, event.id) do
-                {:ok, %{outcome: :requeued, event: updated}}
+                   {:ok, :pass} <- ensure_no_active_job(event) do
+                recover_current(event, operation_ref, worker, initiator)
               end
 
             {:running, _} ->
@@ -53,6 +53,23 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
 
   def requeue(_event_id, _expected_generation, _operation_ref, _worker, _initiator) do
     {:error, :invalid_outbox_recovery_request}
+  end
+
+  defp recover_current(event, operation_ref, worker, initiator) do
+    case CMS.Articles.Effects.recovery_status(event) do
+      {:ok, %{outcome: :superseded} = diagnosis} ->
+        {:ok, diagnosis}
+
+      {:ok, %{outcome: :pending}} ->
+        with {:ok, updated} <- reset_event(event),
+             {:ok, _retry} <- record_retry(event, operation_ref, initiator),
+             {:ok, _job} <- insert_job(worker, event.id) do
+          {:ok, %{outcome: :requeued, event: updated}}
+        end
+
+      {:error, _reason} = error ->
+        error
+    end
   end
 
   defp lock_event(event_id) do
@@ -71,6 +88,43 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
 
   defp require_dead(%Event{status: :failed}), do: {:ok, :pass}
 
+  defp validate_worker(event, worker) do
+    case WorkerRegistry.name_for(worker) do
+      {:ok, name} when name == event.worker -> {:ok, :pass}
+      _ -> {:error, :outbox_worker_invalid}
+    end
+  end
+
+  defp validate_effect(%Event{event: kind} = event, operation_ref, initiator)
+       when kind in ["asset.provider_delete", "asset.application_upload_provider_delete"] do
+    case CMS.Assets.Deletion.provider_delete_target(event) do
+      {:ok, target} -> validate_recovery_owner(target, operation_ref, initiator)
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp validate_effect(_event, _operation_ref, _initiator), do: {:ok, :pass}
+
+  defp validate_recovery_owner(target, operation_ref, %{
+         initiator_kind: "owner",
+         owner_ref: "provider-reconciliation:" <> workflow_ref,
+         reason_code: "provider_delete_retry",
+         lease_owner: lease_owner
+       }) do
+    CMS.Assets.ProviderReconciliation.validate_recovery_lease(
+      target,
+      operation_ref,
+      workflow_ref,
+      lease_owner
+    )
+  end
+
+  defp validate_recovery_owner(_target, _operation_ref, %{initiator_kind: "owner"}) do
+    {:error, :provider_delete_recovery_lease_invalid}
+  end
+
+  defp validate_recovery_owner(_target, _operation_ref, _initiator), do: {:ok, :pass}
+
   defp existing_receipt(event) do
     case Repo.get_by(Retry,
            event_id: event.id,
@@ -81,8 +135,8 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
     end
   end
 
-  defp ensure_no_active_job(event, worker) do
-    worker_name = Atom.to_string(worker)
+  defp ensure_no_active_job(event) do
+    worker_name = event.worker
 
     if Repo.exists?(
          from(job in Oban.Job,

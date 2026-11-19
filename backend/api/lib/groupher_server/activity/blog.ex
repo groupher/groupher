@@ -34,13 +34,14 @@ defmodule GroupherServer.Activity.Blog do
         changed_fields: [:body]
       ),
     trashed:
-      Event.contract([], [], [:community_log], nil,
+      Event.contract([:operation_scope, :effect], [], [:community_log], nil,
         outcomes: %{
           allowed: %{producer_status: :active},
           denied: %{producer_status: :active, rejection_codes: @trash_rejection_codes}
         }
       ),
-    restored: Event.contract([], [], [:article_log, :community_log]),
+    restored:
+      Event.contract([:operation_scope, :effect], [], [:article_log, :community_log]),
     archived: Event.contract([], [:batch], [:article_log, :community_log]),
     permanently_deleted: Event.contract([], [], [:community_log]),
     comment_created: Event.contract([], [], []) |> Event.contract_only(),

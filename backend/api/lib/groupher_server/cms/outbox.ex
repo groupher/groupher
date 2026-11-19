@@ -23,6 +23,21 @@ defmodule GroupherServer.CMS.Outbox do
 
   @lease_seconds 120
 
+  @doc "Checks a persisted intent against its current owner's payload contract before recovery."
+  def validate_event_contract(%Event{contract_version: 1} = event) do
+    with {:ok, :pass} <- WorkerRegistry.validate_route(event),
+         {:ok, _projection} <- payload_projection(event.event, event.data) do
+      {:ok, :pass}
+    end
+  end
+
+  def validate_event_contract(%Event{id: id}) do
+    {:error, {:outbox_contract_version_conflict, id}}
+  end
+
+  @doc "Diagnoses a bounded batch of dead events after current root admission."
+  defdelegate diagnose_failures(actor, limit), to: CMS.Outbox.Diagnostics
+
   @doc "Retries a dead intent after current root admission in the manual recovery Command."
   defdelegate retry_event(event_id, expected_failure_generation, actor, reason),
     to: CMS.Outbox.ManualRetry,

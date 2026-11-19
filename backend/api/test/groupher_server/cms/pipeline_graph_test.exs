@@ -6,7 +6,11 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
   alias CommandPipeline.GraphAnalyzer
 
   test "manual Outbox recovery is reachable through its authenticated capability facade" do
-    modules = [GroupherServer.CMS.Outbox, GroupherServer.CMS.Outbox.ManualRetry]
+    modules = [
+      GroupherServer.CMS.Outbox,
+      GroupherServer.CMS.Outbox.ManualRetry,
+      GroupherServer.CMS.Outbox.Diagnostics
+    ]
 
     files =
       Enum.map(modules, fn module ->
@@ -21,6 +25,7 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
     report = Graph.build_report(files, contracts)
     assert report["summary"]["pipelines_reached"] == 1
     assert report["internal_pipeline_violations"] == []
+    assert report["unpipelined_command_writes"] == []
     assert [%{access: :user}] = contracts[GroupherServer.CMS.Outbox.ManualRetry]
   end
 

@@ -23,6 +23,47 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
   @default_age_seconds 15 * 60
   @provider_delete_contract_version 1
 
+  @doc "Fences an automatic reset by the concrete run, step, operation and live lease owner."
+  def validate_recovery_lease(%CommunityAsset{} = asset, operation_ref, workflow_ref, lease_owner)
+      when is_binary(operation_ref) and is_binary(workflow_ref) and
+             is_binary(lease_owner) and lease_owner != "" do
+    now = DateTime.utc_now(:second)
+
+    run =
+      Repo.one(
+        from(run in AssetWorkflowRun, where: run.workflow_ref == ^workflow_ref, lock: "FOR SHARE")
+      )
+
+    with %AssetWorkflowRun{status: :running, workflow_type: "provider_reconciliation"} <- run,
+         true <- run.community_id == asset.community_id and run.resource_type == "community",
+         true <- run.resource_id == to_string(asset.community_id) and run.locked_by == lease_owner,
+         true <- lease_live?(run.lease_expires_at, now),
+         %AssetWorkflowStep{status: :claimed} = step <-
+           Repo.one(
+             from(step in AssetWorkflowStep,
+               where: step.run_id == ^run.id and step.step_ref == ^"asset:#{asset.id}",
+               lock: "FOR SHARE"
+             )
+           ),
+         true <- step.locked_by == lease_owner and step.operation_ref == operation_ref,
+         true <-
+           step.resource_type == "community_asset" and step.resource_id == to_string(asset.id),
+         true <-
+           step.payload["asset_id"] == asset.id and step.payload["public_ref"] == asset.public_ref,
+         true <- lease_live?(step.lease_expires_at, now) do
+      {:ok, :pass}
+    else
+      _ -> {:error, :provider_delete_recovery_lease_invalid}
+    end
+  end
+
+  def validate_recovery_lease(_asset, _operation_ref, _workflow_ref, _lease_owner) do
+    {:error, :provider_delete_recovery_lease_invalid}
+  end
+
+  defp lease_live?(%DateTime{} = expires_at, now), do: DateTime.compare(expires_at, now) == :gt
+  defp lease_live?(_expires_at, _now), do: false
+
   @doc "Re-enqueues missing provider-delete intents for old soft-deleted assets."
   def enqueue_missing(%Community{id: community_id}, opts \\ []) do
     workflow_ref = Keyword.get(opts, :workflow_ref)
@@ -198,7 +239,8 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
       initiator = %{
         initiator_kind: "owner",
         owner_ref: "provider-reconciliation:#{workflow_ref}",
-        reason_code: "provider_delete_retry"
+        reason_code: "provider_delete_retry",
+        lease_owner: owner
       }
 
       case Recovery.requeue(
