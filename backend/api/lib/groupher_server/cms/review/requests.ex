@@ -64,6 +64,43 @@ defmodule GroupherServer.CMS.Review.Requests do
 
   def current(_request_id), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
+  @doc "Validates the frozen request and current scope before a dead effect is requeued."
+  def validate_recovery_event(%{resource_type: "artiment_review"} = event) do
+    with true <- Repo.in_transaction?(),
+         {:ok, request_id} <- Ecto.UUID.cast(event.resource_id),
+         true <- event.data["request_id"] == request_id,
+         %ArtimentReview{} = request <-
+           Repo.one(
+             from(request in ArtimentReview,
+               where: request.id == ^request_id,
+               lock: "FOR SHARE"
+             )
+           ),
+         true <- request.operation_ref == event.operation_ref,
+         true <- is_nil(request.replaced_at) and is_nil(request.outdated_at),
+         true <- DateTime.compare(request.payload_expires_at, DateTime.utc_now(:second)) == :gt,
+         true <- recoverable_state?(request),
+         {:ok, :pass} <- CMS.Review.Results.validate_current_target(request) do
+      {:ok, :pass}
+    else
+      _ -> {:error, :review_request_not_recoverable}
+    end
+  end
+
+  def validate_recovery_event(_event), do: {:error, :review_request_not_recoverable}
+
+  defp recoverable_state?(%ArtimentReview{state: state, payload: payload})
+       when state in [:queued, :running] and is_map(payload) do
+    map_size(payload) > 0
+  end
+
+  defp recoverable_state?(%ArtimentReview{state: :completed, result: result})
+       when is_map(result) do
+    map_size(result) > 0
+  end
+
+  defp recoverable_state?(_request), do: false
+
   @doc "Returns the latest current review request for one canonical resource scope."
   def current_for_scope(attrs) when is_map(attrs) do
     query =

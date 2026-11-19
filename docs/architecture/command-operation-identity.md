@@ -682,6 +682,21 @@ ProviderReconciliation 必须按 outcome 处理恢复返回值，不能用 `{:ok
 分类；不解析任意字符串或由通用 Outbox 猜 HTTP 状态。删除对象已不存在可能已达成目标，
 由删除合同归一化为成功，不无条件重投 404/410。人工授权不替代各事件的业务有效性检查。
 
+当前 Assets 删除分类为：HTTP 408/425/429、5xx 及点名的暂时网络错误归为
+`delete_enqueue_failed/5603`（retryable）；其他 HTTP 拒绝归为
+`provider_delete_rejected/5608`；未知 transport/异常为
+`provider_delete_failure_unclassified/5609`；缺少 endpoint 为
+`provider_delete_configuration_invalid/5610`。后三者不可自动重排。401/403/404
+不能证明对象不存在；只有 provider 明确的完成语义才算完成，不保存响应正文或猜测错误字符串。
+共用恢复事务在新重置分支再次核对 5603；同代次已有凭据优先返回 already_retried，
+不会因为胜者已清空 last_error_code 而误拒绝败者。版本、目标与当前 lease 仍必须复查。
+
+Review 人工恢复在事件锁定事务内加载并共享锁定原请求，校验 UUID、payload request_id、
+原 O、未 replaced/outdated、payload 尚未过期及当前公开目标仍存在。queued/running 必须
+保有私有 payload；completed 且保有结果可由现有 worker 确认，不恢复已清空的私有 payload。
+failed、空内容、已删除/缺失目标或不匹配请求返回 review_request_not_recoverable，
+不重置事件、不写 job 或成功凭据。其他 owner 仍须按实际消费语义核对。
+
 **共用事务。** Outbox 新增非负 failure_generation，初值 0；带租约 fence 的 running →
 dead 原子递增一次。普通重试、重置和调度修复均不递增、不清零。它是 expected generation
 的持久比较值，不使用时间/attempts 拼代次。
@@ -1175,6 +1190,7 @@ UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口�
 | `a73eef5e1` | Passport Catalog/Store/Authorization、Gate 生成合同、GraphQL/Admin 接入与 useGate；仅包含集成所需范围 |
 | `1811c8ca3` | Comment created/replied/updated/deleted 的具体事件合同及版本/删除维度；Review UUID fail closed        |
 | `803f4aa21` | durable first-publish 标记、冻结首次通知、发布回切、fanout 登记与子 dead 独立状态、当前 version 拒绝  |
+| `5643b0c7b` | 版本/worker/资产目标与 live lease fence、纯投影 superseded 证明、root 有界诊断与并发恢复 |
 | `c7b520143` | 事件 owner 投影清单、每次操作的缓存/反应键、手工恢复调用图、新库 migration smoke 与 Worker CI         |
 
 后续事件 owner 与缓存键收口批次由 Git 记录定位；不能仅因本表列有核心提交，就认为全部目标语义都已交付。并行 Co-author、Trash UI 及其他工作树改动不属于本批。
@@ -1191,7 +1207,7 @@ UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口�
 | Comment 回归              | 隔离快照 54 passed                                                                                                                                                                                                                                                                      |
 | 发布/fanout/version 回归  | 隔离快照 21 passed，包含 B→C→B、首次通知冻结、Public 重建、done/dead 混合子事件与登记后中断                                                                                                                                                                                             |
 | 最新 owner/缓存键合并验收 | 隔离快照 115 passed，覆盖具体事件 owner 唯一性、重复操作与独立操作缓存/反应键、手工重试调用图及前述身份验收                                                                                                                                                                             |
-| 恢复/诊断合并回归         | 隔离快照 186 passed；包括共同合同/资产目标守卫、live lease fence、人工与真实 provider owner 并发、普通 History 与 Docs Release superseded、首次通知保留、负例与前述身份回归；源码 commit 前复核最终结果                                                                                 |
+| 恢复/诊断合并回归         | 隔离快照 204 passed；包括共同合同/资产目标/live lease 守卫、人工与真实 provider owner 并发、History/Release superseded、首次通知保留、真实 HTTP 永久/临时失败分类、Review 有效性与 completed 确认；从空任务库迁移后合并验收                                                                                 |
 | Pipeline 调用图           | 143 pipelines reached；unresolved、unreached、internal、阶段/签名违规均为 0；新增手工恢复入口回归                                                                                                                                                                                       |
 | 新库迁移 smoke            | 通过完整 migration 链，至 `20261119110000_add_cms_outbox_worker_route`；数据库名探针使用 `--no-compile` 避免编译日志污染安全校验                                                                                                                                                        |
 | 生产编译                  | 隔离快照 `MIX_ENV=prod mix compile --warnings-as-errors` 通过，本次恢复/诊断批次也已复验                                                                                                                                                                                                |
@@ -1208,10 +1224,9 @@ Git hooks 的全局 backend-context 检查未通过。本批按明确文件/局�
 
 | 项目                              | 当前状态与下一步                                                                                                                                                                                                                                                                                                                                       |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 人工恢复领域守卫                  | **部分闭合**：已验证版本、event/worker 路由、payload 字段，资产目标与 Application upload 状态，自动 provider run/step/O/live lease 的复查及并发凭据。其他领域（尤其 Review request 状态/过期）的恢复有效性守卫仍须逐项核对；不能把当前 root 权限视为全部 owner 的恢复许可。                                                                            |
+| 人工恢复领域守卫 | **部分闭合**：版本、固定路由、payload、资产冻结目标/Application upload、自动 run/step/O/live lease 与并发凭据已验证；Review 原请求身份、状态/过期/替代/目标与 completed 确认已交付。其余 owner 仍按消费语义逐项核对，root 不代替领域许可。 |
 | 纯投影 superseded 诊断            | **已交付本节合同**：恢复与 root 诊断复用同一持久事实判定，旧行不重置、不排 job、不写成功凭据，当前 pending 集合排除有完整替代证明的旧行；普通 History、Docs sealed Release 祖先链和必要负例已通过。首次通知仍保留，替代行 failed 仍进入 pending；不是全链路总签收。                                                                                    |
-| Provider 失败分类                 | **待完成**：当前 HTTP 非成功响应仍统一归入 5603，自动恢复不能据此区分 403 等永久拒绝与 429/5xx 等瞬时故障；须在 Assets owner 的 HTTP/transport 归一化中保留稳定分类，并在锁定事件后复查自动恢复允许的失败码。未知或折叠错误默认不得自动重排。                                                                                                          |
-| Provider 错误分类                 | **待修复**。当前 provider 删除将非 2xx 与 transport 错误统一归为可重试 `delete_enqueue_failed/5603`；自动恢复仅核对这个码，尚不能区分 401/403 等永久拒绝、配置/未知失败与网络/限流/临时 provider 故障。须在 Assets owner 保留稳定分类，并在锁定事件后复核可恢复码，再补真实 consumer 的永久/瞬时分支测试；当前通过的 503→dead→恢复用例不代替这项要求。 |
+| Provider 错误分类 | **已交付本节合同**：5603 仅限点名的暂时故障；HTTP 拒绝 5608、未知 5609、配置 5610 默认不自动重排。真实 HTTP consumer 与锁内恢复负例通过；并发凭据复用不受胜者清空失败码影响。 |
 | §8.1 全部故障注入矩阵             | **待逐项闭合**。人工/自动竞争、lease/版本/目标/替代证明本批已覆盖；Release/Queue/Oban 各失败点、文章 publication/removal 及全部外部删除交错仍须逐项核实，不能仅凭现有目录发布回滚测试判定全部交付。                                                                                                                                                    |
 | style/context/docs 与全量测试     | **待修复并重跑**。先按当前交付快照的 findings 归属修复，保留无关并行工作；不通过扩大排除或删验收命令使门禁变绿                                                                                                                                                                                                                                         |
 | Hub Article / Assets 真实业务闭环 | **未验收**。本轮普通 local-debug 可登录并读取 Posts 列表；Assets 因缺管理权限拒绝，不能提升该账号或当作 Assets 实现故障。Community 曾在后端重编译时 SSR 超时；需要稳定进程、相应权限和实际写入后的 Receipt/History/Outbox 对照                                                                                                                         |

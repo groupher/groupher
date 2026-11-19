@@ -70,6 +70,15 @@ defmodule GroupherServer.CMS.Review.Results do
 
   defp lock_target(_request), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
+  @doc "Checks the current public resource using the same facts as opinion application."
+  def validate_current_target(%ArtimentReview{} = request) do
+    if current_content?(request) do
+      {:ok, :pass}
+    else
+      {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
   defp current_content?(%ArtimentReview{target_type: :article} = request) do
     Repo.exists?(
       from(public in ArticlePublic,
@@ -91,6 +100,8 @@ defmodule GroupherServer.CMS.Review.Results do
       )
     )
   end
+
+  defp current_content?(_request), do: false
 
   defp lock_request(artiment_review_id) do
     Repo.one(

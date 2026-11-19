@@ -18,7 +18,11 @@ defmodule GroupherServer.Test.CMS.OutboxRecoveryConcurrencyTest do
     {:ok, fixture} =
       Sandbox.unboxed_run(Repo, fn ->
         Repo.transact_result(fn ->
-          {:ok, root} = db_insert(:user)
+          {:ok, root} =
+            db_insert(:user, %{
+              login:
+                "recovery-" <> Base.url_encode64(:crypto.strong_rand_bytes(9), padding: false)
+            })
 
           Repo.insert!(
             GlobalPassport.changeset(%GlobalPassport{}, %{user_id: root.id, is_root: true})

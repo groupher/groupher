@@ -205,7 +205,11 @@ done replay
 `CMS.retry_outbox_event(event_id, expected_failure_generation, root_actor, reason)` 在实时 root
 检查后，锁定失败代次，校验当前版本、固定 event/worker 路由与领域目标，并原子重置、写入一次
 重试凭据和 Oban 唤醒。Assets 的恢复与投递共享 frozen provider 目标守卫；自动 provider 恢复
-另外复查持久 run/step 的操作身份与当前租约，不相信进入巡检时的旧 claimed struct。
+另外复查持久 run/step 的操作身份与当前租约，不相信进入巡检时的旧 claimed struct。仅明确的临时失败
+5603 可自动重排；永久 HTTP 拒绝 5608、未知失败 5609、配置错误 5610 均拒绝。
+同代次凭据已存在时复用 already_retried，不重复重置。
+Review 恢复共享锁定原请求，核对原操作身份、未替代/未过期、有效请求内容及当前目标；
+completed 只确认已有结果，不恢复私有 payload。
 
 `CMS.diagnose_outbox_failures(root_actor, limit \\ 50)` 是有界维护入口，上限 100，返回
 `pending` 和 `superseded`。纯 Article 缓存/投影只有在 publish History 或 sealed Docs Release

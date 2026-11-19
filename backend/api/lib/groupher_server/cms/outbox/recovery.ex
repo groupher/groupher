@@ -36,6 +36,7 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
 
             {:failed, {:ok, :new}} ->
               with {:ok, :pass} <- require_dead(event),
+                   {:ok, :pass} <- validate_reset_eligibility(event, initiator),
                    {:ok, :pass} <- ensure_no_active_job(event) do
                 recover_current(event, operation_ref, worker, initiator)
               end
@@ -98,14 +99,18 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
   defp validate_effect(%Event{event: kind} = event, operation_ref, initiator)
        when kind in ["asset.provider_delete", "asset.application_upload_provider_delete"] do
     case CMS.Assets.Deletion.provider_delete_target(event) do
-      {:ok, target} -> validate_recovery_owner(target, operation_ref, initiator)
+      {:ok, target} -> validate_recovery_owner(target, event, operation_ref, initiator)
       {:error, _reason} = error -> error
     end
   end
 
+  defp validate_effect(%Event{event: "cms.artiment_review"} = event, _operation_ref, _initiator) do
+    CMS.Review.Requests.validate_recovery_event(event)
+  end
+
   defp validate_effect(_event, _operation_ref, _initiator), do: {:ok, :pass}
 
-  defp validate_recovery_owner(target, operation_ref, %{
+  defp validate_recovery_owner(target, _event, operation_ref, %{
          initiator_kind: "owner",
          owner_ref: "provider-reconciliation:" <> workflow_ref,
          reason_code: "provider_delete_retry",
@@ -119,11 +124,23 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
     )
   end
 
-  defp validate_recovery_owner(_target, _operation_ref, %{initiator_kind: "owner"}) do
+  defp validate_recovery_owner(_target, _event, _operation_ref, %{initiator_kind: "owner"}) do
     {:error, :provider_delete_recovery_lease_invalid}
   end
 
-  defp validate_recovery_owner(_target, _operation_ref, _initiator), do: {:ok, :pass}
+  defp validate_recovery_owner(_target, _event, _operation_ref, _initiator), do: {:ok, :pass}
+
+  # A competing recovery may already have cleared last_error_code. Only a new
+  # reset needs failure classification; the one-per-generation fact proves a replay.
+  defp validate_reset_eligibility(%Event{event: kind, last_error_code: code}, %{
+         initiator_kind: "owner"
+       })
+       when kind in ["asset.provider_delete", "asset.application_upload_provider_delete"] and
+              code != "5603" do
+    {:error, :provider_delete_event_not_recoverable}
+  end
+
+  defp validate_reset_eligibility(_event, _initiator), do: {:ok, :pass}
 
   defp existing_receipt(event) do
     case Repo.get_by(Retry,

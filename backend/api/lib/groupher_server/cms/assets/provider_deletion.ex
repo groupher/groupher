@@ -304,11 +304,11 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   defp safe_enqueue(%CommunityAsset{} = asset) do
     do_enqueue(asset)
   rescue
-    exception ->
-      {:error, ErrorCat.delete_enqueue_failed(Exception.message(exception))}
+    _exception ->
+      {:error, ErrorCat.provider_delete_failure_unclassified()}
   catch
-    kind, reason ->
-      {:error, ErrorCat.delete_enqueue_failed({kind, reason})}
+    _kind, _reason ->
+      {:error, ErrorCat.provider_delete_failure_unclassified()}
   end
 
   defp do_enqueue(%CommunityAsset{storage: "r2", storage_key: storage_key} = asset)
@@ -352,19 +352,58 @@ defmodule GroupherServer.CMS.Assets.Deletion do
 
         {:ok, :pass}
 
-      {:ok, %Tesla.Env{status: status, body: body}} ->
-        {:error,
-         ErrorCat.delete_enqueue_failed(%{status: status, body: body, duration_ms: duration_ms})}
+      {:ok, %Tesla.Env{status: status}}
+      when status in [408, 425, 429] or status in 500..599 ->
+        {:error, ErrorCat.delete_enqueue_failed(%{status: status, duration_ms: duration_ms})}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, ErrorCat.provider_delete_rejected(%{status: status, duration_ms: duration_ms})}
 
       {:error, reason} ->
-        {:error, ErrorCat.delete_enqueue_failed(%{reason: reason, duration_ms: duration_ms})}
+        transport_failure(reason)
     end
   end
+
+  @doc "Classifies transport failures without guessing from arbitrary error strings."
+  def transport_failure(reason) do
+    if temporary_transport?(reason) do
+      {:error, ErrorCat.delete_enqueue_failed(%{kind: :transport})}
+    else
+      {:error, ErrorCat.provider_delete_failure_unclassified()}
+    end
+  end
+
+  defp temporary_transport?(reason)
+       when reason in [
+              :timeout,
+              :connect_timeout,
+              :closed,
+              :econnrefused,
+              :econnreset,
+              :enetunreach,
+              :ehostunreach,
+              :nxdomain
+            ] do
+    true
+  end
+
+  defp temporary_transport?(%{reason: reason}), do: temporary_transport?(reason)
+  defp temporary_transport?({:timeout, _context}), do: true
+
+  defp temporary_transport?({:failed_connect, details}) when is_list(details) do
+    Enum.any?(details, fn
+      {:inet, _options, reason} -> temporary_transport?(reason)
+      {:inet6, _options, reason} -> temporary_transport?(reason)
+      _ -> false
+    end)
+  end
+
+  defp temporary_transport?(_reason), do: false
 
   defp endpoint do
     case GroupherServer.CMS.Assets.Endpoints.fetch("ASSETS_HUB_DELETE_ENDPOINT") do
       {:ok, endpoint} -> {:ok, endpoint}
-      :error -> {:error, ErrorCat.delete_enqueue_failed("ASSETS_HUB_DELETE_ENDPOINT is required")}
+      :error -> {:error, ErrorCat.provider_delete_configuration_invalid()}
     end
   end
 end

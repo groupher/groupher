@@ -191,6 +191,19 @@ defmodule GroupherServer.Test.CMS.OutboxRecoveryContractTest do
       end)
     end
 
+    for code <- ["5608", "5609", "5610", "outbox_failed"] do
+      invalid =
+        Repo.update!(Ecto.Changeset.change(Repo.get!(Event, event.id), last_error_code: code))
+
+      assert_unchanged(invalid, fn ->
+        assert {:error, :provider_delete_event_not_recoverable} =
+                 recover.(step.operation_ref, owner)
+      end)
+    end
+
+    event =
+      Repo.update!(Ecto.Changeset.change(Repo.get!(Event, event.id), last_error_code: "5603"))
+
     assert_unchanged(event, fn ->
       assert {:error, :provider_delete_recovery_lease_invalid} =
                recover.(step.operation_ref, "other-owner")
@@ -246,7 +259,9 @@ defmodule GroupherServer.Test.CMS.OutboxRecoveryContractTest do
       end)
 
     assert {:error, _} =
-             CMS.Outbox.execute(event.id, fn _ -> {:error, :provider_unavailable} end,
+             CMS.Outbox.execute(
+               event.id,
+               fn _ -> {:error, CMS.Assets.ErrorCat.delete_enqueue_failed(%{status: 503})} end,
                on_error: :fail
              )
 
@@ -301,7 +316,9 @@ defmodule GroupherServer.Test.CMS.OutboxRecoveryContractTest do
       end)
 
     assert {:error, _} =
-             CMS.Outbox.execute(event.id, fn _ -> {:error, :provider_unavailable} end,
+             CMS.Outbox.execute(
+               event.id,
+               fn _ -> {:error, CMS.Assets.ErrorCat.delete_enqueue_failed(%{status: 503})} end,
                on_error: :fail
              )
 

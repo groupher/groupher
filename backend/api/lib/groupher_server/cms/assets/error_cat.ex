@@ -14,4 +14,7 @@ defmodule GroupherServer.CMS.Assets.ErrorCat do
   error(:provider_delete_target_invalid, code: 5605, retryable: false)
   error(:asset_not_restorable, code: 5606, retryable: false)
   error(:storage_identity_conflict, code: 5607, retryable: false)
+  error(:provider_delete_rejected, code: 5608, retryable: false)
+  error(:provider_delete_failure_unclassified, code: 5609, retryable: false)
+  error(:provider_delete_configuration_invalid, code: 5610, retryable: false)
 end
