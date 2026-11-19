@@ -180,17 +180,27 @@ defmodule GroupherServer.Test.CMS.SearchArtiments.OutboxTest do
   end
 
   defp enqueue(kind, community, article) do
+    snapshot_id = GroupherServer.Repo.get_by!(ArticlePublic, article_id: article.id).snapshot_id
+
     {:ok, event} =
-      CMS.Outbox.send(%{
+      enqueue_outbox(%{
         event: "article.search_sync",
         worker: GroupherServer.Jobs.CMSOutboxSearch,
         resource_type: "article",
         resource_id: article.id,
-        identity: {:workflow, Ecto.UUID.generate()},
-        data: %{source_event: kind, community_id: community.id}
+        operation_ref: Ecto.UUID.generate(),
+        dedupe_key: CMS.Outbox.DedupeKey.encode([article.id, kind]),
+        data: %{source_event: kind, community_id: community.id, snapshot_id: snapshot_id}
       })
 
     event
+  end
+
+  defp enqueue_outbox(attrs) do
+    case GroupherServer.Repo.transaction(fn -> CMS.Outbox.send(attrs) end) do
+      {:ok, result} -> result
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp deliver(event) do

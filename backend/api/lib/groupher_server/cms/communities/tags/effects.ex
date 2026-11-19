@@ -15,20 +15,20 @@ defmodule GroupherServer.CMS.Communities.Tags.Effects do
   alias GroupherServer.CMS
   alias CMS.Model.Community
 
-  @type identity :: {:command | :workflow, String.t()}
+  alias CMS.Outbox.DedupeKey
 
   @doc "Records one taxonomy invalidation in the caller-owned transaction."
-  @spec enqueue_taxonomy_changed(Community.t(), atom(), identity(), String.t()) ::
+  @spec enqueue_taxonomy_changed(Community.t(), atom(), Ecto.UUID.t(), term()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_taxonomy_changed(%Community{} = community, thread, identity, effect_key)
-      when is_atom(thread) and is_binary(effect_key) do
+  def enqueue_taxonomy_changed(%Community{} = community, thread, operation_ref, effect_dimensions)
+      when is_atom(thread) and is_binary(operation_ref) do
     CMS.Outbox.send(%{
       event: "community.taxonomy_changed",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
       resource_id: community.id,
-      identity: identity,
-      effect_key: effect_key,
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id, thread, effect_dimensions]),
       data: %{community: community.slug, community_id: community.id, thread: thread}
     })
   end

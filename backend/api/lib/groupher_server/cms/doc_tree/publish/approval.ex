@@ -42,11 +42,12 @@ defmodule GroupherServer.CMS.DocTree.Publish.Approval do
         %DocsPublishQueue{} = queue,
         revision,
         %User{id: actor_id} = actor,
-        command_id
+        command_id,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_integer(actor_id) and actor_id > 0 and
-             is_binary(command_id) do
-    with {:ok, command_id} <- Ecto.UUID.cast(command_id),
+             is_binary(operation_ref) do
+    with {:ok, operation_ref} <- Ecto.UUID.cast(operation_ref),
          {:ok, queue} <- Queue.advance(community, queue, %{queue_revision: revision}, []),
          true <- queue.approval_required,
          %User{} <- Repo.get(User, actor_id),
@@ -94,7 +95,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Approval do
          {:ok, approval} <- approval |> Ecto.Changeset.change(sealed: true) |> Repo.update(),
          {:ok, queue} <-
            queue |> Ecto.Changeset.change(latest_approval_id: approval.id) |> Repo.update(),
-         {:ok, _} <- CMS.DocTree.Publication.Notifications.approved(queue) do
+         {:ok, _} <- CMS.DocTree.Publication.Notifications.approved(queue, operation_ref) do
       {:ok, %{approval: approval, queue: queue, plan: plan}}
     else
       :error -> {:error, :invalid_docs_approval}
@@ -105,7 +106,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Approval do
     end
   end
 
-  def approve(_, _, _, _, _), do: {:error, :invalid_docs_approval}
+  def approve(_, _, _, _, _, _), do: {:error, :invalid_docs_approval}
 
   @doc "Checks fixed approval Snapshot identities and sources against the rebuilt queue plan."
   def matches_sources?(approval, plan) do

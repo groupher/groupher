@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
   @primary_key {:id, Ecto.UUID, autogenerate: true}
 
   schema "artiment_reviews" do
+    field(:operation_ref, Ecto.UUID)
     field(:target_type, Ecto.Enum, values: @target_types)
     belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:comment, Comment)
@@ -51,6 +52,7 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
     request
     |> cast(attrs, [
       :target_type,
+      :operation_ref,
       :article_id,
       :comment_id,
       :community_id,
@@ -66,6 +68,7 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
     ])
     |> validate_required([
       :target_type,
+      :operation_ref,
       :policy_snapshot,
       :state,
       :payload_expires_at

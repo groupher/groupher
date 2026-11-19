@@ -77,13 +77,14 @@ defmodule GroupherServer.CMS.Articles.BindingReview do
     end
   end
 
-  defp register_published_binding_review(article, community, lifecycle, _operation_ref) do
+  defp register_published_binding_review(article, community, lifecycle, operation_ref) do
     with {:ok, configs} <- ReviewBot.configs(community.id, :article),
          {:ok, content} <- current_review_content(article.id),
          target <- %{
            type: :article,
            article_id: article.id,
-           lifecycle: lifecycle
+           lifecycle: lifecycle,
+           operation_ref: operation_ref
          },
          {:ok, _registered} <-
            CMS.Review.RequestSubmission.register_in_transaction(

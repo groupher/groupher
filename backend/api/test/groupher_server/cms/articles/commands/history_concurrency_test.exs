@@ -49,8 +49,13 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.HistoryConcurrencyTest do
         send(first, :go)
         send(second, :go)
         results = Enum.map(tasks, &Task.await(&1, 20_000))
-        assert Enum.count(results, &match?({:ok, _}, &1)) == 1
-        assert Enum.count(results, &match?({:error, _}, &1)) == 1
+
+        assert Enum.count(results, &match?({:ok, _}, &1)) == 1,
+               "expected one successful command, got: #{inspect(results, pretty: true)}"
+
+        assert Enum.count(results, &match?({:error, _}, &1)) == 1,
+               "expected one rejected command, got: #{inspect(results, pretty: true)}"
+
         operation_refs =
           Repo.all(
             from(receipt in CommandReceipt,
@@ -59,7 +64,9 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.HistoryConcurrencyTest do
             )
           )
 
-        events = Repo.all(from(event in ArticleEvent, where: event.operation_ref in ^operation_refs))
+        events =
+          Repo.all(from(event in ArticleEvent, where: event.operation_ref in ^operation_refs))
+
         assert [%ArticleEvent{type: :edit} = event] = events
         assert event.before_revision == work.revision
         assert event.after_revision == work.revision + 1

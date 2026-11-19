@@ -30,7 +30,7 @@ defmodule GroupherServer.CommandPipeline do
 
       receipt_pipeline execute_receipt(article, folder_id, user, command_id) do
         gate(fn candidate -> prepare_gated_add(article, folder_id, user, command_id) end)
-        change(fn prepared -> apply_add(prepared, article, user) end)
+        change(fn prepared, _operation_ref -> apply_add(prepared, article, user) end)
         confirm(fn folder -> confirmation(folder, article, folder_id, :add) end)
         present(fn receipt -> present_confirmation(receipt, command_id) end)
       end
@@ -530,7 +530,14 @@ defmodule GroupherServer.CommandPipeline do
 
   defp validate_callback!(stage, callback, caller, expected \\ nil) do
     arity = callback_arity(callback)
-    expected = expected || if(stage in [:prepare, :load], do: 0, else: 1)
+
+    expected =
+      expected ||
+        cond do
+          stage in [:prepare, :load] -> 0
+          stage == :change -> 2
+          true -> 1
+        end
 
     unless arity == expected do
       raise ArgumentError, "#{stage} callback must have arity #{expected}, got #{inspect(arity)}"

@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDuplicate do
   @fields ~w(node_id type parent_node_id index title href doc_id marker badge hidden)a
 
   @doc "Copies one checked source and its complete content in the caller's transaction."
-  def run(site, queue, revision, node_id, actor) do
+  def run(site, queue, revision, node_id, actor, operation_ref) do
     with {:ok, queue} <- Queue.advance(site, queue, %{tree_lock_version: revision}, []),
          rows <- WorkspacePersist.lock_nodes(site),
          %{type: type} = source <- Enum.find(rows, &(&1.node_id == node_id)),
@@ -32,7 +32,13 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDuplicate do
            TreeOrder.insert(Enum.map(rows, &Map.take(&1, @fields)), node, source.index + 1),
          {:ok, :pass} <- WorkspacePersist.save(site, rows, result.changed),
          {:ok, queue} <-
-           Queue.advance(site, queue, %{tree_lock_version: revision}, [:tree_lock_version]) do
+           Queue.advance(
+             site,
+             queue,
+             %{tree_lock_version: revision},
+             [:tree_lock_version],
+             operation_ref
+           ) do
       {:ok,
        %{
          node_id: node.node_id,

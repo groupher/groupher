@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Wallpaper.Commands.RestoreSnapshot do
   receipt_pipeline run_receipt(community, input, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :update, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       restore_input = input |> Map.delete("command_id") |> Map.put(:command_id, command_id)
       Workflow.run_restore_snapshot(canonical, restore_input, actor)
     end)

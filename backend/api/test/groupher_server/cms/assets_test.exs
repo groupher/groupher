@@ -7,6 +7,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
   alias CMS.Assets.ThreadIdentity
   alias CMS.Hash
 
+  @publish_throttle CMS.Gate.RateLimit.Publish.Config.publish_throttle()
+  @throttle_interval @publish_throttle.interval_minutes
+  @throttle_hour_limit @publish_throttle.hour_limit
+  @throttle_day_limit @publish_throttle.day_limit
+
   alias CMS.Model.{
     Article,
     ArticleAssetRef,
@@ -19,9 +24,36 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     AssetReplacementPlan,
     AssetWorkflowRun,
     AssetWorkflowStep,
+    CommunityAdmin,
     CommunityAsset,
     CommunityApplicationLogoUpload
   }
+
+  defmodule ProviderDeleteEndpoint do
+    @moduledoc false
+
+    import Plug.Conn
+
+    def init(opts), do: opts
+
+    def call(conn, _opts) do
+      {:ok, body, conn} = read_body(conn)
+      status = Application.fetch_env!(:groupher_server, :asset_provider_test_status)
+      pid = Application.fetch_env!(:groupher_server, :asset_provider_test_pid)
+
+      send(pid, {
+        :asset_provider_delete_request,
+        status,
+        conn.request_path,
+        get_req_header(conn, "authorization"),
+        Jason.decode!(body)
+      })
+
+      conn
+      |> put_resp_content_type("application/json")
+      |> send_resp(status, ~s({"accepted":true}))
+    end
+  end
 
   describe "[cms assets]" do
     setup do
@@ -99,17 +131,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       })
       |> Repo.insert!()
 
-      grants =
-        ~w(ticket.create ticket.read_internal ticket.update ticket.manage_visibility)
-        |> Map.new(&{&1, true})
-
-      ticket_actor = %{
-        user
-        | cur_passport: %{
-            "global" => %{},
-            community.slug => %{"cms" => grants}
-          }
-      }
+      ticket_actor = grant_ticket_actions(community, user)
 
       assert {:ok, ticket} =
                CMS.Tickets.create_from_post(
@@ -319,17 +341,19 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           Ecto.UUID.generate()
         )
 
-      command_id = Ecto.UUID.generate()
+      operation_ref = Ecto.UUID.generate()
 
-      assert {:ok, {:ok, %CMS.Outbox.Event{identity_type: :command} = event}} =
+      assert {:ok, {:ok, %CMS.Outbox.Event{} = event}} =
                Repo.transaction(fn ->
-                 CMS.Assets.Effects.enqueue_provider_delete(asset, {:command, command_id})
+                 CMS.Assets.Effects.enqueue_provider_delete(asset, operation_ref)
                end)
 
       assert event.event == "asset.provider_delete"
       assert event.resource_id == to_string(asset.id)
-      assert event.command_id == command_id
-      assert event.effect_key == "asset:#{asset.id}"
+      assert event.operation_ref == operation_ref
+
+      assert event.dedupe_key ==
+               CMS.Outbox.DedupeKey.encode([asset.public_ref, asset.storage, asset.storage_key])
     end
 
     test "deduplicates registered storage objects when url changes", ~m(community user)a do
@@ -356,6 +380,169 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       {:ok, usage} = CMS.Assets.usage(community)
       assert usage.asset_count == 1
       assert usage.storage_bytes == 96
+    end
+
+    test "does not change a storage owner's public identity on duplicate registration",
+         ~m(community user)a do
+      storage_key = "identity-owner/#{Ecto.UUID.generate()}/original"
+
+      attrs =
+        image_asset_attrs("identity-owner.png", 64)
+        |> Map.merge(%{
+          public_ref: "asset_identity_owner",
+          storage: "r2",
+          storage_key: storage_key
+        })
+
+      assert {:ok, owner} =
+               CMS.Assets.register_to_community(community, attrs, user, Ecto.UUID.generate())
+
+      owner_before_conflict = Repo.get!(CommunityAsset, owner.id)
+
+      assert {:error, %{reason: :storage_identity_conflict}} =
+               CMS.Assets.register_to_community(
+                 community,
+                 Map.put(attrs, :public_ref, "asset_identity_reassigned"),
+                 user,
+                 Ecto.UUID.generate()
+               )
+
+      assert Repo.get!(CommunityAsset, owner.id) == owner_before_conflict
+    end
+
+    test "a deleted provider object identity cannot be registered again",
+         ~m(community user)a do
+      storage_key = "deleted-owner/#{Ecto.UUID.generate()}/original"
+
+      {:ok, owner} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("deleted-owner.png", 64)
+          |> Map.merge(%{storage: "r2", storage_key: storage_key}),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, _receipt} = CMS.Assets.backfill_usage(community)
+
+      assert {:ok, %{status: :deleted, deleted_at: deleted_at}} =
+               CMS.Assets.delete(community, owner.id, user, Ecto.UUID.generate())
+
+      assert not is_nil(deleted_at)
+      owner_after_delete = Repo.get!(CommunityAsset, owner.id)
+
+      assert {:error,
+              %ErrorCat.Error{
+                namespace: {:cms, :asset},
+                reason: :storage_identity_conflict
+              }} =
+               CMS.Assets.register_to_community(
+                 community,
+                 image_asset_attrs("deleted-owner-replacement.png", 96)
+                 |> Map.merge(%{storage: "r2", storage_key: storage_key}),
+                 user,
+                 Ecto.UUID.generate()
+               )
+
+      assert Repo.get!(CommunityAsset, owner.id) == owner_after_delete
+
+      assert Repo.aggregate(
+               from(asset in CommunityAsset,
+                 where: asset.storage == "r2" and asset.storage_key == ^storage_key
+               ),
+               :count,
+               :id
+             ) == 1
+    end
+
+    test "provider object identity cannot move to another community",
+         ~m(community user)a do
+      {:ok, other_community} = mock_community(user)
+      storage_key = "cross-community/#{Ecto.UUID.generate()}/original"
+
+      {:ok, owner} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("cross-community-owner.png", 64)
+          |> Map.merge(%{storage: "r2", storage_key: storage_key}),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      owner_before_conflict = Repo.get!(CommunityAsset, owner.id)
+
+      assert {:error,
+              %ErrorCat.Error{
+                namespace: {:cms, :asset},
+                reason: :storage_identity_conflict
+              }} =
+               CMS.Assets.register_to_community(
+                 other_community,
+                 image_asset_attrs("cross-community-replacement.png", 96)
+                 |> Map.merge(%{storage: "r2", storage_key: storage_key}),
+                 user,
+                 Ecto.UUID.generate()
+               )
+
+      assert Repo.get!(CommunityAsset, owner.id) == owner_before_conflict
+
+      assert Repo.aggregate(
+               from(asset in CommunityAsset,
+                 where: asset.storage == "r2" and asset.storage_key == ^storage_key
+               ),
+               :count,
+               :id
+             ) == 1
+    end
+
+    test "the storage identity unique constraint rejects direct inserts for deleted owners",
+         ~m(community user)a do
+      {:ok, other_community} = mock_community(user)
+      storage_key = "deleted-constraint/#{Ecto.UUID.generate()}/original"
+
+      {:ok, owner} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("deleted-constraint-owner.png", 64)
+          |> Map.merge(%{storage: "r2", storage_key: storage_key}),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, _receipt} = CMS.Assets.backfill_usage(community)
+
+      assert {:ok, %{status: :deleted}} =
+               CMS.Assets.delete(community, owner.id, user, Ecto.UUID.generate())
+
+      owner_after_delete = Repo.get!(CommunityAsset, owner.id)
+
+      changeset =
+        %CommunityAsset{}
+        |> CommunityAsset.changeset(
+          image_asset_attrs("deleted-constraint-duplicate.png", 96)
+          |> Map.merge(%{
+            community_id: other_community.id,
+            uploader_id: user.id,
+            storage: "r2",
+            storage_key: storage_key
+          })
+        )
+
+      assert {:error, %Ecto.Changeset{} = changeset} = Repo.insert(changeset)
+
+      assert Enum.any?(changeset.errors, fn {_field, {_message, opts}} ->
+               opts[:constraint_name] == "community_assets_storage_key_index"
+             end)
+
+      assert Repo.get!(CommunityAsset, owner.id) == owner_after_delete
+
+      assert Repo.aggregate(
+               from(asset in CommunityAsset,
+                 where: asset.storage == "r2" and asset.storage_key == ^storage_key
+               ),
+               :count,
+               :id
+             ) == 1
     end
 
     test "retired ref linking entry points are not exported" do
@@ -387,8 +574,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       refs = article_refs(:post, post.id)
-      assert refs |> Enum.map(& &1.usage) |> Enum.sort() == [:attachment, :cover]
-      body_ref = Enum.find(refs, &(&1.usage == :attachment))
+      working_copy_refs = Enum.filter(refs, &(not is_nil(&1.working_copy_id)))
+      snapshot_refs = Enum.filter(refs, &(not is_nil(&1.snapshot_id)))
+      assert Enum.map(working_copy_refs, & &1.usage) |> Enum.sort() == [:attachment, :cover]
+      assert Enum.map(snapshot_refs, & &1.usage) |> Enum.sort() == [:attachment, :cover]
+      [body_ref] = Enum.filter(working_copy_refs, &(&1.usage == :attachment))
       assert body_ref.usage == :attachment
       assert body_ref.title == "document attachment"
       assert body_ref.alt == "body attachment"
@@ -396,8 +586,10 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       {:ok, summary} = CMS.Assets.usage_summary(community, body_ref.asset_id, user)
       assert summary.draft == 1
       assert summary.live == 0
-      assert summary.historical == 0
+      assert summary.historical == 1
       assert summary.trashed == 0
+
+      historical_ref_ids = Enum.map(snapshot_refs, & &1.id)
 
       {:ok, usage} = CMS.Assets.usage(community)
       assert usage.asset_count == 2
@@ -413,7 +605,13 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  community: community
                )
 
-      assert [%ArticleAssetRef{usage: :cover}] = article_refs(:post, post.id)
+      refs_after_second_save = article_refs(:post, post.id)
+
+      working_copy_refs_after_second_save =
+        Enum.filter(refs_after_second_save, &(not is_nil(&1.working_copy_id)))
+
+      assert [%ArticleAssetRef{usage: :cover}] = working_copy_refs_after_second_save
+      assert Enum.all?(historical_ref_ids, &Repo.get(ArticleAssetRef, &1))
 
       {:ok, usage} = CMS.Assets.usage(community)
       assert usage.asset_count == 2
@@ -443,12 +641,13 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       {result, queries} = capture_queries(fn -> CMS.Assets.usages(community, asset.id, user) end)
 
-      assert {:ok, [%{lifecycle: :draft}]} = result
+      assert {:ok, usages} = result
+      assert Enum.frequencies_by(usages, & &1.lifecycle) == %{draft: 1, historical: 1}
       assert Enum.count(queries, &String.contains?(&1, "article_asset_refs")) == 1
       refute Enum.any?(queries, &String.contains?(&1, "pg_advisory_xact_lock"))
     end
 
-    test "returns trashed draft refs as trashed without opening per-ref locks",
+    test "fails closed for trashed draft refs when the target binding is missing",
          ~m(community post user)a do
       {:ok, asset} =
         CMS.Assets.register_to_community(
@@ -470,13 +669,15 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       assert {:ok, _trash} =
-               CMS.Articles.Trash.trash(post, user, community: community)
+               CMS.Articles.Trash.trash(post, user,
+                 community: community,
+                 operation_ref: Ecto.UUID.generate()
+               )
 
       Repo.get_by!(ArticleBinding, article_id: post.id, community_id: community.id)
       |> Repo.delete!()
 
-      assert {:ok, [%{lifecycle: :trashed}]} =
-               CMS.Assets.usages(community, asset.id, user)
+      assert {:ok, []} = CMS.Assets.usages(community, asset.id, user)
     end
 
     test "fails closed when the draft article has no target community binding",
@@ -506,7 +707,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, []} = CMS.Assets.usages(community, asset.id, user)
     end
 
-    test "keeps non-draft refs classified when their target binding is missing",
+    test "fails closed for non-draft refs when the target binding is missing",
          ~m(community post user)a do
       {:ok, asset} =
         CMS.Assets.register_to_community(
@@ -529,6 +730,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           :title,
           :digest,
           :slug,
+          :capture_actor_type,
           :captured_by_id,
           :captured_at,
           :causation_command_id
@@ -546,7 +748,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         |> then(&ArticleSnapshot.changeset(%ArticleSnapshot{}, &1))
         |> Repo.insert!()
 
-      {_, trashed_post, _, _} = mock_article(:post, community, user)
+      {_, trashed_post, _, _} = mock_article_after_throttle(:post, community, user)
       trashed_public = Repo.get_by!(ArticlePublic, article_id: trashed_post.id)
 
       for snapshot_id <- [public.snapshot_id, historical_snapshot.id, trashed_public.snapshot_id] do
@@ -561,14 +763,16 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       end
 
       assert {:ok, _trash} =
-               CMS.Articles.Trash.trash(trashed_post, user, community: community)
+               CMS.Articles.Trash.trash(trashed_post, user,
+                 community: community,
+                 operation_ref: Ecto.UUID.generate()
+               )
 
       Repo.delete_all(
         from(binding in ArticleBinding, where: binding.community_id == ^community.id)
       )
 
-      assert {:ok, usages} = CMS.Assets.usages(community, asset.id, user)
-      assert Enum.frequencies_by(usages, & &1.lifecycle) == %{live: 1, historical: 1, trashed: 1}
+      assert {:ok, []} = CMS.Assets.usages(community, asset.id, user)
     end
 
     test "keeps replacement planning bounded for 101 draft refs",
@@ -590,7 +794,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       for index <- 1..101 do
-        {_, article, _, _} = mock_article(:post, community, user)
+        {_, article, _, _} =
+          mock_article_in_next_publish_window(:post, community, user, index)
+
         assert {:ok, _draft} = open_draft(article, user)
 
         assert {:ok, %{body: [_]}} =
@@ -608,10 +814,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       {result, queries} = capture_queries(fn -> CMS.Assets.usages(community, asset.id, user) end)
 
       assert {:ok, usages} = result
-      assert length(usages) == 101
+      assert length(usages) == 202
+      assert Enum.frequencies_by(usages, & &1.lifecycle) == %{draft: 101, historical: 101}
       refute Enum.any?(usages, &Map.has_key?(&1, :resource_lifecycle))
       refute Enum.any?(usages, &Map.has_key?(&1, :community_lifecycle))
-      assert Enum.count(queries, &String.contains?(&1, "article_asset_refs")) == 2
+      assert Enum.count(queries, &String.contains?(&1, "article_asset_refs")) == 3
       refute Enum.any?(queries, &String.contains?(&1, "pg_advisory_xact_lock"))
 
       {plan_result, plan_queries} =
@@ -624,10 +831,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         end)
 
       assert {:ok, %AssetReplacementPlan{items: items}} = plan_result
-      assert length(items) == 101
-      assert Enum.all?(items, &((&1[:decision] || &1["decision"]) == "editable"))
-      assert Enum.count(plan_queries, &String.contains?(&1, "article_asset_refs")) == 2
-      assert Enum.count(plan_queries, &String.contains?(&1, ~s("cms"."ticket_states"))) <= 2
+      assert length(items) == 202
+      assert Enum.count(items, &((&1[:decision] || &1["decision"]) == "editable")) == 101
+      assert Enum.count(items, &((&1[:decision] || &1["decision"]) == "historical_only")) == 101
+      assert Enum.count(plan_queries, &String.contains?(&1, "article_asset_refs")) == 3
+      assert Enum.count(plan_queries, &String.contains?(&1, ~s("cms"."ticket_states"))) <= 3
 
       refute Enum.any?(plan_queries, &String.contains?(&1, "pg_advisory_xact_lock"))
     end
@@ -635,7 +843,16 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     test "includes Doc WorkingCopy asset refs in the batch usage query" do
       {doc_community, doc, _attrs, doc_user} = mock_article(:doc)
       public = Repo.get!(ArticlePublic, doc.article_id)
-      actor = %{doc_user | cur_passport: %{"global" => %{"god" => true}}}
+      actor = doc_user
+      {:ok, doc_lord} = db_insert(:user)
+
+      Repo.insert!(
+        CommunityAdmin.changeset(%CommunityAdmin{}, %{
+          community_id: doc_community.id,
+          user_id: doc_lord.id,
+          is_lord: true
+        })
+      )
 
       assert {:ok, _} =
                CMS.DocTree.Commands.BeginEdit.execute(
@@ -665,8 +882,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  community: doc_community
                )
 
-      assert {:ok, [%{lifecycle: :draft, thread: :doc}]} =
-               CMS.Assets.usages(doc_community, asset.id, doc_user)
+      assert {:ok, usages} = CMS.Assets.usages(doc_community, asset.id, doc_user)
+      assert Enum.frequencies_by(usages, & &1.lifecycle) == %{draft: 1, historical: 1}
+      assert Enum.all?(usages, &(&1.thread == :doc))
 
       {:ok, replacement_asset} =
         CMS.Assets.register_to_community(
@@ -676,16 +894,18 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           Ecto.UUID.generate()
         )
 
-      assert {:ok, %AssetReplacementPlan{items: [item]}} =
+      assert {:ok, %AssetReplacementPlan{items: items}} =
                CMS.Assets.create_replacement_plan(
                  doc_community,
                  %{from_asset_id: asset.id, to_asset_id: replacement_asset.id},
                  doc_user
                )
 
-      assert (item[:decision] || item["decision"]) == "unsupported"
+      assert length(items) == 2
 
-      assert {:ok, _} = CMS.Seeds.Docs.delete(doc_community, doc.article_id, actor)
+      assert Enum.all?(items, &((&1[:decision] || &1["decision"]) == "unsupported"))
+
+      assert {:ok, _} = CMS.Seeds.Docs.delete(doc_community, doc.article_id, doc_lord)
       assert {:ok, []} = CMS.Assets.usages(doc_community, asset.id, doc_user)
     end
 
@@ -729,8 +949,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       assert refs |> Enum.map(& &1.asset_id) |> Enum.sort() == [asset_a.id, asset_b.id]
-      assert asset_ref_count(asset_a.id) == 1
-      assert asset_ref_count(asset_b.id) == 1
+      assert asset_ref_count(asset_a.id) == 2
+      assert asset_ref_count(asset_b.id) == 2
       assert asset_ref_count(asset_c.id) == 0
 
       assert {:ok, %{body: refs, cover: []}} =
@@ -748,14 +968,22 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       assert refs |> Enum.map(& &1.asset_id) |> Enum.sort() == [asset_b.id, asset_c.id]
 
-      assert article_refs(:post, post.id) |> Enum.map(& &1.asset_id) |> Enum.sort() == [
-               asset_b.id,
-               asset_c.id
-             ]
+      refs_by_owner = article_refs(:post, post.id)
+      current_working_copy_refs = Enum.filter(refs_by_owner, &(not is_nil(&1.working_copy_id)))
+      snapshot_refs = Enum.filter(refs_by_owner, &(not is_nil(&1.snapshot_id)))
 
-      assert asset_ref_count(asset_a.id) == 0
-      assert asset_ref_count(asset_b.id) == 1
-      assert asset_ref_count(asset_c.id) == 1
+      assert Enum.map(current_working_copy_refs, & &1.asset_id) |> Enum.sort() ==
+               [asset_b.id, asset_c.id]
+
+      assert Enum.frequencies_by(snapshot_refs, & &1.asset_id) == %{
+               asset_a.id => 1,
+               asset_b.id => 2,
+               asset_c.id => 1
+             }
+
+      assert asset_ref_count(asset_a.id) == 1
+      assert asset_ref_count(asset_b.id) == 3
+      assert asset_ref_count(asset_c.id) == 2
     end
 
     test "replaces one WorkingCopy attachment with a revision and source guard",
@@ -789,6 +1017,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default)
       workflow_ref = "asset-replacement:test:#{post.id}"
+      operation_ref = Ecto.UUID.generate()
 
       params = %{
         revision: work.revision,
@@ -797,6 +1026,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         from_asset_id: from_asset.id,
         to_asset_id: to_asset.id
       }
+
+      from_asset_id = from_asset.id
+      to_asset_id = to_asset.id
 
       assert {:ok, _} =
                CMS.Dashboard.update(
@@ -811,11 +1043,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                CMS.Assets.replace_use(post, params, user, Ecto.UUID.generate())
 
       assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
-               CMS.Assets.replace_use_workflow(post, params, user, workflow_ref)
+               CMS.Assets.replace_use_workflow(post, params, user, workflow_ref, operation_ref)
 
       assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
-      assert [%ArticleAssetRef{asset_id: old_id}] = article_refs(:post, post.id)
-      assert old_id == from_asset.id
+
+      assert %ArticleAssetRef{asset_id: ^from_asset_id} =
+               Repo.get_by!(ArticleAssetRef, working_copy_id: work.id, block_id: "replace-me")
 
       assert {:ok, _} =
                CMS.Dashboard.update(
@@ -837,12 +1070,18 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    to_asset_id: to_asset.id
                  },
                  user,
-                 workflow_ref
+                 workflow_ref,
+                 operation_ref
                )
 
       assert revision == work.revision + 1
-      assert [%ArticleAssetRef{asset_id: asset_id}] = article_refs(:post, post.id)
-      assert asset_id == to_asset.id
+
+      assert %ArticleAssetRef{asset_id: ^to_asset_id} =
+               Repo.get_by!(ArticleAssetRef, working_copy_id: work.id, block_id: "replace-me")
+
+      assert Enum.any?(article_refs(:post, post.id), fn ref ->
+               not is_nil(ref.snapshot_id) and ref.asset_id == from_asset.id
+             end)
 
       assert {:ok, _} =
                CMS.Dashboard.update(
@@ -864,7 +1103,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    to_asset_id: to_asset.id
                  },
                  user,
-                 workflow_ref
+                 workflow_ref,
+                 operation_ref
                )
 
       assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
@@ -878,7 +1118,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    to_asset_id: from_asset.id
                  },
                  user,
-                 "asset-replacement:new-step:#{post.id}"
+                 "asset-replacement:new-step:#{post.id}",
+                 Ecto.UUID.generate()
                )
 
       assert Repo.get!(ArticleWorkingCopy, work.id).revision == revision
@@ -1087,11 +1328,26 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  user
                )
 
-      assert MapSet.new(Enum.map(plan.items, &(&1[:working_copy_id] || &1["working_copy_id"]))) ==
-               MapSet.new(Enum.map(copies, & &1.id))
+      editable_items =
+        Enum.filter(plan.items, &((&1[:decision] || &1["decision"]) == "editable"))
+
+      historical_items =
+        Enum.filter(plan.items, &((&1[:decision] || &1["decision"]) == "historical_only"))
+
+      assert MapSet.new(
+               Enum.map(editable_items, &(&1[:working_copy_id] || &1["working_copy_id"]))
+             ) == MapSet.new(Enum.map(copies, & &1.id))
+
+      assert length(historical_items) == 1
 
       assert {:ok, applied} = CMS.Assets.apply_replacement_plan(plan, user)
       assert applied.status == :completed
+
+      [skipped_historical_item] =
+        Enum.filter(applied.items, &((&1[:decision] || &1["decision"]) == "historical_only"))
+
+      historical_result = skipped_historical_item[:result] || skipped_historical_item["result"]
+      assert (historical_result[:status] || historical_result["status"]) in [:skipped, "skipped"]
 
       for work <- copies do
         assert Repo.get_by!(ArticleAssetRef, working_copy_id: work.id, block_id: "same").asset_id ==
@@ -1133,12 +1389,18 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  community: community
                )
 
-      assert {:ok, %AssetReplacementPlan{status: :pending, items: [item]}} =
+      assert {:ok, %AssetReplacementPlan{status: :pending, items: items}} =
                CMS.Assets.create_replacement_plan(
                  community,
                  %{from_asset_id: from_asset.id, to_asset_id: to_asset.id},
                  user
                )
+
+      assert length(items) == 2
+      [item] = Enum.filter(items, &((&1[:decision] || &1["decision"]) == "editable"))
+
+      [historical_item] =
+        Enum.filter(items, &((&1[:decision] || &1["decision"]) == "historical_only"))
 
       assert (item[:article_id] || item["article_id"]) == post.id
 
@@ -1148,6 +1410,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert (item[:decision] || item["decision"]) == "editable"
       locators = item[:usage_locators] || item["usage_locators"]
       assert [%{block_id: "plan-block"}] = locators
+
+      historical_locators = historical_item[:usage_locators] || historical_item["usage_locators"]
+      assert [%{block_id: "plan-block"}] = historical_locators
     end
 
     test "replacement plan persists step completion and resumes idempotently",
@@ -1190,12 +1455,21 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                CMS.Assets.apply_replacement_plan(plan, user)
 
       assert is_binary(run_ref)
-      [item] = applied.items
+      [item] = Enum.filter(applied.items, &((&1[:decision] || &1["decision"]) == "editable"))
       [locator] = item[:usage_locators] || item["usage_locators"]
       assert (locator[:status] || locator["status"]) == "succeeded"
 
+      [historical_item] =
+        Enum.filter(applied.items, &((&1[:decision] || &1["decision"]) == "historical_only"))
+
+      historical_result = historical_item[:result] || historical_item["result"]
+      assert (historical_result[:status] || historical_result["status"]) in [:skipped, "skipped"]
+
       persisted = Repo.get!(AssetReplacementPlan, applied.id)
-      [persisted_item] = persisted.items
+
+      [persisted_item] =
+        Enum.filter(persisted.items, &((&1[:decision] || &1["decision"]) == "editable"))
+
       persisted_result = persisted_item[:result] || persisted_item["result"]
       assert (persisted_result[:status] || persisted_result["status"]) in [:applied, "applied"]
 
@@ -1205,7 +1479,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
     test "keeps a subset apply run pending until every article is selected",
          ~m(community post user)a do
-      {_community, other_post, _attrs, _other_user} = mock_article(:post, community, user)
+      {_community, other_post, _attrs, _other_user} =
+        mock_article_after_throttle(:post, community, user)
+
       assert {:ok, _draft} = open_draft(other_post, user)
 
       {:ok, from_asset} =
@@ -1266,6 +1542,24 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       step_statuses = Repo.all(AssetWorkflowStep) |> Enum.map(& &1.status)
       assert Enum.count(step_statuses, &(&1 == :succeeded)) == 1
       assert Enum.count(step_statuses, &(&1 == :pending)) == 1
+      assert Enum.count(step_statuses, &(&1 == :skipped)) == 2
+
+      assert [%AssetWorkflowStep{resource_id: pending_article_id}] =
+               Repo.all(AssetWorkflowStep) |> Enum.filter(&(&1.status == :pending))
+
+      assert pending_article_id == to_string(other_post.id)
+
+      historical_items =
+        Enum.filter(partial.items, fn item ->
+          (item[:decision] || item["decision"]) in [:historical_only, "historical_only"]
+        end)
+
+      assert length(historical_items) == 2
+
+      assert Enum.all?(historical_items, fn item ->
+               result = item[:result] || item["result"]
+               (result[:status] || result["status"]) in [:skipped, "skipped"]
+             end)
 
       assert {:ok, %AssetReplacementPlan{status: :completed}} =
                CMS.Assets.apply_replacement_plan(
@@ -1280,7 +1574,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
     test "skips historical-only plan items without creating a draft",
          ~m(community user)a do
-      {_community, historical_post, _attrs, _other_user} = mock_article(:post, community, user)
+      {_community, historical_post, _attrs, _other_user} =
+        mock_article_after_throttle(:post, community, user)
 
       {:ok, from_asset} =
         CMS.Assets.register_to_community(
@@ -1387,6 +1682,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  community: community
                )
 
+      refs_before_invalid_body = article_refs(:post, post.id)
+
       for usage <- [:cover, "cover_dark"] do
         assert {:error,
                 %ErrorCat.Error{
@@ -1407,10 +1704,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    community: community
                  )
 
-        assert [%ArticleAssetRef{id: ref_id, usage: :cover}] =
-                 article_refs(:post, post.id)
-
-        assert ref_id == cover_ref.id
+        refs_after_invalid_body = article_refs(:post, post.id)
+        assert refs_after_invalid_body == refs_before_invalid_body
+        assert Enum.any?(refs_after_invalid_body, &(&1.id == cover_ref.id and &1.usage == :cover))
       end
     end
 
@@ -1465,9 +1761,13 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
              ) == 1
 
       refs = article_refs(:post, post.id)
+      working_copy_refs = Enum.filter(refs, &(not is_nil(&1.working_copy_id)))
+      snapshot_refs = Enum.filter(refs, &(not is_nil(&1.snapshot_id)))
 
-      assert length(refs) == 1
-      assert hd(refs).source in ["sync-a.png", "sync-b.png"]
+      assert length(working_copy_refs) == 1
+      assert hd(working_copy_refs).source in ["sync-a.png", "sync-b.png"]
+      assert length(snapshot_refs) == 1
+      assert hd(snapshot_refs).source == hd(working_copy_refs).source
     end
 
     test "paginates refs for one asset", ~m(community post user)a do
@@ -1497,19 +1797,29 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert length(refs) == 105
 
       {:ok, paged_refs} =
-        CMS.Assets.refs(community, asset.id, %GroupherServer.Pagi.Params.Offset{page: 1, size: 20})
+        CMS.Assets.refs(
+          community,
+          asset.id,
+          %GroupherServer.Pagi.Params.Offset{page: 1, size: 20},
+          user
+        )
 
       assert length(paged_refs.entries) == 20
-      assert paged_refs.total_count == 105
-      assert paged_refs.total_pages == 6
+      assert paged_refs.total_count == 210
+      assert paged_refs.total_pages == 11
       assert paged_refs.page == 1
 
       {:ok, second_page_refs} =
-        CMS.Assets.refs(community, asset.id, %GroupherServer.Pagi.Params.Offset{page: 2, size: 20})
+        CMS.Assets.refs(
+          community,
+          asset.id,
+          %GroupherServer.Pagi.Params.Offset{page: 2, size: 20},
+          user
+        )
 
       assert length(second_page_refs.entries) == 20
-      assert second_page_refs.total_count == 105
-      assert second_page_refs.total_pages == 6
+      assert second_page_refs.total_count == 210
+      assert second_page_refs.total_pages == 11
       assert second_page_refs.page == 2
 
       first_page_ids = paged_refs.entries |> Enum.map(& &1.id) |> MapSet.new()
@@ -1518,14 +1828,16 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert MapSet.disjoint?(first_page_ids, second_page_ids)
 
       {result, queries} =
-        capture_queries(fn -> CMS.Assets.refs(community, asset.id, %{cursor: %{first: 20}}) end)
+        capture_queries(fn ->
+          CMS.Assets.refs(community, asset.id, %{cursor: %{first: 20}}, user)
+        end)
 
       assert {:ok, %{entries: first_cursor_entries, end_cursor: cursor}} = result
       assert Enum.map(first_cursor_entries, & &1.id) == Enum.map(paged_refs.entries, & &1.id)
       refute Enum.any?(queries, &String.contains?(String.downcase(&1), "count("))
 
       assert {:ok, %{entries: next_entries}} =
-               CMS.Assets.refs(community, asset.id, %{cursor: %{first: 20, after: cursor}})
+               CMS.Assets.refs(community, asset.id, %{cursor: %{first: 20, after: cursor}}, user)
 
       assert Enum.map(next_entries, & &1.id) == Enum.map(second_page_refs.entries, & &1.id)
 
@@ -1538,7 +1850,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:error, _} =
-               CMS.Assets.refs(community, other_asset.id, %{cursor: %{first: 20, after: cursor}})
+               CMS.Assets.refs(
+                 community,
+                 other_asset.id,
+                 %{cursor: %{first: 20, after: cursor}},
+                 user
+               )
     end
 
     test "creates upload intent with readable refs and dated storage key", ~m(community user)a do
@@ -1861,22 +2178,295 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       workflow_ref = "provider-reconciliation:test:#{community.id}"
 
-      assert {:ok, %{run_ref: ^workflow_ref, status: :completed, enqueued: 1, skipped: 0}} =
+      assert {:ok, %{run_ref: ^workflow_ref, status: :pending, enqueued: 0, skipped: 1}} =
                CMS.Assets.ProviderReconciliation.enqueue_missing(
                  community,
                  workflow_ref: workflow_ref,
                  age_seconds: 0
                )
 
-      assert Repo.get_by!(AssetWorkflowRun, workflow_ref: workflow_ref).status == :completed
+      assert Repo.get_by!(AssetWorkflowRun, workflow_ref: workflow_ref).status == :pending
 
-      assert [%AssetWorkflowStep{status: :succeeded, result: %{"outbox" => "created"}}] =
+      assert [
+               %AssetWorkflowStep{
+                 status: :pending,
+                 operation_ref: _operation_ref,
+                 result: %{}
+               }
+             ] =
                Repo.all(AssetWorkflowStep)
 
-      assert Repo.get_by!(CMS.Outbox.Event,
+      refute Repo.get_by(CMS.Outbox.Event,
                event: "asset.provider_delete",
                resource_id: to_string(asset.id)
-             ).identity_type == :workflow
+             )
+    end
+
+    test "provider reconciliation rejects existing delete events with a mismatched contract",
+         ~m(community user)a do
+      {:ok, asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("provider-contract.png", 80)
+          |> Map.merge(%{storage: "r2", storage_key: "provider-contract/original"}),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, _receipt} = CMS.Assets.backfill_usage(community)
+      assert {:ok, _deleted} = CMS.Assets.Persist.delete(community, asset.id)
+
+      event =
+        Repo.insert!(%CMS.Outbox.Event{
+          id: Ecto.UUID.generate(),
+          event: "asset.provider_delete",
+          contract_version: 1,
+          worker: inspect(GroupherServer.Jobs.CMSOutboxAsset),
+          resource_type: "community_asset",
+          resource_id: to_string(asset.id),
+          operation_ref: Ecto.UUID.generate(),
+          dedupe_key:
+            CMS.Outbox.DedupeKey.encode([asset.public_ref, asset.storage, asset.storage_key]),
+          data: %{
+            "asset_id" => asset.id,
+            "public_ref" => asset.public_ref,
+            "storage" => asset.storage,
+            "storage_key" => asset.storage_key
+          },
+          status: :waiting,
+          attempts: 0,
+          failure_generation: 0,
+          available_at: DateTime.utc_now(:second)
+        })
+
+      outbox_event_id = event.id
+      event_data = event.data
+      event_worker = event.worker
+
+      mismatches = [
+        %{data: Map.put(event.data, "storage_key", "other/object")},
+        %{contract_version: 2},
+        %{worker: "Elixir.GroupherServer.Jobs.UnexpectedAssetWorker"}
+      ]
+
+      previous_env = Application.get_env(:groupher_server, :env)
+      Application.put_env(:groupher_server, :env, :dev)
+
+      on_exit(fn ->
+        if is_nil(previous_env) do
+          Application.delete_env(:groupher_server, :env)
+        else
+          Application.put_env(:groupher_server, :env, previous_env)
+        end
+      end)
+
+      valid_workflow_ref = "provider-contract-valid:#{community.id}"
+
+      assert {:ok, %{run_ref: ^valid_workflow_ref, status: :completed, enqueued: 0, skipped: 1}} =
+               CMS.Assets.ProviderReconciliation.enqueue_missing(
+                 community,
+                 workflow_ref: valid_workflow_ref,
+                 age_seconds: -1
+               )
+
+      valid_run = Repo.get_by!(AssetWorkflowRun, workflow_ref: valid_workflow_ref)
+
+      assert %AssetWorkflowStep{
+               status: :succeeded,
+               result: %{
+                 "outcome" => "existing",
+                 "outbox_event_id" => ^outbox_event_id
+               }
+             } = Repo.get_by!(AssetWorkflowStep, run_id: valid_run.id)
+
+      for {mismatch, index} <- Enum.with_index(mismatches) do
+        Repo.get!(CMS.Outbox.Event, outbox_event_id)
+        |> CMS.Outbox.Event.changeset(
+          Map.merge(
+            %{contract_version: 1, worker: event_worker, data: event_data},
+            mismatch
+          )
+        )
+        |> Repo.update!()
+
+        workflow_ref = "provider-contract:#{community.id}:#{index}"
+
+        assert {:error, :provider_delete_event_identity_mismatch} =
+                 CMS.Assets.ProviderReconciliation.enqueue_missing(
+                   community,
+                   workflow_ref: workflow_ref,
+                   age_seconds: -1
+                 )
+
+        assert Repo.get_by!(AssetWorkflowRun, workflow_ref: workflow_ref).status == :failed
+
+        assert Repo.get_by!(AssetWorkflowStep,
+                 run_id: Repo.get_by!(AssetWorkflowRun, workflow_ref: workflow_ref).id,
+                 resource_id: to_string(asset.id)
+               ).status == :failed
+      end
+    end
+
+    test "provider reconciliation requeues the same dead intent on a later leased run",
+         ~m(community user)a do
+      {:ok, asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("provider-recovery.png", 80)
+          |> Map.merge(%{storage: "r2", storage_key: "provider-recovery/original"}),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, _receipt} = CMS.Assets.backfill_usage(community)
+      assert {:ok, _deleted} = CMS.Assets.Persist.delete(community, asset.id)
+
+      endpoint = start_provider_delete_endpoint(503)
+      endpoint_before = System.get_env("ASSETS_HUB_DELETE_ENDPOINT")
+      service_token_key = {"https://assets.groupher.com/internal", ["assets:object:delete"]}
+      previous_token = :ets.lookup(:groupher_service_token_cache, service_token_key)
+      previous_endpoint_pid = Application.get_env(:groupher_server, :asset_provider_test_pid)
+      previous_status = Application.get_env(:groupher_server, :asset_provider_test_status)
+
+      System.put_env("ASSETS_HUB_DELETE_ENDPOINT", endpoint)
+
+      :ets.insert(
+        :groupher_service_token_cache,
+        {service_token_key, "test-service-token", System.system_time(:second) + 3_600}
+      )
+
+      Application.put_env(:groupher_server, :asset_provider_test_pid, self())
+      Application.put_env(:groupher_server, :asset_provider_test_status, 503)
+
+      on_exit(fn ->
+        restore_env("ASSETS_HUB_DELETE_ENDPOINT", endpoint_before)
+        restore_application_env(:asset_provider_test_pid, previous_endpoint_pid)
+        restore_application_env(:asset_provider_test_status, previous_status)
+
+        :ets.delete(:groupher_service_token_cache, service_token_key)
+
+        case previous_token do
+          [entry] -> :ets.insert(:groupher_service_token_cache, entry)
+          [] -> :ok
+        end
+      end)
+
+      with_jobs_enabled(fn ->
+        first_workflow_ref = "provider-recovery:r1:#{community.id}"
+
+        assert {:ok, %{run_ref: ^first_workflow_ref, status: :completed, enqueued: 1, skipped: 0}} =
+                 CMS.Assets.reconcile_provider_deletions(community,
+                   workflow_ref: first_workflow_ref,
+                   age_seconds: -1
+                 )
+
+        first_run = Repo.get_by!(AssetWorkflowRun, workflow_ref: first_workflow_ref)
+
+        assert %AssetWorkflowStep{status: :succeeded} =
+                 first_step = Repo.get_by!(AssetWorkflowStep, run_id: first_run.id)
+
+        first_event = Repo.get_by!(CMS.Outbox.Event, event: "asset.provider_delete")
+        first_event_id = first_event.id
+
+        assert {:ok, :pass} =
+                 GroupherServer.Jobs.CMSOutboxAsset.perform(%Oban.Job{
+                   args: %{"event_id" => first_event.id},
+                   attempt: 8,
+                   max_attempts: 8
+                 })
+
+        assert %CMS.Outbox.Event{status: :failed, last_error_code: "5603"} =
+                 first_event = Repo.get!(CMS.Outbox.Event, first_event.id)
+
+        assert_receive {:asset_provider_delete_request, 503, "/internal/assets/delete",
+                        ["Bearer test-service-token"], payload}
+
+        assert payload["assetPublicRef"] == asset.public_ref
+        assert payload["storageKey"] == asset.storage_key
+
+        assert first_event.failure_generation == 1
+
+        Repo.update_all(
+          from(job in Oban.Job,
+            where: fragment("?->>'event_id' = ?", job.args, ^first_event.id)
+          ),
+          set: [state: "completed", completed_at: DateTime.utc_now(:second)]
+        )
+
+        first_operation_ref = first_event.operation_ref
+        first_event_data = first_event.data
+        first_dedupe_key = first_event.dedupe_key
+        second_workflow_ref = "provider-recovery:r2:#{community.id}"
+
+        assert {:ok,
+                %{run_ref: ^second_workflow_ref, status: :completed, enqueued: 1, skipped: 0}} =
+                 CMS.Assets.reconcile_provider_deletions(community,
+                   workflow_ref: second_workflow_ref,
+                   age_seconds: -1
+                 )
+
+        second_run = Repo.get_by!(AssetWorkflowRun, workflow_ref: second_workflow_ref)
+
+        assert %AssetWorkflowStep{
+                 status: :succeeded,
+                 result: %{
+                   "outcome" => "requeued",
+                   "outbox_event_id" => ^first_event_id
+                 }
+               } = second_step = Repo.get_by!(AssetWorkflowStep, run_id: second_run.id)
+
+        assert %CMS.Outbox.Event{
+                 status: :waiting,
+                 failure_generation: 1,
+                 operation_ref: ^first_operation_ref,
+                 dedupe_key: ^first_dedupe_key,
+                 data: ^first_event_data
+               } = Repo.get!(CMS.Outbox.Event, first_event.id)
+
+        assert first_step.operation_ref == first_operation_ref
+        assert second_step.operation_ref != first_operation_ref
+
+        assert %CMS.Outbox.Retry{
+                 initiator_kind: "owner",
+                 reason_code: "provider_delete_retry",
+                 original_operation_ref: ^first_operation_ref,
+                 retry_operation_ref: retry_operation_ref
+               } =
+                 Repo.get_by!(CMS.Outbox.Retry,
+                   event_id: first_event.id,
+                   failure_generation: 1
+                 )
+
+        assert retry_operation_ref == second_step.operation_ref
+
+        assert Repo.aggregate(
+                 from(event in CMS.Outbox.Event, where: event.id == ^first_event.id),
+                 :count,
+                 :id
+               ) == 1
+
+        assert Repo.aggregate(
+                 from(job in Oban.Job,
+                   where: fragment("?->>'event_id' = ?", job.args, ^first_event.id)
+                 ),
+                 :count,
+                 :id
+               ) == 2
+
+        Application.put_env(:groupher_server, :asset_provider_test_status, 200)
+
+        assert {:ok, :pass} =
+                 GroupherServer.Jobs.CMSOutboxAsset.perform(%Oban.Job{
+                   args: %{"event_id" => first_event.id},
+                   attempt: 1,
+                   max_attempts: 8
+                 })
+
+        assert_receive {:asset_provider_delete_request, 200, "/internal/assets/delete",
+                        ["Bearer test-service-token"], _payload}
+
+        assert Repo.get!(CMS.Outbox.Event, first_event.id).status == :done
+      end)
     end
 
     test "handled workflow failures release the run lease",
@@ -1987,12 +2577,17 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           community: community
         )
 
-      assert asset_ref_count(ref.asset_id) == 1
+      assert asset_ref_count(ref.asset_id) == 2
+      refs_before_trash = article_refs(:post, post.id)
+      assert Enum.count(refs_before_trash, &(not is_nil(&1.working_copy_id))) == 1
+      assert Enum.count(refs_before_trash, &(not is_nil(&1.snapshot_id))) == 1
 
       assert {:ok, _trash_item} = CMS.Articles.trash(post, user)
 
-      assert asset_ref_count(ref.asset_id) == 1
-      assert [_] = article_refs(:post, post.id)
+      assert asset_ref_count(ref.asset_id) == 2
+
+      assert Enum.map(article_refs(:post, post.id), & &1.id) ==
+               Enum.map(refs_before_trash, & &1.id)
     end
 
     test "permanently deleting an article cleans up document asset refs",
@@ -2009,10 +2604,13 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           community: community
         )
 
-      assert [_] = article_refs(:post, post.id)
+      refs_before_trash = article_refs(:post, post.id)
+      assert length(refs_before_trash) == 2
+      assert Enum.count(refs_before_trash, &(not is_nil(&1.working_copy_id))) == 1
+      assert Enum.count(refs_before_trash, &(not is_nil(&1.snapshot_id))) == 1
 
       assert {:ok, trash_item} = CMS.Articles.trash(post, user)
-      assert asset_ref_count(ref.asset_id) == 1
+      assert asset_ref_count(ref.asset_id) == 2
 
       assert {:ok, %{done: true}} =
                CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
@@ -2024,7 +2622,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
     test "permanently deleting one article keeps shared asset refs from other articles",
          ~m(community post user)a do
-      {_community, other_post, _attrs, _user} = mock_article(:post, community, user)
+      {_community, other_post, _attrs, _user} =
+        mock_article_after_throttle(:post, community, user)
+
       assert {:ok, _draft} = open_draft(other_post, user)
 
       {:ok, asset} =
@@ -2055,16 +2655,19 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  community: community
                )
 
-      assert asset_ref_count(asset.id) == 2
+      assert asset_ref_count(asset.id) == 4
 
       assert {:ok, trash_item} = CMS.Articles.trash(post, user)
 
       assert {:ok, %{done: true}} =
                CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
-      assert asset_ref_count(asset.id) == 1
+      assert asset_ref_count(asset.id) == 2
       assert article_refs(:post, post.id) == []
-      assert [_] = article_refs(:post, other_post.id)
+      other_refs = article_refs(:post, other_post.id)
+      assert length(other_refs) == 2
+      assert Enum.count(other_refs, &(not is_nil(&1.working_copy_id))) == 1
+      assert Enum.count(other_refs, &(not is_nil(&1.snapshot_id))) == 1
     end
 
     test "keeps the default WorkingCopy revision when usage also includes a Snapshot",
@@ -2259,4 +2862,91 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       0 -> Enum.reverse(queries)
     end
   end
+
+  defp grant_ticket_actions(community, user) do
+    permissions =
+      ~w(ticket.create ticket.link_source ticket.read_internal ticket.update ticket.manage_visibility)
+      |> Map.new(&{&1, true})
+
+    case Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) do
+      %CommunityAdmin{} = member ->
+        member
+        |> CommunityAdmin.changeset(%{permissions: Map.merge(member.permissions, permissions)})
+        |> Repo.update!()
+
+      nil ->
+        %CommunityAdmin{}
+        |> CommunityAdmin.changeset(%{
+          user_id: user.id,
+          community_id: community.id,
+          permissions: permissions
+        })
+        |> Repo.insert!()
+    end
+
+    user
+  end
+
+  defp mock_article_after_throttle(thread, community, user) do
+    CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+      :last_publish_time,
+      %User{id: user.id},
+      minutes: -@throttle_interval
+    )
+
+    mock_article(thread, community, user)
+  end
+
+  defp mock_article_in_next_publish_window(thread, community, user, index) do
+    if rem(index, @throttle_hour_limit) == 0 do
+      CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+        :publish_hour,
+        %User{id: user.id},
+        hours: -1
+      )
+    end
+
+    if rem(index, @throttle_day_limit) == 0 do
+      CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+        :publish_date,
+        %User{id: user.id},
+        days: -2
+      )
+    end
+
+    mock_article_after_throttle(thread, community, user)
+  end
+
+  defp start_provider_delete_endpoint(status) do
+    ref = Module.concat(__MODULE__, "ProviderDeleteEndpoint#{System.unique_integer([:positive])}")
+    Application.put_env(:groupher_server, :asset_provider_test_status, status)
+    {:ok, _pid} = Plug.Cowboy.http(ProviderDeleteEndpoint, [], port: 0, ref: ref)
+    on_exit(fn -> Plug.Cowboy.shutdown(ref) end)
+
+    "http://127.0.0.1:#{:ranch.get_port(ref)}"
+  end
+
+  defp with_jobs_enabled(action) do
+    unless Oban.Registry.whereis(Oban) do
+      start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})
+    end
+
+    previous_env = Application.get_env(:groupher_server, :env)
+    Application.put_env(:groupher_server, :env, :dev)
+
+    try do
+      action.()
+    after
+      restore_application_env(:env, previous_env)
+    end
+  end
+
+  defp restore_application_env(key, nil),
+    do: Application.delete_env(:groupher_server, key)
+
+  defp restore_application_env(key, value),
+    do: Application.put_env(:groupher_server, key, value)
+
+  defp restore_env(name, nil), do: System.delete_env(name)
+  defp restore_env(name, value), do: System.put_env(name, value)
 end

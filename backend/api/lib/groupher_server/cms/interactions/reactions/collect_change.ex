@@ -21,15 +21,15 @@ defmodule GroupherServer.CMS.Interactions.Reactions.CollectChange do
   @doc "Applies one idempotent collect set-state change in the existing transaction."
   @spec apply(struct(), User.t(), :add | :remove, Ecto.UUID.t()) ::
           {:ok, {struct(), :changed | :unchanged}} | {:error, term()}
-  def apply(canonical, %User{} = actor, operation, command_id)
+  def apply(canonical, %User{} = actor, operation, operation_ref)
       when operation in [:add, :remove] do
     with true <- Repo.in_transaction?(),
          {:ok, %{collection?: true} = info} <- Matcher.match_interaction(canonical),
          {:ok, change} <- change_fact(canonical, info, actor, operation),
          {:ok, _} <- sync_state(canonical, actor, operation, change),
-         {:ok, _} <- record_metric(canonical, operation, command_id, change),
+         {:ok, _} <- record_metric(canonical, operation, operation_ref, change),
          {:ok, _} <- sync_achievement(canonical, operation, change),
-         {:ok, _} <- enqueue_effect(canonical, actor, operation, command_id, change) do
+         {:ok, _} <- enqueue_effect(canonical, actor, operation, operation_ref, change) do
       {:ok, {canonical, change}}
     else
       false -> {:error, :pipeline_transaction_required}
@@ -77,16 +77,15 @@ defmodule GroupherServer.CMS.Interactions.Reactions.CollectChange do
   defp author_user(%{author: %{user_id: user_id}}), do: %User{id: user_id}
   defp author_user(%{author_id: author_id}), do: %User{id: Repo.get!(Author, author_id).user_id}
 
-  defp enqueue_effect(_article, _actor, _operation, _command_id, :unchanged), do: {:ok, :pass}
+  defp enqueue_effect(_article, _actor, _operation, _operation_ref, :unchanged), do: {:ok, :pass}
 
-  defp enqueue_effect(article, actor, operation, command_id, :changed) do
+  defp enqueue_effect(article, actor, operation, operation_ref, :changed) do
     Effects.enqueue_reaction_changed(
       "interaction.collect_changed",
       "article",
       article.id,
-      command_id,
-      %{actor_id: actor.id, operation: operation},
-      effect_key: "article:#{article.id}:#{operation}"
+      operation_ref,
+      %{actor_id: actor.id, operation: operation}
     )
   end
 

@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Review do
       CMS.Gate.check_application_in_transaction(actor, :application_review, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       Review.start(canonical.public_ref, actor, Map.fetch!(params, :expected_version))
     end)
 
@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Review do
       CMS.Gate.check_application_in_transaction(actor, :application_approve, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       Review.approve(
         canonical.public_ref,
         actor,
@@ -75,7 +75,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Review do
       CMS.Gate.check_application_in_transaction(actor, :application_reject, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       Review.reject(
         canonical.public_ref,
         actor,
@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Review do
       CMS.Gate.check_application_in_transaction(actor, :application_retry_creation, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       Review.retry_creation(
         canonical.public_ref,
         actor,

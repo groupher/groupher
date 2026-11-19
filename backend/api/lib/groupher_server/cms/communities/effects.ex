@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Communities.Effects do
 
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Model.{Community, CommunityLifecycle}
+  alias CMS.Outbox.DedupeKey
 
   @doc "Records one Community activity in the caller-owned transaction."
   def activity(resource, event, opts), do: Activity.log(resource, event, opts)
@@ -16,14 +17,14 @@ defmodule GroupherServer.CMS.Communities.Effects do
   @doc "Records durable analytics provisioning for a newly created Community."
   @spec enqueue_analysis_provision(Community.t(), Ecto.UUID.t()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_analysis_provision(%Community{} = community, command_id) do
+  def enqueue_analysis_provision(%Community{} = community, operation_ref) do
     CMS.Outbox.send(%{
       event: "community.analysis_provision",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
       resource_id: community.id,
-      identity: {:command, command_id},
-      effect_key: "analysis_provision",
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id]),
       data: %{community_id: community.id}
     })
   end
@@ -62,9 +63,9 @@ defmodule GroupherServer.CMS.Communities.Effects do
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
       resource_id: community.id,
-      identity: {:workflow, "community_lifecycle:#{community.id}:#{operation_ref}"},
-      effect_key: "public_visibility_changed",
-      data: %{community: community.slug}
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id]),
+      data: %{community: community.slug, community_id: community.id}
     })
   end
 

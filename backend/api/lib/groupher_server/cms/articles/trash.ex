@@ -154,7 +154,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
   def restore(item_or_id, actor, opts \\ [])
 
   def restore(item_or_id, actor, opts) do
-    with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
+    with {:ok, opts} <- validate_operation_ref_opts(opts),
+         {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
          %Article{} = article <- Repo.get(Article, item.article_id),
          %Community{} = community <- Repo.get(Community, item.community_id) do
       CMS.Gate.with_community_check(actor, :restore, community, article, fn canonical ->
@@ -166,7 +167,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
                  canonical,
                  community,
                  actor,
-                 Keyword.get(opts, :command_id) || trash_operation_ref(item),
+                 Keyword.fetch!(opts, :operation_ref),
                  :post_restore
                ),
              {:ok, _} <- update_tag_stats(canonical, 1),
@@ -188,7 +189,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
   @spec restore_loaded(TrashedArticle.t(), map(), term(), keyword()) ::
           {:ok, Article.t()} | {:error, term()}
   def restore_loaded(%TrashedArticle{} = item, canonical, actor, opts \\ []) do
-    with %Community{} = community <- Repo.get(Community, item.community_id),
+    with {:ok, opts} <- validate_operation_ref_opts(opts),
+         %Community{} = community <- Repo.get(Community, item.community_id),
          {:ok, lifecycle} <- Lifecycle.lock(canonical),
          {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, item.restore_state),
          {:ok, _deleted} <- Repo.delete(item),
@@ -197,7 +199,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
              canonical,
              community,
              actor,
-             Keyword.get(opts, :command_id) || trash_operation_ref(item),
+             Keyword.fetch!(opts, :operation_ref),
              :post_restore
            ),
          {:ok, _} <- update_tag_stats(canonical, 1),
@@ -222,7 +224,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
   def permanently_delete(item_or_id, actor, opts \\ [])
 
   def permanently_delete(item_or_id, actor, opts) do
-    with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
+    with {:ok, opts} <- validate_operation_ref_opts(opts),
+         {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
          %Article{} = article <- Repo.get(Article, item.article_id),
          %Community{} = community <- Repo.get(Community, item.community_id) do
       CMS.Gate.with_community_check(
@@ -238,13 +241,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
                    canonical,
                    community,
                    actor,
-                   trash_operation_ref(item)
+                   Keyword.fetch!(opts, :operation_ref)
                  ),
                {:ok, lifecycle} <- Lifecycle.lock(canonical),
                {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :destroy),
                {:ok, _event} <-
                  activity(canonical, :permanently_deleted, actor, item.trash_action,
-                   source: activity_source(opts)
+                   source: activity_source(opts),
+                   operation_ref: Keyword.fetch!(opts, :operation_ref)
                  ),
                {:ok, _mention_endpoints} <-
                  CMS.ArtimentMentions.mark_deleted(%{
@@ -276,12 +280,13 @@ defmodule GroupherServer.CMS.Articles.Trash do
         from(comment in Comment, where: comment.article_id == ^canonical.id, select: comment.id)
       )
 
-    with {:ok, :pass} <-
+    with {:ok, opts} <- validate_operation_ref_opts(opts),
+         {:ok, :pass} <-
            unlink_ticket_sources_before_post_delete(
              canonical,
              Repo.get(Community, item.community_id),
              actor,
-             Keyword.get(opts, :command_id) || trash_operation_ref(item)
+             Keyword.fetch!(opts, :operation_ref)
            ),
          {:ok, lifecycle} <- Lifecycle.lock(canonical),
          {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :destroy),
@@ -289,12 +294,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
            AlertWall.mark_target_deleted_in_transaction(
              :article,
              to_string(canonical.id),
-             Ecto.UUID.generate()
+             Keyword.fetch!(opts, :operation_ref)
            ),
-         {:ok, :pass} <- mark_comment_items_deleted(comment_ids),
+         {:ok, :pass} <-
+           mark_comment_items_deleted(comment_ids, Keyword.fetch!(opts, :operation_ref)),
          {:ok, _event} <-
            activity(canonical, :permanently_deleted, actor, item.trash_action,
-             source: activity_source(opts)
+             source: activity_source(opts),
+             operation_ref: Keyword.fetch!(opts, :operation_ref)
            ),
          {:ok, _mention_endpoints} <-
            CMS.ArtimentMentions.mark_deleted(%{
@@ -335,12 +342,12 @@ defmodule GroupherServer.CMS.Articles.Trash do
     {:ok, :pass}
   end
 
-  defp mark_comment_items_deleted(comment_ids) do
+  defp mark_comment_items_deleted(comment_ids, operation_ref) do
     Enum.reduce_while(comment_ids, {:ok, :pass}, fn comment_id, {:ok, :pass} ->
       case GroupherServer.AlertWall.mark_target_deleted_in_transaction(
              :comment,
              to_string(comment_id),
-             Ecto.UUID.generate()
+             operation_ref
            ) do
         {:ok, :pass} -> {:cont, {:ok, :pass}}
         {:error, reason} -> {:halt, {:error, reason}}
@@ -469,7 +476,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
        ) do
     article = struct(Article, Map.from_struct(canonical))
 
-    with {:ok, %{community: %Community{}}} <- Bindings.get(article, community),
+    with {:ok, opts} <- validate_operation_ref_opts(opts),
+         {:ok, %{community: %Community{}}} <- Bindings.get(article, community),
          {:ok, lifecycle} <- Lifecycle.lock(article),
          {:ok, action} <-
            create_action(community, actor, %{
@@ -486,11 +494,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
              article,
              community,
              actor,
-             Keyword.get(opts, :command_id) || action.hash_id,
+             Keyword.fetch!(opts, :operation_ref),
              :post_trash
            ),
          {:ok, _} <- update_community_count(article, community),
-         {:ok, _event} <- activity(canonical, :trashed, actor, action) do
+         {:ok, _event} <- activity(canonical, :trashed, actor, action, opts) do
       _ = CMS.SearchArtiments.Indexer.enqueue_delete(article)
       {:ok, item}
     else
@@ -525,12 +533,20 @@ defmodule GroupherServer.CMS.Articles.Trash do
     {:ok, :pass}
   end
 
-  defp trash_operation_ref(%TrashedArticle{trash_action_id: action_id}) do
-    case Repo.get(TrashAction, action_id) do
-      %TrashAction{hash_id: hash_id} when is_binary(hash_id) -> hash_id
-      _ -> Ecto.UUID.generate()
+  defp validate_operation_ref_opts(opts) when is_list(opts) do
+    case Keyword.fetch(opts, :operation_ref) do
+      {:ok, operation_ref} ->
+        case Ecto.UUID.cast(operation_ref) do
+          {:ok, canonical} -> {:ok, Keyword.put(opts, :operation_ref, canonical)}
+          :error -> {:error, Activity.ErrorCat.invalid_operation_ref()}
+        end
+
+      :error ->
+        {:error, :operation_ref_required}
     end
   end
+
+  defp validate_operation_ref_opts(_opts), do: {:error, :operation_ref_required}
 
   defp create_membership(action, article, community, restore_state, actor) do
     with {:ok, %{community: community}} <- Bindings.get(article, community) do
@@ -596,7 +612,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   defp resolve_item(%TrashedArticle{} = item), do: {:ok, Repo.preload(item, :trash_action)}
   defp resolve_item(hash_id), do: get(hash_id)
 
-  defp activity(article, action, actor, %TrashAction{} = trash_action, opts) do
+  defp activity(article, action, actor, %TrashAction{}, opts) do
     payload =
       if action in [:trashed, :restored] do
         %{operation_scope: "article", effect: "effective"}
@@ -608,7 +624,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
       actor: activity_actor(actor),
       payload: payload,
       source: Keyword.get(opts, :source, :api),
-      operation_ref: Keyword.get(opts, :operation_ref) || trash_action.hash_id,
+      operation_ref: Keyword.fetch!(opts, :operation_ref),
       occurred_at: DateTime.utc_now(:second)
     )
   end

@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
       WorkingCopyAccess.check_in_transaction(actor, action, article, community)
     end)
 
-    change(fn canonical_article, %{operation_ref: operation_ref} ->
+    change(fn canonical_article, operation_ref ->
       history_context = Map.put(history_context, :causation_command_id, command_id)
 
       with {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(canonical_article),

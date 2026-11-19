@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   receipt_pipeline execute_pipeline(target_key, scope_key, actor, command_id) do
     prepare(fn -> prepare(target_key, scope_key) end)
     gate(fn prepared -> authorize(prepared, actor) end)
-    change(fn prepared -> register(prepared) end)
+    change(fn prepared, operation_ref -> register(prepared, operation_ref) end)
     confirm(fn confirmation -> {:ok, confirmation} end)
     present(fn confirmation -> present_result(confirmation, command_id) end)
   end
@@ -104,12 +104,15 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp register(%{target_key: target_key, scope_key: scope_key, target_type: target_type}) do
+  defp register(
+         %{target_key: target_key, scope_key: scope_key, target_type: target_type},
+         operation_ref
+       ) do
     with {:ok, context} <- Target.load_for_update(target_key, scope_key),
          {:ok, content} <- current_content(context),
          {:ok, configs} <- current_configs(context, scope_key),
          {:ok, requested_scope} <- request_scope(scope_key),
-         target <- request_target(context),
+         target <- Map.put(request_target(context), :operation_ref, operation_ref),
          {:ok, requests} <-
            RequestSubmission.register_in_transaction(
              target,

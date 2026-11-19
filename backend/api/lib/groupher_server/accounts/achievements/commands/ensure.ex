@@ -14,7 +14,7 @@ defmodule GroupherServer.Accounts.Achievements.Commands.Ensure do
   @pipeline operation: :accounts_achievements_ensure, access: :open, target: :user_id
 
   direct_pipeline execute_pipeline(user_id) do
-    change(fn _user_id -> Persist.ensure(user_id) end)
+    change(fn _user_id, _operation_ref -> Persist.ensure(user_id) end)
   end
 
   @doc """

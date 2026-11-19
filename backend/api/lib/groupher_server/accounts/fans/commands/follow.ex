@@ -16,7 +16,7 @@ defmodule GroupherServer.Accounts.Fans.Commands.Follow do
   direct_pipeline execute_pipeline(user, follower) do
     prepare(fn -> Persist.prepare_pair(user, follower) end)
 
-    change(fn %{user: user, target_user: target_user} ->
+    change(fn %{user: user, target_user: target_user}, _operation_ref ->
       with {:ok, _relationships} <- Persist.insert_relationships(target_user, user),
            {:ok, target_user} <- Persist.update_follow_info(target_user, user, :add),
            {:ok, _achievement} <- record_achievement(target_user, :inc),

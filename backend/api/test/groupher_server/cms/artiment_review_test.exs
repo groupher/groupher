@@ -13,7 +13,8 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     ArticleReviewBlock,
     ArtimentReview,
     CommentLifecycle,
-    CommentReviewBlock
+    CommentReviewBlock,
+    CommunityAdmin
   }
 
   alias AlertWall.Model.{Item, UserReport}
@@ -23,6 +24,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
   test "accepts one typed resource reference per request" do
     attrs = %{
       target_type: :article,
+      operation_ref: Ecto.UUID.generate(),
       article_id: Ecto.UUID.generate(),
       policy_snapshot: %{"review_mode" => "immediate"},
       payload: %{"text" => %{"title" => "title", "body" => "body"}},
@@ -375,7 +377,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     assert {:ok, {:ok, [system_request, community_request]}} =
              Repo.transaction(fn ->
                GroupherServer.CMS.register_artiment_reviews_in_transaction(
-                 target,
+                 review_target(target),
                  content,
                  configs,
                  :publish
@@ -403,7 +405,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     assert {:ok, [system_request]} =
              Repo.transact_result(fn ->
                CMS.Review.RequestSubmission.register_in_transaction(
-                 target,
+                 review_target(target),
                  content,
                  configs,
                  :recheck,
@@ -416,7 +418,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     assert {:ok, [community_request]} =
              Repo.transact_result(fn ->
                CMS.Review.RequestSubmission.register_in_transaction(
-                 target,
+                 review_target(target),
                  content,
                  configs,
                  :binding,
@@ -481,7 +483,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     assert {:ok, {:ok, [recheck]}} =
              Repo.transaction(fn ->
                CMS.Review.RequestSubmission.register_in_transaction(
-                 target,
+                 review_target(target),
                  content,
                  configs,
                  :recheck,
@@ -517,7 +519,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     assert {:ok, {:ok, _requests}} =
              Repo.transaction(fn ->
                CMS.Review.RequestSubmission.register_in_transaction(
-                 target,
+                 review_target(target),
                  content,
                  configs,
                  :edit
@@ -582,11 +584,11 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     assert {:ok, {:ok, [_system_request, community_request]}} =
              Repo.transaction(fn ->
                GroupherServer.CMS.register_artiment_reviews_in_transaction(
-                 %{
+                 review_target(%{
                    type: :article,
                    article_id: article.id,
                    lifecycle: lifecycle
-                 },
+                 }),
                  %{title: "Title", body: "Body", images: []},
                  configs,
                  :edit
@@ -633,7 +635,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     assert {:ok, {:ok, [_system_request, request]}} =
              Repo.transaction(fn ->
                CMS.Review.RequestSubmission.register_in_transaction(
-                 %{type: :comment, comment_id: comment.id, lifecycle: lifecycle},
+                 review_target(%{type: :comment, comment_id: comment.id, lifecycle: lifecycle}),
                  %{title: "", body: "Shared review candidate", images: []},
                  configs,
                  :edit
@@ -642,13 +644,17 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
 
     {:ok, moderator} = db_insert(:user)
 
-    moderator = %{
-      moderator
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.decide" => true}}
-        }
-    }
+    member =
+      Repo.get_by(CommunityAdmin, user_id: moderator.id, community_id: community.id) ||
+        %CommunityAdmin{}
+
+    member
+    |> CommunityAdmin.changeset(%{
+      user_id: moderator.id,
+      community_id: community.id,
+      permissions: Map.put(member.permissions || %{}, "review.decide", true)
+    })
+    |> Repo.insert_or_update!()
 
     assert {:error, _reason} =
              CMS.decide_review_target(
@@ -690,7 +696,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     assert {:ok, {:ok, [destination_request]}} =
              Repo.transaction(fn ->
                CMS.Review.RequestSubmission.register_in_transaction(
-                 %{type: :comment, comment_id: comment.id, lifecycle: lifecycle},
+                 review_target(%{type: :comment, comment_id: comment.id, lifecycle: lifecycle}),
                  %{title: "", body: "Shared review candidate", images: []},
                  destination_configs,
                  :recheck,
@@ -734,6 +740,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
   defp request_attrs(article_id) do
     %{
       target_type: :article,
+      operation_ref: Ecto.UUID.generate(),
       article_id: article_id,
       policy_snapshot: %{"review_mode" => "immediate"},
       payload: %{"text" => %{"title" => "title", "body" => "body"}}
@@ -779,7 +786,12 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
   end
 
   defp create_target_request(attrs) do
+    attrs = Map.put_new(attrs, :operation_ref, Ecto.UUID.generate())
     Repo.transact_result(fn -> Requests.create_in_transaction(attrs) end)
+  end
+
+  defp review_target(target) do
+    Map.put(target, :operation_ref, Ecto.UUID.generate())
   end
 
   defp apply_clear_result(request) do

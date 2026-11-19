@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.CommandPipelineAdapter do
     }
 
     Command.execute(command,
-      action: fn _context -> callback.() end,
+      action: fn context -> callback.(context.operation_ref) end,
       confirmation: contract.confirmation
     )
   end

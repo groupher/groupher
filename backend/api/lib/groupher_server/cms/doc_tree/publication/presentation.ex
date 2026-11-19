@@ -97,7 +97,7 @@ defmodule GroupherServer.CMS.DocTree.Publication.Presentation do
   def json(value), do: value
 
   @doc "Runs a presentation write and advances its site version in the same transaction."
-  def write(site, fun) do
+  def write(site, operation_ref, fun) when is_binary(operation_ref) do
     with {:ok, queue} <- CMS.DocTree.Publish.Queue.lock_or_create(site),
          {:ok, result} <- fun.(),
          {:ok, _} <-
@@ -105,7 +105,8 @@ defmodule GroupherServer.CMS.DocTree.Publication.Presentation do
              site,
              queue,
              %{public_presentation_revision: queue.public_presentation_revision},
-             [:public_presentation_revision]
+             [:public_presentation_revision],
+             operation_ref
            ) do
       {:ok, result}
     end

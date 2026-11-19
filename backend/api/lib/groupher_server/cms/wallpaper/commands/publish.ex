@@ -30,7 +30,9 @@ defmodule GroupherServer.CMS.Wallpaper.Commands.Publish do
       end
     end)
 
-    change(fn {canonical, prepared} -> Workflow.commit_publish(canonical, prepared) end)
+    change(fn {canonical, prepared}, _operation_ref ->
+      Workflow.commit_publish(canonical, prepared)
+    end)
 
     confirm(fn %{version: version} ->
       {:ok, Confirmation.build(Confirmation, community.id, version, command_id)}

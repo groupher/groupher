@@ -29,7 +29,10 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Set do
   @pipeline operation: :article_tag_set, target: :article
   direct_pipeline execute_pipeline(article, tag, community, actor, command_id) do
     gate(fn candidate -> check_article_gate(actor, community, candidate) end)
-    change(fn canonical -> Assignment.add(canonical, tag.id, command_id: command_id) end)
+
+    change(fn canonical, operation_ref ->
+      Assignment.add(canonical, tag.id, operation_ref: operation_ref)
+    end)
   end
 
   defp article_resource(%Article{} = article), do: {:ok, article}

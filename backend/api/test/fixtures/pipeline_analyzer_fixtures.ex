@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.PipelineGraphFixtures.GateInChange do
 
   @pipeline operation: :gate_in_change_fixture, access: :internal, target: :resource
   direct_pipeline execute(resource) do
-    change(fn candidate ->
+    change(fn candidate, _operation_ref ->
       GroupherServer.CMS.Gate.check_in_transaction(:operations, :edit, candidate)
     end)
   end
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.PipelineGraphFixtures.GateInPresent do
 
   @pipeline operation: :gate_in_present_fixture, access: :internal, target: :resource
   direct_pipeline execute(resource) do
-    change(fn candidate -> {:ok, candidate} end)
+    change(fn candidate, _operation_ref -> {:ok, candidate} end)
 
     present(fn candidate ->
       GroupherServer.CMS.Gate.access_check(:operations, :edit, candidate)
@@ -76,7 +76,7 @@ defmodule GroupherServer.CMS.Test.PipelineDefaultAdapterFixture do
 
   @pipeline operation: :cms_default_adapter_fixture, access: :internal, target: :resource
   direct_pipeline execute_internal(resource) do
-    change(fn value -> {:ok, value} end)
+    change(fn value, _operation_ref -> {:ok, value} end)
   end
 end
 
@@ -112,5 +112,5 @@ defmodule GroupherServer.Test.PipelineGraphFixtures.UnattributedStages do
     Runner.run_direct(__MODULE__, @contract, input, stages(resource))
   end
 
-  defp stages(resource), do: [change: fn _input -> {:ok, resource} end]
+  defp stages(resource), do: [change: fn _input, _operation_ref -> {:ok, resource} end]
 end

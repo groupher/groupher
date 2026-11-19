@@ -22,9 +22,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.Enqueue do
   receipt_pipeline run_receipt(community, revision, entries, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :docs_queue_write, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical) do
-        EnqueueBatch.run(canonical, queue, revision, entries, actor, command_id)
+        EnqueueBatch.run(canonical, queue, revision, entries, actor, command_id, operation_ref)
       end
     end)
 

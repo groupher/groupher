@@ -30,8 +30,8 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.ReindexTagGroups do
   direct_pipeline execute_pipeline(community, thread, groups, actor, command_id) do
     gate(fn candidate -> Gate.check_in_transaction(actor, :update, candidate) end)
 
-    change(fn canonical ->
-      Mutation.reindex_groups(canonical, thread, groups, command_id: command_id)
+    change(fn canonical, operation_ref ->
+      Mutation.reindex_groups(canonical, thread, groups, operation_ref: operation_ref)
     end)
   end
 end

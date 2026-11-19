@@ -64,8 +64,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
       CMS.Gate.check_comment_in_transaction(actor, :delete, candidate, community)
     end)
 
-    change(fn {canonical, article} ->
-      delete_new(canonical, article, actor, command_id)
+    change(fn {canonical, article}, operation_ref ->
+      delete_new(canonical, article, actor, command_id, operation_ref)
     end)
 
     confirm(fn result -> {:ok, confirmation(result)} end)
@@ -95,23 +95,21 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
     end
   end
 
-  defp delete_new(%Comment{} = comment, article, actor, command_id) do
+  defp delete_new(%Comment{} = comment, article, actor, command_id, operation_ref) do
     occurred_at = DateTime.utc_now(:second)
 
     with {:ok, _} <- ensure_not_archived(comment) do
-      delete_new(comment, actor, article, command_id, occurred_at)
+      delete_new(comment, actor, article, command_id, operation_ref, occurred_at)
     end
   end
 
-  defp delete_new(comment, actor, article, command_id, occurred_at) do
-    CMS.Comments.Summary.with_change(comment, fn ->
-      delete_facts(comment, actor, article, command_id, occurred_at)
+  defp delete_new(comment, actor, article, command_id, operation_ref, occurred_at) do
+    CMS.Comments.Summary.with_change(comment, operation_ref, fn ->
+      delete_facts(comment, actor, article, command_id, operation_ref, occurred_at)
     end)
   end
 
-  defp delete_facts(comment, actor, article, command_id, occurred_at) do
-    operation_ref = command_id
-
+  defp delete_facts(comment, actor, article, command_id, operation_ref, occurred_at) do
     with {:ok, _} <- revoke_if_current(article, comment, actor, operation_ref, occurred_at),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
          {:ok, :pass} <-
@@ -123,12 +121,12 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
            GroupherServer.AlertWall.mark_target_deleted_in_transaction(
              :comment,
              to_string(comment.id),
-             command_id
+             operation_ref
            ),
-         {:ok, _} <- Lifecycle.transition(comment.id, :deleted),
+         {:ok, _} <- Lifecycle.transition(comment.id, :deleted, operation_ref),
          {:ok, deleted} <- Persist.tombstone(comment, @delete_hint),
-         {:ok, _} <- record_article_metric(article, command_id, :comment_deleted),
-         {:ok, _} <- enqueue_delete_effects(comment, article, actor, command_id) do
+         {:ok, _} <- record_article_metric(article, operation_ref, :comment_deleted),
+         {:ok, _} <- enqueue_delete_effects(comment, article, actor, operation_ref) do
       {:ok, %{comment: deleted, article: article, command_id: command_id}}
     end
   end
@@ -172,12 +170,12 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
     end
   end
 
-  defp enqueue_delete_effects(comment, article, actor, command_id) do
+  defp enqueue_delete_effects(comment, article, actor, operation_ref) do
     case Effects.enqueue(
            "comment.deleted",
            "article",
            article.id,
-           command_id,
+           operation_ref,
            %{actor_id: actor.id, article_id: article.id, comment_id: comment.id}
          ) do
       {:ok, _event} -> {:ok, :pass}

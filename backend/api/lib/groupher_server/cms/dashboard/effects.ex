@@ -15,43 +15,41 @@ defmodule GroupherServer.CMS.Dashboard.Effects do
 
   alias GroupherServer.CMS
   alias CMS.Model.Community
+  alias CMS.Outbox.DedupeKey
 
   @doc """
-  Enqueues the public-presentation cleanup using the caller's command identity.
+  Enqueues public-presentation cleanup with the caller's operation identity.
 
   The event is inserted into the current transaction; this function never
   creates a second identity or opens a transaction.
 
   ## Examples
 
-      Dashboard.Effects.enqueue_presentation_changed(community, command_id)
+      Dashboard.Effects.enqueue_presentation_changed(community, operation_ref)
       #=> {:ok, %CMS.Outbox.Event{}} | {:error, reason}
   """
-  @spec enqueue_presentation_changed(Community.t(), Ecto.UUID.t() | {:workflow, String.t()}) ::
+  @spec enqueue_presentation_changed(Community.t(), Ecto.UUID.t()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_presentation_changed(%Community{} = community, identity) do
-    identity_attrs =
-      case identity do
-        {:workflow, workflow_ref} -> %{identity: {:workflow, workflow_ref}}
-        command_id -> %{command_id: command_id}
-      end
-
-    Map.merge(identity_attrs, %{
+  def enqueue_presentation_changed(%Community{} = community, operation_ref) do
+    %{
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id]),
       event: "community.presentation_changed",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
       resource_id: community.id,
       data: %{community: community.slug, community_id: community.id}
-    })
+    }
     |> CMS.Outbox.send()
   end
 
   @doc "Enqueues cache invalidation for the community-wide list preference."
   @spec enqueue_pagi_mode_changed(Community.t(), Ecto.UUID.t()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_pagi_mode_changed(%Community{} = community, command_id) do
+  def enqueue_pagi_mode_changed(%Community{} = community, operation_ref) do
     %{
-      command_id: command_id,
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id]),
       event: "community.pagi_mode_changed",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",

@@ -11,4 +11,7 @@ defmodule GroupherServer.CMS.Assets.ErrorCat do
   error(:skipped, code: 5602)
   error(:delete_enqueue_failed, code: 5603, retryable: true)
   error(:unsupported_asset_cleanup_resource, code: 5604)
+  error(:provider_delete_target_invalid, code: 5605, retryable: false)
+  error(:asset_not_restorable, code: 5606, retryable: false)
+  error(:storage_identity_conflict, code: 5607, retryable: false)
 end

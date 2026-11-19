@@ -43,9 +43,9 @@ defmodule GroupherServer.CMS.Assets.Commands.Delete do
       end
     end)
 
-    change(fn {canonical, candidate}, %{operation_ref: operation_ref} ->
+    change(fn {canonical, candidate}, operation_ref ->
       with {:ok, deleted} <- Persist.delete(canonical, candidate.id),
-           {:ok, _event} <- Effects.enqueue_provider_delete(deleted, {:operation, operation_ref}) do
+           {:ok, _event} <- Effects.enqueue_provider_delete(deleted, operation_ref) do
         {:ok, deleted}
       end
     end)

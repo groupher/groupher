@@ -50,25 +50,30 @@ defmodule GroupherServer.CMS.Articles.Commands.Move do
                    ) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :move, candidate, source) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, source_binding} <- source_binding(source, canonical.id),
-           {:ok, :pass} <- BindingReview.remove_binding_review(canonical, source, command_id),
+           {:ok, :pass} <- BindingReview.remove_binding_review(canonical, source, operation_ref),
            {:ok, moved} <- BindingPersist.move(canonical, source, destination),
            {:ok, destination_binding} <- Store.binding(moved.id, destination.id),
            {:ok, _binding} <- Tags.replace(destination_binding, tag_ids),
            {:ok, :pass} <-
-             BindingReview.register_binding_review(canonical, destination, command_id),
+             BindingReview.register_binding_review(canonical, destination, operation_ref),
            {:ok, _source} <- CommunityFacade.update_count_field(source, canonical.thread),
            {:ok, _destination} <-
              CommunityFacade.update_count_field(destination, canonical.thread),
            {:ok, _} <-
-             BindingSupport.invalidate_scope(source, source_binding, canonical.thread, command_id),
+             BindingSupport.invalidate_scope(
+               source,
+               source_binding,
+               canonical.thread,
+               operation_ref
+             ),
            {:ok, _} <-
              BindingSupport.invalidate_scope(
                destination,
                destination_binding,
                canonical.thread,
-               command_id
+               operation_ref
              ),
            {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(moved) do
         {:ok, canonical}

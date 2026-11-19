@@ -24,7 +24,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.EnqueueBatch do
         revision,
         entries,
         %User{} = actor,
-        command_id
+        command_id,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_list(entries) do
     with {:ok, ids} <- ids(entries),
@@ -36,7 +37,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.EnqueueBatch do
          {:ok, decoded} <- TreeCodec.decode_changes(changes),
          {:ok, current} <- TargetTree.build(public, decoded),
          {:ok, target} <- Dependencies.target(public, draft, current, ids),
-         {:ok, result} <- Queue.enqueue(community, queue, revision, entries, actor, command_id),
+         {:ok, result} <-
+           Queue.enqueue(community, queue, revision, entries, actor, command_id, operation_ref),
          {:ok, _} <-
            Tree.reconcile_after_content(
              community,
@@ -44,7 +46,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.EnqueueBatch do
              result.queue.queue_revision,
              public,
              target,
-             actor
+             actor,
+             operation_ref
            ) do
       {:ok, result}
     end

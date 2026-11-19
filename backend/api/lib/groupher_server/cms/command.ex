@@ -86,7 +86,7 @@ defmodule GroupherServer.CMS.Command do
             resource_type,
             resource_id,
             command.params,
-            fn -> action.(context) end,
+            fn operation_ref -> action.(Map.put(context, :operation_ref, operation_ref)) end,
             confirmation
           ]
 

@@ -157,9 +157,9 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     |> Enum.shuffle()
     |> Enum.take(count)
     |> Enum.with_index()
-    |> Enum.each(fn {tag_id, index} ->
-      workflow_ref = "seed-article-tags:#{article.id}:#{index}"
-      Maintenance.add(article, tag_id, workflow_ref)
+    |> Enum.each(fn {tag_id, _index} ->
+      operation_ref = Ecto.UUID.generate()
+      Maintenance.add(article, tag_id, operation_ref)
     end)
   end
 

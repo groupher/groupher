@@ -29,8 +29,8 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.Remove do
   receipt_pipeline run(community, member_id, revision, actor, command_id) do
     gate(fn canonical -> authorize(canonical, actor, member_id) end)
 
-    change(fn canonical, execution ->
-      remove_locked(canonical, member_id, revision, actor, execution.operation_ref)
+    change(fn canonical, operation_ref ->
+      remove_locked(canonical, member_id, revision, actor, operation_ref)
     end)
 
     confirm(fn _ -> {:ok, %Confirmation{data: %{"removed" => true}}} end)

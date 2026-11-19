@@ -20,9 +20,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.UpdateWorkspaceNode do
   receipt_pipeline run_receipt(community, revision, node_id, patch, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical) do
-        WorkspaceUpdate.run(canonical, queue, revision, node_id, patch, actor)
+        WorkspaceUpdate.run(canonical, queue, revision, node_id, patch, actor, operation_ref)
       end
     end)
 

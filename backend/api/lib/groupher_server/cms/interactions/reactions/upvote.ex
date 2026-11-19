@@ -64,8 +64,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     prepare(fn -> Matcher.match_interaction(input) end)
     gate(fn info -> gate_target(input, info, actor) end)
 
-    change(fn {canonical, info} ->
-      change_upvote(canonical, info, actor, operation, command_id)
+    change(fn {canonical, info}, operation_ref ->
+      change_upvote(canonical, info, actor, operation, operation_ref)
     end)
 
     confirm(fn {canonical, change} -> confirmation(canonical, operation, change) end)
@@ -81,8 +81,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     prepare(fn -> Matcher.match_interaction(input) end)
     gate(fn info -> gate_target(input, info, actor) end)
 
-    change(fn {canonical, info} ->
-      change_upvote(canonical, info, actor, operation, command_id)
+    change(fn {canonical, info}, operation_ref ->
+      change_upvote(canonical, info, actor, operation, operation_ref)
     end)
 
     confirm(fn {canonical, change} -> confirmation(canonical, operation, change) end)
@@ -95,12 +95,12 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     end
   end
 
-  defp change_upvote(canonical, info, actor, operation, command_id) do
+  defp change_upvote(canonical, info, actor, operation, operation_ref) do
     with {:ok, change} <- change_fact(canonical, info, actor, operation),
          {:ok, _} <- sync_state(canonical, actor, operation, change),
-         {:ok, _} <- record_metric(canonical, operation, change, command_id),
+         {:ok, _} <- record_metric(canonical, operation, change, operation_ref),
          {:ok, _} <- maybe_achieve(canonical, actor, operation, change),
-         {:ok, _} <- enqueue_effect(canonical, operation, actor, command_id, change) do
+         {:ok, _} <- enqueue_effect(canonical, operation, actor, operation_ref, change) do
       {:ok, {canonical, change}}
     end
   end
@@ -156,16 +156,17 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     end
   end
 
-  defp enqueue_effect(_canonical, _operation, _actor, _command_id, :unchanged), do: {:ok, :pass}
+  defp enqueue_effect(_canonical, _operation, _actor, _operation_ref, :unchanged),
+    do: {:ok, :pass}
 
-  defp enqueue_effect(canonical, operation, actor, command_id, :changed) do
+  defp enqueue_effect(canonical, operation, actor, operation_ref, :changed) do
     with {:ok, data} <-
            Effects.reaction_data(canonical, %{actor_id: actor.id, operation: operation}) do
       Effects.enqueue_reaction_changed(
         "interaction.upvote_changed",
         interaction_resource_type(canonical),
         canonical.id,
-        command_id,
+        operation_ref,
         data
       )
     end

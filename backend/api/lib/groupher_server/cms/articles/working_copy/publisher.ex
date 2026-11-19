@@ -29,28 +29,15 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
   @supported_threads [:post, :blog, :changelog]
 
   @doc "Publishes a saved WorkingCopy revision or existing Snapshot in the caller transaction."
-  def publish_in_transaction(article, community, source, expected, user, command_id) do
+  def publish_in_transaction(article, community, source, expected, user, operation_ref) do
     publish_in_transaction(
       article,
       community,
       source,
       expected,
       user,
-      command_id,
-      {:command, command_id}
-    )
-  end
-
-  def publish_in_transaction(article, community, source, expected, user, command_id, identity) do
-    publish_in_transaction(
-      article,
-      community,
-      source,
-      expected,
-      user,
-      command_id,
-      identity,
-      command_id
+      operation_ref,
+      nil
     )
   end
 
@@ -60,11 +47,10 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
         source,
         expected_public_snapshot_id,
         %User{} = user,
-        command_id,
-        identity,
+        operation_ref,
         causation_command_id
       )
-      when thread in @supported_threads and is_binary(command_id) do
+      when thread in @supported_threads and is_binary(operation_ref) do
     with true <- Repo.in_transaction?(),
          {:ok, :pass} <- MutationLock.lock_community_admission(article.id),
          {:ok, locked_article} <- lock_article(article.id),
@@ -86,12 +72,13 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
            Public.select_snapshot(locked_article, snapshot, user, published_at: published_at),
          {:ok, _edited_article} <- mark_edited_on_republish(locked_article, public, snapshot),
          {:ok, _linked_tickets} <-
-           revalidate_linked_tickets(locked_article, snapshot, identity),
+           revalidate_linked_tickets(locked_article, snapshot, operation_ref),
          {:ok, _mentions} <-
-           capture_mentions(locked_article, community, snapshot, selected, identity),
+           capture_mentions(locked_article, community, snapshot, selected, operation_ref),
          {:ok, _stats} <- maybe_initialize_stats(locked_article, first_publish?),
          {:ok, lifecycle} <- transition_lifecycle(lifecycle),
-         {:ok, _review} <- register_review(locked_article, snapshot, lifecycle, first_publish?),
+         {:ok, _review} <-
+           register_review(locked_article, snapshot, lifecycle, first_publish?, operation_ref),
          {:ok, _activity} <-
            record_publication_changes(
              locked_article,
@@ -100,7 +87,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
              previous_snapshot,
              snapshot,
              user,
-             command_id
+             operation_ref
            ),
          {:ok, _binding} <- CMS.Articles.BindingPersist.ensure_binding(locked_article, community),
          {:ok, _finalized} <-
@@ -113,7 +100,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
              selected,
              snapshot,
              first_publish?,
-             identity
+             operation_ref
            ) do
       {:ok,
        %{
@@ -139,8 +126,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
         _source,
         _expected,
         _user,
-        _command_id,
-        _identity,
+        _operation_ref,
         _causation_command_id
       ) do
     {:error, :unsupported_article_thread}
@@ -245,11 +231,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          nil,
          snapshot,
          user,
-         command_id
+         operation_ref
        ) do
     Activity.log(activity_resource(article, community, binding, snapshot), :created,
       actor: user,
-      operation_ref: command_id,
+      operation_ref: operation_ref,
       metadata: %{snapshot_id: snapshot.id}
     )
   end
@@ -261,7 +247,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          previous,
          snapshot,
          user,
-         command_id
+         operation_ref
        ) do
     resource = activity_resource(article, community, binding, snapshot)
 
@@ -273,7 +259,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
              resource,
              :title_changed,
              user,
-             command_id,
+             operation_ref,
              metadata,
              %{title: snapshot.title},
              [:title]
@@ -285,7 +271,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
              resource,
              :body_updated,
              user,
-             command_id,
+             operation_ref,
              metadata,
              %{schema_version: CMS.Articles.Body.document(snapshot).schema_version},
              [:body]
@@ -309,7 +295,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          _resource,
          _action,
          _user,
-         _command_id,
+         _operation_ref,
          _metadata,
          _payload,
          _fields
@@ -317,10 +303,10 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
     {:ok, :unchanged}
   end
 
-  defp maybe_log_change(true, resource, action, user, command_id, metadata, payload, fields) do
+  defp maybe_log_change(true, resource, action, user, operation_ref, metadata, payload, fields) do
     Activity.log(resource, action,
       actor: user,
-      operation_ref: command_id,
+      operation_ref: operation_ref,
       operation_index: if(action == :title_changed, do: 0, else: 1),
       metadata: metadata,
       payload: payload,
@@ -360,15 +346,15 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
 
   defp mark_edited_on_republish(%Article{} = article, _public, _snapshot), do: {:ok, article}
 
-  defp revalidate_linked_tickets(%Article{thread: :post, id: post_id}, snapshot, identity) do
+  defp revalidate_linked_tickets(%Article{thread: :post, id: post_id}, snapshot, operation_ref) do
     CMS.Tickets.SourceVisibility.revalidate_cache_in_transaction(
       post_id,
-      identity,
+      operation_ref,
       "post-snapshot:#{snapshot.id}"
     )
   end
 
-  defp revalidate_linked_tickets(%Article{}, _snapshot, _command_id), do: {:ok, :pass}
+  defp revalidate_linked_tickets(%Article{}, _snapshot, _operation_ref), do: {:ok, :pass}
 
   defp transition_lifecycle(%ArticleLifecycle{state: :published} = lifecycle) do
     {:ok, lifecycle}
@@ -378,7 +364,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
     Lifecycle.transition(lifecycle, :published)
   end
 
-  defp register_review(article, snapshot, lifecycle, first_publish?) do
+  defp register_review(article, snapshot, lifecycle, first_publish?, operation_ref) do
     community_ids =
       ArticleBinding
       |> where([binding], binding.article_id == ^article.id)
@@ -386,7 +372,12 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
       |> Repo.all()
 
     with {:ok, configs} <- GroupherServer.ReviewBot.configs_for_targets(community_ids, :article),
-         target <- %{type: :article, article_id: article.id, lifecycle: lifecycle},
+         target <- %{
+           type: :article,
+           article_id: article.id,
+           lifecycle: lifecycle,
+           operation_ref: operation_ref
+         },
          content <- %{
            identity: "article-snapshot:#{snapshot.id}",
            title: snapshot.title,
@@ -439,13 +430,21 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
     end
   end
 
-  defp enqueue_events(article, community, binding, public, snapshot, first_publish?, identity) do
+  defp enqueue_events(
+         article,
+         community,
+         binding,
+         public,
+         snapshot,
+         first_publish?,
+         operation_ref
+       ) do
     with {:ok, cache_event} <-
            CMS.Articles.Effects.enqueue(
              if(first_publish?, do: "article.published", else: "article.updated"),
              "article",
              article.id,
-             identity,
+             operation_ref,
              %{
                community: community.slug,
                community_id: community.id,
@@ -453,31 +452,64 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
                inner_id: binding.inner_id,
                article_id: article.id,
                snapshot_id: snapshot.id
-             },
-             effect_key: "article-cache:#{community.id}:#{binding.inner_id}",
-             retry_failed: true
+             }
            ),
          {:ok, projection_event} <-
            CMS.Articles.Effects.enqueue(
              "article.projections",
              "article",
              article.id,
-             identity,
+             operation_ref,
              %{
                first_publish?: first_publish?,
                community_id: community.id,
                inner_id: binding.inner_id,
                published_by_id: public.published_by_id,
                snapshot_id: snapshot.id
-             },
-             effect_key: "article-projections:#{community.id}:#{binding.inner_id}",
-             retry_failed: true
+             }
+           ),
+         {:ok, notification_event} <-
+           maybe_enqueue_first_publish_notification(
+             article,
+             community,
+             snapshot,
+             public.published_by_id,
+             first_publish?,
+             operation_ref
            ) do
-      {:ok, %{cache: cache_event, projections: projection_event}}
+      {:ok,
+       %{cache: cache_event, projections: projection_event, notification: notification_event}}
     end
   end
 
-  defp capture_mentions(article, community, snapshot, public, identity) do
+  defp maybe_enqueue_first_publish_notification(
+         article,
+         community,
+         snapshot,
+         published_by_id,
+         true,
+         operation_ref
+       ) do
+    CMS.Articles.Effects.Outbox.enqueue_first_publish_notification(
+      article,
+      community,
+      snapshot,
+      published_by_id,
+      operation_ref
+    )
+  end
+
+  defp maybe_enqueue_first_publish_notification(
+         _article,
+         _community,
+         _snapshot,
+         _published_by_id,
+         false,
+         _operation_ref
+       ),
+       do: {:ok, :unchanged}
+
+  defp capture_mentions(article, community, snapshot, public, operation_ref) do
     with {:ok, ast} <- PlateJSON.decode(CMS.Articles.Body.document(snapshot).json),
          true <- match?(%DateTime{}, public.updated_at),
          {:ok, captured} <-
@@ -489,7 +521,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
                community_id: community.id,
                mentioned_at: public.updated_at
              },
-             identity
+             operation_ref
            ) do
       {:ok, captured}
     else

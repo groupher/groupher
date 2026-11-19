@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.DeleteWorkspaceNode do
                    ) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical) do
         WorkspaceDelete.run(
           canonical,
@@ -36,7 +36,8 @@ defmodule GroupherServer.CMS.DocTree.Commands.DeleteWorkspaceNode do
           queue_revision,
           node_id,
           confirmation,
-          actor
+          actor,
+          operation_ref
         )
       end
     end)

@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Dashboard.Commands.UpdateSection do
   direct_pipeline execute(community, key, args, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :update, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       args = if is_map(args), do: Map.delete(args, :command_id), else: args
       section_args = section_args(key, args)
 
@@ -39,13 +39,13 @@ defmodule GroupherServer.CMS.Dashboard.Commands.UpdateSection do
         with {:ok, dashboard} <- dashboard_for_update(canonical, key),
              {:ok, canonical} <- maybe_update_identity(canonical, key, args),
              {:ok, updated} <- update_dashboard(dashboard, key, section_args),
-             {:ok, _event} <- enqueue_effect(canonical, key, section_args, command_id) do
+             {:ok, _event} <- enqueue_effect(canonical, key, section_args, operation_ref) do
           {:ok, updated}
         end
       end
 
       if key in [:doc_faq, :layout, :enable] do
-        CMS.DocTree.Publication.Presentation.write(canonical, write)
+        CMS.DocTree.Publication.Presentation.write(canonical, operation_ref, write)
       else
         write.()
       end

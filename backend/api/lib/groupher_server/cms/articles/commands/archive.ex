@@ -16,6 +16,6 @@ defmodule GroupherServer.CMS.Articles.Commands.Archive do
   @spec execute(atom()) :: {:ok, term()} | {:error, term()}
   @pipeline operation: :article_archive, target: :thread, access: :internal
   direct_pipeline execute(thread) do
-    change(fn _target -> States.archive(thread) end)
+    change(fn _target, _operation_ref -> States.archive(thread) end)
   end
 end

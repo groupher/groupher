@@ -44,19 +44,24 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
                 (trigger in [:recheck, :binding] and is_tuple(requested_scope) and
                    tuple_size(requested_scope) == 2 and elem(requested_scope, 0) == :community and
                    is_integer(elem(requested_scope, 1)))) do
-    CMS.Comments.Summary.for_lifecycle(Map.get(target, :lifecycle), fn ->
-      with true <- Repo.in_transaction?(),
-           {:ok, scopes} <- policy_scopes(configs, requested_scope),
-           {:ok, attrs} <- target_attrs(target, content, trigger, scopes),
-           {:ok, :pass} <- end_previous_wall_items(target, trigger),
-           {:ok, requests} <- insert_scoped_requests(attrs, target) do
-        {:ok, requests}
-      else
-        false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
-        {:error, _reason} = error -> error
-        _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+    CMS.Comments.Summary.for_lifecycle(
+      Map.get(target, :lifecycle),
+      Map.get(target, :operation_ref),
+      fn ->
+        with true <- Repo.in_transaction?(),
+             {:ok, operation_ref} <- Ecto.UUID.cast(Map.get(target, :operation_ref)),
+             {:ok, scopes} <- policy_scopes(configs, requested_scope),
+             {:ok, attrs} <- target_attrs(target, content, trigger, scopes, operation_ref),
+             {:ok, :pass} <- end_previous_wall_items(target, trigger),
+             {:ok, requests} <- insert_scoped_requests(attrs, target) do
+          {:ok, requests}
+        else
+          false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
+          {:error, _reason} = error -> error
+          _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+        end
       end
-    end)
+    )
   end
 
   def register_in_transaction(_target, _content, _configs, _trigger, _scope) do
@@ -105,7 +110,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
 
-  defp target_attrs(target, content, trigger, scopes) do
+  defp target_attrs(target, content, trigger, scopes, operation_ref) do
     with {:ok, payload} <- normalize_content(content),
          {:ok, common} <- validate_target(target) do
       {:ok,
@@ -134,6 +139,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
            end
 
          Map.merge(common, %{
+           operation_ref: operation_ref,
            community_id: community_id,
            policy_snapshot: policy_snapshot,
            payload: payload
@@ -223,7 +229,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
                scope_key: scope_key,
                type: :ai_review_hold,
                artiment_review_id: request.id,
-               operation_ref: request.id,
+               operation_ref: request.operation_ref,
                source_ref: "request:#{request.id}:ai_review_hold",
                source: :request,
                applied_at: DateTime.utc_now(:second)

@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
   alias GroupherServer.{CMS, PublicCache, Repo}
   alias CMS.Model.{ArticleBinding, ArticleLifecycle, Community, TicketState}
   alias CMS.Tickets.Model.Source
+  alias CMS.Outbox.DedupeKey
 
   @doc "Enqueues public Ticket and affected Post tags in the caller transaction."
   def enqueue(
@@ -19,21 +20,11 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
         ticket_id,
         inner_id,
         post_inner_ids,
-        identity_ref,
+        operation_ref,
         effect_key
       )
       when is_binary(ticket_id) and is_integer(inner_id) and is_list(post_inner_ids) and
-             (is_binary(identity_ref) or
-                (is_tuple(identity_ref) and tuple_size(identity_ref) == 2 and
-                   elem(identity_ref, 0) in [:command, :workflow] and
-                   is_binary(elem(identity_ref, 1)))) and is_binary(effect_key) do
-    identity =
-      case identity_ref do
-        {:command, _command_id} = value -> value
-        {:workflow, _workflow_ref} = value -> value
-        command_id -> {:command, command_id}
-      end
-
+             is_binary(operation_ref) and is_binary(effect_key) do
     tags =
       [
         PublicCache.ticket_list_tag(community.slug),
@@ -50,8 +41,8 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
              worker: GroupherServer.Jobs.CMSOutboxTicket,
              resource_type: "ticket",
              resource_id: ticket_id,
-             identity: identity,
-             effect_key: "#{effect_key}:#{index}",
+             operation_ref: operation_ref,
+             dedupe_key: DedupeKey.encode([ticket_id, effect_key, index]),
              data: %{"cache_tags" => batch}
            }) do
         {:ok, event} -> {:cont, {:ok, [event | events]}}

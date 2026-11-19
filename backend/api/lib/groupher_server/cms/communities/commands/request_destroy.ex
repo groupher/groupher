@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Communities.Commands.RequestDestroy do
   receipt_pipeline execute_pipeline(community, actor, opts, command_id) do
     gate(fn candidate -> Gate.check_in_transaction(actor, :request_destroy, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       Lifecycle.request_destroy(
         canonical.id,
         Keyword.put(opts, :operation_ref, command_id)

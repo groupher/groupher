@@ -53,18 +53,25 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
         queue_revision,
         node_id,
         proof,
-        %User{} = actor
+        %User{} = actor,
+        operation_ref
       ) do
     with {:ok, plan} <- plan(community, queue, tree_revision, queue_revision, node_id, actor),
          {:ok, removed_queue, advanced?} <-
-           remove_copies(community, queue, queue_revision, plan, proof),
+           remove_copies(community, queue, queue_revision, plan, proof, operation_ref),
          {:ok, action} <- trash(community, plan, actor),
          {:ok, :pass} <- delete_workspace(community, plan),
          {:ok, queue} <-
-           Queue.advance(community, removed_queue, %{tree_lock_version: tree_revision}, [
-             :tree_lock_version
-           ]),
-         {:ok, queue} <- reconcile(community, queue, plan, advanced?, actor) do
+           Queue.advance(
+             community,
+             removed_queue,
+             %{tree_lock_version: tree_revision},
+             [
+               :tree_lock_version
+             ],
+             operation_ref
+           ),
+         {:ok, queue} <- reconcile(community, queue, plan, advanced?, actor, operation_ref) do
       {:ok,
        %{
          trash_action_id: action.hash_id,
@@ -260,17 +267,25 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
     end
   end
 
-  defp remove_copies(_community, queue, _revision, %{member_ids: []}, nil) do
+  defp remove_copies(_community, queue, _revision, %{member_ids: []}, nil, _operation_ref) do
     {:ok, queue, false}
   end
 
-  defp remove_copies(_community, _queue, _revision, %{member_ids: []}, _proof) do
+  defp remove_copies(_community, _queue, _revision, %{member_ids: []}, _proof, _operation_ref) do
     {:error, :stale_discard_confirmation}
   end
 
-  defp remove_copies(community, queue, revision, plan, proof) do
+  defp remove_copies(community, queue, revision, plan, proof, operation_ref) do
     with {:ok, result} <-
-           Queue.remove_many(community, queue, revision, plan.member_ids, plan.operation, proof) do
+           Queue.remove_many(
+             community,
+             queue,
+             revision,
+             plan.member_ids,
+             plan.operation,
+             proof,
+             operation_ref
+           ) do
       {:ok, result.queue, true}
     end
   end
@@ -398,11 +413,18 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
     end
   end
 
-  defp reconcile(_community, queue, %{queued: same, queue_target: same}, false, _actor) do
+  defp reconcile(
+         _community,
+         queue,
+         %{queued: same, queue_target: same},
+         false,
+         _actor,
+         _operation_ref
+       ) do
     {:ok, queue}
   end
 
-  defp reconcile(community, queue, plan, true, actor) do
+  defp reconcile(community, queue, plan, true, actor, operation_ref) do
     with {:ok, result} <-
            Tree.reconcile_after_content(
              community,
@@ -410,13 +432,14 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
              queue.queue_revision,
              plan.public,
              plan.queue_target,
-             actor
+             actor,
+             operation_ref
            ) do
       {:ok, result.queue}
     end
   end
 
-  defp reconcile(community, queue, plan, false, actor) do
+  defp reconcile(community, queue, plan, false, actor, operation_ref) do
     with {:ok, result} <-
            Queue.reconcile_tree(
              community,
@@ -424,7 +447,8 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
              queue.queue_revision,
              plan.public,
              plan.queue_target,
-             actor
+             actor,
+             operation_ref
            ) do
       {:ok, result.queue}
     end

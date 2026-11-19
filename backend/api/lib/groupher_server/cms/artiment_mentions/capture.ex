@@ -30,10 +30,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.Capture do
   def execute(
         source_identity,
         selected_body,
-        outbox_identity
+        operation_ref
       )
-      when is_map(source_identity) and is_map(selected_body) and is_tuple(outbox_identity) do
-    execute(source_identity, selected_body, outbox_identity, [])
+      when is_map(source_identity) and is_map(selected_body) and is_binary(operation_ref) do
+    execute(source_identity, selected_body, operation_ref, [])
   end
 
   def execute(_, _, _), do: {:error, :invalid_mention_capture}
@@ -46,12 +46,12 @@ defmodule GroupherServer.CMS.ArtimentMentions.Capture do
           community_id: community_id,
           mentioned_at: mentioned_at
         },
-        outbox_identity,
+        operation_ref,
         opts
       )
       when is_map(source_identity) and is_binary(revision_identity) and is_list(ast) and
              (is_nil(community_id) or is_integer(community_id)) and
-             is_struct(mentioned_at, DateTime) and is_tuple(outbox_identity) and
+             is_struct(mentioned_at, DateTime) and is_binary(operation_ref) and
              is_list(opts) do
     with true <- Repo.in_transaction?(),
          {:ok, :pass} <- validate_options(opts),
@@ -73,7 +73,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Capture do
              saved,
              revision_identity,
              community_id,
-             outbox_identity,
+             operation_ref,
              source_identity.type,
              recipients
            ) do
@@ -98,7 +98,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Capture do
          saved,
          revision_identity,
          community_id,
-         outbox_identity,
+         operation_ref,
          source_type,
          notification_user_ids
        ) do
@@ -110,7 +110,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Capture do
       Effects.enqueue_notifications(
         saved.source_endpoint_id,
         revision_identity,
-        outbox_identity,
+        operation_ref,
         community_id,
         recipients
       )

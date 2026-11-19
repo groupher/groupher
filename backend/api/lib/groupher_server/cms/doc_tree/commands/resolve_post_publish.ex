@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.ResolvePostPublish do
                    ) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with {:ok, :acquired} <- SiteLock.acquire(canonical),
            {:ok, :pass} <- QueueAccess.authorize(canonical, article_id, actor) do
         ResolveConflict.resolve(

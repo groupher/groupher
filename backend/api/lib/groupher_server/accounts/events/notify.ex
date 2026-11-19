@@ -22,9 +22,9 @@ defmodule GroupherServer.Accounts.Events.Notify do
       Accounts.Events.Notify.handle(:follow, target_user, follower)
   """
   def handle(:follow, %User{} = user, %User{} = from_user) do
-    notify_attrs = %{action: :follow, user_id: user.id}
+    notify_attrs = %{type: :follow, user_id: user.id}
 
-    Messaging.send_notification(notify_attrs, from_user)
+    Messaging.send_notice(notify_attrs, from_user)
   end
 
   @doc """
@@ -35,8 +35,8 @@ defmodule GroupherServer.Accounts.Events.Notify do
       Accounts.Events.Notify.handle(:undo, :follow, target_user, follower)
   """
   def handle(:undo, :follow, %User{} = user, %User{} = from_user) do
-    notify_attrs = %{action: :follow, user_id: user.id}
+    notify_attrs = %{type: :follow, user_id: user.id}
 
-    Messaging.revoke_notification(notify_attrs, from_user)
+    Messaging.revoke_notice(notify_attrs, from_user)
   end
 end

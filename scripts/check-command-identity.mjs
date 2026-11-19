@@ -92,9 +92,8 @@ export const hasDirectPersistCall = (source, file = 'module.ex') => {
 }
 
 /** Detects a boundary that silently manufactures a business command identity.
- * Infrastructure ids (outbox event ids, leases and workflow operation refs)
- * are intentionally outside this check; only expressions naming command_id
- * are considered business command identity fallbacks.
+ * Infrastructure UUIDs such as row ids and workflow operation refs remain
+ * valid. Only expressions explicitly manufacturing command_id are checked.
  * @example
  * hasDerivedCommandIdentity('command_id: Ecto.UUID.generate()') === true
  */
@@ -130,7 +129,7 @@ const persistFiles = files.filter(isPersistFile)
 for (const file of persistFiles) {
   const source = executableSource(readFileSync(path.join(repoRoot, file), 'utf8'), file)
 
-  if (/CMS\.Gate\.|CMS\.Command\b|CMS\.Outbox\.|Repo\.(?:transaction|rollback)\b|Ecto\.UUID\.generate\(/.test(source)) {
+  if (/CMS\.Gate\.|CMS\.Command\b|CMS\.Outbox\.|Repo\.(?:transaction|rollback)\b/.test(source)) {
     boundaryViolations.push(`${file}: Persist must not own Gate, Command, Outbox, transaction, rollback, or command identity`)
   }
 }
@@ -150,7 +149,7 @@ for (const file of cmsProductionFiles) {
   const source = readFileSync(path.join(repoRoot, file), 'utf8')
 
   if (hasDerivedCommandIdentity(source, file)) {
-    boundaryViolations.push(`${file}: production CMS code must not manufacture command_id`)
+    boundaryViolations.push(`${file}: production CMS code must not manufacture command or operation identity`)
   }
 }
 

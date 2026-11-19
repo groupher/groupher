@@ -34,18 +34,45 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   @doc "Builds the provider-deletion projection for an expired Application upload."
   @spec delete_application_upload_object(map()) :: {:ok, :pass}
   def delete_application_upload_object(upload) do
-    workflow_ref = "application-upload-cleanup:#{upload.public_ref}"
+    workflow_ref = "application-upload-cleanup:#{upload.id}"
+    owner = "application-upload-cleanup:#{Ecto.UUID.generate()}"
 
-    Repo.transaction(fn ->
-      case Effects.enqueue_application_upload_delete(upload, workflow_ref) do
-        {:ok, _event} -> :pass
-        {:error, reason} -> Repo.rollback(reason)
+    with {:ok, run} <-
+           Workflow.ensure_run(%{
+             workflow_ref: workflow_ref,
+             workflow_type: "application_upload_cleanup",
+             resource_type: "application_logo_upload",
+             resource_id: to_string(upload.id),
+             status: :pending
+           }),
+         {:ok, step} <-
+           Workflow.ensure_step(run, %{
+             step_ref: "upload:#{upload.id}",
+             resource_type: "application_logo_upload",
+             resource_id: to_string(upload.id),
+             status: :pending,
+             payload: %{upload_id: upload.id, public_ref: upload.public_ref},
+             result: %{},
+             attempts: 0
+           }),
+         {:ok, claimed} <- Workflow.claim_step(step, owner),
+         {:ok, :pass} <- enqueue_application_upload(claimed, upload, owner) do
+      {:ok, :pass}
+    else
+      {:completed, _step} -> {:ok, :pass}
+      {:busy, seconds} -> {:error, {:workflow_step_busy, seconds}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp enqueue_application_upload(claimed, upload, owner) do
+    Repo.transact_result(fn ->
+      with {:ok, _event} <-
+             Effects.enqueue_application_upload_delete(upload, claimed.operation_ref),
+           {:ok, _step} <- Workflow.complete_step(claimed, owner, %{"outbox" => "created"}) do
+        {:ok, :pass}
       end
     end)
-    |> case do
-      {:ok, :pass} -> {:ok, :pass}
-      {:error, _reason} -> {:ok, :pass}
-    end
   end
 
   @doc "Soft-deletes generated assets and enqueues provider cleanup."
@@ -112,7 +139,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     end
   end
 
-  defp process_deletion_steps(steps, community, workflow_ref, owner) do
+  defp process_deletion_steps(steps, community, _workflow_ref, owner) do
     Enum.reduce(steps, {nil, 0}, fn step, {first_error, processed} ->
       case Workflow.claim_step(step, owner) do
         {:completed, _step} ->
@@ -122,7 +149,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
           {first_error || {:workflow_step_busy, seconds}, processed}
 
         {:ok, claimed} ->
-          case delete_one_generated_asset(community, claimed.resource_id, workflow_ref) do
+          case delete_one_generated_asset(community, claimed) do
             {:ok, :pass} ->
               _ = Workflow.complete_step(claimed, owner, %{"status" => "deleted"})
               {first_error, processed + 1}
@@ -135,11 +162,11 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     end)
   end
 
-  defp delete_one_generated_asset(community, asset_id, workflow_ref) do
+  defp delete_one_generated_asset(community, claimed) do
     Repo.transaction(fn ->
-      with {:ok, deleted} <- Persist.delete(community, asset_id),
+      with {:ok, deleted} <- Persist.delete(community, claimed.resource_id),
            {:ok, _event} <-
-             Effects.enqueue_provider_delete(deleted, {:workflow, workflow_ref}) do
+             Effects.enqueue_provider_delete(deleted, claimed.operation_ref) do
         :pass
       else
         {:error, reason} -> Repo.rollback(reason)

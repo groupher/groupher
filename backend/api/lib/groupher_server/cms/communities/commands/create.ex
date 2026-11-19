@@ -46,12 +46,16 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
 
   receipt_pipeline execute_pipeline(create_target, args, user, command_id) do
     gate(fn target -> CMS.Gate.check_community_create_in_transaction(user, target) end)
-    change(fn _target -> create_community(args, user, command_id) end)
+
+    change(fn _target, operation_ref ->
+      create_community(args, user, command_id, operation_ref)
+    end)
+
     confirm(fn confirmation -> {:ok, confirmation} end)
     present(fn confirmation -> present_create(confirmation) end)
   end
 
-  defp create_community(args, %User{} = user, command_id) do
+  defp create_community(args, %User{} = user, command_id, operation_ref) do
     with {:ok, _slug} <-
            CMS.Communities.NameRules.check_seed_slug_change(
              nil,
@@ -64,9 +68,9 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
          {:ok, _moderator} <- ModeratorSetup.add_root(community, user),
          {:ok, canonical} <- FrontDesk.community(community.slug, mode: :internal),
          {:ok, _event} <-
-           CMS.Dashboard.Effects.enqueue_presentation_changed(canonical, command_id),
+           CMS.Dashboard.Effects.enqueue_presentation_changed(canonical, operation_ref),
          {:ok, _event} <-
-           CMS.Communities.Effects.enqueue_analysis_provision(canonical, command_id) do
+           CMS.Communities.Effects.enqueue_analysis_provision(canonical, operation_ref) do
       {:ok,
        %CreateConfirmation{
          data: %{"community_id" => canonical.id, "command_id" => command_id}

@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Commands.Subscribe do
   receipt_pipeline execute_pipeline(community, community_id, actor, command_id) do
     gate(fn candidate -> Gate.check_in_transaction(actor, :read, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with {:ok, _} <- Persist.subscribe(canonical, actor),
            {:ok, _} <- Communities.Count.update(canonical, actor, :subscribers_count, :inc),
            {:ok, _} <- Accounts.profiles_update_subscribe_state(actor) do

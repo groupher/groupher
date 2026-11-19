@@ -312,6 +312,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
                with {:ok, lifecycle} <- CMS.Articles.Lifecycle.lock(article),
                     {:ok, restriction} <-
                       CMS.Articles.Lifecycle.apply_review_block(lifecycle, %{
+                        operation_ref: Ecto.UUID.generate(),
                         scope_key: "community:#{community.id}",
                         type: :manual_hold,
                         source_ref: "ticket-binding-review:#{Ecto.UUID.generate()}",

@@ -112,8 +112,8 @@ defmodule GroupherServer.CMS.Tickets.SourceVisibility do
   end
 
   @doc "Invalidates Ticket and Post cache tags after a newly selected Post revision."
-  def revalidate_cache_in_transaction(post_id, identity, effect_key)
-      when is_binary(post_id) and is_tuple(identity) and is_binary(effect_key) do
+  def revalidate_cache_in_transaction(post_id, operation_ref, effect_key)
+      when is_binary(post_id) and is_binary(operation_ref) and is_binary(effect_key) do
     with true <- Repo.in_transaction?() do
       community_ids =
         from(source in Source,
@@ -132,7 +132,7 @@ defmodule GroupherServer.CMS.Tickets.SourceVisibility do
             case Persist.invalidate_cache_linked_to_post(
                    community,
                    post_id,
-                   identity,
+                   operation_ref,
                    "#{effect_key}:#{community.id}"
                  ) do
               {:ok, _result} -> {:cont, {:ok, :pass}}
@@ -148,7 +148,7 @@ defmodule GroupherServer.CMS.Tickets.SourceVisibility do
     end
   end
 
-  def revalidate_cache_in_transaction(_post_id, _identity, _effect_key) do
+  def revalidate_cache_in_transaction(_post_id, _operation_ref, _effect_key) do
     {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
   end
 

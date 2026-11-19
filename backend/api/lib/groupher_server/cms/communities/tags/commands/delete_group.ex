@@ -45,8 +45,8 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.DeleteTagGroup do
         {:error, CMS.Communities.ErrorCat.not_exist("CommunityTagGroup")}
     end)
 
-    change(fn {canonical, candidate} ->
-      Mutation.delete_group(canonical, thread, candidate.id, command_id: command_id)
+    change(fn {canonical, candidate}, operation_ref ->
+      Mutation.delete_group(canonical, thread, candidate.id, operation_ref: operation_ref)
     end)
 
     confirm(fn deleted ->

@@ -17,9 +17,10 @@ defmodule GroupherServer.CMS.DocTree.Commands.ConfigureQueue do
       CMS.Gate.check_in_transaction(actor, :docs_queue_configure, canonical)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical),
-           {:ok, result} <- Queue.set_policy(canonical, queue, revision, required, self_approval),
+           {:ok, result} <-
+             Queue.set_policy(canonical, queue, revision, required, self_approval, operation_ref),
            {:ok, _} <- audit(canonical, queue, result, actor, command_id) do
         {:ok, result.queue}
       end

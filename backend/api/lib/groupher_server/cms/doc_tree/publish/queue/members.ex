@@ -28,9 +28,16 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Members do
   }
 
   @doc "Registers an entire batch and advances the Queue revision exactly once."
-  def add_many(%Community{} = community, %DocsPublishQueue{} = queue, revision, entries, %User{
-        id: user_id
-      })
+  def add_many(
+        %Community{} = community,
+        %DocsPublishQueue{} = queue,
+        revision,
+        entries,
+        %User{
+          id: user_id
+        },
+        operation_ref
+      )
       when is_integer(revision) and revision >= 0 and is_list(entries) and
              is_integer(user_id) and user_id > 0 do
     with {:ok, entries} <- normalize_entries(entries),
@@ -39,7 +46,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Members do
          {:ok, :pass} <- lock_and_validate(community, queue, entries),
          {:ok, members} <- insert_members(queue, entries, user_id),
          {:ok, queue} <-
-           Queue.advance(community, queue, %{queue_revision: revision}, [:queue_revision]) do
+           Queue.advance(
+             community,
+             queue,
+             %{queue_revision: revision},
+             [:queue_revision],
+             operation_ref
+           ) do
       {:ok, %{queue: queue, members: members}}
     else
       nil -> {:error, :invalid_queue_actor}
@@ -47,7 +60,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Members do
     end
   end
 
-  def add_many(_community, _queue, _revision, _entries, _actor) do
+  def add_many(_community, _queue, _revision, _entries, _actor, _operation_ref) do
     {:error, :invalid_queue_members}
   end
 

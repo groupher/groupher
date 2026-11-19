@@ -14,13 +14,14 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, Jobs, Repo}
   alias CMS.Assets.{Effects, Workflow}
   alias CMS.Model.{AssetWorkflowRun, AssetWorkflowStep}
   alias CMS.Model.{Community, CommunityAsset}
-  alias CMS.Outbox.Event
+  alias CMS.Outbox.{DedupeKey, Event, Recovery}
 
   @default_age_seconds 15 * 60
+  @provider_delete_contract_version 1
 
   @doc "Re-enqueues missing provider-delete intents for old soft-deleted assets."
   def enqueue_missing(%Community{id: community_id}, opts \\ []) do
@@ -134,19 +135,47 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
   end
 
   defp process_claimed_step(claimed, workflow_ref, owner, result) do
-    if pending_intent?(claimed.resource_id) do
-      _ = Workflow.complete_step(claimed, owner, %{"outbox" => "present"})
-      {:cont, {:ok, %{result | skipped: result.skipped + 1}}}
+    if Jobs.config_skip_enqueue?() do
+      case Workflow.release_step(claimed, owner) do
+        {:ok, :pass} ->
+          {:cont, {:ok, %{result | skipped: result.skipped + 1}}}
+
+        {:error, reason} ->
+          {:halt, {:error, reason}}
+      end
     else
-      enqueue_claimed_step(claimed, workflow_ref, owner, result)
+      with {:ok, asset} <- load_deleted_asset(claimed.resource_id),
+           {:ok, :pass} <- validate_step_target(claimed, asset) do
+        case existing_provider_intent(asset) do
+          nil ->
+            enqueue_claimed_step(claimed, asset, owner, result)
+
+          %Event{} = event ->
+            if provider_event_matches_asset?(event, asset) do
+              process_existing_provider_intent(
+                event,
+                claimed,
+                asset,
+                workflow_ref,
+                owner,
+                result
+              )
+            else
+              fail_claimed_step(claimed, owner, :provider_delete_event_identity_mismatch)
+            end
+        end
+      else
+        {:error, reason} ->
+          _ = Workflow.fail_step(claimed, owner, reason)
+          {:halt, {:error, reason}}
+      end
     end
   end
 
-  defp enqueue_claimed_step(claimed, workflow_ref, owner, result) do
-    case enqueue_provider_delete(claimed, workflow_ref) do
-      {:ok, _event} ->
-        _ = Workflow.complete_step(claimed, owner, %{"outbox" => "created"})
-        {:cont, {:ok, %{result | enqueued: result.enqueued + 1}}}
+  defp enqueue_claimed_step(claimed, asset, owner, result) do
+    case enqueue_provider_delete(asset, claimed.operation_ref) do
+      {:ok, event} ->
+        complete_recovery_step(claimed, event, "created", owner, result, :enqueued)
 
       {:error, reason} = error ->
         _ = Workflow.fail_step(claimed, owner, reason)
@@ -154,21 +183,150 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
     end
   end
 
-  defp enqueue_provider_delete(%AssetWorkflowStep{} = step, workflow_ref) do
-    Repo.transaction(fn ->
-      case Repo.get(CommunityAsset, step.resource_id) do
-        %CommunityAsset{} = asset ->
-          Effects.enqueue_provider_delete(asset, {:workflow, workflow_ref}, retry_failed: true)
+  defp complete_existing_step(claimed, event, owner, result) do
+    case Workflow.complete_step(claimed, owner, %{
+           "outbox_event_id" => event.id,
+           "outcome" => "existing"
+         }) do
+      {:ok, :pass} -> {:cont, {:ok, %{result | skipped: result.skipped + 1}}}
+      {:error, reason} -> {:halt, {:error, reason}}
+    end
+  end
 
-        nil ->
-          Repo.rollback(:asset_not_found)
+  defp recover_claimed_step(claimed, asset, event, workflow_ref, owner, result) do
+    if recoverable_provider_event?(event, asset) do
+      initiator = %{
+        initiator_kind: "owner",
+        owner_ref: "provider-reconciliation:#{workflow_ref}",
+        reason_code: "provider_delete_retry"
+      }
+
+      case Recovery.requeue(
+             event.id,
+             event.failure_generation,
+             claimed.operation_ref,
+             GroupherServer.Jobs.CMSOutboxAsset,
+             initiator
+           ) do
+        {:ok, %{outcome: :requeued}} ->
+          complete_recovery_step(claimed, event, "requeued", owner, result, :enqueued)
+
+        {:ok, %{outcome: :already_retried}} ->
+          complete_recovery_step(claimed, event, "already_retried", owner, result, :skipped)
+
+        {:ok, %{outcome: :skipped}} ->
+          case Workflow.release_step(claimed, owner) do
+            {:ok, :pass} -> {:cont, {:ok, %{result | skipped: result.skipped + 1}}}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+
+        {:error, reason} ->
+          _ = Workflow.fail_step(claimed, owner, reason)
+          {:halt, {:error, reason}}
       end
+    else
+      reason = :provider_delete_event_not_recoverable
+      _ = Workflow.fail_step(claimed, owner, reason)
+      {:halt, {:error, reason}}
+    end
+  end
+
+  defp complete_recovery_step(claimed, event, outcome, owner, result, count_key) do
+    case Workflow.complete_step(claimed, owner, %{
+           "outbox_event_id" => event.id,
+           "outcome" => outcome
+         }) do
+      {:ok, :pass} -> {:cont, {:ok, Map.update!(result, count_key, &(&1 + 1))}}
+      {:error, reason} -> {:halt, {:error, reason}}
+    end
+  end
+
+  defp enqueue_provider_delete(%CommunityAsset{} = asset, operation_ref) do
+    Repo.transaction(fn ->
+      Effects.enqueue_provider_delete(asset, operation_ref)
     end)
     |> case do
       {:ok, {:ok, event}} -> {:ok, event}
       {:ok, {:error, reason}} -> {:error, reason}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp load_deleted_asset(resource_id) do
+    case Repo.get(CommunityAsset, resource_id) do
+      %CommunityAsset{status: :deleted, deleted_at: %DateTime{}} = asset -> {:ok, asset}
+      _ -> {:error, :provider_delete_asset_not_deleted}
+    end
+  end
+
+  defp validate_step_target(%AssetWorkflowStep{} = step, %CommunityAsset{} = asset) do
+    if step.resource_type == "community_asset" and step.resource_id == to_string(asset.id) and
+         step.payload["asset_id"] in [nil, asset.id] and
+         step.payload["public_ref"] in [nil, asset.public_ref] do
+      {:ok, :pass}
+    else
+      {:error, :provider_delete_step_target_invalid}
+    end
+  end
+
+  defp existing_provider_intent(asset) do
+    key = DedupeKey.encode([asset.public_ref, asset.storage, asset.storage_key])
+
+    Repo.get_by(Event,
+      event: "asset.provider_delete",
+      resource_type: "community_asset",
+      resource_id: to_string(asset.id),
+      dedupe_key: key
+    )
+  end
+
+  defp recoverable_provider_event?(%Event{} = event, %CommunityAsset{} = asset) do
+    event.last_error_code == "5603" and event.data["asset_id"] == asset.id and
+      event.data["public_ref"] == asset.public_ref and event.data["storage"] == asset.storage and
+      event.data["storage_key"] == asset.storage_key and is_binary(asset.storage) and
+      asset.storage != "" and is_binary(asset.storage_key) and asset.storage_key != ""
+  end
+
+  defp process_existing_provider_intent(
+         %Event{status: :failed} = event,
+         claimed,
+         asset,
+         workflow_ref,
+         owner,
+         result
+       ) do
+    recover_claimed_step(claimed, asset, event, workflow_ref, owner, result)
+  end
+
+  defp process_existing_provider_intent(
+         %Event{status: status} = event,
+         claimed,
+         _asset,
+         _workflow_ref,
+         owner,
+         result
+       )
+       when status in [:waiting, :running, :retrying, :done] do
+    complete_existing_step(claimed, event, owner, result)
+  end
+
+  defp process_existing_provider_intent(_event, claimed, _asset, _workflow_ref, owner, _result) do
+    fail_claimed_step(claimed, owner, :provider_delete_event_state_invalid)
+  end
+
+  defp provider_event_matches_asset?(%Event{} = event, %CommunityAsset{} = asset) do
+    event.contract_version == @provider_delete_contract_version and
+      event.worker == inspect(Jobs.CMSOutboxAsset) and
+      event.event == "asset.provider_delete" and event.resource_type == "community_asset" and
+      event.resource_id == to_string(asset.id) and
+      event.dedupe_key == DedupeKey.encode([asset.public_ref, asset.storage, asset.storage_key]) and
+      event.data["asset_id"] == asset.id and event.data["public_ref"] == asset.public_ref and
+      event.data["storage"] == asset.storage and event.data["storage_key"] == asset.storage_key
+  end
+
+  defp fail_claimed_step(claimed, owner, reason) do
+    _ = Workflow.fail_step(claimed, owner, reason)
+    {:halt, {:error, reason}}
   end
 
   defp workflow_owner(workflow_ref) do
@@ -236,16 +394,5 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
       %DateTime{} = inserted_at -> DateTime.compare(inserted_at, cutoff) == :gt
       _ -> false
     end
-  end
-
-  defp pending_intent?(asset_id) do
-    Repo.exists?(
-      from(event in Event,
-        where:
-          event.event == "asset.provider_delete" and event.resource_type == "community_asset" and
-            event.resource_id == ^to_string(asset_id) and
-            event.status in [:waiting, :running, :retrying, :done]
-      )
-    )
   end
 end

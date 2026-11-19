@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.BeginEdit do
   receipt_pipeline run_receipt(community, article_id, public_snapshot_id, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with {:ok, :acquired} <- SiteLock.acquire(canonical),
            {:ok, :pass} <- QueueAccess.authorize(canonical, article_id, actor),
            {:ok, state} <- DefaultCopy.load(canonical, article_id),
@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.BeginEdit do
 
     present(fn confirmation ->
       with {:ok, _} <- CMS.Gate.access_check(actor, :manage_docs, community),
-           {:ok, :pass} <- QueueAccess.authorize(community, article_id, actor) do
+           {:ok, :pass} <- QueueAccess.authorize_after_commit(community, article_id, actor) do
         {:ok,
          %{
            working_copy_id: confirmation.data["working_copy_id"],

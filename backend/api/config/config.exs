@@ -277,6 +277,9 @@ config :tesla,
   adapter: {Tesla.Adapter.Finch, name: GroupherServer.Finch},
   disable_deprecated_builder_warning: true
 
+config :groupher_server, GroupherServer.CMS.Outbox.ScheduleConfig,
+  outbox_schedule_stale_after_seconds: 300
+
 config :groupher_server, Oban,
   engine: Oban.Engines.Basic,
   repo: GroupherServer.Repo,
@@ -294,7 +297,8 @@ config :groupher_server, Oban,
        {"* * * * *", GroupherServer.Jobs.ArticleInsightsAggregation},
        {"@daily", GroupherServer.Jobs.ArticleInsightsRetention},
        {"@daily", GroupherServer.Jobs.CMSArtimentReviewRetention},
-       {"@daily", GroupherServer.Jobs.CommandReceiptRetention}
+       {"@daily", GroupherServer.Jobs.CommandReceiptRetention},
+       {"* * * * *", GroupherServer.Jobs.CMSOutboxScheduleCheck}
      ]}
   ],
   queues: [

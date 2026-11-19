@@ -53,8 +53,25 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Asset do
 
   defp deliver_provider_object("community_asset", event) do
     case Repo.get(CommunityAsset, event.resource_id) do
-      %CommunityAsset{} = asset -> normalize_delete_result(Effects.deliver_provider_delete(asset))
-      nil -> {:ok, :already_deleted}
+      %CommunityAsset{
+        id: id,
+        status: :deleted,
+        deleted_at: deleted_at,
+        public_ref: public_ref,
+        storage: storage,
+        storage_key: storage_key
+      } = asset ->
+        if not is_nil(deleted_at) and id == event.data["asset_id"] and
+             public_ref == event.data["public_ref"] and storage == event.data["storage"] and
+             storage_key == event.data["storage_key"] and is_binary(storage) and
+             storage != "" and is_binary(storage_key) and storage_key != "" do
+          normalize_delete_result(Effects.deliver_provider_delete(asset))
+        else
+          {:error, AssetErrorCat.provider_delete_target_invalid()}
+        end
+
+      _asset ->
+        {:error, AssetErrorCat.provider_delete_target_invalid()}
     end
   end
 
@@ -66,6 +83,6 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Asset do
     {:error, AssetErrorCat.unsupported_asset_cleanup_resource(%{resource_type: resource_type})}
   end
 
-  defp normalize_delete_result({:ok, _result}), do: {:ok, :deleted}
+  defp normalize_delete_result({:ok, :pass}), do: {:ok, :enqueued}
   defp normalize_delete_result({:error, reason}), do: {:error, reason}
 end

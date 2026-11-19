@@ -8,14 +8,14 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
   Callers must acquire all needed site locks before the Article lock.
   """
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.WorkingCopy.{Diff, Snapshotter}
   alias CMS.Model.{Article, ArticleWorkingCopy}
   alias CMS.Articles.WorkingCopy.Persist
   alias GroupherServer.Accounts.Model.User
 
   @doc "Builds attribution from a trusted domain actor and request provenance."
-  def event_attrs(%User{} = actor, command_id, community_id, origin, operation_index) do
+  def event_attrs(%User{} = actor, operation_ref, community_id, origin, operation_index) do
     %{
       actor_type: :user,
       actor_id: actor.id,
@@ -23,8 +23,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
       service_ref: origin.service_ref,
       source_community_id: community_id,
       occurred_at: DateTime.utc_now() |> DateTime.truncate(:second),
-      operation_ref: command_id,
-      causation_command_id: Map.get(origin, :causation_command_id, command_id),
+      operation_ref: operation_ref,
+      causation_command_id: Map.get(origin, :causation_command_id),
       operation_index: operation_index
     }
   end
@@ -34,19 +34,19 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
         %Article{id: article_id} = article,
         %ArticleWorkingCopy{article_id: article_id} = work,
         actor,
-        command_id,
+        operation_ref,
         %{type: type} = event_attrs
       )
-      when is_binary(command_id) and type in [:create, :fork] and
+      when is_binary(operation_ref) and type in [:create, :fork] and
              (is_struct(actor, User) or actor == :system) do
     with {:ok, :pass} <- require_transaction(),
-         {:ok, :pass} <- validate_identity(actor, command_id, event_attrs),
+         {:ok, :pass} <- validate_identity(actor, operation_ref, event_attrs),
          {:ok, snapshot} <-
            Snapshotter.freeze_in_transaction(
              work.id,
              work.revision,
              actor,
-             Map.get(event_attrs, :causation_command_id, command_id)
+             Map.get(event_attrs, :causation_command_id)
            ),
          {:ok, event} <-
            append_in_transaction(
@@ -74,13 +74,13 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
         before_snapshot_id,
         after_snapshot_id,
         actor,
-        command_id,
+        operation_ref,
         event_attrs
       )
       when (is_struct(actor, User) or actor == :system) and is_binary(after_snapshot_id) and
-             is_binary(command_id) and is_map(event_attrs) do
+             is_binary(operation_ref) and is_map(event_attrs) do
     with {:ok, :pass} <- require_transaction(),
-         {:ok, :pass} <- validate_identity(actor, command_id, event_attrs) do
+         {:ok, :pass} <- validate_identity(actor, operation_ref, event_attrs) do
       if before_snapshot_id == after_snapshot_id do
         {:ok, :unchanged}
       else
@@ -102,26 +102,34 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
         %Article{id: article_id} = article,
         %ArticleWorkingCopy{article_id: article_id} = work,
         actor,
-        command_id,
+        operation_ref,
         event_attrs,
         save
       )
-      when is_binary(command_id) and is_map(event_attrs) and is_function(save, 0) and
+      when is_binary(operation_ref) and is_map(event_attrs) and is_function(save, 0) and
              (is_struct(actor, User) or actor == :system) do
     with {:ok, :pass} <- require_transaction(),
-         {:ok, :pass} <- validate_identity(actor, command_id, event_attrs),
+         {:ok, :pass} <- validate_identity(actor, operation_ref, event_attrs),
          {:ok, :pass} <- validate_save_type(event_attrs),
          {:ok, before} <-
            Snapshotter.freeze_in_transaction(
              work.id,
              work.revision,
              actor,
-             Map.get(event_attrs, :causation_command_id, command_id)
+             Map.get(event_attrs, :causation_command_id)
            ),
          {:ok, saved} <- save.(),
          {:ok, diff} <- Diff.compare(before.id, saved.id),
          {:ok, :pass} <-
-           record_if_changed(article, work, saved, before, diff, actor, command_id, event_attrs) do
+           record_if_changed(
+             article,
+             work,
+             saved,
+             before,
+             diff,
+             actor,
+             event_attrs
+           ) do
       {:ok, saved}
     end
   end
@@ -133,25 +141,27 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
   defp validate_save_type(attrs) when not is_map_key(attrs, :type), do: {:ok, :pass}
   defp validate_save_type(_attrs), do: {:error, :invalid_history_event}
 
-  defp validate_identity(%User{id: actor_id}, command_id, %{
-         actor_type: :user,
-         actor_id: actor_id,
-         operation_ref: command_id
-       }) do
-    {:ok, :pass}
+  defp validate_identity(%User{id: actor_id}, operation_ref, attrs) when is_map(attrs) do
+    if attrs.actor_type == :user and attrs.actor_id == actor_id and
+         attrs.operation_ref == operation_ref do
+      {:ok, :pass}
+    else
+      {:error, :history_identity_mismatch}
+    end
   end
 
-  defp validate_identity(:system, command_id, %{
-         actor_type: :system,
-         actor_id: nil,
-         operation_ref: command_id
-       }) do
-    {:ok, :pass}
+  defp validate_identity(:system, operation_ref, attrs) when is_map(attrs) do
+    if attrs.actor_type == :system and is_nil(attrs.actor_id) and
+         attrs.operation_ref == operation_ref do
+      {:ok, :pass}
+    else
+      {:error, :history_identity_mismatch}
+    end
   end
 
   defp validate_identity(_actor, _command_id, _attrs), do: {:error, :history_identity_mismatch}
 
-  defp record_if_changed(article, work, saved, before, diff, actor, command_id, event_attrs) do
+  defp record_if_changed(article, work, saved, before, diff, actor, event_attrs) do
     changed? =
       not diff.body.equal or map_size(diff.fields) > 0 or diff.tags.added != [] or
         diff.tags.removed != [] or diff.cover_edit or diff.asset_refs
@@ -162,7 +172,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
                saved.id,
                saved.revision,
                actor,
-               Map.get(event_attrs, :causation_command_id, command_id)
+               Map.get(event_attrs, :causation_command_id)
              ),
            {:ok, _event} <-
              append_in_transaction(
@@ -187,5 +197,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
   @doc "Appends one event after taking the Article lock in the caller transaction."
   def append_in_transaction(%Article{id: article_id}, attrs) when is_map(attrs) do
     Persist.append_article_event_in_transaction(article_id, attrs)
+  end
+
+  defp require_transaction do
+    if Repo.in_transaction?(), do: {:ok, :pass}, else: {:error, :transaction_required}
   end
 end

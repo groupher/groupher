@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
           String.t(),
           String.t() | pos_integer(),
           term(),
-          (-> Command.action_result(term())),
+          (Ecto.UUID.t() -> Command.action_result(term())),
           module()
         ) :: T.result(term(), term())
   def execute(
@@ -111,7 +111,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
          confirmation
        )
        when is_binary(initiator_key) and is_binary(command_id) and
-              is_function(execute, 0) and is_atom(confirmation) do
+              is_function(execute, 1) and is_atom(confirmation) do
     case execute_receipt_transaction(fn ->
            configure_claim_timeout!()
 
@@ -130,7 +130,14 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
 
              {:ok, :new, receipt} ->
                configure_transaction_timeouts!()
-               execute_and_finalize(receipt, execute, confirmation)
+
+               case Ecto.UUID.cast(receipt.operation_ref) do
+                 {:ok, operation_ref} ->
+                   execute_and_finalize(receipt, execute, confirmation, operation_ref)
+
+                 :error ->
+                   Repo.rollback(ErrorCat.command_result_unavailable())
+               end
 
              {:error, reason} ->
                Repo.rollback(reason)
@@ -145,22 +152,30 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
   end
 
   defp validate_callbacks!(execute, confirmation) do
-    unless is_function(execute, 0) and is_atom(confirmation) do
+    unless is_function(execute, 1) and is_atom(confirmation) do
       raise ArgumentError,
-            "command receipt callbacks must be execute/0 and a confirmation module"
+            "command receipt callbacks must be execute/1 and a confirmation module"
     end
   end
 
   # The runner never inspects domain result shapes. Each domain owner supplies
   # the typed, versioned Confirmation codec used by execution and replay.
-  defp execute_and_finalize(receipt, execute, confirmation)
+  defp execute_and_finalize(receipt, execute, confirmation, operation_ref)
        when is_atom(confirmation) do
-    case execute.() do
+    case execute.(operation_ref) do
       {:ok, value} ->
         finalize_confirmation(receipt, confirmation, value)
 
       {:error, reason} ->
-        Repo.rollback(reason)
+        case reason do
+          {:pipeline_stage, stage, stage_reason} ->
+            Repo.rollback(
+              {:cms_command_pipeline_rejection, stage, stage_reason, operation_ref}
+            )
+
+          _reason ->
+            Repo.rollback(reason)
+        end
 
       other ->
         Repo.rollback({:invalid_command_result, other})

@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Decide do
       CMS.Gate.check_in_transaction(actor, :admin_request_decide, candidate)
     end)
 
-    change(fn canonical, execution ->
+    change(fn canonical, operation_ref ->
       decide_locked(
         canonical,
         request_id,
@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Decide do
         decision,
         approved,
         actor,
-        execution.operation_ref
+        operation_ref
       )
     end)
 

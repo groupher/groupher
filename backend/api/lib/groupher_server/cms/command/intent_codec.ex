@@ -20,6 +20,25 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
   @type policy :: :digest | :digest_each | :empty | {:fields, %{String.t() => policy() | :raw}}
 
   @policies %{
+    community_admin_remove: {:fields, %{"member_id" => :raw, "revision" => :raw}},
+    community_admin_permissions_update:
+      {:fields, %{"member_id" => :raw, "revision" => :raw, "permissions" => :digest_each}},
+    community_admin_request_cancel: {:fields, %{"request_id" => :raw, "revision" => :raw}},
+    community_admin_request_create:
+      {:fields,
+       %{
+         "subject_user_id" => :raw,
+         "request_type" => :raw,
+         "permissions" => :digest_each
+       }},
+    community_admin_request_decide:
+      {:fields,
+       %{
+         "request_id" => :raw,
+         "revision" => :raw,
+         "decision" => :raw,
+         "approved" => :digest
+       }},
     docs_restore_snapshot:
       {:fields,
        %{
@@ -31,28 +50,33 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     docs_configure_queue:
       {:fields, %{"revision" => :raw, "required" => :raw, "self_approval" => :raw}},
     article_create: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
-    article_create_article: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
-    article_create_and_publish_article: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
+    article_create_article:
+      {:fields, %{"thread" => :raw, "attrs" => :digest_each, "history_context" => :digest_each}},
+    article_create_and_publish_article:
+      {:fields, %{"thread" => :raw, "attrs" => :digest_each, "history_context" => :digest_each}},
     article_save_working_copy:
       {:fields,
        %{
          "working_copy_id" => :raw,
          "attrs" => :digest_each,
          "revision" => :raw,
-         "community_id" => :raw
+         "community_id" => :raw,
+         "history_context" => :digest_each
        }},
     article_publish_article:
       {:fields,
        %{
          "source" => :digest_each,
-         "expected_public_snapshot_id" => :raw
+         "expected_public_snapshot_id" => :raw,
+         "history_context" => :digest_each
        }},
     article_fork_snapshot:
       {:fields,
        %{
          "snapshot_id" => :raw,
          "scope_type" => :raw,
-         "scope_id" => :raw
+         "scope_id" => :raw,
+         "history_context" => :digest_each
        }},
     article_delete_working_copy: {:fields, %{"working_copy_id" => :raw}},
     article_update: :digest_each,
@@ -117,6 +141,9 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     category_delete: {:fields, %{"community_id" => :raw}},
     category_set: {:fields, %{"category_id" => :raw}},
     category_unset: {:fields, %{"category_id" => :raw}},
+    community_article_hide: {:fields, %{"community_id" => :raw}},
+    community_article_restore:
+      {:fields, %{"community_id" => :raw, "trash_id" => :raw, "revision" => :raw}},
     community_subscribe: {:fields, %{"community_id" => :raw}},
     community_unsubscribe: {:fields, %{"community_id" => :raw}},
     community_application_submit: :digest,

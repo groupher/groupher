@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.Events.Notify do
          {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, author} <- article_author(article) do
       notify_attrs = %{
-        action: :comment,
+        type: :comment,
         thread: thread,
         article_id: stable_article_id(article),
         title: article.title,
@@ -90,7 +90,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         user_id: author.id
       }
 
-      Messaging.send_notification(notify_attrs, from_user)
+      Messaging.send_notice(notify_attrs, from_user)
     else
       error -> handle_missing_target(error)
     end
@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.Events.Notify do
          {:ok, article} <- parent_article_for_notification(reply_comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       notify_attrs = %{
-        action: :reply,
+        type: :reply,
         thread: thread,
         article_id: stable_article_id(article),
         title: article.title,
@@ -111,7 +111,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         user_id: reply_to_author_id
       }
 
-      Messaging.send_notification(notify_attrs, from_user)
+      Messaging.send_notice(notify_attrs, from_user)
     else
       %Comment{reply_to_comment: nil} -> {:ok, :pass}
       error -> handle_missing_target(error)
@@ -123,7 +123,7 @@ defmodule GroupherServer.CMS.Events.Notify do
     with {:ok, article} <- parent_article_for_notification(comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       notify_attrs = %{
-        action: action,
+        type: action,
         thread: thread,
         article_id: article.id,
         title: article.title,
@@ -131,7 +131,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         comment_id: comment.id
       }
 
-      Messaging.send_notification(notify_attrs, from_user)
+      Messaging.send_notice(notify_attrs, from_user)
     else
       error -> handle_missing_target(error)
     end
@@ -143,14 +143,14 @@ defmodule GroupherServer.CMS.Events.Notify do
          {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, author} <- article_author(article) do
       notify_attrs = %{
-        action: action,
+        type: action,
         thread: thread,
         article_id: article.id,
         title: article.title,
         user_id: author.id
       }
 
-      Messaging.send_notification(notify_attrs, from_user)
+      Messaging.send_notice(notify_attrs, from_user)
     else
       error -> handle_missing_target(error)
     end
@@ -161,7 +161,7 @@ defmodule GroupherServer.CMS.Events.Notify do
     with {:ok, article} <- parent_article_for_notification(comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       notify_attrs = %{
-        action: action,
+        type: action,
         thread: thread,
         article_id: article.id,
         title: article.title,
@@ -169,7 +169,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         user_id: comment.author_id
       }
 
-      Messaging.revoke_notification(notify_attrs, from_user)
+      Messaging.revoke_notice(notify_attrs, from_user)
     else
       error -> handle_missing_target(error)
     end
@@ -181,13 +181,13 @@ defmodule GroupherServer.CMS.Events.Notify do
          {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, author} <- article_author(article) do
       notify_attrs = %{
-        action: action,
+        type: action,
         thread: thread,
         article_id: article.id,
         user_id: author.id
       }
 
-      Messaging.revoke_notification(notify_attrs, from_user)
+      Messaging.revoke_notice(notify_attrs, from_user)
     else
       error -> handle_missing_target(error)
     end
@@ -198,7 +198,7 @@ defmodule GroupherServer.CMS.Events.Notify do
          {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, author} <- article_author(article) do
       notify_attrs = %{
-        action: :comment,
+        type: :comment,
         thread: thread,
         article_id: stable_article_id(article),
         title: article.title,
@@ -207,7 +207,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         delivery_key: delivery_key
       }
 
-      Messaging.send_notification(notify_attrs, from_user)
+      Messaging.send_notice(notify_attrs, from_user)
     else
       error -> handle_missing_target(error)
     end
@@ -219,7 +219,7 @@ defmodule GroupherServer.CMS.Events.Notify do
          {:ok, article} <- parent_article_for_notification(reply),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       notify_attrs = %{
-        action: :reply,
+        type: :reply,
         thread: thread,
         article_id: stable_article_id(article),
         title: article.title,
@@ -228,7 +228,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         delivery_key: delivery_key
       }
 
-      Messaging.send_notification(notify_attrs, from_user)
+      Messaging.send_notice(notify_attrs, from_user)
     else
       %Comment{reply_to_comment: nil} -> {:ok, :pass}
       error -> handle_missing_target(error)
@@ -240,7 +240,7 @@ defmodule GroupherServer.CMS.Events.Notify do
     with {:ok, article} <- parent_article_for_notification(comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       %{
-        action: action,
+        type: action,
         thread: thread,
         article_id: article.id,
         title: article.title,
@@ -248,7 +248,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         comment_id: comment.id,
         delivery_key: delivery_key
       }
-      |> Messaging.send_notification(from_user)
+      |> Messaging.send_notice(from_user)
     else
       error -> handle_missing_target(error)
     end
@@ -260,14 +260,14 @@ defmodule GroupherServer.CMS.Events.Notify do
          {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, author} <- article_author(article) do
       %{
-        action: action,
+        type: action,
         thread: thread,
         article_id: article.id,
         title: article.title,
         user_id: author.id,
         delivery_key: delivery_key
       }
-      |> Messaging.send_notification(from_user)
+      |> Messaging.send_notice(from_user)
     else
       error -> handle_missing_target(error)
     end

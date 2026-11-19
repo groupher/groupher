@@ -50,7 +50,7 @@ defmodule GroupherServer.AlertWall.Commands.WithdrawReport do
   receipt_pipeline execute_pipeline(report_id, actor, command_id) do
     prepare(fn -> {:ok, report_id, target: {:alert_report, report_id}, params: %{}} end)
     gate(fn id -> authorize(id, actor) end)
-    change(fn id -> withdraw(id, actor) end)
+    change(fn id, _operation_ref -> withdraw(id, actor) end)
     confirm(fn confirmation -> {:ok, confirmation} end)
     present(&present_report/1)
   end

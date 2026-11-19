@@ -20,10 +20,10 @@ defmodule GroupherServerWeb.Resolvers.CMS.Assets do
   def community_asset_refs(
         _root,
         %{community: %Community{} = community, asset_id: asset_id} = args,
-        _info
+        info
       ) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.assets_refs(community, asset_id, pagi)
+      CMS.assets_refs(community, asset_id, pagi, Map.get(info.context, :cur_user))
     end
   end
 

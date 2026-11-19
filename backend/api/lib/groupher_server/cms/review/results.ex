@@ -102,7 +102,7 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp apply_restrictions(request, context, result) do
-    CMS.Comments.Summary.for_lifecycle(context.lifecycle, fn ->
+    CMS.Comments.Summary.for_lifecycle(context.lifecycle, request.operation_ref, fn ->
       apply_restriction_facts(request, context, result)
     end)
   end
@@ -180,7 +180,7 @@ defmodule GroupherServer.CMS.Review.Results do
       scope_key: context.scope_key,
       type: type,
       artiment_review_id: request.id,
-      operation_ref: request.id,
+      operation_ref: request.operation_ref,
       source_ref: "request:#{request.id}:#{type}",
       source: :request,
       applied_at: DateTime.utc_now(:second)

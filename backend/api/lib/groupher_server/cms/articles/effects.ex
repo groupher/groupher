@@ -15,14 +15,10 @@ defmodule GroupherServer.CMS.Articles.Effects do
   alias GroupherServer.CMS
   alias CMS.Articles.Effects.{Outbox, Publish}
 
-  @type identity :: {:command | :workflow, String.t()}
-
   @doc "Records one Article effect in the caller-owned transaction."
-  @spec enqueue(String.t(), String.t(), term(), identity(), map(), keyword()) ::
+  @spec enqueue(String.t(), String.t(), term(), Ecto.UUID.t(), map()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue(event, resource_type, resource_id, identity, data, opts \\ [])
-
-  defdelegate enqueue(event, resource_type, resource_id, identity, data, opts), to: Outbox
+  defdelegate enqueue(event, resource_type, resource_id, operation_ref, data), to: Outbox
 
   @doc "Records independent Press, Search and CDN intents for a committed Article event."
   defdelegate dispatch(event), to: Outbox

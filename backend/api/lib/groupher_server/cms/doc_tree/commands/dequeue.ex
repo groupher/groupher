@@ -26,9 +26,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.Dequeue do
       end
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical) do
-        DequeueBatch.run(canonical, queue, revision, ids, confirmation, actor)
+        DequeueBatch.run(canonical, queue, revision, ids, confirmation, actor, operation_ref)
       end
     end)
 

@@ -22,4 +22,14 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
       _ -> {:error, :invalid_doc_identity}
     end
   end
+
+  @doc "Rechecks current Doc edit access through Gate after a Receipt commits."
+  def authorize_after_commit(community, article_id, actor) do
+    with {:ok, article_id} <- Ecto.UUID.cast(article_id),
+         %Article{thread: :doc} = article <- Repo.get(Article, article_id) do
+      CMS.Gate.with_community_check(actor, :edit, community, article, fn _ -> {:ok, :pass} end)
+    else
+      _ -> {:error, :invalid_doc_identity}
+    end
+  end
 end

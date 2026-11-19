@@ -102,8 +102,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   @doc "Enqueues cache invalidations for every User Ticket linked to a Post."
-  def invalidate_cache_linked_to_post(community, post_id, command_id, effect_key)
-      when is_binary(post_id) and (is_binary(command_id) or is_tuple(command_id)) and
+  def invalidate_cache_linked_to_post(community, post_id, operation_ref, effect_key)
+      when is_binary(post_id) and is_binary(operation_ref) and
              is_binary(effect_key) do
     states =
       from(state in TicketState,
@@ -121,7 +121,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     Enum.reduce_while(states, {:ok, :pass}, fn {state, binding}, {:ok, _} ->
       with {:ok, state} <- Lifecycle.increment_version(state),
            {:ok, _cache} <-
-             invalidate_user_ticket_cache(community, state, binding, command_id, effect_key) do
+             invalidate_user_ticket_cache(community, state, binding, operation_ref, effect_key) do
         {:cont, {:ok, :pass}}
       else
         {:error, reason} -> {:halt, {:error, reason}}
@@ -450,10 +450,10 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              article,
              ticket_binding,
              context.actor,
-             context.command_id
+             context.operation_ref
            ),
          {:ok, _activity} <-
-           insert_created_activity(article, context.actor, context.command_id) do
+           insert_created_activity(article, context.actor, context.operation_ref) do
       {:ok, article.id}
     else
       nil -> {:error, ErrorCat.invalid_ticket_content()}
@@ -483,14 +483,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, _state} <- insert_state(article, binding, :worker, :todo),
          {:ok, _relation} <- insert_worker(parent.id, article.id),
          {:ok, _activity} <-
-           insert_created_activity(article, context.actor, context.command_id),
+           insert_created_activity(article, context.actor, context.operation_ref),
          {:ok, parent_state} <- Lifecycle.increment_version(parent_state),
          {:ok, _cache} <-
            invalidate_user_ticket_cache(
              community,
              parent_state,
              parent_binding,
-             context.command_id,
+             context.operation_ref,
              "ticket_worker_created"
            ) do
       {:ok, article.id}
@@ -519,7 +519,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, binding} <- CMS.Articles.Bindings.fetch_binding(article.id, community.id),
          {:ok, _state} <- insert_state(article, binding, :case, :open),
          {:ok, _activity} <-
-           insert_created_activity(article, context.actor, context.command_id) do
+           insert_created_activity(article, context.actor, context.operation_ref) do
       case value(attrs, :member_ticket_id) do
         nil ->
           {:ok, article.id}
@@ -636,16 +636,16 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              from_status,
              state.status,
              context.actor,
-             context.command_id
+             context.operation_ref
            ),
          {:ok, _notification} <-
-           Notifications.enqueue_activity(community, state, activity, context.command_id),
+           Notifications.enqueue_activity(community, state, activity, context.operation_ref),
          {:ok, _cache} <-
            invalidate_user_ticket_cache(
              community,
              state,
              binding,
-             context.command_id,
+             context.operation_ref,
              "ticket_status"
            ) do
       {:ok, ticket_id}
@@ -668,7 +668,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              state,
              binding,
-             context.command_id,
+             context.operation_ref,
              "ticket_reordered"
            ) do
       {:ok, ticket_id}
@@ -688,7 +688,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              state,
              binding,
-             context.command_id,
+             context.operation_ref,
              "ticket_updated"
            ) do
       {:ok, ticket_id}
@@ -832,14 +832,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, _activity} <- insert_update_activity(article, update, context),
          {:ok, state} <- Lifecycle.increment_version(state),
          {:ok, _notification} <-
-           Notifications.enqueue_update(community, state, update, context.command_id),
+           Notifications.enqueue_update(community, state, update, context.operation_ref),
          {:ok, _cache} <-
            (if visibility == :public do
               invalidate_user_ticket_cache(
                 community,
                 state,
                 binding,
-                context.command_id,
+                context.operation_ref,
                 "ticket_public_update"
               )
             else
@@ -874,14 +874,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                    Repo.get!(Article, ticket_id),
                    binding,
                    context.actor,
-                   context.command_id
+                   context.operation_ref
                  ),
                {:ok, _activity} <-
                  log_ticket_activity(
                    Repo.get!(Article, ticket_id),
                    :source_linked,
                    context.actor,
-                   context.command_id,
+                   context.operation_ref,
                    metadata: %{
                      ticket_source_id: link.id,
                      source_type: "post",
@@ -893,7 +893,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                    community,
                    state,
                    binding,
-                   context.command_id,
+                   context.operation_ref,
                    "ticket_source_linked",
                    [post_binding.inner_id]
                  ) do
@@ -933,7 +933,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                    link,
                    post_binding.inner_id,
                    context.actor,
-                   context.command_id,
+                   context.operation_ref,
                    "ticket_source_unlinked"
                  ) do
             {:ok, ticket_id}
@@ -962,7 +962,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              lifecycle,
              target_lifecycle_state,
              context.actor,
-             context.command_id
+             context.operation_ref
            ),
          {:ok, updated_lifecycle} <-
            CMS.Articles.Lifecycle.transition(lifecycle, target_lifecycle_state),
@@ -975,7 +975,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              article,
              if(target_lifecycle_state == :published, do: :published, else: :moved_to_draft),
              context.actor,
-             context.command_id,
+             context.operation_ref,
              metadata: %{
                lifecycle_version: updated_lifecycle.version,
                reason: reason,
@@ -990,7 +990,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                 community,
                 updated_state,
                 activity,
-                context.command_id
+                context.operation_ref
               )
             else
               {:ok, :pass}
@@ -1000,7 +1000,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              updated_state,
              updated_binding,
-             context.command_id,
+             context.operation_ref,
              "ticket_visibility"
            ) do
       {:ok, article.id}
@@ -1576,7 +1576,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          ticket,
          ticket_binding,
          actor,
-         command_id
+         operation_ref
        ) do
     resource = post |> Map.from_struct() |> Map.put(:community_id, post_binding.community_id)
 
@@ -1589,7 +1589,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     GroupherServer.Activity.log(resource, action,
       actor: actor,
       source: :api,
-      operation_ref: command_id,
+      operation_ref: operation_ref,
       target: target
     )
   end
@@ -1896,11 +1896,17 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   defp maybe_insert_status_event(ticket_id, from_status, state, context) do
-    insert_status_event(ticket_id, from_status, state.status, context.actor, context.command_id)
+    insert_status_event(
+      ticket_id,
+      from_status,
+      state.status,
+      context.actor,
+      context.operation_ref
+    )
   end
 
   defp enqueue_status_event(community, state, %TicketLog{} = activity, context) do
-    Notifications.enqueue_activity(community, state, activity, context.command_id)
+    Notifications.enqueue_activity(community, state, activity, context.operation_ref)
   end
 
   defp enqueue_status_event(_community, _state, :pass, _context), do: {:ok, :pass}
@@ -1936,14 +1942,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
           {:public_update_superseded, %{update_id: update.id, supersedes_id: supersedes_id}}
       end
 
-    log_ticket_activity(article, action, context.actor, context.command_id, payload: payload)
+    log_ticket_activity(article, action, context.actor, context.operation_ref, payload: payload)
   end
 
   defp insert_update_activity(_article, %TicketUpdate{visibility: :internal}, _context) do
     {:ok, :pass}
   end
 
-  defp log_ticket_activity(article, action, actor, command_id, opts \\ []) do
+  defp log_ticket_activity(article, action, actor, operation_ref, opts \\ []) do
     case Repo.get_by(ArticleBinding, article_id: article.id) do
       %ArticleBinding{community_id: community_id} ->
         resource = article |> Map.from_struct() |> Map.put(:community_id, community_id)
@@ -1951,7 +1957,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         Activity.log(resource, action,
           actor: actor || :system,
           source: :api,
-          operation_ref: command_id,
+          operation_ref: operation_ref,
           payload: Keyword.get(opts, :payload, %{}),
           metadata: Keyword.get(opts, :metadata, %{}),
           changed_fields: Keyword.get(opts, :changed_fields, [])

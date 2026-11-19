@@ -20,12 +20,12 @@ defmodule GroupherServer.CMS.DocTree.Publication.Notifications do
   }
 
   @doc "Registers an approved notice to the captured queue participants."
-  def approved(queue) do
-    emit(queue, "approved", recipients(queue))
+  def approved(queue, operation_ref) do
+    emit(queue, "approved", recipients(queue), operation_ref)
   end
 
   @doc "Registers invalidation only when a previously current approval stops matching."
-  def changed(old, updated) do
+  def changed(old, updated, operation_ref) do
     approval =
       if old.latest_approval_id, do: Repo.get(DocsPublishApproval, old.latest_approval_id)
 
@@ -37,7 +37,8 @@ defmodule GroupherServer.CMS.DocTree.Publication.Notifications do
       emit(
         updated,
         if(updated.approval_required, do: "pending", else: "disabled"),
-        recipients(old)
+        recipients(old),
+        operation_ref
       )
     else
       {:ok, :unchanged}
@@ -78,8 +79,8 @@ defmodule GroupherServer.CMS.DocTree.Publication.Notifications do
     Enum.sort(Enum.uniq(current ++ prior ++ approver))
   end
 
-  defp emit(queue, status, recipients) do
-    CMS.DocTree.Publication.Effects.notify(queue, status, recipients)
+  defp emit(queue, status, recipients, operation_ref) do
+    CMS.DocTree.Publication.Effects.notify(queue, status, recipients, operation_ref)
   end
 
   @doc "Delivers a claimed event idempotently without exposing document content."

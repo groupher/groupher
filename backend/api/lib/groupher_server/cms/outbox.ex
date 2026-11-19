@@ -19,19 +19,117 @@ defmodule GroupherServer.CMS.Outbox do
   alias GroupherServer.CMS
 
   alias GroupherServer.{ErrorCat, Jobs, Repo}
-  alias CMS.Outbox.Event
+  alias CMS.Outbox.{Event, WorkerRegistry}
 
   @lease_seconds 120
+
+  @payload_fields %{
+    "community.analysis_provision" => ["community_id"],
+    "community.presentation_changed" => ["community", "community_id"],
+    "community.taxonomy_changed" => ["community", "community_id", "thread"],
+    "community.admin_request" => [
+      "community_ref",
+      "request_id",
+      "request_revision",
+      "request_type",
+      "request_action",
+      "event_type",
+      "recipient_id",
+      "actor"
+    ],
+    "article.co_author_request" => [
+      "article_id",
+      "request_id",
+      "request_revision",
+      "request_type",
+      "request_action",
+      "event_type",
+      "recipient_id",
+      "actor"
+    ],
+    "community.pagi_mode_changed" => ["community", "community_id"],
+    "press.cache_invalidation" => [],
+    "docs.approval_status" => [
+      "community_id",
+      "status",
+      "queue_revision",
+      "recipients"
+    ],
+    "mention.notify" => [
+      "source_endpoint_id",
+      "published_revision_identity",
+      "community_id",
+      "notify_user_ids"
+    ],
+    "comment.changed" => [
+      "article_id",
+      "community_id",
+      "community",
+      "inner_id",
+      "thread",
+      "comments_revision",
+      "count_changed"
+    ],
+    "comment.created" => ["article_id", "actor_id", "community_id"],
+    "comment.replied" => ["article_id", "actor_id", "community_id"],
+    "doc_tree.changed" => ["community", "community_id"],
+    "ticket.notification" => ["source_type", "source_id"],
+    "ticket.cache_invalidation" => ["cache_tags"],
+    "asset.provider_delete" => ["asset_id", "public_ref", "storage", "storage_key"],
+    "asset.application_upload_provider_delete" => ["id", "public_ref", "storage", "storage_key"],
+    "cms.artiment_review" => ["request_id"],
+    "interaction.upvote_changed" => ["actor_id", "operation", "community_id"],
+    "interaction.collect_changed" => ["actor_id", "operation", "community_id"],
+    "interaction.emotion_changed" => ["actor_id", "operation", "emotion", "community_id"],
+    "article.published" => [
+      "community",
+      "community_id",
+      "thread",
+      "inner_id",
+      "article_id",
+      "snapshot_id"
+    ],
+    "article.updated" => [
+      "community",
+      "community_id",
+      "thread",
+      "inner_id",
+      "article_id",
+      "snapshot_id"
+    ],
+    "article.projections" => [
+      "first_publish?",
+      "community_id",
+      "inner_id",
+      "published_by_id",
+      "snapshot_id"
+    ],
+    "article.first_published_notification" => [
+      "article_id",
+      "community_id",
+      "community_slug",
+      "thread",
+      "title",
+      "digest",
+      "author_id",
+      "author_name",
+      "published_by_id",
+      "notify_user_ids"
+    ],
+    "article.visibility_changed" => ["community_id", "inner_id"],
+    "article.review_changed" => ["community_id", "inner_id"],
+    "article.search_sync" => ["source_event", "community_id", "snapshot_id"],
+    "article.cdn_purge" => ["source_event", "community_id", "snapshot_id"],
+    "article.application_cleanup" => ["upload_id", "storage", "storage_key"]
+  }
 
   @type event_attrs :: %{
           required(:event) => String.t(),
           required(:resource_type) => String.t(),
           required(:resource_id) => String.t() | integer(),
-          optional(:command_id) => String.t(),
-          optional(:identity) => {:command | :workflow, String.t()},
-          optional(:effect_key) => String.t(),
+          required(:operation_ref) => Ecto.UUID.t(),
+          required(:dedupe_key) => String.t(),
           optional(:contract_version) => pos_integer(),
-          optional(:retry_failed) => boolean(),
           optional(:data) => map(),
           required(:worker) => module()
         }
@@ -39,49 +137,59 @@ defmodule GroupherServer.CMS.Outbox do
   @doc "Inserts an event and its Oban wakeup in the caller's transaction."
   @spec send(event_attrs()) :: {:ok, Event.t()} | {:error, term()}
   def send(attrs) when is_map(attrs) do
-    with {:ok, event} <- Map.fetch(attrs, :event),
-         {:ok, worker} <- required_worker(attrs),
-         {:ok, {identity_type, command_id}} <- required_identity(attrs),
+    data = normalize_data(Map.get(attrs, :data, %{}))
+    contract_version = Map.get(attrs, :contract_version, 1)
+
+    with true <- Repo.in_transaction?(),
+         {:ok, event} <- Map.fetch(attrs, :event),
+         {:ok, {worker, worker_name}} <- required_worker(attrs),
+         {:ok, operation_ref} <- required_operation_ref(attrs),
+         {:ok, dedupe_key} <- required_dedupe_key(attrs),
          {:ok, resource_type} <- Map.fetch(attrs, :resource_type),
-         {:ok, resource_id} <- Map.fetch(attrs, :resource_id) do
+         {:ok, resource_id} <- Map.fetch(attrs, :resource_id),
+         {:ok, payload_projection} <- payload_projection(event, data) do
+      id = Ecto.UUID.generate()
+      data = normalize_data(Map.get(attrs, :data, %{}))
+
       event_attrs = %{
-        id: Map.get(attrs, :id, Ecto.UUID.generate()),
+        id: id,
         event: event,
-        contract_version: Map.get(attrs, :contract_version, 1),
+        contract_version: contract_version,
+        worker: worker_name,
         resource_type: resource_type,
         resource_id: to_string(resource_id),
-        command_id: command_id,
-        identity_type: identity_type,
-        effect_key: effect_key(attrs),
-        data: normalize_data(Map.get(attrs, :data, %{})),
+        operation_ref: operation_ref,
+        dedupe_key: dedupe_key,
+        failure_generation: 0,
+        data: data,
         status: :waiting,
         attempts: 0,
+        inserted_at: DateTime.utc_now(:second),
+        updated_at: DateTime.utc_now(:second),
         available_at: DateTime.utc_now(:second)
       }
 
       changeset = Event.changeset(%Event{}, event_attrs)
 
-      case Repo.insert(changeset,
-             on_conflict: [set: [effect_key: event_attrs.effect_key]],
-             conflict_target: [
-               :identity_type,
-               :command_id,
-               :event,
-               :resource_type,
-               :resource_id,
-               :effect_key
-             ],
-             returning: true
-           ) do
-        {:ok, event_record} when event_record.id == event_attrs.id ->
-          with {:ok, _job} <- enqueue(worker, event_record.id), do: {:ok, event_record}
+      if changeset.valid? do
+        case Repo.insert_all(Event, [event_attrs],
+               on_conflict: :nothing,
+               conflict_target: [:event, :resource_type, :resource_id, :dedupe_key],
+               returning: true
+             ) do
+          {1, [event_record]} ->
+            with {:ok, _job} <- enqueue(worker, event_record.id), do: {:ok, event_record}
 
-        {:ok, %Event{} = event_record} ->
-          maybe_retry_existing(event_record, worker, attrs)
-
-        {:error, reason} ->
-          {:error, reason}
+          {0, []} ->
+            existing_event(event_attrs, payload_projection)
+        end
+      else
+        {:error, changeset}
       end
+    else
+      false -> {:error, :transaction_required}
+      :error -> {:error, :outbox_event_attributes_required}
+      {:error, _reason} = error -> error
     end
   end
 
@@ -318,7 +426,8 @@ defmodule GroupherServer.CMS.Outbox do
           locked_at: nil,
           locked_by: nil,
           updated_at: now
-        ]
+        ],
+        inc: [failure_generation: 1]
       )
 
     if updated == 1, do: {:ok, :pass}, else: {:error, :stale_lock}
@@ -344,87 +453,86 @@ defmodule GroupherServer.CMS.Outbox do
     end
   end
 
-  defp maybe_retry_existing(%Event{status: status} = event, worker, attrs)
-       when status in [:retrying, :failed] do
-    if Map.get(attrs, :retry_failed, false) do
-      retry_existing(event, worker)
-    else
-      {:ok, event}
-    end
-  end
-
-  defp maybe_retry_existing(%Event{} = event, _worker, _attrs), do: {:ok, event}
-
-  defp retry_existing(event, worker) do
-    now = DateTime.utc_now(:second)
-
-    case Repo.transaction(fn -> reset_and_enqueue(event, worker, now) end) do
-      {:ok, event} -> {:ok, event}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  defp reset_and_enqueue(event, worker, now) do
-    with {:ok, event} <-
-           event
-           |> Event.changeset(%{
-             status: :waiting,
-             attempts: 0,
-             available_at: now,
-             locked_at: nil,
-             locked_by: nil,
-             completed_at: nil,
-             last_error_code: nil,
-             last_error_at: nil
-           })
-           |> Repo.update(),
-         {:ok, _job} <- enqueue(worker, event.id) do
-      event
-    else
-      {:error, reason} -> Repo.rollback(reason)
-    end
-  end
-
   defp required_worker(attrs) do
     case Map.get(attrs, :worker) do
       nil ->
         {:error, :outbox_worker_required}
 
       worker when is_atom(worker) ->
-        {:ok, worker}
+        case WorkerRegistry.name_for(worker) do
+          {:ok, worker_name} -> {:ok, {worker, worker_name}}
+          :error -> {:error, :outbox_worker_invalid}
+        end
 
       _ ->
         {:error, :outbox_worker_invalid}
     end
   end
 
-  defp required_identity(attrs) do
-    case Map.fetch(attrs, :identity) do
-      {:ok, {:command, command_id}} -> cast_command_identity(command_id)
-      {:ok, {:workflow, workflow_ref}} -> cast_workflow_identity(workflow_ref)
-      {:ok, _invalid} -> {:error, :outbox_identity_required}
-      :error -> cast_command_identity(Map.get(attrs, :command_id))
+  defp required_operation_ref(attrs) do
+    case Ecto.UUID.cast(Map.get(attrs, :operation_ref)) do
+      {:ok, operation_ref} -> {:ok, operation_ref}
+      :error -> {:error, :outbox_operation_ref_required}
     end
   end
 
-  defp cast_command_identity(command_id) do
-    case Ecto.UUID.cast(command_id) do
-      {:ok, command_id} -> {:ok, {:command, command_id}}
-      :error -> {:error, :outbox_command_id_required}
+  defp required_dedupe_key(%{dedupe_key: key}) when is_binary(key) do
+    if String.trim(key) == "", do: {:error, :outbox_dedupe_key_required}, else: {:ok, key}
+  end
+
+  defp required_dedupe_key(_attrs), do: {:error, :outbox_dedupe_key_required}
+
+  defp existing_event(attrs, expected_projection) do
+    query =
+      from(event in Event,
+        where:
+          event.event == ^attrs.event and event.resource_type == ^attrs.resource_type and
+            event.resource_id == ^attrs.resource_id and event.dedupe_key == ^attrs.dedupe_key,
+        lock: "FOR UPDATE"
+      )
+
+    case Repo.one(query) do
+      %Event{} = event ->
+        cond do
+          event.contract_version != attrs.contract_version ->
+            {:error, {:outbox_contract_version_conflict, event.id}}
+
+          event.worker != attrs.worker ->
+            {:error, {:outbox_worker_conflict, event.id}}
+
+          payload_projection(event.event, event.data) != {:ok, expected_projection} ->
+            {:error, {:outbox_payload_conflict, event.id}}
+
+          event.status == :failed ->
+            {:error, {:outbox_effect_dead, event.id}}
+
+          event.status in [:waiting, :running, :retrying, :done] ->
+            {:ok, event}
+
+          true ->
+            {:error, {:outbox_status_unknown, event.id}}
+        end
+
+      nil ->
+        {:error, :outbox_conflict_row_missing}
     end
   end
 
-  defp cast_workflow_identity(workflow_ref)
-       when is_binary(workflow_ref) and byte_size(workflow_ref) > 0 do
-    {:ok, {:workflow, workflow_ref}}
-  end
+  defp payload_projection(event, data) when is_map(data) do
+    fields = Map.get(@payload_fields, event)
 
-  defp cast_workflow_identity(_workflow_ref), do: {:error, :outbox_workflow_ref_required}
-
-  defp effect_key(attrs) do
-    case Map.get(attrs, :effect_key) do
-      key when is_binary(key) and key != "" -> key
-      _ -> "default"
+    if is_list(fields) do
+      case Enum.reduce_while(fields, {:ok, %{}}, fn field, {:ok, projected} ->
+             case Map.fetch(data, field) do
+               {:ok, value} -> {:cont, {:ok, Map.put(projected, field, value)}}
+               :error -> {:halt, {:error, {:outbox_payload_field_missing, field}}}
+             end
+           end) do
+        {:ok, projection} -> {:ok, projection}
+        {:error, _reason} = error -> error
+      end
+    else
+      {:error, {:outbox_event_owner_missing, event}}
     end
   end
 
@@ -435,6 +543,7 @@ defmodule GroupherServer.CMS.Outbox do
   end
 
   defp normalize_data(data) when is_list(data), do: Enum.map(data, &normalize_data/1)
+  defp normalize_data(nil), do: nil
   defp normalize_data(value) when is_atom(value), do: Atom.to_string(value)
   defp normalize_data(value), do: value
 

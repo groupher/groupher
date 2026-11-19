@@ -23,8 +23,6 @@ defmodule GroupherServer.CMS.Assets.Persist do
 
   @asset_url_conflict_target {:unsafe_fragment,
                               "(community_id, url_hash) WHERE deleted_at IS NULL"}
-  @asset_storage_conflict_target {:unsafe_fragment,
-                                  "(community_id, storage, storage_key) WHERE storage_key IS NOT NULL AND deleted_at IS NULL"}
 
   @spec register(Community.t(), map(), User.t() | nil) ::
           {:ok, CommunityAsset.t()} | {:error, term()}
@@ -37,7 +35,11 @@ defmodule GroupherServer.CMS.Assets.Persist do
       |> put_default_asset_type()
       |> Map.put_new(:archived_at, nil)
 
-    upsert_active_asset(attrs)
+    if Repo.in_transaction?() do
+      upsert_active_asset(attrs)
+    else
+      {:error, :transaction_required}
+    end
   end
 
   @spec delete(Community.t(), term()) ::
@@ -63,7 +65,13 @@ defmodule GroupherServer.CMS.Assets.Persist do
 
   def restore(%Community{id: community_id}, asset_id) do
     with {:ok, asset} <- find_asset_for_update(community_id, asset_id) do
-      ORM.update(asset, %{status: :active, archived_at: nil, deleted_at: nil})
+      case asset do
+        %CommunityAsset{status: :archived, deleted_at: nil} ->
+          ORM.update(asset, %{status: :active, archived_at: nil})
+
+        _ ->
+          {:error, AssetErrorCat.asset_not_restorable()}
+      end
     end
   end
 
@@ -90,27 +98,97 @@ defmodule GroupherServer.CMS.Assets.Persist do
   end
 
   defp upsert_active_asset(attrs) do
-    attrs
-    |> upsert_identity()
-    |> then(&insert_active_asset(attrs, &1))
-    |> case do
-      {:ok, asset} -> {:ok, asset}
-      {:error, %Ecto.Changeset{} = changeset} -> retry_active_asset_upsert(attrs, changeset)
+    if storage_identity?(attrs) do
+      register_storage_identity(attrs)
+    else
+      insert_active_asset(attrs)
     end
   end
 
-  defp insert_active_asset(attrs, identity) do
+  defp register_storage_identity(attrs) do
+    case lock_storage_owner(attrs) do
+      %CommunityAsset{} = owner -> update_storage_owner(owner, attrs)
+      nil -> insert_or_load_storage_owner(attrs)
+    end
+  end
+
+  defp lock_storage_owner(attrs) do
+    storage = get_attr(attrs, :storage)
+    storage_key = get_attr(attrs, :storage_key)
+
+    Repo.one(
+      from(asset in CommunityAsset,
+        where: asset.storage == ^storage and asset.storage_key == ^storage_key,
+        lock: "FOR UPDATE"
+      )
+    )
+  end
+
+  defp update_storage_owner(%CommunityAsset{community_id: community_id}, attrs)
+       when community_id != attrs.community_id do
+    {:error, AssetErrorCat.storage_identity_conflict()}
+  end
+
+  defp update_storage_owner(%CommunityAsset{status: :deleted}, _attrs) do
+    {:error, AssetErrorCat.storage_identity_conflict()}
+  end
+
+  defp update_storage_owner(%CommunityAsset{public_ref: public_ref} = owner, attrs) do
+    if has_attr?(attrs, :public_ref) and get_attr(attrs, :public_ref) != public_ref do
+      {:error, AssetErrorCat.storage_identity_conflict()}
+    else
+      attrs = Map.drop(attrs, [:status, :deleted_at, :archived_at])
+      ORM.update(owner, attrs)
+    end
+  end
+
+  defp insert_or_load_storage_owner(attrs) do
+    changeset = CommunityAsset.changeset(%CommunityAsset{}, attrs)
+
+    opts = [
+      on_conflict: :nothing,
+      conflict_target:
+        {:unsafe_fragment,
+         "(storage, storage_key) WHERE storage IS NOT NULL AND storage_key IS NOT NULL"},
+      returning: true
+    ]
+
+    opts = Keyword.put(opts, :mode, :savepoint)
+
+    case Repo.insert(changeset, opts) do
+      {:ok, %CommunityAsset{id: nil}} ->
+        case lock_storage_owner(attrs) do
+          %CommunityAsset{} = owner -> update_storage_owner(owner, attrs)
+          nil -> {:error, AssetErrorCat.storage_identity_conflict()}
+        end
+
+      {:ok, %CommunityAsset{} = asset} ->
+        {:ok, asset}
+
+      {:error, changeset} ->
+        if unique_constraint_error?(changeset, :community_assets_storage_key_index) do
+          case lock_storage_owner(attrs) do
+            %CommunityAsset{} = owner -> update_storage_owner(owner, attrs)
+            nil -> {:error, AssetErrorCat.storage_identity_conflict()}
+          end
+        else
+          {:error, changeset}
+        end
+    end
+  end
+
+  defp insert_active_asset(attrs) do
     changeset = CommunityAsset.changeset(%CommunityAsset{}, attrs)
 
     set_fields =
       changeset.changes
-      |> Map.drop(conflict_fields(identity))
+      |> Map.drop([:community_id, :url_hash])
       |> Map.put(:updated_at, DateTime.utc_now(:second))
       |> Enum.to_list()
 
     opts = [
       on_conflict: [set: set_fields],
-      conflict_target: conflict_target(identity),
+      conflict_target: @asset_url_conflict_target,
       returning: true
     ]
 
@@ -118,30 +196,9 @@ defmodule GroupherServer.CMS.Assets.Persist do
     Repo.insert(changeset, opts)
   end
 
-  defp retry_active_asset_upsert(attrs, changeset) do
-    cond do
-      unique_constraint_error?(changeset, :community_assets_community_url_hash_index) ->
-        insert_active_asset(attrs, :url_hash)
-
-      storage_identity?(attrs) and
-          unique_constraint_error?(changeset, :community_assets_community_storage_key_index) ->
-        insert_active_asset(attrs, :storage_key)
-
-      true ->
-        {:error, changeset}
-    end
-  end
-
-  defp upsert_identity(attrs), do: if(storage_identity?(attrs), do: :storage_key, else: :url_hash)
-
   defp storage_identity?(attrs) do
     is_binary(get_attr(attrs, :storage)) and is_binary(get_attr(attrs, :storage_key))
   end
-
-  defp conflict_target(:storage_key), do: @asset_storage_conflict_target
-  defp conflict_target(:url_hash), do: @asset_url_conflict_target
-  defp conflict_fields(:storage_key), do: [:community_id, :storage, :storage_key]
-  defp conflict_fields(:url_hash), do: [:community_id, :url_hash]
 
   defp unique_constraint_error?(%Ecto.Changeset{errors: errors}, constraint_name) do
     constraint_name = to_string(constraint_name)

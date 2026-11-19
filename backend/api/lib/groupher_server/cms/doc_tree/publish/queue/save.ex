@@ -33,7 +33,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Save do
         article_id,
         work_revision,
         attrs,
-        %User{id: user_id} = actor
+        %User{id: user_id} = actor,
+        operation_ref
       )
       when is_integer(queue_revision) and queue_revision >= 0 and is_binary(article_id) and
              is_integer(work_revision) and work_revision > 0 and is_map(attrs) and
@@ -50,7 +51,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Save do
          {:ok, :pass} <-
            maybe_record_contribution(community, queue, queue_revision, article_id, actor, changed),
          {:ok, updated_queue} <-
-           Queue.advance(community, queue, %{queue_revision: queue_revision}, [:queue_revision]) do
+           Queue.advance(
+             community,
+             queue,
+             %{queue_revision: queue_revision},
+             [:queue_revision],
+             operation_ref
+           ) do
       {:ok, %{queue: updated_queue, working_copy: saved, changed_fields: changed}}
     else
       :error -> {:error, :invalid_queue_member}
@@ -59,7 +66,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Save do
     end
   end
 
-  def save(_, _, _, _, _, _, _), do: {:error, :invalid_queue_member}
+  def save(_, _, _, _, _, _, _, _), do: {:error, :invalid_queue_member}
 
   @doc false
   def lock_member(community, queue, article_id, work_revision) do

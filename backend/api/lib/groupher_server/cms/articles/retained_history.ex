@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.Articles.RetainedHistory do
         )
 
       Enum.each(ids, fn article_id ->
-        article = Repo.one!(from(a in Article, where: a.id == ^article_id, lock: "FOR UPDATE"))
+        Repo.one!(from(a in Article, where: a.id == ^article_id, lock: "FOR UPDATE"))
 
         Repo.delete_all(
           from(o in ArticleHistoryOwner,

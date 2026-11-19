@@ -26,14 +26,24 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Tree do
         revision,
         public_nodes,
         target_nodes,
-        %User{id: user_id} = actor
+        %User{id: user_id} = actor,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_list(public_nodes) and
              is_list(target_nodes) and is_integer(user_id) and user_id > 0 do
-    reconcile_locked(community, queue, revision, public_nodes, target_nodes, actor, true)
+    reconcile_locked(
+      community,
+      queue,
+      revision,
+      public_nodes,
+      target_nodes,
+      actor,
+      true,
+      operation_ref
+    )
   end
 
-  def reconcile(_, _, _, _, _, _), do: {:error, :invalid_tree_input}
+  def reconcile(_, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
   @doc "Reconciles dependencies after content has already advanced the same transaction's Queue."
   def reconcile_after_content(
@@ -42,16 +52,35 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Tree do
         revision,
         public_nodes,
         target_nodes,
-        %User{id: user_id} = actor
+        %User{id: user_id} = actor,
+        operation_ref
       )
       when is_integer(revision) and revision > 0 and is_list(public_nodes) and
              is_list(target_nodes) and is_integer(user_id) and user_id > 0 do
-    reconcile_locked(community, queue, revision, public_nodes, target_nodes, actor, false)
+    reconcile_locked(
+      community,
+      queue,
+      revision,
+      public_nodes,
+      target_nodes,
+      actor,
+      false,
+      operation_ref
+    )
   end
 
-  def reconcile_after_content(_, _, _, _, _, _), do: {:error, :invalid_tree_input}
+  def reconcile_after_content(_, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
-  defp reconcile_locked(community, queue, revision, public_nodes, target_nodes, actor, advance?) do
+  defp reconcile_locked(
+         community,
+         queue,
+         revision,
+         public_nodes,
+         target_nodes,
+         actor,
+         advance?,
+         operation_ref
+       ) do
     with {:ok, queue} <- Queue.advance(community, queue, %{queue_revision: revision}, []),
          %User{} <- Repo.get(User, actor.id),
          {:ok, public} <- TargetTree.build(public_nodes, []),
@@ -64,7 +93,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Tree do
          {:ok, authors} <- load_authors(queue.id),
          {:ok, writes} <- prepare_writes(public, previous, target, rows, authors, actor.id),
          {:ok, :pass} <- persist_writes(community, queue, writes, target),
-         {:ok, updated} <- advance(community, queue, revision, writes, advance?) do
+         {:ok, updated} <- advance(community, queue, revision, writes, advance?, operation_ref) do
       {:ok, %{queue: updated, changed_node_ids: Enum.map(writes, & &1.id), target: target}}
     else
       nil -> {:error, :invalid_queue_actor}
@@ -227,10 +256,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Tree do
     end
   end
 
-  defp advance(_community, queue, _revision, _writes, false), do: {:ok, queue}
-  defp advance(_community, queue, _revision, [], true), do: {:ok, queue}
+  defp advance(_community, queue, _revision, _writes, false, _operation_ref), do: {:ok, queue}
+  defp advance(_community, queue, _revision, [], true, _operation_ref), do: {:ok, queue}
 
-  defp advance(community, queue, revision, _writes, true) do
-    Queue.advance(community, queue, %{queue_revision: revision}, [:queue_revision])
+  defp advance(community, queue, revision, _writes, true, operation_ref) do
+    Queue.advance(community, queue, %{queue_revision: revision}, [:queue_revision], operation_ref)
   end
 end

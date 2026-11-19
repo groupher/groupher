@@ -32,10 +32,19 @@ defmodule GroupherServer.CMS.DocTree.Commands.SaveQueue do
       end
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical),
            {:ok, :pass} <- QueueAccess.authorize(canonical, article_id, actor) do
-        Queue.save(canonical, queue, queue_revision, article_id, work_revision, attrs, actor)
+        Queue.save(
+          canonical,
+          queue,
+          queue_revision,
+          article_id,
+          work_revision,
+          attrs,
+          actor,
+          operation_ref
+        )
       end
     end)
 

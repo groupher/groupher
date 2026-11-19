@@ -172,11 +172,11 @@ defmodule GroupherServer.CMS.Communities do
     UpdateCommand.execute_pipeline(community, args, actor, command_id)
   end
 
-  @doc "Updates Community fields from an explicit maintenance workflow identity."
-  @spec update_operations(Community.t(), map(), String.t()) :: T.domain_res(Community.t())
-  def update_operations(%Community{} = community, args, workflow_ref)
-      when is_binary(workflow_ref) and workflow_ref != "" do
-    UpdateCommand.execute_workflow(community, args, :operations, {:workflow, workflow_ref})
+  @doc "Updates Community fields under an explicitly owned operation UUID."
+  @spec update_operations(Community.t(), map(), Ecto.UUID.t()) :: T.domain_res(Community.t())
+  def update_operations(%Community{} = community, args, operation_ref)
+      when is_binary(operation_ref) do
+    UpdateCommand.execute_workflow(community, args, :operations, operation_ref)
   end
 
   @doc "Creates a Community from an approved Application through its durable workflow owner."

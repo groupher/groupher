@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{CommentLifecycle, CommentReviewBlock}
+  alias CMS.Model.{CommentLifecycle, CommentReviewBlock, CommunityAdmin, GlobalPassport}
   alias CMS.Outbox.Event, as: OutboxEvent
 
   test "Comment creation persists a current version set without a notification recipient" do
@@ -198,6 +198,8 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
 
     lifecycle = Repo.get_by!(CommentLifecycle, comment_id: comment.id)
 
+    operation_ref = Ecto.UUID.generate()
+
     assert {:ok, restriction} =
              Repo.transaction(fn ->
                locked =
@@ -208,7 +210,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
 
                case CMS.Comments.Lifecycle.apply_review_block(
                       locked,
-                      restriction_attrs(lifecycle, "platform", "manual-review")
+                      restriction_attrs(lifecycle, "platform", "manual-review", operation_ref)
                     ) do
                  {:ok, restriction} -> restriction
                  {:error, reason} -> Repo.rollback(reason)
@@ -219,7 +221,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
              Repo.get_by!(OutboxEvent,
                event: "article.visibility_changed",
                resource_id: comment.article_id,
-               effect_key: "review:#{restriction.source_ref}:#{community.id}"
+               operation_ref: operation_ref
              )
 
     assert effect_data["community_id"] == community.id
@@ -233,26 +235,28 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
 
     {:ok, platform_reader_user} = db_insert(:user)
 
-    platform_reader = %{
-      platform_reader_user
-      | cur_passport: %{"global" => %{"review.platform.read" => true}}
-    }
+    Repo.insert!(
+      GlobalPassport.changeset(%GlobalPassport{}, %{
+        user_id: platform_reader_user.id,
+        permissions: %{"review.platform.read" => true}
+      })
+    )
 
-    assert {:ok, reviewer_loaded} = CMS.FrontDesk.comment(path, platform_reader)
+    assert {:ok, reviewer_loaded} = CMS.FrontDesk.comment(path, platform_reader_user)
     assert reviewer_loaded.id == comment.id
 
     {:ok, community_reader_user} = db_insert(:user)
 
-    community_reader = %{
-      community_reader_user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.read" => true}}
-        }
-    }
+    Repo.insert!(
+      CommunityAdmin.changeset(%CommunityAdmin{}, %{
+        user_id: community_reader_user.id,
+        community_id: community.id,
+        permissions: %{"review.read" => true}
+      })
+    )
 
     assert {:error, %ErrorCat.Error{reason: :not_exist}} =
-             CMS.FrontDesk.comment(path, community_reader)
+             CMS.FrontDesk.comment(path, community_reader_user)
 
     assert {:error, %ErrorCat.Error{reason: :not_exist}} =
              CMS.FrontDesk.comment(path)
@@ -281,8 +285,9 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
     assert Repo.get!(CommentReviewBlock, restriction.id).version == 2
   end
 
-  defp restriction_attrs(_lifecycle, scope_key, source_ref) do
+  defp restriction_attrs(_lifecycle, scope_key, source_ref, operation_ref \\ Ecto.UUID.generate()) do
     %{
+      operation_ref: operation_ref,
       scope_key: scope_key,
       type: :manual_hold,
       source_ref: source_ref,

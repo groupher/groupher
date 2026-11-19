@@ -54,7 +54,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.DequeueBatch do
         revision,
         ids,
         confirmation,
-        %User{} = actor
+        %User{} = actor,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_list(ids) do
     with {:ok, ids} <- Dequeue.normalize_ids(ids),
@@ -65,7 +66,15 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.DequeueBatch do
          {:ok, current} <- TargetTree.build(public, changes),
          {:ok, target} <- remove_dependencies(public, current, ids),
          {:ok, removed} <-
-           Queue.remove_many(community, queue, revision, ids, operation(ids), confirmation),
+           Queue.remove_many(
+             community,
+             queue,
+             revision,
+             ids,
+             operation(ids),
+             confirmation,
+             operation_ref
+           ),
          {:ok, _} <-
            Tree.reconcile_after_content(
              community,
@@ -73,7 +82,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.DequeueBatch do
              removed.queue.queue_revision,
              public,
              target,
-             actor
+             actor,
+             operation_ref
            ) do
       {:ok, removed}
     end
@@ -151,7 +161,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.DequeueBatch do
     if empty == [] do
       removed
     else
-        prune_empty_parents(nodes, public_ids, Enum.reduce(empty, removed, &MapSet.put(&2, &1)))
+      prune_empty_parents(nodes, public_ids, Enum.reduce(empty, removed, &MapSet.put(&2, &1)))
     end
   end
 

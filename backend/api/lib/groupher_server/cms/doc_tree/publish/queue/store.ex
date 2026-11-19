@@ -58,7 +58,38 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
   @doc "Checks expected counters and advances each requested counter once on a locked Queue."
   def advance(%Community{id: id} = community, %DocsPublishQueue{id: queue_id}, expected, changes)
       when is_integer(id) and id > 0 and is_binary(queue_id) and is_map(expected) and
-             is_list(changes) do
+             is_list(changes) and changes == [] do
+    advance_locked(community, id, queue_id, expected, changes, nil)
+  end
+
+  def advance(%Community{}, %DocsPublishQueue{}, expected, changes)
+      when is_map(expected) and is_list(changes) and changes != [],
+      do: {:error, :operation_ref_required}
+
+  def advance(_community, _queue, _expected, _changes), do: {:error, :invalid_queue_versions}
+
+  def advance(
+        %Community{id: id} = community,
+        %DocsPublishQueue{id: queue_id},
+        expected,
+        changes,
+        operation_ref
+      )
+      when is_integer(id) and id > 0 and is_binary(queue_id) and is_map(expected) and
+             is_list(changes) and is_binary(operation_ref) do
+    case Ecto.UUID.cast(operation_ref) do
+      {:ok, operation_ref} ->
+        advance_locked(community, id, queue_id, expected, changes, operation_ref)
+
+      :error ->
+        {:error, :invalid_operation_ref}
+    end
+  end
+
+  def advance(_community, _queue, _expected, _changes, _operation_ref),
+    do: {:error, :invalid_queue_versions}
+
+  defp advance_locked(community, id, queue_id, expected, changes, operation_ref) do
     with {:ok, :pass} <- validate_versions(expected, changes),
          {:ok, :acquired} <- SiteLock.acquire(community),
          %DocsPublishQueue{id: ^queue_id} = queue <- locked_queue(id),
@@ -66,7 +97,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
          {:ok, :pass} <- check_overflow(queue, changes) do
       case changes do
         [] -> {:ok, queue}
-        _ -> update_versions(queue, changes)
+        _ -> update_versions(queue, changes, operation_ref)
       end
     else
       nil -> {:error, :queue_not_found}
@@ -75,18 +106,18 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
     end
   end
 
-  def advance(_community, _queue, _expected, _changes), do: {:error, :invalid_queue_versions}
-
   @doc "Updates approval settings and their policy revision together when they change."
   def set_policy(
         %Community{id: id} = community,
         %DocsPublishQueue{id: queue_id},
         expected_revision,
         approval_required,
-        allow_self_approval
+        allow_self_approval,
+        operation_ref
       )
       when is_integer(id) and id > 0 and is_binary(queue_id) and
              is_integer(expected_revision) and expected_revision >= 0 and
+             is_binary(operation_ref) and
              is_boolean(approval_required) and is_boolean(allow_self_approval) do
     with {:ok, :acquired} <- SiteLock.acquire(community),
          %DocsPublishQueue{id: ^queue_id} = queue <- locked_queue(id),
@@ -104,7 +135,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
                  approval_policy_revision: queue.approval_policy_revision + 1
                })
                |> Repo.update() do
-          with {:ok, _} <- CMS.DocTree.Publication.Notifications.changed(queue, updated) do
+          with {:ok, _} <-
+                 CMS.DocTree.Publication.Notifications.changed(queue, updated, operation_ref) do
             {:ok, %{queue: updated, changed?: true}}
           end
         end
@@ -116,7 +148,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
     end
   end
 
-  def set_policy(_community, _queue, _revision, _required, _self) do
+  def set_policy(_community, _queue, _revision, _required, _self, _operation_ref) do
     {:error, :invalid_queue_policy}
   end
 
@@ -168,20 +200,20 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
     end
   end
 
-  defp update_versions(queue, changes) do
+  defp update_versions(queue, changes, operation_ref) do
     attrs = Map.new(changes, fn field -> {field, Map.fetch!(queue, field) + 1} end)
 
     with {:ok, updated} <- queue |> Ecto.Changeset.change(attrs) |> Repo.update(),
-         {:ok, _} <- notify_change(queue, updated, changes) do
+         {:ok, _} <- notify_change(queue, updated, changes, operation_ref) do
       {:ok, updated}
     end
   end
 
-  defp notify_change(old, updated, changes) do
+  defp notify_change(old, updated, changes, operation_ref) do
     if :public_presentation_revision in changes do
       {:ok, :unchanged}
     else
-      CMS.DocTree.Publication.Notifications.changed(old, updated)
+      CMS.DocTree.Publication.Notifications.changed(old, updated, operation_ref)
     end
   end
 end

@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
   }
 
   @doc "Removes the complete affected batch after validating the bound confirmation."
-  def remove_many(community, queue, revision, ids, operation, confirmation \\ nil)
+  def remove_many(community, queue, revision, ids, operation, confirmation, operation_ref)
 
   def remove_many(
         %Community{} = community,
@@ -35,7 +35,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
         revision,
         ids,
         operation,
-        confirmation
+        confirmation,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_list(ids) and is_map(operation) do
     with {:ok, ids} <- normalize_ids(ids),
@@ -44,12 +45,18 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
          {:ok, _} <- Queue.check_discard(operation, revision, locked.documents, confirmation),
          {:ok, :pass} <- remove_members(locked),
          {:ok, queue} <-
-           Queue.advance(community, queue, %{queue_revision: revision}, [:queue_revision]) do
+           Queue.advance(
+             community,
+             queue,
+             %{queue_revision: revision},
+             [:queue_revision],
+             operation_ref
+           ) do
       {:ok, %{queue: queue, article_ids: ids}}
     end
   end
 
-  def remove_many(_, _, _, _, _, _), do: {:error, :invalid_queue_members}
+  def remove_many(_, _, _, _, _, _, _), do: {:error, :invalid_queue_members}
 
   @doc false
   def normalize_ids([]), do: {:error, :invalid_queue_members}

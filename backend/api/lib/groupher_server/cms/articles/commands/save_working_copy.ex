@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
       WorkingCopyAccess.check_in_transaction(actor, action, article, community)
     end)
 
-    change(fn canonical_article, %{operation_ref: operation_ref} ->
+    change(fn canonical_article, operation_ref ->
       history_context = Map.put(history_context, :causation_command_id, command_id)
 
       with %ArticleWorkingCopy{} = work <-
@@ -146,14 +146,14 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
          actor,
          revision,
          community_id,
-         command_id,
+         operation_ref,
          history_context
        )
        when thread in [:post, :blog, :changelog, :doc] do
-    event_attrs = History.event_attrs(actor, command_id, community_id, history_context, 0)
+    event_attrs = History.event_attrs(actor, operation_ref, community_id, history_context, 0)
 
     if work.revision == revision do
-      History.record_save_in_transaction(article, work, actor, command_id, event_attrs, fn ->
+      History.record_save_in_transaction(article, work, actor, operation_ref, event_attrs, fn ->
         Store.save_loaded(work, attrs, actor, revision, community_id)
       end)
     else
@@ -161,7 +161,16 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
     end
   end
 
-  defp save(_article, work, attrs, actor, revision, community_id, _command_id, _history_context) do
+  defp save(
+         _article,
+         work,
+         attrs,
+         actor,
+         revision,
+         community_id,
+         _operation_ref,
+         _history_context
+       ) do
     Store.save_loaded(work, attrs, actor, revision, community_id)
   end
 

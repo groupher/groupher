@@ -18,10 +18,12 @@ defmodule GroupherServer.CMS.Comments.Effects do
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Model.{Article, Community}
+  alias CMS.Outbox.DedupeKey
 
   @doc "Persists summary invalidation for every public binding in the owner transaction."
-  @spec summary_changed(Article.t(), pos_integer(), boolean()) :: {:ok, :pass} | {:error, term()}
-  def summary_changed(article, revision, count_changed?) do
+  @spec summary_changed(Article.t(), pos_integer(), boolean(), Ecto.UUID.t()) ::
+          {:ok, :pass} | {:error, term()}
+  def summary_changed(article, revision, count_changed?, operation_ref) do
     bindings =
       from(binding in CMS.Model.ArticleBinding,
         join: community in CMS.Model.Community,
@@ -37,8 +39,8 @@ defmodule GroupherServer.CMS.Comments.Effects do
              worker: GroupherServer.Jobs.CMSOutboxComment,
              resource_type: "article",
              resource_id: article.id,
-             identity: {:workflow, "comment-summary:#{article.id}:#{revision}"},
-             effect_key: "comment.changed:#{community.id}",
+             operation_ref: operation_ref,
+             dedupe_key: DedupeKey.encode([revision, community.id]),
              data: %{
                article_id: article.id,
                community_id: community.id,
@@ -58,23 +60,23 @@ defmodule GroupherServer.CMS.Comments.Effects do
   @doc "Records one Comment effect in the caller-owned transaction."
   @spec enqueue(String.t(), String.t(), term(), Ecto.UUID.t(), map(), keyword()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue(event, resource_type, resource_id, command_id, data, opts \\ [])
+  def enqueue(event, resource_type, resource_id, operation_ref, data, opts \\ [])
 
-  def enqueue(event, resource_type, resource_id, command_id, data, opts)
-      when is_binary(event) and is_binary(resource_type) and is_binary(command_id) and
+  def enqueue(event, resource_type, resource_id, operation_ref, data, opts)
+      when is_binary(event) and is_binary(resource_type) and is_binary(operation_ref) and
              is_map(data) and is_list(opts) do
     CMS.Outbox.send(%{
       event: event,
       worker: GroupherServer.Jobs.CMSOutboxComment,
       resource_type: resource_type,
       resource_id: resource_id,
-      identity: {:command, command_id},
-      effect_key: Keyword.get(opts, :effect_key, "default"),
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([event, resource_type, resource_id]),
       data: data
     })
   end
 
-  def enqueue(_event, _resource_type, _resource_id, _command_id, _data, _opts) do
+  def enqueue(_event, _resource_type, _resource_id, _operation_ref, _data, _opts) do
     {:error, :comment_effect_identity_required}
   end
 

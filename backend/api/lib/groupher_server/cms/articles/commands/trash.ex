@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       end
     end)
 
-    change(fn canonical, %{operation_ref: operation_ref} ->
+    change(fn canonical, operation_ref ->
       TrashAgg.trash_loaded(canonical, actor, Keyword.put(opts, :operation_ref, operation_ref))
     end)
 
@@ -62,7 +62,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       end
     end)
 
-    change(fn canonical -> TrashAgg.trash_loaded(canonical, actor, opts) end)
+    change(fn canonical, operation_ref ->
+      TrashAgg.trash_loaded(canonical, actor, Keyword.put(opts, :operation_ref, operation_ref))
+    end)
 
     on_rejection(&build_rejection/1)
   end
@@ -80,7 +82,13 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       end
     end)
 
-    change(fn canonical -> TrashAgg.trash_loaded(canonical, :operations, opts) end)
+    change(fn canonical, operation_ref ->
+      TrashAgg.trash_loaded(
+        canonical,
+        :operations,
+        Keyword.put(opts, :operation_ref, operation_ref)
+      )
+    end)
 
     on_rejection(&build_rejection/1)
   end

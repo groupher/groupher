@@ -31,8 +31,8 @@ defmodule GroupherServer.CMS.DocCover.Commands.ReorderPinnedDocs do
   receipt_pipeline execute(community, ids, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
 
-    change(fn canonical ->
-      CMS.DocTree.Publication.Presentation.write(canonical, fn ->
+    change(fn canonical, operation_ref ->
+      CMS.DocTree.Publication.Presentation.write(canonical, operation_ref, fn ->
         Persist.reorder_pinned_docs(canonical, ids)
       end)
     end)

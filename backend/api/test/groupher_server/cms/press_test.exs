@@ -14,6 +14,7 @@ defmodule GroupherServer.Test.CMS.Press do
   }
 
   alias CMS.Outbox.Event
+  alias CMS.Model.CommandReceipt
 
   alias Ecto.Changeset
   alias GroupherServerWeb.Schema
@@ -281,20 +282,23 @@ defmodule GroupherServer.Test.CMS.Press do
 
     assert {:ok, %PressConfig{revision: 1}} = CMS.Press.config(community)
 
+    operation_ref =
+      Repo.get_by!(CommandReceipt, initiator_key: to_string(user.id), command_id: command_id).operation_ref
+
     assert [%Event{} = event] =
              Repo.all(
                from(event in Event,
                  where:
-                   event.command_id == ^command_id and
+                   event.operation_ref == ^operation_ref and
                      event.event == "press.cache_invalidation"
                )
              )
 
-    assert event.identity_type == :command
+    assert event.operation_ref == operation_ref
     assert event.contract_version == 1
     assert event.resource_type == "community"
     assert event.resource_id == to_string(community.id)
-    assert event.effect_key == "config"
+    assert is_binary(event.dedupe_key) and event.dedupe_key != ""
     assert event.data == %{}
   end
 

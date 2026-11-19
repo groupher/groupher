@@ -39,14 +39,14 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Create do
       CMS.Gate.check_in_transaction(actor, action, candidate)
     end)
 
-    change(fn canonical, execution ->
+    change(fn canonical, operation_ref ->
       create_locked(
         canonical,
         subject_user_id,
         request_type,
         permissions,
         actor,
-        execution.operation_ref
+        operation_ref
       )
     end)
 

@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Articles.Workflow do
              :expected_public_snapshot_id,
              current_public && current_public.snapshot_id
            ),
-         command_id <- publish_command_id(opts) do
+         operation_ref <- Ecto.UUID.generate() do
       result =
         transaction(fn ->
           Publisher.publish_in_transaction(
@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Articles.Workflow do
             source,
             expected_public_snapshot_id,
             user,
-            command_id
+            operation_ref
           )
         end)
 
@@ -123,11 +123,6 @@ defmodule GroupherServer.CMS.Articles.Workflow do
       _ ->
         {:error, :invalid_publish_source}
     end
-  end
-
-  defp publish_command_id(opts) do
-    Keyword.get(opts, :command_id) || Keyword.get(opts, :outbox_command_id) ||
-      Ecto.UUID.generate()
   end
 
   @doc "Returns or creates the CMS Author row associated with a User."

@@ -29,10 +29,10 @@ defmodule GroupherServer.CMS.DocTree.Commands.ApproveQueue do
       end
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical),
            {:ok, _} <- QueueRead.read(canonical, actor) do
-        Approval.approve(canonical, queue, revision, actor, command_id)
+        Approval.approve(canonical, queue, revision, actor, command_id, operation_ref)
       end
     end)
 

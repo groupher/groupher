@@ -42,18 +42,18 @@ defmodule GroupherServer.Messaging do
 
   ## Examples
 
-      Messaging.send_notification(notification_attrs, user)
+      Messaging.send_notice(notification_attrs, user)
   """
-  def send_notification(attrs, from_user), do: Commands.SendNotification.run(attrs, from_user)
+  def send_notice(attrs, from_user), do: Commands.SendNotice.run(attrs, from_user)
 
   @doc """
   Revokes a previously stored activity notification matching the supplied facts.
 
   ## Examples
 
-      Messaging.revoke_notification(notification_attrs, user)
+      Messaging.revoke_notice(notification_attrs, user)
   """
-  def revoke_notification(attrs, from_user), do: Commands.RevokeNotification.run(attrs, from_user)
+  def revoke_notice(attrs, from_user), do: Commands.RevokeNotice.run(attrs, from_user)
 
   @doc """
   Returns the current user's paged direct-mention inbox.

@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.{Activity, AlertWall, CMS, PublicCache}
-  alias AlertWall.Model.{Item, UserReport}
+  alias AlertWall.Model.{Action, Item, UserReport}
   alias CMS.Outbox.Event
   alias PublicCache.Tags
 
@@ -15,6 +15,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     ArticleStats,
     ArticlePublic,
     ArticleWorkingCopy,
+    CommunityAdmin,
     Comment,
     TrashAction,
     TrashedArticle,
@@ -55,13 +56,30 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert trash_ref == item.hash_id
     action = Repo.get!(TrashAction, item.trash_action_id)
-    assert Repo.get_by(PostLog, action: :trashed, operation_ref: action.hash_id)
+    log = Repo.get_by!(PostLog, action: :trashed, article_id: post.article_id)
+    refute log.operation_ref == action.hash_id
+    assert {:ok, _operation_ref} = Ecto.UUID.cast(log.operation_ref)
 
     assert {:ok, restored} = CMS.Articles.restore_trashed(item.hash_id, user)
     assert restored.id == post.id
     assert {:ok, _} = read_article(community, :post, article_inner_id(post, community))
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
     refute Repo.get(TrashAction, item.trash_action_id)
+  end
+
+  test "Trash aggregate requires a valid operation_ref and never falls back to resource identity" do
+    {community, post, _attrs, user} = mock_article(:post)
+
+    assert {:error, :operation_ref_required} =
+             CMS.Articles.Trash.trash(post, user, community: community)
+
+    assert {:error, _reason} =
+             CMS.Articles.Trash.trash(post, user,
+               community: community,
+               operation_ref: "not-a-uuid"
+             )
+
+    refute CMS.Articles.Trash.trashed_article?(post)
   end
 
   test "trashing and restoring a Comment parent advances the global Mentions revision" do
@@ -104,10 +122,13 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     opts = [command_id: command_id, community_id: community.id, thread: :post]
 
     assert {:ok, first} = CMS.Articles.restore_trashed_receipt(item.hash_id, user, opts)
+    receipt = Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
     assert {:ok, replayed} = CMS.Articles.restore_trashed_receipt(item.hash_id, user, opts)
+    replayed_receipt = Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id)
     assert replayed == first
     assert replayed.command_id == command_id
+    assert replayed_receipt.operation_ref == receipt.operation_ref
   end
 
   test "restore scope validation is owned by the command use case" do
@@ -161,22 +182,22 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert count_after == count_before - 1
   end
 
-  test "permanent delete removes the workspace but retains immutable Article history" do
+  test "permanent delete purges an unprotected Article and its retained history" do
     {community, post, _attrs, user} = mock_article(:post)
     assert {:ok, item} = CMS.Articles.trash(post, user)
 
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
-    assert Repo.get(CMS.Model.Article, post.article_id)
-    assert Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: post.article_id)
+    refute Repo.get(CMS.Model.Article, post.article_id)
+    refute Repo.get_by(CMS.Model.ArticleHistoryOwner, article_id: post.article_id)
 
-    assert Repo.exists?(
+    refute Repo.exists?(
              from(s in CMS.Model.ArticleSnapshot, where: s.article_id == ^post.article_id)
            )
 
     refute Repo.get(CMS.Model.ArticlePublic, post.article_id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
-    assert Repo.get_by(ArticleLifecycle,
+    refute Repo.get_by(ArticleLifecycle,
              thread: :post,
              article_id: post.article_id
            )
@@ -196,28 +217,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   test "Post permanent deletion unlinks its TicketSource and keeps the Ticket in Draft" do
     {community, post, _attrs, user} = mock_article(:post)
-    passport = user.cur_passport || %{}
-    community_passport = Map.get(passport, community.slug, %{})
-    cms_grants = Map.get(community_passport, "cms", %{})
-
-    ticket_actor = %{
-      user
-      | cur_passport:
-          passport
-          |> Map.put_new("global", %{})
-          |> Map.put(
-            community.slug,
-            Map.put(
-              community_passport,
-              "cms",
-              Map.merge(cms_grants, %{
-                "ticket.create" => true,
-                "ticket.read_internal" => true,
-                "ticket.manage_visibility" => true
-              })
-            )
-          )
-    }
+    ticket_actor = grant_ticket_actions(community, user)
 
     assert {:ok, ticket} =
              CMS.Tickets.create_from_post(
@@ -238,7 +238,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{done: true}} =
              CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
-    assert Repo.get(Article, post.id)
+    refute Repo.get(Article, post.id)
     refute Repo.get_by(Source, ticket_id: ticket.id, post_id: post.id)
     assert Repo.get_by!(TicketState, article_id: ticket.id).type == :user
     assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
@@ -246,28 +246,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   test "restoring a Ticket source Post purges both surfaces without republishing the Ticket" do
     {community, post, _attrs, user} = mock_article(:post)
-    passport = user.cur_passport || %{}
-    community_passport = Map.get(passport, community.slug, %{})
-    cms_grants = Map.get(community_passport, "cms", %{})
-
-    ticket_actor = %{
-      user
-      | cur_passport:
-          passport
-          |> Map.put_new("global", %{})
-          |> Map.put(
-            community.slug,
-            Map.put(
-              community_passport,
-              "cms",
-              Map.merge(cms_grants, %{
-                "ticket.create" => true,
-                "ticket.read_internal" => true,
-                "ticket.manage_visibility" => true
-              })
-            )
-          )
-    }
+    ticket_actor = grant_ticket_actions(community, user)
 
     assert {:ok, ticket} =
              CMS.Tickets.create_from_post(
@@ -299,26 +278,35 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, trash_item} = CMS.Articles.trash(post, user)
     assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
 
-    events_before_restore =
-      Repo.all(Event)
-      |> Enum.count(fn event ->
-        event.event == "ticket.cache_invalidation" and event.resource_id == ticket.id and
-          Tags.ticket_detail(community.slug, ticket.inner_id) in event.data["cache_tags"] and
-          Tags.article_detail(community.slug, :post, post.inner_id) in event.data["cache_tags"]
-      end)
+    restore_event_matches? = fn event ->
+      event.event == "ticket.cache_invalidation" and event.resource_id == ticket.id and
+        Tags.ticket_detail(community.slug, ticket.inner_id) in event.data["cache_tags"] and
+        Tags.article_detail(community.slug, :post, post.inner_id) in event.data["cache_tags"]
+    end
 
-    assert {:ok, _restored_post} = CMS.Articles.restore_trashed(trash_item.hash_id, user)
+    events_before_restore = Repo.all(Event) |> Enum.filter(restore_event_matches?)
+    event_ids_before_restore = MapSet.new(events_before_restore, & &1.id)
+    trash_action = Repo.get!(TrashAction, trash_item.trash_action_id)
+    client_command_id = Ecto.UUID.generate()
+
+    assert {:ok, _restored_post} =
+             CMS.Articles.restore_trashed(trash_item.hash_id, user, command_id: client_command_id)
+
     assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
 
     events_after_restore =
       Repo.all(Event)
-      |> Enum.count(fn event ->
-        event.event == "ticket.cache_invalidation" and event.resource_id == ticket.id and
-          Tags.ticket_detail(community.slug, ticket.inner_id) in event.data["cache_tags"] and
-          Tags.article_detail(community.slug, :post, post.inner_id) in event.data["cache_tags"]
-      end)
+      |> Enum.filter(restore_event_matches?)
 
-    assert events_after_restore > events_before_restore
+    assert length(events_after_restore) > length(events_before_restore)
+
+    restore_event =
+      Enum.find(events_after_restore, &(not MapSet.member?(event_ids_before_restore, &1.id)))
+
+    assert restore_event
+    refute restore_event.operation_ref == trash_action.hash_id
+    refute restore_event.operation_ref == client_command_id
+    assert {:ok, _operation_ref} = Ecto.UUID.cast(restore_event.operation_ref)
   end
 
   test "permanent delete supersedes Wall items and preserves report history" do
@@ -375,12 +363,76 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{done: true, command_id: ^command_id} = first} =
              CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
 
-    assert Repo.get(CMS.Model.Article, post.article_id)
+    refute Repo.get(CMS.Model.Article, post.article_id)
 
     assert {:ok, replayed} =
              CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
 
     assert replayed == first
+  end
+
+  test "permanent-delete receipt activity uses the command operation_ref" do
+    {community, post, _attrs, user} = mock_article(:post)
+    comment = create_trash_comment(community, post, user)
+    article_report = create_wall_report(:article, post.article_id, user)
+    comment_report = create_wall_report(:comment, comment.id, user)
+    assert {:ok, item} = CMS.Articles.trash(post, user)
+    action = Repo.get!(TrashAction, item.trash_action_id)
+    command_id = Ecto.UUID.generate()
+    opts = [command_id: command_id, community_id: community.id, thread: :post]
+
+    assert {:ok, %{done: true}} =
+             CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
+
+    receipt = Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id)
+    log = Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.article_id)
+    assert log.operation_ref == receipt.operation_ref
+    refute log.operation_ref == action.hash_id
+
+    assert_wall_delete_actions(
+      [article_report.item_id, comment_report.item_id],
+      receipt.operation_ref
+    )
+
+    assert {:ok, replayed} =
+             CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
+
+    assert replayed.done
+
+    assert Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id).operation_ref ==
+             receipt.operation_ref
+
+    assert Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.article_id) == log
+
+    assert_wall_delete_actions(
+      [article_report.item_id, comment_report.item_id],
+      receipt.operation_ref
+    )
+  end
+
+  test "direct permanent-delete activity uses the runner operation_ref" do
+    {community, post, _attrs, user} = mock_article(:post)
+    comment = create_trash_comment(community, post, user)
+    article_report = create_wall_report(:article, post.article_id, user)
+    comment_report = create_wall_report(:comment, comment.id, user)
+    assert {:ok, item} = CMS.Articles.trash(post, user)
+    action = Repo.get!(TrashAction, item.trash_action_id)
+    client_command_id = Ecto.UUID.generate()
+
+    assert {:ok, %{done: true}} =
+             CMS.Articles.permanently_delete_trashed(item.hash_id, user,
+               command_id: client_command_id
+             )
+
+    log = Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.article_id)
+    assert {:ok, _operation_ref} = Ecto.UUID.cast(log.operation_ref)
+    refute log.operation_ref == action.hash_id
+    refute log.operation_ref == client_command_id
+
+    assert_wall_delete_actions(
+      [article_report.item_id, comment_report.item_id],
+      log.operation_ref
+    )
   end
 
   test "permanent delete rejects a stale emotion request and leaves no orphan projections" do
@@ -395,13 +447,14 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    assert Repo.get(CMS.Model.Article, post.article_id)
+    refute Repo.get(CMS.Model.Article, post.article_id)
     refute Repo.get_by(ArticleStats, thread: :post, article_id: post.article_id)
     refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.article_id)
   end
 
-  test "permanent parent delete preserves Comment identity without claiming it was deleted" do
+  test "permanent parent delete removes Comment identity and clears projections" do
     {community, post, _attrs, user} = mock_article(:post)
+    reset_publish_throttle(user)
     {_, target, _, _} = mock_article(:blog, community, user)
 
     body =
@@ -437,7 +490,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, item} = CMS.Articles.trash(post, user)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    assert Repo.get(Comment, comment.id)
+    refute Repo.get(Comment, comment.id)
     assert is_nil(Repo.get!(Endpoint, comment_endpoint.id).deleted_at)
     refute Repo.get(Edge, edge.id)
     assert Repo.aggregate(Edge, :count) == 0
@@ -445,6 +498,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   test "incoming Mention edge survives Trash and restore but clears on permanent deletion" do
     {community, target, _attrs, user} = mock_article(:post)
+    reset_publish_throttle(user)
     {_, mentioner, _, _} = mock_article(:blog, community, user)
 
     body =
@@ -514,18 +568,23 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   test "scheduler permanently deletes due actions and records a system audit" do
     {_community, post, _attrs, user} = mock_article(:post)
     assert {:ok, item} = CMS.Articles.trash(post, user, retention_days: 0)
+    action = Repo.get!(TrashAction, item.trash_action_id)
 
     assert {:ok, %{deleted: 1, failed: []}} =
              CMS.Trash.purge_due(now: DateTime.utc_now(:second), size: 10)
 
-    assert Repo.get(CMS.Model.Article, post.article_id)
+    refute Repo.get(CMS.Model.Article, post.article_id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
-    assert Repo.get_by(PostLog,
-             action: :permanently_deleted,
-             article_id: post.article_id,
-             source: :scheduler
-           )
+    log =
+      Repo.get_by!(PostLog,
+        action: :permanently_deleted,
+        article_id: post.article_id,
+        source: :scheduler
+      )
+
+    refute log.operation_ref == action.hash_id
+    assert {:ok, _operation_ref} = Ecto.UUID.cast(log.operation_ref)
   end
 
   test "scoped Trash permanent delete uses the Article receipt command" do
@@ -569,6 +628,92 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
       assert {:ok, _} = CMS.Articles.restore_trashed(item.hash_id, user)
       assert Repo.get!(CMS.Model.Community, community.id).meta |> Map.fetch!(count_field) == 1
     end)
+  end
+
+  defp grant_ticket_actions(community, user) do
+    permissions =
+      ~w(ticket.create ticket.link_source ticket.update ticket.transition ticket.assign ticket.manage_case ticket.manage_visibility ticket.read_internal)
+      |> Map.new(&{&1, true})
+
+    case Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) do
+      %CommunityAdmin{} = member ->
+        member
+        |> CommunityAdmin.changeset(%{
+          permissions: Map.merge(member.permissions, permissions)
+        })
+        |> Repo.update!()
+
+      nil ->
+        %CommunityAdmin{}
+        |> CommunityAdmin.changeset(%{
+          user_id: user.id,
+          community_id: community.id,
+          permissions: permissions
+        })
+        |> Repo.insert!()
+    end
+
+    user
+  end
+
+  defp create_trash_comment(community, post, user) do
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(post, community),
+               mock_comment(
+                 "A sufficiently detailed comment body for the permanent deletion test."
+               ),
+               user,
+               Ecto.UUID.generate()
+             )
+
+    comment
+  end
+
+  defp reset_publish_throttle(user) do
+    assert {:ok, _throttle} =
+             CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+               :last_publish_time,
+               user,
+               minutes: -CMS.Gate.RateLimit.Publish.Config.publish_throttle().interval_minutes
+             )
+  end
+
+  defp create_wall_report(target_type, target_id, user) do
+    attrs = %{
+      reporter_id: user.id,
+      owner: :cms,
+      target_type: target_type,
+      target_id: to_string(target_id),
+      observed_version: 1,
+      community_id: nil,
+      report_type: "SPAM",
+      details: "Please review"
+    }
+
+    assert {:ok, report} =
+             Repo.transact_result(fn ->
+               AlertWall.submit_report_in_transaction(attrs, Ecto.UUID.generate())
+             end)
+
+    report
+  end
+
+  defp assert_wall_delete_actions(item_ids, operation_ref) do
+    Enum.each(item_ids, fn item_id ->
+      child_ref = wall_child_operation_ref(operation_ref, item_id)
+
+      assert %Action{item_id: ^item_id, operation_ref: ^child_ref, action: :supersede} =
+               Repo.get_by!(Action, operation_ref: child_ref, action: :supersede)
+    end)
+  end
+
+  defp wall_child_operation_ref(operation_ref, item_id) do
+    digest = :crypto.hash(:sha256, "#{operation_ref}:#{item_id}")
+    <<uuid::binary-size(16), _rest::binary>> = digest
+    Ecto.UUID.load!(uuid)
   end
 
   defp save_and_publish_mentioner(mentioner_view, community, user, body_json) do

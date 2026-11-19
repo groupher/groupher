@@ -1,6 +1,12 @@
 defmodule GroupherServer.CMS.Articles.WorkingCopy.Persist.ArticleHistory do
   @moduledoc """
   Persists immutable Article history events inside the command transaction.
+
+      WorkingCopy.History
+        -> verify caller transaction and lock Article
+        -> link the previous event and assign sequence
+        -> insert ArticleEvent
+        -> caller commits or rolls back command and history together
   """
 
   import Ecto.Query

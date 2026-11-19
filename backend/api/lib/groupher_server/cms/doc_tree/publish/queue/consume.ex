@@ -36,7 +36,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Consume do
         %DocsPublishQueue{} = queue,
         revision,
         release_id,
-        entries
+        entries,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_integer(release_id) and release_id > 0 and
              is_list(entries) do
@@ -69,7 +70,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Consume do
                queue_revision: revision,
                public_presentation_revision: queue.public_presentation_revision
              },
-             [:queue_revision, :public_presentation_revision]
+             [:queue_revision, :public_presentation_revision],
+             operation_ref
            ) do
       {:ok, %{queue: updated, article_ids: ids, tree_changes_consumed: length(changes)}}
     else

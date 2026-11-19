@@ -142,7 +142,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
       CMS.Gate.check_in_transaction(user, edit_action(candidate), candidate, community)
     end)
 
-    change(fn canonical, %{operation_ref: operation_ref} ->
+    change(fn canonical, operation_ref ->
       replace_loaded(canonical, community, params, user, operation_ref, :browser, command_id)
     end)
 
@@ -187,7 +187,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
       end
     end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       replace_with_workflow_recovery(
         canonical,
         community,

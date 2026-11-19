@@ -68,7 +68,7 @@ defmodule GroupherServer.CMS.Tickets.Commands.Publish do
       )
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, published_id} <-
              CMS.Tickets.Persist.publish(
                canonical,
@@ -78,7 +78,7 @@ defmodule GroupherServer.CMS.Tickets.Commands.Publish do
                expected_lifecycle_version,
                expected_workflow_version,
                expected_preview,
-               %{actor: actor, command_id: command_id}
+               %{actor: actor, command_id: command_id, operation_ref: operation_ref}
              ),
            {:ok, _graph} <- CMS.Tickets.Mentions.update(published_id, canonical, command_id) do
         {:ok, published_id}

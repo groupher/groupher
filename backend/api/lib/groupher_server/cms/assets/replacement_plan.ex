@@ -158,8 +158,9 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     Enum.map_reduce(plan.items, {0, 0, 0}, fn item,
                                               {applied_count, skipped_count, conflict_count} ->
       article_id = item_value(item, :article_id)
+      non_actionable = non_actionable_decision?(item_value(item, :decision))
 
-      if selected && article_id not in selected do
+      if selected && article_id not in selected && not non_actionable do
         {item, {applied_count, skipped_count, conflict_count}}
       else
         case apply_item(plan, item, user, body_bags, apply_run_ref, steps, owner) do
@@ -179,6 +180,19 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     |> then(fn {items, {applied_count, skipped_count, conflict_count}} ->
       {items, applied_count, skipped_count, conflict_count}
     end)
+  end
+
+  defp non_actionable_decision?(decision) do
+    decision in [
+      :historical_only,
+      "historical_only",
+      :live_snapshot_only,
+      "live_snapshot_only",
+      :permission_denied,
+      "permission_denied",
+      :unsupported,
+      "unsupported"
+    ]
   end
 
   defp ensure_apply_run(%AssetReplacementPlan{} = plan, run_ref) do

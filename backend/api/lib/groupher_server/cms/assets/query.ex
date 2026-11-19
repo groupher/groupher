@@ -251,6 +251,11 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
+  defp article_usage_scope_ids(nil) do
+    public_only = from(article in Article, where: false, select: article.id)
+    {:ok, public_only, public_only}
+  end
+
   defp article_usage_scope_ids(actor) do
     with {:ok, global_scope} <- CMS.Passport.load_global_scope(actor),
          {:ok, history} <-
@@ -288,6 +293,8 @@ defmodule GroupherServer.CMS.Assets.Query do
   end
 
   defp usage_query(community_id, asset_id, ticket_ids, history_ids, draft_ids, public_ids) do
+    public_snapshot_ids = union_all(public_ids, ^ticket_ids)
+
     from(ref in ArticleAssetRef,
       where: ref.community_id == ^community_id and ref.asset_id == ^asset_id,
       left_join: work in ArticleWorkingCopy,
@@ -310,7 +317,8 @@ defmodule GroupherServer.CMS.Assets.Query do
         not is_nil(binding.id) and community_lifecycle.state in [:active, :read_only] and
           ((not is_nil(ref.snapshot_id) and
               (article.id in subquery(history_ids) or
-                 (ref.snapshot_id == public.snapshot_id and article.id in subquery(public_ids)))) or
+                 (ref.snapshot_id == public.snapshot_id and
+                    article.id in subquery(public_snapshot_ids)))) or
              (not is_nil(ref.working_copy_id) and article.id in subquery(draft_ids))) and
           (article.thread != :ticket or article.id in subquery(ticket_ids)),
       select:

@@ -9,7 +9,8 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     ArticleLifecycle,
     ArtimentReview,
     CommentLifecycle,
-    ArticlePublic
+    ArticlePublic,
+    CommunityAdmin
   }
 
   for target_type <- [:article, :comment, :doc, :doc_comment] do
@@ -19,6 +20,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
       applied_at = DateTime.utc_now(:second)
 
       attrs = %{
+        operation_ref: Ecto.UUID.generate(),
         scope_key: scope_key,
         type: :report_threshold_hold,
         source: :domain,
@@ -45,10 +47,12 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
   test "Doc Comment author notices include current checks and branch Community holds" do
     {community, _doc, author, comment} = doc_comment()
     target = %{type: :comment, comment_id: comment.id, community_id: community.id}
+    operation_ref = Ecto.UUID.generate()
 
     assert {:ok, request} =
              Repo.transact_result(fn ->
                CMS.Review.Requests.create_in_transaction(%{
+                 operation_ref: operation_ref,
                  target_type: :comment,
                  comment_id: comment.id,
                  community_id: community.id,
@@ -74,7 +78,8 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
                  scope_key: "community:#{community.id}",
                  type: :report_threshold_hold,
                  source: :domain,
-                 source_ref: "report_threshold:notice"
+                 source_ref: "report_threshold:notice",
+                 operation_ref: Ecto.UUID.generate()
                })
              end)
 
@@ -235,12 +240,18 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
   defp reviewer(community) do
     {:ok, user} = db_insert(:user)
 
-    %{
-      user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.decide" => true}}
-        }
-    }
+    member =
+      Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) ||
+        %CommunityAdmin{}
+
+    member
+    |> CommunityAdmin.changeset(%{
+      user_id: user.id,
+      community_id: community.id,
+      permissions: Map.put(member.permissions || %{}, "review.decide", true)
+    })
+    |> Repo.insert_or_update!()
+
+    user
   end
 end

@@ -6,18 +6,26 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects do
   """
 
   alias GroupherServer.CMS
+  alias CMS.Outbox.DedupeKey
 
   @doc "Delivers one committed Mention notification intent."
-  defdelegate deliver_notifications(source_id, revision_identity, community_id, recipient_ids, event_id),
-    to: CMS.ArtimentMentions.Effects.Notifications,
-    as: :deliver
+  defdelegate deliver_notifications(
+                source_id,
+                revision_identity,
+                community_id,
+                recipient_ids,
+                event_id
+              ),
+              to: CMS.ArtimentMentions.Effects.Notifications,
+              as: :deliver
+
   @doc "Enqueues one notification event per source and published revision."
-  @spec enqueue_notifications(Ecto.UUID.t(), String.t(), tuple(), integer(), [integer()]) ::
+  @spec enqueue_notifications(Ecto.UUID.t(), String.t(), Ecto.UUID.t(), integer(), [integer()]) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
   def enqueue_notifications(
         source_endpoint_id,
         revision_identity,
-        identity,
+        operation_ref,
         community_id,
         recipient_ids \\ []
       )
@@ -25,22 +33,27 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects do
   def enqueue_notifications(
         source_endpoint_id,
         revision_identity,
-        _identity,
+        operation_ref,
         community_id,
         recipient_ids
       )
       when is_binary(source_endpoint_id) and is_binary(revision_identity) and
              is_integer(community_id) and is_list(recipient_ids) do
+    {:ok, operation_ref} = Ecto.UUID.cast(operation_ref)
+
     key =
-      :crypto.hash(:sha256, source_endpoint_id <> ":" <> revision_identity)
-      |> Base.encode16(case: :lower)
+      DedupeKey.encode([
+        source_endpoint_id,
+        revision_identity,
+        Enum.sort(Enum.uniq(recipient_ids))
+      ])
 
     CMS.Outbox.send(%{
       event: "mention.notify",
       resource_type: "mention_source",
       resource_id: source_endpoint_id,
-      identity: {:workflow, "mention.notify:" <> key},
-      effect_key: "mention.notify:" <> key,
+      operation_ref: operation_ref,
+      dedupe_key: key,
       worker: GroupherServer.Jobs.CMSMentionNotifier,
       data: %{
         source_endpoint_id: source_endpoint_id,

@@ -457,9 +457,9 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
   defp preload_group_tags(result), do: result
 
   defp invalidate_taxonomy(%Community{} = community, thread, effect_key, opts) do
-    with {:ok, identity} <- taxonomy_identity(community, thread, opts),
+    with {:ok, operation_ref} <- taxonomy_identity(community, thread, opts),
          {:ok, _event} <-
-           Effects.enqueue_taxonomy_changed(community, thread, identity, effect_key) do
+           Effects.enqueue_taxonomy_changed(community, thread, operation_ref, effect_key) do
       {:ok, :pass}
     end
   end
@@ -470,29 +470,11 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
   end
 
   defp taxonomy_identity(%Community{}, _thread, opts) do
-    case Keyword.get(opts, :identity) do
-      {:command, command_id} when is_binary(command_id) ->
-        {:ok, {:command, command_id}}
-
-      {:workflow, workflow_ref} when is_binary(workflow_ref) and workflow_ref != "" ->
-        {:ok, {:workflow, workflow_ref}}
-
-      nil ->
-        command_identity(Keyword.get(opts, :command_id))
-
-      _ ->
-        {:error, :invalid_taxonomy_identity}
+    case Ecto.UUID.cast(Keyword.get(opts, :operation_ref)) do
+      {:ok, operation_ref} -> {:ok, operation_ref}
+      :error -> {:error, :taxonomy_operation_ref_required}
     end
   end
-
-  defp command_identity(command_id) when is_binary(command_id) do
-    case Ecto.UUID.cast(command_id) do
-      {:ok, command_id} -> {:ok, {:command, command_id}}
-      :error -> {:error, :invalid_taxonomy_identity}
-    end
-  end
-
-  defp command_identity(_command_id), do: {:error, :taxonomy_identity_required}
 
   defp split_identity(attrs, opts) when is_map(attrs) do
     command_id = Map.get(attrs, :command_id) || Map.get(attrs, "command_id")

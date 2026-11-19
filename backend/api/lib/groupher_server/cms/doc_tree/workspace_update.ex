@@ -23,7 +23,8 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
         revision,
         node_id,
         patch,
-        %User{} = actor
+        %User{} = actor,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_binary(node_id) and is_map(patch) do
     with {:ok, patch} <- normalize_patch(patch),
@@ -50,7 +51,8 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
              public,
              current,
              updated_queue,
-             actor
+             actor,
+             operation_ref
            ) do
       {:ok, result}
     else
@@ -58,7 +60,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
     end
   end
 
-  def run(_, _, _, _, _, _), do: {:error, :invalid_tree_input}
+  def run(_, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
   @doc "Moves a node and reconciles its actual Queue position and required parent chain."
   def move(
@@ -68,7 +70,8 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
         node_id,
         parent,
         position,
-        %User{} = actor
+        %User{} = actor,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_binary(node_id) and
              (is_binary(parent) or is_nil(parent)) and is_integer(position) and position >= 0 do
@@ -96,13 +99,14 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
              public,
              current,
              queued_target,
-             actor
+             actor,
+             operation_ref
            ) do
       {:ok, result}
     end
   end
 
-  def move(_, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
+  def move(_, _, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
   @doc "Applies confirmed import navigation without publishing content or overwriting Q bodies."
   def import_nodes(%Community{} = community, imported, %User{} = actor) when is_list(imported) do
@@ -320,26 +324,42 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
          public,
          current,
          queued_target,
-         actor
+         actor,
+         operation_ref
        ) do
     previous = Map.new(draft, &{&1.node_id, &1})
     changed = Enum.filter(target, &(previous[&1.node_id] != &1))
 
     with {:ok, :pass} <- WorkspacePersist.save(community, rows, changed),
          {:ok, queue} <-
-           Queue.advance(community, queue, %{tree_lock_version: revision}, [:tree_lock_version]),
-         {:ok, _queue} <- reconcile_queue(community, queue, public, current, queued_target, actor) do
+           Queue.advance(
+             community,
+             queue,
+             %{tree_lock_version: revision},
+             [:tree_lock_version],
+             operation_ref
+           ),
+         {:ok, _queue} <-
+           reconcile_queue(community, queue, public, current, queued_target, actor, operation_ref) do
       {:ok, %{tree_revision: queue.tree_lock_version}}
     end
   end
 
-  defp reconcile_queue(_community, queue, _public, current, target, _actor)
+  defp reconcile_queue(_community, queue, _public, current, target, _actor, _operation_ref)
        when current == target do
     {:ok, queue}
   end
 
-  defp reconcile_queue(community, queue, public, _current, target, actor) do
-    Queue.reconcile_tree(community, queue, queue.queue_revision, public, target, actor)
+  defp reconcile_queue(community, queue, public, _current, target, actor, operation_ref) do
+    Queue.reconcile_tree(
+      community,
+      queue,
+      queue.queue_revision,
+      public,
+      target,
+      actor,
+      operation_ref
+    )
   end
 
   defp public_nodes(community) do

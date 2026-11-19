@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreSnapshot do
                    ) do
     gate(fn canonical -> CMS.Gate.check_in_transaction(actor, :docs_history_read, canonical) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with {:ok, :acquired} <- Publish.SiteLock.acquire(canonical),
            {:ok, :pass} <- QueueAccess.authorize(canonical, article_id, actor),
            {:ok, state} <- DefaultCopy.load(canonical, article_id),

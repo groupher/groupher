@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Commands.Unsubscribe do
       end
     end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with true <- Persist.subscribed?(canonical, actor),
            {:ok, _} <- Persist.unsubscribe(canonical, actor),
            {:ok, _} <- Communities.Count.update(canonical, actor, :subscribers_count, :dec),

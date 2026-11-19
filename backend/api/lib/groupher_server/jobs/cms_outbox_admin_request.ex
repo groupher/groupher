@@ -34,6 +34,9 @@ defmodule GroupherServer.Jobs.CMSOutboxAdminRequest do
       {:ok, :already_delivered} ->
         {:ok, :pass}
 
+      {:ok, :pass} ->
+        {:ok, :pass}
+
       {:busy, seconds} ->
         {:snooze, seconds}
 

@@ -44,8 +44,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Submit do
       end
     end)
 
-    change(fn %{actor: authorized_actor, application_decision: decision} ->
-      submit_workflow(attrs, authorized_actor, decision, command_id)
+    change(fn %{actor: authorized_actor, application_decision: decision}, operation_ref ->
+      submit_workflow(attrs, authorized_actor, decision, command_id, operation_ref)
     end)
 
     confirm(fn application ->
@@ -55,11 +55,12 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Submit do
     present(fn confirmation -> Support.result(confirmation) end)
   end
 
-  defp submit_workflow(attrs, user, application_decision, submit_command_id) do
+  defp submit_workflow(attrs, user, application_decision, submit_command_id, operation_ref) do
     with {:ok, normalized} <- normalize_input(attrs),
          {:ok, prepared} <-
            prepare_submission(normalized, user, application_decision, submit_command_id),
-         {:ok, application} <- persist_submission(prepared, user, submit_command_id) do
+         {:ok, application} <-
+           persist_submission(prepared, user, submit_command_id, operation_ref) do
       {:ok, application}
     end
   end
@@ -99,11 +100,11 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Submit do
     end
   end
 
-  defp persist_submission(%{existing: application}, _user, _submit_command_id) do
+  defp persist_submission(%{existing: application}, _user, _submit_command_id, _operation_ref) do
     {:ok, application}
   end
 
-  defp persist_submission(prepared, user, submit_command_id) do
+  defp persist_submission(prepared, user, submit_command_id, operation_ref) do
     normalized = prepared.normalized
 
     application_changeset =
@@ -137,7 +138,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Submit do
       |> Lifecycle.initial_event_changeset(%{
         type: :applicant,
         id: user.id,
-        operation_ref: submit_command_id,
+        operation_ref: operation_ref,
         occurred_at: prepared.now
       })
       |> Persist.insert_event()

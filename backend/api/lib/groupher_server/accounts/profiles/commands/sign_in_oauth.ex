@@ -47,10 +47,10 @@ defmodule GroupherServer.Accounts.Profiles.Commands.SignInOauth do
     end)
 
     change(fn
-      %{user: _user, newly_registered: false} = state ->
+      %{user: _user, newly_registered: false} = state, _operation_ref ->
         {:ok, state}
 
-      %{provider: provider} ->
+      %{provider: provider}, _operation_ref ->
         case Oauth.register_in_transaction(provider) do
           {:ok, user} ->
             {:ok, %{provider: provider, user: user, newly_registered: true}}

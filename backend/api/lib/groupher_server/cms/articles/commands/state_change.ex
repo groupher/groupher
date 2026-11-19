@@ -36,19 +36,22 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
       end
     end)
 
-    change(fn canonical -> States.set_cat(canonical, category) end)
+    change(fn canonical, _operation_ref -> States.set_cat(canonical, category) end)
   end
 
   @pipeline operation: :article_sink, target: :article_id
   direct_pipeline sink_pipeline(article_id, actor, opts) do
     gate(fn _candidate -> authorize_state_change(:sink, article_id, actor, opts) end)
-    change(fn {canonical, change_opts} -> States.sink(canonical, change_opts) end)
+    change(fn {canonical, change_opts}, _operation_ref -> States.sink(canonical, change_opts) end)
   end
 
   @pipeline operation: :article_undo_sink, target: :article_id
   direct_pipeline undo_sink_pipeline(article_id, actor, opts) do
     gate(fn _candidate -> authorize_state_change(:undo_sink, article_id, actor, opts) end)
-    change(fn {canonical, change_opts} -> States.undo_sink(canonical, change_opts) end)
+
+    change(fn {canonical, change_opts}, _operation_ref ->
+      States.undo_sink(canonical, change_opts)
+    end)
   end
 
   @spec update_active_timestamp(atom(), Article.t()) :: {:ok, Article.t()} | {:error, term()}

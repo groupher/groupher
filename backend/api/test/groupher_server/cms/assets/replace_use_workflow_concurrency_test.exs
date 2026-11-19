@@ -120,6 +120,7 @@ defmodule GroupherServer.Test.CMS.Assets.ReplaceUseWorkflowConcurrency do
 
       work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default)
       workflow_ref = "asset-replacement:recovery-race:#{post.id}"
+      operation_ref = Ecto.UUID.generate()
 
       params = %{
         revision: work.revision,
@@ -130,7 +131,7 @@ defmodule GroupherServer.Test.CMS.Assets.ReplaceUseWorkflowConcurrency do
       }
 
       assert {:ok, %{revision: replaced_revision}} =
-               CMS.Assets.replace_use_workflow(post, params, user, workflow_ref)
+               CMS.Assets.replace_use_workflow(post, params, user, workflow_ref, operation_ref)
 
       parent = self()
 
@@ -175,7 +176,7 @@ defmodule GroupherServer.Test.CMS.Assets.ReplaceUseWorkflowConcurrency do
         Task.async(fn ->
           Sandbox.unboxed_run(Repo, fn ->
             send(parent, :workflow_retry_started)
-            CMS.Assets.replace_use_workflow(post, params, user, workflow_ref)
+            CMS.Assets.replace_use_workflow(post, params, user, workflow_ref, operation_ref)
           end)
         end)
 

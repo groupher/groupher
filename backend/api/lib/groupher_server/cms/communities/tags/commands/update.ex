@@ -45,7 +45,9 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Update do
         {:error, CMS.Communities.ErrorCat.not_exist("CommunityTag")}
     end)
 
-    change(fn candidate -> Mutation.update(candidate.id, attrs, command_id: command_id) end)
+    change(fn candidate, operation_ref ->
+      Mutation.update(candidate.id, attrs, operation_ref: operation_ref)
+    end)
 
     confirm(fn updated ->
       {:ok, TagSupport.confirmation(TagConfirmation, "tag_id", updated.id, command_id)}

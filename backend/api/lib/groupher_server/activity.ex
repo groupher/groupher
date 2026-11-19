@@ -126,7 +126,7 @@ defmodule GroupherServer.Activity do
       Activity.log_rejection(article, :trashed,
         actor: actor,
         rejection_code: :forbidden,
-        operation_ref: command_id
+        operation_ref: operation_ref
       )
   """
   @spec log_rejection(struct() | map(), atom(), keyword()) :: {:ok, struct()} | {:error, term()}

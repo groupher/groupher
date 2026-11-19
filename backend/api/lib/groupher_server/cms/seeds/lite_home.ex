@@ -258,9 +258,9 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
     tag_ids
     |> Enum.reduce_while({:ok, article}, fn tag_id, {:ok, article} ->
-      workflow_ref = "seed-article-tags:#{article.id}:#{tag_id}"
+      operation_ref = Ecto.UUID.generate()
 
-      case Maintenance.add(article, tag_id, workflow_ref) do
+      case Maintenance.add(article, tag_id, operation_ref) do
         {:ok, article} -> {:cont, {:ok, article}}
         {:error, reason} -> {:halt, {:error, reason}}
       end

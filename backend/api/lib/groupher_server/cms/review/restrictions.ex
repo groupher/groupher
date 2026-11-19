@@ -10,10 +10,10 @@ defmodule GroupherServer.CMS.Review.Restrictions do
   alias CMS.ReviewBlocks
 
   @doc "Applies a restriction and its source visibility consequences in the caller transaction."
-  def apply(lifecycle, attrs) do
-    operation_ref = Map.get(attrs, :operation_ref) || Ecto.UUID.generate()
-
-    with {:ok, _schema, target} <- ReviewBlocks.scope_target(lifecycle, attrs),
+  def apply(lifecycle, %{operation_ref: operation_ref} = attrs)
+      when is_binary(operation_ref) do
+    with {:ok, operation_ref} <- Ecto.UUID.cast(operation_ref),
+         {:ok, _schema, target} <- ReviewBlocks.scope_target(lifecycle, attrs),
          {:ok, restriction} <-
            ReviewBlocks.apply(lifecycle, Map.put(attrs, :operation_ref, operation_ref)),
          {:ok, :pass} <-
@@ -26,6 +26,8 @@ defmodule GroupherServer.CMS.Review.Restrictions do
       {:ok, restriction}
     end
   end
+
+  def apply(_lifecycle, _attrs), do: {:error, :review_operation_ref_required}
 
   @doc "Resolves restrictions and reconciles every affected projection in the caller transaction."
   def end_blocks(lifecycle, scope_key, ids, operation_ref, resolution) do

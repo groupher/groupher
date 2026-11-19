@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.MergeQueue do
       end
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical),
            {:ok, :pass} <- QueueAccess.authorize(canonical, article_id, actor) do
         Queue.merge(
@@ -46,7 +46,8 @@ defmodule GroupherServer.CMS.DocTree.Commands.MergeQueue do
           work_revision,
           choices,
           actor,
-          command_id
+          command_id,
+          operation_ref
         )
       end
     end)

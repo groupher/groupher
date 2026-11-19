@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
   import Ecto.Query
 
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.Model.ArtimentReview
+  alias CMS.Model.{ArtimentReview, CommunityAdmin, GlobalPassport}
   alias AlertWall.Model.{Item, UserReport}
 
   test "add is idempotent and a fresh AI source replaces the opinion as one unit" do
@@ -234,12 +234,12 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     {:ok, reporter} = db_insert(:user)
     {:ok, reviewer} = db_insert(:user)
 
-    reviewer = %{
-      reviewer
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.read" => true}}
-        }
+    reviewer = grant_community_permissions(community, reviewer, %{"review.read" => true})
+    {:ok, legacy_user} = db_insert(:user)
+
+    legacy_reviewer = %{
+      legacy_user
+      | cur_passport: %{community.slug => %{"cms" => %{"review.read" => true}}}
     }
 
     assert {:ok, {:ok, report}} =
@@ -262,11 +262,20 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     assert {:ok, %{entries: [visible]}} = AlertWall.item_reports(report.item_id, reviewer)
     assert visible.details == "A promotion link"
     assert {:error, _reason} = AlertWall.item_reports(report.item_id, reporter)
+    assert {:error, _reason} = AlertWall.item_reports(report.item_id, legacy_reviewer)
+
+    assert {:ok, %{entries: wall_items}} =
+             AlertWall.list_items(%{type: :community, community: community}, nil, reviewer)
+
+    assert Enum.any?(wall_items, &(&1.id == report.item_id))
+
+    assert {:error, _reason} =
+             AlertWall.list_items(%{type: :community, community: community}, nil, legacy_reviewer)
   end
 
   test "resolve CommandPipeline returns GraphQL fields and rejects a stale item version" do
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.decide" => true})
     command_id = Ecto.UUID.generate()
 
     assert {:ok, {:ok, item}} =
@@ -288,6 +297,71 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
                "reviewed again",
                item.version,
                reviewer,
+               Ecto.UUID.generate()
+             )
+  end
+
+  test "community Wall resolution reads Community Passport facts from storage" do
+    {community, article, _attrs, _author} = mock_article(:post)
+    {:ok, reviewer} = db_insert(:user)
+    reviewer = grant_community_permissions(community, reviewer, %{"review.decide" => true})
+
+    assert {:ok, {:ok, item}} =
+             Repo.transaction(fn ->
+               AlertWall.add_in_transaction(
+                 %{
+                   owner: :cms,
+                   target_type: :article,
+                   target_id: article.id,
+                   community_id: community.id,
+                   ai_source_ref: Ecto.UUID.generate(),
+                   sus_notes: [],
+                   summary: "community review"
+                 },
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert {:ok, %{item_id: item_id, resolution: "reviewed"}} =
+             AlertWall.resolve_item(
+               item.id,
+               "reviewed",
+               item.version,
+               reviewer,
+               Ecto.UUID.generate()
+             )
+
+    assert item_id == item.id
+
+    {:ok, legacy_reviewer} = db_insert(:user)
+
+    legacy_reviewer = %{
+      legacy_reviewer
+      | cur_passport: %{community.slug => %{"cms" => %{"review.decide" => true}}}
+    }
+
+    assert {:ok, {:ok, pending_item}} =
+             Repo.transaction(fn ->
+               AlertWall.add_in_transaction(
+                 %{
+                   owner: :cms,
+                   target_type: :article,
+                   target_id: article.id,
+                   community_id: community.id,
+                   ai_source_ref: Ecto.UUID.generate(),
+                   sus_notes: [],
+                   summary: "legacy passport must not grant access"
+                 },
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert {:error, _reason} =
+             AlertWall.resolve_item(
+               pending_item.id,
+               "reviewed",
+               pending_item.version,
+               legacy_reviewer,
                Ecto.UUID.generate()
              )
   end
@@ -342,8 +416,9 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
   end
 
   test "hasReports follows active report status and excludes resolved reports" do
+    {:ok, reviewer} = db_insert(:user)
     {:ok, reporter} = db_insert(:user)
-    reviewer = %{reporter | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.read" => true})
     attrs = item_attrs(nil, [], "resolved report only")
 
     assert {:ok, {:ok, item}} =
@@ -367,7 +442,7 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
 
   test "closed Wall items remain available in the review history" do
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.read" => true})
 
     assert {:ok, {:ok, item}} =
              Repo.transaction(fn ->
@@ -488,6 +563,26 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     }
   end
 
+  defp grant_community_permissions(community, user, permissions) do
+    %CommunityAdmin{}
+    |> CommunityAdmin.changeset(%{
+      user_id: user.id,
+      community_id: community.id,
+      permissions: permissions
+    })
+    |> Repo.insert!()
+
+    user
+  end
+
+  defp grant_global_permissions(user, permissions) do
+    %GlobalPassport{}
+    |> GlobalPassport.changeset(%{user_id: user.id, permissions: permissions})
+    |> Repo.insert!()
+
+    user
+  end
+
   defp report_attrs(reporter_id) do
     %{
       reporter_id: reporter_id,
@@ -508,6 +603,7 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
       %ArtimentReview{}
       |> ArtimentReview.changeset(%{
         target_type: :article,
+        operation_ref: Ecto.UUID.generate(),
         article_id: article_id,
         community_id: community_id,
         policy_snapshot: %{"scope" => if(community_id, do: "community", else: "system")},

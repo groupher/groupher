@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Effects do
   alias GroupherServer.{Activity, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Model.{Community, CommunityAdminRequest}
+  alias CMS.Outbox.DedupeKey
 
   @request_events [:created, :decided, :cancelled, :expired]
 
@@ -48,17 +49,17 @@ defmodule GroupherServer.CMS.Communities.Admins.Effects do
       |> Enum.uniq()
       |> Enum.sort()
       |> Enum.reduce_while({:ok, []}, fn recipient, {:ok, sent} ->
-        effect_key = "#{request.id}:#{request.revision}:#{event}:#{recipient}"
+        dedupe_key = DedupeKey.encode([request.id, request.revision, event, recipient])
 
         case CMS.Outbox.send(%{
                event: "community.admin_request",
                worker: GroupherServer.Jobs.CMSOutboxAdminRequest,
                resource_type: "community_admin_request",
                resource_id: request.id,
-               identity: {:operation, operation_ref},
-               effect_key: effect_key,
+               operation_ref: operation_ref,
+               dedupe_key: dedupe_key,
                data: %{
-                 community_ref: community.ref,
+                 community_ref: community.slug,
                  request_id: request.id,
                  request_revision: request.revision,
                  request_type: "community_admin",

@@ -33,7 +33,8 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
         action_id,
         target_parent,
         target_index,
-        %User{} = actor
+        %User{} = actor,
+        operation_ref
       )
       when is_integer(tree_revision) and tree_revision >= 0 and is_integer(queue_revision) and
              queue_revision >= 0 and is_binary(action_id) and
@@ -101,10 +102,17 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
          {:ok, :pass} <- restore_lifecycles(community, docs),
          {:ok, :pass} <- save_workspace(community, rows, draft, target_draft),
          {:ok, queue} <-
-           Queue.advance(community, queue, %{tree_lock_version: tree_revision}, [
-             :tree_lock_version
-           ]),
-         {:ok, queue} <- reconcile(community, queue, public, current, target_queue, actor),
+           Queue.advance(
+             community,
+             queue,
+             %{tree_lock_version: tree_revision},
+             [
+               :tree_lock_version
+             ],
+             operation_ref
+           ),
+         {:ok, queue} <-
+           reconcile(community, queue, public, current, target_queue, actor, operation_ref),
          {:ok, :pass} <- remove_trash(action, entries, docs) do
       {:ok,
        %{
@@ -120,7 +128,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
     end
   end
 
-  def run(_, _, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
+  def run(_, _, _, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
   defp relocate(nodes, _root_id, nil, nil), do: {:ok, nodes}
 
@@ -360,11 +368,19 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
     WorkspacePersist.save(community, rows, Enum.filter(target, &(previous[&1.node_id] != &1)))
   end
 
-  defp reconcile(_community, queue, _public, same, same, _actor), do: {:ok, queue}
+  defp reconcile(_community, queue, _public, same, same, _actor, _operation_ref), do: {:ok, queue}
 
-  defp reconcile(community, queue, public, _current, target, actor) do
+  defp reconcile(community, queue, public, _current, target, actor, operation_ref) do
     with {:ok, result} <-
-           Queue.reconcile_tree(community, queue, queue.queue_revision, public, target, actor) do
+           Queue.reconcile_tree(
+             community,
+             queue,
+             queue.queue_revision,
+             public,
+             target,
+             actor,
+             operation_ref
+           ) do
       {:ok, result.queue}
     end
   end

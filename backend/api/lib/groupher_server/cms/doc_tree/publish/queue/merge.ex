@@ -27,7 +27,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Merge do
         work_revision,
         choices,
         %User{id: actor_id} = actor,
-        command_id
+        command_id,
+        operation_ref
       )
       when is_integer(queue_revision) and queue_revision >= 0 and is_binary(article_id) and
              is_integer(default_revision) and default_revision > 0 and is_integer(work_revision) and
@@ -51,7 +52,15 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Merge do
          {:ok, saved} <- save_selected(locked.work, source, selected, changed, actor, community),
          {:ok, member} <- update_source(locked.member, source.id),
          {:ok, updated_queue} <-
-           advance_if_changed(community, queue, queue_revision, article_id, actor, changed) do
+           advance_if_changed(
+             community,
+             queue,
+             queue_revision,
+             article_id,
+             actor,
+             changed,
+             operation_ref
+           ) do
       {:ok, %{queue: updated_queue, member: member, working_copy: saved, changed_fields: changed}}
     else
       :error -> {:error, :invalid_queue_merge}
@@ -60,7 +69,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Merge do
     end
   end
 
-  def merge(_, _, _, _, _, _, _, _, _), do: {:error, :invalid_queue_merge}
+  def merge(_, _, _, _, _, _, _, _, _, _), do: {:error, :invalid_queue_merge}
 
   defp check_default(%{revision: revision}, revision), do: {:ok, :pass}
 
@@ -113,12 +122,19 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Merge do
     member |> DocsQueueArticle.changeset(%{source_snapshot_id: id}) |> Repo.update()
   end
 
-  defp advance_if_changed(_community, queue, _revision, _article_id, _actor, []), do: {:ok, queue}
+  defp advance_if_changed(_community, queue, _revision, _article_id, _actor, [], _operation_ref),
+    do: {:ok, queue}
 
-  defp advance_if_changed(community, queue, revision, article_id, actor, _changed) do
+  defp advance_if_changed(community, queue, revision, article_id, actor, _changed, operation_ref) do
     with {:ok, _} <- Queue.record_contribution(community, queue, revision, article_id, actor),
          {:ok, queue} <-
-           Queue.advance(community, queue, %{queue_revision: revision}, [:queue_revision]) do
+           Queue.advance(
+             community,
+             queue,
+             %{queue_revision: revision},
+             [:queue_revision],
+             operation_ref
+           ) do
       {:ok, queue}
     end
   end

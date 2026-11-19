@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy do
       WorkingCopyAccess.check_in_transaction(actor, :edit, article, community)
     end)
 
-    change(fn canonical_article ->
+    change(fn canonical_article, _operation_ref ->
       with {:ok, :pass} <- WorkingCopyAccess.generic_delete(canonical_article),
            %ArticleWorkingCopy{} = work <- lock_work(canonical_article.id, working_copy_id),
            {:ok, :deleted} <- Deleter.delete_in_transaction(canonical_article, work) do

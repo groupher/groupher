@@ -25,7 +25,7 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
             params: [:mentions, :from_user]
 
   direct_pipeline execute_pipeline(content, mentions, from_user) do
-    change(fn _content ->
+    change(fn _content, _operation_ref ->
       case mentions do
         [] ->
           {:ok, %{users: []}}

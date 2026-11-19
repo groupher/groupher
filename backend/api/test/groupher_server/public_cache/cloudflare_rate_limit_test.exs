@@ -89,13 +89,22 @@ defmodule GroupherServer.PublicCache.CloudflareRateLimitTest do
     end)
 
     assert {:ok, event} =
-             CMS.Outbox.send(%{
+             enqueue_outbox(%{
                event: "comment.changed",
                worker: CMSOutboxComment,
                resource_type: "comment",
                resource_id: "429-test",
-               command_id: Ecto.UUID.generate(),
-               data: %{community: "home", thread: "post", inner_id: 42}
+               operation_ref: Ecto.UUID.generate(),
+               dedupe_key: CMS.Outbox.DedupeKey.encode(["429-test", "comment.changed"]),
+               data: %{
+                 article_id: Ecto.UUID.generate(),
+                 community: "home",
+                 community_id: 1,
+                 thread: "post",
+                 inner_id: 42,
+                 comments_revision: 1,
+                 count_changed: false
+               }
              })
 
     before = DateTime.utc_now(:second)
@@ -137,5 +146,12 @@ defmodule GroupherServer.PublicCache.CloudflareRateLimitTest do
     assert {:error, {:cloudflare_rate_limited, seconds}} = Cloudflare.purge(["community[home]"])
     assert seconds in 25..35
     Req.Test.verify!(__MODULE__)
+  end
+
+  defp enqueue_outbox(attrs) do
+    case Repo.transaction(fn -> CMS.Outbox.send(attrs) end) do
+      {:ok, result} -> result
+      {:error, reason} -> {:error, reason}
+    end
   end
 end

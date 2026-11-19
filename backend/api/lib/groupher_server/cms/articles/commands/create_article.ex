@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
                    ) do
     gate(fn _target -> CMS.Gate.check_in_transaction(actor, :create_article, community) end)
 
-    change(fn canonical_community, %{operation_ref: operation_ref} ->
+    change(fn canonical_community, operation_ref ->
       create_in_transaction(
         canonical_community,
         thread,
@@ -102,7 +102,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
 
   def execute(_community, _thread, _attrs, _actor, _opts), do: {:error, :invalid_actor}
 
-  defp create_in_transaction(community, thread, attrs, actor, command_id, history_context) do
+  defp create_in_transaction(community, thread, attrs, actor, operation_ref, history_context) do
     with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
          {:ok, article} <-
            CMS.Articles.Identity.create_loaded(
@@ -116,22 +116,22 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
            |> Map.merge(%{scope_type: :default, scope_id: article.id}),
          {:ok, working_copy} <- Store.create_loaded(article, work_attrs, actor, community.id),
          event_attrs =
-           History.event_attrs(actor, command_id, community.id, history_context, 0)
+           History.event_attrs(actor, operation_ref, community.id, history_context, 0)
            |> Map.put(:type, :create),
          {:ok, _event} <-
            History.record_initial_in_transaction(
              article,
              working_copy,
              actor,
-             command_id,
+             operation_ref,
              event_attrs
            ),
-         {:ok, _binding_tags} <- sync_community_tags(community, article, attrs, command_id) do
+         {:ok, _binding_tags} <- sync_community_tags(community, article, attrs, operation_ref) do
       {:ok, %{article: article, working_copy: working_copy}}
     end
   end
 
-  defp sync_community_tags(community, article, attrs, command_id) do
+  defp sync_community_tags(community, article, attrs, operation_ref) do
     case fetch(attrs, :community_tags) do
       :missing ->
         {:ok, :unchanged}
@@ -142,7 +142,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
           article.thread,
           article,
           %{community_tags: tag_ids || []},
-          identity: {:command, command_id}
+          operation_ref: operation_ref
         )
     end
   end

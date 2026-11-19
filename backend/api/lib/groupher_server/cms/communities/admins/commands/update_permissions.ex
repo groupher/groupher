@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.UpdatePermissions do
       CMS.Gate.check_in_transaction(actor, :admin_permissions_update, canonical)
     end)
 
-    change(fn canonical, execution ->
+    change(fn canonical, operation_ref ->
       with %CommunityAdmin{} = prior <-
              Repo.get_by(CommunityAdmin, id: member_id, community_id: canonical.id),
            {:ok, locked} <- Locks.lock(canonical.id, [actor.id, prior.user_id], []),
@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.UpdatePermissions do
                locked.community,
                :admin_permissions_changed,
                actor,
-               execution.operation_ref,
+               operation_ref,
                0,
                %{
                  subject_user_id: member.user_id,

@@ -25,6 +25,8 @@ defmodule GroupherServer.CMS.Review.Commands.ApplyResult do
             target: :request_id,
             params: [:opinion]
   direct_pipeline run_internal(request_id, opinion) do
-    change(fn _target -> CMS.Review.Results.apply_in_transaction(request_id, opinion) end)
+    change(fn _target, _operation_ref ->
+      CMS.Review.Results.apply_in_transaction(request_id, opinion)
+    end)
   end
 end

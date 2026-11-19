@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
   direct_pipeline lock_comments(article_id, actor, opts) do
     gate(fn _candidate -> authorize(article_id, actor, :lock_comments, opts) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       States.lock_comments(canonical, opts)
     end)
   end
@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
   direct_pipeline unlock_comments(article_id, actor, opts) do
     gate(fn _candidate -> authorize(article_id, actor, :undo_lock_comments, opts) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       States.undo_lock_comments(canonical, opts)
     end)
   end

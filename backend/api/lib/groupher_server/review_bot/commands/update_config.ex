@@ -68,7 +68,7 @@ defmodule GroupherServer.ReviewBot.Commands.UpdateConfig do
     prepare(fn -> prepare(scope, subject_type, expected_version, attrs) end)
     gate(fn prepared -> authorize(prepared, actor) end)
 
-    change(fn prepared -> persist(prepared, actor) end)
+    change(fn prepared, _operation_ref -> persist(prepared, actor) end)
     confirm(fn confirmation -> {:ok, confirmation} end)
     present(&present_result/1)
   end

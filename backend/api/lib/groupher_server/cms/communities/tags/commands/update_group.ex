@@ -61,8 +61,8 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.UpdateTagGroup do
         {:error, CMS.Communities.ErrorCat.not_exist("CommunityTagGroup")}
     end)
 
-    change(fn {canonical, candidate} ->
-      Mutation.update_group(canonical, thread, candidate.id, attrs, command_id: command_id)
+    change(fn {canonical, candidate}, operation_ref ->
+      Mutation.update_group(canonical, thread, candidate.id, attrs, operation_ref: operation_ref)
     end)
 
     confirm(fn updated ->

@@ -27,7 +27,7 @@ defmodule GroupherServer.Messaging.Commands.RevokeNotice do
       end
     end)
 
-    change(fn %{notifications: notifications} ->
+    change(fn %{notifications: notifications}, _operation_ref ->
       if notifications == [] do
         {:ok, %{users: []}}
       else

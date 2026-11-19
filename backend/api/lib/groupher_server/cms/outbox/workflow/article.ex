@@ -60,6 +60,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
       "article.projections" ->
         run_projections(event)
 
+      "article.first_published_notification" ->
+        CMS.Articles.Effects.Publish.deliver_first_publish_notification(event)
+
       "article.search_sync" ->
         sync_search(event)
 

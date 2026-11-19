@@ -32,7 +32,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Enqueue do
         revision,
         entries,
         %User{id: actor_id} = actor,
-        command_id
+        command_id,
+        operation_ref
       )
       when is_integer(revision) and revision >= 0 and is_list(entries) and
              is_integer(actor_id) and actor_id > 0 and is_binary(command_id) do
@@ -42,7 +43,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Enqueue do
          %User{} <- Repo.get(User, actor_id),
          {:ok, locked} <- lock_batch(community, queue, entries),
          {:ok, forks} <- fork_batch(locked, queue, actor, command_id),
-         {:ok, result} <- Queue.add_many(community, queue, revision, forks, actor) do
+         {:ok, result} <- Queue.add_many(community, queue, revision, forks, actor, operation_ref) do
       {:ok, result}
     else
       :error -> {:error, :invalid_queue_members}
@@ -51,7 +52,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Enqueue do
     end
   end
 
-  def enqueue(_, _, _, _, _, _), do: {:error, :invalid_queue_members}
+  def enqueue(_, _, _, _, _, _, _), do: {:error, :invalid_queue_members}
 
   defp normalize([]), do: {:error, :invalid_queue_members}
 

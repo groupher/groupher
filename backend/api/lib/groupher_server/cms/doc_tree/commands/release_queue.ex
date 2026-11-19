@@ -24,9 +24,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.ReleaseQueue do
   receipt_pipeline run_receipt(community, revision, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :docs_queue_publish, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical) do
-        QueueRelease.run(canonical, queue, revision, actor, command_id)
+        QueueRelease.run(canonical, queue, revision, actor, command_id, operation_ref)
       end
     end)
 

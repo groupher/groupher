@@ -38,8 +38,13 @@ defmodule GroupherServer.CMS.Articles.Commands.PermanentlyDeleteTrashed do
       end
     end)
 
-    change(fn %{item: item, article: article} ->
-      TrashAgg.permanently_delete_loaded(item, article, actor, opts)
+    change(fn %{item: item, article: article}, operation_ref ->
+      TrashAgg.permanently_delete_loaded(
+        item,
+        article,
+        actor,
+        Keyword.put(opts, :operation_ref, operation_ref)
+      )
     end)
 
     confirm(fn _result ->
@@ -62,7 +67,9 @@ defmodule GroupherServer.CMS.Articles.Commands.PermanentlyDeleteTrashed do
       end
     end)
 
-    change(fn loaded -> delete_loaded(loaded, actor, opts) end)
+    change(fn loaded, operation_ref ->
+      delete_loaded(loaded, actor, Keyword.put(opts, :operation_ref, operation_ref))
+    end)
   end
 
   @spec execute(

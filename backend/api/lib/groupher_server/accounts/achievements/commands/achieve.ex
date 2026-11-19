@@ -29,7 +29,7 @@ defmodule GroupherServer.Accounts.Achievements.Commands.Achieve do
       end
     end)
 
-    change(fn %User{id: user_id} ->
+    change(fn %User{id: user_id}, _operation_ref ->
       apply_in_transaction(%User{id: user_id}, operation, key)
     end)
   end
@@ -79,7 +79,7 @@ defmodule GroupherServer.Accounts.Achievements.Commands.Achieve do
       end
     end)
 
-    change(fn %User{id: user_id} ->
+    change(fn %User{id: user_id}, _operation_ref ->
       with {:ok, achievement} <- Persist.find(user_id) do
         attrs = %{
           articles_collects_count: max(achievement.articles_collects_count - count, 0),

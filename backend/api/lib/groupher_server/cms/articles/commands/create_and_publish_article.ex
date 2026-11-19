@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
                    ) do
     gate(fn _target -> CMS.Gate.check_in_transaction(actor, :create_article, community) end)
 
-    change(fn canonical_community, %{operation_ref: operation_ref} ->
+    change(fn canonical_community, operation_ref ->
       history_context = Map.put(history_context, :causation_command_id, command_id)
 
       if check_publish_admission? do
@@ -113,7 +113,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
     {:error, :invalid_create_publish_command}
   end
 
-  defp create_and_publish(community, thread, attrs, actor, command_id, history_context) do
+  defp create_and_publish(community, thread, attrs, actor, operation_ref, history_context) do
     with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
          {:ok, article} <-
            CMS.Articles.Identity.create_loaded(
@@ -124,13 +124,13 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
            ),
          work_attrs <- Map.merge(attrs, %{scope_type: :default, scope_id: article.id}),
          {:ok, work} <- Store.create_loaded(article, work_attrs, actor, community.id),
-         event_attrs = History.event_attrs(actor, command_id, community.id, history_context, 0),
+         event_attrs = History.event_attrs(actor, operation_ref, community.id, history_context, 0),
          {:ok, _created} <-
            History.record_initial_in_transaction(
              article,
              work,
              actor,
-             command_id,
+             operation_ref,
              Map.put(event_attrs, :type, :create)
            ),
          {:ok, published} <-
@@ -140,8 +140,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
              %{working_copy_id: work.id, revision: work.revision},
              nil,
              actor,
-             command_id,
-             {:operation, command_id},
+             operation_ref,
              history_context.causation_command_id
            ),
          {:ok, _published_event} <-
@@ -150,15 +149,15 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
              nil,
              published.snapshot.id,
              actor,
-             command_id,
+             operation_ref,
              %{event_attrs | operation_index: 1}
            ),
-         {:ok, _binding_tags} <- sync_community_tags(community, article, attrs, command_id) do
+         {:ok, _binding_tags} <- sync_community_tags(community, article, attrs, operation_ref) do
       {:ok, Map.put(published, :working_copy, work)}
     end
   end
 
-  defp sync_community_tags(community, article, attrs, command_id) do
+  defp sync_community_tags(community, article, attrs, operation_ref) do
     case fetch(attrs, :community_tags) do
       :missing ->
         {:ok, :unchanged}
@@ -169,7 +168,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
           article.thread,
           article,
           %{community_tags: tag_ids || []},
-          identity: {:command, command_id}
+          operation_ref: operation_ref
         )
     end
   end

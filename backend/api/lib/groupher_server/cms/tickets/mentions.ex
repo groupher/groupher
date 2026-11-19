@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Tickets.Mentions do
   alias CMS.ArtimentMentions
   alias CMS.Model.{Article, ArticlePublic, ArticleSnapshot, Community}
 
-  def update(article_id, %Community{} = community, command_id) when is_binary(command_id) do
+  def update(article_id, %Community{} = community, operation_ref) when is_binary(operation_ref) do
     with {:ok, %Article{thread: :ticket} = article} <-
            CMS.FrontDesk.article(article_id, mode: :internal),
          %ArticlePublic{} = public <- Repo.get(ArticlePublic, article.id),
@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Tickets.Mentions do
           community_id: community.id,
           mentioned_at: public.updated_at
         },
-        {:command, command_id}
+        operation_ref
       )
     else
       false -> {:error, :ticket_publication_time_missing}

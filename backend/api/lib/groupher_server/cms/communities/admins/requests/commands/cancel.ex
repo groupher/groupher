@@ -36,10 +36,10 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Cancel do
             target: :community,
             params: [:request_id, :revision]
   receipt_pipeline run(community, request_id, revision, actor, command_id) do
-    gate(fn _canonical -> {:ok, :pass} end)
+    gate(fn canonical -> authorize_cancel_request(canonical, request_id, actor) end)
 
-    change(fn canonical, execution ->
-      cancel_locked(canonical, request_id, revision, actor, execution.operation_ref)
+    change(fn canonical, operation_ref ->
+      cancel_locked(canonical, request_id, revision, actor, operation_ref)
     end)
 
     confirm(fn request ->
@@ -74,7 +74,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Cancel do
 
   def execute(_, _, _, _, _), do: {:error, :invalid_admin_request}
 
-  defp cancel_locked(community, request_id, revision, actor, operation) do
+  defp cancel_locked(community, request_id, revision, actor, operation_ref) do
     with %CommunityAdminRequest{} = candidate <-
            Repo.get_by(CommunityAdminRequest, id: request_id, community_id: community.id),
          lords <-
@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Cancel do
          users = Enum.uniq([actor.id, candidate.subject_user_id, candidate.created_by_id | lords]),
          {:ok, locked} <- Locks.lock(community.id, users, [candidate.id]),
          [request] <- locked.requests,
-         {:ok, result} <- cancel_or_expire(locked, request, revision, actor, operation) do
+         {:ok, result} <- cancel_or_expire(locked, request, revision, actor, operation_ref) do
       {:ok, result}
     else
       nil -> {:error, :request_not_found}
@@ -97,19 +97,18 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Cancel do
     end
   end
 
-  defp cancel_or_expire(locked, request, revision, actor, operation) do
+  defp cancel_or_expire(locked, request, revision, actor, operation_ref) do
     now = DateTime.utc_now(:second)
 
     case Rules.pending(request, revision, now) do
-      {:ok, :pass} -> commit_cancel(locked, request, actor, operation, now)
-      {:error, :request_expired} -> Expiration.expire(locked, request, operation, 0, now)
+      {:ok, :pass} -> commit_cancel(locked, request, actor, operation_ref, now)
+      {:error, :request_expired} -> Expiration.expire(locked, request, operation_ref, 0, now)
       {:error, _} = error -> error
     end
   end
 
-  defp commit_cancel(locked, request, actor, operation, now) do
-    with {:ok, :pass} <- authorize_cancel(locked.community, request, actor),
-         {:ok, cancelled} <-
+  defp commit_cancel(locked, request, actor, operation_ref, now) do
+    with {:ok, cancelled} <-
            request
            |> CommunityAdminRequest.changeset(%{
              status: :cancelled,
@@ -134,7 +133,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Cancel do
              locked.community,
              :admin_request_cancelled,
              actor,
-             operation,
+             operation_ref,
              0,
              metadata
            ),
@@ -146,20 +145,27 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Cancel do
              :cancelled,
              actor,
              recipients,
-             operation
+             operation_ref
            ) do
       {:ok, cancelled}
     end
   end
 
-  defp authorize_cancel(_community, %CommunityAdminRequest{subject_user_id: id}, %User{id: id}),
-    do: {:ok, :pass}
+  defp authorize_cancel_request(community, request_id, actor) do
+    case Repo.get_by(CommunityAdminRequest, id: request_id, community_id: community.id) do
+      %CommunityAdminRequest{subject_user_id: id} when id == actor.id ->
+        {:ok, community}
 
-  defp authorize_cancel(_community, %CommunityAdminRequest{created_by_id: id}, %User{id: id}),
-    do: {:ok, :pass}
+      %CommunityAdminRequest{created_by_id: id} when id == actor.id ->
+        {:ok, community}
 
-  defp authorize_cancel(community, _request, actor),
-    do: CMS.Gate.check_in_transaction(actor, :admin_request_decide, community)
+      %CommunityAdminRequest{} ->
+        CMS.Gate.check_in_transaction(actor, :admin_request_decide, community)
+
+      nil ->
+        {:error, :request_not_found}
+    end
+  end
 
   defp cancel_recipients(locked, %CommunityAdminRequest{type: :apply} = request, actor) do
     locked.admins

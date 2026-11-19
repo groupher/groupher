@@ -30,8 +30,8 @@ defmodule GroupherServer.CMS.DocCover.Commands.UnpinDoc do
   receipt_pipeline execute(community, node_id, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
 
-    change(fn canonical ->
-      CMS.DocTree.Publication.Presentation.write(canonical, fn ->
+    change(fn canonical, operation_ref ->
+      CMS.DocTree.Publication.Presentation.write(canonical, operation_ref, fn ->
         Persist.unpin_doc(canonical, node_id)
       end)
     end)

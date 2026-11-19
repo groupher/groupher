@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
                    ) do
     gate(fn _target -> authorize_create(thread, article, user, community, info) end)
 
-    change(fn context ->
+    change(fn context, operation_ref ->
       create_new(
         thread,
         context.article,
@@ -67,7 +67,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         user,
         context.info,
         command_id,
-        context.community
+        context.community,
+        operation_ref
       )
     end)
 
@@ -92,8 +93,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
       end
     end)
 
-    change(fn %{comment: canonical, article: article} ->
-      reply_new_from_canonical(canonical, article, body, user, command_id)
+    change(fn %{comment: canonical, article: article}, operation_ref ->
+      reply_new_from_canonical(canonical, article, body, user, command_id, operation_ref)
     end)
 
     confirm(fn result ->
@@ -246,25 +247,34 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp create_new(thread, article, body, %User{} = user, info, command_id, community) do
+  defp create_new(
+         thread,
+         article,
+         body,
+         %User{} = user,
+         info,
+         command_id,
+         community,
+         operation_ref
+       ) do
     with {:ok, comment} <-
            create_comment_record(body, thread, info.foreign_key, article, community, user) do
-      Summary.with_change(comment, fn ->
-        finish_create_new(thread, article, comment, user, command_id, community)
+      Summary.with_change(comment, operation_ref, fn ->
+        finish_create_new(thread, article, comment, user, command_id, community, operation_ref)
       end)
     end
   end
 
-  defp finish_create_new(thread, article, comment, user, command_id, community) do
+  defp finish_create_new(thread, article, comment, user, command_id, community, operation_ref) do
     with {:ok, lifecycle} <- Lifecycle.ensure_created(comment.id),
          {:ok, _review} <-
-           register_comment_review(comment, lifecycle, community, command_id, :submit),
+           register_comment_review(comment, lifecycle, community, operation_ref, :submit),
          {:ok, counted_article} <- keep_article(article),
          {:ok, projected_comment} <- Persist.update_question_flag(article, comment),
          {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
          {:ok, _} <-
            record_article_metric(counted_article, community, command_id, :comment_created),
-         {:ok, _} <- Mentions.update(projected_comment, command_id, community.id),
+         {:ok, _} <- Mentions.update(projected_comment, operation_ref, community.id),
          {:ok, :pass} <- Revision.bump(),
          {:ok, _} <-
            enqueue_comment_effects(
@@ -273,7 +283,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
              community,
              user,
              :created,
-             command_id
+             command_id,
+             operation_ref
            ) do
       {:ok,
        %{
@@ -421,7 +432,14 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp reply_new_from_canonical(canonical, article, body, %User{} = user, command_id) do
+  defp reply_new_from_canonical(
+         canonical,
+         article,
+         body,
+         %User{} = user,
+         command_id,
+         operation_ref
+       ) do
     with replying_comment <- Query.comment_with_reply_author(canonical),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
          %Community{} = community <- Map.get(article, :community),
@@ -435,7 +453,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         info,
         article,
         community,
-        command_id
+        command_id,
+        operation_ref
       )
     end
   end
@@ -448,7 +467,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          info,
          article,
          community,
-         command_id
+         command_id,
+         operation_ref
        ) do
     with {:ok, replied_comment} <-
            Persist.insert_comment(
@@ -460,7 +480,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
              user,
              replying_comment
            ) do
-      Summary.with_change(replied_comment, fn ->
+      Summary.with_change(replied_comment, operation_ref, fn ->
         finish_reply_new(
           replying_comment,
           replied_comment,
@@ -468,7 +488,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
           thread,
           article,
           community,
-          command_id
+          command_id,
+          operation_ref
         )
       end)
     end
@@ -481,13 +502,14 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          thread,
          article,
          community,
-         command_id
+         command_id,
+         operation_ref
        ) do
     parent_comment = Replies.root_comment(replying_comment)
 
     with {:ok, lifecycle} <- Lifecycle.ensure_created(replied_comment.id),
          {:ok, _review} <-
-           register_comment_review(replied_comment, lifecycle, community, command_id, :submit),
+           register_comment_review(replied_comment, lifecycle, community, operation_ref, :submit),
          {:ok, counted_article} <- keep_article(article),
          {:ok, _reply_binding} <- Persist.insert_reply_binding(replied_comment, replying_comment),
          {:ok, reply_with_meta} <-
@@ -497,7 +519,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          {:ok, _activity_time} <- update_active_timestamp(thread, article, associated_reply),
          {:ok, _} <-
            record_article_metric(counted_article, community, command_id, :comment_created),
-         {:ok, _} <- Mentions.update(associated_reply, command_id, community.id),
+         {:ok, _} <- Mentions.update(associated_reply, operation_ref, community.id),
          {:ok, :pass} <- Revision.bump(),
          {:ok, _} <-
            enqueue_comment_effects(
@@ -506,7 +528,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
              community,
              user,
              :replied,
-             command_id
+             command_id,
+             operation_ref
            ) do
       {:ok,
        %{
@@ -529,7 +552,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          %Comment{} = comment,
          lifecycle,
          %Community{id: community_id},
-         _command_id,
+         operation_ref,
          trigger
        ) do
     with {:ok, configs} <- ReviewBot.configs(community_id, :comment) do
@@ -542,7 +565,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
       target = %{
         type: :comment,
         comment_id: comment.id,
-        lifecycle: lifecycle
+        lifecycle: lifecycle,
+        operation_ref: operation_ref
       }
 
       CMS.Review.RequestSubmission.register_in_transaction(
@@ -577,7 +601,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          community,
          %User{} = actor,
          action,
-         command_id
+         _command_id,
+         operation_ref
        ) do
     with {:ok, _inner_id} <- article_inner_id(article, community),
          {:ok, _event} <-
@@ -585,7 +610,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
              "comment.#{action}",
              "comment",
              comment.id,
-             command_id,
+             operation_ref,
              %{article_id: article.id, actor_id: actor.id, community_id: community.id}
            ) do
       {:ok, :pass}

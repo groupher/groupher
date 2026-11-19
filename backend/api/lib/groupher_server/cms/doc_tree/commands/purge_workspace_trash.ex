@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.PurgeWorkspaceTrash do
       end
     end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical) do
         WorkspaceTrashPurge.run(canonical, queue, queue_revision, action_id, actor, command_id)
       end
@@ -55,7 +55,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.PurgeWorkspaceTrash do
       end
     end)
 
-    change(fn community ->
+    change(fn community, _operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(community) do
         case Repo.one(
                from(a in TrashAction,

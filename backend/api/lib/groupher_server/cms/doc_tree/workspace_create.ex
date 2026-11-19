@@ -16,7 +16,14 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceCreate do
   @fields ~w(node_id type parent_node_id index title href doc_id marker badge hidden)a
 
   @doc "Creates one validated draft node under the checked site tree version."
-  def run(%Community{} = community, %DocsPublishQueue{} = queue, revision, attrs, %User{} = actor)
+  def run(
+        %Community{} = community,
+        %DocsPublishQueue{} = queue,
+        revision,
+        attrs,
+        %User{} = actor,
+        operation_ref
+      )
       when is_integer(revision) and revision >= 0 and is_map(attrs) do
     with {:ok, queue} <- Queue.advance(community, queue, %{tree_lock_version: revision}, []),
          {:ok, input} <- normalize(attrs),
@@ -27,7 +34,13 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceCreate do
            TreeOrder.insert(Enum.map(rows, &Map.take(&1, @fields)), node, input.index),
          {:ok, :pass} <- WorkspacePersist.save(community, rows, result.changed),
          {:ok, queue} <-
-           Queue.advance(community, queue, %{tree_lock_version: revision}, [:tree_lock_version]) do
+           Queue.advance(
+             community,
+             queue,
+             %{tree_lock_version: revision},
+             [:tree_lock_version],
+             operation_ref
+           ) do
       {:ok,
        %{
          node_id: node.node_id,
@@ -38,7 +51,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceCreate do
     end
   end
 
-  def run(_, _, _, _, _), do: {:error, :invalid_tree_input}
+  def run(_, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
   defp normalize(%{type: type, title: title} = attrs)
        when type in [:tab, :group, :page, :link, :pin] and is_binary(title) do

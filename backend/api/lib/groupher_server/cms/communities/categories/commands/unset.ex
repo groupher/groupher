@@ -38,7 +38,9 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Unset do
       end
     end)
 
-    change(fn {canonical, category} -> Persist.unset_category(canonical, category) end)
+    change(fn {canonical, category}, _operation_ref ->
+      Persist.unset_category(canonical, category)
+    end)
 
     confirm(fn _result ->
       {:ok, Support.confirmation(BindingConfirmation, "community_id", community.id, command_id)}

@@ -27,7 +27,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Commands.Add do
       prepare_gated_add(article, folder_id, user, command_id)
     end)
 
-    change(fn prepared -> apply_add(prepared, article, user) end)
+    change(fn prepared, _operation_ref -> apply_add(prepared, article, user) end)
     confirm(fn folder -> confirmation(folder, article, folder_id, :add) end)
     present(fn confirmation -> present_confirmation(confirmation, command_id) end)
   end
@@ -36,7 +36,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Commands.Add do
 
   direct_pipeline execute_direct(article, folder_id, user) do
     gate(fn _article -> prepare_gated_add(article, folder_id, user, Ecto.UUID.generate()) end)
-    change(fn prepared -> apply_add(prepared, article, user) end)
+    change(fn prepared, _operation_ref -> apply_add(prepared, article, user) end)
     present(fn folder -> {:ok, %{folder: folder, command_id: nil}} end)
   end
 

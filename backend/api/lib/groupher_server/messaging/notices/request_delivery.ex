@@ -39,18 +39,44 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
            event
        )
        when is_map(data) do
+    deliver_request_notice(event, data, :community_admin)
+  end
+
+  defp deliver_in_transaction(
+         %{
+           event: "article.co_author_request",
+           resource_type: "article_co_author_request",
+           data: data
+         } =
+           event
+       )
+       when is_map(data) do
+    deliver_request_notice(event, data, :article_co_author)
+  end
+
+  defp deliver_in_transaction(_), do: {:error, invalid_event()}
+
+  defp deliver_request_notice(event, data, expected_request_type) do
     with {:ok, recipient_id} <- positive_id(data["recipient_id"]),
          {:ok, request_id} <- uuid(data["request_id"]),
          {:ok, revision} <- positive_id(data["request_revision"]),
-         {:ok, request_type} <- request_type(data["request_type"]),
+         {:ok, ^expected_request_type} <- request_type(data["request_type"]),
          {:ok, event_type} <- event_type(data["event_type"]),
          {:ok, action} <- notice_action(data["event_type"], data["request_action"]),
          true <- event.resource_id == request_id,
-         true <- is_binary(data["community_ref"]),
+         :ok <- validate_resource_context(data, expected_request_type),
          {:ok, recipient} <- fetch_user(recipient_id),
          {:ok, actors} <- actors(data["actor"], event_type),
          {:ok, notice} <-
-           write_notice(recipient, actors, action, request_type, request_id, revision, event_type),
+           write_notice(
+             recipient,
+             actors,
+             action,
+             expected_request_type,
+             request_id,
+             revision,
+             event_type
+           ),
          {:ok, users} <- Accounts.mailbox_update_status_many_in_transaction([recipient.id]) do
       {:ok, {notice, users}}
     else
@@ -58,8 +84,6 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
       {:error, _} = error -> error
     end
   end
-
-  defp deliver_in_transaction(_), do: {:error, invalid_event()}
 
   defp write_notice(recipient, actors, action, request_type, request_id, revision, event_type) do
     key = "admin-request:#{request_type}:#{request_id}:#{revision}:#{event_type}:#{recipient.id}"
@@ -69,7 +93,7 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
            Notice.changeset(%Notice{}, %{
              user_id: recipient.id,
              type: action,
-             title: "Community Admin request",
+             title: request_title(request_type),
              read: false,
              request_type: request_type,
              request_id: request_id,
@@ -124,19 +148,33 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
   defp uuid(_), do: {:error, invalid_event()}
 
   defp request_type("community_admin"), do: {:ok, :community_admin}
+  defp request_type("article_co_author"), do: {:ok, :article_co_author}
   defp request_type(_), do: {:error, invalid_event()}
   defp event_type("created"), do: {:ok, :created}
   defp event_type("decided"), do: {:ok, :decided}
   defp event_type("cancelled"), do: {:ok, :cancelled}
   defp event_type("expired"), do: {:ok, :expired}
   defp event_type(_), do: {:error, invalid_event()}
-  defp notice_action("created", "invite"), do: {:ok, "invite"}
-  defp notice_action("created", "apply"), do: {:ok, "apply"}
+  defp notice_action("created", action) when action in ["invite", "apply"], do: {:ok, action}
 
   defp notice_action(event, _) when event in ["decided", "cancelled", "expired"],
     do: {:ok, "result"}
 
   defp notice_action(_, _), do: {:error, invalid_event()}
+
+  defp validate_resource_context(data, :community_admin) do
+    if is_binary(data["community_ref"]), do: :ok, else: {:error, invalid_event()}
+  end
+
+  defp validate_resource_context(data, :article_co_author) do
+    case Ecto.UUID.cast(data["article_id"]) do
+      {:ok, _article_id} -> :ok
+      :error -> {:error, invalid_event()}
+    end
+  end
+
+  defp request_title(:community_admin), do: "Community Admin request"
+  defp request_title(:article_co_author), do: "Article co-author request"
 
   defp invalid_event, do: CMS.ErrorCat.invalid_body("invalid admin request outbox event")
 end

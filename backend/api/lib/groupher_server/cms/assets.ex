@@ -89,14 +89,14 @@ defmodule GroupherServer.CMS.Assets do
 
   ## Examples
 
-      CMS.Assets.refs(community, asset.id, %{page: 1, size: 20})
+      CMS.Assets.refs(community, asset.id, %{page: 1, size: 20}, actor)
       #=> {:ok, %{entries: refs, total_count: total_count}}
 
   """
-  @spec refs(Community.t(), T.id(), GroupherServer.Pagi.Params.t() | nil) ::
+  @spec refs(Community.t(), T.id(), GroupherServer.Pagi.Params.t() | nil, User.t()) ::
           T.domain_res(T.paged_data())
-  def refs(%Community{} = community, asset_id, pagi) do
-    Query.refs(community, asset_id, pagi)
+  def refs(%Community{} = community, asset_id, pagi, actor) do
+    Query.refs(community, asset_id, pagi, actor)
   end
 
   @doc "Returns the version-owned asset relations for one Draft or Revision body owner."
@@ -256,30 +256,19 @@ defmodule GroupherServer.CMS.Assets do
     Commands.ReplaceUse.execute(article, attrs, user, command_id)
   end
 
-  @doc "Replaces one Draft asset use through the explicit replacement workflow entry."
-  def replace_use_workflow(article, attrs, %User{} = user, workflow_ref) do
-    Commands.ReplaceUse.execute_for_workflow(article, attrs, user, workflow_ref)
+  @doc "Replaces one Draft asset use using its persisted workflow-step operation identity."
+  def replace_use_workflow(article, attrs, %User{} = user, workflow_ref, operation_ref) do
+    Commands.ReplaceUse.execute_for_workflow(article, attrs, user, workflow_ref, operation_ref)
+  end
+
+  def replace_use_workflow(_article, _attrs, %User{}, _workflow_ref) do
+    {:error, :operation_ref_required}
   end
 
   @doc "Lists old, unreferenced assets eligible for a later GC decision."
   def gc_candidates(%Community{} = community, opts \\ []) do
     GroupherServer.CMS.Assets.GC.candidates(community, opts)
   end
-
-  @doc """
-  Cleans up all persisted asset refs for one permanently deleted article.
-
-  This is called from article deletion so the resource library keeps ownership
-  data in `community_assets` while removing stale document usage rows.
-
-  ## Examples
-
-      CMS.Assets.cleanup_refs(:post, post.id)
-      #=> {:ok, {deleted_count, nil}}
-
-  """
-  @spec cleanup_refs(atom(), T.id()) :: T.domain_res(term())
-  def cleanup_refs(thread, article_id), do: Refs.purge_refs(thread, article_id)
 
   @doc "Creates an immutable, reviewable global replacement plan."
   def create_replacement_plan(%Community{} = community, attrs, %User{} = user) do

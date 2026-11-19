@@ -9,17 +9,18 @@ defmodule GroupherServer.CMS.Review.Effects do
 
   alias GroupherServer.CMS
   alias CMS.Model.ArtimentReview
+  alias CMS.Outbox.DedupeKey
 
   @doc "Writes the request's reliable review event in the caller-owned transaction."
   @spec enqueue_artiment_review(ArtimentReview.t()) :: {:ok, struct()} | {:error, term()}
-  def enqueue_artiment_review(%ArtimentReview{id: request_id}) do
+  def enqueue_artiment_review(%ArtimentReview{id: request_id, operation_ref: operation_ref}) do
     CMS.Outbox.send(%{
       event: "cms.artiment_review",
       worker: GroupherServer.Jobs.CMSArtimentReview,
       resource_type: "artiment_review",
       resource_id: request_id,
-      identity: {:workflow, "review-request:#{request_id}"},
-      effect_key: "review-request:#{request_id}",
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([request_id]),
       data: %{"request_id" => request_id}
     })
   end

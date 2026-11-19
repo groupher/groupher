@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
       end
     end)
 
-    change(fn %{item: item, article: article}, %{operation_ref: operation_ref} ->
+    change(fn %{item: item, article: article}, operation_ref ->
       TrashAgg.restore_loaded(
         item,
         article,
@@ -70,7 +70,9 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
       end
     end)
 
-    change(fn loaded -> restore_loaded(loaded, actor, opts) end)
+    change(fn loaded, operation_ref ->
+      restore_loaded(loaded, actor, Keyword.put(opts, :operation_ref, operation_ref))
+    end)
   end
 
   @spec execute(

@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestEffectsTest do
                Repo.rollback(:failed_later)
              end)
 
-    refute Repo.exists?(from(e in Event, where: e.command_id == ^operation))
+    refute Repo.exists?(from(e in Event, where: e.operation_ref == ^operation))
 
     assert {:ok, :pass} =
              Repo.transaction(fn ->
@@ -62,10 +62,9 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestEffectsTest do
                :pass
              end)
 
-    assert Repo.aggregate(from(e in Event, where: e.command_id == ^operation), :count) == 1
+    assert Repo.aggregate(from(e in Event, where: e.operation_ref == ^operation), :count) == 1
 
-    event = Repo.one!(from(e in Event, where: e.command_id == ^operation))
-    assert event.identity_type == :operation
+    event = Repo.one!(from(e in Event, where: e.operation_ref == ^operation))
     assert event.data["request_id"] == request.id
     assert event.data["recipient_id"] == recipient.id
 
@@ -129,7 +128,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestEffectsTest do
                :pass
              end)
 
-    event = Repo.one!(from(e in Event, where: e.command_id == ^operation))
+    event = Repo.one!(from(e in Event, where: e.operation_ref == ^operation))
 
     assert {:ok, :pass} =
              GroupherServer.Jobs.CMSOutboxAdminRequest.perform(%Oban.Job{
@@ -162,7 +161,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestEffectsTest do
                :pass
              end)
 
-    result_event = Repo.one!(from(e in Event, where: e.command_id == ^result_operation))
+    result_event = Repo.one!(from(e in Event, where: e.operation_ref == ^result_operation))
 
     assert {:ok, :pass} =
              GroupherServer.Jobs.CMSOutboxAdminRequest.perform(%Oban.Job{
@@ -209,7 +208,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestEffectsTest do
                :pass
              end)
 
-    event = Repo.one!(from(e in Event, where: e.command_id == ^operation))
+    event = Repo.one!(from(e in Event, where: e.operation_ref == ^operation))
 
     assert {:ok, :pass} =
              GroupherServer.Jobs.CMSOutboxAdminRequest.perform(%Oban.Job{

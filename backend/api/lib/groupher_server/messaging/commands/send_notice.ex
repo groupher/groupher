@@ -31,7 +31,7 @@ defmodule GroupherServer.Messaging.Commands.SendNotice do
       end
     end)
 
-    change(fn attrs ->
+    change(fn attrs, _operation_ref ->
       case deliver(attrs, from_user) do
         {:error, reason} -> {:error, reason}
         result -> {:ok, result}

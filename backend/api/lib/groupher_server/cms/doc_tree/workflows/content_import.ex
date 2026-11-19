@@ -97,7 +97,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
          {:ok, bodies} <- load_bodies(job.id, ready_items),
          ready_refs <- MapSet.new(ready_items, & &1.external_ref),
          tree <- DocValidator.filter_target_tree(job.target_tree, ready_refs),
-         {:ok, _} <- restore_trashed_targets(community, actor, ready_items),
+         {:ok, _} <- restore_trashed_targets(community, actor, job.hash_id, ready_items),
          {:ok, written_items} <-
            write_items(community, actor, ready_items, bodies),
          {:ok, _tree} <- DocTreeImport.apply(community, tree, written_items, actor),
@@ -143,7 +143,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
 
   # Reimport restores the complete owning Trash action before writing its D.
   # The new restore path rechecks permissions and Queue dependencies atomically.
-  defp restore_trashed_targets(community, actor, items) do
+  defp restore_trashed_targets(community, actor, operation_ref, items) do
     ids = Enum.map(items, & &1.target_ref)
 
     actions =
@@ -160,7 +160,9 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
       )
       |> Enum.uniq()
 
-    Enum.reduce_while(actions, {:ok, :pass}, fn id, _ ->
+    actions
+    |> Enum.with_index()
+    |> Enum.reduce_while({:ok, :pass}, fn {id, operation_index}, _ ->
       with {:ok, queue} <- Queue.lock_or_create(community),
            {:ok, restored} <-
              WorkspaceRestore.run(
@@ -171,7 +173,8 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
                id,
                nil,
                nil,
-               actor
+               actor,
+               operation_ref
              ),
            {:ok, _} <-
              GroupherServer.Activity.log(
@@ -179,7 +182,8 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
                :restored,
                actor: actor,
                source: :worker,
-               operation_ref: id
+               operation_ref: operation_ref,
+               operation_index: operation_index
              ) do
         {:cont, {:ok, :pass}}
       else

@@ -27,6 +27,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   alias CMS.Gate.Access.Check
   alias CMS.Gate.Access.Policy.Application, as: ApplicationPolicy
   alias CMS.Gate.{Decision, ErrorCat}
+  require ErrorCat
   alias CMS.{Articles, FrontDesk}
   alias CMS.Model.{Article, Comment, Community}
   alias CMS.Model.CommunityApplication
@@ -54,6 +55,14 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   def access_check(actor, action, %Comment{} = resource) do
     Check.comment(actor, action, resource)
+  end
+
+  def access_check(actor, :manage_coauthors, %Article{} = resource) do
+    case Repo.transaction(fn -> Check.article(actor, :manage_coauthors, resource) end) do
+      {:ok, result} -> result
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+      {:error, _reason} -> {:error, Decision.deny(ErrorCat.resource_not_found())}
+    end
   end
 
   def access_check(actor, action, %Article{} = resource) do
@@ -127,6 +136,13 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     else
       nil -> {:error, ErrorCat.resource_not_found()}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def check_in_transaction(actor, :manage_coauthors, %Article{} = article) do
+    with {:ok, :pass} <- require_transaction() do
+      Check.article(actor, :manage_coauthors, article)
+      |> normalize_join_decision()
     end
   end
 

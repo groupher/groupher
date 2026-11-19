@@ -20,9 +20,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.DuplicateWorkspaceNode do
   receipt_pipeline run_receipt(community, revision, node_id, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical) do
-        WorkspaceDuplicate.run(canonical, queue, revision, node_id, actor)
+        WorkspaceDuplicate.run(canonical, queue, revision, node_id, actor, operation_ref)
       end
     end)
 

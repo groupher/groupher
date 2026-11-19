@@ -20,13 +20,12 @@ defmodule GroupherServer.CMS.Outbox.Event do
   schema "outbox_events" do
     field(:event, :string)
     field(:contract_version, :integer, default: 1)
+    field(:worker, :string)
     field(:resource_type, :string)
     field(:resource_id, :string)
-    # Kept under the legacy column name while the database contract migrates;
-    # `identity_type` distinguishes a user command from a maintenance workflow.
-    field(:command_id, :string)
-    field(:identity_type, Ecto.Enum, values: [:command, :workflow], default: :command)
-    field(:effect_key, :string, default: "default")
+    field(:operation_ref, Ecto.UUID)
+    field(:dedupe_key, :string)
+    field(:failure_generation, :integer, default: 0)
     field(:data, :map, default: %{})
     field(:status, GroupherServer.CMS.Outbox.Status, default: :waiting)
     field(:attempts, :integer, default: 0)
@@ -47,11 +46,12 @@ defmodule GroupherServer.CMS.Outbox.Event do
       :id,
       :event,
       :contract_version,
+      :worker,
       :resource_type,
       :resource_id,
-      :command_id,
-      :identity_type,
-      :effect_key,
+      :operation_ref,
+      :dedupe_key,
+      :failure_generation,
       :data,
       :status,
       :attempts,
@@ -66,11 +66,12 @@ defmodule GroupherServer.CMS.Outbox.Event do
       :id,
       :event,
       :contract_version,
+      :worker,
       :resource_type,
       :resource_id,
-      :command_id,
-      :identity_type,
-      :effect_key,
+      :operation_ref,
+      :dedupe_key,
+      :failure_generation,
       :data,
       :status,
       :attempts,
@@ -78,11 +79,18 @@ defmodule GroupherServer.CMS.Outbox.Event do
     ])
     |> validate_number(:contract_version, greater_than: 0)
     |> validate_number(:attempts, greater_than_or_equal_to: 0)
-    |> validate_inclusion(:identity_type, [:command, :workflow])
+    |> validate_number(:failure_generation, greater_than_or_equal_to: 0)
+    |> validate_change(:worker, fn :worker, worker ->
+      if String.trim(worker) == "", do: [worker: "must be non-blank"], else: []
+    end)
+    |> validate_change(:dedupe_key, fn :dedupe_key, key ->
+      if String.trim(key) == "", do: [dedupe_key: "must be non-blank"], else: []
+    end)
     |> unique_constraint(:id, name: :outbox_events_pkey)
     |> unique_constraint(
-      [:identity_type, :command_id, :event, :resource_type, :resource_id, :effect_key],
-      name: :outbox_events_command_event_resource_index
+      [:event, :resource_type, :resource_id, :dedupe_key],
+      name: :outbox_events_event_resource_dedupe_index
     )
+    |> check_constraint(:worker, name: :outbox_events_worker_non_blank_check)
   end
 end

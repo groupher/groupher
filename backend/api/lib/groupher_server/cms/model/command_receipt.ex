@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
     field(:initiator_type, :string)
     field(:initiator_key, :string)
     field(:command_id, Ecto.UUID)
+    field(:operation_ref, Ecto.UUID, read_after_writes: true)
     field(:command, :string)
     field(:resource_type, :string)
     field(:resource_id, :string)
@@ -53,6 +54,7 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
       :initiator_type,
       :initiator_key,
       :command_id,
+      :operation_ref,
       :command,
       :resource_type,
       :resource_id,

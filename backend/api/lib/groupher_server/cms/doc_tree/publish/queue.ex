@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue do
 
   @doc "Checks expected versions and advances the requested counters."
   defdelegate advance(community, queue, expected, changes), to: Store
+  defdelegate advance(community, queue, expected, changes, operation_ref), to: Store
 
   @doc "Updates approval configuration and its independent revision."
   defdelegate set_policy(
@@ -24,20 +25,30 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue do
                 queue,
                 expected_revision,
                 approval_required,
-                allow_self_approval
+                allow_self_approval,
+                operation_ref
               ),
               to: Store
 
   @doc "Registers a checked batch of forked Doc members within the caller transaction."
-  defdelegate add_many(community, queue, revision, entries, actor), to: Members
+  defdelegate add_many(community, queue, revision, entries, actor, operation_ref), to: Members
 
   @doc "Freezes, forks and registers an admitted batch of default Doc revisions."
-  defdelegate enqueue(community, queue, revision, entries, actor, command_id), to: Enqueue
+  defdelegate enqueue(community, queue, revision, entries, actor, command_id, operation_ref),
+    to: Enqueue
 
   @doc "Reconciles the admitted complete directory target with its public baseline."
-  defdelegate reconcile_tree(community, queue, revision, public_nodes, target_nodes, actor),
-    to: Tree,
-    as: :reconcile
+  defdelegate reconcile_tree(
+                community,
+                queue,
+                revision,
+                public_nodes,
+                target_nodes,
+                actor,
+                operation_ref
+              ),
+              to: Tree,
+              as: :reconcile
 
   @doc "Records one actor of an actual Queue-copy content change."
   defdelegate record_contribution(community, queue, revision, article_id, actor), to: Members
@@ -48,17 +59,34 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue do
     as: :check
 
   @doc "Removes a checked batch of Queue members within the caller transaction."
-  defdelegate remove_many(community, queue, revision, ids, operation, confirmation \\ nil),
-    to: Dequeue
+  defdelegate remove_many(
+                community,
+                queue,
+                revision,
+                ids,
+                operation,
+                confirmation,
+                operation_ref
+              ),
+              to: Dequeue
 
   @doc "Consumes content and directory members for the checked sealed Release."
-  defdelegate consume_release(community, queue, revision, release_id, entries),
+  defdelegate consume_release(community, queue, revision, release_id, entries, operation_ref),
     to: Consume,
     as: :release
 
   @doc "Saves the Queue-owned copy of one admitted Doc."
-  defdelegate save(community, queue, queue_revision, article_id, work_revision, attrs, actor),
-    to: Save
+  defdelegate save(
+                community,
+                queue,
+                queue_revision,
+                article_id,
+                work_revision,
+                attrs,
+                actor,
+                operation_ref
+              ),
+              to: Save
 
   @doc "Absorbs a default Doc revision into the Queue-owned copy."
   defdelegate merge(
@@ -70,7 +98,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue do
                 work_revision,
                 choices,
                 actor,
-                command_id
+                command_id,
+                operation_ref
               ),
               to: Merge
 end
