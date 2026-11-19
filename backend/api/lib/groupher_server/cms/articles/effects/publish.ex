@@ -3,8 +3,10 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
   Starts post-commit projections after a stable Article Publish succeeds.
 
       committed Publish result
-        -> first-publication metadata (when applicable)
-        -> administrator notification
+        -> rebuildable author/public projections
+
+  First-publication notifications are delivered separately from their frozen
+  Outbox payload; rebuilding a projection never creates that notification.
 
   Press, Search and CDN delivery use independent durable outbox tasks; the
   Article content Activity is recorded in its Snapshot publication transaction;
@@ -43,7 +45,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
     end
   end
 
-  defp update_published_projection(%{first_publish?: true}, %{author: user}) do
+  defp update_published_projection(_result, %{author: user}) do
     GroupherServer.FrontDesk.revalidate_user(user.login)
   end
 

@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          {:ok, previous_snapshot} <- previous_snapshot(public),
          {:ok, snapshot} <-
            materialize_source(locked_article, source_work, source_ref, user, causation_command_id),
-         first_publish? <- is_nil(public),
+         first_publish? <- is_nil(lifecycle.first_published_at),
          {:ok, :pass} <- check_first_publish_rate_limit(user, first_publish?),
          {:ok, :pass} <- Publishable.validate(snapshot),
          {:ok, published_at} <- published_at(),
@@ -87,7 +87,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
              previous_snapshot,
              snapshot,
              user,
-             operation_ref
+             operation_ref,
+             first_publish?
            ),
          {:ok, _binding} <- CMS.Articles.BindingPersist.ensure_binding(locked_article, community),
          {:ok, _finalized} <-
@@ -231,7 +232,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          nil,
          snapshot,
          user,
-         operation_ref
+         operation_ref,
+         true
        ) do
     Activity.log(activity_resource(article, community, binding, snapshot), :created,
       actor: user,
@@ -241,13 +243,27 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
   end
 
   defp record_publication_changes(
+         _article,
+         _community,
+         _binding,
+         nil,
+         _snapshot,
+         _user,
+         _ref,
+         false
+       ) do
+    {:ok, :unchanged}
+  end
+
+  defp record_publication_changes(
          article,
          community,
          binding,
          previous,
          snapshot,
          user,
-         operation_ref
+         operation_ref,
+         _first_publish?
        ) do
     resource = activity_resource(article, community, binding, snapshot)
 
@@ -506,8 +522,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          _published_by_id,
          false,
          _operation_ref
-       ),
-       do: {:ok, :unchanged}
+       ) do
+    {:ok, :unchanged}
+  end
 
   defp capture_mentions(article, community, snapshot, public, operation_ref) do
     with {:ok, ast} <- PlateJSON.decode(CMS.Articles.Body.document(snapshot).json),

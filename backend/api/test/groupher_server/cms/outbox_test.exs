@@ -41,6 +41,7 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
              send_event(%{attrs | worker: GroupherServer.Jobs.CMSOutboxComment})
 
     assert event_id == stored.id
+
     assert {:error, :outbox_worker_invalid} =
              send_event(%{attrs | worker: Map})
 
@@ -159,6 +160,27 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
              send_event(Map.put(attrs, :contract_version, 2))
 
     assert Repo.get!(Event, event.id).status == :waiting
+  end
+
+  test "unsupported new intents are rejected before an event or wakeup is stored" do
+    attrs = event_attrs(Ecto.UUID.generate()) |> Map.put(:contract_version, 2)
+    assert {:error, {:outbox_contract_version_conflict, nil}} = send_event(attrs)
+    refute Repo.get_by(Event, dedupe_key: attrs.dedupe_key)
+  end
+
+  test "delivery refuses an unsupported stored payload version without acquiring a lease" do
+    assert {:ok, event} = send_event(event_attrs(Ecto.UUID.generate()))
+    stored = Repo.update!(Event.changeset(event, %{contract_version: 2}))
+
+    assert {:error, {:outbox_contract_version_conflict, id}} =
+             CMS.Outbox.execute(event.id, fn _ ->
+               send(self(), :unsupported_payload_delivered)
+               {:ok, :unexpected}
+             end)
+
+    assert id == stored.id
+    refute_receive :unsupported_payload_delivered
+    assert Repo.get!(Event, event.id) == stored
   end
 
   defp event_attrs(operation_ref) do

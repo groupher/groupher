@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
   """
 
   import Ecto.Query
+  require Logger
   alias GroupherServer.{Activity, CMS, Jobs, Repo}
   alias CMS.Outbox.DedupeKey
   alias CMS.Model.{Author, Community, CommunityAdmin}
@@ -70,7 +71,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
       resource_type: "article",
       resource_id: article.id,
       operation_ref: operation_ref,
-      dedupe_key: DedupeKey.encode([article.id, community.id, recipients]),
+      dedupe_key: DedupeKey.encode([article.id, community.id]),
       data: %{
         article_id: article.id,
         community_id: community.id,
@@ -137,7 +138,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
       operation_ref = event.operation_ref
 
       with {:ok, press} <-
-             CMS.Outbox.send(%{
+             register_child(event.id, %{
                event: "press.cache_invalidation",
                worker: Jobs.CMSOutboxPress,
                resource_type: "community",
@@ -148,13 +149,20 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
              }),
            {:ok, search} <- child(event, "article.search_sync", Jobs.CMSOutboxSearch),
            {:ok, cdn} <- child(event, "article.cdn_purge", Jobs.CMSOutboxCDN) do
-        {:ok, %{press: press, search: search, cdn: cdn}}
+        children = %{press: press, search: search, cdn: cdn}
+
+        {:ok,
+         %{
+           registered: Map.new(children, fn {kind, child} -> {kind, child.id} end),
+           failed_child_ids:
+             children |> Map.values() |> Enum.filter(&(&1.status == :failed)) |> Enum.map(& &1.id)
+         }}
       end
     end)
   end
 
   defp child(event, kind, worker) do
-    CMS.Outbox.send(%{
+    register_child(event.id, %{
       event: kind,
       worker: worker,
       resource_type: event.resource_type,
@@ -163,6 +171,24 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
       dedupe_key: DedupeKey.encode([event.id]),
       data: Map.put(event.data, "source_event", event.event)
     })
+  end
+
+  defp register_child(parent_id, attrs) do
+    case CMS.Outbox.send(attrs) do
+      {:error, {:outbox_effect_dead, child_id}} ->
+        # send/1 has already checked this exact version and business projection.
+        # Registration is complete; only the child's recovery owner may reset it.
+        Logger.warning("CMS Article fanout retained a dead child",
+          parent_event_id: parent_id,
+          child_event_id: child_id,
+          child_event: attrs.event
+        )
+
+        {:ok, Repo.get!(CMS.Outbox.Event, child_id)}
+
+      result ->
+        result
+    end
   end
 
   @doc "Records one Article activity in the caller-owned transaction."

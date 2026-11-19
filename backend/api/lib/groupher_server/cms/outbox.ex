@@ -145,6 +145,14 @@ defmodule GroupherServer.CMS.Outbox do
          {:ok, dedupe_key} <- required_dedupe_key(attrs),
          {:ok, resource_type} <- Map.fetch(attrs, :resource_type),
          {:ok, resource_id} <- Map.fetch(attrs, :resource_id),
+         {:ok, :pass} <-
+           require_current_version(
+             contract_version,
+             event,
+             resource_type,
+             resource_id,
+             dedupe_key
+           ),
          {:ok, payload_projection} <- payload_projection(event, data) do
       id = Ecto.UUID.generate()
       data = normalize_data(Map.get(attrs, :data, %{}))
@@ -247,6 +255,9 @@ defmodule GroupherServer.CMS.Outbox do
       case Repo.one(from(event in Event, where: event.id == ^event_id, lock: "FOR UPDATE")) do
         nil ->
           Repo.rollback(:outbox_event_not_found)
+
+        %Event{contract_version: version} = event when version != 1 ->
+          Repo.rollback({:outbox_contract_version_conflict, event.id})
 
         %Event{status: :done} ->
           {:ok, :done}
@@ -492,7 +503,7 @@ defmodule GroupherServer.CMS.Outbox do
     case Repo.one(query) do
       %Event{} = event ->
         cond do
-          event.contract_version != attrs.contract_version ->
+          event.contract_version != 1 or event.contract_version != attrs.contract_version ->
             {:error, {:outbox_contract_version_conflict, event.id}}
 
           event.worker != attrs.worker ->
@@ -514,6 +525,24 @@ defmodule GroupherServer.CMS.Outbox do
       nil ->
         {:error, :outbox_conflict_row_missing}
     end
+  end
+
+  defp require_current_version(1, _event, _resource_type, _resource_id, _dedupe_key) do
+    {:ok, :pass}
+  end
+
+  defp require_current_version(_version, event, resource_type, resource_id, dedupe_key) do
+    id =
+      Repo.one(
+        from(row in Event,
+          where:
+            row.event == ^event and row.resource_type == ^resource_type and
+              row.resource_id == ^to_string(resource_id) and row.dedupe_key == ^dedupe_key,
+          select: row.id
+        )
+      )
+
+    {:error, {:outbox_contract_version_conflict, id}}
   end
 
   defp payload_projection(event, data)

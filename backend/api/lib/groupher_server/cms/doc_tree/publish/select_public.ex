@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.SelectPublic do
          {:ok, :pass} <- ensure_head(public, expected_public_id),
          {:ok, selected} <-
            Public.select_snapshot(locked.article, snapshot, actor, published_at: published_at) do
-      {:ok, %{public: selected, snapshot: snapshot, first_publish?: is_nil(public)}}
+      {:ok, %{public: selected, snapshot: snapshot, public_created?: is_nil(public)}}
     else
       :error -> {:error, :invalid_doc_public_selection}
       nil -> {:error, :doc_public_source_or_actor_not_found}

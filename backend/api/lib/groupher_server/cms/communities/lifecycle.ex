@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   alias CMS.Communities.{Const, Effects, Transaction}
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Gate.ErrorCat, as: GateErrorCat
-  alias CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
+  alias CMS.Model.{Community, CommunityAdmin, CommunityLifecycle, CommunityLifecycleBlocker}
 
   @archive_blockers [:owner_archive, :moderation_archive]
   @hidden_blockers [:moderation_suspend, :moderation_archive, :owner_archive]
@@ -572,6 +572,10 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
           {:ok, :purged} -> {:ok, :pass}
           {:error, reason} -> Repo.rollback(reason)
         end
+
+        Repo.delete_all(
+          from(admin in CommunityAdmin, where: admin.community_id == ^destroyed.community_id)
+        )
 
         case write_audit(
                destroyed,

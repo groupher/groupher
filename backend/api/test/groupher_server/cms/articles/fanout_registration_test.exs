@@ -1,0 +1,152 @@
+defmodule GroupherServer.Test.CMS.Articles.FanoutRegistrationTest do
+  use GroupherServer.TestMate, async: false
+
+  import Ecto.Query
+
+  alias GroupherServer.{CMS, Jobs}
+  alias CMS.Articles.Effects
+  alias CMS.Outbox
+  alias Outbox.{DedupeKey, Event, Retry}
+
+  setup do
+    start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})
+    previous = Application.get_env(:groupher_server, :env)
+    Application.put_env(:groupher_server, :env, :dev)
+    on_exit(fn -> Application.put_env(:groupher_server, :env, previous) end)
+    :ok
+  end
+
+  test "done, dead and new children all count as registered without resetting a dead child" do
+    parent = parent()
+    press = child(parent, "press.cache_invalidation", Jobs.CMSOutboxPress, "community", 7, %{})
+
+    search =
+      child(
+        parent,
+        "article.search_sync",
+        Jobs.CMSOutboxSearch,
+        "article",
+        parent.resource_id,
+        Map.put(parent.data, "source_event", parent.event)
+      )
+
+    assert {:ok, :done} = Outbox.execute(press.id, fn _ -> {:ok, :done} end)
+
+    assert {:error, %{reason: :outbox_delivery_exhausted}} =
+             Outbox.execute(search.id, fn _ -> {:error, :permanent_failure} end, on_error: :fail)
+
+    failed = Repo.get!(Event, search.id)
+
+    assert {:ok, %{registered: registered, failed_child_ids: [failed_id]}} =
+             Outbox.execute(parent.id, &Effects.dispatch/1)
+
+    assert failed_id == failed.id
+    assert registered.press == press.id
+    assert registered.search == search.id
+    assert Repo.get!(Event, parent.id).status == :done
+    assert Repo.get!(Event, press.id).status == :done
+    assert Repo.get!(Event, search.id) == failed
+    assert Repo.get!(Event, registered.cdn).status == :waiting
+    assert Repo.aggregate(from(row in Retry, where: row.event_id == ^search.id), :count) == 0
+
+    assert Repo.aggregate(
+             from(job in Oban.Job,
+               where: job.args["event_id"] == ^registered.cdn and job.state == "available"
+             ),
+             :count
+           ) == 1
+  end
+
+  test "a crash after child registration reuses every child and wakeup on parent retry" do
+    parent = parent()
+
+    assert {:error, %RuntimeError{}} =
+             Outbox.execute(parent.id, fn event ->
+               assert {:ok, %{registered: children}} = Effects.dispatch(event)
+               send(self(), {:registered_children, children})
+               raise "crashed before parent completion"
+             end)
+
+    assert_receive {:registered_children, original}
+
+    assert {:ok, %{registered: repeated, failed_child_ids: []}} =
+             Outbox.execute(parent.id, &Effects.dispatch/1)
+
+    assert repeated == original
+    assert Repo.get!(Event, parent.id).status == :done
+
+    Enum.each(Map.values(original), fn id ->
+      assert Repo.aggregate(from(job in Oban.Job, where: job.args["event_id"] == ^id), :count) ==
+               1
+    end)
+  end
+
+  test "a conflicting child rolls back new siblings and leaves the parent retryable" do
+    parent = parent()
+
+    conflicting =
+      child(
+        parent,
+        "article.search_sync",
+        Jobs.CMSOutboxSearch,
+        "article",
+        parent.resource_id,
+        Map.put(parent.data, "source_event", "article.published")
+      )
+
+    assert {:error, {:outbox_payload_conflict, id}} =
+             Outbox.execute(parent.id, &Effects.dispatch/1)
+
+    assert id == conflicting.id
+    assert Repo.get!(Event, parent.id).status == :retrying
+    assert Repo.get!(Event, conflicting.id).data == conflicting.data
+
+    refute Repo.get_by(Event,
+             event: "press.cache_invalidation",
+             dedupe_key: DedupeKey.encode([parent.id])
+           )
+
+    refute Repo.get_by(Event,
+             event: "article.cdn_purge",
+             dedupe_key: DedupeKey.encode([parent.id])
+           )
+  end
+
+  defp parent do
+    article_id = Ecto.UUID.generate()
+
+    send_event(%{
+      event: "article.updated",
+      worker: Jobs.CMSOutboxArticle,
+      resource_type: "article",
+      resource_id: article_id,
+      operation_ref: Ecto.UUID.generate(),
+      dedupe_key: DedupeKey.encode([article_id]),
+      data: %{
+        community: "fanout",
+        community_id: 7,
+        thread: :post,
+        inner_id: 1,
+        article_id: article_id,
+        snapshot_id: Ecto.UUID.generate()
+      }
+    })
+  end
+
+  defp child(parent, event, worker, resource_type, resource_id, data) do
+    send_event(%{
+      event: event,
+      worker: worker,
+      resource_type: resource_type,
+      resource_id: resource_id,
+      operation_ref: parent.operation_ref,
+      dedupe_key: DedupeKey.encode([parent.id]),
+      data: data
+    })
+  end
+
+  defp send_event(attrs) do
+    {:ok, {:ok, event}} = Repo.transaction(fn -> Outbox.send(attrs) end)
+    event
+  end
+end

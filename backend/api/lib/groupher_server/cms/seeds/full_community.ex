@@ -114,6 +114,10 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
             )
 
             delete_all(
+              from(admin in CMS.Model.CommunityAdmin, where: admin.community_id == ^community.id)
+            )
+
+            delete_all(
               from(blocker in CMS.Model.CommunityLifecycleBlocker,
                 where: blocker.community_id == ^community.id and not is_nil(blocker.ended_at)
               )

@@ -119,6 +119,11 @@ defmodule GroupherServer.CMS.DocTree.HistoryPurge do
       deletable_ids
     ])
 
+    case purge_article_events(deletable_ids) do
+      {:ok, :pass} -> {:ok, :pass}
+      {:error, reason} -> Repo.rollback(reason)
+    end
+
     Repo.query!("DELETE FROM cms.article_snapshots WHERE article_id=ANY($1::uuid[])", [
       deletable_ids
     ])
@@ -140,6 +145,35 @@ defmodule GroupherServer.CMS.DocTree.HistoryPurge do
     Repo.query!("DELETE FROM cms.articles WHERE id=ANY($1::uuid[])", [deletable_ids])
 
     {:ok, :purged}
+  end
+
+  defp purge_article_events(article_ids) do
+    result =
+      Repo.query!(
+        """
+        DELETE FROM cms.article_events AS event
+        WHERE event.article_id=ANY($1::uuid[])
+          AND NOT EXISTS (
+            SELECT 1
+            FROM cms.article_events AS child
+            WHERE child.article_id=event.article_id
+              AND child.previous_event_id=event.id
+          )
+        """,
+        [article_ids]
+      )
+
+    if result.num_rows > 0 do
+      purge_article_events(article_ids)
+    else
+      case Repo.query!(
+             "SELECT EXISTS(SELECT 1 FROM cms.article_events WHERE article_id=ANY($1::uuid[]))",
+             [article_ids]
+           ).rows do
+        [[false]] -> {:ok, :pass}
+        [[true]] -> {:error, :article_event_history_purge_incomplete}
+      end
+    end
   end
 
   defp purge_release_history(id) do

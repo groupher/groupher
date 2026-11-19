@@ -223,7 +223,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
       binding =
         Repo.get_by!(ArticleBinding, article_id: row.article.id, community_id: community.id)
 
-      with {:ok, binding} <- Numbering.assign_binding_inner_id(binding),
+      with first_publish? <- is_nil(lifecycles[row.article.id].first_published_at),
+           {:ok, binding} <- Numbering.assign_binding_inner_id(binding),
            {:ok, selected} <-
              SelectPublic.select(
                community,
@@ -246,9 +247,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
                selected.snapshot.id,
                actor
              ),
-           {:ok, :pass} <- initialize_stats(row.article, selected.first_publish?),
+           {:ok, :pass} <- initialize_stats(row.article, first_publish?),
            {:ok, published_lifecycle} <-
-             Lifecycle.published(lifecycles[row.article.id], selected.first_publish?, now),
+             Lifecycle.published(lifecycles[row.article.id], first_publish?, now),
            {:ok, _} <- update_article_state(row.article, current, selected.snapshot, now),
            {:ok, _} <-
              capture_mentions(row.article, community, selected.snapshot, now, operation_ref),
@@ -281,7 +282,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
           article_id: row.article.id,
           snapshot_id: selected.snapshot.id,
           work_revision: row.copy.revision,
-          first_publish?: selected.first_publish?
+          first_publish?: first_publish?
         }
 
         {:cont, {:ok, [publication | result]}}
@@ -528,6 +529,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
          _snapshot,
          _actor_id,
          _operation_ref
-       ),
-       do: {:ok, :unchanged}
+       ) do
+    {:ok, :unchanged}
+  end
 end
