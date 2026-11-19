@@ -98,7 +98,6 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
                  community_tags,
                  Repo.get!(Community, community_id),
                  thread,
-                 "article-tags:#{binding.id}:#{:erlang.phash2(Enum.map(community_tags, & &1.id))}",
                  opts
                ) do
           {:ok, updated_article}
@@ -113,14 +112,14 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
     {:error, ArticleErrorCat.binding_context_required()}
   end
 
-  defp maybe_invalidate_taxonomy(old_tags, new_tags, community, thread, effect_key, opts) do
+  defp maybe_invalidate_taxonomy(old_tags, new_tags, community, thread, opts) do
     old_ids = MapSet.new(old_tags, & &1.id)
     new_ids = MapSet.new(new_tags, & &1.id)
 
     if old_ids == new_ids do
       {:ok, :pass}
     else
-      invalidate_taxonomy(community, thread, effect_key, opts)
+      invalidate_taxonomy(community, thread, opts)
     end
   end
 
@@ -162,10 +161,10 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
     end
   end
 
-  defp invalidate_taxonomy(%Community{} = community, thread, effect_key, opts) do
+  defp invalidate_taxonomy(%Community{} = community, thread, opts) do
     with {:ok, operation_ref} <- taxonomy_identity(community, thread, opts),
          {:ok, _event} <-
-           Effects.enqueue_taxonomy_changed(community, thread, operation_ref, effect_key) do
+           Effects.enqueue_taxonomy_changed(community, thread, operation_ref) do
       {:ok, :pass}
     end
   end

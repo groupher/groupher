@@ -91,8 +91,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                community,
                state,
                binding,
-               command_id,
-               "ticket_visibility:#{visibility_cause}:#{post_id}"
+               command_id
              ) do
         {:cont, {:ok, :pass}}
       else
@@ -102,9 +101,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   @doc "Enqueues cache invalidations for every User Ticket linked to a Post."
-  def invalidate_cache_linked_to_post(community, post_id, operation_ref, effect_key)
-      when is_binary(post_id) and is_binary(operation_ref) and
-             is_binary(effect_key) do
+  def invalidate_cache_linked_to_post(community, post_id, operation_ref)
+      when is_binary(post_id) and is_binary(operation_ref) do
     states =
       from(state in TicketState,
         join: link in Source,
@@ -121,7 +119,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     Enum.reduce_while(states, {:ok, :pass}, fn {state, binding}, {:ok, _} ->
       with {:ok, state} <- Lifecycle.increment_version(state),
            {:ok, _cache} <-
-             invalidate_user_ticket_cache(community, state, binding, operation_ref, effect_key) do
+             invalidate_user_ticket_cache(community, state, binding, operation_ref) do
         {:cont, {:ok, :pass}}
       else
         {:error, reason} -> {:halt, {:error, reason}}
@@ -165,8 +163,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                  link,
                  post_binding.inner_id,
                  actor,
-                 command_id,
-                 "post_permanently_deleted"
+                 command_id
                ) do
           {:cont, {:ok, :pass}}
         else
@@ -181,14 +178,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   @doc "Advances the internal lifecycle version and cache after a Ticket ReviewBlock changes."
-  def review_block_changed(%Community{} = community, ticket_id, actor, command_id, effect_key)
-      when is_binary(ticket_id) and is_binary(command_id) and is_binary(effect_key) do
+  def review_block_changed(%Community{} = community, ticket_id, actor, command_id)
+      when is_binary(ticket_id) and is_binary(command_id) do
     with {:ok, state, article, binding} <- lock_state(community, ticket_id),
          {:ok, lifecycle} <- lock_ticket_lifecycle(article),
          {:ok, lifecycle} <-
            reconcile_ticket_review_lifecycle(state, article, lifecycle, actor, command_id),
          {:ok, _cache} <-
-           invalidate_user_ticket_cache(community, state, binding, command_id, effect_key) do
+           invalidate_user_ticket_cache(community, state, binding, command_id) do
       {:ok, lifecycle}
     end
   end
@@ -201,8 +198,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          link,
          old_post_inner_id,
          actor,
-         command_id,
-         effect_key
+         command_id
        ) do
     with {:ok, _deleted} <- CMS.Tickets.SourceWriter.delete(link),
          {:ok, updated_state} <- Lifecycle.increment_version(state),
@@ -231,7 +227,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              updated_state,
              binding,
              command_id,
-             effect_key,
              [old_post_inner_id]
            ) do
       {:ok, :pass}
@@ -490,8 +485,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              parent_state,
              parent_binding,
-             context.operation_ref,
-             "ticket_worker_created"
+             context.operation_ref
            ) do
       {:ok, article.id}
     else
@@ -645,8 +639,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              state,
              binding,
-             context.operation_ref,
-             "ticket_status"
+             context.operation_ref
            ) do
       {:ok, ticket_id}
     end
@@ -668,8 +661,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              state,
              binding,
-             context.operation_ref,
-             "ticket_reordered"
+             context.operation_ref
            ) do
       {:ok, ticket_id}
     else
@@ -688,8 +680,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              state,
              binding,
-             context.operation_ref,
-             "ticket_updated"
+             context.operation_ref
            ) do
       {:ok, ticket_id}
     else
@@ -839,8 +830,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                 community,
                 state,
                 binding,
-                context.operation_ref,
-                "ticket_public_update"
+                context.operation_ref
               )
             else
               {:ok, :pass}
@@ -894,7 +884,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                    state,
                    binding,
                    context.operation_ref,
-                   "ticket_source_linked",
                    [post_binding.inner_id]
                  ) do
             {:ok, ticket_id}
@@ -933,8 +922,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                    link,
                    post_binding.inner_id,
                    context.actor,
-                   context.operation_ref,
-                   "ticket_source_unlinked"
+                   context.operation_ref
                  ) do
             {:ok, ticket_id}
           end
@@ -1000,8 +988,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              updated_state,
              updated_binding,
-             context.operation_ref,
-             "ticket_visibility"
+             context.operation_ref
            ) do
       {:ok, article.id}
     else
@@ -1819,7 +1806,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          state,
          binding,
          command_id,
-         effect_key,
          additional_post_ids \\ []
        )
 
@@ -1828,7 +1814,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          %TicketState{type: :user} = state,
          %ArticleBinding{} = binding,
          command_id,
-         effect_key,
          additional_post_ids
        ) do
     case binding.inner_id do
@@ -1845,13 +1830,12 @@ defmodule GroupherServer.CMS.Tickets.Persist do
           |> Repo.all()
           |> Enum.reject(&is_nil/1)
 
-        CMS.Tickets.Cache.enqueue(
+        CMS.Tickets.Cache.projection_changed(
           community,
-          state.article_id,
-          inner_id,
+          state,
+          binding,
           Enum.uniq(post_inner_ids ++ additional_post_ids),
-          command_id,
-          effect_key
+          command_id
         )
 
       _ ->
@@ -1859,7 +1843,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     end
   end
 
-  defp invalidate_user_ticket_cache(_community, _state, _binding, _command_id, _effect_key, _ids) do
+  defp invalidate_user_ticket_cache(_community, _state, _binding, _command_id, _ids) do
     {:ok, :pass}
   end
 

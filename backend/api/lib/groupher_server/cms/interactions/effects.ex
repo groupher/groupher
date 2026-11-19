@@ -12,64 +12,87 @@ defmodule GroupherServer.CMS.Interactions.Effects do
         -> Interaction cleanup worker
   """
 
-  alias GroupherServer.CMS
-  alias CMS.Model.Comment
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Interactions.Config
+  alias CMS.Model.{Article, Comment}
   alias CMS.Outbox.DedupeKey
 
-  @doc "Freezes the Comment request Community identity before asynchronous delivery."
-  def reaction_data(%Comment{} = comment, data) do
-    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
-      {:ok, Map.put(data, :community_id, community.id)}
+  @doc "Records one Article or Comment upvote change in the caller transaction."
+  def upvote_changed(resource, actor, operation, operation_ref) do
+    record("interaction.upvote_changed", resource, actor, operation, nil, operation_ref)
+  end
+
+  @doc "Records one Article or Comment emotion change in the caller transaction."
+  def emotion_changed(resource, actor, operation, emotion, operation_ref) do
+    vocabulary =
+      case resource do
+        %Article{} -> Config.emotions() -- [:upvote, :collect]
+        %Comment{} -> Config.comment_emotions()
+        _ -> []
+      end
+
+    if emotion in vocabulary do
+      record("interaction.emotion_changed", resource, actor, operation, emotion, operation_ref)
+    else
+      {:error, :interaction_effect_identity_required}
     end
   end
 
-  def reaction_data(_article, data), do: {:ok, Map.put_new(data, :community_id, nil)}
-
-  @doc "Records one changed reaction intent for the current interaction transaction."
-  @spec enqueue_reaction_changed(
-          String.t(),
-          String.t(),
-          term(),
-          Ecto.UUID.t(),
-          map()
-        ) :: {:ok, :pass} | {:error, term()}
-  def enqueue_reaction_changed(event, resource_type, resource_id, operation_ref, data)
-
-  def enqueue_reaction_changed(event, resource_type, resource_id, operation_ref, data)
-      when is_binary(event) and is_binary(resource_type) and is_binary(operation_ref) and
-             is_map(data) do
-    data = Map.put_new(data, :community_id, nil)
-
-    %{
-      event: event,
-      worker: GroupherServer.Jobs.CMSOutboxInteraction,
-      resource_type: resource_type,
-      resource_id: resource_id,
-      operation_ref: operation_ref,
-      dedupe_key:
-        DedupeKey.encode([
-          operation_ref,
-          operation_ref,
-          event,
-          resource_type,
-          resource_id,
-          Map.get(data, :actor_id) || Map.get(data, "actor_id"),
-          Map.get(data, :operation) || Map.get(data, "operation"),
-          Map.get(data, :emotion) || Map.get(data, "emotion"),
-          Map.get(data, :community_id) || Map.get(data, "community_id")
-        ]),
-      data: data
-    }
-    |> CMS.Outbox.send()
-    |> case do
-      {:ok, _event} -> {:ok, :pass}
-      {:error, reason} -> {:error, reason}
-    end
+  @doc "Records one Article collection change in the caller transaction."
+  def collect_changed(%Article{} = article, actor, operation, operation_ref) do
+    record("interaction.collect_changed", article, actor, operation, nil, operation_ref)
   end
 
-  def enqueue_reaction_changed(_event, _resource_type, _resource_id, _operation_ref, _data) do
+  def collect_changed(_resource, _actor, _operation, _operation_ref) do
     {:error, :interaction_effect_identity_required}
   end
+
+  defp record(event, resource, %User{id: actor_id}, operation, emotion, operation_ref)
+       when is_integer(actor_id) and operation in [:add, :remove] and is_binary(operation_ref) do
+    with {:ok, resource_type, resource_id, community_id} <- target(resource) do
+      data = %{actor_id: actor_id, operation: operation, community_id: community_id}
+      data = if is_nil(emotion), do: data, else: Map.put(data, :emotion, emotion)
+
+      CMS.Outbox.send(%{
+        event: event,
+        worker: GroupherServer.Jobs.CMSOutboxInteraction,
+        resource_type: resource_type,
+        resource_id: resource_id,
+        operation_ref: operation_ref,
+        dedupe_key:
+          DedupeKey.encode([
+            operation_ref,
+            event,
+            resource_type,
+            resource_id,
+            actor_id,
+            operation,
+            emotion,
+            community_id
+          ]),
+        data: data
+      })
+      |> case do
+        {:ok, _event} -> {:ok, :pass}
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp record(_event, _resource, _actor, _operation, _emotion, _operation_ref) do
+    {:error, :interaction_effect_identity_required}
+  end
+
+  defp target(%Article{id: id}) when is_binary(id), do: {:ok, "article", id, nil}
+
+  defp target(%Comment{id: id} = comment) when is_integer(id) do
+    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      {:ok, "comment", id, community.id}
+    end
+  end
+
+  defp target(_resource), do: {:error, :interaction_effect_identity_required}
 
   @doc "Projects immutable business fields for duplicate Outbox comparison."
   def payload_projection(event, data) do

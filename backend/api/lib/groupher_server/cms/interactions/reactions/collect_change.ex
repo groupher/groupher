@@ -80,13 +80,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.CollectChange do
   defp enqueue_effect(_article, _actor, _operation, _operation_ref, :unchanged), do: {:ok, :pass}
 
   defp enqueue_effect(article, actor, operation, operation_ref, :changed) do
-    Effects.enqueue_reaction_changed(
-      "interaction.collect_changed",
-      "article",
-      article.id,
-      operation_ref,
-      %{actor_id: actor.id, operation: operation}
-    )
+    Effects.collect_changed(article, actor, operation, operation_ref)
   end
 
   defp change_fact(article, info, actor, :add) do

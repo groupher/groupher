@@ -90,8 +90,7 @@ defmodule GroupherServer.CMS.Review.Restrictions do
                    community,
                    article.id,
                    actor,
-                   operation_ref,
-                   "ticket_review_block_applied:#{article.id}"
+                   operation_ref
                  ) do
               {:ok, _lifecycle} -> {:ok, :pass}
               {:error, reason} -> {:error, reason}
@@ -127,8 +126,7 @@ defmodule GroupherServer.CMS.Review.Restrictions do
                    community,
                    article.id,
                    actor,
-                   operation_ref,
-                   "#{CMS.Tickets.Const.cause_value(:ticket_review_block_resolved)}:#{article.id}"
+                   operation_ref
                  ) do
               {:ok, _lifecycle} -> {:ok, :pass}
               {:error, reason} -> {:error, reason}

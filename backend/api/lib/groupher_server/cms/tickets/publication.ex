@@ -14,8 +14,7 @@ defmodule GroupherServer.CMS.Tickets.Publication do
                 community,
                 ticket_id,
                 actor,
-                operation_ref,
-                effect_key
+                operation_ref
               ), to: CMS.Tickets.Persist, as: :review_block_changed
 
   @doc "Hashes the currently visible source heads and effective PUBLIC Updates without persisting a version."

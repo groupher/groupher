@@ -362,11 +362,10 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
 
   defp mark_edited_on_republish(%Article{} = article, _public, _snapshot), do: {:ok, article}
 
-  defp revalidate_linked_tickets(%Article{thread: :post, id: post_id}, snapshot, operation_ref) do
+  defp revalidate_linked_tickets(%Article{thread: :post, id: post_id}, _snapshot, operation_ref) do
     CMS.Tickets.SourceVisibility.revalidate_cache_in_transaction(
       post_id,
-      operation_ref,
-      "post-snapshot:#{snapshot.id}"
+      operation_ref
     )
   end
 

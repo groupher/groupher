@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
                  group.id
                ),
              {:ok, _} <- CMS.Communities.update_count_field(community, :community_tags_count),
-             {:ok, _} <- invalidate_taxonomy(community, thread, "tag:create:#{tag.id}", opts) do
+             {:ok, _} <- invalidate_taxonomy(community, thread, opts) do
           tag
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -86,7 +86,6 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
              {:ok, _} <-
                invalidate_taxonomy_by_tag(
                  updated,
-                 "tag:update:#{updated.id}:#{updated.updated_at}",
                  opts
                ) do
           updated
@@ -110,7 +109,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
                  next_group_index(community, thread)
                ),
              {:ok, _} <-
-               invalidate_taxonomy(community, thread, "tag-group:create:#{group.id}", opts),
+               invalidate_taxonomy(community, thread, opts),
              {:ok, group} <- preload_group_tags({:ok, group}) do
           group
         else
@@ -131,7 +130,6 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
                invalidate_taxonomy(
                  community,
                  thread,
-                 "tag-group:update:#{updated.id}:#{updated.updated_at}",
                  opts
                ),
              {:ok, updated} <- {:ok, updated} do
@@ -149,7 +147,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
       require_transaction(fn ->
         with {:ok, deleted_group} <- delete_group_and_update_count(community, group),
              {:ok, _} <-
-               invalidate_taxonomy(community, thread, "tag-group:delete:#{group.id}", opts) do
+               invalidate_taxonomy(community, thread, opts) do
           deleted_group
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -177,7 +175,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
       require_transaction(fn ->
         with {:ok, deleted_tag} <- Persist.delete_tag(tag),
              {:ok, _} <- CMS.Communities.update_count_field(community, :community_tags_count),
-             {:ok, _} <- invalidate_taxonomy(community, tag.thread, "tag:delete:#{tag.id}", opts) do
+             {:ok, _} <- invalidate_taxonomy(community, tag.thread, opts) do
           deleted_tag
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -195,7 +193,6 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
       run_batch_reindex(
         community,
         thread,
-        "tag:reindex:group:#{group_id}:#{:erlang.phash2(indexed_tags)}",
         opts,
         fn -> batch_reindex_tags(community, thread, indexed_tags, false) end
       )
@@ -210,7 +207,6 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
       run_batch_reindex(
         community,
         thread,
-        "tag:reindex:#{:erlang.phash2(indexed_tags)}",
         opts,
         fn -> batch_reindex_tags(community, thread, indexed_tags, true) end
       )
@@ -225,7 +221,6 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
       run_batch_reindex(
         community,
         thread,
-        "tag:reindex-groups:#{:erlang.phash2(indexed_groups)}",
         opts,
         fn -> batch_reindex_groups(community, thread, indexed_groups) end
       )
@@ -381,11 +376,11 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
-  defp run_batch_reindex(community, thread, effect_key, opts, update_fun) do
+  defp run_batch_reindex(community, thread, opts, update_fun) do
     require_transaction(fn ->
       case update_fun.() do
         {:ok, :pass} ->
-          case invalidate_taxonomy(community, thread, effect_key, opts) do
+          case invalidate_taxonomy(community, thread, opts) do
             {:ok, _} -> :pass
             {:error, reason} -> Repo.rollback(reason)
           end
@@ -456,17 +451,17 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
 
   defp preload_group_tags(result), do: result
 
-  defp invalidate_taxonomy(%Community{} = community, thread, effect_key, opts) do
+  defp invalidate_taxonomy(%Community{} = community, thread, opts) do
     with {:ok, operation_ref} <- taxonomy_identity(community, thread, opts),
          {:ok, _event} <-
-           Effects.enqueue_taxonomy_changed(community, thread, operation_ref, effect_key) do
+           Effects.enqueue_taxonomy_changed(community, thread, operation_ref) do
       {:ok, :pass}
     end
   end
 
-  defp invalidate_taxonomy_by_tag(tag, effect_key, opts) do
+  defp invalidate_taxonomy_by_tag(tag, opts) do
     community = Repo.get!(Community, tag.community_id)
-    invalidate_taxonomy(community, tag.thread, effect_key, opts)
+    invalidate_taxonomy(community, tag.thread, opts)
   end
 
   defp taxonomy_identity(%Community{}, _thread, opts) do

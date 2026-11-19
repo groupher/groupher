@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Articles.EffectEntryTest do
         first
       end
 
-    assert Enum.sort(Repo.all(Event)) == Enum.sort(before_events ++ inserted)
+    assert_events(before_events ++ inserted)
     assert Repo.aggregate(Oban.Job, :count) == before_jobs + length(constructors)
   end
 
@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.CMS.Articles.EffectEntryTest do
 
     refute first.id == second.id
     refute first.dedupe_key == second.dedupe_key
-    assert Enum.sort(Repo.all(Event)) == Enum.sort(before_events ++ [first, second])
+    assert_events(before_events ++ [first, second])
   end
 
   test "a sealed Release is immutable business data during duplicate comparison", f do
@@ -199,5 +199,16 @@ defmodule GroupherServer.Test.CMS.Articles.EffectEntryTest do
 
     assert Repo.aggregate(from(job in Oban.Job, where: job.args["event_id"] == ^event.id), :count) ==
              1
+  end
+
+  defp assert_events(expected) do
+    rows = Repo.all(Event)
+    actual = Map.new(rows, &{&1.id, &1})
+    assert length(rows) == length(expected)
+    assert Enum.sort(Map.keys(actual)) == Enum.sort(Enum.map(expected, & &1.id))
+
+    for row <- expected do
+      assert actual[row.id] == row
+    end
   end
 end

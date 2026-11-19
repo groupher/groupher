@@ -117,8 +117,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, doc} = Maintenance.add(doc, article_tag.id, "test:tag-assoc:#{doc.id}")
-      {:ok, doc} = Maintenance.add(doc, article_tag2.id, "test:tag-assoc:#{doc.id}")
+      {:ok, doc} = Maintenance.add(doc, article_tag.id, Ecto.UUID.generate())
+      {:ok, doc} = Maintenance.add(doc, article_tag2.id, Ecto.UUID.generate())
 
       {:ok, tags} = binding_tags(doc, community)
       assert exist_in?(article_tag, tags)
@@ -226,7 +226,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, doc} = Maintenance.add(doc, article_tag.id, "test:tag-assoc:#{doc.id}")
+      {:ok, doc} = Maintenance.add(doc, article_tag.id, Ecto.UUID.generate())
       assert doc.community_tags |> length == 1
       assert exist_in?(article_tag, doc.community_tags)
 
@@ -234,17 +234,17 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
       assert stat.contents_count == 0
       assert stat.today_contents_count == 0
 
-      {:ok, doc} = Maintenance.add(doc, article_tag2.id, "test:tag-assoc:#{doc.id}")
+      {:ok, doc} = Maintenance.add(doc, article_tag2.id, Ecto.UUID.generate())
       assert doc.community_tags |> length == 2
       assert exist_in?(article_tag, doc.community_tags)
       assert exist_in?(article_tag2, doc.community_tags)
 
-      {:ok, doc} = Maintenance.remove(doc, article_tag.id, "test:tag-assoc:#{doc.id}")
+      {:ok, doc} = Maintenance.remove(doc, article_tag.id, Ecto.UUID.generate())
       assert doc.community_tags |> length == 1
       assert not exist_in?(article_tag, doc.community_tags)
       assert exist_in?(article_tag2, doc.community_tags)
 
-      {:ok, doc} = Maintenance.remove(doc, article_tag2.id, "test:tag-assoc:#{doc.id}")
+      {:ok, doc} = Maintenance.remove(doc, article_tag2.id, Ecto.UUID.generate())
       assert doc.community_tags |> length == 0
       assert not exist_in?(article_tag, doc.community_tags)
       assert not exist_in?(article_tag2, doc.community_tags)
@@ -260,8 +260,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, doc} = Maintenance.add(doc, article_tag.id, "test:tag-assoc:#{doc.id}")
-      {:ok, doc} = Maintenance.add(doc, article_tag.id, "test:tag-assoc:#{doc.id}")
+      {:ok, doc} = Maintenance.add(doc, article_tag.id, Ecto.UUID.generate())
+      {:ok, doc} = Maintenance.add(doc, article_tag.id, Ecto.UUID.generate())
 
       assert doc.community_tags |> length == 1
     end
