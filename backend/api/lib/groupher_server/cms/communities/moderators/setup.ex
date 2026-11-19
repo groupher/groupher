@@ -13,8 +13,8 @@ defmodule GroupherServer.CMS.Communities.Moderators.Setup do
         -> canonical root membership / moderator count
   """
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.{Community, CommunityAdmin, CommunityModerator}
   alias Helper.{ORM, T}

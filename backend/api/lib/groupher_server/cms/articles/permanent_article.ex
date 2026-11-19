@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Articles.PermanentArticle do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.CollectFolderEntry
   alias CMS.Model.{Article, ArticleCoAuthor, ArticleCoAuthorRequest}
-  alias CMS.Tickets.Model.Source, as: TicketSource
+  alias CMS.Tickets.Model.Source
 
   @doc false
   def prepare_delete(%Article{id: article_id}) do
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Articles.PermanentArticle do
       )
 
       Repo.delete_all(
-        from(source in TicketSource,
+        from(source in Source,
           where: source.post_id == ^article_id or source.ticket_id == ^article_id
         )
       )

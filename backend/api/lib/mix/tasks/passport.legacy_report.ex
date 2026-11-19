@@ -11,9 +11,9 @@ defmodule Mix.Tasks.Passport.LegacyReport do
   use Mix.Task
   import Ecto.Query
 
-  alias GroupherServer.CMS.Model.Passport
-  alias GroupherServer.CMS.Passport.LegacyPlan
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Model.Passport
+  alias CMS.Passport.LegacyPlan
 
   @shortdoc "Reports legacy Passport conversion candidates without writes"
   def run([]) do

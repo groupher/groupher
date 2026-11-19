@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Passport.LegacyConversionTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.{CommunityAdmin, GlobalPassport}
-  alias GroupherServer.CMS.Passport.LegacyConversion
+  alias GroupherServer.CMS
+  alias CMS.Model.{CommunityAdmin, GlobalPassport}
+  alias CMS.Passport.LegacyConversion
 
   test "converts verified facts once and refuses replay after revocation" do
     {:ok, user} = db_insert(:user)

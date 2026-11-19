@@ -10,12 +10,13 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
         -> CMS.Outbox event
   """
 
-  import Ecto.Query
   require Logger
-  alias GroupherServer.{Activity, CMS, Jobs, Repo}
+
+  import Ecto.Query
+  alias GroupherServer.{Accounts, Activity, CMS, Jobs, Repo}
   alias CMS.Outbox.DedupeKey
   alias CMS.Model.{Author, Community, CommunityAdmin}
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
 
   @doc "Records one Article effect in the caller-owned transaction."
   def enqueue(event, resource_type, resource_id, operation_ref, data)
@@ -169,9 +170,18 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
       resource_id: event.resource_id,
       operation_ref: event.operation_ref,
       dedupe_key: DedupeKey.encode([event.id]),
-      data: Map.put(event.data, "source_event", event.event)
+      data: child_data(event)
     })
   end
+
+  defp child_data(%{event: kind, data: data})
+       when kind in ["article.visibility_changed", "article.review_changed"] do
+    data
+    |> Map.put("source_event", kind)
+    |> Map.put("snapshot_id", nil)
+  end
+
+  defp child_data(event), do: Map.put(event.data, "source_event", event.event)
 
   defp register_child(parent_id, attrs) do
     case CMS.Outbox.send(attrs) do
@@ -198,7 +208,14 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
   def payload_projection(event, data) do
     case event do
       "article.cdn_purge" ->
-        CMS.Outbox.Event.project_fields(data, ["source_event", "community_id", "snapshot_id"])
+        CMS.Outbox.Event.project_fields(data, [
+          "source_event",
+          "community",
+          "community_id",
+          "thread",
+          "inner_id",
+          "snapshot_id"
+        ])
 
       "article.first_published_notification" ->
         CMS.Outbox.Event.project_fields(data, [
@@ -234,7 +251,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
         ])
 
       "article.review_changed" ->
-        CMS.Outbox.Event.project_fields(data, ["community_id", "inner_id"])
+        CMS.Outbox.Event.project_fields(data, ["community", "community_id", "thread", "inner_id"])
 
       "article.search_sync" ->
         CMS.Outbox.Event.project_fields(data, ["source_event", "community_id", "snapshot_id"])
@@ -250,7 +267,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
         ])
 
       "article.visibility_changed" ->
-        CMS.Outbox.Event.project_fields(data, ["community_id", "inner_id"])
+        CMS.Outbox.Event.project_fields(data, ["community", "community_id", "thread", "inner_id"])
 
       _ ->
         {:error, {:outbox_event_owner_missing, event}}

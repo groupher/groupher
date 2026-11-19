@@ -6,7 +6,25 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
   import Ecto.Query
 
   alias GroupherServer.{CMS, ErrorCat, Repo}
-  alias CMS.Outbox.{Event, WorkerRegistry}
+  alias CMS.Outbox
+  alias Outbox.{Event, WorkerRegistry}
+
+  test "status accepts only the declared stored vocabulary" do
+    for {stored, app} <- [
+          {"pending", :waiting},
+          {"executing", :running},
+          {"failed", :retrying},
+          {"completed", :done},
+          {"dead", :failed}
+        ] do
+      assert {:ok, ^app} = Outbox.Status.load(stored)
+      assert {:ok, ^stored} = Outbox.Status.dump(app)
+    end
+
+    for unknown <- ["waiting", "running", "retrying", "done", "unknown"] do
+      assert :error = Outbox.Status.load(unknown)
+    end
+  end
 
   test "stores a typed event and its wakeup inside the caller transaction" do
     attrs = event_attrs(Ecto.UUID.generate())

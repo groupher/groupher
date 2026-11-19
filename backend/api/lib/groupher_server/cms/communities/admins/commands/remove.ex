@@ -5,8 +5,8 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.Remove do
       Community -> Users -> Admins -> requests -> membership / Activity / Notice intent
   """
   use GroupherServer.CommandPipeline, adapter: GroupherServer.CMS.CommandPipelineAdapter
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityAdmin, CommunityAdminRequest}
   alias CMS.Communities.Admins.{Effects, Requests.Locks}
 
@@ -39,8 +39,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.Remove do
 
   @doc "Removes a selected non-lord Admin or the actor's own ordinary membership."
   def execute(%Community{} = community, member_id, revision, %User{} = actor, command_id)
-      when is_integer(member_id) and is_integer(revision) and revision > 0,
-      do: run(community, member_id, revision, actor, command_id)
+      when is_integer(member_id) and is_integer(revision) and revision > 0 do
+    run(community, member_id, revision, actor, command_id)
+  end
 
   def execute(_, _, _, _, _), do: {:error, :invalid_admin_removal}
 

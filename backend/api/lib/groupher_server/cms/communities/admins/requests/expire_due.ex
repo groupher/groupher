@@ -8,9 +8,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
   """
   import Ecto.Query
 
-  alias GroupherServer.CMS.Communities.Admins.Requests.Commands.Expire
-  alias GroupherServer.CMS.Model.CommunityAdminRequest
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Communities.Admins.Requests.Commands.Expire
+  alias CMS.Model.CommunityAdminRequest
 
   @batch_size 100
 

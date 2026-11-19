@@ -10,13 +10,14 @@ defmodule GroupherServer.CMS.Model.CommunityAdmin do
 
   @flop_options [filterable: [], sortable: [:inserted_at, :id], pagination_types: [:page, :first]]
 
+  alias GroupherServer.{Accounts, CMS}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @type t :: %__MODULE__{}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Community
+  alias Accounts.Model.User
+  alias CMS.Model.Community
 
   schema "communities_admins" do
     belongs_to(:user, User)

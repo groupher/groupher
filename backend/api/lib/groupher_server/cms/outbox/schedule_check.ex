@@ -9,11 +9,12 @@ defmodule GroupherServer.CMS.Outbox.ScheduleCheck do
       Oban Cron -> ScheduleCheck -> stale event + missing job -> locked repair
   """
 
-  import Ecto.Query
   require Logger
 
-  alias GroupherServer.{Jobs, Repo}
-  alias GroupherServer.CMS.Outbox.{Event, ScheduleConfig, WorkerRegistry}
+  import Ecto.Query
+
+  alias GroupherServer.{CMS, Jobs, Repo}
+  alias CMS.Outbox.{Event, ScheduleConfig, WorkerRegistry}
 
   @batch_size 100
   @lease_seconds 120

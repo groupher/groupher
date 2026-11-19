@@ -159,4 +159,15 @@ defmodule GroupherServer.Activity do
       iex> GroupherServer.Activity.event_ref_derive(...)
   """
   defdelegate event_ref_derive(arg1), to: GroupherServer.Activity.EventRef, as: :derive
+
+  @doc """
+  Returns the stable Activity error for an invalid operation identity.
+
+  ## Examples
+
+      Activity.error_cat_invalid_operation_ref()
+  """
+  defdelegate error_cat_invalid_operation_ref(),
+    to: GroupherServer.Activity.ErrorCat,
+    as: :invalid_operation_ref
 end

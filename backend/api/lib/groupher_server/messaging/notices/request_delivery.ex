@@ -9,11 +9,11 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
       Messaging.notify -> RequestDelivery -> Dedup + Notice + mailbox projection
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Messaging, Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Model.Embeds
-  alias GroupherServer.Messaging.Model.Notice
-  alias GroupherServer.Messaging.Notices.Dedup
+  alias Messaging.Model.Notice
+  alias Messaging.Notices.Dedup
 
   @doc """
   Delivers one validated request event in an atomic Notice transaction.
@@ -157,8 +157,9 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
   defp event_type(_), do: {:error, invalid_event()}
   defp notice_action("created", action) when action in ["invite", "apply"], do: {:ok, action}
 
-  defp notice_action(event, _) when event in ["decided", "cancelled", "expired"],
-    do: {:ok, "result"}
+  defp notice_action(event, _) when event in ["decided", "cancelled", "expired"] do
+    {:ok, "result"}
+  end
 
   defp notice_action(_, _), do: {:error, invalid_event()}
 
@@ -176,5 +177,5 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
   defp request_title(:community_admin), do: "Community Admin request"
   defp request_title(:article_co_author), do: "Article co-author request"
 
-  defp invalid_event, do: CMS.ErrorCat.invalid_body("invalid admin request outbox event")
+  defp invalid_event, do: CMS.error_cat_invalid_body("invalid admin request outbox event")
 end

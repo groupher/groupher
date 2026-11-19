@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Expire do
          {:ok, expired?} <- Rules.expired?(request, now) do
       if expired? do
         operation =
-          Activity.EventRef.derive(
+          Activity.event_ref_derive(
             {:community_admin_request_expiry, request.id, request.revision}
           )
 

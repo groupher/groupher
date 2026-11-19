@@ -8,11 +8,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
   Callers must acquire all needed site locks before the Article lock.
   """
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS}
   alias CMS.Articles.WorkingCopy.{Diff, Snapshotter}
   alias CMS.Model.{Article, ArticleWorkingCopy}
   alias CMS.Articles.WorkingCopy.Persist
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
 
   @doc "Builds attribution from a trusted domain actor and request provenance."
   def event_attrs(%User{} = actor, operation_ref, community_id, origin, operation_index) do
@@ -134,8 +134,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
     end
   end
 
-  defp validate_save_type(%{type: :restore, source_snapshot_id: source}) when is_binary(source),
-    do: {:ok, :pass}
+  defp validate_save_type(%{type: :restore, source_snapshot_id: source}) when is_binary(source) do
+    {:ok, :pass}
+  end
 
   defp validate_save_type(%{type: :edit}), do: {:ok, :pass}
   defp validate_save_type(attrs) when not is_map_key(attrs, :type), do: {:ok, :pass}
@@ -200,6 +201,6 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History do
   end
 
   defp require_transaction do
-    if Repo.in_transaction?(), do: {:ok, :pass}, else: {:error, :transaction_required}
+    Persist.require_transaction()
   end
 end

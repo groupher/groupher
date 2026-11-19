@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Messaging.NoticeContract do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
 
-  alias GroupherServer.Messaging.Model.Notice
+  alias GroupherServer.Messaging
+  alias Messaging.Model.Notice
 
   test "Messaging accepts the activity types from the generated Notice contract" do
     assert GroupherServer.Messaging.Config.notify_actions() == [

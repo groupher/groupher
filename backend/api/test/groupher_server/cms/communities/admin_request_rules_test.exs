@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Communities.AdminRequestRulesTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Communities.Admins.Requests.Rules
-  alias GroupherServer.CMS.Model.CommunityAdminRequest
+  alias GroupherServer.CMS
+  alias CMS.Communities.Admins.Requests.Rules
+  alias CMS.Model.CommunityAdminRequest
 
   test "apply may approve a dependent subset; invite accepts exactly its proposal" do
     proposed = %{"doc.queue.preview" => true, "doc.queue.write" => true}

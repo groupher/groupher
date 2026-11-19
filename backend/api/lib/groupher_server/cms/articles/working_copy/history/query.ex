@@ -7,10 +7,10 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.Articles.WorkingCopy.Diff
   alias CMS.Model.{Article, ArticleEvent, ArticleSnapshot, ArticleWorkingCopy}
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
 
   @default_limit 20
   @max_limit 50
@@ -133,8 +133,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
     end
   end
 
-  def event(_article_id, _event_id, _actor, _opts),
-    do: {:error, :article_history_unavailable}
+  def event(_article_id, _event_id, _actor, _opts) do
+    {:error, :article_history_unavailable}
+  end
 
   @doc "Checks whether a user contributed content to one published Snapshot's same-Article lineage."
   def contributor_to_snapshot?(article_id, snapshot_id, user_id)
@@ -170,8 +171,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
     end
   end
 
-  def contributor_to_snapshot?(_article_id, _snapshot_id, _user_id),
-    do: {:error, :article_history_unavailable}
+  def contributor_to_snapshot?(_article_id, _snapshot_id, _user_id) do
+    {:error, :article_history_unavailable}
+  end
 
   @doc "Compares a fixed Snapshot with another Snapshot or the current WorkingCopy."
   def compare(article_id, before, after_version, %User{} = actor) do
@@ -190,8 +192,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
     end
   end
 
-  def compare(_article_id, _before, _after, _actor),
-    do: {:error, :article_history_unavailable}
+  def compare(_article_id, _before, _after, _actor) do
+    {:error, :article_history_unavailable}
+  end
 
   defp load_article(article_id) do
     with {:ok, article_id} <- cast_uuid(article_id),
@@ -244,8 +247,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
     end
   end
 
-  defp contributors_page(_event, _opts),
-    do: {:ok, %{items: [], next_cursor: nil, unknown: false}}
+  defp contributors_page(_event, _opts) do
+    {:ok, %{items: [], next_cursor: nil, unknown: false}}
+  end
 
   defp contributor_events(%ArticleEvent{} = publish) do
     case Repo.query(@contributors_lineage_sql, [
@@ -323,9 +327,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
       events
       |> Enum.filter(&(&1.type in [:create, :edit, :restore]))
       |> Enum.group_by(fn event ->
-        if event.actor_type == :user,
-          do: {:user, event.actor_id},
-          else: {:system, event.actor_snapshot}
+        if event.actor_type == :user do
+          {:user, event.actor_id}
+        else
+          {:system, event.actor_snapshot}
+        end
       end)
       |> Enum.map(fn {_identity, actor_events} ->
         ordered = Enum.sort_by(actor_events, & &1.sequence)
@@ -354,17 +360,21 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
   end
 
   defp snapshot_ref(%{type: :snapshot, snapshot_id: id} = ref) do
-    if Enum.sort(Map.keys(ref)) == [:snapshot_id, :type],
-      do: cast_uuid(id),
-      else: {:error, :article_history_unavailable}
+    if Enum.sort(Map.keys(ref)) == [:snapshot_id, :type] do
+      cast_uuid(id)
+    else
+      {:error, :article_history_unavailable}
+    end
   end
 
   defp snapshot_ref(_), do: {:error, :article_history_unavailable}
 
   defp after_ref(%{type: :snapshot, snapshot_id: id} = ref, article, _actor) do
-    if Enum.sort(Map.keys(ref)) == [:snapshot_id, :type],
-      do: snapshot_version(id, article),
-      else: {:error, :article_history_unavailable}
+    if Enum.sort(Map.keys(ref)) == [:snapshot_id, :type] do
+      snapshot_version(id, article)
+    else
+      {:error, :article_history_unavailable}
+    end
   end
 
   defp after_ref(
@@ -372,9 +382,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
          article,
          actor
        ) do
-    if Enum.sort(Map.keys(ref)) == [:revision, :type, :working_copy_id],
-      do: working_copy_ref(id, revision, article, actor),
-      else: {:error, :article_history_unavailable}
+    if Enum.sort(Map.keys(ref)) == [:revision, :type, :working_copy_id] do
+      working_copy_ref(id, revision, article, actor)
+    else
+      {:error, :article_history_unavailable}
+    end
   end
 
   defp after_ref(_version, _article, _actor), do: {:error, :article_history_unavailable}
@@ -434,8 +446,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
   defp pagi_value(%{key: key, value: value}, field) when key == field, do: value
   defp pagi_value(%{key: key, value: value}, field) when is_atom(key) and key == field, do: value
 
-  defp pagi_value(pagi, field) when is_map(pagi),
-    do: Map.get(pagi, field) || Map.get(pagi, to_string(field))
+  defp pagi_value(pagi, field) when is_map(pagi) do
+    Map.get(pagi, field) || Map.get(pagi, to_string(field))
+  end
 
   defp pagi_value(_, _), do: nil
 end

@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Passport.GlobalFactsTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Passport
-  alias GroupherServer.CMS.Model.{CommunityAdmin, GlobalPassport}
+  alias GroupherServer.CMS
+  alias CMS.Passport
+  alias CMS.Model.{CommunityAdmin, GlobalPassport}
 
   test "returns normalized facts and fails closed for invalid stored grants" do
     {:ok, user} = db_insert(:user)

@@ -5,8 +5,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
       GraphQL input validation -> CMS Community Admin facade
   """
 
-  alias GroupherServer.{CMS, Pagi}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Pagi}
+  alias Accounts.Model.User
 
   def candidates(_root, %{community_ref: ref, name: name}, %{context: %{cur_user: actor}}) do
     CMS.communities_admins_candidates(ref, name, actor)

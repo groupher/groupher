@@ -8,8 +8,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Rules do
       locked request facts -> Rules -> validated transition inputs -> command
   """
 
-  alias GroupherServer.CMS.Model.CommunityAdminRequest
-  alias GroupherServer.CMS.Passport.Catalog
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityAdminRequest
+  alias CMS.Passport.Catalog
 
   @doc """
   Returns a normalized grantable Community permission map.

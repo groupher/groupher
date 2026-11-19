@@ -5,7 +5,8 @@ defmodule GroupherServer.CMS.Passport.Catalog do
       Contract -> Catalog -> Passport Store -> resource admission
   """
 
-  alias GroupherServer.CMS.GateAction
+  alias GroupherServer.CMS
+  alias CMS.GateAction
 
   @scopes [:global, :community, :article]
 

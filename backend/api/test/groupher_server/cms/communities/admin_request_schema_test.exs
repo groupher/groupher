@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Communities.AdminRequestSchemaTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.CommunityAdminRequest
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityAdminRequest
 
   test "one pending request per subject, immutable proposal, and valid terminal states" do
     {:ok, owner} = db_insert(:user)

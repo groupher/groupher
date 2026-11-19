@@ -52,7 +52,6 @@ defmodule GroupherServerWeb.Middleware.Passport do
   alias CMS.ErrorCat, as: CmsErrorCat
   alias CMS.Model.Comment
   alias CMS.Passport.ErrorCat, as: PassportErrorCat
-  alias CMS.Passport.Catalog
 
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
@@ -70,7 +69,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   defp authorize_action(resolution, action, opts) do
-    case Catalog.get(action) do
+    case CMS.passport_catalog_action(action) do
       {:ok, %{scope: scope, grantable: true}} when scope in [:global, :community] ->
         case maybe_put_article_path(resolution, opts) do
           {:ok, resolution} ->
@@ -106,8 +105,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp check_catalog_requirement(resolution, action, :global, _opts) do
     with %User{} = actor <- current_user(resolution),
-         {:ok, scope} <- CMS.Passport.load_global_scope(actor),
-         {:ok, true} <- CMS.Passport.allowed?(actor, scope, action) do
+         {:ok, scope} <- CMS.passport_global_scope(actor),
+         {:ok, true} <- CMS.passport_allowed?(actor, scope, action) do
       resolution
     else
       _ -> passport_denied(resolution)
@@ -118,9 +117,9 @@ defmodule GroupherServerWeb.Middleware.Passport do
     with %User{} = actor <- current_user(resolution),
          {:ok, slug} <- fetch_community_slug(resolution),
          {:ok, community} <- FrontDesk.community(slug, mode: :internal),
-         {:ok, scope} <- CMS.Passport.load_community_scope(actor, community),
+         {:ok, scope} <- CMS.passport_community_scope(actor, community),
          {:ok, true} <-
-           CMS.Passport.allowed?(actor, scope, action, passport_thread(resolution, opts)) do
+           CMS.passport_allowed?(actor, scope, action, passport_thread(resolution, opts)) do
       resolution
     else
       _ -> passport_denied(resolution)

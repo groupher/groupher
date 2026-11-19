@@ -5,9 +5,10 @@ defmodule GroupherServer.Test.CMS.OutboxScheduleCheckTest do
 
   import Ecto.Query
 
+  alias GroupherServer.{CMS, Jobs}
   alias Ecto.Adapters.SQL.Sandbox
-  alias GroupherServer.CMS.Outbox.{Event, ScheduleCheck, ScheduleConfig}
-  alias GroupherServer.Jobs.CMSOutboxArticle
+  alias CMS.Outbox.{Event, ScheduleCheck, ScheduleConfig}
+  alias Jobs.CMSOutboxArticle
 
   setup do
     start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})
@@ -171,9 +172,11 @@ defmodule GroupherServer.Test.CMS.OutboxScheduleCheckTest do
     with_env(:dev, fn ->
       {:ok, event} = committed_event()
       on_exit(fn -> cleanup_committed_event(event, previous_env) end)
+
       committed_update(event, %{
         available_at: DateTime.add(DateTime.utc_now(:second), -600, :second)
       })
+
       committed_delete_jobs(event)
 
       tasks =
@@ -249,6 +252,7 @@ defmodule GroupherServer.Test.CMS.OutboxScheduleCheckTest do
 
   defp with_stale_after_seconds(value, action) do
     config = Application.get_env(:groupher_server, ScheduleConfig, [])
+
     Application.put_env(
       :groupher_server,
       ScheduleConfig,

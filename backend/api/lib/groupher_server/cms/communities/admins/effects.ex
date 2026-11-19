@@ -8,8 +8,8 @@ defmodule GroupherServer.CMS.Communities.Admins.Effects do
       locked Admin request -> Activity + Outbox intent -> Messaging -> Notice
   """
 
-  alias GroupherServer.{Activity, CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityAdminRequest}
   alias CMS.Outbox.DedupeKey
 

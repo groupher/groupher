@@ -13,8 +13,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
   alias Accounts.Model.User
   alias CMS.Articles.Commands.PublishArticleConfirmation, as: Confirmation
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
-  alias CMS.Articles.WorkingCopy.Publisher
-  alias CMS.Articles.WorkingCopy.History
+  alias CMS.Articles.WorkingCopy.{Publisher, History}
   alias CMS.Model.{Article, ArticlePublic, ArticleSnapshot, Community}
 
   @pipeline operation: :article_publish_article,

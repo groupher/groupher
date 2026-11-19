@@ -6,6 +6,7 @@ defmodule GroupherServer.CMS.Communities.Admins do
   """
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.FrontDesk
   alias Accounts.Model.User
   alias CMS.Communities.Admins.Query
   alias CMS.Communities.Admins.Requests.Commands.{Cancel, Create, Decide}
@@ -175,12 +176,12 @@ defmodule GroupherServer.CMS.Communities.Admins do
     end
   end
 
-  defp community(ref), do: CMS.front_desk_community({:ref, ref}, mode: :internal)
+  defp community(ref), do: FrontDesk.community({:ref, ref}, mode: :internal)
 
   defp readable_community(ref, actor) do
-    case CMS.front_desk_community({:ref, ref}, actor, mode: :public) do
+    case FrontDesk.community({:ref, ref}, actor, mode: :public) do
       {:ok, community} -> {:ok, community}
-      {:error, _} -> CMS.front_desk_community({:ref, ref}, actor, mode: :management)
+      {:error, _} -> FrontDesk.community({:ref, ref}, actor, mode: :management)
     end
   end
 end

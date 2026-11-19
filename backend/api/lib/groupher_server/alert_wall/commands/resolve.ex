@@ -99,9 +99,9 @@ defmodule GroupherServer.AlertWall.Commands.Resolve do
   defp authorize_permission(actor, permission, params \\ %{})
 
   defp authorize_permission(actor, permission, %Community{} = community) do
-    with {:ok, scope} <- CMS.Passport.Store.load_community_scope(actor, community),
+    with {:ok, scope} <- CMS.passport_community_scope(actor, community),
          {:ok, true} <-
-           CMS.Passport.Store.allowed_community?(actor, scope, permission) do
+           CMS.passport_allowed?(actor, scope, permission) do
       {:ok, :pass}
     else
       {:ok, false} -> {:error, CMS.passport_error_cat_permission_denied()}

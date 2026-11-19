@@ -1,7 +1,8 @@
 defmodule GroupherServer.CMS.OutboxDedupeTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Outbox.DedupeKey
+  alias GroupherServer.CMS
+  alias CMS.Outbox.DedupeKey
 
   test "encodes ordered typed dimensions deterministically" do
     assert DedupeKey.encode([:provider_delete, 42, "asset-key"]) ==

@@ -13,8 +13,8 @@ defmodule GroupherServer.CMS.Passport.LegacyConversion do
   """
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityAdmin, GlobalPassport, Passport}
   alias CMS.Passport.{Catalog, LegacyPlan}
 
@@ -102,8 +102,9 @@ defmodule GroupherServer.CMS.Passport.LegacyConversion do
 
   defp ensure_no_exceptions(%{exceptions: []}), do: {:ok, :pass}
 
-  defp ensure_no_exceptions(%{exceptions: exceptions}),
-    do: {:error, {:legacy_conversion_unresolved, exceptions}}
+  defp ensure_no_exceptions(%{exceptions: exceptions}) do
+    {:error, {:legacy_conversion_unresolved, exceptions}}
+  end
 
   defp scope_ids(plan) do
     plan.communities |> Map.values() |> Enum.map(& &1.community_id) |> Enum.sort()

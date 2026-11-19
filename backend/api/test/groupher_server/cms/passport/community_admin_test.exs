@@ -1,9 +1,10 @@
 defmodule GroupherServer.Test.CMS.Passport.CommunityAdminTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.CommunityAdmin
-  alias GroupherServer.CMS.Passport
-  alias GroupherServer.CMS.Passport.Store
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityAdmin
+  alias CMS.Passport
+  alias CMS.Passport.Store
 
   test "Community destroy removes current Admin membership atomically" do
     {:ok, user} = db_insert(:user)

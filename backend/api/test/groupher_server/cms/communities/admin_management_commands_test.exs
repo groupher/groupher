@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Communities.AdminManagementCommandsTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Communities.Admins.Commands.{Remove, UpdatePermissions}
-  alias GroupherServer.CMS.Model.{CommunityAdmin, CommunityAdminRequest}
+  alias GroupherServer.CMS
+  alias CMS.Communities.Admins.Commands.{Remove, UpdatePermissions}
+  alias CMS.Model.{CommunityAdmin, CommunityAdminRequest}
 
   test "permission replacement checks revision and writes new Passport facts" do
     {:ok, lord} = db_insert(:user)

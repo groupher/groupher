@@ -2,14 +2,16 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestExpireTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
 
-  alias GroupherServer.CMS.Communities.Admins.Requests.{
+  alias GroupherServer.{CMS, Jobs}
+
+  alias CMS.Communities.Admins.Requests.{
     Commands.Create,
     Commands.Expire
   }
 
-  alias GroupherServer.CMS.Model.CommunityAdmin
-  alias GroupherServer.CMS.Outbox.Event
-  alias GroupherServer.Jobs.ExpireCommunityAdminRequests
+  alias CMS.Model.CommunityAdmin
+  alias CMS.Outbox.Event
+  alias Jobs.ExpireCommunityAdminRequests
 
   test "bounded scan rechecks and expires only due pending requests once" do
     {:ok, owner} = db_insert(:user)

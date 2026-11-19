@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Assets.WorkflowHistoryIdentityTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Assets.Workflow
+  alias GroupherServer.CMS
+  alias CMS.Assets.Workflow
 
   test "workflow steps retain distinct operation identities across retries" do
     assert {:ok, run} =

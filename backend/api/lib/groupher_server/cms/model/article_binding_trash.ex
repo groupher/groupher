@@ -11,8 +11,9 @@ defmodule GroupherServer.CMS.Model.ArticleBindingTrash do
   @flop_options [filterable: [], sortable: [:id, :inserted_at], pagination_types: [:page, :first]]
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.{Article, ArticleBinding, Community}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Accounts}
+  alias CMS.Model.{Article, ArticleBinding, Community}
+  alias Accounts.Model.User
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   @schema_prefix "cms"

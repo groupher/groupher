@@ -14,8 +14,9 @@ defmodule GroupherServer.Messaging.Notify do
         -> inbox / notification store
   """
 
-  alias GroupherServer.CMS.Outbox.Event
-  alias GroupherServer.Messaging.Notices.RequestDelivery
+  alias GroupherServer.{CMS, Messaging}
+  alias CMS.Outbox.Event
+  alias Messaging.Notices.RequestDelivery
 
   @doc """
   Accepts a notification event at the stable dispatch boundary.

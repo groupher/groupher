@@ -25,9 +25,9 @@ defmodule GroupherServer.Messaging.Model.Notice do
   import Ecto.Changeset
 
   alias __MODULE__
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Messaging, Accounts, CMS}
   alias Accounts.Model.User
-  alias GroupherServer.Messaging.NoticeContract
+  alias Messaging.NoticeContract
 
   alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
@@ -94,9 +94,11 @@ defmodule GroupherServer.Messaging.Model.Notice do
       (event == :created and type in [:invite, :apply]) or
         (event in [:decided, :cancelled, :expired] and type == :result)
 
-    if valid?,
-      do: changeset,
-      else: add_error(changeset, :type, "invalid request notice type/event")
+    if valid? do
+      changeset
+    else
+      add_error(changeset, :type, "invalid request notice type/event")
+    end
   end
 
   defp validate_request_actors(changeset) do

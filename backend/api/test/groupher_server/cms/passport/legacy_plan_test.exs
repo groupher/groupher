@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Passport.LegacyPlanTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Passport.LegacyPlan
+  alias GroupherServer.CMS
+  alias CMS.Passport.LegacyPlan
 
   test "reports unsafe scoped conversions without widening thread grants" do
     rules = %{

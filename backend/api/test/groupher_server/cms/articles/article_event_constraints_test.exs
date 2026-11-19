@@ -3,13 +3,10 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   import Ecto.Query
 
-  alias GroupherServer.CMS.Articles.WorkingCopy.History
-  alias GroupherServer.CMS.Articles.WorkingCopy.Store
-  alias GroupherServer.CMS.Articles.WorkingCopy.Diff
-  alias GroupherServer.CMS.Articles.WorkingCopy.Snapshotter
   alias GroupherServer.CMS
+  alias CMS.Articles.WorkingCopy.{History, Store, Diff, Snapshotter}
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Article,
     ArticleBinding,
     ArticleEvent,

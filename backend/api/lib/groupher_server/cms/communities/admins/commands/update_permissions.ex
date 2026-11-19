@@ -5,8 +5,8 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.UpdatePermissions do
       Admin permissions command -> Community / User / Admin locks -> Passport row + Activity
   """
   use GroupherServer.CommandPipeline, adapter: GroupherServer.CMS.CommandPipelineAdapter
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityAdmin}
   alias CMS.Communities.Admins.Requests.Locks
 
@@ -78,8 +78,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.UpdatePermissions do
         %User{} = actor,
         command_id
       )
-      when is_integer(member_id) and is_integer(revision) and is_map(permissions),
-      do: run(community, member_id, revision, permissions, actor, command_id)
+      when is_integer(member_id) and is_integer(revision) and is_map(permissions) do
+    run(community, member_id, revision, permissions, actor, command_id)
+  end
 
   def execute(_, _, _, _, _, _), do: {:error, :invalid_admin_permissions}
 
@@ -92,8 +93,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.UpdatePermissions do
     end
   end
 
-  defp update_member(%CommunityAdmin{is_lord: true}, _permissions, _revision),
-    do: {:error, :lord_permissions_immutable}
+  defp update_member(%CommunityAdmin{is_lord: true}, _permissions, _revision) do
+    {:error, :lord_permissions_immutable}
+  end
 
   defp update_member(%CommunityAdmin{revision: current} = member, permissions, current) do
     member
@@ -101,6 +103,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.UpdatePermissions do
     |> Repo.update()
   end
 
-  defp update_member(%CommunityAdmin{}, _permissions, _revision),
-    do: {:error, :permission_revision_conflict}
+  defp update_member(%CommunityAdmin{}, _permissions, _revision) do
+    {:error, :permission_revision_conflict}
+  end
 end

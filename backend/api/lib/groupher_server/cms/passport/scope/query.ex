@@ -8,8 +8,8 @@ defmodule GroupherServer.CMS.Passport.Scope.Query do
   """
   import Ecto.Query
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
   alias CMS.Model.{Article, ArticleCoAuthor, Author}
   alias CMS.Passport.{Catalog, Scope}
 

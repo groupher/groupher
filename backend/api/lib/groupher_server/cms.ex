@@ -2955,4 +2955,37 @@ defmodule GroupherServer.CMS do
   defdelegate docs_restore_snapshot(site, article, snapshot, work, revision, actor, command),
     to: GroupherServer.CMS.DocTree.Commands.RestoreSnapshot,
     as: :execute
+
+  @doc "Looks up one registered Passport action at the CMS boundary."
+  defdelegate passport_catalog_action(action), to: GroupherServer.CMS.Passport.Catalog, as: :get
+
+  @doc "Loads current Global Passport facts for an authenticated actor."
+  defdelegate passport_global_scope(actor),
+    to: GroupherServer.CMS.Passport,
+    as: :load_global_scope
+
+  @doc "Loads current Community Passport facts for an authenticated actor."
+  defdelegate passport_community_scope(actor, community),
+    to: GroupherServer.CMS.Passport,
+    as: :load_community_scope
+
+  @doc "Checks an actor-bound Passport scope against one registered action."
+  defdelegate passport_allowed?(actor, scope, action),
+    to: GroupherServer.CMS.Passport,
+    as: :allowed?
+
+  @doc "Checks an actor-bound Passport scope against an action and thread."
+  defdelegate passport_allowed?(actor, scope, action, thread),
+    to: GroupherServer.CMS.Passport,
+    as: :allowed?
+
+  @doc "Reconciles one bounded batch of CMS Outbox wakeups."
+  defdelegate reconcile_outbox_schedules(),
+    to: GroupherServer.CMS.Outbox.ScheduleCheck,
+    as: :reconcile
+
+  @doc "Expires pending Community Admin requests due at the supplied UTC time."
+  defdelegate expire_community_admin_requests(now),
+    to: GroupherServer.CMS.Communities.Admins.Requests,
+    as: :expire_due
 end

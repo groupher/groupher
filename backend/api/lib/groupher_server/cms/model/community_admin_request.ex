@@ -10,7 +10,8 @@ defmodule GroupherServer.CMS.Model.CommunityAdminRequest do
 
   @flop_options [filterable: [], sortable: [:inserted_at, :id], pagination_types: [:page, :first]]
 
-  alias GroupherServer.CMS.Passport.Catalog
+  alias GroupherServer.CMS
+  alias CMS.Passport.Catalog
   alias Helper.Constant.DBPrefix
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}

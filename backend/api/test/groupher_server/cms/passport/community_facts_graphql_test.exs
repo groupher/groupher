@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityFactsGraphqlTest do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.CommunityAdmin
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityAdmin
   alias GroupherServerWeb.Schema
 
   @query "query($communityRef: String!) { currentCommunityAdmin(communityRef: $communityRef) { isLord permissions } }"

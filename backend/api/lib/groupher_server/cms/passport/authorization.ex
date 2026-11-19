@@ -11,11 +11,10 @@ defmodule GroupherServer.CMS.Passport.Authorization do
 
   require GroupherServer.CMS.Passport.ErrorCat
 
-  alias GroupherServer.{CMS, Repo}
-
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.Passport.{Catalog, ErrorCat, Registry, Store}
   alias CMS.Model.Community
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
 
   @doc """
   Asks whether one normalized passport grants an action in a community.

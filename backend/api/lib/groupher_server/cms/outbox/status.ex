@@ -1,14 +1,11 @@
 defmodule GroupherServer.CMS.Outbox.Status do
   @moduledoc """
-  Maps the current Outbox lifecycle onto the rolling-deploy-safe database vocabulary.
+  Maps the application lifecycle onto the canonical stored Outbox vocabulary.
 
-  The database retains the original values so a previous release can keep
-  reading and writing while a new release starts. A later, separately staged
-  contract migration may rewrite the stored vocabulary after old writers are gone.
+  The schema uses pending/executing/failed/completed/dead. Application callers
+  use waiting/running/retrying/done/failed; unknown stored values are rejected.
 
-      application lifecycle atom
-        -> Outbox.Status
-        -> rolling-safe stored string
+      application lifecycle atom -> Outbox.Status -> stored lifecycle string
   """
 
   @behaviour Ecto.Type
@@ -50,19 +47,11 @@ defmodule GroupherServer.CMS.Outbox.Status do
   def load(value) when is_binary(value) do
     case Map.fetch(@loaded, value) do
       {:ok, status} -> {:ok, status}
-      :error -> load_transitional_value(value)
+      :error -> :error
     end
   end
 
   def load(_value), do: :error
-
-  # Accept the unambiguous values written by an early local version of the
-  # rename migration until its forward correction has run.
-  defp load_transitional_value("waiting"), do: {:ok, :waiting}
-  defp load_transitional_value("running"), do: {:ok, :running}
-  defp load_transitional_value("retrying"), do: {:ok, :retrying}
-  defp load_transitional_value("done"), do: {:ok, :done}
-  defp load_transitional_value(_value), do: :error
 
   @impl Ecto.Type
   def equal?(left, right), do: left == right

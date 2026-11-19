@@ -6,11 +6,10 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Expiration do
 
       Expire command -> Rules -> request state + Activity + Outbox intent
   """
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Communities.Admins.Effects
-  alias GroupherServer.CMS.Communities.Admins.Requests.Rules
-  alias GroupherServer.CMS.Model.CommunityAdminRequest
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Communities.Admins.Effects
+  alias CMS.Communities.Admins.Requests.Rules
+  alias CMS.Model.CommunityAdminRequest
 
   @doc "Writes an expired state and notifies the current authorized participants."
   def expire(

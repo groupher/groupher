@@ -2,9 +2,10 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestCreateTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
 
-  alias GroupherServer.CMS.Communities.Admins.Requests.Commands.Create
-  alias GroupherServer.CMS.Model.{CommunityAdmin, CommunityAdminRequest}
-  alias GroupherServer.CMS.Outbox.Event
+  alias GroupherServer.CMS
+  alias CMS.Communities.Admins.Requests.Commands.Create
+  alias CMS.Model.{CommunityAdmin, CommunityAdminRequest}
+  alias CMS.Outbox.Event
 
   test "invite is a receipt-backed request, never a direct membership grant" do
     {:ok, owner} = db_insert(:user)

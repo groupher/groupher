@@ -11,12 +11,12 @@ defmodule GroupherServer.CMS.Passport.Store do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.Model.{Community, CommunityAdmin, GlobalPassport}
   alias CMS.Passport.Scope.Article, as: ArticleScope
   alias CMS.Passport.Scope.Community, as: CommunityScope
   alias CMS.Passport.Scope.Global, as: GlobalScope
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
   alias CMS.Passport.Catalog
 
   @doc "Loads Global facts for an already authenticated actor."

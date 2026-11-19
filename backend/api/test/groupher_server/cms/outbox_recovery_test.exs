@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.OutboxRecoveryTest do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Outbox
+  alias CMS.Outbox
   alias Outbox.{Event, Recovery, Retry}
   alias CMS.Model.GlobalPassport
 

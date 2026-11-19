@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Activity, AlertWall, CMS, Repo}
+  alias GroupherServer.{Activity, AlertWall, CMS, Repo, Pagi}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Articles.{Effects, Lifecycle, Bindings}
   alias CMS.Communities.Tags.Stats
@@ -33,7 +33,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order}
-  alias GroupherServer.{Pagi}
   alias Pagi.Params
 
   @default_retention_days 30
@@ -538,7 +537,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
       {:ok, operation_ref} ->
         case Ecto.UUID.cast(operation_ref) do
           {:ok, canonical} -> {:ok, Keyword.put(opts, :operation_ref, canonical)}
-          :error -> {:error, Activity.ErrorCat.invalid_operation_ref()}
+          :error -> {:error, Activity.error_cat_invalid_operation_ref()}
         end
 
       :error ->

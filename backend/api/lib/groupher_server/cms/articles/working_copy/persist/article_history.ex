@@ -11,8 +11,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Persist.ArticleHistory do
 
   import Ecto.Query
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.{Article, ArticleEvent}
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Model.{Article, ArticleEvent}
 
   def append_article_event_in_transaction(article_id, attrs)
       when is_binary(article_id) and is_map(attrs) do
@@ -39,7 +39,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Persist.ArticleHistory do
     end
   end
 
-  defp require_transaction do
+  @doc "Requires an existing transaction for immutable Article history writes."
+  def require_transaction do
     if Repo.in_transaction?(), do: {:ok, :pass}, else: {:error, :transaction_required}
   end
 

@@ -7,9 +7,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
 
   import Ecto.Query
 
-  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.{CMS, Accounts, Repo}
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityAdmin, CommunityAdminRequest}
+  alias CMS.Model.{Community, CommunityAdmin, CommunityAdminRequest}
   alias Helper.ORM
   alias Helper.ORM.Pagi.Order
 
@@ -173,8 +173,9 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
   end
 
   @doc "Maps an Admin request row and related identities into its GraphQL-facing projection."
-  def present_request(%CommunityAdminRequest{} = request),
-    do: {:ok, present_request_data(request)}
+  def present_request(%CommunityAdminRequest{} = request) do
+    {:ok, present_request_data(request)}
+  end
 
   def present_request_data(%CommunityAdminRequest{} = request) do
     %{

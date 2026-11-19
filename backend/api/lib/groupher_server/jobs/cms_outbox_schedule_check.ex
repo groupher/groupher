@@ -7,7 +7,7 @@ defmodule GroupherServer.Jobs.CMSOutboxScheduleCheck do
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
-  alias GroupherServer.CMS.Outbox.ScheduleCheck
+  alias GroupherServer.CMS
 
   @impl Oban.Worker
   @doc """
@@ -18,7 +18,7 @@ defmodule GroupherServer.Jobs.CMSOutboxScheduleCheck do
       perform(%Oban.Job{})
   """
   def perform(%Oban.Job{}) do
-    case ScheduleCheck.reconcile() do
+    case CMS.reconcile_outbox_schedules() do
       {:ok, _summary} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end

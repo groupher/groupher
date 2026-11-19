@@ -3,12 +3,13 @@ defmodule GroupherServer.Test.CMS.Command.OperationIdentityTest do
 
   import Ecto.Query
 
-  alias GroupherServer.Activity.Model.PostLog
-  alias GroupherServer.CMS.Model.CommandReceipt
-  alias GroupherServer.CommandPipeline.{Rejected, RejectionContext, RejectionData}
+  alias GroupherServer.{Activity, CMS, CommandPipeline}
+  alias Activity.Model.PostLog
+  alias CMS.Model.CommandReceipt
+  alias CommandPipeline.{Rejected, RejectionContext, RejectionData}
 
   defmodule Confirmation do
-    @behaviour GroupherServer.CMS.Command.ConfirmationCodec
+    @behaviour CMS.Command.ConfirmationCodec
     defstruct [:value]
 
     def operations, do: [:article_update]

@@ -10,7 +10,7 @@ defmodule GroupherServer.Jobs.ExpireCommunityAdminRequests do
 
   use Oban.Worker, queue: :community_application, max_attempts: 3
 
-  alias GroupherServer.CMS.Communities.Admins.Requests.ExpireDue
+  alias GroupherServer.CMS
 
   @doc """
   Runs the bounded UTC expiry scan and returns failures to Oban for retry.
@@ -21,7 +21,7 @@ defmodule GroupherServer.Jobs.ExpireCommunityAdminRequests do
   """
   @impl Oban.Worker
   def perform(_job) do
-    case ExpireDue.run(DateTime.utc_now(:second)) do
+    case CMS.expire_community_admin_requests(DateTime.utc_now(:second)) do
       {:ok, _count} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end

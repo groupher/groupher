@@ -7,7 +7,8 @@ defmodule GroupherServer.CMS.Model.ArticleCoAuthor do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Passport.Catalog
+  alias GroupherServer.CMS
+  alias CMS.Passport.Catalog
   alias Helper.Constant.DBPrefix
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}

@@ -284,11 +284,11 @@ defmodule GroupherServer.Activity.CommunityLog do
   end
 
   defp authorize_audit_read(actor, community) do
-    with {:ok, scope} <- CMS.Passport.load_community_scope(actor, community),
-         {:ok, true} <- CMS.Passport.allowed?(actor, scope, CMS.GateAction.audit_read()) do
+    with {:ok, scope} <- CMS.passport_community_scope(actor, community),
+         {:ok, true} <- CMS.passport_allowed?(actor, scope, "audit.read") do
       {:ok, %{private_admin_events?: scope.global.is_root or scope.community.is_lord}}
     else
-      _ -> {:error, CMS.Passport.ErrorCat.permission_denied()}
+      _ -> {:error, CMS.passport_error_cat_permission_denied()}
     end
   end
 

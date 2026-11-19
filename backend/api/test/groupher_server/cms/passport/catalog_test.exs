@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Passport.CatalogTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Passport.Catalog
+  alias GroupherServer.CMS
+  alias CMS.Passport.Catalog
 
   test "validates grant scope, values, grantability and dependencies" do
     assert {:ok, %{"article.read_draft" => true, "article.update" => true}} =

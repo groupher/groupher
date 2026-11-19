@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Passport do
 
   @doc "Checks actor-bound Global facts for one Article query Action."
   def scope_articles(query, actor, scope, action) do
-    __MODULE__.Scope.Query.articles(query, actor, scope, action)
+    __MODULE__.Scope.articles(query, actor, scope, action)
   end
 
   @doc "Grants Community permissions under the caller's transaction."

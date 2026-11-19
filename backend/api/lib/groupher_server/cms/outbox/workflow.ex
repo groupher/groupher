@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Outbox.Workflow do
 
   @doc "Dispatches one claimed CMS outbox job to its domain delivery workflow."
   @spec perform(atom(), Oban.Job.t()) :: Oban.Worker.result()
+  def perform(:admin_request, job), do: __MODULE__.AdminRequest.perform(job)
   def perform(:docs, job), do: __MODULE__.Docs.perform(job)
   def perform(:article, job), do: Article.perform(job)
   def perform(:asset, job), do: Asset.perform(job)

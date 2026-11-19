@@ -10,8 +10,8 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Locks do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityAdmin, CommunityAdminRequest}
 
   @doc """

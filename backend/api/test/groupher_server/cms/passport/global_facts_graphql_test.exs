@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.CMS.Passport.GlobalFactsGraphqlTest do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.GlobalPassport
+  alias GroupherServer.CMS
+  alias CMS.Model.GlobalPassport
   alias GroupherServerWeb.Schema
 
   @query "query { currentGlobalPassport { isRoot permissions } }"

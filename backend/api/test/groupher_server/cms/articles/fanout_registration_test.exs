@@ -112,6 +112,62 @@ defmodule GroupherServer.Test.CMS.Articles.FanoutRegistrationTest do
            )
   end
 
+  test "visibility and review transitions register children without a publication snapshot" do
+    for kind <- ["article.visibility_changed", "article.review_changed"] do
+      id = Ecto.UUID.generate()
+
+      assert {:ok, parent} =
+               Repo.transact_result(fn ->
+                 Effects.enqueue(kind, "article", id, Ecto.UUID.generate(), %{
+                   community: "fanout",
+                   community_id: 7,
+                   thread: :post,
+                   inner_id: 1
+                 })
+               end)
+
+      assert {:ok, %{registered: children}} = Outbox.execute(parent.id, &Effects.dispatch/1)
+      search = Repo.get!(Event, children.search)
+      cdn = Repo.get!(Event, children.cdn)
+      assert Map.has_key?(search.data, "snapshot_id")
+      assert search.data["snapshot_id"] == nil
+      assert cdn.data["snapshot_id"] == nil
+      assert cdn.data["source_event"] == kind
+
+      assert {:ok, tags} =
+               GroupherServer.PublicCache.scope_tags(:article_visibility_changed, cdn.data)
+
+      assert length(tags) == 2
+      assert Repo.get!(Event, parent.id).status == :done
+      assert {:ok, %{registered: repeated}} = Effects.dispatch(parent)
+      assert repeated == children
+    end
+  end
+
+  test "CDN duplicate comparison freezes the complete cache scope" do
+    parent = parent()
+    assert {:ok, %{registered: children}} = Effects.dispatch(parent)
+    cdn = Repo.get!(Event, children.cdn)
+
+    for {field, other} <- [{"community", "other"}, {"thread", "BLOG"}, {"inner_id", 2}] do
+      assert {:error, {:outbox_payload_conflict, id}} =
+               Repo.transact_result(fn ->
+                 Outbox.send(%{
+                   event: cdn.event,
+                   worker: Jobs.CMSOutboxCDN,
+                   resource_type: cdn.resource_type,
+                   resource_id: cdn.resource_id,
+                   operation_ref: Ecto.UUID.generate(),
+                   dedupe_key: cdn.dedupe_key,
+                   data: Map.put(cdn.data, field, other)
+                 })
+               end)
+
+      assert id == cdn.id
+      assert Repo.get!(Event, cdn.id) == cdn
+    end
+  end
+
   defp parent do
     article_id = Ecto.UUID.generate()
 

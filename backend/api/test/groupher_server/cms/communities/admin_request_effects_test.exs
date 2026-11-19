@@ -2,9 +2,10 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestEffectsTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
 
-  alias GroupherServer.CMS.Communities.Admins.Effects
-  alias GroupherServer.CMS.Model.CommunityAdminRequest
-  alias GroupherServer.CMS.Outbox.Event
+  alias GroupherServer.CMS
+  alias CMS.Communities.Admins.Effects
+  alias CMS.Model.CommunityAdminRequest
+  alias CMS.Outbox.Event
 
   test "recipient intents deduplicate and roll back with the domain transaction" do
     {:ok, actor} = db_insert(:user)

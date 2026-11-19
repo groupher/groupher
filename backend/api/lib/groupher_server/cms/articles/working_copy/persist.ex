@@ -8,8 +8,12 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Persist do
         -> caller transaction commits or rolls back
   """
 
-  alias GroupherServer.CMS.Articles.WorkingCopy.Persist.ArticleHistory
+  alias GroupherServer.CMS
+  alias CMS.Articles.WorkingCopy.Persist.ArticleHistory
 
   defdelegate append_article_event_in_transaction(article_id, attrs),
     to: ArticleHistory
+
+  @doc "Requires the caller-owned transaction before freezing Article history."
+  defdelegate require_transaction(), to: ArticleHistory
 end

@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Mutation.CMS.CommunityAdminRequestsTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.{CommunityAdmin, CommunityAdminRequest}
+  alias GroupherServer.CMS
+  alias CMS.Model.{CommunityAdmin, CommunityAdminRequest}
 
   test "Admin GraphQL invite is pending until its subject accepts" do
     {:ok, lord} = db_insert(:user)

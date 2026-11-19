@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Passport.GlobalPassportTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.GlobalPassport
-  alias GroupherServer.CMS.Passport.Store
+  alias GroupherServer.CMS
+  alias CMS.Model.GlobalPassport
+  alias CMS.Passport.Store
 
   test "global facts are unique per user and retain a positive revision" do
     {:ok, user} = db_insert(:user)

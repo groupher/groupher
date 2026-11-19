@@ -2,9 +2,10 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestDecideTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
 
-  alias GroupherServer.CMS.Communities.Admins.Requests.Commands.{Create, Decide}
-  alias GroupherServer.CMS.Model.{CommunityAdmin, CommunityAdminRequest}
-  alias GroupherServer.CMS.Outbox.Event
+  alias GroupherServer.CMS
+  alias CMS.Communities.Admins.Requests.Commands.{Create, Decide}
+  alias CMS.Model.{CommunityAdmin, CommunityAdminRequest}
+  alias CMS.Outbox.Event
 
   test "invite decision grants once and receipt replay cannot recreate a removed member" do
     {:ok, owner} = db_insert(:user)

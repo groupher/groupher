@@ -18,16 +18,16 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   and return only `:ok` or `{:error, reason}`.
   """
 
+  require GroupherServer.CMS.Gate.ErrorCat
+
   import Ecto.Query
 
-  alias GroupherServer.CommandPipeline
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CommandPipeline, CMS, Repo}
   alias CommandPipeline.StageContext
 
   alias CMS.Gate.Access.Check
   alias CMS.Gate.Access.Policy.Application, as: ApplicationPolicy
   alias CMS.Gate.{Decision, ErrorCat}
-  require ErrorCat
   alias CMS.{Articles, FrontDesk}
   alias CMS.Model.{Article, Comment, Community}
   alias CMS.Model.CommunityApplication

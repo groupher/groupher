@@ -10,8 +10,8 @@ defmodule GroupherServer.CMS.Gate.Scope.ReviewRead do
         -> ReviewRead grants -> Gate Scope restriction filters
   """
 
-  alias GroupherServer.CMS
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
 
   @doc "Returns platform review access and Community ids authorized by current Passport rows."
   def grants(%User{} = actor) do

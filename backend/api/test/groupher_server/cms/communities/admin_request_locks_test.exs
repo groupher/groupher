@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Communities.AdminRequestLocksTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Communities.Admins.Requests.Locks
-  alias GroupherServer.CMS.Model.CommunityAdminRequest
+  alias GroupherServer.CMS
+  alias CMS.Communities.Admins.Requests.Locks
+  alias CMS.Model.CommunityAdminRequest
 
   test "locks canonical resources in order and requires every request subject" do
     {:ok, owner} = db_insert(:user)
