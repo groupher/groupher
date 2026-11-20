@@ -50,20 +50,14 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Community do
 
   defp cleanup(event) do
     case event.event do
-      "community.analysis_provision" -> provision_analysis(event.resource_id)
+      "community.analysis_provision" -> provision_analysis(event)
       _ -> purge_cache(event)
     end
   end
 
-  defp provision_analysis(community_id) do
-    case Integer.parse(to_string(community_id)) do
-      {community_id, ""} ->
-        with {:ok, community} <- CMS.FrontDesk.community(community_id, mode: :internal) do
-          Analysis.web_provision_community_on_create(community)
-        end
-
-      _ ->
-        {:error, CommunityErrorCat.invalid_outbox_resource()}
+  defp provision_analysis(event) do
+    with {:ok, community} <- CMS.Communities.Effects.analysis_target(event) do
+      Analysis.web_provision_community_on_create(community)
     end
   end
 

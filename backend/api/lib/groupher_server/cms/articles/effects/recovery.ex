@@ -5,15 +5,124 @@ defmodule GroupherServer.CMS.Articles.Effects.Recovery do
       failed effect -> matching publish History or sealed Release lineage
         -> same resource, binding and complete effect intent -> pending / superseded
 
-  This is a read of existing facts. It never resets an event, discards a
-  notification, or persists a second alert or replacement state machine.
+  These reads are shared by manual recovery and current projection delivery.
+  They never reset an event, discard a notification, or persist a second alert
+  or replacement state machine.
   """
 
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{ArticleEvent, DocsRelease, DocsReleaseArticle}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    ArticleEvent,
+    ArticlePublic,
+    ArticleSnapshot,
+    Community,
+    DocsRelease,
+    DocsReleaseArticle
+  }
+
   alias CMS.Outbox.Event
+
+  @doc "Loads the current public projection while retaining the event's admitted Binding scope."
+  def projection_context(%{resource_type: "article", resource_id: id, data: data}) do
+    with {:ok, id} <- Ecto.UUID.cast(id),
+         %Article{} = article <- Repo.get(Article, id),
+         community_id when is_integer(community_id) <- data["community_id"],
+         %Community{} = community <- Repo.get(Community, community_id),
+         %ArticleBinding{} = binding <-
+           Repo.get_by(ArticleBinding, article_id: id, community_id: community_id),
+         true <- binding.inner_id == data["inner_id"],
+         %ArticlePublic{} = public <- Repo.get(ArticlePublic, id),
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, public.snapshot_id),
+         {:ok, _view} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: article.thread,
+             inner_id: binding.inner_id
+           }) do
+      {:ok,
+       %{
+         article: article,
+         community: community,
+         binding: binding,
+         public: public,
+         snapshot: snapshot,
+         actor: original_actor(data),
+         first_publish?: Map.get(data, "first_publish?", false),
+         changed_fields: changed_fields(Map.get(data, "changed_fields", [])),
+         published_by_id: data["published_by_id"]
+       }}
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.projection_not_found()}
+    end
+  end
+
+  def projection_context(_event), do: {:error, CMS.Articles.ErrorCat.projection_not_found()}
+
+  @doc "Checks only dependencies required by the configured Search consumer."
+  def search_context(event) do
+    if CMS.SearchArtiments.platform() == CMS.SearchArtiments.Disabled do
+      {:ok, :search_disabled}
+    else
+      enabled_search_context(event)
+    end
+  end
+
+  defp enabled_search_context(%{resource_type: "article", resource_id: id, data: data}) do
+    with {:ok, id} <- Ecto.UUID.cast(id),
+         %Article{} = article <- Repo.get(Article, id),
+         kind
+         when kind in [
+                "article.published",
+                "article.updated",
+                "article.visibility_changed",
+                "article.review_changed"
+              ] <- data["source_event"],
+         {:ok, :pass} <- search_binding_scope(kind, data["community_id"]) do
+      {:ok, %{article: article, source_event: kind, community_id: data["community_id"]}}
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.projection_not_found()}
+    end
+  end
+
+  defp enabled_search_context(_event), do: {:error, CMS.Articles.ErrorCat.projection_not_found()}
+
+  defp search_binding_scope(kind, _community_id)
+       when kind in ["article.published", "article.updated"] do
+    {:ok, :pass}
+  end
+
+  defp search_binding_scope(_kind, id) when is_integer(id) do
+    case Repo.get(Community, id) do
+      %Community{} -> {:ok, :pass}
+      nil -> {:error, CMS.Articles.ErrorCat.projection_not_found()}
+    end
+  end
+
+  defp search_binding_scope(_kind, _id) do
+    {:error, CMS.Articles.ErrorCat.projection_not_found()}
+  end
+
+  defp original_actor(%{"published_by_id" => id}) when is_integer(id) do
+    Repo.get(GroupherServer.Accounts.Model.User, id)
+  end
+
+  defp original_actor(_data), do: nil
+
+  defp changed_fields(fields) when is_list(fields) do
+    Enum.map(fields, fn
+      "title" -> :title
+      "body_hash" -> :body_hash
+      "cover_edit" -> :cover_edit
+      value -> value
+    end)
+  end
+
+  defp changed_fields(_fields), do: []
 
   @doc "Returns the current failure diagnosis without mutating the original intent."
   def status(%Event{status: :failed, contract_version: 1, resource_type: "article"} = event) do

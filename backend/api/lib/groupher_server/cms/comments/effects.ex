@@ -2,8 +2,9 @@ defmodule GroupherServer.CMS.Comments.Effects do
   @moduledoc """
   Owns durable effect intents emitted by Comment mutations.
 
-  The caller owns the current Command transaction. This module only builds the
-  bounded Outbox intent; the Comment cleanup worker performs post-commit
+  The caller owns the current Command transaction. This module builds bounded
+  Outbox intent and loads the dependencies shared by recovery and delivery;
+  the Comment cleanup worker performs post-commit
   cache, search, and subscription delivery. Mentions are updated by the
   owning Comment Command before commit.
 
@@ -109,6 +110,42 @@ defmodule GroupherServer.CMS.Comments.Effects do
       data: data
     })
   end
+
+  @doc "Loads only dependencies the Comment consumer needs, preserving its legal no-op cases."
+  def delivery_context(%{
+        event: "comment.created",
+        resource_type: "comment",
+        resource_id: id,
+        data: data
+      }) do
+    with {id, ""} when id > 0 <- Integer.parse(to_string(id)),
+         %Comment{} = comment <- Repo.get(Comment, id),
+         true <- comment.article_id == data["article_id"],
+         actor_id when is_integer(actor_id) <- data["actor_id"],
+         %User{} = actor <- Repo.get(User, actor_id),
+         community_id when is_integer(community_id) <- data["community_id"] do
+      {:ok, %{comment: comment, actor: actor, community: Repo.get(Community, community_id)}}
+    else
+      _ -> {:error, CMS.Comments.ErrorCat.effect_target_not_found()}
+    end
+  end
+
+  def delivery_context(%{
+        event: "comment.deleted",
+        resource_type: "article",
+        resource_id: id,
+        data: data
+      }) do
+    with {:ok, id} <- Ecto.UUID.cast(id),
+         true <- id == data["article_id"],
+         %Article{} = article <- Repo.get(Article, id) do
+      {:ok, %{article: article}}
+    else
+      _ -> {:error, CMS.Comments.ErrorCat.not_exist("Comment parent Article")}
+    end
+  end
+
+  def delivery_context(_event), do: {:error, CMS.Comments.ErrorCat.unknown_outbox_event()}
 
   @doc "Records one Comment activity in the caller-owned transaction."
   def activity(resource, event, opts), do: Activity.log(resource, event, opts)

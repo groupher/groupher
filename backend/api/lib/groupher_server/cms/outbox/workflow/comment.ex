@@ -10,14 +10,11 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
         -> complete / retry / snooze / terminal failure
   """
 
-  alias GroupherServer.Accounts
-
   alias GroupherServer.{CMS, ErrorCat, Jobs, Repo}
   alias CMS.Outbox
   alias CMS.Comments.ErrorCat, as: CommentErrorCat
-  alias CMS.Model.{Article, Comment, Community}
+  alias CMS.Model.Article
   alias CMS.SearchArtiments.Indexer
-  alias Accounts.Model.User
 
   @doc """
   Delivers one Comment outbox event under the shared lease and retry protocol.
@@ -61,11 +58,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
         end
 
       "comment.deleted" ->
-        with %Article{} = article <- Repo.get(Article, event.resource_id),
+        with {:ok, %{article: article}} <- CMS.Comments.Effects.delivery_context(event),
              {:ok, _} <- normalize(Indexer.enqueue_metrics(article)) do
           {:ok, :effects_enqueued}
-        else
-          nil -> {:error, CommentErrorCat.not_exist("Comment parent Article")}
         end
 
       action when action in ["comment.updated", "comment.replied"] ->
@@ -80,20 +75,16 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
 
   defp comment_effects(action, event)
        when action == "comment.created" do
-    with %Comment{} = comment <- Repo.get(Comment, event.resource_id),
-         %User{} = actor <- Repo.get(User, event.data["actor_id"]),
-         community_id when is_integer(community_id) <- event.data["community_id"] do
-      case Repo.get(Community, community_id) do
+    with {:ok, context} <- CMS.Comments.Effects.delivery_context(event) do
+      case context.community do
         nil ->
           {:ok, :community_gone}
 
         community ->
-          with {:ok, _} <- enqueue_comment_job(action, comment, actor, community) do
+          with {:ok, _} <- enqueue_comment_job(action, context.comment, context.actor, community) do
             {:ok, :effects_enqueued}
           end
       end
-    else
-      _ -> {:error, CommentErrorCat.effect_target_not_found()}
     end
   end
 

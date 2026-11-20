@@ -62,7 +62,8 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
         {:ok, diagnosis}
 
       {:ok, %{outcome: :pending}} ->
-        with {:ok, updated} <- reset_event(event),
+        with {:ok, :pass} <- validate_current_target(event),
+             {:ok, updated} <- reset_event(event),
              {:ok, _retry} <- record_retry(event, operation_ref, initiator),
              {:ok, _job} <- insert_job(worker, event.id) do
           {:ok, %{outcome: :requeued, event: updated}}
@@ -72,6 +73,25 @@ defmodule GroupherServer.CMS.Outbox.Recovery do
         error
     end
   end
+
+  defp validate_current_target(%Event{event: "article.projections"} = event) do
+    with {:ok, _} <- CMS.Articles.Effects.projection_context(event), do: {:ok, :pass}
+  end
+
+  defp validate_current_target(%Event{event: "article.search_sync"} = event) do
+    with {:ok, _} <- CMS.Articles.Effects.search_context(event), do: {:ok, :pass}
+  end
+
+  defp validate_current_target(%Event{event: kind} = event)
+       when kind in ["comment.created", "comment.deleted"] do
+    with {:ok, _} <- CMS.Comments.Effects.delivery_context(event), do: {:ok, :pass}
+  end
+
+  defp validate_current_target(%Event{event: "community.analysis_provision"} = event) do
+    with {:ok, _} <- CMS.Communities.Effects.analysis_target(event), do: {:ok, :pass}
+  end
+
+  defp validate_current_target(_event), do: {:ok, :pass}
 
   defp lock_event(event_id) do
     case Repo.one(from(event in Event, where: event.id == ^event_id, lock: "FOR UPDATE")) do

@@ -50,6 +50,11 @@ defmodule GroupherServer.CMS.Articles.Effects do
 
   @doc "Records one Article activity in the caller-owned transaction."
   defdelegate activity(resource, event, opts), to: Outbox
+  @doc "Loads current projection dependencies shared by recovery and delivery."
+  defdelegate projection_context(event), to: CMS.Articles.Effects.Recovery
+  @doc "Loads Search dependencies shared by recovery and delivery."
+  defdelegate search_context(event), to: CMS.Articles.Effects.Recovery
+
   @doc "Derives a pure failed effect's replacement from committed publication facts."
   defdelegate recovery_status(event), to: CMS.Articles.Effects.Recovery, as: :status
 end
