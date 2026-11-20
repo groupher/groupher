@@ -1,6 +1,6 @@
 # FrontDesk Article 读取统一与版本接口
 
-> 状态：方案已确认，待实施（2026-11-19）。本文只记录目标、当前差异和实施验收，不代表代码已经切换。
+> 状态：实现已落入当前工作区（2026-11-20）；focused 验收进行中。本文保留原目标、实施范围和验收合同，末尾记录当前验证结果；工作区实现不代表已发布。
 
 ## 1. 已确认的目标
 
@@ -16,28 +16,30 @@
 - FrontDesk 负责读取；内容保存、发布、并发检查、事务锁和 Receipt 仍由现有 owner 负责。
 - 同批完成跨资源读取命名迁移：`:management` → `:admin`、`:owner_management` → `:owner`，覆盖 Article、Community、Doc、Comment 和 ArticleLog 的相关读取链路；具体范围见第 7 节。
 
-## 2. 当前实现与目标的差异
+## 2. 实施前差异与当前落地
 
-| 范围             | 当前实现                                                  | 本次目标                                                  |
-| ---------------- | --------------------------------------------------------- | --------------------------------------------------------- |
-| Article schema   | 稳定身份、作者关联及运行状态；没有 title、body 等读取字段 | 在同一个 Article 中声明实际需要的 virtual 字段            |
-| 公开详情         | FrontDesk 经 SnapshotProjection 返回 ArticleView          | 在返回前把选定内容和社区信息加载到 Article                |
-| 公开路径批量     | 返回 `%{path, article, binding}`                          | 返回按路径加载好的 Article 列表                           |
-| 列表             | Pagination 返回展示 map                                   | 现有 Page 中的文章条目统一为 Article                      |
-| 内部文章读取     | 可按裸 ID 返回不带 community 的 Article                   | 显式内部读取提供 community；锁内身份加载归现有 Gate/Store |
-| 社区补齐         | Store.with_community 区分 Article 与 ArticleView          | 删除该步骤；正常读取返回时已经有 community                |
-| 指定 Snapshot    | 底层 Articles.snapshot/3 和 GraphQL 查询已存在            | 新增 FrontDesk 入口并复用底层能力                         |
-| 指定 WorkingCopy | 底层 Articles.working_copy/3 已存在，没有 FrontDesk 入口  | 新增 FrontDesk 入口；本次不新增单条 GraphQL query         |
+下表左列记录实施前基线，右列是已落地的工作区实现。后续验收发现的偏差以第 10 节为准。
 
-当前证据：
+| 范围             | 当前实现                                                  | 本次目标                                                |
+| ---------------- | --------------------------------------------------------- | ------------------------------------------------------- |
+| Article schema   | 稳定身份、作者关联及运行状态；没有 title、body 等读取字段 | 同一 Article 声明读取用 virtual 字段                    |
+| 公开详情         | FrontDesk 经 SnapshotProjection 返回 ArticleView          | FrontDesk 返回带当前 community 和所选公开内容的 Article |
+| 公开路径批量     | 返回 `%{path, article, binding}`                          | 返回按输入顺序装配好的 Article 列表                     |
+| 列表             | Pagination 返回展示 map                                   | Page entries 和 pinned_entries 使用 Article             |
+| 内部文章读取     | 可按裸 ID 返回不带 community 的 Article                   | 按 ID 读取要求明确 community；Gate/Store 保留锁内加载   |
+| 社区补齐         | Store.with_community 区分 Article 与 ArticleView          | 正常读取直接带 community，不再二次补齐                  |
+| 指定 Snapshot    | 底层 Articles.snapshot/3 和 GraphQL 查询已存在            | FrontDesk.article_snapshot/5 复用底层能力               |
+| 指定 WorkingCopy | 底层 Articles.working_copy/3 已存在，没有 FrontDesk 入口  | FrontDesk.article_working_copy/5 复用底层能力           |
+
+当前实现入口（已删除文件只作历史说明，不再是可用代码入口）：
 
 - [Article schema](../../backend/api/lib/groupher_server/cms/model/article.ex)
 - [FrontDesk Article](../../backend/api/lib/groupher_server/cms/front_desk/article.ex)
-- [SnapshotProjection](../../backend/api/lib/groupher_server/cms/articles/snapshot_projection.ex)
-- [ArticleView](../../backend/api/lib/groupher_server/cms/articles/article_view.ex)
-- [Store](../../backend/api/lib/groupher_server/cms/articles/store.ex)
-- [版本底层查询](../../backend/api/lib/groupher_server/cms/articles/working_copy/query.ex)
-- [现有 GraphQL 版本读取](../../backend/api/lib/groupher_server_web/resolvers/cms/articles.ex)
+- [Article Store](../../backend/api/lib/groupher_server/cms/articles/store.ex)
+- [WorkingCopy 底层查询](../../backend/api/lib/groupher_server/cms/articles/working_copy/query.ex)
+- [GraphQL 读取 resolver](../../backend/api/lib/groupher_server_web/resolvers/cms/articles.ex)
+
+实施前的 `SnapshotProjection`、`ArticleView` 和 `ArticleTransportResult` 仅用于解释历史形状。
 
 ## 3. 普通 Article 接口
 
@@ -118,27 +120,29 @@ FrontDesk.article(article_id, actor, community: community, mode: :internal)
 - `community` 为当前请求的 `%Community{}`，`inner_id` 为该社区中的编号；不新增顶层 `article_id` 别名，文章身份使用 `article.id`。
 - 内容字段、snapshot_id 和资产引用均来自这次选中的同一版本；不暴露嵌套 public 对象。
 
-批量返回 `{:ok, [%Article{}]}`，保留有效输入顺序和重复项，省略无效、不可见或禁用路径。同一 Article 在不同社区出现时，返回分别带对应 community、inner_id 的 Article 值；不能仅按 Article ID 恢复路径顺序或去重。
+批量返回 `{:ok, [%Article{}]}`，保留有效输入顺序和重复项，省略无效、不可见或禁用路径。同一 Article 在不同社区出现时，返回分别带对应 community、inner_id 的 Article 值；不能仅按 Article ID 恢复路径顺序或去重。公开路径批量加载所选正文、当前社区、标签、pin、Lifecycle、作者和 Snapshot extension；为保留有界批量查询，它不加载 `asset_refs`、`comments_participants` 和 Post `cat`。这些专用字段由详情读取或相应专用 API 提供，批量结果不能直接当作详情完整度的 GraphQL source。
 
 分页保留现有 `%{entries: articles, pinned_entries: pinned_articles, page_info: page_info}` 容器，不另建 Page。列表、身份解析和状态查询保持各自现有加载预算，不因类型统一而默认加载所有正文；它们的最小字段要求和调用方一同迁移。
 
 ### 3.3 mode 与未发布文章
 
-| mode        | 内容及社区合同                                                                                        |
-| ----------- | ----------------------------------------------------------------------------------------------------- |
-| `:public`   | Gate 限定可见集合，加载当前公开内容和当前社区；没有可读公开版时返回现有错误                           |
-| `:admin`    | 使用现有管理准入；Article 对应内部 `:owner` 策略，加载当前公开内容及明确社区，不自动改读 WorkingCopy  |
-| `:internal` | 仅供可信命令/维护读取；必须明确 community；按既有用途可只加载身份，内容字段可以未加载，不自动读取草稿 |
+| mode        | 内容及社区合同                                                                                                                                              |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `:public`   | Gate 限定可见集合，加载当前公开内容和当前社区；没有可读公开版时返回现有错误                                                                                 |
+| `:admin`    | 使用现有管理准入；Article 对应内部 `:owner` 策略，加载当前公开内容及明确社区，不自动改读 WorkingCopy                                                        |
+| `:internal` | 仅供可信命令/维护读取；身份读取可省略 community，社区内容读取必须明确 community；按 ID 读取身份时不检查 thread 是否启用；内容字段可以未加载，不自动读取草稿 |
+
+`:public` 和 `:admin` 的路径及 ID 读取都检查 thread 是否启用；可信 `:internal` ID 身份读取只恢复 Article/binding 身份，不做该检查，也不因此返回公开内容。
 
 普通公开详情保证完整正文。列表和明确的身份读取不承诺正文已加载；字段省略不改变 Article 类型，也不改变同名字段含义。
 
-旧 `article(id, mode: :internal)` 的调用逐个迁移：需要社区的正常读取补充明确 community，版本读取使用下面两个接口，仅供锁内授权的身份加载保留在现有 Gate/Store。恢复删除等场景使用 owner 已有领域事实处理归属，不能通过猜测社区或跳过锁来适配新接口。
+旧 `article(id, mode: :internal)` 的调用逐个迁移：需要社区内容的正常读取补充明确 community；仅需要稳定身份的可信内部读取可以省略 community。版本读取使用下面两个接口，仅供锁内授权的身份加载保留在现有 Gate/Store。恢复删除等场景使用 owner 已有领域事实处理归属，不能通过猜测社区或跳过锁来适配新接口。
 
 ### 3.4 批量 actor 与 admin 合同
 
-当前实现只有 `article(paths, opts)` 的批量分支，支持公开路径和可信内部 ID 批量；公开 Locator 固定使用 `Gate.scope(Article, nil, :list, ...)`，尚不支持管理批量。当前三参 `article(paths, actor, opts)` 会进入单篇分发，不是已经实现的带 actor 参数的批量接口。现有 Article Gate 的 public stage 忽略 actor；公开批量接受 actor 不表示按该用户扩大可见集合。
+已实现 `article(paths, opts)` 和 `article(paths, actor, opts)` 两种批量入口。无 actor 的入口用于公开路径或可信内部 ID；带 actor 的入口支持 `:public` 和 `:admin`。Article Gate 的 public stage 忽略 actor；公开批量接受 actor 不表示按该用户扩大可见集合。`:admin` 要求 actor，并按 Article `:owner` 准入读取，不会先裁成公开集合。
 
-上面的三参示例是本次需要补齐的目标能力，不能通过删除 actor 或拒绝管理读取来消除差异：
+批量合同如下：
 
 | 目标调用                                            | actor / mode 语义                                                                                 |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -146,7 +150,7 @@ FrontDesk.article(article_id, actor, community: community, mode: :internal)
 | `article(paths, actor, opts)`，默认或显式 `:public` | 接受 actor，但与匿名 public 使用相同可见集合；现有 public stage 忽略 actor，传入用户不会升级 mode |
 | `article(paths, actor, mode: :admin)`               | actor 必填；沿用单篇管理读取的 Gate 策略，Article 内部使用 `:owner`，不选择草稿或历史版本         |
 
-每组 community/thread 按对应 mode 构造批量 scope，不循环调用单篇接口，也不先按匿名公开集合筛掉管理者本可读取的路径。权限不足的路径按不可见路径规则省略；admin 必须校验 actor 及其真实关系，缺 actor 或未知 mode 返回错误，不降级为 public。public 的 actor 不参与可见性授权；按现有逻辑加载用户展示状态时，也不能借此增加可见文章。各 facade 必须显式处理列表加 actor 的分发，避免再次落入单篇解析。
+每组 community/thread 按对应 mode 构造批量 scope，不循环调用单篇接口，也不先按匿名公开集合筛掉管理者本可读取的路径。权限不足的路径按不可见路径规则省略；admin 必须校验 actor 及其真实关系，缺 actor 或未知 mode 返回错误，不降级为 public。public 的 actor 不参与可见性授权；按现有逻辑加载用户展示状态时，也不能借此增加可见文章。各 facade 显式处理列表加 actor 的分发，避免再次落入单篇解析。
 
 `article(ids, mode: :internal)` 的现有身份消费者独立列入 A0。只需要稳定身份、没有请求社区的 owner 事实查询不伪造 community，也不当成已加载的公开 Article 展示；按现有身份查询与 canonical reload 职责迁移。正常文章资源读取仍遵守默认公开且带 community 的合同。
 
@@ -267,7 +271,7 @@ FrontDesk 内部复用 [Public.current](../../backend/api/lib/groupher_server/cm
 
 公开正文来自 PublicBody；Snapshot 继续提供版本身份、typed extension、封面和资产身份。缺失或不匹配沿用既有错误，不读取历史正文或 WorkingCopy 补齐。
 
-`inserted_at / updated_at` 保持 Article 数据库含义；公开版本时间放到 published_at。GraphQL 详情、Lite、Search、Press 各自当前时间口径在消费端明确映射，不覆盖 Article 时间字段。
+读取投影把 `inserted_at / updated_at` 映射为所选公开版本的 `published_at`，与 `published_at` 保持同一公开时间口径；该映射只作用于返回的 Article，不写回数据库。Search、Press 等其他资源仍遵守各自的时间字段合同。
 
 ### 5.3 批量和分页
 
@@ -317,7 +321,7 @@ Web / Job / cross-domain caller
 
 尤其核对当前三个分支问题：Store 会拒绝所有 Article；Comments.Create 的 Article 分支没有沿用展示对象传入的社区；Gate 中 Article 与带 community 的展示对象可能进入不同分支。不能仅改构造点就认为调用链已经统一。
 
-作者解析逐项覆盖现有三个位置：`general_article_fields` 中的 `author: :user`、`article_page_objects` 中的 Lite `author: :common_user`，以及 `common_article` 的 `author: :common_user`。后两者当前直接取值；只给详情解包 Author，列表和评论附带文章仍会返回错误的作者形状。
+作者解析逐项覆盖现有三个位置：`general_article_fields` 中的 `author: :user`、`article_page_objects` 中的 Lite `author: :common_user`，以及 `common_article` 的 `author: :common_user`。Lite 查询层直接产出 `%User{}`；`common_article.author` 通过同一字段解析函数兼容 `%User{}` 和 `%Author{user: %User{}}`，保证 upvoted/collected 列表及可能携带 Article 关联的 Comment 来源都返回 User。验收同时覆盖 GraphQL common_article 列表和 Author/User 两种解析输入。
 
 过渡过程中，现有字段 resolver 兼容已加载的 `%Author{user: %User{}}` 和 `%User{}`，统一向 GraphQL 返回 User；关联尚未加载时复用已有批量加载能力，不逐项 Repo 查询。无需按 ArticleView 类型另建分发。A4 清除只服务旧 ArticleView 的分支，同时保留其他既有合法来源需要的 User 处理，不建立长期双文章类型或新作者适配层。
 
@@ -385,19 +389,19 @@ Community 的旧 `mode: :management` 位置分别处理（前两项为实际调�
 
 ## 8. 实施批次
 
-各批同时更新相关调用方和测试，最后整体交付，不长期保留 ArticleView / Article 双返回。
+实施按下列批次完成；没有保留 ArticleView / Article 双返回的发布阶段。
 
 A0 先完成第 7.1 节的全局命名清单，包括 atom、构造函数、draft 默认值、映射、facade、实际调用、测试和当前文档，并单列 `Communities.fetch` owner 转换的行为修正。A1 将这些定义、消费者及该修正作为完整变更一起迁移，不允许只改 Article FrontDesk、遗漏 Community/Doc/Comment/ArticleLog。A1 的跨资源命名与 owner 转换验证通过后，A2 才切换普通 Article 返回结构；A1 不依赖 ArticleView 已删除。
 
 A2 切换读取生产者之前，必须完成受新 Article/Author 形状影响的最低限度消费者适配，包括 Gate 分发、Store、评论和全部 GraphQL 作者位置。它们与返回值切换作为同一集成变更验证，不能因为表中列在 A3 就延后。A3 收口其余命令和后台链路；如果某项适配是 A2 正常运行的前提，立即并入 A2。A2/A3 是工作分类，不能作为允许旧消费者损坏的独立发布边界。
 
-| 批次                    | 内容                                                                                                                              | 退出条件                                                                                                                |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| A0 基线                 | 固定详情、列表、版本读取、错误与批量 SQL 基线；清点旧字段/view，以及第 7.1 节跨资源 mode、构造函数、映射和调用                    | 每个实际调用者都有目标入口和必需字段；完整列出跨资源命名范围，区别当前实现与待新增能力                                  |
-| A1 命名、字段与版本入口 | 完成全局 admin/owner 改名、Communities.fetch owner 转换修正及消费者适配；Article 声明 virtual/真实关联；补齐两个版本入口及 facade | 除明确的 owner 转换修正外权限/状态与改名前一致，无旧运行时名称；版本归属、body、编辑权限、未发布内容和 Doc 限制通过验证 |
-| A2 普通读取             | 切换单篇、批量、分页、GraphQL 和依赖旧返回形状的消费者                                                                            | 所有普通文章为 Article；默认公开、当前 community、顺序、分页和响应符合合同                                              |
-| A3 命令及后台消费       | Gate、评论、互动、收藏、状态命令、Search、Press、通知、工厂同步迁移                                                               | 社区与版本不丢失，锁/并发/恢复语义正确，无逐篇查询回归                                                                  |
-| A4 删除与验收           | 删除 ArticleView、with_community、旧类型分支和已无调用的 transport/Response 代码，更新文档和 typespec                             | 无旧形状消费者；编译、focused tests、合同和文档检查完成并记录实际结果                                                   |
+| 批次                    | 内容                                                                                       | 退出条件                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| A0 基线                 | 固定详情、列表、版本读取、错误与批量 SQL 基线；清点旧字段/view 和跨资源 mode 清单          | 已完成；见第 3–7 节及调用方验收范围                           |
+| A1 命名、字段与版本入口 | 完成全局 admin/owner 改名、owner 转换修正、Article 字段和两个版本入口                      | 已落地；验证结果见第 10 节                                    |
+| A2 普通读取             | 切换单篇、批量、分页、GraphQL 和旧返回形状消费者                                           | 已落地；测试覆盖详情、批量、分页和 GraphQL                    |
+| A3 命令及后台消费       | Gate、评论、互动、收藏、状态命令、Search、Press、通知、工厂同步                            | 已落地；focused 回归发现并修复 Doc Comment Article scope 缺失 |
+| A4 删除与验收           | 删除 ArticleView、with_community、旧类型分支和无调用的 transport 代码，更新文档和 typespec | 已落地；编译、测试与静态检查结果见第 10 节                    |
 
 不按目录盲删 ArticleTransportResult、Response 等模块；先确认实际引用和仍承担的业务职责，必要逻辑迁入已有 owner 后再删除。
 
@@ -428,12 +432,14 @@ A2 切换读取生产者之前，必须完成受新 Article/Author 形状影响�
 
 验证结果区分本任务失败、预先存在的工作区失败和未运行项；不把静态方案或单项通过写成完整实现验收。
 
-## 10. 本次落文档状态
+## 10. 工作区实施与验证状态
 
-本次只新增方案和索引链接，没有实施字段、FrontDesk、GraphQL 或下游代码变更；未运行后端业务测试。实施状态从 A0 开始，不能据本文宣称接口已经存在或迁移已完成。
+代码已按 A0–A4 切换；ArticleView、SnapshotProjection、ArticleTransportResult、Store.with_community 和 Article view 分支已从运行时代码删除。所有验证均为当前工作区的本地结果，不代表合并或发布。
 
 2026-11-20 文档验证：
 
-- 本文、两个 feature 入口 README 和 migrations README 的 oxfmt 检查、本地链接检查和 scoped `git diff --check` 通过。
-- `pnpm docs:check` 中 documentation tests 11/11、Documentation coverage 和 CMS Query boundary 通过。
-- 后续 `check:backend-context-v2`（`mix lint.context --strict`）报告 55 处 strict `context_boundary` 违规，首条为 `backend/api/lib/groupher_server/activity/community_log.ex:287`；涉及既有工作区的 activity、jobs、messaging、review_bot、middleware/passport 和 resolvers/cms 等改动。`cms/doc_tree/commands/queue_access.ex:28` 不在这 55 条中。该检查令 `pnpm docs:check` 退出 1，后续串联检查未执行。此结果来自当前含其他未提交改动的工作区，不属于 Article 方案本身的实施验收。
+- `mix compile --warnings-as-errors` 通过；修改范围内 `.ex` / `.exs` 的 `mix format --check-formatted` 通过。
+- Article/GraphQL/Gate/Passport middleware 合并回归：15 个定向测试文件 94/94 通过；`Press` passport fixture 单测 1/1 通过。`communityActivity` Passport scope 复用定向测试 1/1 通过。
+- 评论回归：初次运行 15 个相关文件为 246/248；review 确认剩余两项是 Command Operation Identity 迁移后仍查询 `Outbox.Event.command_id` 的过期断言，已改为当前字段 `operation_ref`。`post_comment_test.exs` 全文件复验 46/46 通过；其余评论回归未因这两项重跑。
+- `mix lint.style` 仍因工作区其余 38 条 style 违规退出 1，主要分布在 co-author、jobs、analysis 和其他已有文件；本次 review 发现的 `@doc/@spec` 顺序、GraphQL helper alias 及新增 scope 测试 alias 问题已修正。
+- `pnpm docs:check`：documentation tests 11/11、Documentation coverage、CMS Query boundary 及 Context/policy 检查通过；随后 `check:backend-context-v2` 报告 40 条既有工作区 strict 违规（包括 activity、jobs、review_bot、resolvers/cms，以及 `cms/articles/co_authors` 目录边界），命令退出 1，后续串联检查未执行。当前 Article 修改引入的 FrontDesk 反向 Context facade 调用已修复；剩余违规位于本次 Article 统一读取和 Passport scope 试点范围之外。

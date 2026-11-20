@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
     assert :collects in CMS.Interactions.Const.interaction_order_values()
   end
 
-  test "offset returns Article Lite rows and a distinct binding count" do
+  test "offset returns Article structs and a distinct binding count" do
     {community, article, _attrs, _user} = mock_article(:post)
 
     assert {:ok,
@@ -65,9 +65,16 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
              )
 
     assert entry.id == article.id
+    assert %CMS.Model.Article{} = entry
+    assert is_binary(entry.title)
+    assert is_binary(entry.snapshot_id)
+    assert %GroupherServer.Accounts.Model.User{} = entry.author
     assert entry.inner_id == 1
     assert entry.community.id == community.id
     assert entry.author.id == article.author.id
+    assert entry.inserted_at == entry.published_at
+    assert entry.updated_at == entry.published_at
+    assert is_nil(entry.body)
   end
 
   test "Article Lite loads author and ordered tags in the page query" do
@@ -97,6 +104,18 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
     {:ok, _assignment} =
       CMS.Communities.set_tag(article, second_tag.id, user, Ecto.UUID.generate())
 
+    {:ok, {public, _snapshot}} = CMS.Articles.Public.current(article.id)
+
+    Repo.insert!(%CMS.Model.ArticleSnapshotTag{
+      snapshot_id: public.snapshot_id,
+      tag_id: second_tag.id
+    })
+
+    Repo.insert!(%CMS.Model.ArticleSnapshotTag{
+      snapshot_id: public.snapshot_id,
+      tag_id: first_tag.id
+    })
+
     assert {:ok, %{entries: [entry]}} =
              Pagination.page(
                :post,
@@ -112,6 +131,7 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
     assert Enum.map(entry.community_tags, & &1.id) == [first_tag.id, second_tag.id]
     assert Enum.all?(entry.community_tags, &(is_binary(&1.group) and &1.group != ""))
     assert Enum.all?(entry.community_tags, &(&1.community.id == community.id))
+    assert Enum.map(entry.article_tags, & &1.id) == [first_tag.id, second_tag.id]
   end
 
   test "cursor continues from the Article binding identity without a count" do

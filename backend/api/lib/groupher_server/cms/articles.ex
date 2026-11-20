@@ -20,7 +20,6 @@ defmodule GroupherServer.CMS.Articles do
     Commands,
     Pagination,
     Query,
-    Store,
     Trash
   }
 
@@ -34,10 +33,6 @@ defmodule GroupherServer.CMS.Articles do
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, Community}
-
-  @doc "Loads the Article's current path Community needed by cross-owner result readers."
-  @spec load_community(struct()) :: {:ok, struct()} | {:error, term()}
-  def load_community(article), do: Store.with_community(article)
 
   @doc "Moves a stable ordinary Article between explicit Communities through Gate."
   @spec move(Community.t(), Community.t(), Ecto.UUID.t(), [T.id()], User.t(), Ecto.UUID.t()) ::

@@ -14,7 +14,6 @@ defmodule GroupherServer.CMS.Articles.Store do
   """
 
   alias GroupherServer.CMS
-  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   alias CMS.Model.{
     Article,
@@ -23,7 +22,7 @@ defmodule GroupherServer.CMS.Articles.Store do
     Community
   }
 
-  alias CMS.Articles.{Bindings, ArticleView}
+  alias CMS.Articles.Bindings
   alias CMS.FrontDesk.Article, as: PublicArticleFrontDesk
 
   alias Helper.ORM
@@ -44,15 +43,6 @@ defmodule GroupherServer.CMS.Articles.Store do
   @doc "Loads one ArticleBinding binding for a Community."
   def binding(article_id, community_id) do
     ORM.find_by(ArticleBinding, article_id: article_id, community_id: community_id)
-  end
-
-  @doc "Ensures an Article has the Community association needed by an effect."
-  def with_community(%Article{}), do: {:error, ArticleErrorCat.binding_context_required()}
-
-  def with_community(%ArticleView{community: %Community{}} = article), do: {:ok, article}
-
-  def with_community(%ArticleView{} = _article) do
-    {:error, ArticleErrorCat.binding_context_required()}
   end
 
   defp load_public_article(article_id, %Community{} = community) do

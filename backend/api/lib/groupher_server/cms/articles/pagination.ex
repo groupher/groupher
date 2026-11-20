@@ -17,20 +17,21 @@ defmodule GroupherServer.CMS.Articles.Pagination do
 
   alias GroupherServer.{Accounts, CMS, Pagi, Repo}
   alias CMS.Articles.{ArticleLite, Query.Contract}
+  alias CMS.Review.SnapshotVersion
   alias CMS.Communities.Enable
   alias CMS.Dashboard.PagiMode
   alias CMS.ErrorCat
 
   alias CMS.Model.{
+    Author,
     Article,
     ArticleBinding,
     ArticleBindingTag,
+    ArticleSnapshotTag,
     ArticleLifecycle,
-    Author,
     ArticlePublic,
     Community,
     CommunityTag,
-    ArticleLifecycle,
     PinnedArticle,
     PostState
   }
@@ -448,22 +449,44 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   defp present_lite_entries([]), do: []
 
   defp present_lite_entries(rows) do
+    article_tags = snapshot_tags(Enum.map(rows, & &1.snapshot_id))
+
     Enum.map(rows, fn row ->
-      %{
-        id: row.article.id,
-        thread: row.article.thread,
-        inner_id: row.inner_id,
+      row.article
+      |> Map.merge(%{
         title: row.title,
-        cat: Map.get(row, :cat),
-        is_pinned: Map.get(row, :is_pinned, false),
         digest: row.digest,
-        author: row.author,
+        snapshot_id: row.snapshot_id,
+        version: SnapshotVersion.from_id(row.snapshot_id),
+        published_at: row.published_at,
+        public_updated_at: row.public_updated_at,
+        inserted_at: row.published_at,
+        updated_at: row.published_at,
+        active_at: row.active_at,
+        inner_id: row.inner_id,
         community: row.community,
         community_tags: ArticleLite.community_tags(row.community_tags, row.community),
-        active_at: row.active_at,
-        inserted_at: row.article.inserted_at
-      }
+        article_tags: Map.get(article_tags, row.snapshot_id, []),
+        is_pinned: Map.get(row, :is_pinned, false),
+        cat: Map.get(row, :cat),
+        author: row.author
+      })
     end)
+  end
+
+  defp snapshot_tags([]), do: %{}
+
+  defp snapshot_tags(snapshot_ids) do
+    Repo.all(
+      from(tag in CommunityTag,
+        join: assignment in ArticleSnapshotTag,
+        on: assignment.tag_id == tag.id,
+        where: assignment.snapshot_id in ^snapshot_ids,
+        order_by: [asc: tag.index, asc: tag.id],
+        select: {assignment.snapshot_id, tag}
+      )
+    )
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
   end
 
   defp maybe_attach_viewer(entries, _viewer), do: {:ok, entries}
@@ -523,6 +546,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         digest: public.digest,
         active_at: article.active_at,
         published_at: public.published_at,
+        public_updated_at: public.updated_at,
         inserted_at: article.inserted_at,
         updated_at: article.updated_at,
         author: user,

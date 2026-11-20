@@ -81,6 +81,34 @@ defmodule GroupherServer.CMS.Model.Article do
     field(:comments_locked, :boolean, default: false)
     field(:next_floor, :integer, default: 1)
     field(:next_comment_inner_id, :integer, default: 1)
+
+    # Selected public content and request-community facts are read projections
+    # on the canonical Article struct. They are never cast or persisted here.
+    field(:title, :string, virtual: true)
+    field(:digest, :string, virtual: true)
+    field(:slug, :string, virtual: true)
+    field(:body, :map, virtual: true)
+    field(:snapshot_id, Ecto.UUID, virtual: true)
+    field(:version, :integer, virtual: true)
+    field(:published_at, :utc_datetime, virtual: true)
+    field(:public_updated_at, :utc_datetime, virtual: true)
+    field(:body_hash, :string, virtual: true)
+    field(:inner_id, :integer, virtual: true)
+    field(:community, :map, virtual: true)
+    field(:community_tags, {:array, :map}, virtual: true)
+    field(:article_tags, {:array, :map}, virtual: true)
+    field(:comments_participants, {:array, :map}, virtual: true)
+    field(:asset_refs, {:array, :map}, virtual: true)
+    field(:is_pinned, :boolean, virtual: true)
+    field(:lifecycle, :map, virtual: true)
+    field(:copy_right, :string, virtual: true)
+    field(:link_addr, :string, virtual: true)
+    field(:cover_url, :string, virtual: true)
+    field(:cover_url_dark, :string, virtual: true)
+    field(:subtitle, :string, virtual: true)
+    field(:template_key, :string, virtual: true)
+    field(:cat, :map, virtual: true)
+
     timestamps(type: :utc_datetime)
   end
 

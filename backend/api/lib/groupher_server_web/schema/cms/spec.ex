@@ -1515,7 +1515,17 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
     field(:title, :string)
     field(:comments_revision, :integer)
     field(:article_stats, :article_stats)
-    field(:author, :common_user)
+
+    field(:author, :common_user,
+      resolve: fn source, args, resolution ->
+        GroupherServerWeb.Schema.Helper.Fields.article_relation(
+          source,
+          args,
+          resolution,
+          :author
+        )
+      end
+    )
   end
 
   object :common_comment do

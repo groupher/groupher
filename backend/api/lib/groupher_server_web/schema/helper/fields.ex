@@ -12,7 +12,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   import Helper.Utils, only: [plural: 1]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Author, Community}
 
   @emotions CMS.artiment_config_emotions()
   @comment_emotions CMS.artiment_config_comment_emotions()
@@ -122,7 +124,23 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         end
       )
 
-      field(:meta, :article_meta)
+      field(:meta, :article_meta,
+        resolve: fn source, _, _ ->
+          case Map.fetch(source, :meta) do
+            {:ok, meta} when is_map(meta) ->
+              {:ok, meta}
+
+            _ ->
+              {:ok,
+               %{
+                 thread: Map.get(source, :thread),
+                 is_edited: Map.get(source, :is_edited),
+                 is_comment_locked: Map.get(source, :comments_locked),
+                 last_active_at: Map.get(source, :last_active_at)
+               }}
+          end
+        end
+      )
 
       field(:command_id, :id,
         resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3
@@ -146,6 +164,23 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   @doc "Returns an already assembled Article DTO relation or delegates legacy structs to Dataloader."
   @spec article_relation(map(), map(), Absinthe.Resolution.t(), atom()) :: term()
+  def article_relation(%{author: %Author{user: %User{} = user}}, _args, _resolution, :author) do
+    {:ok, user}
+  end
+
+  def article_relation(
+        %{author: %Author{user: %Ecto.Association.NotLoaded{}}} = source,
+        args,
+        resolution,
+        :author
+      ) do
+    load_relation(source, args, resolution, :author)
+  end
+
+  def article_relation(%{community: %Community{} = community}, _args, _resolution, :communities) do
+    {:ok, [community]}
+  end
+
   def article_relation(source, args, resolution, relation) do
     case Map.fetch(source, relation) do
       {:ok, %Ecto.Association.NotLoaded{}} -> load_relation(source, args, resolution, relation)

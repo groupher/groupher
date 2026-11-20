@@ -294,7 +294,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           community,
           :doc,
           mock_attrs(:doc),
-          user, command_id: Ecto.UUID.generate())
+          user,
+          command_id: Ecto.UUID.generate()
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -311,13 +313,41 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           community,
           :doc,
           mock_attrs(:doc),
-          user, command_id: Ecto.UUID.generate())
+          user,
+          command_id: Ecto.UUID.generate()
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       doc = results["entries"] |> List.first()
 
       assert doc["inserted_at"] == doc["active_at"]
+    end
+
+    test "Doc activeAt falls back to public time when Article active_at is nil",
+         ~m(guest_conn community user)a do
+      {:ok, doc} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user,
+          command_id: Ecto.UUID.generate()
+        )
+
+      Repo.update!(Ecto.Changeset.change(doc, active_at: nil))
+
+      variables = %{
+        pagi: %{offset: %{page: 1, size: 20, config_revision: 0}},
+        filter: %{community: community.slug}
+      }
+
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
+
+      inner_id = to_string(article_inner_id(doc, community))
+      entry = Enum.find(results["entries"], &(&1["innerId"] == inner_id))
+      assert is_binary(entry["activeAt"])
+      assert entry["activeAt"] == entry["insertedAt"]
     end
 
     test "filter sort should have default :desc_active", ~m(guest_conn)a do
@@ -365,21 +395,27 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           community,
           :doc,
           mock_attrs(:doc),
-          user, command_id: Ecto.UUID.generate())
+          user,
+          command_id: Ecto.UUID.generate()
+        )
 
       {:ok, _} =
         GroupherServer.Support.Factory.create_published_article(
           community,
           :doc,
           mock_attrs(:doc),
-          user, command_id: Ecto.UUID.generate())
+          user,
+          command_id: Ecto.UUID.generate()
+        )
 
       {:ok, _} =
         GroupherServer.Support.Factory.create_published_article(
           community,
           :doc,
           mock_attrs(:doc),
-          user, command_id: Ecto.UUID.generate())
+          user,
+          command_id: Ecto.UUID.generate()
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -463,7 +499,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           community,
           :doc,
           mock_attrs(:doc),
-          user2, command_id: Ecto.UUID.generate())
+          user2,
+          command_id: Ecto.UUID.generate()
+        )
 
       variables = %{
         pagi: %{offset: %{page: 1, size: 20, config_revision: 0}},
@@ -528,7 +566,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           community,
           :doc,
           mock_attrs(:doc),
-          user, command_id: Ecto.UUID.generate())
+          user,
+          command_id: Ecto.UUID.generate()
+        )
 
       variables = %{
         pagi: %{offset: %{page: 1, size: 20, config_revision: 0}},
@@ -537,11 +577,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       doc = CMS.Model.Article |> Repo.get!(doc_last_week.id) |> Repo.preload(author: :user)
 
+      inner_id =
+        Repo.get_by!(CMS.Model.ArticleBinding,
+          article_id: doc.id,
+          community_id: community.id
+        ).inner_id
+
       {:ok, _} =
         CMS.Comments.create_comment(
           community,
           :doc,
-          article_inner_id(doc, community),
+          inner_id,
           mock_comment(),
           doc.author.user,
           Ecto.UUID.generate()

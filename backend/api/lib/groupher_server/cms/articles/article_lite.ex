@@ -225,8 +225,10 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         binding_id: binding.id,
         title: public.title,
         digest: public.digest,
+        snapshot_id: public.snapshot_id,
         active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, public),
         published_at: public.published_at,
+        public_updated_at: public.updated_at,
         doc_active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, public),
         inserted_at: article.inserted_at
       }
@@ -253,8 +255,10 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         binding_id: binding.id,
         title: public.title,
         digest: public.digest,
+        snapshot_id: public.snapshot_id,
         active_at: article.active_at,
         published_at: public.published_at,
+        public_updated_at: public.updated_at,
         doc_active_at: nil,
         inserted_at: article.inserted_at
       }
