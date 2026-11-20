@@ -8,6 +8,7 @@ import useTrans from '~/hooks/useTrans'
 import type { TArticleState } from '~/spec'
 import Pagi from '~/ui/Pagi'
 
+import ArticleCoAuthors from '../ArticleCoAuthors'
 import { ArticleCell, AuthorCell, DateCell, StatusCell } from '../Cell'
 import CmsDataTable from '../Table/CmsDataTable'
 import CmsTableToolbar from '../Table/CmsTableToolbar'
@@ -91,6 +92,15 @@ export default function Changelogs() {
         cell: ({ row }) => <AuthorCell rowData={row.original.content} />,
         size: 160,
         meta: { sticky: 'right', align: 'right' },
+      },
+      {
+        id: 'coauthors',
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.coauthors.action')}</div>
+        ),
+        cell: ({ row }) => <ArticleCoAuthors article={row.original.content} />,
+        size: 120,
+        meta: { sticky: 'right', align: 'center' },
       },
     ]
   }, [s.title, s.cell, t])

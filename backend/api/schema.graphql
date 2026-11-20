@@ -56,7 +56,7 @@ type RootQueryType {
   allPassportRulesString: Rules
 
   "search user by name"
-  searchUsers(name: String!): [User!]!
+  searchUsers(name: String!): [CommonUser!]!
 
   "get paged published article comments"
   pagedPublishedComments(login: String!, filter: CommentPageFilter, pagi: PagiInput, thread: Thread): CommentCollectionPage
@@ -87,6 +87,18 @@ type RootQueryType {
 
   "Whether the viewer can manage Community Admin memberships"
   communityAdminManagementAllowed(communityRef: String!): Boolean!
+
+  "Paged current co-authors for one Article; requires article.author.manage"
+  pagedArticleCoAuthors(articleId: ID!, pagi: PagiInput): ArticleCoAuthorPage!
+
+  "Search bounded Article co-author invite candidates; requires article.author.manage"
+  articleCoAuthorCandidates(articleId: ID!, name: String!): [CommonUser!]!
+
+  "Paged Article co-author requests visible to the manager or current subject"
+  pagedArticleCoAuthorRequests(articleId: ID!, pagi: PagiInput): ArticleCoAuthorRequestPage!
+
+  "The current viewer's effective permissions for one Article"
+  articlePermissions(articleId: ID!): ArticlePermissions!
 
   docsQueuePolicy(community: String!): Json
 
@@ -260,7 +272,7 @@ type RootQueryType {
   checkCommunityName(slug: String!): CommunityNameCheck
 
   "Bounded user picker excluding current moderators"
-  moderatorCandidates(community: String!, name: String!): [User!]!
+  moderatorCandidates(community: String!, name: String!): [CommonUser!]!
 
   "communities with pagination info"
   pagedCommunities(filter: CommunitiesFilter, pagi: PagiInput): CommunityPage
@@ -620,6 +632,28 @@ type RootMutationType {
 
   "Leave the current user's ordinary Admin membership"
   leaveCommunityAdmins(communityRef: String!, revision: Int!, commandId: ID!): Boolean!
+
+  "Create an Article co-author invitation or submit the current user's application"
+  createArticleCoAuthorRequest(
+    articleId: ID!, subjectLogin: String, type: ArticleCoAuthorRequestType!, permissions: Json!, commandId: ID!
+  ): ArticleCoAuthorRequest!
+
+  "Accept or reject an Article co-author invitation or application"
+  decideArticleCoAuthorRequest(
+    requestId: ID!, revision: Int!, decision: ArticleCoAuthorDecision!, approvedPermissions: Json, commandId: ID!
+  ): ArticleCoAuthorRequest!
+
+  "Cancel a pending Article co-author request at its current revision"
+  cancelArticleCoAuthorRequest(requestId: ID!, revision: Int!, commandId: ID!): ArticleCoAuthorRequest!
+
+  "Replace one co-author's grantable Article permissions at its current revision"
+  updateArticleCoAuthorPermissions(articleId: ID!, memberId: ID!, revision: Int!, permissions: Json!, commandId: ID!): ArticleCoAuthor!
+
+  "Remove one current Article co-author membership"
+  removeArticleCoAuthor(articleId: ID!, memberId: ID!, revision: Int!, commandId: ID!): ArticleCoAuthor!
+
+  "Leave the current user's Article co-author membership"
+  leaveArticleCoAuthors(articleId: ID!, revision: Int!, commandId: ID!): ArticleCoAuthor!
 
   "Create a stable Article and its default mutable WorkingCopy"
   createArticle(
@@ -1902,6 +1936,65 @@ type CmsArtimentReview {
   reviewMode: String
   systemOpinion: ArtimentReviewOpinion
   communityOpinion: ArtimentReviewOpinion
+}
+
+enum ArticleCoAuthorRequestType {
+  INVITE
+  APPLY
+}
+
+enum ArticleCoAuthorRequestStatus {
+  PENDING
+  DECIDED
+  CANCELLED
+  EXPIRED
+}
+
+enum ArticleCoAuthorDecision {
+  ACCEPT
+  REJECT
+}
+
+type ArticleCoAuthor {
+  memberId: ID!
+  articleId: ID!
+  revision: Int!
+  permissions: [PassportAction!]!
+  joinedAt: DateTime!
+  user: CommonUser!
+}
+
+type ArticleCoAuthorPage {
+  entries: [ArticleCoAuthor!]!
+  pageInfo: PageInfo!
+}
+
+type ArticleCoAuthorRequest {
+  id: ID!
+  articleId: ID!
+  type: ArticleCoAuthorRequestType!
+  status: ArticleCoAuthorRequestStatus!
+  decision: ArticleCoAuthorDecision
+  revision: Int!
+  proposedPermissions: Json!
+  approvedPermissions: Json
+  expiresAt: DateTime!
+  decidedAt: DateTime
+  cancelledAt: DateTime
+  subjectUser: CommonUser
+  createdBy: CommonUser
+  currentMember: ArticleCoAuthor
+}
+
+type ArticleCoAuthorRequestPage {
+  entries: [ArticleCoAuthorRequest!]!
+  pageInfo: PageInfo!
+}
+
+type ArticlePermissions {
+  articleId: ID!
+  isOwner: Boolean!
+  permissions: [PassportAction!]!
 }
 
 type CommunityAdmin {

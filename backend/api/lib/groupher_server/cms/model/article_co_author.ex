@@ -5,7 +5,10 @@ defmodule GroupherServer.CMS.Model.ArticleCoAuthor do
       Article command -> Passport Store -> current membership
   """
   use Ecto.Schema
+  use Flop.Schema
   import Ecto.Changeset
+
+  @flop_options [filterable: [], sortable: [:inserted_at, :id], pagination_types: [:page, :first]]
 
   alias GroupherServer.CMS
   alias CMS.Passport.Catalog

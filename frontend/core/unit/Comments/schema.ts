@@ -285,7 +285,7 @@ const searchUsers = graphql(`
   "Search user by name"
   query SearchUsers($name: String!) {
     searchUsers(name: $name) {
-      ...CommentAuthorFields
+      ...UserSearchFields
     }
   }
 `)

@@ -175,6 +175,17 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       Check.article(actor, :edit, post)
       #=> {:ok, canonical_post} | {:error, %Gate.Decision{}}
   """
+  def article(actor, :manage_coauthors, %Article{} = resource) do
+    with {:ok, context} <- Load.article_author_management(actor, resource),
+         %Decision{allowed: true} = decision <-
+           Decision.from_result(Policy.article(actor, :manage_coauthors, context), context) do
+      {:ok, decision.context.article}
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+    end
+  end
+
   def article(actor, action, %model{} = resource) when model in @article_models do
     _ = {actor, action, resource}
     {:error, Decision.deny(ErrorCat.resource_not_found())}

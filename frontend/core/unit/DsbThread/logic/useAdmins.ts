@@ -5,7 +5,7 @@ import usePagiPosition from '~/hooks/usePagiPosition'
 import { viewerQueryKeys } from '~/query'
 import { invalidatePrefix } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
-import type { TUser } from '~/spec'
+import type { TUser, TUserSearchResult } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import { useAdminEditor } from '~/stores/dsbShell/editor'
@@ -35,10 +35,10 @@ export default function useAdmins() {
     error: query.error,
     retry: query.refetch,
     setPage: position.setPage,
-    searchUsers: async (name: string): Promise<TUser[]> => {
+    searchUsers: async (name: string): Promise<TUserSearchResult[]> => {
       if (!name.trim()) return []
       return (await browserGraphQLRequest(S.searchUsers, { name: name.trim(), community: slug }))
-        .moderatorCandidates as TUser[]
+        .moderatorCandidates as TUserSearchResult[]
     },
     addAdmins: async (users: TUser[]): Promise<void> => {
       const logins = [...new Set(users.map((user) => user.login).filter(Boolean))]

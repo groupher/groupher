@@ -79,6 +79,31 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
          "history_context" => :digest_each
        }},
     article_delete_working_copy: {:fields, %{"working_copy_id" => :raw}},
+    article_co_author_request_create:
+      {:fields,
+       %{
+         "subject_user_id" => :raw,
+         "request_type" => :raw,
+         "permissions" => :digest_each
+       }},
+    article_co_author_request_decide:
+      {:fields,
+       %{
+         "request_id" => :raw,
+         "revision" => :raw,
+         "decision" => :raw,
+         "approved" => :digest
+       }},
+    article_co_author_request_cancel: {:fields, %{"request_id" => :raw, "revision" => :raw}},
+    article_co_author_permissions_update:
+      {:fields,
+       %{
+         "member_id" => :raw,
+         "revision" => :raw,
+         "permissions" => :digest_each
+       }},
+    article_co_author_member_remove: {:fields, %{"member_id" => :raw, "revision" => :raw}},
+    article_co_author_member_leave: {:fields, %{"revision" => :raw}},
     article_update: :digest_each,
     article_mirror:
       {:fields,

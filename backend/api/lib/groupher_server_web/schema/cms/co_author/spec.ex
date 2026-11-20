@@ -28,7 +28,6 @@ defmodule GroupherServerWeb.Schema.CMS.CoAuthor.Spec do
   object :article_co_author do
     field(:member_id, non_null(:id))
     field(:article_id, non_null(:id))
-    field(:author_id, non_null(:id))
     field(:revision, non_null(:integer))
     field(:permissions, non_null(list_of(non_null(:passport_action))))
     field(:joined_at, non_null(:datetime))
@@ -43,8 +42,6 @@ defmodule GroupherServerWeb.Schema.CMS.CoAuthor.Spec do
   object :article_co_author_request do
     field(:id, non_null(:id))
     field(:article_id, non_null(:id))
-    field(:subject_user_id, non_null(:id))
-    field(:created_by_id, non_null(:id))
     field(:type, non_null(:article_co_author_request_type))
     field(:status, non_null(:article_co_author_request_status))
     field(:decision, :article_co_author_decision)

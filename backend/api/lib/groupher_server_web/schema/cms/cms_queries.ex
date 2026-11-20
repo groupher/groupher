@@ -63,6 +63,41 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.CommunityAdmins.management_allowed/3)
     end
 
+    @desc "Paged current co-authors for one Article; requires article.author.manage"
+    field :paged_article_co_authors, non_null(:article_co_author_page) do
+      arg(:article_id, non_null(:id))
+      arg(:pagi, :pagi_input)
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.ArticleCoAuthors.members/3)
+    end
+
+    @desc "Search bounded Article co-author invite candidates; requires article.author.manage"
+    field :article_co_author_candidates, non_null(list_of(non_null(:common_user))) do
+      arg(:article_id, non_null(:id))
+      arg(:name, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.ArticleCoAuthors.candidates/3)
+    end
+
+    @desc "Paged Article co-author requests visible to the manager or current subject"
+    field :paged_article_co_author_requests, non_null(:article_co_author_request_page) do
+      arg(:article_id, non_null(:id))
+      arg(:pagi, :pagi_input)
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.ArticleCoAuthors.requests/3)
+    end
+
+    @desc "The current viewer's effective permissions for one Article"
+    field :article_permissions, non_null(:article_permissions) do
+      arg(:article_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.ArticleCoAuthors.permissions/3)
+    end
+
     field :docs_queue_policy, :json do
       arg(:community, non_null(:string))
       middleware(M.Authorize, :login)
@@ -618,7 +653,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "Bounded user picker excluding current moderators"
-    field :moderator_candidates, non_null(list_of(non_null(:user))) do
+    field :moderator_candidates, non_null(list_of(non_null(:common_user))) do
       arg(:community, non_null(:string))
       arg(:name, non_null(:string))
       middleware(M.Authorize, :login)

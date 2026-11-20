@@ -47,15 +47,7 @@ export const searchUsers = graphql(`
   "Bounded user picker excluding current moderators"
   query DashboardSearchUsers($name: String!, $community: String!) {
     moderatorCandidates(name: $name, community: $community) {
-      login
-      avatar
-      nickname
-      bio
-      social {
-        github
-        twitter
-        zhihu
-      }
+      ...UserSearchFields
     }
   }
 `)

@@ -10,6 +10,16 @@ export const UserAuthorFields = graphql(`
   }
 `)
 
+export const UserSearchFields = graphql(`
+  fragment UserSearchFields on CommonUser {
+    login
+    nickname
+    avatar
+    bio
+    shortbio
+  }
+`)
+
 export const UserSocialFields = graphql(`
   fragment UserSocialFields on SocialMap {
     github

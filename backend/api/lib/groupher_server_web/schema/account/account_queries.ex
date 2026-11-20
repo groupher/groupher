@@ -157,7 +157,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
     end
 
     @desc "search user by name"
-    field :search_users, non_null(list_of(non_null(:user))) do
+    field :search_users, non_null(list_of(non_null(:common_user))) do
       arg(:name, non_null(:string))
 
       resolve(&R.Accounts.Profiles.search_users/3)

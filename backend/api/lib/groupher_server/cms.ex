@@ -114,6 +114,77 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Communities.Admins,
     as: :management_allowed
 
+  @doc "Pages Article co-authors visible to an authorized manager."
+  defdelegate articles_co_authors_members(article_id, actor, pagi),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :members
+
+  @doc "Searches Article co-author invitation candidates."
+  defdelegate articles_co_authors_candidates(article_id, actor, name),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :candidates
+
+  @doc "Pages Article co-author requests visible to the actor."
+  defdelegate articles_co_authors_requests(article_id, actor, pagi),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :requests
+
+  @doc "Returns the actor's effective Article permissions."
+  defdelegate articles_co_authors_permissions(article_id, actor),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :permissions
+
+  @doc "Creates an Article co-author invitation or application."
+  defdelegate articles_co_authors_create_request(
+                article_id,
+                subject_login,
+                type,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Articles.CoAuthors,
+              as: :create_request
+
+  @doc "Decides a revisioned Article co-author request."
+  defdelegate articles_co_authors_decide_request(
+                request_id,
+                revision,
+                decision,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Articles.CoAuthors,
+              as: :decide_request
+
+  @doc "Cancels a pending Article co-author request."
+  defdelegate articles_co_authors_cancel_request(request_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :cancel_request
+
+  @doc "Replaces one Article co-author's permissions."
+  defdelegate articles_co_authors_update_permissions(
+                article_id,
+                member_id,
+                revision,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Articles.CoAuthors,
+              as: :update_permissions
+
+  @doc "Removes one Article co-author membership."
+  defdelegate articles_co_authors_remove_member(article_id, member_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :remove_member
+
+  @doc "Leaves the actor's Article co-author membership."
+  defdelegate articles_co_authors_leave_member(article_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :leave_member
+
   @doc "Builds the public Community query used by relation-backed collections."
   defdelegate communities_public_query(), to: GroupherServer.CMS.Communities, as: :public_query
 

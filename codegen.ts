@@ -26,6 +26,7 @@ const config: CodegenConfig = {
     'frontend/core/unit/DsbThread/Analysis/WebOverview/server.ts',
     'frontend/core/unit/DsbThread/Analysis/RealtimeOnline/schema.ts',
     'frontend/core/unit/DsbThread/schema/admins.ts',
+    'frontend/core/unit/DsbThread/schema/coAuthors.ts',
     'frontend/core/unit/DsbThread/Appearance/Theme/schema.ts',
     'frontend/core/unit/DsbThread/schema/appearance.ts',
     'frontend/core/unit/DsbThread/schema/assets.ts',

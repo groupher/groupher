@@ -8,6 +8,7 @@ import useTrans from '~/hooks/useTrans'
 import type { TArticleState } from '~/spec'
 import Pagi from '~/ui/Pagi'
 
+import ArticleCoAuthors from '../ArticleCoAuthors'
 import { ArticleCell, AuthorCell, DateCell } from '../Cell'
 import CmsDataTable from '../Table/CmsDataTable'
 import CmsTableToolbar from '../Table/CmsTableToolbar'
@@ -87,6 +88,15 @@ export default function Posts() {
           <div className={cn(s.title, 'text-center')}>{t('ticket.management.title')}</div>
         ),
         cell: ({ row }) => <TicketActions post={row.original.content} />,
+        size: 120,
+        meta: { align: 'center' },
+      },
+      {
+        id: 'coauthors',
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.coauthors.action')}</div>
+        ),
+        cell: ({ row }) => <ArticleCoAuthors article={row.original.content} />,
         size: 120,
         meta: { align: 'center' },
       },

@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Outbox.WorkerRegistry do
     GroupherServer.Jobs.CMSMentionNotifier,
     GroupherServer.Jobs.CMSOutboxAdminRequest,
     GroupherServer.Jobs.CMSOutboxArticle,
+    GroupherServer.Jobs.CMSOutboxArticleCoAuthor,
     GroupherServer.Jobs.CMSOutboxAsset,
     GroupherServer.Jobs.CMSOutboxCDN,
     GroupherServer.Jobs.CMSOutboxComment,
@@ -77,6 +78,9 @@ defmodule GroupherServer.CMS.Outbox.WorkerRegistry do
           true
 
         {"community.admin_request", "GroupherServer.Jobs.CMSOutboxAdminRequest"} ->
+          true
+
+        {"article.co_author_request", "GroupherServer.Jobs.CMSOutboxArticleCoAuthor"} ->
           true
 
         {"docs.approval_status", "GroupherServer.Jobs.CMSOutboxDocs"} ->

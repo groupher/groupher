@@ -7,7 +7,7 @@ import useTrans from '~/hooks/useTrans'
 import CloseSVG from '~/icons/CloseLight'
 import PlusSVG from '~/icons/Plus'
 import Img from '~/Img'
-import type { TUser } from '~/spec'
+import type { TUserSearchResult } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import Button from '~/ui/Buttons/Button'
@@ -27,7 +27,7 @@ export default function Adder() {
   const { slug } = useCommunity()
   const { accountScope } = useAccount()
   const [inputValue, setInputValue] = useState('')
-  const [selectedUsers, setSelectedUsers] = useState<TUser[]>([])
+  const [selectedUsers, setSelectedUsers] = useState<TUserSearchResult[]>([])
   const [open, setOpen] = useState(false)
   const [adding, setAdding] = useState(false)
   const [showPermissionDrawer, setShowPermissionDrawer] = useState(false)
@@ -141,7 +141,7 @@ export default function Adder() {
                   {loading ? t('dsb.admin.adder.loading') : t('dsb.admin.adder.empty')}
                 </div>
               ) : (
-                (user: TUser) => (
+                (user: TUserSearchResult) => (
                   <Combobox.Item key={user.login} value={user} className={s.item}>
                     <div className={s.itemInner}>
                       <div className={s.avatarBox}>
