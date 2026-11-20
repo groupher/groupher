@@ -822,6 +822,218 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
     end
   end
 
+  test "Docs B to C to B content creates a new Q Snapshot and Release with independent effects" do
+    f = prepare_release(:publication)
+    a = publish_pending(f)
+    a_receipt = Repo.get_by!(CommandReceipt, command_id: a.command_id)
+
+    first_notice =
+      Repo.get_by!(Event,
+        operation_ref: a_receipt.operation_ref,
+        event: "article.first_published_notification"
+      )
+
+    b = publish_title(f, "Version B", %{body_bag: mock_body_bag(mock_rich_text("Body B"))})
+    b_event = consume_publication_fanout(f, b)
+    c = publish_title(f, "Version C", %{body_bag: mock_body_bag(mock_rich_text("Body C"))})
+    c_event = consume_publication_fanout(f, c)
+    b_snapshot = Repo.get!(CMS.Model.ArticleSnapshot, b.snapshot_id)
+    c_snapshot = Repo.get!(CMS.Model.ArticleSnapshot, c.snapshot_id)
+    b_body = Repo.get!(CMS.Model.ArticleBody, b_snapshot.body_id)
+    c_body = Repo.get!(CMS.Model.ArticleBody, c_snapshot.body_id)
+
+    refute CMS.Model.ArticleBodyDocument.document(b_body) ==
+             CMS.Model.ArticleBodyDocument.document(c_body)
+
+    b_release = Repo.get!(DocsRelease, b.release_id)
+    c_release = Repo.get!(DocsRelease, c.release_id)
+    b_member = release_member(f, b.release_id)
+    c_member = release_member(f, c.release_id)
+
+    old_events =
+      Repo.all(
+        from(row in Event,
+          where: row.operation_ref in ^[b_event.operation_ref, c_event.operation_ref]
+        )
+      )
+
+    restore_command_id = Ecto.UUID.generate()
+
+    assert {:ok, restored} =
+             CMS.DocTree.Commands.RestoreSnapshot.execute(
+               f.community,
+               f.article.id,
+               b.snapshot_id,
+               nil,
+               nil,
+               f.actor,
+               restore_command_id
+             )
+
+    assert default_copy(f).title == "Version B"
+    assert {:ok, before_enqueue} = Queue.read(f.community)
+
+    assert {:ok, _} =
+             Enqueue.execute(
+               f.community,
+               before_enqueue.queue_revision,
+               [%{article_id: f.article.id, default_revision: restored.revision}],
+               f.actor,
+               Ecto.UUID.generate()
+             )
+
+    q = queue_copy(f)
+    assert {:ok, before_release} = Queue.read(f.community)
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, result} =
+             ReleaseQueue.execute(f.community, before_release.queue_revision, f.actor, command_id)
+
+    public = Repo.get!(CMS.Model.ArticlePublic, f.article.id)
+    selected = Repo.get!(CMS.Model.ArticleSnapshot, public.snapshot_id)
+    release = Repo.get!(DocsRelease, result.release_id)
+    receipt = Repo.get_by!(CommandReceipt, command_id: command_id)
+    restore_receipt = Repo.get_by!(CommandReceipt, command_id: restore_command_id)
+    member = release_member(f, release.id)
+    event = publication_event(f, command_id)
+
+    assert selected.id not in [b_snapshot.id, c_snapshot.id]
+    assert selected.source_working_copy_id == q.id
+    assert selected.source_revision == q.revision
+    assert selected.source_working_copy_id != b_snapshot.source_working_copy_id
+
+    assert Map.take(selected, [:title, :digest, :slug, :cover_edit_snapshot_id]) ==
+             Map.take(b_snapshot, [:title, :digest, :slug, :cover_edit_snapshot_id])
+
+    body = Repo.get!(CMS.Model.ArticleBody, selected.body_id)
+
+    assert CMS.Model.ArticleBodyDocument.document(body) ==
+             CMS.Model.ArticleBodyDocument.document(b_body)
+
+    public_body = Repo.get!(CMS.Model.ArticlePublicBody, f.article.id)
+    assert public_body.snapshot_id == selected.id
+
+    assert CMS.Model.ArticleBodyDocument.document(public_body) ==
+             CMS.Model.ArticleBodyDocument.document(b_body)
+
+    assert release.sealed
+    assert release.id not in [b_release.id, c_release.id]
+    assert release.base_release_id == c_release.id
+    assert member.action == :publish
+    assert member.snapshot_id == selected.id
+    assert {:ok, released_queue} = Queue.read(f.community)
+    assert released_queue.public_release_id == release.id
+
+    assert receipt.operation_ref not in [
+             b_event.operation_ref,
+             c_event.operation_ref,
+             restore_receipt.operation_ref
+           ]
+
+    assert {:ok, _} = Ecto.UUID.cast(receipt.operation_ref)
+    assert event.operation_ref == receipt.operation_ref
+    assert event.data["snapshot_id"] == selected.id
+    assert event.data["release_id"] == release.id
+    assert event.dedupe_key not in [b_event.dedupe_key, c_event.dedupe_key]
+    assert event.id not in [b_event.id, c_event.id]
+
+    binding =
+      Repo.get_by!(CMS.Model.ArticleBinding,
+        article_id: f.article.id,
+        community_id: f.community.id
+      )
+
+    assert {:ok, current} =
+             CMS.FrontDesk.article(%{
+               community: f.community.slug,
+               thread: :doc,
+               inner_id: binding.inner_id
+             })
+
+    assert current.title == "Version B"
+    assert current.snapshot_id == selected.id
+
+    assert consume_publication_fanout(f, %{command_id: command_id}).id == event.id
+    assert Repo.get!(Event, b_event.id).status == :done
+    assert Repo.get!(Event, c_event.id).status == :done
+    assert Repo.get!(CMS.Model.ArticleSnapshot, b_snapshot.id) == b_snapshot
+    assert Repo.get!(CMS.Model.ArticleSnapshot, c_snapshot.id) == c_snapshot
+    assert Repo.get!(CMS.Model.ArticleBody, b_body.id) == b_body
+    assert Repo.get!(CMS.Model.ArticleBody, c_body.id) == c_body
+    assert Repo.get!(DocsRelease, b_release.id) == b_release
+    assert Repo.get!(DocsRelease, c_release.id) == c_release
+    assert release_member(f, b_release.id) == b_member
+    assert release_member(f, c_release.id) == c_member
+    for old <- old_events, do: assert(Repo.get!(Event, old.id) == old)
+
+    assert Repo.get!(Event, first_notice.id) == first_notice
+
+    assert Repo.aggregate(
+             from(row in Event,
+               where:
+                 row.resource_id == ^f.article.id and
+                   row.event == "article.first_published_notification"
+             ),
+             :count
+           ) == 1
+
+    before = persistent_facts()
+
+    assert {:ok, ^result} =
+             ReleaseQueue.execute(f.community, before_release.queue_revision, f.actor, command_id)
+
+    assert_unchanged(before)
+
+    assert {:ok, repeated} =
+             Repo.transact_result(fn ->
+               CMS.Articles.Effects.release_updated(
+                 binding,
+                 f.community,
+                 selected,
+                 release,
+                 receipt.operation_ref
+               )
+             end)
+
+    assert repeated.id == event.id
+    assert_unchanged(before)
+  end
+
+  defp publication_event(f, command_id) do
+    receipt = Repo.get_by!(CommandReceipt, command_id: command_id)
+
+    Repo.get_by!(Event,
+      operation_ref: receipt.operation_ref,
+      resource_id: f.article.id,
+      event: "article.updated"
+    )
+  end
+
+  defp consume_publication_fanout(f, %{command_id: command_id}) do
+    event = publication_event(f, command_id)
+    job = %Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 8}
+    assert {:ok, :pass} = GroupherServer.Jobs.CMSOutboxArticle.perform(job)
+    done = Repo.get!(Event, event.id)
+    assert done.status == :done
+
+    children =
+      Repo.all(
+        from(row in Event, where: row.dedupe_key == ^CMS.Outbox.DedupeKey.encode([event.id]))
+      )
+
+    assert Enum.sort(Enum.map(children, & &1.event)) == [
+             "article.cdn_purge",
+             "article.search_sync",
+             "press.cache_invalidation"
+           ]
+
+    done
+  end
+
+  defp release_member(f, release_id) do
+    Repo.get_by!(CMS.Model.DocsReleaseArticle, release_id: release_id, article_id: f.article.id)
+  end
+
   defp default_copy(f) do
     Repo.get_by(CMS.Model.ArticleWorkingCopy, article_id: f.article.id, scope_type: :default)
   end
@@ -833,12 +1045,12 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
     Repo.get!(CMS.Model.ArticleWorkingCopy, member.working_copy_id)
   end
 
-  defp save_title(f, work, title) do
+  defp save_title(f, work, title, attrs \\ %{}) do
     CMS.Articles.Commands.SaveWorkingCopy.execute(
       f.article,
       f.community,
       work.id,
-      %{title: title},
+      Map.put(attrs, :title, title),
       work.revision,
       f.actor,
       Ecto.UUID.generate()
@@ -856,7 +1068,7 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
     %{snapshot_id: public.snapshot_id, release_id: released.release_id, command_id: command_id}
   end
 
-  defp publish_title(f, title) do
+  defp publish_title(f, title, attrs \\ %{}) do
     public = Repo.get!(CMS.Model.ArticlePublic, f.article.id)
 
     assert {:ok, opened} =
@@ -869,7 +1081,12 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
              )
 
     assert {:ok, edited} =
-             save_title(f, Repo.get!(CMS.Model.ArticleWorkingCopy, opened.working_copy_id), title)
+             save_title(
+               f,
+               Repo.get!(CMS.Model.ArticleWorkingCopy, opened.working_copy_id),
+               title,
+               attrs
+             )
 
     assert {:ok, queue} = Queue.read(f.community)
 
