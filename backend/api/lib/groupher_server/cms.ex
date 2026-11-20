@@ -28,6 +28,11 @@ defmodule GroupherServer.CMS do
   @doc "Lists canonical Passport Actions for cross-context contract generation."
   defdelegate passport_actions(), to: GroupherServer.CMS.GateAction, as: :actions
 
+  @doc "Returns the registered Article Insights read action."
+  defdelegate gate_action_article_insights_read(),
+    to: GroupherServer.CMS.GateAction,
+    as: :article_insights_read
+
   @doc "Returns candidate Users for a Community Admin invitation."
   defdelegate communities_admins_candidates(community_ref, name, actor),
     to: GroupherServer.CMS.Communities.Admins,

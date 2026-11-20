@@ -10,8 +10,10 @@ defmodule GroupherServer.Analysis.ArticleInsights.Query do
 
   import Ecto.Query
 
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.{Analysis, CMS, Repo}
   alias Analysis.{Const, Model.ArticleHourlyMetric}
+  alias CMS.Model.{Community, CommunityAdmin}
 
   @default_hours 48
   @max_buckets 720
@@ -117,37 +119,38 @@ defmodule GroupherServer.Analysis.ArticleInsights.Query do
   def metrics, do: Const.metrics()
 
   @doc """
-  Extracts community-scoped insight grants at the trusted API boundary.
+  Extracts current community-scoped insight grants from Passport Store.
 
   ## Examples
 
       Analysis.ArticleInsights.passport_granted_community_slugs(viewer)
   """
   @spec passport_granted_community_slugs(term()) :: [String.t()]
-  def passport_granted_community_slugs(viewer) do
-    viewer
-    |> then(&Map.get(&1, :cur_passport))
-    |> Helper.PermissionRegistry.normalize_rules()
-    |> Enum.reduce([], fn
-      {"global", _rules}, acc ->
-        acc
+  def passport_granted_community_slugs(%{id: user_id}) when is_integer(user_id) do
+    viewer = %User{id: user_id}
 
-      {slug, rules}, acc when is_map(rules) ->
-        cms = Map.get(rules, "cms", %{})
-
-        if Map.get(rules, "root") == true or Map.get(cms, "article.insights.read") == true do
-          [slug | acc]
-        else
-          acc
-        end
-
-      _, acc ->
-        acc
+    from(admin in CommunityAdmin,
+      join: community in Community,
+      on: community.id == admin.community_id,
+      where: admin.user_id == ^user_id,
+      select: community
+    )
+    |> Repo.all()
+    |> Enum.flat_map(fn community ->
+      with {:ok, scope} <- CMS.passport_community_scope(viewer, community),
+           {:ok, true} <-
+             CMS.passport_allowed?(viewer, scope, CMS.gate_action_article_insights_read()) do
+        [community.slug]
+      else
+        _ -> []
+      end
     end)
     |> Enum.uniq()
   rescue
     _ -> []
   end
+
+  def passport_granted_community_slugs(_viewer), do: []
 
   defp authorize_if_needed(article, viewer, article_type, opts) do
     if Keyword.get(opts, :skip_authorize, false) do
