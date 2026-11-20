@@ -13,6 +13,7 @@
 - [Comments / Replies / Reaction B0 基线](./comment-reaction-snapshot-counts-inventory.md)：保留实施前静态读写清单、时间口径、Doc owner 约束设计和42个具名 case；后续授权、实现与运行证据见实施记录，不覆盖原快照。
 - [Comments B0 固定输入复核](./comment-reaction-snapshot-counts-snapshot-review.md)：固定正文/SHA、全部相关变化与遗漏覆盖映射，以及捕获后差异；不宣称实时工作区已验收。
 - [FrontDesk 与 Query 读取边界收口](./frontdesk-query-convergence.md)：单资源、批量转发、list/pagi、统一查询能力合同与资源加载 lint；整改已实施，验收见本文档与执行记录。
+- [FrontDesk Article 读取统一与版本接口](./frontdesk-article-unification.md)：已确认、待实施；普通读取返回带当前社区的扁平 Article，删除 ArticleView/with_community，并补齐指定 Snapshot、WorkingCopy 的 FrontDesk 入口。
 - [Gate 读取与操作准入收口](./gate-admission-convergence.md)：复用当前 Gate 合同，补齐调用覆盖、唯一可见集合和跨入口验收；整改已实施，验收见执行记录。
 - [旧内容 Audit 链路退役](./legacy-content-audit-removal.md)：已执行静态扫描，列出旧外部接口、配置、前后端消费者与替代/切换清单；实现待执行。
 - [旧 Audit 逐文件扫描](./legacy-content-audit-inventory.md)：逐文件证据与保留分类。
