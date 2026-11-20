@@ -143,7 +143,7 @@ defmodule GroupherServerWeb.Context do
          get_req_header(conn, "x-groupher-test-service-auth") == ["enabled"] do
       Map.put(context, :service_actor, %{
         audience: "test:any",
-        scopes: MapSet.new(["*"]),
+        scopes: MapSet.new(["*", "content:history:browser"]),
         subject: "service:test-suite",
         token_id: "test-suite"
       })

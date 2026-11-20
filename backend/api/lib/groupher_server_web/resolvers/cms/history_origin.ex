@@ -18,7 +18,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.HistoryOrigin do
     end
   end
 
-  def from_context(%{service_actor: _}), do: {:error, :history_origin_invalid}
+  def from_context(%{service_actor: service_actor}) when not is_nil(service_actor),
+    do: {:error, :history_origin_invalid}
 
   def from_context(%{cur_user: %GroupherServer.Accounts.Model.User{}}) do
     {:ok, %{source: :browser, service_ref: nil}}

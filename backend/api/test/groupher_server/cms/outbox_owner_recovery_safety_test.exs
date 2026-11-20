@@ -11,7 +11,12 @@ defmodule GroupherServer.Test.CMS.OutboxOwnerRecoverySafetyTest do
   setup do
     start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})
     {community, view, _, actor} = mock_article(:post)
-    Repo.insert!(GlobalPassport.changeset(%GlobalPassport{}, %{user_id: actor.id, is_root: true}))
+    passport = Repo.get_by(GlobalPassport, user_id: actor.id) || %GlobalPassport{}
+
+    passport
+    |> GlobalPassport.changeset(%{user_id: actor.id, is_root: true})
+    |> Repo.insert_or_update!()
+
     %{community: community, article: Repo.get!(Article, view.id), actor: actor}
   end
 

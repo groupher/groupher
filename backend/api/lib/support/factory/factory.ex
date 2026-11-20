@@ -25,7 +25,8 @@ defmodule GroupherServer.Support.Factory do
     Community,
     CommunityAdmin,
     CommunityTag,
-    CommunityTagGroup
+    CommunityTagGroup,
+    GlobalPassport
   }
 
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
@@ -223,6 +224,18 @@ defmodule GroupherServer.Support.Factory do
     db_insert_with_retry(factory_name, attributes, 3)
   end
 
+  defp ensure_test_system_root!(%User{id: user_id}) do
+    passport = Repo.get_by(GlobalPassport, user_id: user_id) || %GlobalPassport{}
+
+    passport
+    |> GlobalPassport.changeset(%{
+      user_id: user_id,
+      is_root: true,
+      permissions: passport.permissions
+    })
+    |> Repo.insert_or_update!()
+  end
+
   @doc "Creates a public Article fixture through the single-command Snapshot publisher."
   def create_published_article(community, thread, attrs, user, opts \\ [])
 
@@ -234,7 +247,8 @@ defmodule GroupherServer.Support.Factory do
         opts
       )
       when thread in [:post, :blog, :changelog] and is_map(attrs) and is_list(opts) do
-    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    ensure_test_system_root!(user)
+    actor = user
     attrs = with_body_bag(attrs)
     opts = Keyword.put_new(opts, :command_id, Ecto.UUID.generate())
 

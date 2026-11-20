@@ -17,9 +17,10 @@ defmodule GroupherServer.Test.ConnSimulator do
 
   import GroupherServer.FrontDesk, only: [article_author: 1]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.Model.GlobalPassport
   alias Helper.{Guardian, ORM, PermissionRegistry}
 
   @spec simu_conn(:guest | :invalid_token | :user) :: Plug.Conn.t()
@@ -63,10 +64,13 @@ defmodule GroupherServer.Test.ConnSimulator do
 
     token = gen_jwt_token(id: user.id)
 
+    normalized_rules = normalize_passport_rules(passport_rules)
+
     {:ok, _passport} =
-      passport_rules
-      |> normalize_passport_rules()
+      normalized_rules
       |> CMS.Communities.stamp_passport(%User{id: user.id})
+
+    maybe_stamp_test_system_root!(user, passport_rules)
 
     build_conn() |> put_req_header("authorization", token)
   end
@@ -75,10 +79,13 @@ defmodule GroupherServer.Test.ConnSimulator do
   def simu_conn(:user, %User{} = user, cms: passport_rules) do
     token = gen_jwt_token(id: user.id)
 
+    normalized_rules = normalize_passport_rules(passport_rules)
+
     {:ok, _passport} =
-      passport_rules
-      |> normalize_passport_rules()
+      normalized_rules
       |> CMS.Communities.stamp_passport(%User{id: user.id})
+
+    maybe_stamp_test_system_root!(user, passport_rules)
 
     build_conn() |> put_req_header("authorization", token)
   end
@@ -113,6 +120,24 @@ defmodule GroupherServer.Test.ConnSimulator do
   end
 
   defp normalize_passport_rules(_), do: %{"global" => %{}}
+
+  defp maybe_stamp_test_system_root!(%User{id: user_id}, passport_rules) do
+    if test_system_root?(passport_rules) do
+      passport = Repo.get_by(GlobalPassport, user_id: user_id) || %GlobalPassport{}
+
+      passport
+      |> GlobalPassport.changeset(%{
+        user_id: user_id,
+        is_root: true,
+        permissions: passport.permissions
+      })
+      |> Repo.insert_or_update!()
+    end
+  end
+
+  defp test_system_root?(%{"god" => true}), do: true
+  defp test_system_root?(%{"global" => %{"god" => true}}), do: true
+  defp test_system_root?(_), do: false
 
   defp sanitize_passport_rules(%{"global" => global} = rules) do
     rules

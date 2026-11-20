@@ -8,6 +8,16 @@ defmodule GroupherServer.Test.Mutation.CMS.CommunityAdminRequestsTest do
     {:ok, lord} = db_insert(:user)
     {:ok, subject} = db_insert(:user)
     {:ok, community} = mock_community(lord)
+
+    community_identity =
+      gq_query(
+        simu_conn(:guest),
+        "query($slug:String!){community(slug:$slug){ref slug}}",
+        %{slug: community.slug}
+      )
+
+    assert community_identity["ref"] == community.ref
+
     member = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: lord.id)
     Repo.update!(Ecto.Changeset.change(member, is_lord: true))
 
@@ -20,21 +30,21 @@ defmodule GroupherServer.Test.Mutation.CMS.CommunityAdminRequestsTest do
       gq_query(
         simu_conn(:user, lord),
         "query($ref:String!){communityAdminManagementAllowed(communityRef:$ref)}",
-        %{ref: community.slug}
+        %{ref: community.ref}
       )
 
     admins =
       gq_query(
         simu_conn(:user, lord),
-        "query($community:String!){pagedCommunityAdmins(community:$community,pagi:{offset:{page:1,size:10}}){entries{memberId revision isLord permissions user{login}} pageInfo{... on OffsetPageInfo{totalCount}}}}",
-        %{community: community.slug}
+        "query($communityRef:String!){pagedCommunityAdmins(communityRef:$communityRef,pagi:{offset:{page:1,size:10}}){entries{memberId revision isLord permissions user{login}} pageInfo{... on OffsetPageInfo{totalCount}}}}",
+        %{communityRef: community.ref}
       )
 
     candidates =
       gq_query(
         simu_conn(:user, lord),
-        "query($community:String!,$name:String!){adminCandidates(community:$community,name:$name){login}}",
-        %{community: community.slug, name: subject.login}
+        "query($communityRef:String!,$name:String!){adminCandidates(communityRef:$communityRef,name:$name){login}}",
+        %{communityRef: community.ref, name: subject.login}
       )
 
     assert allowed
@@ -42,15 +52,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CommunityAdminRequestsTest do
     assert Enum.any?(candidates, &(&1["login"] == subject.login))
 
     create = """
-    mutation($community: String!, $type: String!, $login: String!, $permissions: Json!, $commandId: ID!) {
-      createCommunityAdminRequest(community: $community, type: $type, subjectLogin: $login,
+    mutation($communityRef: String!, $type: String!, $login: String!, $permissions: Json!, $commandId: ID!) {
+      createCommunityAdminRequest(communityRef: $communityRef, type: $type, subjectLogin: $login,
         permissions: $permissions, commandId: $commandId) { id type status revision }
     }
     """
 
     invite =
       gq_mutation(simu_conn(:user, lord), create, %{
-        community: community.slug,
+        communityRef: community.ref,
         type: "invite",
         login: subject.login,
         permissions: Jason.encode!(%{"doc.queue.write" => true}),
@@ -64,8 +74,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CommunityAdminRequestsTest do
     requests =
       gq_query(
         simu_conn(:user, lord),
-        "query($community:String!){pagedCommunityAdminRequests(community:$community,pagi:{offset:{page:1,size:10}}){entries{id type status revision subjectUser{login} createdBy{login}} pageInfo{... on OffsetPageInfo{totalCount}}}}",
-        %{community: community.slug}
+        "query($communityRef:String!){pagedCommunityAdminRequests(communityRef:$communityRef,pagi:{offset:{page:1,size:10}}){entries{id type status revision subjectUser{login} createdBy{login}} pageInfo{... on OffsetPageInfo{totalCount}}}}",
+        %{communityRef: community.ref}
       )
 
     assert Enum.any?(requests["entries"], &(&1["id"] == invite["id"]))
@@ -93,9 +103,49 @@ defmodule GroupherServer.Test.Mutation.CMS.CommunityAdminRequestsTest do
              "doc.queue.write" => true
            }
 
+    member = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: subject.id)
+
+    updated_member =
+      gq_mutation(
+        simu_conn(:user, lord),
+        """
+        mutation($communityRef: String!, $memberId: ID!, $revision: Int!, $permissions: Json!, $commandId: ID!) {
+          updateCommunityAdminPermissions(communityRef: $communityRef, memberId: $memberId,
+            revision: $revision, permissions: $permissions, commandId: $commandId) {
+            memberId revision isLord permissions user { login }
+          }
+        }
+        """,
+        %{
+          communityRef: community.ref,
+          memberId: member.id,
+          revision: member.revision,
+          permissions:
+            Jason.encode!(%{
+              "doc.queue.write" => true,
+              "doc.queue.approve" => true
+            }),
+          commandId: Ecto.UUID.generate()
+        }
+      )
+
+    assert updated_member["memberId"] == to_string(member.id)
+    assert updated_member["revision"] == member.revision + 1
+    assert updated_member["permissions"] == ["DOC_QUEUE_APPROVE", "DOC_QUEUE_WRITE"]
+
+    current =
+      gq_query(
+        simu_conn(:user, subject),
+        "query($communityRef: String!){currentCommunityAdmin(communityRef: $communityRef){memberId revision isLord permissions}}",
+        %{communityRef: community.ref}
+      )
+
+    assert current["memberId"] == to_string(member.id)
+    assert current["revision"] == updated_member["revision"]
+
     apply_request =
       gq_mutation(simu_conn(:user, subject), create, %{
-        community: community.slug,
+        communityRef: community.ref,
         type: "apply",
         login: subject.login,
         permissions: Jason.encode!(%{"doc.queue.write" => true, "doc.queue.publish" => true}),
@@ -104,5 +154,17 @@ defmodule GroupherServer.Test.Mutation.CMS.CommunityAdminRequestsTest do
 
     assert apply_request["type"] == "apply"
     assert apply_request["status"] == "pending"
+
+    assert gq_mutation(
+             simu_conn(:user, subject),
+             "mutation($communityRef: String!, $revision: Int!, $commandId: ID!){leaveCommunityAdmins(communityRef: $communityRef, revision: $revision, commandId: $commandId)}",
+             %{
+               communityRef: community.ref,
+               revision: updated_member["revision"],
+               commandId: Ecto.UUID.generate()
+             }
+           )
+
+    refute Repo.get_by(CommunityAdmin, community_id: community.id, user_id: subject.id)
   end
 end

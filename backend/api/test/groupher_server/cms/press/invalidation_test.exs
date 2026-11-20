@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS
-  alias CMS.Model.CommandReceipt
+  alias CMS.Model.{ArticlePublic, CommandReceipt}
   alias CMS.Outbox.Event
   alias CMS.Press.Invalidation
 
@@ -234,7 +234,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     assert Repo.aggregate(
              from(e in Event, where: e.operation_ref == ^event.operation_ref),
              :count
-           ) == 3
+           ) == 4
 
     for {worker, leaf, queue} <- [
           {GroupherServer.Jobs.CMSOutboxPress, press, "press"},
@@ -253,6 +253,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
 
   test "publication and review facts each create three independent intents" do
     {community, article, _attrs, _user} = mock_article(:post)
+    snapshot_id = Repo.get_by!(ArticlePublic, article_id: article.id).snapshot_id
 
     for kind <- [
           "article.published",
@@ -269,10 +270,12 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
           operation_ref: Ecto.UUID.generate(),
           dedupe_key: CMS.Outbox.DedupeKey.encode([article.id, kind]),
           data: %{
+            article_id: article.id,
             community: community.slug,
             community_id: community.id,
             thread: "post",
-            inner_id: article_inner_id(article, community)
+            inner_id: article_inner_id(article, community),
+            snapshot_id: snapshot_id
           }
         })
 
@@ -297,6 +300,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     malformed = %{
       id: identity,
       event: "article.updated",
+      operation_ref: Ecto.UUID.generate(),
       resource_type: nil,
       resource_id: "invalid",
       data: %{"community_id" => community.id}
