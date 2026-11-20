@@ -2,8 +2,8 @@ defmodule GroupherServer.Messaging.Notify do
   @moduledoc """
   Dispatches durable notification events to their domain-owned delivery paths.
 
-  Community Admin request events are projected into Notice and Inbox facts by
-  the request delivery owner. Other event families retain the current
+  Request and first-publication events are projected into Notice and Inbox facts by
+  their delivery owners. Other event families retain the current
   acknowledgement boundary until their producer migrations are complete.
 
   Business position:
@@ -16,7 +16,7 @@ defmodule GroupherServer.Messaging.Notify do
 
   alias GroupherServer.{CMS, Messaging}
   alias CMS.Outbox.Event
-  alias Messaging.Notices.RequestDelivery
+  alias Messaging.Notices.{FirstPublication, RequestDelivery}
 
   @doc """
   Accepts a notification event at the stable dispatch boundary.
@@ -32,6 +32,10 @@ defmodule GroupherServer.Messaging.Notify do
 
   def dispatch(:article_co_author_request, %Event{} = event) do
     RequestDelivery.deliver(event)
+  end
+
+  def dispatch(:notify_admin_new_article, event) do
+    FirstPublication.deliver(event)
   end
 
   def dispatch(event, payload) when is_atom(event) and is_map(payload) do

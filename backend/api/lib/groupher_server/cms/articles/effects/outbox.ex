@@ -27,6 +27,8 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
     DocsRelease
   }
 
+  alias CMS.Model.Embeds.User, as: UserEmbed
+
   alias Accounts.Model.User
 
   @doc "Records the first selected public Snapshot for an admitted Binding."
@@ -208,36 +210,39 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
       )
       |> Enum.uniq()
 
-    author_name =
-      Repo.one(
-        from(author in Author,
-          join: user in User,
-          on: user.id == author.user_id,
-          where: author.id == ^article.author_id,
-          select: user.nickname
-        )
-      )
+    case Repo.one(
+           from(author in Author,
+             join: user in User,
+             on: user.id == author.user_id,
+             where: author.id == ^article.author_id,
+             select: user
+           )
+         ) do
+      %User{} = author ->
+        CMS.Outbox.send(%{
+          event: "article.first_published_notification",
+          worker: Jobs.CMSOutboxArticle,
+          resource_type: "article",
+          resource_id: article.id,
+          operation_ref: operation_ref,
+          dedupe_key: DedupeKey.encode([article.id, community.id]),
+          data: %{
+            article_id: article.id,
+            community_id: community.id,
+            community_slug: community.slug,
+            thread: article.thread,
+            title: snapshot.title || "",
+            digest: Map.get(snapshot, :digest) || snapshot.title || "",
+            author_id: article.author_id,
+            author: author |> UserEmbed.from_account_user() |> Map.from_struct(),
+            published_by_id: actor_id,
+            notify_user_ids: recipients
+          }
+        })
 
-    CMS.Outbox.send(%{
-      event: "article.first_published_notification",
-      worker: Jobs.CMSOutboxArticle,
-      resource_type: "article",
-      resource_id: article.id,
-      operation_ref: operation_ref,
-      dedupe_key: DedupeKey.encode([article.id, community.id]),
-      data: %{
-        article_id: article.id,
-        community_id: community.id,
-        community_slug: community.slug,
-        thread: article.thread,
-        title: snapshot.title || "",
-        digest: Map.get(snapshot, :digest) || snapshot.title || "",
-        author_id: article.author_id,
-        author_name: author_name,
-        published_by_id: actor_id,
-        notify_user_ids: recipients
-      }
-    })
+      nil ->
+        {:error, :first_publish_author_not_found}
+    end
   end
 
   def enqueue_first_publish_notification(_, _, _, _, _), do: invalid_arguments()
@@ -335,7 +340,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
           "title",
           "digest",
           "author_id",
-          "author_name",
+          "author",
           "published_by_id",
           "notify_user_ids"
         ])

@@ -74,7 +74,7 @@ defmodule GroupherServer.Messaging.Model.Notice do
     case Enum.all?(request_values, &is_nil/1) do
       true ->
         changeset
-        |> validate_required([:from_users])
+        |> validate_activity_actors()
         |> validate_number(:from_users_count, greater_than: 0)
 
       false ->
@@ -83,6 +83,13 @@ defmodule GroupherServer.Messaging.Model.Notice do
         |> validate_number(:request_revision, greater_than: 0)
         |> validate_request_type()
         |> validate_request_actors()
+    end
+  end
+
+  defp validate_activity_actors(changeset) do
+    case get_field(changeset, :from_users, []) do
+      [] -> add_error(changeset, :from_users, "can't be blank", validation: :required)
+      _actors -> changeset
     end
   end
 

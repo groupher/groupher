@@ -5,7 +5,7 @@ defmodule GroupherServer.Messaging.NoticeContract do
 
       packages/contracts/notice.contract.json -> NoticeContract -> Notice schema
   """
-  @activity_types [:upvote, :comment, :reply, :collect, :follow, :ticket_status, :ticket_update, :ticket_visibility]
+  @activity_types [:upvote, :comment, :reply, :collect, :follow, :ticket_status, :ticket_update, :ticket_visibility, :article_published]
   @request_types [:article_co_author, :community_admin]
   @request_actions [:invite, :apply, :result]
   @request_events [:created, :decided, :cancelled, :expired]

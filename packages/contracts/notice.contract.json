@@ -8,7 +8,8 @@
     "follow",
     "ticket_status",
     "ticket_update",
-    "ticket_visibility"
+    "ticket_visibility",
+    "article_published"
   ],
   "requestTypes": ["article_co_author", "community_admin"],
   "requestActions": ["invite", "apply", "result"],

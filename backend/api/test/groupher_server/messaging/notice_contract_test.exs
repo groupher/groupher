@@ -14,7 +14,8 @@ defmodule GroupherServer.Test.Messaging.NoticeContract do
              :follow,
              :ticket_status,
              :ticket_update,
-             :ticket_visibility
+             :ticket_visibility,
+             :article_published
            ]
   end
 

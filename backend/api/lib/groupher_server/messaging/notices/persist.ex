@@ -18,7 +18,7 @@ defmodule GroupherServer.Messaging.Notices.Persist do
   alias Messaging.Model.Notice
   alias Helper.{Datetime, ORM}
 
-  @notify_actions Messaging.Config.notify_actions()
+  @notify_actions Messaging.Config.notify_actions() -- [:article_published]
   @notify_group_interval_hour Messaging.Config.notify_group_interval_hour()
 
   @doc """

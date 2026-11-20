@@ -52,32 +52,8 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
   defp update_published_projection(_result, _public), do: {:ok, :pass}
 
   @doc "Delivers the recipient and content snapshot stored by the first-publish intent."
-  def deliver_first_publish_notification(
-        %{event: "article.first_published_notification", data: data} = event
-      ) do
-    recipients = Map.get(data, "notify_user_ids")
-
-    if is_list(recipients) do
-      Enum.reduce_while(recipients, {:ok, :pass}, fn user_id, _result ->
-        case Messaging.notify(:notify_admin_new_article, %{
-               id: data["article_id"],
-               title: data["title"],
-               digest: data["digest"],
-               author_id: data["author_id"],
-               author_name: data["author_name"],
-               community_id: data["community_id"],
-               community_slug: data["community_slug"],
-               type: data["thread"],
-               recipient_id: user_id,
-               delivery_key: "outbox:#{event.id}:#{user_id}"
-             }) do
-          {:ok, _} -> {:cont, {:ok, :pass}}
-          {:error, _reason} = error -> {:halt, error}
-        end
-      end)
-    else
-      {:error, ArticleErrorCat.unknown_outbox_event()}
-    end
+  def deliver_first_publish_notification(%{event: "article.first_published_notification"} = event) do
+    Messaging.notify(:notify_admin_new_article, event)
   end
 
   defp public_projection(%Article{thread: thread}, community, inner_id)

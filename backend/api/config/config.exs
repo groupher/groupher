@@ -126,17 +126,7 @@ config :groupher_server, :general,
   user_achieve_follow_weight: 3,
   # others
   # 在这个时间段内，多条提醒消息将被合并为一条
-  notify_group_interval_hour: 1,
-  nofity_actions: [
-    :upvote,
-    :comment,
-    :reply,
-    :collect,
-    :follow,
-    :ticket_status,
-    :ticket_update,
-    :ticket_visibility
-  ]
+  notify_group_interval_hour: 1
 
 config :groupher_server, :article,
   min_length: 10,
