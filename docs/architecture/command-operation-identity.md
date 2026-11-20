@@ -1367,11 +1367,11 @@ Article Trash Command 后验证 worker 再次拒绝；未改动 User 删除保�
 | DocTree 内容回切              | **已按确认合同验收**：DocTree 的 Snapshot 绑定当前 Q revision，Restore B 内容后产生新 B′ Snapshot；Release/O/key 均为本次新身份，原 B/C 事实保持不变。原 Snapshot ID 回切只在 Article 路径验收。父 worker 的子 Outbox 身份已断言；外部服务调用不属于本项合同。 |
 | 首次发布通知持久投递             | **已闭合存储与恢复幂等**：冻结作者/收件人，`article_published` Notice、Dedup、Mailbox 同事务写入；delivery key 按 Outbox event/recipient 固定。实际 publish→落库→complete 前中断→root retry→worker 重放两次已通过；迁移空库 up/down 通过，有实际 Notice 时 down fail closed。 |
 | 门禁与全量测试                    | 本批隔离 style/context 为 0 findings；notice contract 生成检查、文档覆盖和合并定向 72 项通过。全仓 `pnpm run docs:check` 仍被当前共享树中未提交的 Co-author/Community Trash CMS facade findings 阻断；全量后端及 Hub 业务链路未签收。470 项前序合并回归不能代替全量签收。 |
-| 本地应用写入验收                  | **未验收**。Dev Hub 已用于启动本地服务；普通 local-debug 可登录并读取 Posts。文章创建/发布和资产替换恢复尚未通过应用写入验收；Assets 曾因测试身份权限不足而拒绝，不能据此判断实现故障或提升该账号。后续只需核对这些操作的 Receipt/History/Outbox 身份链；这属于应用验收，不属于 Hub 功能。 |
+| 本地应用写入验收                  | **写入闭环未验收**。2026-11-20 已备份并清理本地开发库的 102 条旧 Outbox 记录（30 completed、72 dead）及 16 条空 payload 的 failed Review 记录；开发迁移已到 `20261120100000`。工作树活跃变更期间 Phoenix 曾在 GraphQL 请求时重编译 192–199 个文件及 `CMS.Types`，耗时约 42–44 秒；源码稳定后，对 Dash 使用的 `postPage` GraphQL operation 直接请求 API 得 HTTP 200、0.39 秒（未带浏览器登录态），未复现长延迟。Dash 浏览器登录态页面尚未重验；专用 `local-passport-admin` 登录仍为 404，因为 Dev Hub 管理员本地登录 opt-in 未启用。文章创建/发布与资产替换恢复尚未通过应用写入验收。 |
 | Admin 浏览器 UI                   | **用户明确后置**。Admin GraphQL 列表合同定向通过；浏览器流程未签收，不继续扩大到 Admin UI 改造                                                                                                                                                                                                                         |
 | Passport P4                       | **单独后续阶段**：旧 fixture/旧 Passport 读取迁移与广泛消费者扫尾，见 [Passport 迁移](../migrations/passport-permissions-refactor.md)。不并入本批已完成项                                                                                                                                                                                           |
 
-Hub 业务验收仍未完成：普通本地测试账号可登录 Dash 并读取 Posts；Assets 管理入口按权限拒绝。Community 页面可打开但列表加载失败。只读查询本地默认开发库确认 `cms.outbox_events` 有 102 条旧协议事件，仍包含 `command_id/effect_key/identity_type`，缺少新协议字段；迁移记录仅到 `20261118100000`，后续迁移尚未应用。当前运行库未准备好，且迁移会对非空旧表 fail closed，需单独作数据处置决定，不能把这轮页面访问当作发布/资产恢复闭环通过。未对共享开发库清表或自动套用迁移。
+Hub 业务写入验收仍未完成。Outbox 与失败 Review 历史已按用户指示备份后清理，开发迁移已成功应用到 `20261120100000`。42–44 秒现象与工作树活跃变更时 Phoenix 反复重编译相关；源码稳定后同一 `postPage` GraphQL operation 经 API 在 0.39 秒返回。该请求未使用浏览器登录态，因此 Dash 页面登录流程及写入流程仍需验收；文章创建/发布与资产替换恢复的 Receipt/History/Outbox 身份链尚未完成。
 
 先前记录中“Phoenix 为 unmanaged PID 6989，必须原终端停止”的阻塞已经过期：本轮 Phoenix 已通过 Dev Hub 管理并可由 `pnpm devhub restart phoenix` 重启。这里不再保留一串互相覆盖的历史 PID 作为当前事实。服务启动成功仍不能替代上表待验收业务链路。
 

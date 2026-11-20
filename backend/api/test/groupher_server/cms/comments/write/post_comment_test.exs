@@ -193,7 +193,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       refute Repo.get_by(
                CMS.Outbox.Event,
                event: "mention.notify",
-               command_id: command_id,
+               operation_ref: command_id,
                resource_id: endpoint.id
              )
     end
@@ -246,7 +246,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       refute Repo.get_by(CMS.Outbox.Event,
                event: "mention.notify",
-               command_id: delete_command_id,
+               operation_ref: delete_command_id,
                resource_id: endpoint.id
              )
 
