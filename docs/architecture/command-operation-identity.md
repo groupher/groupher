@@ -318,6 +318,7 @@ resource_type、dedupe_key、identity tuple 或“按操作/按版本”模式�
 | 评论摘要变更                                   | comments revision、目标社区                                                                            | 相同 Article/版本/社区合并；新版本不能被旧键吞掉                                                                         |
 | DocTree publication / removal                  | 本次持久 Release.id；publication 再含选中 snapshot.id；Article/Community 为固定资源作用域              | 同 release/动作/目标重试复用；新 release 即使再次选择同快照也产生新键                                                    |
 | Article cache                                  | Community、Binding.inner_id、本次 publish 的 O、public snapshot.id                                     | 同一次发布重试复用；重新发布同快照仍是新意图；完整替代的纯缓存效果可按第 5.7 节诊断                                      |
+| Article 首次发布通知                         | 首次发布 Outbox event ID、冻结接收人 ID                                                               | 每个 event/接收人各投递一次；读/删通知后重试仍不重建；不同首次发布不聚合                                              |
 | Article projections                            | Community、Binding.inner_id、本次 publish 的 O、public snapshot.id、投影目标及其稳定版本               | 不同发布变化或目标不合并；拆出通知后的纯投影才可按第 5.7 节判 superseded                                                 |
 | 首次发布通知                                   | Article、首次发布所属 Community、固定通知类型                                                          | 首次发布独立登记；后续发布、缓存重建和投影重试不再次通知，不因新版本被取消                                               |
 | Article 子事件扇出                             | parent Outbox event ID；子类型由 event 列区分                                                          | 父事件重试不重复扇出；不同父事件按原合同区分                                                                             |
@@ -333,7 +334,7 @@ resource_type、dedupe_key、identity tuple 或“按操作/按版本”模式�
 | Event                                      | Owner（省略 GroupherServer.）       | Worker（Jobs.）         | Version | Key inputs（资源列另参与唯一约束；O = operation_ref）                     | Payload projection                                                                                                                            |
 | ------------------------------------------ | ----------------------------------- | ----------------------- | ------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `article.cdn_purge`                        | `CMS.Articles.Effects.Outbox`       | `CMSOutboxCDN`          | 1       | parent event ID                                                           | `source_event`, `community`, `community_id`, `thread`, `inner_id`, `snapshot_id`, optional `release_id`                                       |
-| `article.first_published_notification`     | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Article + Community                                                       | `article_id`, `community_id`, `community_slug`, `thread`, `title`, `digest`, `author_id`, `author_name`, `published_by_id`, `notify_user_ids` |
+| `article.first_published_notification`     | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Article + Community                                                       | `article_id`, `community_id`, `community_slug`, `thread`, `title`, `digest`, `author_id`, `author` User embed, `published_by_id`, `notify_user_ids` |
 | `article.projections`                      | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + snapshot                                       | `first_publish?`, `community_id`, `inner_id`, `published_by_id`, `snapshot_id`                                                                |
 | `article.published`                        | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O + snapshot + optional release                    | `community`, `community_id`, `thread`, `inner_id`, `article_id`, `snapshot_id`, optional `release_id`                                         |
 | `article.review_changed`                   | `CMS.Articles.Effects.Outbox`       | `CMSOutboxArticle`      | 1       | Community + inner_id + O                                                  | `community`, `community_id`, `thread`, `inner_id`                                                                                             |
@@ -493,11 +494,14 @@ retry last publish -> same O3 / R3 -> same K3; no extra intent
 
 通知保留既有管理员接收范围规则，在首次登记时固化接收范围和必需的文章/作者/快照等
 业务事实；重放使用已保存事实，不按当前管理员列表或当前 Public 内容重构 payload。
-后续发布不改变通知键或原 payload。独立 consumer 通过既有 Messaging 入口投递，并遵循
-稳定 event ID/接收人的消费幂等合同；投递后中断的重试不能重复创建通知。
-Article projections consumer 删除直接通知管理员的调用。现有首次发布的作者缓存失效是
-可重复的重建效果，留在纯投影并确保后续重建覆盖，不能仅以 first_publish? 为唯一执行
-门槛，导致旧投影被替代后该失效永远遗漏。一次性通知不再混入纯投影。
+作者使用首次登记时的 User embed 快照。独立 consumer 通过既有 Messaging 入口写入
+`article_published` Notice、逐收件人的 Dedup 和 mailbox 投影；delivery key 固定为
+`article-first-publication:<outbox-event-id>:<recipient-id>`，这些写入处于同一事务。
+Notice 不进入普通 activity 小时聚合。读/删 Notice 不删除 Dedup，Outbox 重试不重建已投递
+通知。后续发布不改变通知键或原 payload。Article projections consumer 删除直接通知管理员
+的调用。现有首次发布的作者缓存失效是可重复的重建效果，留在纯投影并确保后续重建覆盖，
+不能仅以 first_publish? 为唯一执行门槛，导致旧投影被替代后该失效永远遗漏。一次性通知不再
+混入纯投影。
 
 同类键使用集中、纯函数的确定性编码：固定顺序、明确类型、无歧义边界；可复用现有
 编码能力，不为此建立注册表或配置 DSL。入口是唯一生成者；禁止按任意 payload map
@@ -977,6 +981,7 @@ storage/storage_key，新守卫会按身份不完整拒绝并产生 dead/告警�
 | `cms/outbox_test.exs`                                                                                              | UUID/key 缺失和旧输入失败；schema 无默认 key；空白 key 与 DB check；事务外拒绝及整体回滚；状态矩阵；版本投影；终态 generation 递增、reset 不清零；原行/job/重试记录原子性                                                  |
 | `cms/outbox_schedule_check_test.exs`                                                                               | skip_enqueue 显式 skipped；waiting/retrying 的 available_at 宽限边界；running 的 lease+宽限边界；active Oban job 不重复唤醒；锁下并发只有一个修复；原 event payload/O/key/status 不变；worker route allowlist 和未知值拒绝 |
 | `cms/doc_tree/release_effects_test.exs`                                                                            | 先领域写与完整 Release.record，再登记 publication/removal/首次发布通知；任一登记或唤醒失败回滚 Release、公开状态、queue、Receipt 与意图；成功事件使用真实整数 Release.id；SaveQueue、MergeQueue、RestoreSnapshot、ResolvePostPublish 的提交后返回与 Confirmation 重放 |
+| `cms/articles/first_publish_notification_test.exs`                                                                 | 实际 Article publish 产生冻结 event；通知落库后、Outbox complete 前中断；root 恢复与 worker 重放后 Notice、Dedup、接收范围不变且 Outbox done |
 | `cms/interactions/recovery_safety_test.exs` | 三类反应各自拒绝缺失目标/actor，实际 Command 经人工恢复后消费、同代恢复与 worker 重放；缺失/无绑定/未记录社区拒绝；恢复后消费再次检查，拒绝时 Event/Retry/job 完整不变 |
 | `cms/outbox_dedupe_test.exs`                                                                                       | 事件入口生成键；O1/O2 同效果合并、新业务版本不合并；dead 命中传播到 Command 回滚；actor 来自请求事实而非重试者；投影排除来源/诊断且保留业务字段；event 名无重复归属；父扇出、Review、Maintenance 恢复合同                  |
 | `cms/command/operation_identity_test.exs`                                                                          | 重写既有冲突测试：裸 UUID、action context、actor 隔离和回滚；操作隔离不等于通知必须重复；最终列/索引正确，无 identity_version/effect_key 等旧协议断言                                                                      |
@@ -997,13 +1002,20 @@ Receipt O、意图/唤醒及 Queue 的事务内事实，Repo telemetry 将该证
 job/event/Receipt，保留模型要求的账号和销毁留痕。成功用例核对 Release 成员、选中
 snapshot/Binding、O 和 job，以及 Receipt/同 owner 登记重放不新增数据。
 
+另有真实 RestoreSnapshot → Enqueue → Release 的 B→C→B′ 用例：B 与 C 使用不同正文，
+回切恢复完整 B 正文并生成属于当前 Q revision 的新 Snapshot、sealed Release、O 和 key；
+Public 与 PublicBody 指向 B′。B/C 的 Snapshot、Body、Release、成员、父子意图保持不变，
+重复 Release commandId 与同 owner 登记不写入。用例实际执行 publication 父 worker 并检查
+Press/Search/CDN 子意图登记，不代表三个外部服务已消费。
+
 DocTree 返回阶段另有 6 项实际 Command 回归：SaveQueue、MergeQueue、RestoreSnapshot
 （不存在/已有 Default 两种路径）以及 ResolvePostPublish 的 source/target 两种选择。
 此前这些 present 调用事务内的 QueueAccess.authorize，Receipt 已提交后仍可能抛出
 transaction_required；现在复用既有 authorize_after_commit，在当前 Gate 权限下返回结果。
 重放原 command_id 使用原 Confirmation，不再写入；逐行比较上述 34 个 schema，
 并验证 Restore 后的后续编辑保留、已移除的冲突不妨碍成功重放。此修复不改变 Snapshot
-选择或 Q revision 约束，不能当作下面原 B snapshot_id 回切的验收。
+选择或 Q revision 约束。原 Snapshot ID 回切仅属于 Article 路径；DocTree 内容回切按
+已确认的 Q 专属规则生成 B′，详见上段验收。
 
 `cms/assets/restore_effect_safety_test.exs` 的 9 项定向测试已通过。状态矩阵通过实际 Delete
 登记意图，使用 Outbox.execute 推进状态；Restore 拒绝后逐行比较原资产、意图、全部
@@ -1067,6 +1079,10 @@ dead 用例必须先提交 O1 的意图并将其设为 :failed/dead，再以 O2 
   为 false 遗漏；不能用通知投递来替代这项重建职责。
   通知投递后、Outbox complete 前中断，重试不重复创建收件人通知。通知 dead 后发布 C
   不能将其判 superseded 或关闭告警，仍走自身的授权恢复合同。
+  当前真实 Article publish 回归已验证 frozen User/recipient 数据；Notice 落库后中断
+  Outbox complete，root 恢复并执行 worker 两次，Notice、Dedup 与接收范围不变，event 最终
+  done。Messaging 定向测试另验证作者本人也在接收范围、不同 event 不小时聚合、读/删后的
+  重试，以及多人中途失败回滚。
 - 旧 B 的纯缓存/投影 dead、较新 C 已提交并登记完整替代意图：恢复诊断返回明确的
   superseded 及两行 ID，关闭旧行当前待处理告警，历史失败事实保留。旧行的状态、O、key、
   payload、generation 不变，不新增 job 或重试凭据；替代行 waiting/retrying/dead 仍有
@@ -1338,12 +1354,13 @@ Article Trash Command 后验证 worker 再次拒绝；未改动 User 删除保�
 | 项目                              | 当前状态与下一步                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 具体事件入口 API                  | **Article、Interactions、Ticket cache 与 Taxonomy 已收口**：Article 的 9 个动作入口、反应的 3 个固定动作、Ticket projection_changed/5 以及 Taxonomy 三参数入口均由 owner 构造 event/resource/worker/payload/key；删除旧通用 API 与外部 effect_key/hash，迁移实际调用链。其余 owner 仍按事件清单继续合同核对；入口收口不能替代恢复守卫及全链路验收。 |
-| 人工恢复领域守卫                  | **部分闭合**：版本、固定路由、payload、资产冻结目标/Application upload、自动 run/step/O/live lease 与并发凭据已验证；Review 原请求身份、状态/过期/替代/目标与 completed 确认已交付；Interaction 三事件共用当前目标/actor 与 Article 请求社区读取守卫。其余 owner 仍按消费语义逐项核对，root 不代替领域许可。                                                                                                          |
+| 人工恢复领域守卫                  | **30 个事件 owner 已逐项分类**：Assets/Review/Interaction 的 6 个既有专属守卫继续保留；本批给 Article projection/search、Comment create/delete、Community analytics 增加 5 类 pending-reset 当前目标检查，superseded 仍先判定。其余 19 类按缓存、历史通知、fanout、skip/defer 合同处理，不统一要求当前目标仍存在。41 项恢复回归通过。 |
 | 纯投影 superseded 诊断            | **已交付本节合同**：恢复与 root 诊断复用同一持久事实判定，旧行不重置、不排 job、不写成功凭据，当前 pending 集合排除有完整替代证明的旧行；普通 History、Docs sealed Release 祖先链和必要负例已通过。首次通知仍保留，替代行 failed 仍进入 pending；不是全链路总签收。                                                                                 |
 | Provider 错误分类                 | **已交付本节合同**：5603 仅限点名的暂时故障；HTTP 拒绝 5608、未知 5609、配置 5610 默认不自动重排。真实 HTTP consumer 与锁内恢复负例通过；并发凭据复用不受胜者清空失败码影响。                                                                                                                                                                       |
-| §8.1 全部故障注入矩阵             | **部分闭合**：Docs publication/removal 故障点、实际 Asset worker 永久目标守卫、Restore 五状态矩阵/Confirmation 重放/双向锁竞争/守卫后发送前交错已验证。各实际登记入口的 deleted/foreign 拒绝、合法生成/归档复用、预查竞争与唯一冲突备用重试已补齐；DocTree 发布回切及其余矩阵仍须逐项验收，不能代替整节签收。                                       |
-| DocTree 原 Snapshot 回切合同 | **未完成，等待业务合同选择**：实际 RestoreSnapshot→Enqueue→ReleaseQueue 恢复 B 内容但生成新 snapshot_id（B′）；SelectPublic、AlignDefault、Release 与 Consume 要求 snapshot 属于当前 Q revision，不能复用原 B ID。诊断用例已复现原 ID 断言失败，未纳入绿色计数。保留 §8.1 原要求，先讨论是否调整 DocTree 合同，不削弱现有守卫。 |
-| 门禁与全量测试                    | 本批 style/context 已清零，文档覆盖在共享工作树通过；隔离快照的 Auth/Co-author 文档缺失、共享树并行模块 findings 及全量套件失败仍须按归属核对修复。470 项合并回归不能代替全量签收；不扩大排除或降低门禁。                                                                                                                                           |
+| §8.1 故障注入与恢复矩阵             | **继续分项验收**：Docs publication/removal 故障点、实际 Asset worker 永久目标守卫、Restore 五状态矩阵/Confirmation 重放/双向锁竞争/守卫后发送前交错、DocTree B→C→B′ 与 30-event recovery owner 检查已验证。它们不代表整节所有历史矩阵或外部服务闭环全部签收。 |
+| DocTree 内容回切              | **已按确认合同验收**：DocTree 的 Snapshot 绑定当前 Q revision，Restore B 内容后产生新 B′ Snapshot；Release/O/key 均为本次新身份，原 B/C 事实保持不变。原 Snapshot ID 回切只在 Article 路径验收。真实父 worker 登记 Press/Search/CDN 子意图，但本项未消费三个外部服务。 |
+| 首次发布通知持久投递             | **已闭合存储与恢复幂等**：冻结作者/收件人，`article_published` Notice、Dedup、Mailbox 同事务写入；delivery key 按 Outbox event/recipient 固定。实际 publish→落库→complete 前中断→root retry→worker 重放两次已通过；迁移空库 up/down 通过，有实际 Notice 时 down fail closed。 |
+| 门禁与全量测试                    | 本批隔离 style/context 为 0 findings；notice contract 生成检查、文档覆盖和合并定向 72 项通过。全仓 `pnpm run docs:check` 仍被当前共享树中未提交的 Co-author/Community Trash CMS facade findings 阻断；全量后端及 Hub 业务链路未签收。470 项前序合并回归不能代替全量签收。 |
 | Hub Article / Assets 真实业务闭环 | **未验收**。本轮普通 local-debug 可登录并读取 Posts 列表；Assets 因缺管理权限拒绝，不能提升该账号或当作 Assets 实现故障。Community 曾在后端重编译时 SSR 超时；需要稳定进程、相应权限和实际写入后的 Receipt/History/Outbox 对照                                                                                                                      |
 | Admin 浏览器 UI                   | **用户明确后置**。Admin 后端定向通过；旧 GraphQL fixture 仍有 community/communityRef 合同缺口，浏览器流程没有签收；不继续扩大到 Admin UI 改造                                                                                                                                                                                                       |
 | Passport P4                       | **单独后续阶段**：旧 fixture/旧 Passport 读取迁移与广泛消费者扫尾，见 [Passport 迁移](../migrations/passport-permissions-refactor.md)。不并入本批已完成项                                                                                                                                                                                           |
