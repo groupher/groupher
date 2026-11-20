@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.Analysis.Types do
+defmodule GroupherServerWeb.Schema.Analysis.Spec do
   @moduledoc """
   GraphQL types for built-in community Analysis Web.
 

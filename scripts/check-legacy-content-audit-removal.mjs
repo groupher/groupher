@@ -30,8 +30,8 @@ const v2ReportCountOwners = new Set([
   'backend/api/lib/groupher_server/alert_wall.ex',
   'backend/api/lib/groupher_server/cms/review/results.ex',
   'backend/api/lib/groupher_server_web/resolvers/alert_wall.ex',
-  'backend/api/lib/groupher_server_web/schema/account/account_types.ex',
-  'backend/api/lib/groupher_server_web/schema/alert_wall/types.ex',
+  'backend/api/lib/groupher_server_web/schema/account/spec.ex',
+  'backend/api/lib/groupher_server_web/schema/alert_wall/spec.ex',
 ])
 const reportCountPattern = /reported_count|report_count/
 

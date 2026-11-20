@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.Account.Types do
+defmodule GroupherServerWeb.Schema.Account.Spec do
   @moduledoc """
   Shared GraphQL object, input, filter, and enum types for the Accounts API.
 

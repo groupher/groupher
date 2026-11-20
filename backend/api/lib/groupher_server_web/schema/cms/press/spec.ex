@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.CMS.Press.Types do
+defmodule GroupherServerWeb.Schema.CMS.Press.Spec do
   @moduledoc """
   GraphQL DTOs for current public Press projections.
 

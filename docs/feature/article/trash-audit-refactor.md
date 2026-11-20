@@ -1014,7 +1014,7 @@ Backend：
 - `backend/api/lib/groupher_server/cms/model/doc_tree_trash_item.ex`（删除）
 - `backend/api/lib/groupher_server_web/schema/helper/mutations.ex`
 - `backend/api/lib/groupher_server_web/schema/cms/cms_queries.ex`
-- `backend/api/lib/groupher_server_web/schema/cms/cms_types.ex`
+- `backend/api/lib/groupher_server_web/schema/cms/spec.ex`
 - `backend/api/lib/groupher_server_web/resolvers/cms_resolver.ex`
 - `backend/api/lib/helper/scheduler.ex`
 - `backend/api/lib/helper/query_builder.ex`（只删除 `mark_delete` filter，不新增能力）

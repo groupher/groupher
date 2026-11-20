@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.ReviewBot.Types do
+defmodule GroupherServerWeb.Schema.ReviewBot.Spec do
   @moduledoc """
   GraphQL types for ReviewBot configuration and policy input.
 

@@ -140,7 +140,7 @@ P3 的 Notice 合同必须包括源码所有合法活动和请求分支；代码
 - `backend/api/lib/groupher_server_web/resolvers/cms/passport.ex`
 - `backend/api/lib/groupher_server_web/resolvers/content_import_resolver.ex`
 - `backend/api/lib/groupher_server_web/schema/account/account_queries.ex`
-- `backend/api/lib/groupher_server_web/schema/account/account_types.ex`
+- `backend/api/lib/groupher_server_web/schema/account/spec.ex`
 - `backend/api/lib/groupher_server_web/schema/cms/cms_queries.ex`
 - `backend/api/lib/groupher_server_web/schema/cms/content_import.ex`
 - `backend/api/lib/groupher_server_web/schema/cms/mutations/comment.ex`
@@ -224,7 +224,7 @@ P3 的 Notice 合同必须包括源码所有合法活动和请求分支；代码
 - `backend/api/lib/groupher_server_web/schema/account/account_metrics.ex`
 - `backend/api/lib/groupher_server_web/schema/account/account_mutations.ex`
 - `backend/api/lib/groupher_server_web/schema/account/account_queries.ex`
-- `backend/api/lib/groupher_server_web/schema/account/account_types.ex`
+- `backend/api/lib/groupher_server_web/schema/account/spec.ex`
 - `backend/api/lib/helper/orm.ex`
 - `frontend/core/assets/icons/raw/lucide/mailbox.svg`
 - `frontend/core/ui/IconHub/icons.ts`

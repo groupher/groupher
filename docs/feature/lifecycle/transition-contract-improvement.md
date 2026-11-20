@@ -732,7 +732,7 @@ GraphQL resolver / CMS facade
 
 - `backend/api/lib/groupher_server_web/resolvers/cms/communities.ex`：`request_destroy_community/3`；
 - `backend/api/lib/groupher_server_web/schema/cms/mutations/community.ex`：`commandId` 入参；
-- `backend/api/lib/groupher_server/cms/model/community.ex`、`cms_types.ex`：`commandId` 出参；服务端不暴露 replay 状态。
+- `backend/api/lib/groupher_server/cms/model/community.ex`、`spec.ex`：`commandId` 出参；服务端不暴露 replay 状态。
 
 `restore`、`schedule_destroy`、`cancel_destroy`、`destroy` 仍是 operations/job 侧 Lifecycle command，当前尚未接入
 用户 Command API。它们不能伪造 actor Gate；未来接入时应设计独立的 job/system 入口，initiator 由 job 记录并在 retry

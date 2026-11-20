@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.CMS.Review.Types do
+defmodule GroupherServerWeb.Schema.CMS.Review.Spec do
   @moduledoc """
   CMS-owned content review projections.
 

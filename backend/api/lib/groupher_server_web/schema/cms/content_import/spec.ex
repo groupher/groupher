@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.CMS.ContentImport.Types do
+defmodule GroupherServerWeb.Schema.CMS.ContentImport.Spec do
   @moduledoc """
   Public GraphQL contract for recoverable ContentImport Jobs and Doc previews.
 

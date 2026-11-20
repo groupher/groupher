@@ -54,7 +54,7 @@ R3 待实现：Public + 独立 ArticlePublicBody
 | `assets/refs.ex`、`review/commands/recheck.ex`                                                           | 从指定 owner 的 ArticleBody 提取资产引用和审核文本，仍绑定同一 Snapshot 身份                         |
 | `press/query.ex`、`search_artiments/capacity.ex`                                                         | 当前公开 Snapshot 的正文读取 join ArticleBody，Press 批量读取不逐篇查正文；后续 R3 才切换 PublicBody |
 | `tickets/{query,persist,mentions}.ex`                                                                    | 保持 Ticket 产品边界；内容比较、复制、Mention 改读独占正文                                           |
-| GraphQL `cms_types.ex` 与 CMS facade                                                                     | 保留当前 bodyJson 等 wire 字段，resolver 改取 ArticleBody；未增加兼容字段或改变 schema               |
+| GraphQL `spec.ex` 与 CMS facade                                                                     | 保留当前 bodyJson 等 wire 字段，resolver 改取 ArticleBody；未增加兼容字段或改变 schema               |
 | 测试与隔离验证脚本                                                                                       | 修改直接构造 owner 的正文 fixture，新增正文约束与事务测试                                            |
 
 旧 ArticleBodyDraft / ArticleBodySnapshot 模型及其实际依赖未在本批次删除；它们不参与新的 WorkingCopy / Snapshot 写链。旧 BodyBag 传输校验字段也未借此批次扩展改名。

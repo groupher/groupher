@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.CMS.Types do
+defmodule GroupherServerWeb.Schema.CMS.Spec do
   @moduledoc """
   GraphQL object and payload types for the CMS domain.
 

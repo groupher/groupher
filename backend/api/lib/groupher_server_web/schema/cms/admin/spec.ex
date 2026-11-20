@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.CMS.AdminTypes do
+defmodule GroupherServerWeb.Schema.CMS.Admin.Spec do
   @moduledoc """
   GraphQL types for Passport-backed Community Admin membership and requests.
 

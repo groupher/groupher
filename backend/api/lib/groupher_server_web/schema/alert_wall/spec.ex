@@ -1,4 +1,4 @@
-defmodule GroupherServerWeb.Schema.AlertWall.Types do
+defmodule GroupherServerWeb.Schema.AlertWall.Spec do
   @moduledoc """
   GraphQL item and report types owned by AlertWall.
 
