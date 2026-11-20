@@ -120,9 +120,22 @@ defmodule GroupherServerWeb.Middleware.Passport do
          {:ok, scope} <- CMS.passport_community_scope(actor, community),
          {:ok, true} <-
            CMS.passport_allowed?(actor, scope, action, passport_thread(resolution, opts)) do
-      resolution
+      maybe_put_passport_scope(resolution, opts, :community, scope)
     else
       _ -> passport_denied(resolution)
+    end
+  end
+
+  defp maybe_put_passport_scope(resolution, opts, scope_key, scope) do
+    if Keyword.get(opts, :pass_scope, false) do
+      arguments =
+        Map.update(resolution.arguments, :passport_scopes, %{scope_key => scope}, fn scopes ->
+          if is_map(scopes), do: Map.put(scopes, scope_key, scope), else: %{scope_key => scope}
+        end)
+
+      %{resolution | arguments: arguments}
+    else
+      resolution
     end
   end
 

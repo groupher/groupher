@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.ActivityTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.{Activity, CMS}
+  alias GroupherServer.{Activity, CMS, ErrorCat}
   alias Activity.Artiment
   alias Activity.Const, as: ActivityConst
 
@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.ActivityTest do
   }
 
   alias CMS.Artiment.Threads
-  alias CMS.Model.{Comment, PressConfig}
+  alias CMS.Model.{Comment, CommunityAdmin, PressConfig}
 
   test "routes abstract Articles, rejects invalid contracts and deduplicates event refs" do
     {_community, post, _attrs, user} = mock_article(:post)
@@ -495,10 +495,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     occurred_at = DateTime.utc_now(:second)
 
@@ -646,9 +643,104 @@ defmodule GroupherServer.Test.ActivityTest do
              )
   end
 
+  test "CommunityLog reuses an explicitly supplied actor-bound Passport scope" do
+    {community, _post, _attrs, _owner} = mock_article(:post)
+    {:ok, manager} = db_insert(:user)
+
+    admin =
+      %CommunityAdmin{}
+      |> CommunityAdmin.changeset(%{
+        user_id: manager.id,
+        community_id: community.id,
+        permissions: %{"audit.read" => true}
+      })
+      |> Repo.insert!()
+
+    {:ok, scope} = CMS.passport_community_scope(manager, community)
+    admin |> CommunityAdmin.changeset(%{permissions: %{}}) |> Repo.update!()
+
+    assert {:ok, _} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: scope
+             )
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10}
+             )
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: nil
+             )
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               []
+             )
+
+    {:ok, member} = db_insert(:user)
+
+    %CommunityAdmin{}
+    |> CommunityAdmin.changeset(%{
+      user_id: member.id,
+      community_id: community.id,
+      permissions: %{}
+    })
+    |> Repo.insert!()
+
+    {:ok, member_scope} = CMS.passport_community_scope(member, community)
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               member,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: member_scope
+             )
+
+    {:ok, other_manager} = db_insert(:user)
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               other_manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: scope
+             )
+
+    {other_community, _other_post, _other_attrs, _other_owner} = mock_article(:post)
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               other_community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: scope
+             )
+  end
+
   test "CommunityLog cursor traverses tied times and rejects another community or filter" do
     {community, post, _, manager} = mock_article(:post)
-    manager = %{manager | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}}
+    manager = grant_audit_read(community, manager)
     time = DateTime.utc_now(:second)
 
     for _ <- 1..4 do
@@ -715,10 +807,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     base_time = DateTime.add(DateTime.utc_now(:second), -60, :second)
 
@@ -762,10 +851,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     start = DateTime.new!(Date.add(Date.utc_today(), -2), ~T[00:00:00], "Etc/UTC")
 
@@ -829,10 +915,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     assert {:ok, result} =
              Activity.list_community_logs(
@@ -864,10 +947,7 @@ defmodule GroupherServer.Test.ActivityTest do
                parent_event_ref: parent.event_ref
              )
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     assert {:ok, detail} = Activity.get_community_log_event(community, manager, child.event_ref)
     assert detail.event_ref == child.event_ref
@@ -883,10 +963,7 @@ defmodule GroupherServer.Test.ActivityTest do
   test "CommunityLog rejects invalid and unbounded time windows" do
     {community, _post, _attrs, manager} = mock_article(:post)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     after_datetime = DateTime.utc_now()
     before_datetime = DateTime.add(after_datetime, -1, :second)
@@ -909,10 +986,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     assert {:ok, _} =
              Activity.log(
@@ -950,10 +1024,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     assert {:ok, result} =
              Activity.list_community_logs(
@@ -985,10 +1056,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     constraint = "community_logs_reject_export_test"
 
@@ -1025,5 +1093,27 @@ defmodule GroupherServer.Test.ActivityTest do
 
     Regex.scan(~r/'([^']+)'/, definition, capture: :all_but_first)
     |> List.flatten()
+  end
+
+  defp grant_audit_read(community, user) do
+    case Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) do
+      %CommunityAdmin{} = admin ->
+        admin
+        |> CommunityAdmin.changeset(%{
+          permissions: Map.put(admin.permissions || %{}, "audit.read", true)
+        })
+        |> Repo.update!()
+
+      nil ->
+        %CommunityAdmin{}
+        |> CommunityAdmin.changeset(%{
+          user_id: user.id,
+          community_id: community.id,
+          permissions: %{"audit.read" => true}
+        })
+        |> Repo.insert!()
+    end
+
+    user
   end
 end

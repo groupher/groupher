@@ -101,6 +101,20 @@ defmodule GroupherServer.Activity do
   defdelegate list_community_logs(arg1, arg2, arg3, arg4), to: GroupherServer.Activity.Workflow
 
   @doc """
+  Delegates list_community_logs/5 with an explicitly supplied Community Passport scope.
+
+  The field-level GraphQL caller passes the scope that middleware already
+  loaded and checked. This path validates and reuses that scope without loading
+  Passport facts again.
+
+  ## Examples
+
+      Activity.list_community_logs(community, actor, selection, pagi, passport_scope: scope)
+  """
+  defdelegate list_community_logs(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.Activity.Workflow
+
+  @doc """
   Delegates log/2 to the Context workflow owner.
 
   ## Examples

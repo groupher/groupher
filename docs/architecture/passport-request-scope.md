@@ -1,6 +1,9 @@
-# GraphQL 字段内的 Passport Scope（提案）
+# GraphQL 字段内的 Passport Scope
 
-> 状态为提案，尚未实现。Passport 持久化与 Action 合同见
+> 状态：`communityActivity` 字段内的 Community scope 传递已在工作区实施；Article Action 接入仍按本文逐项设计和验收，未随该试点一并完成。
+
+Passport 持久化与 Action 合同见
+
 > [Passport Permission 与 Community Admin](../migrations/passport-permissions-refactor.md)。
 
 ## 目标
@@ -9,7 +12,7 @@
 该字段的下游授权检查复用。Passport Store 提供权限事实，Gate 继续组合 Passport、
 资源关系和 Lifecycle 作最终准入判断。沿用现有 middleware，不恢复 `PassportLoader`。
 
-## 首批仅接入 `communityActivity`
+## 已实施：`communityActivity` Community scope 传递
 
 现有字段依次执行 `M.Authorize`、`M.Passport(action: "audit.read")`、
 `M.FrontDesk, :community` 和 resolver。Passport 加载 Community scope 并当场判权，
@@ -54,6 +57,15 @@ Passport 检查 actor 和 `audit.read`。私有 Admin 事件仍只对 root 或�
 沿用当前顺序，Passport 前置检查失败时仍返回 4353，通过后再由 FrontDesk 原样返回其资源
 读取错误。
 
+本次回归补充了完整 GraphQL `communityActivity` query 到 resolver 和 `CommunityLog` 的传递，
+以及同一 actor、同一 Community 但缺少 `audit.read` 的 provided scope 被拒绝为 4353；见
+[GraphQL 回归](../../backend/api/test/groupher_server_web/query/cms/community_activity_test.exs)
+和 [CommunityLog scope 回归](../../backend/api/test/groupher_server/activity_test.exs)。
+
+范围边界：`pass_scope: true` 目前只在 Community action 分支生效；Global action 分支会忽略该选项，
+不填充 `passport_scopes.global`。当前没有 Global action 启用该选项。接入 Global 或 Article scope 前，
+必须先补对应分支和回归断言，不能依赖这个 Community-only 行为。
+
 首批验收对比现有行为，确认单字段省掉下游一次 Community scope 加载，同一 operation
 的兄弟字段各自加载，actor 或社区错配时拒绝。覆盖无授权、普通 `audit.read`、lord 和
 root 的可见性，以及资源不存在或不可见时原有的错误及其优先级。增加回归用例，
@@ -88,13 +100,12 @@ A2 的普通读取需符合迁移文档的公开默认值、当前社区、顺�
   [参数合同](../migrations/frontdesk-article-unification.md#31-参数) ·
   [返回结构](../migrations/frontdesk-article-unification.md#32-返回结构)
 
-当前 `M.FrontDesk, :article` 的默认公开路径先找到已加载 `author: :user` 的
-`%CMS.Model.Article{}`，再返回公开的 `%ArticleView{}`。Passport Store 的
-`load_article_scope/2` 要求规范 Article 及其 `%CMS.Model.Author{user_id: ...}`，
-把默认 middleware 的 `args.article` 直接传进去会返回 `invalid_scope`。
-`ArticleView.author_id` 是 `cms.authors.id`，投影中的 `author.id` 才是用户 ID。
+Article 普通读取已在工作区切换为 `%CMS.Model.Article{}`，作者关联仍为
+`%CMS.Model.Author{user_id: ...}`；FrontDesk 返回的 `article.author` 预加载 `user`。
+此前 ArticleView 与 SnapshotProjection 的身份不一致问题已随 Article 统一读取移除。
+这只满足逐 Action 接入的资源输入条件，不表示 Article scope 已接入 `M.Passport`，也不改变
+`article.trash` 等字段当前的 middleware 行为。
 [Article FrontDesk](../../backend/api/lib/groupher_server/cms/front_desk/article.ex) ·
-[SnapshotProjection](../../backend/api/lib/groupher_server/cms/articles/snapshot_projection.ex) ·
 [Passport Store](../../backend/api/lib/groupher_server/cms/passport/store.ex)
 
 A2 提供资源返回结构。新增 `M.Passport` 的 `:article` typed 分支、选择各 Action 的
@@ -154,11 +165,11 @@ Trash 的 `opts` 会参与 Receipt intent 编码，权限事实不能混入命�
 
 ## 跨社区动作单列
 
-| Action | GraphQL Passport 当前检查的社区 | Command Gate 当前检查的社区 | 读取与 Gate 就绪条件、命令验收批次 |
-| --- | --- | --- | --- |
-| `article.move` | 文章路径的源社区 | 源社区 | 读取与最小 Gate 适配按 A2，命令验收按 A3 对应改动 |
-| `article.mirror` | 文章路径的源社区 | 源社区 | 读取与最小 Gate 适配按 A2，命令验收按 A3 对应改动 |
-| `article.unmirror` | 文章路径的源社区 | 被移除绑定的目标社区 | 读取与最小 Gate 适配按 A2，命令验收按 A3 对应改动 |
+| Action             | GraphQL Passport 当前检查的社区 | Command Gate 当前检查的社区 | 读取与 Gate 就绪条件、命令验收批次                |
+| ------------------ | ------------------------------- | --------------------------- | ------------------------------------------------- |
+| `article.move`     | 文章路径的源社区                | 源社区                      | 读取与最小 Gate 适配按 A2，命令验收按 A3 对应改动 |
+| `article.mirror`   | 文章路径的源社区                | 源社区                      | 读取与最小 Gate 适配按 A2，命令验收按 A3 对应改动 |
+| `article.unmirror` | 文章路径的源社区                | 被移除绑定的目标社区        | 读取与最小 Gate 适配按 A2，命令验收按 A3 对应改动 |
 
 三条动作都留在首批之外。先为每个 Action 明确源端与目标端分别需要的权限，再决定
 是否携带两份 Community scope。`move` 和 `mirror` 的目标社区权限检查待设计和补齐；
@@ -199,14 +210,14 @@ Trash 的 `opts` 会参与 Receipt intent 编码，权限事实不能混入命�
 
 ## 当前实现状态与未决项
 
-| 部分 | 当前状态 | 本提案的变化 |
-| --- | --- | --- |
-| `communityActivity` | Middleware 和 `CommunityLog` 分别检查并加载 Community scope | 可选传递已通过检查的 typed scope，避免同字段重复加载 |
-| `M.Passport` `pass_scope` | 尚无该选项；现有 middleware 检查后不把 scope 交给 resolver | 需要增加字段局部 opt-in 和内部 arguments 写入 |
-| Article 普通读取 | 默认路径目前返回 `%ArticleView{}`；Article 统一方案仍待 A0–A2 实施 | A2 后作为逐 Action 接入的资源输入，不在本提案中改 FrontDesk |
-| 多 scope 的共享 Global facts | Store 的现有二参 loader 各自加载所需 scope | 如 Action 需要多个 scope，新增接收 actor-bound Global scope 的三参 loader；二参入口保留 |
-| Command 写入 | 事务中由 Gate / Access Loader 对 canonical resource 做检查 | 不把字段参数并入 Receipt intent；是否复用必须逐 Command 证明安全 |
-| 跨社区 Article 操作 | GraphQL Passport 与 Command Gate 检查社区的边界不完全一致 | 首批排除，逐项决定源 / 目标社区权限后再设计 |
+| 部分                         | 当前状态                                                                      | 本提案的变化                                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `communityActivity`          | 已在工作区启用 Community typed scope 传递；CommunityLog 校验 actor/社区并复用 | 已落地；focused 验收结果在 Article 迁移实施记录中汇总                                   |
+| `M.Passport` `pass_scope`    | Community scope 支持字段局部 opt-in 和内部 arguments 写入                     | 已落地；目前仅用于 `communityActivity`                                                  |
+| Article 普通读取             | 已在工作区返回 `%Article{}`，并带当前 community 和预加载作者                  | 已满足资源形状前置条件；Article Action 接入仍须逐个完成                                 |
+| 多 scope 的共享 Global facts | Store 的现有二参 loader 各自加载所需 scope                                    | 如 Action 需要多个 scope，新增接收 actor-bound Global scope 的三参 loader；二参入口保留 |
+| Command 写入                 | 事务中由 Gate / Access Loader 对 canonical resource 做检查                    | 不把字段参数并入 Receipt intent；是否复用必须逐 Command 证明安全                        |
+| 跨社区 Article 操作          | GraphQL Passport 与 Command Gate 检查社区的边界不完全一致                     | 首批排除，逐项决定源 / 目标社区权限后再设计                                             |
 
 实施前仍须逐 Action 确认：Article 使用 `:public`、`:admin` 或受控 `:internal` 查找时，
 如何保持资源隐藏规则和错误优先级；`article.move` / `mirror` 的目标 Community
@@ -214,6 +225,6 @@ Trash 的 `opts` 会参与 Receipt intent 编码，权限事实不能混入命�
 如果这些问题会改变已有权限或错误合同，应先更新对应的资源读取 / Command 方案，
 不能在通用 scope 传递实现中顺手决定。
 
-本提案不新增 GraphQL 字段或客户端参数，不改变 `context.cur_user`，不替换 Gate、
-Lifecycle、Command 或 Passport Store，也不恢复 `PassportLoader`。具体落地仍需单独
-授权实施，并按对应 Action 增加针对性测试；本文自身只记录边界和验收条件。
+本文不新增 GraphQL 字段或客户端参数，不改变 `context.cur_user`，不替换 Gate、
+Lifecycle、Command 或 Passport Store，也不恢复 `PassportLoader`。Community 试点已经落地；
+Article Actions 仍须按资源读取方式、权限事实和错误合同逐项实施并增加针对性测试。

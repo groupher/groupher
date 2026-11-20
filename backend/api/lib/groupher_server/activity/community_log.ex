@@ -16,6 +16,7 @@ defmodule GroupherServer.Activity.CommunityLog do
   alias Activity.{ErrorCat, Event, Filter}
   alias Activity.Model.CommunityTimelineRow
   alias CMS.Model.Community
+  alias CMS.Passport.Scope.Community, as: CommunityPassportScope
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order, Page}
 
@@ -107,8 +108,30 @@ defmodule GroupherServer.Activity.CommunityLog do
       Activity.CommunityLog.list(community, actor, %{filter: %{actions: [:create]}}, %GroupherServer.Pagi.Params.Offset{page: 1, size: 20})
   """
   def list(%Community{} = community, actor, selection, pagi \\ nil) do
+    do_list(community, actor, selection, pagi, :load)
+  end
+
+  @doc """
+  Lists CommunityLogs using a caller-supplied Passport scope; missing or invalid scopes fail closed.
+
+  ## Examples
+
+      Activity.CommunityLog.list(community, actor, selection, pagi, passport_scope: scope)
+  """
+  def list(%Community{} = community, actor, selection, pagi, opts) when is_list(opts) do
+    case Keyword.fetch(opts, :passport_scope) do
+      {:ok, scope} -> do_list(community, actor, selection, pagi, {:provided, scope})
+      :error -> {:error, CMS.passport_error_cat_permission_denied()}
+    end
+  end
+
+  def list(%Community{}, _actor, _selection, _pagi, _opts) do
+    {:error, CMS.passport_error_cat_permission_denied()}
+  end
+
+  defp do_list(community, actor, selection, pagi, scope_source) do
     with {:ok, visibility} <-
-           authorize_audit_read(actor, community),
+           authorize_audit_read(actor, community, scope_source),
          {:ok, resolved} <- Filter.resolve(selection, active_actions()),
          {:ok, normalized} <- normalize_filter(resolved.filter, :list),
          handlers <- if(resolved.empty?, do: [], else: select_handlers(normalized)),
@@ -285,6 +308,18 @@ defmodule GroupherServer.Activity.CommunityLog do
 
   defp authorize_audit_read(actor, community) do
     with {:ok, scope} <- CMS.passport_community_scope(actor, community),
+         {:ok, true} <- CMS.passport_allowed?(actor, scope, "audit.read") do
+      {:ok, %{private_admin_events?: scope.global.is_root or scope.community.is_lord}}
+    else
+      _ -> {:error, CMS.passport_error_cat_permission_denied()}
+    end
+  end
+
+  defp authorize_audit_read(actor, community, :load), do: authorize_audit_read(actor, community)
+
+  defp authorize_audit_read(actor, %Community{id: community_id}, {:provided, scope}) do
+    with %GroupherServer.Accounts.Model.User{id: actor_id} <- actor,
+         %CommunityPassportScope{actor_id: ^actor_id, community_id: ^community_id} <- scope,
          {:ok, true} <- CMS.passport_allowed?(actor, scope, "audit.read") do
       {:ok, %{private_admin_events?: scope.global.is_root or scope.community.is_lord}}
     else

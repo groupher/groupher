@@ -118,6 +118,19 @@ defmodule GroupherServer.Activity.Workflow do
   end
 
   @doc """
+  Lists CommunityLogs using the explicitly supplied, already checked Passport scope.
+
+  ## Examples
+
+      Activity.Workflow.list_community_logs(community, actor, selection, pagi, passport_scope: scope)
+  """
+  @spec list_community_logs(Community.t(), struct(), map(), pos_integer(), keyword()) ::
+          {:ok, map()} | {:error, term()}
+  def list_community_logs(community, actor, selection, pagi, opts) do
+    CommunityLog.list(community, actor, selection, pagi, opts)
+  end
+
+  @doc """
   Returns UTC daily CommunityLog counts for the same filter boundary as list_community_logs/3.
 
   ## Examples
