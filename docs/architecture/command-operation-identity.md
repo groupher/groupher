@@ -1005,8 +1005,9 @@ snapshot/Binding、O 和 job，以及 Receipt/同 owner 登记重放不新增数
 另有真实 RestoreSnapshot → Enqueue → Release 的 B→C→B′ 用例：B 与 C 使用不同正文，
 回切恢复完整 B 正文并生成属于当前 Q revision 的新 Snapshot、sealed Release、O 和 key；
 Public 与 PublicBody 指向 B′。B/C 的 Snapshot、Body、Release、成员、父子意图保持不变，
-重复 Release commandId 与同 owner 登记不写入。用例实际执行 publication 父 worker 并检查
-Press/Search/CDN 子意图登记，不代表三个外部服务已消费。
+重复 Release commandId 与同 owner 登记不写入。用例执行 publication 父 worker，验证它按
+同一父 event 身份登记 Press/Search/CDN 子 Outbox 意图；该断言属于扇出身份检查，不要求
+调用 Press、Search 或 CDN 服务，也不是 DocTree 内容回切的业务前置。
 
 DocTree 返回阶段另有 6 项实际 Command 回归：SaveQueue、MergeQueue、RestoreSnapshot
 （不存在/已有 Default 两种路径）以及 ResolvePostPublish 的 source/target 两种选择。
@@ -1261,14 +1262,17 @@ Assets Hub 的执行用例纳入既有 `.github/workflows/deploy-assets-hub.yml`
 已增加上述 test:worker 命令；本地配置与测试通过不等同于远端 CI 已执行通过，
 type-check/build/dry-run 也不能替代队列执行验收。使用隔离 Workers/R2 测试环境，不连接真实 bucket，也不新增部署流程。
 
-### 8.3 Hub 中的真实闭环
+### 8.3 通过 Dev Hub 启动本地应用后的写入验收
 
-应用启动仍遵守 [Dev Hub 本地环境约定](./dev-hub-local-environment.md)。在专用本地测试数据
+Dev Hub 负责启动依赖服务、管理 local env 并提供 Portless URL；下面的文章和资产操作是
+应用端到端验收，不是 Dev Hub 的功能。在专用本地测试数据
 中，通过 `pnpm devhub start dash` 启动依赖链；浏览器使用 Hub 返回的 Portless HTTPS
 URL 和 `/home/xx` 社区。通过现有本地登录与显式授权准备测试身份，不自动提升权限。
 
-执行并记录：管理员申请批准、文章创建并发布、资产替换步骤恢复。每项保留 command_id、
-Receipt/step O、业务 ID、Activity/History/Outbox 行 ID 和入口生成的 dedupe_key。
+执行并记录：文章创建并发布、资产替换步骤恢复。管理员申请批准属于 Admin 浏览器流程，
+按用户决定后置，不作为本批验收步骤。每项写入保留 command_id、Receipt/step O、业务 ID，
+以及对应 Activity/History/Outbox 行 ID 和入口生成的 dedupe_key。这些 ID 用于核对同一操作
+身份如何贯穿持久化记录，不是额外的业务操作。
 新建记录使用当前 O；允许成功的跨操作命中核对已有 ID、首次 O 和原状态；dead 命中
 普通业务入口必须明确失败，不能以通知“已安排”结束；fan-out 单独证明登记完成与子失败
 同时可见。只验第 5.8 节当前版本，未支持的版本必须明确失败。
@@ -1276,8 +1280,9 @@ Receipt/step O、业务 ID、Activity/History/Outbox 行 ID 和入口生成的 d
 复用同 command_id 重试后数量不增加；模拟业务提交后响应丢失，确认恢复原结果。
 失败与无权请求保持原错误语义，清理只通过相应业务入口处理本次测试数据。
 
-Dev Hub running、health=200 或页面打开不是业务验收。编译失败、schema 未准备、缺权限或
-UI 不支持必须标为 blocked/not-run，不绕开 Hub 起服务或换端口。
+Dev Hub running、health=200 或页面打开只能证明本地服务可启动和访问，不能证明文章发布
+或资产恢复成功。编译失败、schema 未准备、缺权限或 UI 不支持时，将对应应用操作标为
+blocked/not-run；不绕开 Hub 起服务或换端口。
 
 ## 9. 签收标准、当前证据与剩余工作
 
@@ -1358,10 +1363,10 @@ Article Trash Command 后验证 worker 再次拒绝；未改动 User 删除保�
 | 纯投影 superseded 诊断            | **已交付本节合同**：恢复与 root 诊断复用同一持久事实判定，旧行不重置、不排 job、不写成功凭据，当前 pending 集合排除有完整替代证明的旧行；普通 History、Docs sealed Release 祖先链和必要负例已通过。首次通知仍保留，替代行 failed 仍进入 pending；不是全链路总签收。                                                                                 |
 | Provider 错误分类                 | **已交付本节合同**：5603 仅限点名的暂时故障；HTTP 拒绝 5608、未知 5609、配置 5610 默认不自动重排。真实 HTTP consumer 与锁内恢复负例通过；并发凭据复用不受胜者清空失败码影响。                                                                                                                                                                       |
 | §8.1 故障注入与恢复矩阵             | **继续分项验收**：Docs publication/removal 故障点、实际 Asset worker 永久目标守卫、Restore 五状态矩阵/Confirmation 重放/双向锁竞争/守卫后发送前交错、DocTree B→C→B′ 与 30-event recovery owner 检查已验证。它们不代表整节所有历史矩阵或外部服务闭环全部签收。 |
-| DocTree 内容回切              | **已按确认合同验收**：DocTree 的 Snapshot 绑定当前 Q revision，Restore B 内容后产生新 B′ Snapshot；Release/O/key 均为本次新身份，原 B/C 事实保持不变。原 Snapshot ID 回切只在 Article 路径验收。真实父 worker 登记 Press/Search/CDN 子意图，但本项未消费三个外部服务。 |
+| DocTree 内容回切              | **已按确认合同验收**：DocTree 的 Snapshot 绑定当前 Q revision，Restore B 内容后产生新 B′ Snapshot；Release/O/key 均为本次新身份，原 B/C 事实保持不变。原 Snapshot ID 回切只在 Article 路径验收。父 worker 的子 Outbox 身份已断言；外部服务调用不属于本项合同。 |
 | 首次发布通知持久投递             | **已闭合存储与恢复幂等**：冻结作者/收件人，`article_published` Notice、Dedup、Mailbox 同事务写入；delivery key 按 Outbox event/recipient 固定。实际 publish→落库→complete 前中断→root retry→worker 重放两次已通过；迁移空库 up/down 通过，有实际 Notice 时 down fail closed。 |
 | 门禁与全量测试                    | 本批隔离 style/context 为 0 findings；notice contract 生成检查、文档覆盖和合并定向 72 项通过。全仓 `pnpm run docs:check` 仍被当前共享树中未提交的 Co-author/Community Trash CMS facade findings 阻断；全量后端及 Hub 业务链路未签收。470 项前序合并回归不能代替全量签收。 |
-| Hub Article / Assets 真实业务闭环 | **未验收**。本轮普通 local-debug 可登录并读取 Posts 列表；Assets 因缺管理权限拒绝，不能提升该账号或当作 Assets 实现故障。Community 曾在后端重编译时 SSR 超时；需要稳定进程、相应权限和实际写入后的 Receipt/History/Outbox 对照                                                                                                                      |
+| 本地应用写入验收                  | **未验收**。Dev Hub 已用于启动本地服务；普通 local-debug 可登录并读取 Posts。文章创建/发布和资产替换恢复尚未通过应用写入验收；Assets 曾因测试身份权限不足而拒绝，不能据此判断实现故障或提升该账号。后续只需核对这些操作的 Receipt/History/Outbox 身份链；这属于应用验收，不属于 Hub 功能。 |
 | Admin 浏览器 UI                   | **用户明确后置**。Admin 后端定向通过；旧 GraphQL fixture 仍有 community/communityRef 合同缺口，浏览器流程没有签收；不继续扩大到 Admin UI 改造                                                                                                                                                                                                       |
 | Passport P4                       | **单独后续阶段**：旧 fixture/旧 Passport 读取迁移与广泛消费者扫尾，见 [Passport 迁移](../migrations/passport-permissions-refactor.md)。不并入本批已完成项                                                                                                                                                                                           |
 
