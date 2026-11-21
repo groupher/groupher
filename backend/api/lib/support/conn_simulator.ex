@@ -188,18 +188,20 @@ defmodule GroupherServer.Test.ConnSimulator do
     Enum.each(scoped, fn {slug, grant} ->
       case find_test_community(slug) do
         nil ->
-          :ok
+          {:ok, :pass}
 
         community ->
           upsert_test_membership!(user_id, community, grant.permissions, grant.is_lord)
       end
     end)
+
+    {:ok, :pass}
   end
 
   defp upsert_test_membership!(user_id, community, permissions, is_lord) do
     case Repo.get_by(CommunityAdmin, user_id: user_id, community_id: community.id) do
       nil when permissions == %{} and is_lord != true ->
-        :ok
+        {:ok, :pass}
 
       member ->
         member = member || %CommunityAdmin{}
@@ -213,6 +215,8 @@ defmodule GroupherServer.Test.ConnSimulator do
           is_lord: next_is_lord
         })
         |> Repo.insert_or_update!()
+
+        {:ok, :pass}
     end
   end
 

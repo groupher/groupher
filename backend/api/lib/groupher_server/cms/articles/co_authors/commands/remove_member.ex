@@ -86,7 +86,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember do
          {:ok, locked} <- Locks.lock(article.id, Enum.uniq([actor.id, subject_id, owner_id])),
          %ArticleCoAuthor{} = member <- Enum.find(locked.members, &(&1.id == member_id)),
          true <- member.revision == revision,
-         :ok <- may_remove(locked.article, member, actor, mode),
+         {:ok, :pass} <- may_remove(locked.article, member, actor, mode),
          {:ok, _deleted} <- Repo.delete(member),
          {:ok, :pass} <- cancel_pending(locked, subject_id, actor, operation),
          {:ok, _event} <-
@@ -110,7 +110,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember do
     end
   end
 
-  defp may_remove(_article, _member, _actor, :remove), do: :ok
+  defp may_remove(_article, _member, _actor, :remove), do: {:ok, :pass}
 
   defp may_remove(article, member, actor, :leave) do
     with {:ok, %Author{user_id: subject_id}} <- author(member.author_id),
@@ -118,7 +118,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember do
       cond do
         subject_id != actor.id -> {:error, :permission_denied}
         subject_id == owner_id -> {:error, :article_owner_cannot_leave}
-        true -> :ok
+        true -> {:ok, :pass}
       end
     end
   end

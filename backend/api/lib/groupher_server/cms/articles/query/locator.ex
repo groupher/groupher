@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.Articles.Query.Locator do
     parsed = parse_paths(paths)
     mode = Keyword.get(opts, :mode, :public)
 
-    with :ok <- validate_mode(mode, actor),
+    with {:ok, :pass} <- validate_mode(mode, actor),
          {:ok, resolved} <- resolve_groups(parsed, actor, mode) do
       {:ok, Enum.flat_map(parsed, &List.wrap(Map.get(resolved, path_key(&1))))}
     end
@@ -76,8 +76,8 @@ defmodule GroupherServer.CMS.Articles.Query.Locator do
   def resolve(_paths, _actor, _opts),
     do: {:error, CMS.ErrorCat.invalid_body("Article paths must be a list")}
 
-  defp validate_mode(:public, _actor), do: :ok
-  defp validate_mode(:admin, actor) when not is_nil(actor), do: :ok
+  defp validate_mode(:public, _actor), do: {:ok, :pass}
+  defp validate_mode(:admin, actor) when not is_nil(actor), do: {:ok, :pass}
 
   defp validate_mode(:admin, _actor),
     do: {:error, CMS.ErrorCat.invalid_body("admin Article batch requires actor")}

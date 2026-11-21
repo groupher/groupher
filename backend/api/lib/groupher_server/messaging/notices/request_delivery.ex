@@ -64,7 +64,7 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
          {:ok, event_type} <- event_type(data["event_type"]),
          {:ok, action} <- notice_action(data["event_type"], data["request_action"]),
          true <- event.resource_id == request_id,
-         :ok <- validate_resource_context(data, expected_request_type),
+         {:ok, :pass} <- validate_resource_context(data, expected_request_type),
          {:ok, recipient} <- fetch_user(recipient_id),
          {:ok, actors} <- actors(data["actor"], event_type),
          {:ok, notice} <-
@@ -164,12 +164,12 @@ defmodule GroupherServer.Messaging.Notices.RequestDelivery do
   defp notice_action(_, _), do: {:error, invalid_event()}
 
   defp validate_resource_context(data, :community_admin) do
-    if is_binary(data["community_ref"]), do: :ok, else: {:error, invalid_event()}
+    if is_binary(data["community_ref"]), do: {:ok, :pass}, else: {:error, invalid_event()}
   end
 
   defp validate_resource_context(data, :article_co_author) do
     case Ecto.UUID.cast(data["article_id"]) do
-      {:ok, _article_id} -> :ok
+      {:ok, _article_id} -> {:ok, :pass}
       :error -> {:error, invalid_event()}
     end
   end
