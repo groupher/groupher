@@ -52,9 +52,9 @@ defmodule GroupherServer.CMS.Artiment.BodyBagRoundTripTest do
     assert public.html =~ "Second tab content"
 
     render_script = ~S"""
-    import React from './frontend/core/node_modules/react/index.js';
-    import { renderToStaticMarkup } from './frontend/core/node_modules/react-dom/server.node.js';
-    import { RichEditorStatic } from './frontend/core/node_modules/@groupher/rich-editor/dist/static.js';
+    import React from './packages/content-publisher/node_modules/react/index.js';
+    import { renderToStaticMarkup } from './packages/content-publisher/node_modules/react-dom/server.node.js';
+    import { RichEditorStatic } from './packages/content-publisher/node_modules/@groupher/rich-editor/dist/static.js';
     const value = JSON.parse(process.argv[1]);
     console.log(renderToStaticMarkup(React.createElement(RichEditorStatic, { value })));
     """
