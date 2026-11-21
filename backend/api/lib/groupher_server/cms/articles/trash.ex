@@ -307,6 +307,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
              type: canonical.thread,
              article_id: canonical.id
            }),
+         {:ok, :pass} <-
+           CMS.Articles.RetainedHistory.ensure_unprotected(canonical, item.community_id),
          {:ok, _references} <- CMS.Articles.PermanentArticle.prepare_delete(canonical),
          {:ok, _history} <-
            CMS.Articles.RetainedHistory.remove_workspace(canonical, item.community_id),

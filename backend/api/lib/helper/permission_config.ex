@@ -20,7 +20,9 @@ defmodule Helper.PermissionConfig do
     blog.lock_comment blog.undo_lock_comment
     changelog.trash changelog.restore changelog.pin changelog.undo_pin
     changelog.sink changelog.undo_sink changelog.lock_comment changelog.undo_lock_comment
-    doc.queue.write doc.trash doc.restore doc.pin doc.undo_pin doc.sink doc.undo_sink
+    doc.queue.write doc.queue.approve doc.queue.publish doc.queue.preview doc.queue.configure
+    doc.history.read doc.import
+    doc.trash doc.restore doc.pin doc.undo_pin doc.sink doc.undo_sink
     doc.lock_comment doc.undo_lock_comment
     community_tag.create community_tag.update community_tag.reindex
     community_tag.set community_tag.unset

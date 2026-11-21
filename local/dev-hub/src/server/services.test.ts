@@ -531,17 +531,12 @@ test('public development entrypoints route through Dev Hub and service commands 
       .split('\n')
       .map((command) => command.trim())
     const devHubCommand = `pnpm devhub start ${serviceId}`
-    assert.ok(commands.includes(devHubCommand), target)
-
-    const extraCommands = commands.filter((command) => command !== devHubCommand)
     assert.deepEqual(
-      extraCommands,
+      commands,
       target === 'be.press.start'
-        ? ['pnpm --filter @groupher/press run db:migrate']
-        : target === 'fe.dev.inspire'
-          ? ['open https://inspire-me.groupher.localhost/canny']
-          : [],
-      `${target} extra commands`,
+        ? ['pnpm --filter @groupher/press run db:migrate', devHubCommand]
+        : [devHubCommand],
+      `${target} commands`,
     )
   }
   assert.equal(scripts['dev:content-import'], undefined)

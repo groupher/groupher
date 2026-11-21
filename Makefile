@@ -19,7 +19,6 @@ fe.serve.landing:
 # inspire-me
 fe.dev.inspire:
 	pnpm devhub start inspire-me
-	open https://inspire-me.groupher.localhost/canny
 
 fe.dev.inspire.managed:
 	pnpm run dev:inspire-me:managed

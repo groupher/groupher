@@ -118,6 +118,23 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
       assert moderator.passport_item_count == 2
     end
 
+    test "new moderators keep the default Docs permissions", ~m(user user2 community)a do
+      assert {:ok, _} = CMS.Communities.add_moderator(community, user2, user, command_id())
+
+      moderator = Repo.get_by!(CommunityModerator, community_id: community.id, user_id: user2.id)
+
+      for permission <- [
+            "doc.queue.approve",
+            "doc.queue.publish",
+            "doc.queue.preview",
+            "doc.queue.configure",
+            "doc.history.read",
+            "doc.import"
+          ] do
+        assert moderator.permissions[permission] == true
+      end
+    end
+
     test "can update passport of community moderator", ~m(user user2 community)a do
       cur_user = user
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, command_id())
@@ -152,6 +169,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
       assert {:ok, _} =
                CMS.Communities.add_moderator(community, user2, user, command_id())
 
+      before = Repo.get_by!(CommunityModerator, community_id: community.id, user_id: user2.id)
+
       assert {:error, :unknown_action} =
                CMS.Communities.update_moderator_passport(
                  community,
@@ -165,7 +184,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
                )
 
       member = Repo.get_by!(CommunityModerator, community_id: community.id, user_id: user2.id)
-      assert member.permissions != %{"unknown.action" => true}
+      assert member.permissions == before.permissions
+      assert member.passport_item_count == before.passport_item_count
     end
 
     test "can not update passport of other community moderator", ~m(user user2 community)a do
@@ -310,8 +330,10 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
       assert moderator.community_id == community.id
       assert is_map(default_rules)
       assert default_rules != %{}
+
       assert map_size(default_rules) ==
                Enum.count(default_rules, fn {_action, enabled} -> enabled == true end)
+
       assert Enum.all?(Map.keys(default_rules), &String.contains?(&1, "."))
       assert Enum.all?(Map.keys(default_rules), &(not String.contains?(&1, "delete")))
       assert default_rules["post.pin"]

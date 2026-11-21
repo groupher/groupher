@@ -466,7 +466,7 @@ Guides                         Guides
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-按钮必须使用实际 Page 数量，避免用户误以为只是在创建结构。未映射目标冲突存在时按钮保持禁用；已映射来源覆盖只显示风险，不禁用继续操作。用户点击“继续并覆盖”后，Apply intent 携带 acknowledgement，Phoenix 重新校验来源身份、Mapping 和 `targetRevision`，校验通过即执行覆盖。按钮 disabled 仍不能替代服务端幂等和 targetRevision 校验。
+按钮必须使用实际 Page 数量，避免用户误以为只是在创建结构。当前 Phoenix Validator 尚未实现未映射目标冲突检测，`conflicts` 暂时始终为空；界面不能声称已按此类冲突禁用按钮。冲突检测是未完成项，完成后未映射目标冲突必须阻止 Apply；已映射来源覆盖只显示风险，不禁用继续操作。用户点击“继续并覆盖”后，Apply intent 携带 acknowledgement，Phoenix 重新校验来源身份、Mapping 和 `targetRevision`，校验通过即执行覆盖。按钮 disabled 仍不能替代服务端幂等和 targetRevision 校验。
 
 ## 12. 第三步：导入进度
 
@@ -648,7 +648,7 @@ Browser ── POST /previews/:previewRef/apply ──► Dashboard Next.js API
 - Cloudflare R2 是对象存储，不是数据库。首版为 Dashboard 项目创建一个 private store，按 `content-import/previews/{previewRef}/...` 隔离 Preview；不为每个社区或仓库单独创建 store。
 - Node/TS Publisher 在用户确认后把 Markdown/MDX 逐 Page 转换为 Groupher BodyBag，并以 count/bytes 双上限批次同步给 Phoenix；这里的“逐 Page”是 Bulk Job 的 item 粒度，不是编辑器单篇导入产品。
 - Phoenix 是社区权限的唯一事实来源。Import Worker 在创建 Preview 前调用 Phoenix `checkPassport` 做提前反馈；用户确认并创建正式 Job 的 mutation 再次执行 `doc.import` Passport middleware。Job 创建后的内部 stage/apply 是 Server Trust 对已授权 Job 的后台延续，不增加第三套用户权限判断，也不在 Node 复制权限规则。
-- Phoenix 在用户确认前只接收 bounded `sourceInfo + SourceTree`，以只读方式查询当前 Docs 状态、生成 TargetTree、检查冲突并返回 `targetRevision`；不创建 Job，不保存来源正文。
+- Phoenix 在用户确认前只接收 bounded `sourceInfo + SourceTree`，以只读方式查询当前 Docs 状态、生成 TargetTree 并返回 `targetRevision`；当前 `conflicts` 字段始终为空，未映射目标冲突检测尚未实现。不创建 Job，不保存来源正文。
 - Phoenix 负责创建正式 ContentImport Job、重新检查目标状态、持久化导入事实、BodyBag staging、幂等和原子 apply；Bulk v1 不进入 AssetStager lifecycle。
 - 用户确认前，archive 只存在于 `analyzeSource` Step 的流和临时工作区；筛选后的候选正文与 Preview 结果写入 Private Blob，不发送给 Phoenix。SourceTree 是允许跨 Step/服务边界的结构化小对象。
 - 首版不引入 URL crawler，也不需要为 GitHub Bulk Import 新增 Python 抓取流程。
@@ -733,9 +733,9 @@ query PreviewDocContentImportTarget(
 ```
 
 - 该 query 校验 SourceTree schema/version/规模，只读取当前社区 Docs 状态，不创建 Connection、Snapshot、Plan 或 Job。
-- `targetRevision` 标识规划时当前站点 Docs 目录的状态，语义固定为站点 Queue 的 `tree_lock_version`；API 可以返回 opaque string，但不能改成与目录 revision 无关的随机 token。Queue 尚未初始化时与 revision `0` 等价。
+- `targetRevision` 是有长度上限的 opaque JSON 编码，包含站点 Queue 的 `tree_lock_version`、`queue_revision`，以及每个 Doc 的 lifecycle version、working-copy id/revision 和 public snapshot id。它因此同时覆盖目录导航变化和单篇 Doc 编辑；不能缩窄成单独的 `tree_lock_version` 或无关的随机 token。
 - Node 将 TargetTree、conflicts 和 targetRevision 合并进 Preview DTO；原始正文仍保存在当前 `previewRef` 的 Private Blob 前缀下。
-- Apply mutation 必须在包含整个写入过程的同一个 Phoenix `Repo` transaction 中取得 Docs 站点锁 `docs_site:<community_id>`（`DocTree.Publish.SiteLock`），然后读取当前 Queue 的 `tree_lock_version` 并比较 targetRevision；不得再解析或锁定 Docs branch。
+- Apply mutation 必须在包含整个写入过程的同一个 Phoenix `Repo` transaction 中取得 Docs 站点锁 `docs_site:<community_id>`（`DocTree.Publish.SiteLock`），然后重新读取上述完整目标状态并比较 targetRevision；不得再解析或锁定 Docs branch。
 - targetRevision 已变化时必须回滚并返回 `target_revision_conflict`，要求用户重新 Review。创建 Job 或 apply 不能静默重新规划并接受一套用户没有确认过的新映射。
 - targetRevision 未变化时继续持有同一把锁，直到 BodyBag/Draft 写入、Tree upsert、revision bump、ImportSourceMapping 更新和 Job completion 一起提交。不能在事务外做 `read → compare → write`，也不能只依赖所有写入方未共同参与的孤立 CAS。
 
@@ -871,7 +871,8 @@ Cloudflare R2 是类似 S3 的对象存储，不是关系型数据库，也不�
 - [x] 创建 Preview 前调用 Phoenix `checkPassport(community, "doc.import")`；正式 Job create/start mutation 使用同一 action 的 Passport middleware 再次强制校验，后续 stage/apply 仅接受 `service:content-import` 的 operation-scoped continuation。
 - [x] Import Worker 流式下载固定 commit 的 archive，不把完整压缩包或解压结果放入进程内存。
 - [x] 用户确认前，Phoenix 不创建正式 ContentImport Job，不接收 archive、解压文件或正文集合。
-- [x] Node 只把 versioned SourceTree/sourceInfo 发送给 Phoenix；Phoenix 只读返回 TargetTree、conflicts 和 targetRevision。
+- [x] Node 只把 versioned SourceTree/sourceInfo 发送给 Phoenix；Phoenix 只读返回 TargetTree、conflicts 字段和 targetRevision。当前 `conflicts` 始终为空，冲突检测仍未实现。
+- [ ] Phoenix 检测未映射 TargetTree 与现存 Docs 项之间的冲突，返回稳定 conflict 列表，并在 Apply 前阻止未确认的冲突。
 - [ ] 七类 Node adapter 已通过 basic golden parity；继续补齐变体，并完成固定公开仓库 Preview 验收。
 - [x] 保持生产请求不按 framework 回退 Elixir analyzer；新 Files SDK/staging 链路验收后删除 Phoenix 旧 analyzer，未来 ZIP 也复用同一 Node Source Analyzer。
 - [x] Apply 时 Phoenix 验证 Review intent 和 targetRevision；变化后失败并要求重新 Review，不能静默规划新目标或覆盖并发修改。
