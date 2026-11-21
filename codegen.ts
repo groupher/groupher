@@ -31,7 +31,6 @@ const config: CodegenConfig = {
     'frontend/core/unit/DsbThread/schema/appearance.ts',
     'frontend/core/unit/DsbThread/schema/assets.ts',
     'frontend/core/unit/DsbThread/schema/content.ts',
-    'frontend/core/unit/PassportEditor/schema.ts',
     'frontend/core/unit/KanbanThread/schema.ts',
     'frontend/core/unit/KanbanThread/fragments.ts',
     'frontend/core/unit/DocCovers/schema.ts',
