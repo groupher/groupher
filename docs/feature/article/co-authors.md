@@ -203,6 +203,7 @@ Dash 的 Post / Changelog 列表已接入协作者管理面板，支持 Article 
 
 - C1 采用 Passport 共享锁序和请求状态约定。用命令响应和请求查询验证状态，事务内验证授权事件和 Outbox 意图；GraphQL execution 验证字段与 resolver。Article 请求事件与 producer 的事件语义、接收方和实际投递归 C1；复用独立验收的 Messaging M1 / M2 Notice / Dedup 基础设施。Article 通知验收不阻塞 Passport P3。
 - C2 已在隔离测试环境用两个不同测试账号从邀请 / 接受建立成员关系，再通过真实 `save_working_copy` 验证编辑和移除后的失权；不需要先完成邀请 UI、Dev Hub 或其他模块。浏览器验收可后续按产品界面单独推进。夹具及替身仅限测试。
+- C1、C2 的开发、后端验收和管理 UI 可分别交付，不等待 Passport P4 或 Docs D1–D3。C3 是普通 Article 正式授权入口切换，完成自身 C2 / H3 验收后即可独立交付；它是 Docs D1 的输入，不要求等待 D1–D3。Passport P4 的全局残留检查与最终切换是后续汇总门槛，不把其未完成状态反向作为 C 批次的开发阻塞。
 - History 按自身批次交付和验收。C2 用真实保存和发布生成的事件验收本文要求的 actor、版本来源、授权读取和 Review 归因。H3 的完整界面验收按 History 计划推进。
 
 ### 6.2 正式启用

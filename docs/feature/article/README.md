@@ -2,7 +2,7 @@
 
 > 状态：current
 
-- [FrontDesk Article 读取统一与版本接口](../../migrations/frontdesk-article-unification.md)：已确认、待实施；普通文章直接读取 article.title/body，默认公开且带当前社区，指定 Snapshot、WorkingCopy 使用独立 FrontDesk API；含参数、返回结构、调用方迁移与验收范围。
+- [FrontDesk Article 读取统一与版本接口](../../migrations/frontdesk-article-unification.md)：工作区已实施普通 Article 读取、指定 Snapshot/WorkingCopy 入口、GraphQL 与下游迁移；含接口合同和本地验收记录，未发布。
 
 - [Doc 共享评论与计数收口计划](../../migrations/comment-reaction-snapshot-counts.md)：本地实现及验收已完成，真实发布仍未执行；同一稳定 Doc 的评论、回复、参与者和统计不随正文 branch 分裂，正文准入仍按 Gate 验证。证据见 [实施记录](../../migrations/comment-reaction-snapshot-counts-implementation.md)。
 
