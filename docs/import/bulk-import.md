@@ -101,19 +101,19 @@ Bulk v1 的 Review 只检查结构、目标映射、数量和 warning，不在�
 
 ### 3.2 首版不做
 
-| 能力                     | 首版处理                                                              |
-| ------------------------ | --------------------------------------------------------------------- |
-| ZIP 上传                 | 延后，在 GitHub 流程稳定后复用同一检查与导入页面                      |
-| 线上文档 URL 全站抓取    | 延后，单独研究站点树发现、抓取边界和正文提取                          |
-| 私有 GitHub 仓库         | 延后，需要授权、凭据和权限生命周期设计                                |
-| 手动选择 branch/path     | 延后，首版只使用默认分支和完整仓库                                    |
-| 部分文档勾选             | 延后，首版全量导入                                                    |
-| Review 单篇正文预览      | 延后，与部分 Page 选择和 Preview cache 一起设计                       |
-| 对已导入仓库增量 re-sync | 延后；同仓库再次全量导入会复用 Mapping 并覆盖，尚不提供逐篇 diff/sync |
-| 导入到多个已有 Tab       | 延后，首版避免复杂的逐项目标映射                                      |
-| 覆盖、合并已有 Page      | 只允许显式确认后覆盖同来源 mapped Pages；未映射碰撞仍阻断             |
-| 完整冲突解决 UI          | 延后；首版检测到冲突即阻断                                            |
-| 自动发布                 | 不做，只进入主 Draft                                                  |
+| 能力                     | 首版处理                                                                  |
+| ------------------------ | ------------------------------------------------------------------------- |
+| ZIP 上传                 | 延后，在 GitHub 流程稳定后复用同一检查与导入页面                          |
+| 线上文档 URL 全站抓取    | 延后，单独研究站点树发现、抓取边界和正文提取                              |
+| 私有 GitHub 仓库         | 延后，需要授权、凭据和权限生命周期设计                                    |
+| 手动选择 branch/path     | 延后，首版只使用默认分支和完整仓库                                        |
+| 部分文档勾选             | 延后，首版全量导入                                                        |
+| Review 单篇正文预览      | 延后，与部分 Page 选择和 Preview cache 一起设计                           |
+| 对已导入仓库增量 re-sync | 延后；同仓库再次全量导入会复用 Mapping 并覆盖，尚不提供逐篇 diff/sync     |
+| 导入到多个已有 Tab       | 延后，首版避免复杂的逐项目标映射                                          |
+| 覆盖、合并已有 Page      | 后端会复用同来源 mapped Pages 并 source-wins 覆盖；服务端显式确认尚未实现 |
+| 完整冲突解决 UI          | 延后；冲突检测尚未实现，当前 Validator 返回空 conflicts                   |
+| 自动发布                 | 不做，只进入主 Draft                                                      |
 
 ### 3.3 产品首版与重构工作量不是同一个范围
 
@@ -398,7 +398,9 @@ Guides                         Guides
 
 ## 10. 冲突处理原则
 
-长期原则是：冲突必须由用户确认，不静默覆盖，不静默合并，也不在用户不可见的情况下自动改名。
+目标原则是：冲突必须由用户确认，不静默覆盖，不静默合并，也不在用户不可见的情况下自动改名。
+
+当前实现还没有达到这个目标：StartDocContentImport GraphQL/Phoenix intent 没有覆盖 acknowledgement 字段，因此服务端不能验证用户是否确认过 mapped Page 覆盖；Phoenix Docs Validator 目前也固定返回空 `conflicts`，未映射目标碰撞不会被检测或阻断。以下内容定义目标行为，不代表这些保护已上线。
 
 需要区分“同一已映射来源再次导入”和“未映射目标碰撞”：
 
@@ -433,7 +435,7 @@ Guides                         Guides
 
 ## 11. Review 操作区
 
-新来源首版不增加独立确认页或二次弹窗。第二步 Review 在操作按钮上方展示不可跳过的摘要；用户点击一次带实际 Page 数量的按钮后直接触发 apply。若 Target Preview 表明同一 Repo/branch 已存在 Mapping，则例外弹出一次风险说明；这不是冲突阻断，用户选择继续后必须执行 source-wins 覆盖：
+目标交互是不增加独立确认页或二次弹窗：第二步 Review 在操作按钮上方展示不可跳过的摘要；用户点击一次带实际 Page 数量的按钮后直接触发 apply。若 Target Preview 表明同一 Repo/branch 已存在 Mapping，则例外弹出一次风险说明；这不是冲突阻断，用户选择继续后执行 source-wins 覆盖。当前实现尚未提供该风险确认，也没有服务端 acknowledgement 校验；具体缺项见 §18.1：
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -466,7 +468,7 @@ Guides                         Guides
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-按钮必须使用实际 Page 数量，避免用户误以为只是在创建结构。当前 Phoenix Validator 尚未实现未映射目标冲突检测，`conflicts` 暂时始终为空；界面不能声称已按此类冲突禁用按钮。冲突检测是未完成项，完成后未映射目标冲突必须阻止 Apply；已映射来源覆盖只显示风险，不禁用继续操作。用户点击“继续并覆盖”后，Apply intent 携带 acknowledgement，Phoenix 重新校验来源身份、Mapping 和 `targetRevision`，校验通过即执行覆盖。按钮 disabled 仍不能替代服务端幂等和 targetRevision 校验。
+目标交互中的按钮必须使用实际 Page 数量，避免用户误以为只是在创建结构。当前 Phoenix Validator 尚未实现未映射目标冲突检测，`conflicts` 暂时始终为空；界面不能声称已按此类冲突禁用按钮。冲突检测是未完成项，完成后未映射目标冲突必须阻止 Apply；已映射来源覆盖只显示风险。当前 StartDocContentImport intent 不含 acknowledgement，服务端无法验证用户确认；该合同与 UI 都是未完成项。按钮 disabled 仍不能替代服务端幂等和 targetRevision 校验。
 
 ## 12. 第三步：导入进度
 
@@ -860,7 +862,7 @@ Cloudflare R2 是类似 S3 的对象存储，不是关系型数据库，也不�
 - [x] 无源 Tab 固定进入 `Introduction`；单/多源 Tab 保留源名称；Review 中不显示伪目标选择器。
 - [x] Review 只检查 SourceTree、TargetTree、标题、slug、数量和 warning；首版不在确认前转换或预览单篇正文。
 - [x] Review 操作区内联展示全量导入摘要，并通过一次带实际 Page 数量的按钮直接 apply，不增加独立确认页或二次弹窗。
-- [ ] 同一 Repo/branch 命中既有 Mapping 时，Review 返回 mapped Page 数量并显示覆盖风险；用户点击“继续并覆盖”后 Phoenix 校验 acknowledgement 并执行覆盖，不能再以重复/冲突为由禁止导入。
+- [ ] 同一 Repo/branch 命中既有 Mapping 时，Review 返回 mapped Page 数量并显示覆盖风险；为 StartDocContentImport intent 增加并校验 acknowledgement，确保用户确认后才执行 source-wins 覆盖。当前 GraphQL/Phoenix 合同没有该字段，服务端不会验证确认。
 - [ ] 冲突页只提供真实可执行的“返回仓库”和“重新检查目标状态”，不出现不存在的 branch/path/逐 Tab 映射操作。
 - [ ] 转换结果显示失败/跳过 Page、来源路径、阶段、错误码和原因；普通转换失败不能跳过，只有稳定的 `content_too_large` 可排除该 Page 后继续。
 - [x] 全部有效 Page 转换成功后才 atomic apply；过滤后的 TargetTree 必须与有效 items 一致；零可导入项不 apply，任一失败都不留下用户可见的残缺树或正文。
