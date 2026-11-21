@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.CoAuthors.{Query, Requests}
+  alias CMS.Articles.CoAuthors.Query
   alias CMS.Articles.CoAuthors.Commands.{
     CancelRequest,
     CreateRequest,
@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
     RemoveMember,
     UpdatePermissions
   }
-  alias CMS.Model.{Article, ArticleCoAuthor, ArticleCoAuthorRequest}
+  alias CMS.Model.{ArticleCoAuthor, ArticleCoAuthorRequest}
 
   @doc "Pages the current Article co-author roster for an authorized Article manager."
   def members(article_id, %User{} = actor, pagi_input) do

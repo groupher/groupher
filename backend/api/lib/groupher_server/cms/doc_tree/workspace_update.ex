@@ -303,22 +303,6 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
   end
 
   defp persist(
-         _community,
-         queue,
-         _revision,
-         _rows,
-         draft,
-         target,
-         _public,
-         current,
-         queued,
-         _actor
-       )
-       when draft == target and current == queued do
-    {:ok, %{tree_revision: queue.tree_lock_version}}
-  end
-
-  defp persist(
          community,
          queue,
          revision,

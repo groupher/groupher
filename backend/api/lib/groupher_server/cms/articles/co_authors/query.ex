@@ -178,6 +178,8 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Query do
     end
   end
 
+  def load_article(_), do: {:error, :article_not_found}
+
   @doc "Loads one co-author request by ID for the command facade."
   def load_request(request_id) when is_binary(request_id) do
     case Repo.get(ArticleCoAuthorRequest, request_id) do
@@ -185,8 +187,6 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Query do
       nil -> {:error, :request_not_found}
     end
   end
-
-  def load_article(_), do: {:error, :article_not_found}
 
   @doc "Loads the current member row for one Article User, if a membership exists."
   def member_for_user(%Article{} = article, user_id) when is_integer(user_id) do
