@@ -81,6 +81,7 @@ describe('useTrashedPosts', () => {
 
     expect(mocks.query).toHaveBeenCalledWith(S.trashedPosts, {
       community: 'home',
+      thread: 'POST',
       pagi: { offset: { page: 1, size: 20 } },
     })
     expect(result.current.pagedPosts.entries[0]?.id).toBe('trash-1')
@@ -100,6 +101,7 @@ describe('useTrashedPosts', () => {
     await waitFor(() => expect(result.current.error).toBeNull())
     expect(mocks.query).toHaveBeenLastCalledWith(S.trashedPosts, {
       community: 'other',
+      thread: 'POST',
       pagi: { offset: { page: 1, size: 20 } },
     })
   })
@@ -119,6 +121,7 @@ describe('useTrashedPosts', () => {
       expect.objectContaining({
         community: 'home',
         id: 'trash-1',
+        thread: 'POST',
         commandId: expect.any(String),
       }),
     )
@@ -143,10 +146,31 @@ describe('useTrashedPosts', () => {
       expect.objectContaining({
         community: 'home',
         id: 'trash-1',
+        thread: 'POST',
         commandId: expect.any(String),
       }),
     )
     expect(mocks.query).toHaveBeenCalledTimes(2)
     expect(mocks.toast).toHaveBeenCalledWith('dsb.cms.trash.permanently_deleted')
+  })
+
+  it('uses the selected ordinary thread for changelog Trash actions', async () => {
+    mocks.mutate.mockResolvedValue({ restoreTrashedArticle: { innerId: '1' } })
+    const { result } = renderHook(() => useTrashedPosts(null, 'CHANGELOG'), { wrapper })
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(mocks.query).toHaveBeenCalledWith(S.trashedPosts, {
+      community: 'home',
+      thread: 'CHANGELOG',
+      pagi: { offset: { page: 1, size: 20 } },
+    })
+
+    await act(async () => {
+      expect(await result.current.restore('trash-1')).toBe(true)
+    })
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      S.restoreTrashedPost,
+      expect.objectContaining({ thread: 'CHANGELOG' }),
+    )
   })
 })
