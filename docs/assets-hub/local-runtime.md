@@ -1,18 +1,19 @@
 # Assets Hub 本地运行时边界
 
-> 状态：local provider 已落地，独立 contract/public-read 验收待补充；Cloudflare Worker 仍为显式集成模式
+> 状态：Node local provider 与 Cloudflare read Worker 分别由 Dev Hub 托管；两者使用固定端口和统一私有配置。
 >
-> 目标：本地默认运行不依赖线上 Cloudflare 资源、Cloudflare API Token 或线上 service credentials。
+> 目标：Node 本地 provider 不依赖线上 Cloudflare 资源或凭据；Cloudflare Worker 是显式集成变体，另行授权和启动。
 
 通用原则以[外部依赖服务的本地运行时架构](../architecture/external-services-local-runtime.md)
 为准；本文只记录 Assets Hub 的具体 provider、endpoint、启动拓扑和验收要求。
 
 ## 背景
 
-默认 `backend/assets-hub` 的 `dev:local` 只启动一个本地 provider：
+Assets Hub 有两个独立的 Dev Hub 服务：
 
 ```text
-local provider -> Node/Hono -> filesystem/local batch state :8002
+assets-hub -> Node/Hono -> filesystem/local batch state :8002
+assets-read-worker -> Cloudflare Worker -> remote R2 / local Phoenix lookup :8787
 ```
 
 read worker 的 Cloudflare 配置使用 remote R2，并通过 Cloudflare 的开发运行时加载
@@ -146,7 +147,7 @@ cf dev
 
 ## Phoenix 与 seed 配置
 
-默认本地配置应指向同一个本地 Assets Hub provider：
+Node upload provider 与 Cloudflare read Worker 是独立 listener：
 
 ```text
 ASSETS_HUB_BATCH_ENDPOINT=http://127.0.0.1:8002
@@ -157,16 +158,18 @@ NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT=https://assets.groupher.localhost
 ```
 
 `ASSETS_PUBLIC_ENDPOINT` 会构造并持久化到 CommunityAsset/wallpaper snapshot 的 canonical
-URL，不能使用 loopback HTTP。`assets.groupher.localhost` 必须通过 Portless 指向本地
-provider 的 `8002`；这是本地验收的必需配置，不是可选优化：
+URL，不能使用 loopback HTTP。Node local provider 的 `assets.groupher.localhost` 和
+`assets-hub.groupher.localhost` 都指向 `8002`；集成 Worker 使用独立的
+`assets-worker.groupher.localhost:8787`：
 
 ```text
 assets-hub.groupher.localhost -> 8002
 assets.groupher.localhost     -> 8002
+assets-worker.groupher.localhost -> 8787
 ```
 
-本地 provider 可以同时承接浏览器 upload host 和 public read host，但两个 host 的业务
-入口仍按各自的 capability、service-auth 和 HTTP method 校验。
+两个服务分别承接 upload 和 public read；业务入口仍按各自的 capability、service-auth
+和 HTTP method 校验。
 
 Wallpaper seed 不改业务流程，仍然必须走：
 
@@ -185,23 +188,14 @@ prepare upload
 
 ## Dev Hub 调整范围
 
-实现与维护边界如下：
+`assets-hub` Node provider 监听固定端口 `8002`，`assets-read-worker` 监听 `8787`。默认
+启动 `assets-hub` 只使用 Node provider、Auth 和 Phoenix，不隐式启动需要远端 Cloudflare
+资源的 Worker。开发者明确启动 `assets-read-worker` 时，Hub 才会检查其 Auth/Phoenix 依赖；
+Worker `/health/ready` 必须完成真实 Service Auth 与 Phoenix origin lookup。
 
-1. `backend/assets-hub` 增加 local provider，并复用现有 upload/batch contract；
-2. `local/dev-hub` 默认启动 local provider，不启动 `cf dev` read worker；
-3. Dev Hub 和 `make be.seed.home` 把 batch/delete service endpoint 指向 `8002`，并保留
-   `ASSETS_PUBLIC_ENDPOINT=https://assets.groupher.localhost`；
-4. `cloudflare.config.ts` 和现有 Worker 命令保留为显式 Cloudflare 模式；
-5. 将 `LOCAL_SERVICE_ENDPOINTS.assetsHubRead` 从 `8787` 切换到 `8002`，并同步 Phoenix
-   和 Assets Hub 对 `ASSETS_HUB_BATCH_ENDPOINT`、`ASSETS_HUB_DELETE_ENDPOINT` 的引用；
-6. 将根 `package.json` 的 `portless:sync` 中 `assets.groupher` 别名从 `8787` 改为 `8002`；
-7. Dev Hub 删除默认 read-worker endpoint/readiness 依赖；Cloudflare 显式模式仍由
-   `dev:cloudflare`/Worker 脚本单独保留，local provider 自己提供 `/health/ready`；
-8. 同步更新 `local/dev-hub/src/server/services.test.ts` 的 endpoint、port 和 readiness
-   断言；
-9. 既有 Worker/unit contract、Assets Hub type-check 和真实 seed 已通过；后续继续补充
-   独立 local provider contract test 与 public asset read test；
-10. 本地失败时清理 batch/upload 半成品，或通过既有 reconciliation 机制可重复收敛。
+包级 `dev` 入口、Make public target 和根 pnpm dev alias 都转交 Dev Hub。Hub 内部只调用
+`.managed` target。Worker 的本地 bindings 由 Hub child environment 提供给
+`cloudflare.config.ts` 的 `bindings.*()`；不从 `.env`、`.dev.vars` 读取受管配置。
 
 ## 验收标准
 
