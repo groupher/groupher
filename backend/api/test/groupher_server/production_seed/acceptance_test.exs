@@ -223,7 +223,7 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     assert plan.blockers == []
     assert {:error,
             {:seed_cleanup_domain_failed, "permanent-post",
-             %GroupherServer.ErrorCat.Error{
+             %ErrorCat.Error{
                reason: :article_history_protected
              }}} =
              ProductionSeed.Cleanup.apply("purge", db, "purge", plan.report_digest)

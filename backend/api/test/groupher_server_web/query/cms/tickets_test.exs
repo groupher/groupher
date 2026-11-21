@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.CommunityAdmin
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityAdmin
 
   setup do
     {community, post, _attrs, user} = mock_article(:post)

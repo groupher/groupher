@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.CommunityRefChangesetTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS
+  alias CMS.Model.Community
 
   test "stable refs cannot be assigned or changed through Community changesets" do
     community = %Community{ref: "cm_existing"}

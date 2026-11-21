@@ -1,8 +1,8 @@
 defmodule GroupherServer.Test.CMS.Articles.MutationLockPlanTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Articles.MutationLock
-  alias GroupherServer.CMS.Model.ArticleBinding
+  alias GroupherServer.CMS
+  alias CMS.{Articles.MutationLock, Model.ArticleBinding}
 
   test "a changed Binding set requires the transaction to retry" do
     {x, public, _, actor} = mock_article(:post)

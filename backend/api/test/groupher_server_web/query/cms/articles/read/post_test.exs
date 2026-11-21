@@ -3,6 +3,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
 
   use GroupherServer.TestMate
   alias GroupherServer.CMS
+  alias GroupherServer.ErrorCat, as: DomainErrorCat
   alias CMS.Articles.ErrorCat
 
   setup do
@@ -141,10 +142,10 @@ defmodule GroupherServer.Test.Query.Articles.Post do
              ErrorCat.code(ErrorCat.thread_not_visible())
            )
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :thread_not_visible}} =
+    assert {:error, %DomainErrorCat.Error{reason: :thread_not_visible}} =
              CMS.FrontDesk.article(post.id, nil, mode: :public, community: community)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :thread_not_visible}} =
+    assert {:error, %DomainErrorCat.Error{reason: :thread_not_visible}} =
              CMS.FrontDesk.article(post.id, user, mode: :admin, community: community)
   end
 end

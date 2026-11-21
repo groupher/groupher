@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Web.Resolvers.CMS.HistoryOriginTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts
+  alias Accounts.Model.User
   alias GroupherServerWeb.Resolvers.CMS.HistoryOrigin
 
   test "only signed and unambiguous service scopes identify service origin" do

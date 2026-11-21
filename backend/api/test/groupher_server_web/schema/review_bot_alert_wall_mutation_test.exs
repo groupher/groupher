@@ -5,7 +5,8 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   alias GroupherServer
   alias GroupherServer.{AlertWall, Repo}
-  alias GroupherServer.CMS.Model.{Community, CommunityAdmin, GlobalPassport}
+  alias GroupherServer.CMS
+  alias CMS.Model.{Community, CommunityAdmin, GlobalPassport}
   alias AlertWall.Model.Item
   alias GroupherServerWeb.Schema
 

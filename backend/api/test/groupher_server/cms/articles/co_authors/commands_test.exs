@@ -2,12 +2,12 @@ defmodule GroupherServer.Test.CMS.Articles.CoAuthors.CommandsTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, Jobs, Messaging, Repo}
   alias CMS.Articles.CoAuthors.Commands.{CreateRequest, DecideRequest}
   alias CMS.Model.{Article, ArticleCoAuthor, ArticleCoAuthorEvent, ArticleCoAuthorRequest, Author}
   alias CMS.Outbox.Event
-  alias GroupherServer.Jobs.CMSOutboxArticleCoAuthor
-  alias GroupherServer.Messaging.Model.Notice
+  alias Jobs.CMSOutboxArticleCoAuthor
+  alias Messaging.Model.Notice
 
   test "invite acceptance creates the member and delivers both durable notices" do
     {_community, public, _article, owner} = mock_article(:post)

@@ -2,10 +2,11 @@ defmodule GroupherServer.Test.CMS.Gate.DocPassportScope do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Gate.Access.Policy.Article, as: ArticlePolicy
-  alias GroupherServer.CMS.Gate.Context.Access.Article, as: ArticleContext
-  alias GroupherServer.CMS.Gate.Context.Access.Doc, as: DocContext
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, CommunityLifecycle}
+  alias GroupherServer.CMS
+  alias CMS.Gate.Access.Policy.Article, as: ArticlePolicy
+  alias CMS.Gate.Context.Access.Article, as: ArticleContext
+  alias CMS.Gate.Context.Access.Doc, as: DocContext
+  alias CMS.Model.{ArticleLifecycle, CommunityLifecycle}
 
   test "Doc mutations use Doc queue grants while ordinary Articles stay Article scoped" do
     {:ok, owner} = db_insert(:user)
@@ -35,7 +36,7 @@ defmodule GroupherServer.Test.CMS.Gate.DocPassportScope do
 
     assert {:ok, :pass} = ArticlePolicy.check_access(editor, :edit, doc_context)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}} =
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              ArticlePolicy.check_access(editor, :publish, doc_context)
 
     doc_context = %{
@@ -66,7 +67,7 @@ defmodule GroupherServer.Test.CMS.Gate.DocPassportScope do
       article_passport_scope: article_passport_scope(editor, article)
     }
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}} =
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              ArticlePolicy.check_access(editor, :edit, editor_article_context)
 
     owner_article_context = %{

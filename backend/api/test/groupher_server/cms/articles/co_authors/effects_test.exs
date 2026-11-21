@@ -2,11 +2,12 @@ defmodule GroupherServer.Test.CMS.Articles.CoAuthors.EffectsTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
 
-  alias GroupherServer.CMS.Articles.CoAuthors.Effects
-  alias GroupherServer.CMS.Model.ArticleCoAuthorRequest
-  alias GroupherServer.CMS.Outbox.Event
-  alias GroupherServer.Jobs.CMSOutboxArticleCoAuthor
-  alias GroupherServer.Messaging.Model.Notice
+  alias GroupherServer.{CMS, Jobs, Messaging}
+  alias CMS.Articles.CoAuthors.Effects
+  alias CMS.Model.ArticleCoAuthorRequest
+  alias CMS.Outbox.Event
+  alias Jobs.CMSOutboxArticleCoAuthor
+  alias Messaging.Model.Notice
 
   test "request notice reaches the subject through the durable Outbox path" do
     {:ok, actor} = db_insert(:user)

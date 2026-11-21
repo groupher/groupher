@@ -84,13 +84,14 @@ defmodule GroupherServer.Test.CMS.Articles.DocBindingLockConcurrencyTest do
 
         assert_eventually = fn ->
           Enum.reduce_while(1..100, false, fn _, _ ->
-            if probe.(x_key) == {:ok, false},
-              do: {:halt, true},
-              else:
+            if probe.(x_key) == {:ok, false} do
+              {:halt, true}
+            else
                 (
                   Process.sleep(20)
                   {:cont, false}
                 )
+            end
           end)
         end
 

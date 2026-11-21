@@ -1,8 +1,8 @@
 defmodule GroupherServer.Test.CMS.Articles.CommunityArticleTrashContractTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.{Articles.CommunityTrashQuery, CommunityArticleTrashContract}
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS
+  alias CMS.{Articles.CommunityTrashQuery, CommunityArticleTrashContract, Model.Community}
   alias GroupherServerWeb.Schema
 
   test "shared thread contract matches GraphQL input, item and adapter dispatch" do

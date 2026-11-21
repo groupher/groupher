@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Articles.CoAuthors.CommandIdentityTest do
   use GroupherServer.TestMate, async: true
 
-  alias GroupherServer.CMS.Command.IntentCodec
+  alias GroupherServer.CMS
+  alias CMS.Command.IntentCodec
 
   test "co-author command identities retain selectors and redact permission maps" do
     create = %{

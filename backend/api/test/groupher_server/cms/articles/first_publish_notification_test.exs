@@ -3,12 +3,12 @@ defmodule GroupherServer.Test.CMS.Articles.FirstPublishNotificationTest do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Messaging}
+  alias GroupherServer.{CMS, Jobs, Messaging}
   alias CMS.Model.Article
   alias CMS.Outbox.Event
-  alias GroupherServer.Jobs.CMSOutboxArticle
-  alias GroupherServer.Messaging.Model.Notice
-  alias GroupherServer.Messaging.Notices.Dedup
+  alias Jobs.CMSOutboxArticle
+  alias Messaging.Model.Notice
+  alias Messaging.Notices.Dedup
 
   setup do
     start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})

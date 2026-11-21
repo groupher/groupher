@@ -1,8 +1,9 @@
 defmodule GroupherServerWeb.Schema.CommonArticleAuthorTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Author
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.Author
   alias GroupherServerWeb.Schema.Helper.Fields
 
   test "common Article author resolution accepts User and preloaded Author sources" do
