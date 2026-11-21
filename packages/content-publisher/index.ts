@@ -1,4 +1,4 @@
-import type { TContentSource } from '@groupher/contracts/content-publish'
+import { CONTENT_BODY_SCHEMA_VERSION, type TContentSource } from '@groupher/contracts/content-publish'
 /**
  * Shared Node publisher for every Article and Content Import consumer.
  *

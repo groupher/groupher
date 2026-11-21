@@ -19,7 +19,10 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
              json: @json,
              markdown_toc: %{items: []},
              body_hash: body_hash,
-             schema_version: 2
+             schema_version: 3,
+             html: "<p>Published body content</p>",
+             markdown: "Published body content",
+             digest: "Published body content"
            } = BodyBag.to_document_attrs(body_bag)
 
     assert body_hash == String.duplicate("a", 64)
@@ -42,7 +45,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
   end
 
   test "rejects unsupported schema, invalid hash, and invalid Plate root" do
-    attrs = %{valid_attrs() | json: "{}", body_hash: "not-a-hash", schema_version: 3}
+    attrs = %{valid_attrs() | json: "{}", body_hash: "not-a-hash", schema_version: 4}
 
     assert {:error, changeset} = BodyBag.cast(attrs)
     assert "must contain a Plate root list" in errors_on(changeset).json

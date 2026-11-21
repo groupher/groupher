@@ -1,4 +1,4 @@
-export { CONTENT_PUBLISH_ERROR_CODE } from './content-publish.generated'
+export { CONTENT_BODY_SCHEMA_VERSION, CONTENT_PUBLISH_ERROR_CODE } from './content-publish.generated'
 export type { TContentPublishErrorCode } from './content-publish.generated'
 
 export const CONTENT_SOURCE_FORMAT = { PLATE: 'plate', MARKDOWN: 'markdown' } as const

@@ -30,8 +30,8 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
 
   @primary_key false
 
-  @schema_version 2
-  @supported_schema_versions [1, @schema_version]
+  @schema_version CMS.ContentPublishContract.body_schema_version()
+  @supported_schema_versions [1, 2, @schema_version]
   @max_json_bytes 2 * 1024 * 1024
   @max_derived_bytes 2 * 1024 * 1024
   @max_total_bytes 6 * 1024 * 1024
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
     json: ~S([{"children":[{"text":""}],"type":"p"}]),
     markdown: "\u200B\n",
     html:
-      "<div class=\"slate-editor\"><div class=\"slate-p m-0 px-0 py-1\"><span><span><span>\uFEFF</span></span></span></div></div>",
+      "<div class=\"slate-editor\"><div class=\"slate-p\"><span><span><span>\uFEFF</span></span></span></div></div>",
     toc: [],
     thumbnail: %{version: 1, blocks: []},
     plain_text: "",
