@@ -62,6 +62,24 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       resolve(&R.CMS.CommunityAdmins.management_allowed/3)
     end
+    @desc "Paged ordinary Article Trash for one Community Binding"
+    field :community_article_trash_items, non_null(:community_article_trash_page) do
+      arg(:community_ref, non_null(:string))
+      arg(:thread, non_null(:community_article_trash_thread))
+      arg(:pagi, :pagi_input)
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityTrash.page/3)
+    end
+    @desc "One ordinary Article Trash record for a Community Binding"
+    field :community_article_trash, :community_article_trash_item do
+      arg(:community_ref, non_null(:string))
+      arg(:thread, non_null(:community_article_trash_thread))
+      arg(:id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityTrash.get/3)
+    end
 
     @desc "Paged current co-authors for one Article; requires article.author.manage"
     field :paged_article_co_authors, non_null(:article_co_author_page) do

@@ -87,6 +87,12 @@ type RootQueryType {
 
   "Whether the viewer can manage Community Admin memberships"
   communityAdminManagementAllowed(communityRef: String!): Boolean!
+  "Paged ordinary Article Trash for one Community Binding"
+  communityArticleTrashItems(communityRef: String!, thread: CommunityArticleTrashThread!, pagi: PagiInput): CommunityArticleTrashPage!
+
+  "One ordinary Article Trash record for a Community Binding"
+  communityArticleTrash(communityRef: String!, thread: CommunityArticleTrashThread!, id: ID!): CommunityArticleTrashItem
+
 
   "Paged current co-authors for one Article; requires article.author.manage"
   pagedArticleCoAuthors(articleId: ID!, pagi: PagiInput): ArticleCoAuthorPage!
@@ -632,6 +638,14 @@ type RootMutationType {
 
   "Leave the current user's ordinary Admin membership"
   leaveCommunityAdmins(communityRef: String!, revision: Int!, commandId: ID!): Boolean!
+  "Hide one ordinary Article from a Community without deleting the Article"
+  hideCommunityArticle(communityRef: String!, thread: CommunityArticleTrashThread!, articleId: ID!, commandId: ID!): CommunityArticleBindingTrashItem!
+
+  "Restore one Article Binding from its exact Community Trash record"
+  restoreCommunityArticle(
+    communityRef: String!, thread: CommunityArticleTrashThread!, articleId: ID!, id: ID!, recordRevision: String!, commandId: ID!
+  ): CommunityArticleBindingTrashItem!
+
 
   "Create an Article co-author invitation or submit the current user's application"
   createArticleCoAuthorRequest(
@@ -2159,6 +2173,18 @@ enum PassportAction {
   TICKET_TRANSITION
   TICKET_UPDATE
 }
+enum CommunityArticleTrashThread {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+}
+
+enum CommunityArticleTrashStatus {
+  PENDING
+  EFFECTIVE
+}
+
 
 enum ArticleEventType {
   CREATE
@@ -2178,6 +2204,53 @@ input ArticleVersionRefInput {
   snapshotId: ID
   workingCopyId: ID
   revision: Int
+}
+interface CommunityArticleTrashItem {
+  id: ID!
+  communityId: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+}
+
+type CommunityArticleBindingTrashItem implements CommunityArticleTrashItem {
+  id: ID!
+  communityId: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+  bindingId: ID!
+  articleId: ID!
+  hiddenAt: DateTime!
+  title: String
+  commandId: ID
+}
+
+type CommunityDocTreeTrashItem implements CommunityArticleTrashItem {
+  id: ID!
+  communityId: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+  treePath: [CommunityDocTrashPathSegment!]!
+  pendingMemberCount: Int!
+  removedMemberCount: Int!
+}
+
+type CommunityDocTrashPathSegment {
+  nodeId: ID!
+  title: String!
+}
+
+type CommunityArticleTrashPage {
+  entries: [CommunityArticleTrashItem!]!
+  pageInfo: PageInfo!
 }
 
 enum ArtimentType {
