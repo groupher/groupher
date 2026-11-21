@@ -96,12 +96,14 @@ defmodule GroupherServer.PressPreview.Fixtures do
         Repo.transaction(fn ->
           lifecycle = locked_lifecycle(thread)
           source_ref = "press-preview-#{Ecto.UUID.generate()}"
+          operation_ref = Ecto.UUID.generate()
 
           {:ok, restriction} =
             CMS.ReviewBlocks.apply(lifecycle, %{
               scope_key: "platform",
               type: :manual_hold,
               source_ref: source_ref,
+              operation_ref: operation_ref,
               source: :human,
               applied_at: DateTime.utc_now(:second)
             })
@@ -109,7 +111,7 @@ defmodule GroupherServer.PressPreview.Fixtures do
           %{
             thread: thread,
             restriction_id: restriction.id,
-            operation_ref: source_ref,
+            operation_ref: operation_ref,
             transitions: 1
           }
         end)
@@ -355,9 +357,8 @@ defmodule GroupherServer.PressPreview.Fixtures do
     events =
       Repo.all(
         from(event in CMS.Outbox.Event,
-          where:
-            event.event == "article.visibility_changed" and
-              like(event.effect_key, ^("%" <> result.operation_ref <> "%"))
+          where: event.event == "article.visibility_changed" and
+                   event.operation_ref == ^result.operation_ref
         )
       )
 
@@ -373,6 +374,8 @@ defmodule GroupherServer.PressPreview.Fixtures do
   end
 
   defp deliver(id, deadline) do
+    event = Repo.get!(CMS.Outbox.Event, id)
+
     _result =
       CMS.Outbox.Workflow.Article.perform(%Oban.Job{
         args: %{"event_id" => id},
@@ -383,7 +386,9 @@ defmodule GroupherServer.PressPreview.Fixtures do
     children =
       Repo.all(
         from(e in CMS.Outbox.Event,
-          where: e.command_id == ^id and e.identity_type == :workflow
+          where:
+            e.operation_ref == ^event.operation_ref and
+              e.event in ["press.cache_invalidation", "article.search_sync", "article.cdn_purge"]
         )
       )
 
