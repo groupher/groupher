@@ -37,14 +37,14 @@ describe('handleContentPublishRequest', () => {
     await handleContentPublishRequest(request(), {
       backendToken: 'user-token',
       environment: {
-        GRAPHQL_ENDPOINT: 'https://api.groupher.com/graphiql',
-        PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphiql',
+        GRAPHQL_ENDPOINT: 'https://api.groupher.com/graphql',
+        PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphql',
       },
       fetcher: fetcher as typeof fetch,
       serviceAuthClient,
     })
 
-    expect(fetcher).toHaveBeenCalledWith('https://api.groupher.com/graphiql', expect.any(Object))
+    expect(fetcher).toHaveBeenCalledWith('https://api.groupher.com/graphql', expect.any(Object))
   })
 
   it('calls the Workers fetch implementation without an object receiver', async () => {

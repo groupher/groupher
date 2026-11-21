@@ -18,8 +18,9 @@ config :groupher_server, GroupherServerWeb.Endpoint, load_from_system_env: true
 
 # cache_static_manifest: "priv/static/cache_manifest.json"
 
-# Do not print debug messages in production
-# config :logger, level: :info
+# Do not log GraphQL documents, variables or Phoenix debug parameters in production.
+config :absinthe, log: false
+config :logger, level: :info
 config :logger, :console, format: "[$level] $message\n"
 
 # ## SSL Support

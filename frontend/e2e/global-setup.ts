@@ -41,7 +41,7 @@ export default async () => {
     env: {
       ...process.env,
       MOCK_GRAPHQL_PORT: process.env.MOCK_GRAPHQL_PORT ?? '4001',
-      MOCK_GRAPHQL_PATH: process.env.MOCK_GRAPHQL_PATH ?? '/graphiql',
+      MOCK_GRAPHQL_PATH: process.env.MOCK_GRAPHQL_PATH ?? '/graphql',
     },
   })
 

@@ -154,13 +154,13 @@ https://fix-auth.auth.groupher.localhost
 当前本地 GraphQL 地址：
 
 ```text
-http://localhost:4001/graphiql
+http://localhost:4001/graphql
 ```
 
 接入后应变为：
 
 ```text
-https://api.groupher.localhost/graphiql
+https://api.groupher.localhost/graphql
 ```
 
 这与当前线上 `groupher.com` 和 `api.groupher.com` 的分域形态一致。Phoenix 需要

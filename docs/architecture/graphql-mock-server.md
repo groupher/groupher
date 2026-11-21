@@ -19,7 +19,7 @@ Mock Server 是本地 GraphQL fixture 服务，不连接 Groupher 数据库，�
 前端应用 ──> API Gateway ──> Phoenix GraphQL ──> Groupher 数据库
 ```
 
-普通本地开发默认使用 Phoenix。前端客户端的本地 GraphQL endpoint 是 `http://localhost:4001/graphiql`；本地启动 Phoenix 时，它提供这个 endpoint。启动 Mock Server 也是显式操作，或由特定 E2E 配置启动，不会替换普通开发的数据源。
+普通本地开发默认使用 Phoenix。前端客户端的本地 GraphQL endpoint 是 `http://localhost:4001/graphql`；本地启动 Phoenix 时，它提供这个 endpoint。启动 Mock Server 也是显式操作，或由特定 E2E 配置启动，不会替换普通开发的数据源。
 
 Mock Server 适合隔离渲染、交互和固定响应下的前端测试。涉及真实数据、权限、mutation、副作用、Session 行为或数据库持久化时，应使用 Phoenix 和相应测试环境；Mock Server 的成功响应不能证明这些后端行为正确。
 
@@ -31,7 +31,7 @@ Mock Server 适合隔离渲染、交互和固定响应下的前端测试。涉�
 pnpm run mock:server
 ```
 
-也可以使用 `pnpm --filter @groupher/mock-server run dev` 启动。默认监听 `4001`，GraphQL endpoint 为 `/graphiql`。Mock Server 与本地 Phoenix 使用相同默认端口，因此应按当前运行场景选择其中一个；需要并行运行时，可通过 `MOCK_GRAPHQL_PORT` 为 Mock Server 指定其他端口，并让前端 endpoint 指向同一端口。
+也可以使用 `pnpm --filter @groupher/mock-server run dev` 启动。默认监听 `4001`，GraphQL endpoint 为 `/graphql`。Mock Server 与本地 Phoenix 使用相同默认端口，因此应按当前运行场景选择其中一个；需要并行运行时，可通过 `MOCK_GRAPHQL_PORT` 为 Mock Server 指定其他端口，并让前端 endpoint 指向同一端口。
 
 ## E2E 中的使用
 

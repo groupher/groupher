@@ -29,8 +29,8 @@ export default defineConfig(({ mode }) => {
           production ? 'https://import.groupher.com' : 'http://127.0.0.1:8001',
         ),
         GRAPHQL_ENDPOINT: production
-          ? bindings.text('https://api.groupher.com/graphiql')
-          : bindings.text('http://api.groupher.localhost:4001/graphiql'),
+          ? bindings.text('https://api.groupher.com/graphql')
+          : bindings.text('http://api.groupher.localhost:4001/graphql'),
         CONTENT_IMPORT_SERVICE_AUTH_RESOURCE: bindings.text('https://import.groupher.com/internal'),
         CONTENT_IMPORT_SERVICE_AUTH_SCOPES: bindings.text('docs:import:proxy'),
         SERVICE_AUTH_CLIENT_ID: bindings.text(

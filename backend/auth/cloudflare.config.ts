@@ -55,7 +55,7 @@ export default defineConfig(({ mode }) => {
         ),
         SERVICE_AUTH_TOKEN_TTL_SECONDS: bindings.text('600'),
         SERVICE_AUTH_TOKEN_ENDPOINT: bindings.text(`${authOrigin}/oauth2/token`),
-        PHOENIX_GRAPHQL_ENDPOINT: bindings.text(`${apiOrigin}/graphiql`),
+        PHOENIX_GRAPHQL_ENDPOINT: bindings.text(`${apiOrigin}/graphql`),
         NODE_ENV: bindings.text('production'),
         AUTH_GITHUB_ID: bindings.secret(),
         AUTH_GITHUB_SECRET: bindings.secret(),

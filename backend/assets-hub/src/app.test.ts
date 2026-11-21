@@ -6,7 +6,7 @@ const allowedOrigin = 'http://dash.groupher.localhost:3103'
 const localEnvironment = {
   ASSETS_HUB_CAPABILITY_SECRET: 'test-capability-secret',
   ASSETS_HUB_RUNTIME: 'local',
-  PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphiql',
+  PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphql',
   SERVICE_AUTH_CLIENT_ID: 'assets-hub-test',
   SERVICE_AUTH_CLIENT_SECRET: 'test-secret',
   SERVICE_AUTH_ISSUER: 'http://auth.groupher.localhost:3004',

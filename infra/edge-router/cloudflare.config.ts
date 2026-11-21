@@ -39,6 +39,12 @@ export default defineConfig(({ mode }) => {
               }),
             ],
       env: {
+        GRAPHQL_RATE_LIMIT: bindings.rateLimit({
+          namespace:
+            process.env.GRAPHQL_RATE_LIMIT_NAMESPACE ||
+            (local ? '1892736103' : preview ? '1892736102' : '1892736101'),
+          simple: { limit: 300, period: 60 },
+        }),
         API_SITE: bindings.text(
           local
             ? process.env.API_SITE || 'http://127.0.0.1:4001'

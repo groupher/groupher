@@ -14,13 +14,13 @@
 
 ## 命名
 
-| 变量                                                                       | 含义                                         | 示例                                |
-| -------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------- |
-| `CONTENT_IMPORT_APP_ENDPOINT`                                              | Dashboard 调用 Import 的服务根地址           | `https://import.groupher.com`       |
-| `NEXT_PUBLIC_ASSETS_HUB_ENDPOINT`                                          | Dashboard 浏览器调用 assets-hub 的服务根地址 | `https://assets-hub.groupher.com`   |
-| `DOCUMENT_CONVERTER_APP_ENDPOINT`                                          | 调用 Converter 的服务根地址                  | `https://converter.groupher.com`    |
-| `PHOENIX_GRAPHQL_ENDPOINT`                                                 | 子应用调用 Phoenix GraphQL 的内部地址        | `https://api.groupher.com/graphiql` |
-| `LANDING_SITE` / `MAIN_SITE` / `DASHBOARD_SITE` / `AUTH_SITE` / `API_SITE` | Gateway 后端路由目标                         | 部署平台注入的服务 URL              |
+| 变量                                                                       | 含义                                         | 示例                               |
+| -------------------------------------------------------------------------- | -------------------------------------------- | ---------------------------------- |
+| `CONTENT_IMPORT_APP_ENDPOINT`                                              | Dashboard 调用 Import 的服务根地址           | `https://import.groupher.com`      |
+| `NEXT_PUBLIC_ASSETS_HUB_ENDPOINT`                                          | Dashboard 浏览器调用 assets-hub 的服务根地址 | `https://assets-hub.groupher.com`  |
+| `DOCUMENT_CONVERTER_APP_ENDPOINT`                                          | 调用 Converter 的服务根地址                  | `https://converter.groupher.com`   |
+| `PHOENIX_GRAPHQL_ENDPOINT`                                                 | 子应用调用 Phoenix GraphQL 的内部地址        | `https://api.groupher.com/graphql` |
+| `LANDING_SITE` / `MAIN_SITE` / `DASHBOARD_SITE` / `AUTH_SITE` / `API_SITE` | Gateway 后端路由目标                         | 部署平台注入的服务 URL             |
 
 浏览器 GraphQL 地址固定为 `/api/graphql`，由 Next route handler 或 Gateway 转发到
 Phoenix；浏览器代码不读取 `NEXT_PUBLIC_GRAPHQL_ENDPOINT`。
@@ -51,7 +51,7 @@ listener endpoint；是否改走 Portless 域名取决于各运行时是否统�
 CONTENT_IMPORT_APP_ENDPOINT=https://import.groupher.com
 NEXT_PUBLIC_ASSETS_HUB_ENDPOINT=https://assets-hub.groupher.com
 DOCUMENT_CONVERTER_APP_ENDPOINT=https://converter.groupher.com
-PHOENIX_GRAPHQL_ENDPOINT=https://api.groupher.com/graphiql
+PHOENIX_GRAPHQL_ENDPOINT=https://api.groupher.com/graphql
 ```
 
 后续接入 delegation token 时，只改变鉴权凭证，不改变这些 endpoint 的命名。

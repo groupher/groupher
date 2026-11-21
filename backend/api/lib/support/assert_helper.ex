@@ -107,7 +107,7 @@ defmodule GroupherServer.Test.AssertHelper do
     variables = ensure_command_id(query, variables)
 
     conn
-    |> post("/graphiql", query: query, variables: variables)
+    |> post("/graphql", query: query, variables: variables)
     |> json_response(200)
     |> log_debug_info(flag)
     |> successful_operation!(query)
@@ -168,7 +168,7 @@ defmodule GroupherServer.Test.AssertHelper do
 
   def gq_query(conn, query, variables, flag \\ false) do
     conn
-    |> post("/graphiql", query: query, variables: variables)
+    |> post("/graphql", query: query, variables: variables)
     |> json_response(200)
     |> log_debug_info(flag)
     |> successful_operation!(query)
@@ -176,7 +176,7 @@ defmodule GroupherServer.Test.AssertHelper do
 
   def gq_query(conn, query) do
     conn
-    |> post("/graphiql", query: query, variables: %{})
+    |> post("/graphql", query: query, variables: %{})
     |> json_response(200)
     |> successful_operation!(query)
   end
@@ -239,7 +239,7 @@ defmodule GroupherServer.Test.AssertHelper do
     variables = ensure_command_id(query, variables)
 
     conn
-    |> post("/graphiql", query: query, variables: variables)
+    |> post("/graphql", query: query, variables: variables)
     |> json_response(200)
   end
 

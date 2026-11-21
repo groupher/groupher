@@ -41,7 +41,7 @@ describe('Phoenix Press origin client', () => {
     })
 
     const feed = await createPhoenixOrigin(
-      'http://phoenix.test/graphiql',
+      'http://phoenix.test/graphql',
       fetcher,
       tokenProvider,
     ).communityFeed('home')
@@ -51,7 +51,7 @@ describe('Phoenix Press origin client', () => {
   })
 
   it('maps unavailable Phoenix requests to a safe 503', async () => {
-    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', async () => {
+    const origin = createPhoenixOrigin('http://phoenix.test/graphql', async () => {
       throw new Error('connection refused')
     })
 
@@ -66,7 +66,7 @@ describe('Phoenix Press origin client', () => {
       expect(request.query).toContain('articleRef: articleId')
       return Response.json({ data: { pressArticle: null } })
     })
-    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+    const origin = createPhoenixOrigin('http://phoenix.test/graphql', fetcher, tokenProvider)
 
     await expect(
       origin.article({ community: 'home', thread: 'post', innerId: '1' }),
@@ -79,7 +79,7 @@ describe('Phoenix Press origin client', () => {
       expect(request.query).toContain('articleRef: itemId')
       return Response.json({ data: { pressSiteManifest: null } })
     })
-    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+    const origin = createPhoenixOrigin('http://phoenix.test/graphql', fetcher, tokenProvider)
 
     await expect(origin.siteManifest('home')).rejects.toEqual(
       expect.objectContaining<Partial<OriginError>>({ status: 404 }),
@@ -90,7 +90,7 @@ describe('Phoenix Press origin client', () => {
     const fetcher = vi
       .fn<typeof fetch>()
       .mockResolvedValue(Response.json({ errors: [{ message: 'Press Article', code: 4003 }] }))
-    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+    const origin = createPhoenixOrigin('http://phoenix.test/graphql', fetcher, tokenProvider)
 
     await expect(
       origin.article({ community: 'home', thread: 'post', innerId: '1' }),
@@ -109,7 +109,7 @@ describe('Phoenix Press origin client', () => {
       const fetcher = vi
         .fn<typeof fetch>()
         .mockResolvedValue(Response.json({ errors: [{ message, extensions: { code } }] }))
-      const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+      const origin = createPhoenixOrigin('http://phoenix.test/graphql', fetcher, tokenProvider)
       await expect(origin.siteManifest('hidden')).rejects.toEqual(
         expect.objectContaining<Partial<OriginError>>({ status: 404, message }),
       )
@@ -122,7 +122,7 @@ describe('Phoenix Press origin client', () => {
         errors: [{ message: 'Search platform unavailable', extensions: { code: 4529 } }],
       }),
     )
-    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+    const origin = createPhoenixOrigin('http://phoenix.test/graphql', fetcher, tokenProvider)
     await expect(origin.siteManifest('home')).rejects.toEqual(
       expect.objectContaining<Partial<OriginError>>({ status: 502 }),
     )

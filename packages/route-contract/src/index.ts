@@ -189,7 +189,7 @@ const resolvePlatformRoute = (pathname: string, method: string): PublicRoute => 
   }
   if (isAuthRoute(pathname)) return route('auth', pathname)
   if (isGraphqlRoute(pathname)) {
-    return route('phoenix', '/graphiql', 'graphql-browser-clean')
+    return route('phoenix', '/graphql', 'graphql-browser-clean')
   }
   if (pathname === API_ROUTE.SLUGIFY) {
     return route('community', pathname, 'pass-through', undefined, 'community-tool')

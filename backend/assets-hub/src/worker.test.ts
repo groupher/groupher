@@ -51,7 +51,7 @@ describe('Assets Hub readiness', () => {
     ASSETS_BUCKET: { delete: vi.fn(), get: vi.fn() },
     ASSET_DELETE_QUEUE: { send: vi.fn() },
     ENVIRONMENT: 'development',
-    PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphiql',
+    PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphql',
     SERVICE_AUTH_CLIENT_ID: 'assets-hub-test',
     SERVICE_AUTH_CLIENT_SECRET: 'test-secret',
     SERVICE_AUTH_ISSUER: 'https://auth.groupher.localhost',

@@ -26,7 +26,7 @@ groupher.com/:community/...           Community / Press
 groupher.com/api/graphql              同源浏览器 GraphQL facade
 dash.groupher.com                     Dash
 apply.groupher.com                    Apply
-api.groupher.com/graphiql             Phoenix GraphQL origin
+api.groupher.com/graphql             Phoenix GraphQL origin
 press.groupher.com                    Press 服务 origin
 ```
 

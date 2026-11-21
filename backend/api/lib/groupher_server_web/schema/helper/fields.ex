@@ -326,11 +326,17 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   @doc "Resolves a Comment body from a preloaded projection or canonical body row."
   def comment_body(%{body: %GroupherServer.CMS.Model.CommentBody{} = body}, _, _), do: {:ok, body}
 
-  def comment_body(%{id: comment_id}, _, _) do
-    case GroupherServer.Repo.get_by(GroupherServer.CMS.Model.CommentBody, comment_id: comment_id) do
-      nil -> {:error, "comment body not found"}
-      body -> {:ok, body}
-    end
+  def comment_body(%GroupherServer.CMS.Model.Comment{} = comment, args, resolution) do
+    comment_body_loader(comment, args, resolution, &{:ok, &1})
+  end
+
+  def comment_body(%{id: comment_id}, args, resolution) do
+    comment_body_loader(
+      %GroupherServer.CMS.Model.Comment{id: comment_id},
+      args,
+      resolution,
+      &{:ok, &1}
+    )
   end
 
   @doc "Resolves a Comment body version from a preloaded projection or canonical body row."
@@ -342,11 +348,30 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     {:ok, version}
   end
 
-  def comment_body_version(%{id: comment_id}, _, _) do
-    case GroupherServer.Repo.get_by(GroupherServer.CMS.Model.CommentBody, comment_id: comment_id) do
-      nil -> {:error, "comment body not found"}
-      body -> {:ok, body.version}
+  def comment_body_version(%GroupherServer.CMS.Model.Comment{} = comment, args, resolution) do
+    comment_body_loader(comment, args, resolution, &{:ok, &1.version})
+  end
+
+  def comment_body_version(%{id: comment_id}, args, resolution) do
+    comment_body_loader(
+      %GroupherServer.CMS.Model.Comment{id: comment_id},
+      args,
+      resolution,
+      &{:ok, &1.version}
+    )
+  end
+
+  defp comment_body_loader(comment, args, resolution, convert) do
+    callback = fn
+      nil, _, _ -> {:error, "comment body not found"}
+      body, _, _ -> convert.(body)
     end
+
+    Absinthe.Resolution.Helpers.dataloader(GroupherServer.CMS, :body, callback: callback).(
+      comment,
+      args,
+      resolution
+    )
   end
 
   # see: https://github.com/absinthe-graphql/absinthe/issues/363

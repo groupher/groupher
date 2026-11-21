@@ -112,7 +112,7 @@ async function checkMentionsGraphHost(page) {
       }
       return
     }
-    const response = await route.fetch({ url: 'http://127.0.0.1:4191/graphiql' })
+    const response = await route.fetch({ url: 'http://127.0.0.1:4191/graphql' })
     await route.fulfill({ response })
   })
   const graphCount = () => requests.filter((r) => r.operation === 'MentionsGraphPage').length

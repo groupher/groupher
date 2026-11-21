@@ -8,7 +8,7 @@ defmodule MentionsPerf.HTTP do
 
   def graph(document, variables) do
     conn =
-      Plug.Test.conn(:post, "/graphiql", Jason.encode!(%{query: document, variables: variables}))
+      Plug.Test.conn(:post, "/graphql", Jason.encode!(%{query: document, variables: variables}))
       |> Plug.Conn.put_req_header("content-type", "application/json")
       |> GroupherServerWeb.Endpoint.call([])
 

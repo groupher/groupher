@@ -58,7 +58,7 @@ describe('platform root routes', () => {
     expect(resolveRoot('/api/graphql')).toEqual({
       routeClass: 'phoenix',
       targetKind: 'phoenix',
-      pathname: '/graphiql',
+      pathname: '/graphql',
       requestHeaderPolicy: 'graphql-browser-clean',
     })
   })

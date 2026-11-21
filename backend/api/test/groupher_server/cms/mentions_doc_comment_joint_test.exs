@@ -254,7 +254,9 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
              )
 
     events = Repo.all(from(event in Event, where: event.resource_id == ^endpoint.id))
-    assert length(Enum.filter(events, &(&1.event == "mention.notify"))) == 2
+    mention_events = Enum.filter(events, &(&1.event == "mention.notify"))
+    assert length(mention_events) == 2
+    second_event = Enum.find(mention_events, &(&1.id != first_event.id))
 
     assert {:ok, :pass} =
              CMSMentionNotifier.perform(%Oban.Job{
@@ -264,9 +266,9 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
              })
 
     assert Repo.aggregate(Mention, :count) == 0
-    assert {:ok, :pass} = project(endpoint.id)
+    assert {:ok, :pass} = project_event(second_event.id)
     assert Repo.aggregate(Mention, :count) == 1
-    assert {:ok, :pass} = project(endpoint.id)
+    assert {:ok, :pass} = project_event(second_event.id)
     assert Repo.aggregate(Mention, :count) == 1
   end
 
@@ -307,11 +309,15 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
         {:ok, :pass}
 
       event ->
-        CMSMentionNotifier.perform(%Oban.Job{
-          args: %{"event_id" => event.id},
-          attempt: 1,
-          max_attempts: 5
-        })
+        project_event(event.id)
     end
+  end
+
+  defp project_event(event_id) do
+    CMSMentionNotifier.perform(%Oban.Job{
+      args: %{"event_id" => event_id},
+      attempt: 1,
+      max_attempts: 5
+    })
   end
 end

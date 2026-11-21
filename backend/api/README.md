@@ -65,6 +65,17 @@ make -C ../.. be.seed.home
 
 From the repository root, run `make be.seed.home`.
 
+To build the developer IDE before opening `http://127.0.0.1:4001/graphiql`:
+
+```sh
+cd graphiql
+npm ci --legacy-peer-deps --ignore-scripts
+npm run build
+```
+
+The IDE uses the separate `/graphql` API endpoint. Its built assets are included
+in the API Docker image; they are not checked into source control.
+
 The default local endpoint is `http://127.0.0.1:4001`; normal browser traffic
 should use the Gateway-managed local host configured by Portless.
 

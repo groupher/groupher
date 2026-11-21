@@ -31,7 +31,7 @@ async function checkMentionsGraphRecovery(page) {
       })
     }
 
-    const response = await route.fetch({ url: 'http://127.0.0.1:4197/graphiql' })
+    const response = await route.fetch({ url: 'http://127.0.0.1:4197/graphql' })
     if (mode === 'cursor' && firstPages++ === 0) {
       const result = await response.json()
       if (!result.data?.mentionsGraph) {

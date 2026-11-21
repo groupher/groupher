@@ -28,7 +28,7 @@ export const ICON_BASE = readPublicEnv('NEXT_PUBLIC_ICON_BASE', 'https://static.
 export const GRAPHQL_ENDPOINT =
   (typeof window === 'undefined' ? privateGraphQLEndpoint : API_ROUTE.GRAPHQL) ??
   (() => {
-    return 'http://localhost:4001/graphiql'
+    return 'http://localhost:4001/graphql'
   })()
 export const SITE_URL = readPublicEnv('NEXT_PUBLIC_SITE_URL', 'https://groupher.com')
 export const DASH_SITE_URL = readPublicEnv(

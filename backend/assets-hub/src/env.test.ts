@@ -14,7 +14,7 @@ const createEnvironmentRoot = async () => {
   await writeFile(
     path.join(root, '.env'),
     [
-      'PHOENIX_GRAPHQL_ENDPOINT=http://localhost:4001/graphiql',
+      'PHOENIX_GRAPHQL_ENDPOINT=http://localhost:4001/graphql',
       'SERVICE_AUTH_CLIENT_ID=assets-hub-development',
       'SERVICE_AUTH_CLIENT_SECRET=assets-secret',
       '',
@@ -32,7 +32,7 @@ describe('loadAssetsHubEnvironment', () => {
     const root = await createEnvironmentRoot()
     const environment = {
       ASSETS_HUB_RUNTIME: 'local',
-      PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphiql',
+      PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphql',
       SERVICE_AUTH_CLIENT_ID: 'phoenix-development',
       SERVICE_AUTH_CLIENT_SECRET: 'phoenix-secret',
     }
@@ -41,7 +41,7 @@ describe('loadAssetsHubEnvironment', () => {
 
     expect(environment).toMatchObject({
       ASSETS_HUB_LOCAL_STORAGE_DIR: path.resolve(root, '../..', '.local/assets-hub'),
-      PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphiql',
+      PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphql',
       SERVICE_AUTH_CLIENT_ID: 'assets-hub-development',
       SERVICE_AUTH_CLIENT_SECRET: 'assets-secret',
     })

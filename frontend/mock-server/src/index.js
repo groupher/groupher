@@ -26,7 +26,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const PORT = Number(process.env.MOCK_GRAPHQL_PORT ?? process.env.PORT ?? 4001)
-const GRAPHQL_PATH = process.env.MOCK_GRAPHQL_PATH ?? '/graphiql'
+const GRAPHQL_PATH = process.env.MOCK_GRAPHQL_PATH ?? '/graphql'
 const AUTH_E2E_ENABLED = process.env.E2E_AUTH_STACK === '1'
 
 const schemaPath = (() => {
@@ -268,7 +268,7 @@ createServer((req, res) => {
   if (req.url?.startsWith(GRAPHQL_PATH)) {
     const url = new URL(req.url, `http://${req.headers.host ?? `localhost:${PORT}`}`)
 
-    // Browser open "http://.../graphiql" will be a GET without query.
+    // Browser open "http://.../graphql" will be a GET without query.
     // Provide a real GraphiQL UI instead of "Missing query".
     if (req.method === 'GET' && !url.searchParams.get('query')) {
       res.statusCode = 200

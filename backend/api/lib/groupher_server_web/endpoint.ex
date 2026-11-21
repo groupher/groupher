@@ -49,6 +49,12 @@ defmodule GroupherServerWeb.Endpoint do
     only: GroupherServerWeb.static_paths()
   )
 
+  plug(Plug.Static,
+    at: "/graphiql-assets",
+    from: {:groupher_server, "priv/static/graphiql"},
+    gzip: false
+  )
+
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
@@ -83,7 +89,7 @@ defmodule GroupherServerWeb.Endpoint do
       "http://localhost:3001",
       "http://localhost:3002",
       ~r{^https://([a-z0-9-]+\.)?groupher\.localhost$},
-      ~r{^https://(.*\.?)groupher\.com$}
+      ~r{^https://([a-z0-9-]+\.)*groupher\.com$}
     ],
     # origins: "*",
     allow_headers: [

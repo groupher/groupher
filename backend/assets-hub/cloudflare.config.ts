@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
         ),
         ENVIRONMENT: bindings.text(production ? 'production' : 'development'),
         PHOENIX_GRAPHQL_ENDPOINT: bindings.text(
-          production ? 'https://api.groupher.com/graphiql' : 'http://127.0.0.1:4001/graphiql',
+          production ? 'https://api.groupher.com/graphql' : 'http://127.0.0.1:4001/graphql',
         ),
         SERVICE_AUTH_ISSUER: bindings.text(
           production ? 'https://auth.groupher.com' : 'https://auth.groupher.localhost',

@@ -225,9 +225,14 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
+  defp project_batch(_thread, []), do: {:ok, []}
+
   defp project_batch(thread, articles) do
-    Enum.reduce_while(articles, {:ok, []}, fn article, {:ok, acc} ->
-      case Projection.article(thread, article) do
+    {:ok, counts} = CMS.ArticleStats.search_counts_batch(thread, Enum.map(articles, & &1.id))
+
+    articles
+    |> Enum.reduce_while({:ok, []}, fn article, {:ok, acc} ->
+      case Projection.article(thread, article, counts) do
         {:ok, artiment} -> {:cont, {:ok, [artiment | acc]}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
@@ -242,9 +247,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   defp after_article(query, article_id), do: where(query, [article], article.id > ^article_id)
 
   defp load_public_articles(thread, roots) do
+    bindings_by_article = visible_bindings_by_article(thread, Enum.map(roots, & &1.id))
+
     roots
     |> Enum.reduce_while({:ok, []}, fn root, {:ok, batches} ->
-      case public_article_for(thread, root) do
+      case articles_for_bindings(thread, Map.get(bindings_by_article, root.id, [])) do
         {:ok, articles} -> {:cont, {:ok, [Enum.reverse(articles) | batches]}}
         {:error, :not_found} -> {:cont, {:ok, batches}}
       end
@@ -264,18 +271,27 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
   defp public_article_for(thread, %Article{id: article_id, thread: article_thread})
        when article_thread == thread do
+    thread
+    |> visible_bindings_by_article([article_id])
+    |> Map.get(article_id, [])
+    |> then(&articles_for_bindings(thread, &1))
+  end
+
+  defp visible_bindings_by_article(thread, article_ids) do
     visible_bindings = Pagination.public_binding_ids(thread)
 
-    bindings =
-      ArticleBinding
-      |> join(:inner, [binding], community in Community, on: community.id == binding.community_id)
-      |> where(
-        [binding, _community],
-        binding.article_id == ^article_id and binding.id in subquery(visible_bindings)
-      )
-      |> select([binding, community], {binding.inner_id, community.slug})
-      |> Repo.all()
+    ArticleBinding
+    |> join(:inner, [binding], community in Community, on: community.id == binding.community_id)
+    |> where(
+      [binding, _community],
+      binding.article_id in ^article_ids and binding.id in subquery(visible_bindings)
+    )
+    |> select([binding, community], {binding.article_id, {binding.inner_id, community.slug}})
+    |> Repo.all()
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+  end
 
+  defp articles_for_bindings(thread, bindings) do
     articles =
       Enum.reduce(bindings, [], fn {inner_id, community}, acc ->
         case FrontDesk.article(%{community: community, thread: thread, inner_id: inner_id}) do

@@ -20,7 +20,9 @@ defmodule GroupherServer.CMS.Events.Notify do
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}
   alias Accounts.Model.User
   alias CMS.{ErrorCat, Events.Event, FrontDesk}
-  alias CMS.Model.{ArticleBinding, Comment, Community}
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Model.{Article, ArticleBinding, Comment, Community}
 
   @behaviour CMS.Events.Handler
 
@@ -304,6 +306,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         |> Enum.sort_by(fn {slug, community_id, _inner_id} ->
           {slug != comment.request_community_slug, community_id}
         end)
+        |> publicly_readable_candidates(comment.article_id, thread)
 
       Enum.reduce_while(candidates, {:error, ErrorCat.custom(%{reason: :not_exist})}, fn
         {slug, _community_id, inner_id}, _acc ->
@@ -312,6 +315,37 @@ defmodule GroupherServer.CMS.Events.Notify do
             {:error, _} -> {:cont, {:error, ErrorCat.custom(%{reason: :not_exist})}}
           end
       end)
+    end
+  end
+
+  defp publicly_readable_candidates(candidates, _article_id, _thread)
+       when length(candidates) < 2 do
+    candidates
+  end
+
+  defp publicly_readable_candidates(candidates, article_id, thread) do
+    context =
+      cond do
+        thread == :doc -> DocContext.public_main()
+        thread in CMS.Artiment.Config.threads() -> ArticleContext.public(thread)
+        true -> nil
+      end
+
+    case context && CMS.Gate.scope(Article, nil, :read, context) do
+      %Ecto.Query{} = query ->
+        visible =
+          query
+          |> where([article, ...], article.id == ^article_id)
+          |> select([gate_community: community], community.id)
+          |> Repo.all()
+          |> MapSet.new()
+
+        Enum.filter(candidates, fn {_slug, community_id, _inner_id} ->
+          MapSet.member?(visible, community_id)
+        end)
+
+      _ ->
+        candidates
     end
   end
 

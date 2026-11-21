@@ -20,17 +20,20 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
 
   @production_hosts MapSet.new([
                       "groupher.com",
-                      "dash.groupher.com"
+                      "dash.groupher.com",
+                      "api.groupher.com"
                     ])
   @development_hosts MapSet.new([
                        "groupher.localhost",
                        "community.groupher.localhost",
-                       "dash.groupher.localhost"
+                       "dash.groupher.localhost",
+                       "api.groupher.localhost"
                      ])
   @development_http_ports %{
     "groupher.localhost" => MapSet.new([nil, 80]),
     "community.groupher.localhost" => MapSet.new([nil, 80, 3107]),
-    "dash.groupher.localhost" => MapSet.new([nil, 80, 3103])
+    "dash.groupher.localhost" => MapSet.new([nil, 80, 3103]),
+    "api.groupher.localhost" => MapSet.new([nil, 80, 4001])
   }
 
   def init(options), do: options
@@ -39,7 +42,13 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
     conn = conn |> fetch_cookies() |> fetch_query_params()
 
     cond do
-      not browser_cookie?(conn) or not mutation_request?(conn) ->
+      not browser_cookie?(conn) ->
+        conn
+
+      conn.method not in ["GET", "HEAD"] and not json_request?(conn) ->
+        reject(conn, 400, "JSON is required.", GroupherServer.Auth.contract_invalid_csrf())
+
+      not mutation_request?(conn) ->
         conn
 
       conn.method != "POST" ->
@@ -60,12 +69,9 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
 
   defp browser_cookie?(conn), do: Map.has_key?(conn.req_cookies, "groupher-auth.token")
 
-  defp mutation_request?(%Plug.Conn{method: "GET", query_params: params}) do
-    mutation_params?(params)
+  defp mutation_request?(%Plug.Conn{params: params, body_params: body_params}) do
+    mutation_params?(params) or mutation_params?(body_params)
   end
-
-  defp mutation_request?(%Plug.Conn{body_params: %Plug.Conn.Unfetched{}}), do: false
-  defp mutation_request?(%Plug.Conn{body_params: params}), do: mutation_params?(params)
 
   defp mutation_params?(params) when is_list(params), do: Enum.any?(params, &mutation_params?/1)
 
@@ -73,13 +79,24 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
     query = Map.get(params, "query") || Map.get(params, :query)
     operation_name = Map.get(params, "operationName") || Map.get(params, :operation_name)
 
-    is_binary(query) and mutation_operation?(query, operation_name)
+    (is_binary(query) and mutation_operation?(query, operation_name)) or
+      nested_mutation?(Map.get(params, "_json")) or
+      nested_mutation?(Map.get(params, "operations"))
   end
 
   defp mutation_params?(_), do: false
 
+  defp nested_mutation?(value) when is_binary(value) do
+    case Jason.decode(value) do
+      {:ok, decoded} -> mutation_params?(decoded)
+      _ -> false
+    end
+  end
+
+  defp nested_mutation?(value), do: mutation_params?(value)
+
   defp mutation_operation?(query, operation_name) do
-    case Parse.run(query, []) do
+    case Parse.run(query, token_limit: GroupherServerWeb.GraphQLLimits.token_limit()) do
       {:ok, %{input: %Absinthe.Language.Document{definitions: definitions}}} ->
         operations =
           Enum.filter(definitions, &match?(%Absinthe.Language.OperationDefinition{}, &1))
@@ -104,7 +121,12 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
   defp json_request?(conn) do
     conn
     |> get_req_header("content-type")
-    |> Enum.any?(&String.starts_with?(&1, "application/json"))
+    |> Enum.any?(fn content_type ->
+      case Plug.Conn.Utils.media_type(content_type) do
+        {:ok, "application", "json", _params} -> true
+        _ -> false
+      end
+    end)
   end
 
   defp csrf_header?(conn), do: get_req_header(conn, "x-groupher-csrf") == ["1"]

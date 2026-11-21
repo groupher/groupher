@@ -9,7 +9,7 @@
  *     -> proxied response
  */
 
-import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
+import { GROUPHER_AUTH_TOKEN_COOKIE, GROUPHER_VIEWER_COOKIE } from '@groupher/contracts/auth'
 import { GROUPHER_COMMUNITY_SLUG_HEADER } from '@groupher/contracts/headers'
 
 import type { TGatewayTarget } from './routing'
@@ -78,13 +78,16 @@ export const buildProxyHeaders = (request: Request, target: TGatewayTarget): Hea
 
   if (target.requestHeaderPolicy === 'graphql-browser-clean') {
     const authToken = readCookie(request.headers, GROUPHER_AUTH_TOKEN_COOKIE)
+    const viewerSession = readCookie(request.headers, GROUPHER_VIEWER_COOKIE)
 
     headers.delete('authorization')
     headers.delete('cookie')
 
-    if (authToken) {
-      headers.set('cookie', `${GROUPHER_AUTH_TOKEN_COOKIE}=${encodeURIComponent(authToken)}`)
-    }
+    const cookies = [
+      authToken && `${GROUPHER_AUTH_TOKEN_COOKIE}=${encodeURIComponent(authToken)}`,
+      viewerSession && `${GROUPHER_VIEWER_COOKIE}=${encodeURIComponent(viewerSession)}`,
+    ].filter(Boolean)
+    if (cookies.length) headers.set('cookie', cookies.join('; '))
   }
 
   if (target.requestHeaderPolicy === 'public-output') {

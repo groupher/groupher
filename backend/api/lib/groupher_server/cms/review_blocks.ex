@@ -480,7 +480,13 @@ defmodule GroupherServer.CMS.ReviewBlocks do
 
   defp enqueue_article_visibility(article_id, community_id, key) do
     with %Article{thread: thread} <- Repo.get(Article, article_id) do
-      query = from(binding in ArticleBinding, where: binding.article_id == ^article_id)
+      query =
+        from(binding in ArticleBinding,
+          left_join: community in Community,
+          on: community.id == binding.community_id,
+          where: binding.article_id == ^article_id,
+          select: {binding, community}
+        )
 
       query =
         if is_nil(community_id) do
@@ -491,9 +497,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
 
       query
       |> Repo.all()
-      |> Enum.reduce_while({:ok, :pass}, fn binding, {:ok, :pass} ->
-        community = Repo.get(Community, binding.community_id)
-
+      |> Enum.reduce_while({:ok, :pass}, fn {binding, community}, {:ok, :pass} ->
         case community do
           %Community{} = community ->
             case CMS.Articles.Effects.enqueue(

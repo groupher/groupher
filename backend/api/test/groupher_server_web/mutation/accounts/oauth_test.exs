@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
       response =
         guest_conn
-        |> post("/graphiql", query: query, variables: %{"browserSessionRef" => "bs_missing"})
+        |> post("/graphql", query: query, variables: %{"browserSessionRef" => "bs_missing"})
         |> json_response(200)
 
       assert get_in(response, ["errors", Access.at(0), "extensions", "code"]) ==
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         |> Plug.Conn.put_req_header("content-type", "application/json")
         |> Plug.Conn.put_req_header("origin", "https://dash.groupher.localhost")
         |> Plug.Conn.put_req_header("x-groupher-csrf", "1")
-        |> post("/graphiql", query: query, variables: %{})
+        |> post("/graphql", query: query, variables: %{})
         |> json_response(200)
 
       assert get_in(response, ["errors", Access.at(0), "extensions", "code"]) ==

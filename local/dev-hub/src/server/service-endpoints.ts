@@ -16,5 +16,5 @@ export const LOCAL_SERVICE_ENDPOINTS = {
 export const LOCAL_SERVICE_AUTH_ISSUER = 'https://auth.groupher.localhost'
 
 export const LOCAL_SERVICE_GRAPHQL_ENDPOINTS = {
-  phoenix: `${LOCAL_SERVICE_ENDPOINTS.phoenix}/graphiql`,
+  phoenix: `${LOCAL_SERVICE_ENDPOINTS.phoenix}/graphql`,
 } as const
