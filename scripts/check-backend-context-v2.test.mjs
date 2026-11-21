@@ -455,6 +455,40 @@ test('rejects Facade infrastructure, misplaced Workers, and cross-Context intern
   })
 })
 
+test('rejects aliased internal Passport Store calls from runtime entrypoints', () => {
+  withFixture((root) => {
+    touch(root, 'cms.ex', 'GroupherServer.CMS')
+    const resolverPath = path.join(root, 'web/resolvers/cms/passport.ex')
+    mkdirSync(path.dirname(resolverPath), { recursive: true })
+    writeFileSync(
+      resolverPath,
+      [
+        'defmodule GroupherServerWeb.Resolvers.CMS.Passport do',
+        '  alias GroupherServer.CMS.Passport.Store',
+        '',
+        '  def current_global(user_id), do: Store.global_facts(user_id)',
+        'end',
+        '',
+      ].join('\n'),
+    )
+
+    const findings = backendContextV2SemanticFindings({
+      root,
+      registry: { version: 2, contexts: { cms: { mode: 'strict' } } },
+    })
+
+    assert.equal(
+      findings.some(
+        ({ category, message, file }) =>
+          category === 'context_boundary' &&
+          file.endsWith('/web/resolvers/cms/passport.ex') &&
+          message.includes('CMS.Passport.Store.global_facts'),
+      ),
+      true,
+    )
+  })
+})
+
 test('rejects alternate syntax for internal behavior and Facade module escapes', () => {
   withFixture((root) => {
     touch(root, 'accounts.ex', 'GroupherServer.Accounts')
