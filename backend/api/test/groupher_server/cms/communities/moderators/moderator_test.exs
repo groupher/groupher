@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
   alias GroupherServer.CMS
   alias CMS.Communities.{ErrorCat, Passport}
   alias CMS.Communities.Moderators.Setup, as: ModeratorSetup
-  alias CMS.Model.CommunityModerator
+  alias CMS.Model.{CommunityAdmin, CommunityModerator}
   alias Helper.PermissionRegistry
 
   setup do
@@ -17,6 +17,14 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
   end
 
   describe "[cms community moderators]" do
+    test "community creation stores the owner as a canonical root member",
+         ~m(user community)a do
+      admin = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: user.id)
+
+      assert admin.is_lord
+      assert admin.permissions == %{}
+    end
+
     test "setup add_root requires a caller-owned transaction", ~m(user community)a do
       assert {:error, :community_moderator_transaction_required} =
                ModeratorSetup.add_root(community, user)
@@ -246,14 +254,14 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
          ~m(user2 community)a do
       {:ok, user3} = db_insert(:user)
 
-      {:ok, _} =
-        Passport.stamp_passport(
-          %{
-            "global" => %{},
-            community.slug => %{"root" => true}
-          },
-          user2
-        )
+      Repo.insert!(
+        CommunityAdmin.changeset(%CommunityAdmin{}, %{
+          user_id: user2.id,
+          community_id: community.id,
+          is_lord: true,
+          permissions: %{}
+        })
+      )
 
       {:ok, updated_community} =
         CMS.Communities.add_moderator(community, user3, user2, command_id())

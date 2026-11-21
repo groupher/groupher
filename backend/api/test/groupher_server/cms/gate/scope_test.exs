@@ -154,6 +154,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   end
 
   test "scope construction never executes Repo" do
+    {:ok, actor} = db_insert(:user)
     handler_id = "gate-scope-query-#{System.unique_integer([:positive])}"
     event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
     parent = self()
@@ -168,11 +169,11 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     on_exit(fn -> :telemetry.detach(handler_id) end)
 
-    assert %Ecto.Query{} = CMS.Gate.scope(Article, nil, :read, ArticleContext.public(:post))
-    assert %Ecto.Query{} = CMS.Gate.scope(Comment, nil, :list, CommentContext.all_public())
+    assert %Ecto.Query{} = CMS.Gate.scope(Article, actor, :read, ArticleContext.public(:post))
+    assert %Ecto.Query{} = CMS.Gate.scope(Comment, actor, :list, CommentContext.all_public())
 
     assert %Ecto.Query{} =
-             CMS.Gate.scope(Article, nil, :read, DocContext.public())
+             CMS.Gate.scope(Article, actor, :read, DocContext.public())
 
     refute_receive :scope_query
   end

@@ -13,6 +13,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   defdelegate article(actor, community, thread, article),
     to: GroupherServer.CMS.Gate.Access.Load.Query
 
+  @doc "Builds Article authorization facts without requiring an ArticleBinding."
+  defdelegate article_author_management(actor, article),
+    to: GroupherServer.CMS.Gate.Access.Load.Query
+
   @doc "Delegates actor-scoped comment/5 to the owning implementation."
   defdelegate comment(actor, community, thread, article, comment),
     to: GroupherServer.CMS.Gate.Access.Load.Query

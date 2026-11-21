@@ -18,14 +18,14 @@ defmodule GroupherServer.Test.CMS.Passport.ArticleCoAuthorConcurrencyTest do
       now = DateTime.utc_now(:second)
 
       member_attrs = %{
-        article_id: public.article_id,
+        article_id: public.id,
         author_id: author.id,
         joined_at: now,
         permissions: %{}
       }
 
       request_attrs = %{
-        article_id: public.article_id,
+        article_id: public.id,
         subject_user_id: subject.id,
         created_by_id: owner.id,
         type: :invite,
@@ -56,10 +56,10 @@ defmodule GroupherServer.Test.CMS.Passport.ArticleCoAuthorConcurrencyTest do
         assert Enum.count(request_results, &match?({:error, _}, &1)) == 1
       after
         Repo.delete_all(
-          from(r in ArticleCoAuthorRequest, where: r.article_id == ^public.article_id)
+          from(r in ArticleCoAuthorRequest, where: r.article_id == ^public.id)
         )
 
-        Repo.delete_all(from(m in ArticleCoAuthor, where: m.article_id == ^public.article_id))
+        Repo.delete_all(from(m in ArticleCoAuthor, where: m.article_id == ^public.id))
         CMS.Seeds.FullCommunity.delete(community.slug)
       end
     end)
@@ -72,7 +72,7 @@ defmodule GroupherServer.Test.CMS.Passport.ArticleCoAuthorConcurrencyTest do
       {community, public, _, _owner} = mock_article(:post)
       {:ok, subject} = db_insert(:user)
       author = Repo.insert!(%Author{user_id: subject.id})
-      article = Repo.get!(Article, public.article_id)
+      article = Repo.get!(Article, public.id)
 
       attrs = %{
         article_id: article.id,

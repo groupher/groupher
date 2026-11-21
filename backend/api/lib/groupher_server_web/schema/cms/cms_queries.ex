@@ -62,24 +62,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       resolve(&R.CMS.CommunityAdmins.management_allowed/3)
     end
-    @desc "Paged ordinary Article Trash for one Community Binding"
-    field :community_article_trash_items, non_null(:community_article_trash_page) do
-      arg(:community_ref, non_null(:string))
-      arg(:thread, non_null(:community_article_trash_thread))
-      arg(:pagi, :pagi_input)
-
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.CommunityTrash.page/3)
-    end
-    @desc "One ordinary Article Trash record for a Community Binding"
-    field :community_article_trash, :community_article_trash_item do
-      arg(:community_ref, non_null(:string))
-      arg(:thread, non_null(:community_article_trash_thread))
-      arg(:id, non_null(:id))
-
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.CommunityTrash.get/3)
-    end
 
     @desc "Paged current co-authors for one Article; requires article.author.manage"
     field :paged_article_co_authors, non_null(:article_co_author_page) do
@@ -114,6 +96,26 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       resolve(&R.CMS.ArticleCoAuthors.permissions/3)
+    end
+
+    @desc "Paged ordinary Article Trash for one Community Binding"
+    field :community_article_trash_items, non_null(:community_article_trash_page) do
+      arg(:community_ref, non_null(:string))
+      arg(:thread, non_null(:community_article_trash_thread))
+      arg(:pagi, :pagi_input)
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityTrash.page/3)
+    end
+
+    @desc "One ordinary Article Trash record for a Community Binding"
+    field :community_article_trash, :community_article_trash_item do
+      arg(:community_ref, non_null(:string))
+      arg(:thread, non_null(:community_article_trash_thread))
+      arg(:id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.CommunityTrash.get/3)
     end
 
     field :docs_queue_policy, :json do
@@ -289,7 +291,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:pagi, :pagi_input)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "audit.read")
+      middleware(M.Passport, action: "audit.read", pass_scope: true)
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Activity.community_activity/3)
     end
@@ -671,7 +673,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "Bounded user picker excluding current moderators"
-    field :moderator_candidates, non_null(list_of(non_null(:common_user))) do
+    field :moderator_candidates, non_null(list_of(non_null(:user))) do
       arg(:community, non_null(:string))
       arg(:name, non_null(:string))
       middleware(M.Authorize, :login)

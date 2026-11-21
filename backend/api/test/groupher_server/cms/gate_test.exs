@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.CMS.Gate do
                CMS.Model.Article,
                nil,
                :read_draft,
-               Article.draft(:post, :owner_management)
+               Article.draft(:post, :owner)
              )
   end
 end

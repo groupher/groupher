@@ -87,12 +87,6 @@ type RootQueryType {
 
   "Whether the viewer can manage Community Admin memberships"
   communityAdminManagementAllowed(communityRef: String!): Boolean!
-  "Paged ordinary Article Trash for one Community Binding"
-  communityArticleTrashItems(communityRef: String!, thread: CommunityArticleTrashThread!, pagi: PagiInput): CommunityArticleTrashPage!
-
-  "One ordinary Article Trash record for a Community Binding"
-  communityArticleTrash(communityRef: String!, thread: CommunityArticleTrashThread!, id: ID!): CommunityArticleTrashItem
-
 
   "Paged current co-authors for one Article; requires article.author.manage"
   pagedArticleCoAuthors(articleId: ID!, pagi: PagiInput): ArticleCoAuthorPage!
@@ -105,6 +99,12 @@ type RootQueryType {
 
   "The current viewer's effective permissions for one Article"
   articlePermissions(articleId: ID!): ArticlePermissions!
+
+  "Paged ordinary Article Trash for one Community Binding"
+  communityArticleTrashItems(communityRef: String!, thread: CommunityArticleTrashThread!, pagi: PagiInput): CommunityArticleTrashPage!
+
+  "One ordinary Article Trash record for a Community Binding"
+  communityArticleTrash(communityRef: String!, thread: CommunityArticleTrashThread!, id: ID!): CommunityArticleTrashItem
 
   docsQueuePolicy(community: String!): Json
 
@@ -278,7 +278,7 @@ type RootQueryType {
   checkCommunityName(slug: String!): CommunityNameCheck
 
   "Bounded user picker excluding current moderators"
-  moderatorCandidates(community: String!, name: String!): [CommonUser!]!
+  moderatorCandidates(community: String!, name: String!): [User!]!
 
   "communities with pagination info"
   pagedCommunities(filter: CommunitiesFilter, pagi: PagiInput): CommunityPage
@@ -638,6 +638,7 @@ type RootMutationType {
 
   "Leave the current user's ordinary Admin membership"
   leaveCommunityAdmins(communityRef: String!, revision: Int!, commandId: ID!): Boolean!
+
   "Hide one ordinary Article from a Community without deleting the Article"
   hideCommunityArticle(communityRef: String!, thread: CommunityArticleTrashThread!, articleId: ID!, commandId: ID!): CommunityArticleBindingTrashItem!
 
@@ -645,7 +646,6 @@ type RootMutationType {
   restoreCommunityArticle(
     communityRef: String!, thread: CommunityArticleTrashThread!, articleId: ID!, id: ID!, recordRevision: String!, commandId: ID!
   ): CommunityArticleBindingTrashItem!
-
 
   "Create an Article co-author invitation or submit the current user's application"
   createArticleCoAuthorRequest(
@@ -2173,6 +2173,7 @@ enum PassportAction {
   TICKET_TRANSITION
   TICKET_UPDATE
 }
+
 enum CommunityArticleTrashThread {
   POST
   BLOG
@@ -2184,7 +2185,6 @@ enum CommunityArticleTrashStatus {
   PENDING
   EFFECTIVE
 }
-
 
 enum ArticleEventType {
   CREATE
@@ -2205,6 +2205,7 @@ input ArticleVersionRefInput {
   workingCopyId: ID
   revision: Int
 }
+
 interface CommunityArticleTrashItem {
   id: ID!
   communityId: ID!

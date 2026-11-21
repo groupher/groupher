@@ -11,7 +11,9 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
     ArticleBinding,
     ArticlePublic,
     ArticleReviewBlock,
-    CommunityLifecycle
+    CommunityAdmin,
+    CommunityLifecycle,
+    GlobalPassport
   }
 
   test "public Article detail, list, and count consume the same Gate visibility" do
@@ -26,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
+    assert {:ok, [%CMS.Model.Article{id: article_id}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     restriction =
@@ -43,26 +45,30 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
 
     {:ok, community_reader_user} = db_insert(:user)
 
-    community_reader = %{
-      community_reader_user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.read" => true}}
-        }
-    }
+    Repo.insert!(
+      CommunityAdmin.changeset(%CommunityAdmin{}, %{
+        user_id: community_reader_user.id,
+        community_id: community.id,
+        permissions: %{"review.read" => true}
+      })
+    )
 
-    assert {:ok, reviewer_article} = CMS.FrontDesk.article(path, community_reader)
-    assert reviewer_article.article_id == article.id
+    assert {:ok, reviewer_article} = CMS.FrontDesk.article(path, community_reader_user)
+    assert reviewer_article.id == article.id
 
     {:ok, platform_reader_user} = db_insert(:user)
 
-    platform_reader = %{
-      platform_reader_user
-      | cur_passport: %{"global" => %{"review.platform.read" => true}}
-    }
+    Repo.insert!(
+      GlobalPassport.changeset(%GlobalPassport{}, %{
+        user_id: platform_reader_user.id,
+        permissions: %{"review.platform.read" => true}
+      })
+    )
 
-    assert {:error, %ErrorCat.Error{reason: :article_not_found}} =
-             CMS.FrontDesk.article(path, platform_reader)
+    assert {:ok, platform_reviewer_article} =
+             CMS.FrontDesk.article(path, platform_reader_user)
+
+    assert platform_reviewer_article.id == article.id
 
     assert {:ok, %{entries: [entry], page_info: %{total_count: 1}}} =
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
@@ -82,7 +88,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
+    assert {:ok, [%CMS.Model.Article{id: article_id}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     Repo.delete!(Repo.get_by!(ArticlePublic, article_id: article.id))
@@ -117,7 +123,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
 
     assert entry.id == article.id
 
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
+    assert {:ok, [%CMS.Model.Article{id: article_id}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     Repo.insert!(%CMS.Model.ArticleReviewBlock{

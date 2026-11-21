@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Doc do
     :community_lifecycle,
     :passport_global_scope,
     :community_passport_scope,
+    :article_passport_scope,
     :public_available?,
     trashed?: false,
     review_scope_keys: [],
@@ -31,6 +32,7 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Doc do
           community_lifecycle: struct(),
           passport_global_scope: struct() | nil,
           community_passport_scope: struct() | nil,
+          article_passport_scope: struct() | nil,
           trashed?: boolean(),
           review_scope_keys: [String.t()],
           review_restricted?: boolean()

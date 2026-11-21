@@ -2518,6 +2518,11 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles.ErrorCat,
     as: :not_exist
 
+  @doc "Delegates CMS.Articles.ErrorCat.unsupported_community_trash_thread/0 through the CMS Context boundary."
+  defdelegate articles_error_cat_unsupported_community_trash_thread(),
+    to: GroupherServer.CMS.Articles.ErrorCat,
+    as: :unsupported_community_trash_thread
+
   @doc "Builds a management-scoped Doc workspace read context."
   defdelegate gate_context_scope_doc_draft(policy_mode),
     to: GroupherServer.CMS.Gate.Context.Scope.Doc,
@@ -2699,6 +2704,30 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.FrontDesk.article/3 through the CMS Context boundary."
   defdelegate front_desk_article(arg1, arg2, arg3), to: GroupherServer.CMS.FrontDesk, as: :article
+
+  @doc "Delegates an explicitly selected Article Snapshot read through CMS.FrontDesk."
+  defdelegate front_desk_article_snapshot(article_id, snapshot_id, community, actor),
+    to: GroupherServer.CMS.FrontDesk,
+    as: :article_snapshot
+
+  defdelegate front_desk_article_snapshot(article_id, snapshot_id, community, actor, opts),
+    to: GroupherServer.CMS.FrontDesk,
+    as: :article_snapshot
+
+  @doc "Delegates an explicitly selected Article WorkingCopy read through CMS.FrontDesk."
+  defdelegate front_desk_article_working_copy(article_id, working_copy_id, community, actor),
+    to: GroupherServer.CMS.FrontDesk,
+    as: :article_working_copy
+
+  defdelegate front_desk_article_working_copy(
+                article_id,
+                working_copy_id,
+                community,
+                actor,
+                opts
+              ),
+              to: GroupherServer.CMS.FrontDesk,
+              as: :article_working_copy
 
   @doc "Delegates CMS.FrontDesk.article_author/1 through the CMS Context boundary."
   defdelegate front_desk_article_author(arg1),

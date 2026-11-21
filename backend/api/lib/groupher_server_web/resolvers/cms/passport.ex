@@ -1,5 +1,10 @@
 defmodule GroupherServerWeb.Resolvers.CMS.Passport do
-  @moduledoc false
+  @moduledoc """
+  Resolves authenticated Global Passport facts and the canonical rule catalog through GraphQL.
+
+      authenticated User -> CMS Passport scope -> current Global Passport payload
+      PermissionRegistry -> public Passport rules
+  """
 
   alias GroupherServer.CMS
   alias GroupherServer.Accounts.Model.User

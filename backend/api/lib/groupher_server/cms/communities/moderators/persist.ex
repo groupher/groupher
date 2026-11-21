@@ -119,22 +119,30 @@ defmodule GroupherServer.CMS.Communities.Moderators.Persist do
          %Community{} = community,
          rules
        ) do
-    count =
-      case get_in(rules, [community.slug]) do
-        %{"root" => true} ->
-          Registry.root_passport_item_count()
+    scope =
+      Enum.find_value(rules, %{}, fn {key, value} ->
+        if to_string(key) == community.slug and is_map(value), do: value
+      end)
 
-        %{"cms" => cms_rules} when is_map(cms_rules) ->
-          Enum.count(cms_rules, &match?({_k, true}, &1))
-
-        %{cms: cms_rules} when is_map(cms_rules) ->
-          Enum.count(cms_rules, &match?({_k, true}, &1))
-
-        _ ->
-          0
+    {is_lord, permissions} =
+      case scope do
+        %{"root" => true} -> {true, %{}}
+        %{root: true} -> {true, %{}}
+        %{"cms" => cms_rules} when is_map(cms_rules) -> {false, cms_rules}
+        %{cms: cms_rules} when is_map(cms_rules) -> {false, cms_rules}
+        _ -> {false, %{}}
       end
 
-    ORM.update(moderator, %{passport_item_count: count})
+    count =
+      if is_lord,
+        do: Registry.root_passport_item_count(),
+        else: Enum.count(permissions, &match?({_key, true}, &1))
+
+    ORM.update(moderator, %{
+      is_lord: is_lord,
+      permissions: permissions,
+      passport_item_count: count
+    })
   end
 
   defp match_passport_community(community_slug, rules) do

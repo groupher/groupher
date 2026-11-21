@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.CMS.Gate.Access do
   @moduledoc false
   use GroupherServer.TestMate, async: false
+  import Ecto.Query
 
   alias GroupherServer.CMS
   alias CMS.Gate.{Access.Check, Decision}
@@ -11,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
   alias CMS.Gate.Context.Access.Article, as: ArticleContext
   alias CMS.Gate.Context.Access.Comment, as: CommentContext
   alias CMS.Gate.Context.Access.Community, as: CommunityContext
-  alias CMS.Model.{ArticleLifecycle, Comment, CommentLifecycle, CommunityLifecycle}
+  alias CMS.Model.{Article, ArticleLifecycle, Comment, CommentLifecycle, CommunityLifecycle}
 
   test "access_check rejects unsupported resources without raising" do
     assert {:error, %Decision{primary: %{reason: :unsupported_resource}}} =
@@ -123,10 +124,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     context = %CommunityContext{
       community: community,
       community_lifecycle: lifecycle,
-      passport_rules: %{
-        "global" => %{},
-        community.slug => %{"cms" => %{"doc.edit" => true, "doc.queue.preview" => true}}
-      }
+      community_passport_scope:
+        community_passport_scope(editor, community, %{"doc.queue.preview" => true})
     }
 
     assert {:ok, :pass} =
@@ -146,15 +145,18 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CommunityPolicy.check_access(nil, :docs_queue_preview, community, context)
 
-    granted =
-      put_in(context.passport_rules[community.slug]["cms"], %{
-        "doc.queue.preview" => true,
-        "doc.queue.write" => true,
-        "doc.queue.approve" => true,
-        "doc.queue.configure" => true,
-        "doc.queue.publish" => true,
-        "doc.history.read" => true
-      })
+    granted = %{
+      context
+      | community_passport_scope:
+          community_passport_scope(editor, community, %{
+            "doc.queue.preview" => true,
+            "doc.queue.write" => true,
+            "doc.queue.approve" => true,
+            "doc.queue.configure" => true,
+            "doc.queue.publish" => true,
+            "doc.history.read" => true
+          })
+    }
 
     for action <- [
           :docs_queue_preview,
@@ -219,6 +221,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       community: community,
       community_lifecycle: community.lifecycle,
       article: article,
+      article_passport_scope: article_passport_scope(user, article),
       article_lifecycle: %ArticleLifecycle{state: :archived}
     }
 
@@ -274,6 +277,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     state_only_context = %ArticleContext{
       article: article,
+      article_passport_scope: article_passport_scope(user, article),
       community: community,
       community_lifecycle: community.lifecycle,
       article_lifecycle: %{state: :published}
@@ -285,6 +289,111 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     assert {:error, %ErrorCat.Error{reason: :lifecycle_not_found}} =
              ArticlePolicy.check_access(user, :edit, invalid_context)
+  end
+
+  test "ordinary Article edit admission consumes Passport article.update for co-authors" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, member} = db_insert(:user)
+    {:ok, community} = mock_community(owner)
+
+    community = %{
+      community
+      | lifecycle: Repo.get_by!(CommunityLifecycle, community_id: community.id)
+    }
+
+    article = %{
+      community_id: community.id,
+      id: Ecto.UUID.generate(),
+      thread: :post,
+      author_id: owner.id,
+      author: %{user_id: owner.id},
+      meta: %{is_comment_locked: false}
+    }
+
+    article_scope = %{
+      article_passport_scope(member, article)
+      | membership: %{
+          permissions: %{
+            "article.read_draft" => true,
+            "article.update" => true
+          }
+        }
+    }
+
+    context = %ArticleContext{
+      article: article,
+      article_passport_scope: article_scope,
+      community: community,
+      community_lifecycle: community.lifecycle,
+      article_lifecycle: %ArticleLifecycle{state: :published},
+      published_article_editable?: true
+    }
+
+    assert {:ok, :pass} = ArticlePolicy.check_access(member, :edit_article, context)
+
+    denied_context = %{context | article_passport_scope: article_passport_scope(member, article)}
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             ArticlePolicy.check_access(member, :edit_article, denied_context)
+  end
+
+  test "co-author management admission requires the Article owner Passport Action" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, stranger} = db_insert(:user)
+    {:ok, community} = mock_community(owner)
+
+    community = %{
+      community
+      | lifecycle: Repo.get_by!(CommunityLifecycle, community_id: community.id)
+    }
+
+    article = %{
+      community_id: community.id,
+      id: Ecto.UUID.generate(),
+      thread: :post,
+      author_id: owner.id,
+      author: %{user_id: owner.id},
+      meta: %{is_comment_locked: false}
+    }
+
+    context = %ArticleContext{
+      article: article,
+      article_passport_scope: article_passport_scope(owner, article),
+      community: community,
+      community_lifecycle: community.lifecycle,
+      article_lifecycle: %ArticleLifecycle{state: :published}
+    }
+
+    assert {:ok, :pass} = ArticlePolicy.check_access(owner, :manage_coauthors, context)
+
+    stranger_context = %{
+      context
+      | article_passport_scope: article_passport_scope(stranger, article)
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             ArticlePolicy.check_access(stranger, :manage_coauthors, stranger_context)
+  end
+
+  test "co-author management Gate check works without an ArticleBinding" do
+    {community, public, _, owner} = mock_article(:post)
+    article = Repo.get!(Article, public.id)
+
+    Repo.delete_all(
+      from(binding in CMS.Model.ArticleBinding,
+        where: binding.article_id == ^article.id and binding.community_id == ^community.id
+      )
+    )
+
+    assert {:ok, canonical} = CMS.Gate.access_check(owner, :manage_coauthors, article)
+    assert canonical.id == article.id
+
+    assert {:ok, {:ok, canonical}} =
+             Repo.transaction(fn ->
+               Check.article(owner, :manage_coauthors, article)
+             end)
+
+    assert canonical.id == article.id
   end
 
   test "single Article read denies active restrictions except to the author" do
@@ -319,39 +428,34 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              ArticlePolicy.check_access(other_user, :read, restricted_context)
 
-    community_reader = %{
-      other_user
-      | cur_passport: %{"global" => %{}, community.slug => %{"cms" => %{"review.read" => true}}}
+    community_reader = other_user
+
+    community_review_context = %{
+      restricted_context
+      | community_passport_scope:
+          community_passport_scope(community_reader, community, %{"review.read" => true}),
+        review_scope_keys: ["community:#{community.id}"]
     }
 
     assert {:ok, :pass} =
-             ArticlePolicy.check_access(
-               community_reader,
-               :read,
-               %{
-                 restricted_context
-                 | passport_rules: community_reader.cur_passport,
-                   review_scope_keys: ["community:#{community.id}"]
-               }
-             )
+             ArticlePolicy.check_access(community_reader, :read, community_review_context)
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              ArticlePolicy.check_access(
                community_reader,
                :read,
                %{
-                 restricted_context
-                 | passport_rules: community_reader.cur_passport,
-                   review_scope_keys: ["platform", "community:#{community.id}"]
+                 community_review_context
+                 | review_scope_keys: ["platform", "community:#{community.id}"]
                }
              )
 
-    platform_reader = %{
-      other_user
-      | cur_passport: %{
-          "global" => %{"review.platform.read" => true},
-          community.slug => %{"cms" => %{"review.read" => true}}
-        }
+    platform_reader = other_user
+
+    platform_review_context = %{
+      community_review_context
+      | passport_global_scope:
+          global_passport_scope(platform_reader, %{"review.platform.read" => true})
     }
 
     assert {:ok, :pass} =
@@ -359,9 +463,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
                platform_reader,
                :read,
                %{
-                 restricted_context
-                 | passport_rules: platform_reader.cur_passport,
-                   review_scope_keys: ["platform", "community:#{community.id}"]
+                 platform_review_context
+                 | review_scope_keys: ["platform", "community:#{community.id}"]
                }
              )
   end
@@ -470,7 +573,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       article: article,
       article_lifecycle: %ArticleLifecycle{state: :published},
       community: community,
-      community_lifecycle: community.lifecycle
+      community_lifecycle: community.lifecycle,
+      article_passport_scope: article_passport_scope(author, article)
     }
 
     assert {:ok, :pass} = ArticlePolicy.check_access(author, :edit, context)
@@ -481,15 +585,13 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              ArticlePolicy.check_access(author, :pin, context)
 
-    moderator = %{
-      moderator
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"post.pin" => true}}
-        }
+    moderator_context = %{
+      context
+      | community_passport_scope:
+          community_passport_scope(moderator, community, %{"post.pin" => true})
     }
 
-    assert {:ok, :pass} = ArticlePolicy.check_access(moderator, :pin, context)
+    assert {:ok, :pass} = ArticlePolicy.check_access(moderator, :pin, moderator_context)
 
     read_only_community = %{
       community
@@ -501,7 +603,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
                moderator,
                :pin,
                %{
-                 context
+                 moderator_context
                  | community: read_only_community,
                    community_lifecycle: read_only_community.lifecycle
                }
@@ -518,17 +620,25 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       | lifecycle: Repo.get_by!(CommunityLifecycle, community_id: community.id)
     }
 
+    article = %{
+      id: Ecto.UUID.generate(),
+      thread: :post,
+      author: %{user_id: author.id},
+      meta: %{is_comment_locked: false}
+    }
+
     comment = %Comment{author_id: author.id}
 
     context = %CommentContext{
       public_readable?: true,
       comment: comment,
       comment_author_user_id: author.id,
-      article: %{thread: :post, meta: %{is_comment_locked: false}},
+      article: article,
       article_lifecycle: %ArticleLifecycle{state: :published},
       comment_lifecycle: %CommentLifecycle{state: :visible},
       community: community,
-      community_lifecycle: community.lifecycle
+      community_lifecycle: community.lifecycle,
+      article_passport_scope: article_passport_scope(author, article)
     }
 
     assert {:ok, :pass} = CommentPolicy.check_access(author, :edit, context)
@@ -545,12 +655,15 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     assert {:ok, :pass} = CommentPolicy.check_access(unrelated, :upvote, context)
 
-    god = %{
-      unrelated
-      | cur_passport: %{"global" => %{"god" => true}}
+    god = unrelated
+
+    god_context = %{
+      context
+      | passport_global_scope: global_passport_scope(god, %{}, true),
+        article_passport_scope: article_passport_scope(god, article, true)
     }
 
-    assert {:ok, :pass} = CommentPolicy.check_access(god, :delete, context)
+    assert {:ok, :pass} = CommentPolicy.check_access(god, :delete, god_context)
   end
 
   test "article mutation admission rejects a read-only community before writing" do
@@ -682,7 +795,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     assert {:ok, _} =
              CMS.Communities.fetch(community.slug, owner,
                inc_views: false,
-               policy_mode: :owner_management
+               policy_mode: :owner
              )
 
     assert {:error,
@@ -694,7 +807,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              CMS.Communities.fetch(community.slug, other_user, inc_views: false)
   end
 
-  test "Community Access loader passes embedded passport facts to Policy" do
+  test "Community Access ignores embedded legacy passport facts" do
     {:ok, owner} = db_insert(:user)
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
@@ -709,7 +822,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
         }
     }
 
-    assert {:ok, %CMS.Model.Community{}} = CMS.Gate.access_check(actor, :update, community)
+    assert {:error, %Decision{allowed: false}} = CMS.Gate.access_check(actor, :update, community)
   end
 
   test "Community Access loader passes database passport facts to Policy" do
@@ -717,14 +830,12 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
 
-    assert {:ok, _passport} =
-             CMS.Passport.stamp_passport(
-               %{
-                 "global" => %{},
-                 community.slug => %{"cms" => %{"community.update" => true}}
-               },
-               actor
-             )
+    Repo.insert!(
+      CMS.Model.GlobalPassport.changeset(%CMS.Model.GlobalPassport{}, %{
+        user_id: actor.id,
+        permissions: %{"community.update" => true}
+      })
+    )
 
     assert {:ok, %CMS.Model.Community{}} = CMS.Gate.access_check(actor, :update, community)
   end
@@ -734,14 +845,13 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
 
-    assert {:ok, _passport} =
-             CMS.Passport.stamp_passport(
-               %{
-                 "global" => %{},
-                 community.slug => %{"cms" => %{"doc.queue.preview" => true}}
-               },
-               actor
-             )
+    Repo.insert!(
+      CMS.Model.CommunityAdmin.changeset(%CMS.Model.CommunityAdmin{}, %{
+        user_id: actor.id,
+        community_id: community.id,
+        permissions: %{"doc.queue.preview" => true}
+      })
+    )
 
     assert {:ok, %CMS.Model.Community{}} =
              CMS.Gate.access_check(actor, :docs_queue_preview, community)
@@ -755,14 +865,14 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
 
-    assert {:ok, %CommunityContext{passport_rules: %{"global" => %{}}}} =
+    assert {:ok, %CommunityContext{passport_global_scope: %{global: %{is_root: false}}}} =
              LoadQuery.community(actor, community)
 
     assert {:error, %Decision{allowed: false}} =
              CMS.Gate.access_check(actor, :update, community)
   end
 
-  test "embedded passport facts avoid a Passport query" do
+  test "embedded legacy passport facts cannot authorize a Community command" do
     {:ok, owner} = db_insert(:user)
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
@@ -775,9 +885,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
         }
     }
 
-    queries = capture_repo_queries(fn -> CMS.Gate.access_check(actor, :update, community) end)
-
-    assert Enum.count(queries, &String.contains?(&1, "passports")) == 0
+    assert {:error, %Decision{allowed: false}} =
+             CMS.Gate.access_check(actor, :update, community)
   end
 
   test "Community Access fails closed when passport loading fails" do
@@ -798,8 +907,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     context = %CommunityContext{
       community: community,
-      community_lifecycle: nil,
-      passport_rules: %{"global" => %{}}
+      community_lifecycle: nil
     }
 
     assert {:error, %ErrorCat.Error{reason: :lifecycle_not_loaded}} =
@@ -821,39 +929,38 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
   defp community_context(community) do
     %CommunityContext{
       community: community,
-      community_lifecycle: Map.get(community, :lifecycle),
-      passport_rules: %{}
+      community_lifecycle: Map.get(community, :lifecycle)
     }
   end
 
-  defp capture_repo_queries(fun) do
-    ref = make_ref()
-    handler_id = {__MODULE__, ref}
-    event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
-
-    :ok =
-      :telemetry.attach(
-        handler_id,
-        event,
-        fn _event, _measurements, metadata, {pid, query_ref} ->
-          send(pid, {query_ref, metadata.query})
-        end,
-        {self(), ref}
-      )
-
-    try do
-      _result = fun.()
-      drain_queries(ref, [])
-    after
-      :telemetry.detach(handler_id)
-    end
+  defp community_passport_scope(actor, community, permissions) do
+    %CMS.Passport.Scope.Community{
+      actor_id: actor.id,
+      community_id: community.id,
+      global: %{is_root: false, permissions: %{}},
+      community: %{
+        member_id: nil,
+        revision: nil,
+        is_lord: false,
+        permissions: permissions
+      }
+    }
   end
 
-  defp drain_queries(ref, queries) do
-    receive do
-      {^ref, query} -> drain_queries(ref, [query | queries])
-    after
-      0 -> Enum.reverse(queries)
-    end
+  defp global_passport_scope(actor, permissions, is_root \\ false) do
+    %CMS.Passport.Scope.Global{
+      actor_id: actor.id,
+      global: %{is_root: is_root, permissions: permissions}
+    }
+  end
+
+  defp article_passport_scope(actor, article, is_root \\ false) do
+    %CMS.Passport.Scope.Article{
+      actor_id: actor.id,
+      article_id: article.id,
+      owner_user_id: article.author.user_id,
+      global: %{is_root: is_root, permissions: %{}},
+      membership: nil
+    }
   end
 end

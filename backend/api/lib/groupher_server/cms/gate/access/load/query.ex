@@ -64,6 +64,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
          %ArticleBinding{thread: :doc} <- site_binding(canonical.id, community.id, mode),
          canonical <- preload_article_author(canonical),
          {:ok, passport_scopes} <- community_passport_scopes(actor, community),
+         {:ok, article_passport_scope} <- article_passport_scope(actor, canonical),
          %CommunityLifecycle{} = community_lifecycle <-
            site_community_lifecycle(community.id, mode),
          %ArticleLifecycle{} = doc_lifecycle <-
@@ -77,6 +78,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
          community_lifecycle: community_lifecycle,
          passport_global_scope: passport_scopes.global,
          community_passport_scope: passport_scopes.community,
+         article_passport_scope: article_passport_scope,
          doc_lifecycle: doc_lifecycle,
          public_available?:
            Repo.exists?(from(p in ArticlePublic, where: p.article_id == ^canonical.id)),
@@ -347,7 +349,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
 
   defp parent_passport_scope(%DocContext{community_passport_scope: scope}, :community), do: scope
   defp parent_passport_scope(%ArticleContext{article_passport_scope: scope}, :article), do: scope
-  defp parent_passport_scope(%DocContext{}, :article), do: nil
+  defp parent_passport_scope(%DocContext{article_passport_scope: scope}, :article), do: scope
 
   defp preload_article_author(resource), do: Repo.preload(resource, author: :user)
 

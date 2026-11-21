@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
       iex> %__MODULE__{stage: :draft} = draft()
   """
 
-  @modes [:public, :owner_management, :moderator_management, :operations, :insights_management]
+  @modes [:public, :owner, :moderator_management, :operations, :insights_management]
   @enforce_keys [:stage, :policy_mode]
   defstruct [
     :stage,
@@ -29,8 +29,8 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
     build(:public, Keyword.get(opts, :policy_mode, :public), opts)
   end
 
-  @doc "Builds a management-scoped default Doc workspace read intent."
-  def draft(policy_mode \\ :owner_management, opts \\ []) do
+  @doc "Builds an owner-scoped default Doc workspace read intent."
+  def draft(policy_mode \\ :owner, opts \\ []) do
     build(:draft, policy_mode, opts)
   end
 

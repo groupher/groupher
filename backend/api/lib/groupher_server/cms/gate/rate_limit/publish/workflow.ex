@@ -17,7 +17,6 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish.Workflow do
   alias Accounts.Model.User
   alias CMS.Gate.ErrorCat
   alias CMS.Gate.RateLimit.Publish.{Config, Model.PublishThrottle}
-  alias CMS.Passport.Registry
   alias Helper.{Datetime, ORM}
   alias Helper.ORM.AdvisoryLock
 
@@ -37,10 +36,9 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish.Workflow do
   def check(user, opts \\ [])
 
   def check(user, opts) when is_map(user) do
-    passport = Map.get(user, :cur_passport)
     user = %User{id: Map.get(user, :id)}
 
-    if get_in(Registry.normalize_rules(passport), ["global", "god"]) == true do
+    if system_root?(user.id) do
       {:ok, :publish}
     else
       case load_and_reset(user) do
@@ -70,13 +68,12 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish.Workflow do
 
   def check_in_transaction(user, opts) when is_map(user) and is_list(opts) do
     user_id = Map.get(user, :id)
-    passport = Map.get(user, :cur_passport)
 
     cond do
       not Repo.in_transaction?() ->
         {:error, :transaction_required}
 
-      get_in(Registry.normalize_rules(passport), ["global", "god"]) == true ->
+      system_root?(user_id) ->
         {:ok, :publish}
 
       true ->
@@ -88,6 +85,15 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish.Workflow do
   end
 
   def check_in_transaction(_user, _opts), do: {:error, :invalid_actor}
+
+  defp system_root?(user_id) do
+    case CMS.Passport.system_root?(user_id) do
+      {:ok, true} -> true
+      _ -> false
+    end
+  rescue
+    _ -> false
+  end
 
   defp check_locked(user_id, opts) do
     case load_and_reset_locked(user_id) do

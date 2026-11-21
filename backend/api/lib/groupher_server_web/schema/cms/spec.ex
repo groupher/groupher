@@ -34,6 +34,11 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
     passport_action_values()
   end
 
+  object :global_passport do
+    field(:is_root, non_null(:boolean))
+    field(:permissions, non_null(list_of(non_null(:passport_action))))
+  end
+
   enum :community_article_trash_thread do
     value(:post)
     value(:blog)

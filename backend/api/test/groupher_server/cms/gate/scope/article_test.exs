@@ -139,7 +139,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     {sql, params} = to_sql(query)
 
     assert sql =~ ~s(FROM "cms"."authors")
-    assert sql =~ ~s("cms"."communities_moderators")
+    assert sql =~ ~s("cms"."communities_admins")
     assert sql =~ "slug"
     assert ["community-a"] in params
 

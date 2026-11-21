@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Model.CommunityModerator do
 
   @schema_prefix DBPrefix.cms()
 
-  @optional_fields ~w(passport_item_count)a
+  @optional_fields ~w(is_lord permissions passport_item_count)a
   @required_fields ~w(user_id community_id)a
 
   @type t :: %CommunityModerator{}
@@ -36,6 +36,8 @@ defmodule GroupherServer.CMS.Model.CommunityModerator do
   # schema as the compatibility mapping used by the moderator-facing API until
   # those legacy callers are migrated to Passport directly.
   schema "communities_admins" do
+    field(:is_lord, :boolean, default: false)
+    field(:permissions, :map, default: %{})
     field(:is_root, :boolean, virtual: true, default: false)
     field(:passport_item_count, :integer)
     belongs_to(:user, User, foreign_key: :user_id)

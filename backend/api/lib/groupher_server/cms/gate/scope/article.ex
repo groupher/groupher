@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   @draft_lifecycle_states [:draft, :published, :archived]
   @actions [:read, :read_draft, :list, :read_insights]
   @management_policy_modes [
-    :owner_management,
+    :owner,
     :moderator_management,
     :operations,
     :insights_management
@@ -212,7 +212,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   end
 
   # Read admission only: Public/Body alignment does not guarantee Snapshot metadata
-  # or its typed extension can be projected. Public.current/SnapshotProjection own
+  # or its typed extension can be loaded. FrontDesk.Article owns
   # those failures; PublicReadReport diagnoses them independently of Scope.
   # Depends on the publish tree retaining community_id/stage/type/doc_id semantics
   # and the unique public page (community_id, stage, doc_id) index. Queue cutovers
@@ -355,7 +355,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   end
 
   defp apply_actor_policy(query, actor, policy_mode, _context)
-       when policy_mode in [:owner_management, :moderator_management, :operations] do
+       when policy_mode in [:owner, :moderator_management, :operations] do
     case CommunityChain.community_actor(query, policy_mode, actor) do
       %Ecto.Query{} = scoped -> {:ok, scoped}
       {:error, reason} -> {:error, reason}
@@ -490,7 +490,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     draft_head_scope(query, %ArticleContext{
       thread: :doc,
       stage: :draft,
-      policy_mode: :owner_management
+      policy_mode: :owner
     })
   end
 end

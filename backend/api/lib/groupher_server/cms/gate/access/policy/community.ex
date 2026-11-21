@@ -64,7 +64,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     :ticket_transition,
     :ticket_assign,
     :ticket_manage_case,
-    :ticket_manage_visibility
+    :ticket_manage_visibility,
+    :community_tag_create,
+    :community_tag_update,
+    :community_tag_delete,
+    :community_tag_reindex
   ]
 
   @doc """
@@ -312,6 +316,16 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       passport_allowed?(user, community, category_passport_action(action), context, nil)
   end
 
+  defp command_binding_allowed?(user, community, action, context)
+       when action in [
+              :community_tag_create,
+              :community_tag_update,
+              :community_tag_delete,
+              :community_tag_reindex
+            ] do
+    passport_allowed?(user, community, community_tag_passport_action(action), context, nil)
+  end
+
   defp command_binding_allowed?(user, community, _action, context) do
     base_command_binding_allowed?(user, community, context) or
       passport_allowed?(user, community, Const.passport_action(:community_update), context, nil)
@@ -322,6 +336,18 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp category_passport_action(:category_delete), do: Const.passport_action(:category_delete)
   defp category_passport_action(:category_set), do: Const.passport_action(:category_set)
   defp category_passport_action(:category_unset), do: Const.passport_action(:category_unset)
+
+  defp community_tag_passport_action(:community_tag_create),
+    do: CMS.GateAction.community_tag_create()
+
+  defp community_tag_passport_action(:community_tag_update),
+    do: CMS.GateAction.community_tag_update()
+
+  defp community_tag_passport_action(:community_tag_delete),
+    do: CMS.GateAction.community_tag_delete()
+
+  defp community_tag_passport_action(:community_tag_reindex),
+    do: CMS.GateAction.community_tag_reindex()
 
   defp docs_passport_action(:docs_queue_preview), do: CMS.GateAction.doc_queue_preview()
   defp docs_passport_action(:docs_queue_write), do: CMS.GateAction.doc_queue_write()

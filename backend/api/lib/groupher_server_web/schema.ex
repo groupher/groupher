@@ -46,8 +46,8 @@ defmodule GroupherServerWeb.Schema do
   import_types(CMS.Review.Queries)
   import_types(CMS.ContentImport)
   import_types(CMS.Mutations.Community)
-  import_types(CMS.Mutations.CommunityTrash)
   import_types(CMS.Mutations.CommunityAdmins)
+  import_types(CMS.Mutations.CommunityTrash)
   import_types(CMS.Mutations.ArticleCoAuthors)
   import_types(CMS.Mutations.Operation)
 
@@ -73,8 +73,8 @@ defmodule GroupherServerWeb.Schema do
     import_fields(:account_mutations)
     # cms
     import_fields(:cms_mutation_community)
-    import_fields(:cms_community_trash_mutations)
     import_fields(:cms_community_admin_mutations)
+    import_fields(:cms_community_trash_mutations)
     import_fields(:cms_article_co_author_mutations)
     import_fields(:cms_operation_mutations)
 

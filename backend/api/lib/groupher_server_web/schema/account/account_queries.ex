@@ -45,6 +45,12 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       resolve(&R.Accounts.Profiles.me/3)
     end
 
+    @desc "The authenticated viewer's Global Passport facts"
+    field :current_global_passport, non_null(:global_passport) do
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.Passport.current_global/3)
+    end
+
     @desc "get user by login"
     field :user, :user do
       arg(:login, non_null(:string))

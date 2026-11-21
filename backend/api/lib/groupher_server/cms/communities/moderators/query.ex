@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Communities.Moderators.Query do
     query =
       from(member in CommunityModerator,
         where: member.community_id == ^id,
-        preload: [:community, user: :cms_passport]
+        preload: [:community, :user]
       )
 
     sort = Map.get(filter, :sort, :desc_inserted)
@@ -60,22 +60,13 @@ defmodule GroupherServer.CMS.Communities.Moderators.Query do
              ) do
         entries =
           Enum.map(page.entries, fn membership ->
-            passport =
-              case membership.user.cms_passport do
-                %{rules: rules} -> rules
-                _ -> %{}
-              end
-
-            root = get_in(passport, [membership.community.slug, "root"]) == true
+            root = membership.is_lord
 
             count =
               if root,
                 do: GroupherServer.CMS.Passport.Registry.root_passport_item_count(),
                 else:
-                  Enum.count(get_in(passport, [membership.community.slug, "cms"]) || %{}, fn {_,
-                                                                                              enabled} ->
-                    enabled == true
-                  end)
+                  Enum.count(membership.permissions || %{}, fn {_action, enabled} -> enabled end)
 
             %{membership | is_root: root, passport_item_count: count}
           end)

@@ -181,7 +181,7 @@ defmodule GroupherServer.CMS.Communities.Admins do
   defp readable_community(ref, actor) do
     case FrontDesk.community({:ref, ref}, actor, mode: :public) do
       {:ok, community} -> {:ok, community}
-      {:error, _} -> FrontDesk.community({:ref, ref}, actor, mode: :management)
+      {:error, _} -> FrontDesk.community({:ref, ref}, actor, mode: :admin)
     end
   end
 end

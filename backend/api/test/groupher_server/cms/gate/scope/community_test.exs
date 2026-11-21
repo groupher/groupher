@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
     {:ok, owner} = db_insert(:user)
 
     owner_query =
-      CMS.Gate.scope(Community, owner, :read, CommunityContext.owner_management())
+      CMS.Gate.scope(Community, owner, :read, CommunityContext.owner())
 
     assert %Ecto.Query{} = owner_query
 
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
            ] in owner_params
 
     assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
-             CMS.Gate.scope(Community, nil, :read, CommunityContext.owner_management())
+             CMS.Gate.scope(Community, nil, :read, CommunityContext.owner())
 
     assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
              CMS.Gate.scope(Community, owner, :read, CommunityContext.operations())
@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
 
     assert %Ecto.Query{} = moderator_query
     {moderator_sql, _moderator_params} = to_sql(moderator_query)
-    assert moderator_sql =~ "communities_moderators"
+    assert moderator_sql =~ "communities_admins"
     assert moderator_sql =~ "exists("
 
     operations_query =
@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
         |> where([candidate], candidate.id == ^community.id)
 
       management_query =
-        CMS.Gate.scope(Community, owner, :read, CommunityContext.owner_management())
+        CMS.Gate.scope(Community, owner, :read, CommunityContext.owner())
         |> where([candidate], candidate.id == ^community.id)
 
       assert Repo.exists?(public_query) == state in [:active, :read_only]

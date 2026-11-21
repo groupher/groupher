@@ -120,7 +120,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   def community_actor(query, :public, _actor), do: query
 
   @doc false
-  def community_actor(query, :owner_management, %{id: actor_id}) when is_integer(actor_id) do
+  def community_actor(query, :owner, %{id: actor_id}) when is_integer(actor_id) do
     from([gate_community: community] in query, where: community.user_id == ^actor_id)
   end
 
@@ -195,13 +195,13 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   defp apply_community_lifecycle(query, policy_mode)
        when policy_mode in [
-              :owner_management,
+              :owner,
               :moderator_management,
               :operations,
               :insights_management
             ] do
     lifecycle_mode =
-      if policy_mode == :insights_management, do: :owner_management, else: policy_mode
+      if policy_mode == :insights_management, do: :owner, else: policy_mode
 
     from([gate_community_lifecycle: lifecycle] in query,
       where: lifecycle.state in ^Communities.Lifecycle.readable_states(lifecycle_mode)

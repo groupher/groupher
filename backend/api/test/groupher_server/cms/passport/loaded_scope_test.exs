@@ -10,7 +10,12 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
     {:ok, owner} = db_insert(:user)
     {:ok, other} = db_insert(:user)
     {:ok, root} = db_insert(:user)
-    Repo.insert!(%GlobalPassport{user_id: root.id, is_root: true})
+    root_passport = Repo.get_by(GlobalPassport, user_id: root.id) || %GlobalPassport{}
+
+    root_passport
+    |> GlobalPassport.changeset(%{user_id: root.id, is_root: true})
+    |> Repo.insert_or_update!()
+
     author = Repo.insert!(%Author{user_id: owner.id})
     article = %Article{id: Ecto.UUID.generate(), author: author}
 
@@ -118,9 +123,9 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
 
   test "Gate refuses malformed loaded Global facts rather than dropping them" do
     {community, public, _, actor} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
 
-    Repo.insert!(%GlobalPassport{user_id: actor.id})
+    passport = Repo.get_by!(GlobalPassport, user_id: actor.id)
 
     actor.id
     |> then(&Repo.get_by!(GlobalPassport, user_id: &1))

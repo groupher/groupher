@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
 
     unless policy_mode in [
              :public,
-             :owner_management,
+             :owner,
              :moderator_management,
              :operations
            ] do
