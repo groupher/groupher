@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Mutations do
   use Helper.GqlSchemaSuite
 
   object :cms_press_mutations do
+    @desc "Updates a community's Press configuration."
     field :update_press_config, :press_config_payload do
       arg(:input, non_null(:update_press_config_input))
       arg(:command_id, non_null(:id))

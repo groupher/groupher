@@ -1,0 +1,298 @@
+defmodule GroupherServerWeb.Schema.Account.Spec do
+  @moduledoc """
+  Shared GraphQL object, input, filter, and enum types for the Accounts API.
+
+  These types project Accounts schemas into the stable browser/internal-service
+  contract and attach field-level resolvers for associations and viewer state.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Types
+        -> resolver or domain context
+        -> GraphQL response
+  """
+  use Helper.GqlSchemaSuite
+
+  import GroupherServerWeb.Schema.Helper.Fields
+  import Absinthe.Resolution.Helpers
+
+  alias GroupherServer.Accounts
+  alias GroupherServerWeb.Schema
+
+  import_types(Schema.Account.Metrics)
+
+  object :session_state do
+    field(:user, :user)
+    field(:is_valid, :boolean)
+    field(:delegation_subject, :string)
+  end
+
+  object :linked_oauth_account do
+    field(:public_ref, non_null(:id))
+    field(:provider, non_null(:string))
+    field(:login, :string)
+    field(:nickname, :string)
+    field(:avatar, :string)
+    field(:can_unlink, non_null(:boolean))
+    field(:linked_at, non_null(:datetime))
+  end
+
+  object :linked_oauth_accounts do
+    field(:entries, non_null(list_of(non_null(:linked_oauth_account))))
+  end
+
+  object :profile_view_track_result do
+    field(:tracked, non_null(:boolean))
+    field(:views, non_null(:integer))
+  end
+
+  object :user_meta do
+    field(:is_maker, :boolean)
+    field(:published_posts_count, :integer)
+    field(:published_blogs_count, :integer)
+    field(:reported_count, :integer, resolve: &R.AlertWall.reported_count/3)
+  end
+
+  object :user do
+    meta(:cache, max_age: 30)
+
+    field(:login, non_null(:string))
+
+    field(:meta, :user_meta,
+      resolve: fn %{id: user_id, meta: meta}, _, _ ->
+        {:ok, Map.put(meta || %{}, :user_id, user_id)}
+      end
+    )
+
+    field(:nickname, :string)
+    field(:avatar, :string)
+    field(:bio, :string)
+    field(:shortbio, :string)
+    field(:sex, :string)
+    field(:email, :string)
+
+    field(:location, :string)
+    field(:geo_city, :string)
+
+    field(:views, :integer)
+    field(:social, :social_map, resolve: dataloader(Accounts, :social))
+
+    # field(:achievement, :achievement, resolve: dataloader(Accounts, :achievement))
+
+    field(:achievement, :achievement) do
+      resolve(dataloader(Accounts, :achievement))
+      middleware(M.AchievementProof)
+    end
+
+    field(:passport_string, :string) do
+      middleware(M.Authorize, :login)
+      resolve(&R.Accounts.Passport.get_passport_string/3)
+    end
+
+    field(:passport, :json) do
+      middleware(M.Authorize, :login)
+      resolve(&R.Accounts.Passport.get_passport/3)
+    end
+
+    field(:subscribed_communities_count, :integer)
+
+    @desc "get follower users count"
+    field(:followers_count, :integer)
+
+    @desc "get following users count"
+    field(:followings_count, :integer)
+
+    @desc "if viewer has followed"
+    field(:viewer_has_followed, :boolean)
+    @desc "if viewer has been followed"
+    field(:viewer_been_followed, :boolean)
+
+    field(:contributes, :contribute_map)
+
+    # 2. has_system_messages ?
+    # 3. has_notifications ?
+    # 4. has_watches ?
+
+    @desc "Mailbox unread counters and empty state for the current viewer."
+    field :mailbox, :mailbox_status do
+      middleware(M.Authorize, :login)
+      resolve(&R.Accounts.Mailbox.mailbox_status/3)
+    end
+
+    timestamp_fields()
+  end
+
+  object :mailbox_status do
+    field(:is_empty, :boolean)
+    field(:unread_total_count, :integer)
+    field(:unread_mentions_count, :integer)
+    field(:unread_notifications_count, :integer)
+  end
+
+  object :mailbox_mention do
+    field(:id, :id)
+    field(:thread, :thread)
+    field(:article_id, :id)
+    field(:title, :string)
+    field(:comment_id, :id)
+    field(:read, :boolean)
+
+    field(:block_linker, list_of(:string))
+
+    field(:user, :common_user)
+
+    timestamp_fields()
+  end
+
+  object :mailbox_notification do
+    field(:id, :id)
+    field(:action, :string)
+    field(:thread, :thread)
+    field(:article_id, :id)
+    field(:title, :string)
+    field(:comment_id, :id)
+    field(:read, :boolean)
+
+    field(:from_users, list_of(:common_user))
+    field(:from_users_count, :integer)
+
+    timestamp_fields()
+  end
+
+  object :github_profile do
+    field(:id, :id)
+    field(:github_id, :string)
+    # field(:user, :user, resolve: dataloader(Accounts, :user))
+    field(:login, :string)
+    field(:avatar_url, :string)
+    field(:url, :string)
+    field(:html_url, :string)
+    field(:name, :string)
+    field(:company, :string)
+    field(:blog, :string)
+    field(:location, :string)
+    field(:email, :string)
+    field(:bio, :string)
+    field(:public_repos, :integer)
+    field(:public_gists, :integer)
+  end
+
+  object :education_background do
+    field(:school, :string)
+    field(:major, :string)
+  end
+
+  object :work_background do
+    field(:company, :string)
+    field(:title, :string)
+  end
+
+  object :social_map do
+    social_fields()
+  end
+
+  object :collect_folder_meta do
+    collect_folder_meta_fields()
+  end
+
+  object :collect_folder do
+    field(:id, :id)
+    field(:title, :string)
+    field(:desc, :string)
+    field(:index, :integer)
+    field(:total_count, :integer)
+    field(:private, :boolean)
+    field(:last_updated, :datetime)
+    field(:meta, :collect_folder_meta)
+
+    timestamp_fields()
+  end
+
+  object :collect_folder_page do
+    field(:entries, list_of(:collect_folder))
+    pagi_fields()
+  end
+
+  object :source_contribute do
+    field(:web, :boolean)
+    field(:server, :boolean)
+    field(:we_app, :boolean)
+    field(:h5, :boolean)
+    field(:mobile, :boolean)
+  end
+
+  object :achievement do
+    field(:reputation, :integer)
+    # field(:followers_count, :integer)
+    field(:articles_upvotes_count, :integer)
+    field(:articles_collects_count, :integer)
+    # field(:contents_watched_count, :integer)
+
+    field(:source_contribute, :source_contribute)
+  end
+
+  object :browser_signin_result do
+    field(:access_token, :string)
+    field(:access_expires_at, :datetime)
+    field(:browser_session_ref, :string)
+    field(:session_absolute_expires_at, :datetime)
+  end
+
+  object :browser_session_page do
+    field(:entries, non_null(list_of(non_null(:browser_session))))
+    pagi_fields()
+  end
+
+  object :browser_session do
+    field(:public_ref, :string)
+    field(:is_current, :boolean)
+    field(:status, :string)
+    field(:browser_family, :string)
+    field(:os_family, :string)
+    field(:device_family, :string)
+    field(:user_agent_summary, :string)
+    field(:created_country, :string)
+    field(:created_region, :string)
+    field(:created_city, :string)
+    field(:last_seen_country, :string)
+    field(:last_seen_region, :string)
+    field(:last_seen_city, :string)
+    field(:inserted_at, :datetime)
+    field(:last_seen_at, :datetime)
+  end
+
+  input_object :browser_session_metadata_input do
+    field(:browser_family, :string)
+    field(:os_family, :string)
+    field(:device_family, :string)
+    field(:user_agent_summary, :string)
+    field(:created_country, :string)
+    field(:created_region, :string)
+    field(:created_city, :string)
+  end
+
+  object :rules do
+    field(:cms, :json)
+  end
+
+  object :user_page do
+    field(:entries, non_null(list_of(non_null(:user))))
+    pagi_fields()
+  end
+
+  object :paged_mailbox_mentions do
+    field(:entries, list_of(:mailbox_mention))
+    pagi_fields()
+  end
+
+  object :paged_mailbox_notifications do
+    field(:entries, list_of(:mailbox_notification))
+    pagi_fields()
+  end
+
+  enum :mailbox_type do
+    value(:mention)
+    value(:notification)
+  end
+end

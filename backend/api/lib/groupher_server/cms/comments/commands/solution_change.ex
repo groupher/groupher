@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
         -> Gate aggregate admission
         -> PostSolution binding + Activity
 
-  The supplied command id is also the Activity operation reference. No second
-  UUID is created inside the aggregate callback.
+  The Receipt-owned operation reference is passed into Activity. The client
+  command id remains the retry key and is not used as the operation identity.
   """
 
   use GroupherServer.CommandPipeline,
@@ -53,9 +53,15 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
       CMS.Gate.check_comment_in_transaction(actor, :accept_solution, candidate, community)
     end)
 
-    change(fn {canonical, post} ->
+    change(fn {canonical, post}, operation_ref ->
       with {:ok, changed} <-
-             Solution.apply_in_transaction(:accept_solution, post, canonical, actor, command_id) do
+             Solution.apply_in_transaction(
+               :accept_solution,
+               post,
+               canonical,
+               actor,
+               operation_ref
+             ) do
         {:ok, {changed, post}}
       end
     end)
@@ -77,9 +83,15 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
       CMS.Gate.check_comment_in_transaction(actor, :revoke_solution, candidate, community)
     end)
 
-    change(fn {canonical, post} ->
+    change(fn {canonical, post}, operation_ref ->
       with {:ok, changed} <-
-             Solution.apply_in_transaction(:revoke_solution, post, canonical, actor, command_id) do
+             Solution.apply_in_transaction(
+               :revoke_solution,
+               post,
+               canonical,
+               actor,
+               operation_ref
+             ) do
         {:ok, {changed, post}}
       end
     end)

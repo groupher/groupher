@@ -4,6 +4,7 @@ import {
   CONTENT_PUBLISH_ERROR_CODE,
   CONTENT_PUBLISH_ACTION,
   CONTENT_PUBLISH_RESOURCE,
+  CONTENT_HISTORY_ORIGIN_SCOPE_BY_ACTION,
   CONTENT_SCOPE_BY_ACTION,
   parseContentPublishCommand,
   type TContentPublishCommand,
@@ -48,6 +49,9 @@ const graphQLErrorProjection = (errors: NonNullable<TGraphQLPayload['errors']>) 
   if (authCode) return { code: authCode, status: 401 }
   if (codes.has('SERVICE_SCOPE_FORBIDDEN')) return { code: 'forbidden', status: 403 }
   if (codes.has('RATE_LIMITED') || codes.has('429')) return { code: 'rate_limited', status: 429 }
+  if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.ARTICLE_WORKING_COPY_REVISION_CONFLICT)))
+    return { code: 'revision_conflict', status: 409 }
+  if (codes.has('4569')) return { code: 'revision_conflict', status: 409 }
   if (
     codes.has(String(CONTENT_PUBLISH_ERROR_CODE.DRAFT_VERSION_CONFLICT)) ||
     codes.has(String(CONTENT_PUBLISH_ERROR_CODE.COMMENT_BODY_VERSION_CONFLICT))
@@ -112,9 +116,12 @@ const executeMutation = async ({
   options: TAdapterOptions
   variables: Record<string, unknown>
 }): Promise<Response> => {
+  const historyOriginScope = CONTENT_HISTORY_ORIGIN_SCOPE_BY_ACTION[action]
   const serviceToken = await options.serviceAuthClient.getToken({
     resource: CONTENT_PUBLISH_RESOURCE,
-    scopes: [CONTENT_SCOPE_BY_ACTION[action]],
+    scopes: historyOriginScope
+      ? [CONTENT_SCOPE_BY_ACTION[action], historyOriginScope]
+      : [CONTENT_SCOPE_BY_ACTION[action]],
   })
   const fetcher = options.fetcher
   const response = await fetcher(phoenixEndpoint(options.environment), {
@@ -166,34 +173,10 @@ const executeMutation = async ({
   return Response.json({ ok: true, result: payload.data[field] }, { headers: RESPONSE_HEADERS })
 }
 
-const updateDocDraft = async (
-  command: Extract<
-    TContentPublishCommand,
-    { action: typeof CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT }
-  >,
-  options: Required<Pick<THandlerOptions, 'backendToken' | 'fetcher'>> & {
-    environment: Record<string, string | undefined>
-    serviceAuthClient: TServiceAuthClient
-  },
-): Promise<Response> => {
-  const bodyBag = await publishContent(command.payload.content)
-  return executeMutation({
-    action: command.action,
-    document: CONTENT_PUBLISH_OPERATIONS.updateDocDraft,
-    field: 'updateDocDraft',
-    options,
-    variables: {
-      bodyBag,
-      commandId: command.commandId,
-      community: command.target.community,
-      expectedVersion: command.expectedVersion,
-      id: command.target.documentId,
-      slug: command.payload.slug,
-      subtitle: command.payload.subtitle,
-      title: command.payload.title,
-    },
-  })
-}
+const graphqlBodyBag = <T extends { thumbnail: unknown }>(bodyBag: T) => ({
+  ...bodyBag,
+  thumbnail: JSON.stringify(bodyBag.thumbnail ?? null),
+})
 
 const createComment = async (
   command: Extract<
@@ -213,11 +196,15 @@ const createComment = async (
     options,
     variables: reply
       ? {
-          bodyBag,
+          bodyBag: graphqlBodyBag(bodyBag),
           commandId: command.commandId,
           comment: { article: command.target.article, innerId: command.target.parentId },
         }
-      : { article: command.target.article, bodyBag, commandId: command.commandId },
+      : {
+          article: command.target.article,
+          bodyBag: graphqlBodyBag(bodyBag),
+          commandId: command.commandId,
+        },
   })
 }
 
@@ -235,31 +222,12 @@ const updateComment = async (
     field: 'updateComment',
     options,
     variables: {
-      bodyBag,
+      bodyBag: graphqlBodyBag(bodyBag),
       commandId: command.commandId,
       comment: command.target.comment,
       expectedVersion: command.expectedVersion,
     },
   })
-}
-
-const articleOperation = (action: 'create' | 'update', thread: string) => {
-  switch (thread.toLowerCase()) {
-    case 'post':
-      return action === 'create'
-        ? { document: CONTENT_PUBLISH_OPERATIONS.createPost, field: 'createPost' }
-        : { document: CONTENT_PUBLISH_OPERATIONS.updatePost, field: 'updatePost' }
-    case 'blog':
-      return action === 'create'
-        ? { document: CONTENT_PUBLISH_OPERATIONS.createBlog, field: 'createBlog' }
-        : { document: CONTENT_PUBLISH_OPERATIONS.updateBlog, field: 'updateBlog' }
-    case 'changelog':
-      return action === 'create'
-        ? { document: CONTENT_PUBLISH_OPERATIONS.createChangelog, field: 'createChangelog' }
-        : { document: CONTENT_PUBLISH_OPERATIONS.updateChangelog, field: 'updateChangelog' }
-    default:
-      return null
-  }
 }
 
 const createArticle = async (
@@ -269,48 +237,120 @@ const createArticle = async (
   >,
   options: TAdapterOptions,
 ): Promise<Response> => {
-  const operation = articleOperation('create', command.target.thread)
-  if (!operation) return failure(422, 'unsupported_thread', 'Article thread is not supported.')
   const bodyBag = await publishContent(command.payload.content)
   return executeMutation({
     action: command.action,
-    ...operation,
+    document: CONTENT_PUBLISH_OPERATIONS.createArticle,
+    field: 'createArticle',
     options,
     variables: {
-      bodyBag,
+      bodyBag: graphqlBodyBag(bodyBag),
       commandId: command.commandId,
       community: command.target.community,
-      communityTags: command.payload.tagIds,
-      ...(command.target.thread.toLowerCase() === 'post' ? { cat: command.payload.category } : {}),
+      copyRight: command.payload.copyRight,
+      digest: command.payload.digest,
+      coverUrl: command.payload.coverUrl,
+      coverUrlDark: command.payload.coverUrlDark,
+      linkAddr: command.payload.linkAddr,
+      slug: command.payload.slug,
+      subtitle: command.payload.subtitle,
+      tagIds: command.payload.tagIds,
+      templateKey: command.payload.templateKey,
+      thread: command.target.thread.toUpperCase(),
       title: command.payload.title,
     },
   })
 }
 
-const updateArticle = async (
+const createAndPublishArticle = async (
   command: Extract<
     TContentPublishCommand,
-    { action: typeof CONTENT_PUBLISH_ACTION.UPDATE_ARTICLE }
+    { action: typeof CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE }
   >,
   options: TAdapterOptions,
 ): Promise<Response> => {
-  const operation = articleOperation('update', command.target.article.thread)
-  if (!operation) return failure(422, 'unsupported_thread', 'Article thread is not supported.')
   const bodyBag = await publishContent(command.payload.content)
   return executeMutation({
     action: command.action,
-    ...operation,
+    document: CONTENT_PUBLISH_OPERATIONS.createAndPublishArticle,
+    field: 'createAndPublishArticle',
     options,
     variables: {
-      article: command.target.article,
-      bodyBag,
+      bodyBag: graphqlBodyBag(bodyBag),
       commandId: command.commandId,
-      communityTags: command.payload.tagIds,
-      ...(command.target.article.thread.toLowerCase() === 'post'
-        ? { cat: command.payload.category }
-        : {}),
-      expectedVersion: command.expectedVersion,
+      community: command.target.community,
+      copyRight: command.payload.copyRight,
+      digest: command.payload.digest,
+      coverUrl: command.payload.coverUrl,
+      coverUrlDark: command.payload.coverUrlDark,
+      linkAddr: command.payload.linkAddr,
+      slug: command.payload.slug,
+      subtitle: command.payload.subtitle,
+      tagIds: command.payload.tagIds,
+      templateKey: command.payload.templateKey,
+      thread: command.target.thread.toUpperCase(),
       title: command.payload.title,
+    },
+  })
+}
+
+const saveWorkingCopy = async (
+  command: Extract<
+    TContentPublishCommand,
+    { action: typeof CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY }
+  >,
+  options: TAdapterOptions,
+): Promise<Response> => {
+  const bodyBag = await publishContent(command.payload.content)
+  return executeMutation({
+    action: command.action,
+    document: CONTENT_PUBLISH_OPERATIONS.saveWorkingCopy,
+    field: 'saveWorkingCopy',
+    options,
+    variables: {
+      articleId: command.target.articleId,
+      bodyBag: graphqlBodyBag(bodyBag),
+      commandId: command.commandId,
+      community: command.target.community,
+      copyRight: command.payload.copyRight,
+      digest: command.payload.digest,
+      coverUrl: command.payload.coverUrl,
+      coverUrlDark: command.payload.coverUrlDark,
+      linkAddr: command.payload.linkAddr,
+      revision: command.revision,
+      slug: command.payload.slug,
+      subtitle: command.payload.subtitle,
+      tagIds: command.payload.tagIds,
+      title: command.payload.title,
+      templateKey: command.payload.templateKey,
+      workingCopyId: command.target.workingCopyId,
+    },
+  })
+}
+
+const saveDocQueueCopy = async (
+  command: Extract<
+    TContentPublishCommand,
+    { action: typeof CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY }
+  >,
+  options: TAdapterOptions,
+): Promise<Response> => {
+  const bodyBag = await publishContent(command.payload.content)
+  return executeMutation({
+    action: command.action,
+    document: CONTENT_PUBLISH_OPERATIONS.saveDocsQueueCopy,
+    field: 'saveDocsQueueCopy',
+    options,
+    variables: {
+      articleId: command.target.articleId,
+      bodyBag: graphqlBodyBag(bodyBag),
+      commandId: command.commandId,
+      community: command.target.community,
+      queueRevision: command.queueRevision,
+      workingCopyRevision: command.revision,
+      title: command.payload.title,
+      subtitle: command.payload.subtitle,
+      slug: command.payload.slug,
     },
   })
 }
@@ -342,13 +382,6 @@ export const handleContentPublishRequest = async (
       target: parsed.value.target,
     })
     switch (parsed.value.action) {
-      case CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT:
-        return await updateDocDraft(parsed.value, {
-          backendToken: options.backendToken,
-          environment,
-          fetcher,
-          serviceAuthClient: client,
-        })
       case CONTENT_PUBLISH_ACTION.CREATE_COMMENT:
         return await createComment(parsed.value, {
           backendToken: options.backendToken,
@@ -370,8 +403,22 @@ export const handleContentPublishRequest = async (
           fetcher,
           serviceAuthClient: client,
         })
-      case CONTENT_PUBLISH_ACTION.UPDATE_ARTICLE:
-        return await updateArticle(parsed.value, {
+      case CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY:
+        return await saveWorkingCopy(parsed.value, {
+          backendToken: options.backendToken,
+          environment,
+          fetcher,
+          serviceAuthClient: client,
+        })
+      case CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY:
+        return await saveDocQueueCopy(parsed.value, {
+          backendToken: options.backendToken,
+          environment,
+          fetcher,
+          serviceAuthClient: client,
+        })
+      case CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE:
+        return await createAndPublishArticle(parsed.value, {
           backendToken: options.backendToken,
           environment,
           fetcher,

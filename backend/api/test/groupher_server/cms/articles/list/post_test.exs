@@ -11,8 +11,21 @@ defmodule GroupherServer.Test.CMS.Articles.PostList do
 
   describe "[cms post list]" do
     test "can get paged posts", ~m(community post_attrs user)a do
-      {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, paged_posts} =
         CMS.Articles.page(:post, %{}, %GroupherServer.Pagi.Params.Offset{page: 1, size: 20})
@@ -24,7 +37,14 @@ defmodule GroupherServer.Test.CMS.Articles.PostList do
 
     test "keeps Interaction hydration outside anonymous and logged-in Lite pages",
          ~m(community post_attrs user)a do
-      {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
+
       filter = %{page: 1, size: 20, community: community.slug}
 
       {{:ok, _anonymous_page}, anonymous_queries} =

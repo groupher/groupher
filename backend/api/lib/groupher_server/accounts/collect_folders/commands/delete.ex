@@ -13,7 +13,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Commands.Delete do
   @pipeline operation: :accounts_collect_folder_delete, access: :open, target: :folder_id
 
   direct_pipeline execute_pipeline(folder_id) do
-    change(fn _folder_id -> Persist.delete(folder_id) end)
+    change(fn _folder_id, _operation_ref -> Persist.delete(folder_id) end)
   end
 
   @doc """

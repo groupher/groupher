@@ -10,17 +10,14 @@ defmodule GroupherServer.CMS.Communities.Moderators.Setup do
       Community create workflow
         -> caller-owned community transaction
         -> Moderators.Setup.add_root/2
-        -> membership / count / root passport
+        -> canonical root membership / moderator count
   """
 
-  alias GroupherServer.Accounts
-
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.{Communities, Passport}
+  alias CMS.Communities
   alias CMS.Model.{Community, CommunityModerator}
-  alias CMS.Passport.Registry
-  alias Helper.{ORM, PermissionConfig, T}
+  alias Helper.{ORM, T}
 
   @doc "Adds the first root moderator while a community is being created."
   @spec add_root(Community.t(), User.t()) :: T.domain_res(term())
@@ -36,36 +33,13 @@ defmodule GroupherServer.CMS.Communities.Moderators.Setup do
     with {:ok, moderator} <-
            ORM.create(CommunityModerator, %{
              user_id: target_user.id,
-             community_id: community.id
+             community_id: community.id,
+             is_lord: true,
+             permissions: %{}
            }),
          {:ok, _community} <-
-           Communities.Count.update(community, target_user, :moderators_count, :inc),
-         {:ok, rules} <- PermissionConfig.default_root_passport(community.slug),
-         {:ok, _} <- Passport.stamp_passport(rules, target_user) do
-      update_passport_item_count(moderator, community, rules)
+           Communities.Count.update(community, target_user, :moderators_count, :inc) do
+      {:ok, %{moderator | is_root: moderator.is_lord}}
     end
-  end
-
-  defp update_passport_item_count(
-         %CommunityModerator{} = moderator,
-         %Community{} = community,
-         rules
-       ) do
-    count =
-      case get_in(rules, [community.slug]) do
-        %{"root" => true} ->
-          Registry.root_passport_item_count()
-
-        %{"cms" => cms_rules} when is_map(cms_rules) ->
-          Enum.count(cms_rules, fn {_rule, enabled} -> enabled == true end)
-
-        %{cms: cms_rules} when is_map(cms_rules) ->
-          Enum.count(cms_rules, fn {_rule, enabled} -> enabled == true end)
-
-        _ ->
-          0
-      end
-
-    ORM.update(moderator, %{passport_item_count: count})
   end
 end

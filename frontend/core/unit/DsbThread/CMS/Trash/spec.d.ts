@@ -2,7 +2,7 @@ import type { TArticle, TArticleStats, TGraphQLPagiPageInfo, TUser } from '~/spe
 
 export type TTrashedPost = {
   id: string
-  thread: 'POST'
+  thread: 'POST' | 'BLOG' | 'CHANGELOG'
   articleId: string
   article: TArticle | null
   stats: TArticleStats | null

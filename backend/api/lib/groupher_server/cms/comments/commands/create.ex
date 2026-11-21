@@ -53,14 +53,13 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
                      body,
                      user,
                      command_id,
-                     branch_id,
                      community,
                      info,
                      command_target
                    ) do
-    gate(fn _target -> authorize_create(thread, article, branch_id, user, community, info) end)
+    gate(fn _target -> authorize_create(thread, article, user, community, info) end)
 
-    change(fn context ->
+    change(fn context, operation_ref ->
       create_new(
         thread,
         context.article,
@@ -68,7 +67,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         user,
         context.info,
         command_id,
-        context.community
+        context.community,
+        operation_ref
       )
     end)
 
@@ -93,8 +93,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
       end
     end)
 
-    change(fn %{comment: canonical, article: article} ->
-      reply_new_from_canonical(canonical, article, body, user, command_id)
+    change(fn %{comment: canonical, article: article}, operation_ref ->
+      reply_new_from_canonical(canonical, article, body, user, command_id, operation_ref)
     end)
 
     confirm(fn result ->
@@ -147,6 +147,12 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
           T.domain_res(map())
   def create(thread, %Article{} = article, body, %User{} = user, command_id) do
     with {:ok, info} <- CMS.Artiment.Matcher.match_interaction(article) do
+      community =
+        case Map.get(article, :community) do
+          %Community{} = community -> community
+          _ -> nil
+        end
+
       do_create(
         thread,
         article,
@@ -154,8 +160,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         user,
         info,
         command_id,
-        nil,
-        nil
+        community
       )
     end
   end
@@ -172,7 +177,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         user,
         info,
         command_id,
-        Map.get(projection, :branch_id),
         Map.get(projection, :community)
       )
     else
@@ -197,7 +201,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          %User{} = user,
          info,
          command_id,
-         branch_id,
          community
        ) do
     article = ArticleQuery.article_with_author(article)
@@ -211,7 +214,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         body,
         user,
         command_id,
-        branch_id,
         community,
         info,
         {:comment, article.id}
@@ -238,28 +240,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     {:error, CmsErrorCat.command_result_unavailable()}
   end
 
-  defp authorize_create(
-         :doc,
-         article,
-         _requested_body_branch,
-         user,
-         %Community{} = community,
-         info
-       ) do
-    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article.id),
-         true <- owner.id == community.id,
-         %CMS.Model.DocBranch{id: main_id} <-
-           GroupherServer.Repo.get_by(CMS.Model.DocBranch, community_id: owner.id, type: :main),
-         {:ok, canonical} <-
-           CMS.Gate.check_in_transaction(user, :create_comment, article, community, main_id) do
-      {:ok, %{article: canonical, community: community, info: info}}
-    else
-      {:error, _reason} = error -> error
-      _ -> {:error, ArticleErrorCat.binding_context_required()}
-    end
-  end
-
-  defp authorize_create(_thread, article, _branch_id, user, community, info) do
+  defp authorize_create(_thread, article, user, community, info) do
     case community do
       %Community{} = community ->
         with {:ok, canonical} <-
@@ -272,25 +253,34 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp create_new(thread, article, body, %User{} = user, info, command_id, community) do
+  defp create_new(
+         thread,
+         article,
+         body,
+         %User{} = user,
+         info,
+         command_id,
+         community,
+         operation_ref
+       ) do
     with {:ok, comment} <-
            create_comment_record(body, thread, info.foreign_key, article, community, user) do
-      Summary.with_change(comment, fn ->
-        finish_create_new(thread, article, comment, user, command_id, community)
+      Summary.with_change(comment, operation_ref, fn ->
+        finish_create_new(thread, article, comment, user, command_id, community, operation_ref)
       end)
     end
   end
 
-  defp finish_create_new(thread, article, comment, user, command_id, community) do
+  defp finish_create_new(thread, article, comment, user, command_id, community, operation_ref) do
     with {:ok, lifecycle} <- Lifecycle.ensure_created(comment.id),
          {:ok, _review} <-
-           register_comment_review(comment, lifecycle, community, command_id, :submit),
+           register_comment_review(comment, lifecycle, community, operation_ref, :submit),
          {:ok, counted_article} <- keep_article(article),
          {:ok, projected_comment} <- Persist.update_question_flag(article, comment),
          {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
          {:ok, _} <-
            record_article_metric(counted_article, community, command_id, :comment_created),
-         {:ok, _} <- Mentions.update(projected_comment, command_id, community.id),
+         {:ok, _} <- Mentions.update(projected_comment, operation_ref, community.id),
          {:ok, :pass} <- Revision.bump(),
          {:ok, _} <-
            enqueue_comment_effects(
@@ -299,7 +289,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
              community,
              user,
              :created,
-             command_id
+             command_id,
+             operation_ref
            ) do
       {:ok,
        %{
@@ -364,24 +355,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
 
   defp replay_article(article, _community), do: replay_article(article)
 
-  defp replay_article(
-         %CMS.Articles.ArticleView{
-           article_id: _article_id,
-           community: %Community{} = community,
-           thread: thread
-         } = result
-       ) do
-    with {:ok, %{inner_id: inner_id}} <- CMS.Articles.Bindings.get(result, community),
-         {:ok, _article} = result <-
-           FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id}) do
-      result
-    else
-      {:error, _reason} = error -> error
-    end
-  end
-
   defp replay_article(%Article{id: article_id}) do
-    FrontDesk.article(article_id, mode: :internal, view: :with_author)
+    FrontDesk.article(article_id, mode: :internal, preload: [author: :user])
   end
 
   defp replay_article(%{id: article_id}) when is_binary(article_id) do
@@ -447,7 +422,14 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp reply_new_from_canonical(canonical, article, body, %User{} = user, command_id) do
+  defp reply_new_from_canonical(
+         canonical,
+         article,
+         body,
+         %User{} = user,
+         command_id,
+         operation_ref
+       ) do
     with replying_comment <- Query.comment_with_reply_author(canonical),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
          %Community{} = community <- Map.get(article, :community),
@@ -461,7 +443,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         info,
         article,
         community,
-        command_id
+        command_id,
+        operation_ref
       )
     end
   end
@@ -474,7 +457,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          info,
          article,
          community,
-         command_id
+         command_id,
+         operation_ref
        ) do
     with {:ok, replied_comment} <-
            Persist.insert_comment(
@@ -486,7 +470,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
              user,
              replying_comment
            ) do
-      Summary.with_change(replied_comment, fn ->
+      Summary.with_change(replied_comment, operation_ref, fn ->
         finish_reply_new(
           replying_comment,
           replied_comment,
@@ -494,7 +478,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
           thread,
           article,
           community,
-          command_id
+          command_id,
+          operation_ref
         )
       end)
     end
@@ -507,13 +492,14 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          thread,
          article,
          community,
-         command_id
+         command_id,
+         operation_ref
        ) do
     parent_comment = Replies.root_comment(replying_comment)
 
     with {:ok, lifecycle} <- Lifecycle.ensure_created(replied_comment.id),
          {:ok, _review} <-
-           register_comment_review(replied_comment, lifecycle, community, command_id, :submit),
+           register_comment_review(replied_comment, lifecycle, community, operation_ref, :submit),
          {:ok, counted_article} <- keep_article(article),
          {:ok, _reply_binding} <- Persist.insert_reply_binding(replied_comment, replying_comment),
          {:ok, reply_with_meta} <-
@@ -523,7 +509,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          {:ok, _activity_time} <- update_active_timestamp(thread, article, associated_reply),
          {:ok, _} <-
            record_article_metric(counted_article, community, command_id, :comment_created),
-         {:ok, _} <- Mentions.update(associated_reply, command_id, community.id),
+         {:ok, _} <- Mentions.update(associated_reply, operation_ref, community.id),
          {:ok, :pass} <- Revision.bump(),
          {:ok, _} <-
            enqueue_comment_effects(
@@ -532,7 +518,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
              community,
              user,
              :replied,
-             command_id
+             command_id,
+             operation_ref
            ) do
       {:ok,
        %{
@@ -555,7 +542,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          %Comment{} = comment,
          lifecycle,
          %Community{id: community_id},
-         _command_id,
+         operation_ref,
          trigger
        ) do
     with {:ok, configs} <- ReviewBot.configs(community_id, :comment) do
@@ -568,7 +555,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
       target = %{
         type: :comment,
         comment_id: comment.id,
-        lifecycle: lifecycle
+        lifecycle: lifecycle,
+        operation_ref: operation_ref
       }
 
       CMS.Review.RequestSubmission.register_in_transaction(
@@ -603,19 +591,21 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          community,
          %User{} = actor,
          action,
-         command_id
+         _command_id,
+         operation_ref
        ) do
     with {:ok, _inner_id} <- article_inner_id(article, community),
-         {:ok, _event} <-
-           Effects.enqueue(
-             "comment.#{action}",
-             "comment",
-             comment.id,
-             command_id,
-             %{article_id: article.id, actor_id: actor.id, community_id: community.id}
-           ) do
+         {:ok, _event} <- comment_effect(action, comment, actor, community, operation_ref) do
       {:ok, :pass}
     end
+  end
+
+  defp comment_effect(:created, comment, actor, community, operation_ref) do
+    Effects.created(comment, actor, community, operation_ref)
+  end
+
+  defp comment_effect(:replied, comment, actor, community, operation_ref) do
+    Effects.replied(comment, actor, community, operation_ref)
   end
 
   defp article_inner_id(%Article{} = article, %Community{} = community) do

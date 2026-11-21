@@ -34,8 +34,8 @@ vi.mock('~/query', async () => ({
 vi.mock('~/stores/account/hooks', () => ({ default: () => ({ user: null, accountScope: '' }) }))
 vi.mock('~/hooks/useViewingArticle', () => ({ default: () => viewing }))
 vi.mock('~/hooks/useURLSearchParams', () => ({ default: () => new URLSearchParams() }))
-vi.mock('~/stores/dsbConfig/hooks', () => ({
-  default: () => ({ pagiMode: 'load_more', pagiRevision: 0 }),
+vi.mock('~/stores/dsb/hooks', () => ({
+  default: () => ({ pagiMode: 'LOAD_MORE', pagiRevision: 0 }),
 }))
 vi.mock('~/query/useCommentReceiptReconcile', () => ({ default: () => undefined }))
 vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }) }))
@@ -100,7 +100,7 @@ const deferred = () => {
 }
 function setup(
   api: 'cursor' | 'offset' = 'cursor',
-  mode = api === 'cursor' ? 'load_more' : 'page',
+  mode = api === 'cursor' ? 'LOAD_MORE' : 'PAGE',
 ) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const feed = {
@@ -243,17 +243,17 @@ describe('independent reply paging', () => {
   })
 })
 
-it.each(['page', 'load_more', 'infinite_scroll'])(
+it.each(['PAGE', 'LOAD_MORE', 'INFINITE_SCROLL'])(
   'replies stay manual when the root mode is %s',
   async (mode) => {
     request.mockResolvedValue(response(['reply'], true))
-    setup(mode === 'page' ? 'offset' : 'cursor', mode)
+    setup(mode === 'PAGE' ? 'offset' : 'cursor', mode)
     fireEvent.click(
       within(screen.getByRole('region', { name: 'first' })).getByRole('button', {
         name: /comment.replies.expand/,
       }),
     )
-    expect(await screen.findByText('next cursor')).toHaveAttribute('data-mode', 'load_more')
+    expect(await screen.findByText('next cursor')).toHaveAttribute('data-mode', 'LOAD_MORE')
     expect(request.mock.calls[0][1].pagi).toHaveProperty('cursor')
     expect(request.mock.calls[0][1].pagi).not.toHaveProperty('offset')
   },

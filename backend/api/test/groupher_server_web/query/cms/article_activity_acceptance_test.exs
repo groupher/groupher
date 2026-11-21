@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.Query.CMS.ArticleActivityAcceptanceTest do
     assert {:ok, _} = Activity.log(ctx.post, :trashed, actor: ctx.user)
     assert {:ok, _} = Activity.log(ctx.post, :permanently_deleted, actor: ctx.user)
     # Even an old stored envelope must pass the current projection allowlist.
-    log = Repo.get_by!(PostLog, article_id: ctx.post.article_id, action: :created)
+    log = Repo.get_by!(PostLog, article_id: ctx.post.id, action: :created)
 
     log
     |> Ecto.Changeset.change(
@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.Query.CMS.ArticleActivityAcceptanceTest do
     end
 
     Repo.update_all(
-      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.post.article_id),
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.post.id),
       set: [state: :draft]
     )
 

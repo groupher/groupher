@@ -51,8 +51,11 @@ defmodule GroupherServer.CMS.Assets.Backfill do
       from(ref in ArticleAssetRef,
         where:
           ref.community_id == ^community_id and
-            ((is_nil(ref.body_draft_id) and is_nil(ref.revision_id)) or
-               (not is_nil(ref.body_draft_id) and not is_nil(ref.revision_id)))
+            fragment(
+              "num_nonnulls(?, ?) <> 1",
+              ref.working_copy_id,
+              ref.snapshot_id
+            )
       )
     )
   end

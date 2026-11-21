@@ -88,6 +88,7 @@ defmodule GroupherServer.Test.Helper.Schema.Social do
               innerId
               title
               thread
+              author { login }
             }
             pageInfo { hasNextPage ... on OffsetPageInfo { page size totalCount totalPages } ... on CursorPageInfo { endCursor } }
           }

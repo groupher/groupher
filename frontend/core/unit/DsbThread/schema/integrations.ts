@@ -1,38 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
-export const pressConfig = graphql(`
-  query DashboardPressConfig($community: String!) {
-    pressConfig(community: $community) {
-      markdownEnabled
-      feedEnabled
-      feedType
-      feedCount
-      feedThreads
-      llmsEnabled
-      sitemapEnabled
-      revision
-    }
-  }
-`)
-
-export const updatePressConfig = graphql(`
-  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!, $commandId: ID!) {
-    updatePressConfig(input: $input, commandId: $commandId) {
-      config {
-        markdownEnabled
-        feedEnabled
-        feedType
-        feedCount
-        feedThreads
-        llmsEnabled
-        sitemapEnabled
-        revision
-      }
-    }
-  }
-`)
-
 export const thirdPartyAnalyticsProviders = graphql(`
+  "Dashboard third-party analytics provider registry"
   query DashboardThirdPartyAnalyticsProviders {
     thirdPartyAnalyticsProviders {
       provider
@@ -55,6 +24,7 @@ export const thirdPartyAnalyticsProviders = graphql(`
 `)
 
 export const openGraphInfo = graphql(`
+  "Get open graph info by url"
   query DashboardOpenGraphInfo($url: String!) {
     openGraphInfo(url: $url) {
       title
@@ -66,8 +36,6 @@ export const openGraphInfo = graphql(`
 `)
 
 export default {
-  pressConfig,
-  updatePressConfig,
   thirdPartyAnalyticsProviders,
   openGraphInfo,
 }

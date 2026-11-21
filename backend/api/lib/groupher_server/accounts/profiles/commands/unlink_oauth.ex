@@ -17,7 +17,7 @@ defmodule GroupherServer.Accounts.Profiles.Commands.UnlinkOauth do
             params: [:provider]
 
   direct_pipeline execute_pipeline(login, provider) do
-    change(fn _login -> Oauth.unlink_in_transaction(login, provider) end)
+    change(fn _login, _operation_ref -> Oauth.unlink_in_transaction(login, provider) end)
 
     present(fn user ->
       _ = Effects.revalidate_user(user)

@@ -63,10 +63,10 @@ defmodule MentionsPerf.WriterLoad do
       }
     ]
 
-    drafts =
+    working_copies =
       for index <- 1..40 do
-        {:ok, %{article: article, draft: draft}} =
-          CMS.Articles.create_stable_draft(
+        {:ok, %{article: article, working_copy: working_copy}} =
+          CMS.Articles.create_article(
             community,
             :post,
             %{
@@ -74,13 +74,14 @@ defmodule MentionsPerf.WriterLoad do
               digest: "Complete publish load",
               body_bag: mock_body_bag(Jason.encode!(ast))
             },
-            author
+            author,
+            command_id: Ecto.UUID.generate()
           )
 
-        {article.id, draft.version}
+        {article, working_copy.id, working_copy.revision}
       end
 
-    chunks = Enum.chunk_every(drafts, 20)
+    chunks = Enum.chunk_every(working_copies, 20)
     deadline = System.monotonic_time(:millisecond) + 14_000
 
     readers =
@@ -91,15 +92,17 @@ defmodule MentionsPerf.WriterLoad do
     writers =
       for chunk <- chunks do
         Task.async(fn ->
-          Enum.map(chunk, fn {article_id, draft_version} ->
+          Enum.map(chunk, fn {article, working_copy_id, revision} ->
             started = System.monotonic_time(:microsecond)
 
             result =
-              CMS.Articles.publish(article_id, author,
-                community: community,
-                expected_draft_version: draft_version,
-                expected_lifecycle_version: 1,
-                command_id: Ecto.UUID.generate()
+              CMS.Articles.publish_article(
+                article,
+                community,
+                %{working_copy_id: working_copy_id, revision: revision},
+                nil,
+                author,
+                Ecto.UUID.generate()
               )
 
             duration = (System.monotonic_time(:microsecond) - started) / 1000

@@ -101,8 +101,8 @@ describe('useLogic apply', () => {
 
     expect(result.current.phase).toBe(PHASE.IMPORTING)
     expect(result.current.process).toMatchObject({
-      progress: { completed: 0, total: 2, unit: 'document' },
-      stage: 'preparing',
+      progress: { completed: 0, total: 2, unit: 'DOCUMENT' },
+      stage: 'PREPARING',
     })
     expect(result.current.job).toBeNull()
     expect(mocks.query).not.toHaveBeenCalled()
@@ -114,8 +114,8 @@ describe('useLogic apply', () => {
     await waitFor(() => expect(result.current.job?.id).toBe(job.id))
 
     expect(result.current.process).toMatchObject({
-      progress: { completed: 2, total: 2, unit: 'document' },
-      stage: 'applying',
+      progress: { completed: 2, total: 2, unit: 'DOCUMENT' },
+      stage: 'APPLYING',
     })
 
     expect(mocks.query).toHaveBeenCalledTimes(1)
@@ -151,7 +151,7 @@ describe('useLogic apply', () => {
       await result.current.analyze()
     })
 
-    await waitFor(() => expect(result.current.process?.stage).toBe('building_preview'))
+    await waitFor(() => expect(result.current.process?.stage).toBe('BUILDING_PREVIEW'))
     expect(result.current.phase).toBe(PHASE.ANALYZING)
   })
 
@@ -177,7 +177,7 @@ describe('useLogic apply', () => {
 
     await waitFor(() => expect(result.current.pollingDisconnected).toBe(true))
     expect(result.current.phase).toBe(PHASE.ANALYZING)
-    expect(result.current.process?.stage).toBe('analyzing')
+    expect(result.current.process?.stage).toBe('ANALYZING')
   })
 
   it('returns cleanup success and removes both Preview and Job URL state', async () => {

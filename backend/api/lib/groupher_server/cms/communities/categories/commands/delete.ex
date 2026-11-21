@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Delete do
       end
     end)
 
-    change(fn {canonical, category} ->
+    change(fn {canonical, category}, _operation_ref ->
       with true <- Persist.category_in_community?(canonical, category),
            {:ok, deleted} <- Persist.delete_category(category) do
         {:ok, deleted}

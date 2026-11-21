@@ -13,15 +13,13 @@ import {
   composeEmptyEditorDraft,
   composeEmptySavedDraft,
   composeSavedDraft,
-  composeLoadedDraftSession,
   isDraftDirty,
   countEditorText,
 } from '../helper'
 import type {
   TDraftLoadStatus,
   TDraftSaveStatus,
-  TDocDraftInitialData,
-  TDocDraftDTO,
+  TDocWorkingCopy,
   TDocDraftSession,
   TDocDraftSource,
   TEditorDraft,
@@ -32,11 +30,13 @@ import type {
 type TApplySavedParams = {
   meta: TEditorDraftMeta
   requestDraft: TEditorDraft
-  savedDraft: TDocDraftDTO | null | undefined
+  savedDraft: TDocWorkingCopy
   startedDraft: TEditorDraft
 }
 
 export type TDraftEditorState = {
+  workingCopyId: string | null
+  publicSnapshotId: string | null
   activePage: TSideTreePage | null
   bodyStats: ReturnType<typeof countEditorText>
   dirty: boolean
@@ -70,42 +70,20 @@ const resolveActivePage = (sideTree: TSideTreeController): TSideTreePage | null 
 }
 
 /** Exposes draft editor state state and actions through the shared React hook boundary. */
-export default function useDraftEditorState(
-  sideTree: TSideTreeController,
-  initialData?: TDocDraftInitialData | null,
-): TDraftEditorState {
+export default function useDraftEditorState(sideTree: TSideTreeController): TDraftEditorState {
   const activePage = useMemo(
     () => resolveActivePage(sideTree),
     [sideTree.activeId, sideTree.groups],
   )
-  const initialSession = useMemo(
-    () =>
-      activePage && initialData && String(initialData.docId) === String(activePage.docId)
-        ? composeLoadedDraftSession(initialData, activePage)
-        : null,
-    [],
-  )
-  const initialDraft = useMemo(
-    () =>
-      initialSession ? composeEditorDraftFromSession(initialSession) : composeEmptyEditorDraft(),
-    [],
-  )
-  const [draft, setDraft] = useState<TEditorDraft>(initialDraft)
-  const [savedDraft, setSavedDraft] = useState<TSavedDraft>(() =>
-    composeSavedDraft(initialDraft, {
-      contentHash: initialSession?.serverContentHash,
-      baseRevisionId: initialSession?.baseRevisionId,
-    }),
-  )
-  const [draftSource, setDraftSource] = useState<TDocDraftSource>(() =>
-    initialSession ? initialSession.source : 'public',
-  )
-  const [meta, setMeta] = useState<TEditorDraftMeta>(() =>
-    composeEditorDraftMeta(initialSession?.info),
-  )
+  const [workingCopyId, setWorkingCopyId] = useState<string | null>(null)
+  const [publicSnapshotId, setPublicSnapshotId] = useState<string | null>(null)
+  const [draft, setDraft] = useState<TEditorDraft>(composeEmptyEditorDraft)
+  const [savedDraft, setSavedDraft] = useState<TSavedDraft>(composeEmptySavedDraft)
+  const [draftSource, setDraftSource] = useState<TDocDraftSource>('public')
+  const [meta, setMeta] = useState<TEditorDraftMeta>(() => composeEditorDraftMeta())
   const [loadStatus, setLoadStatus] = useState<TDraftLoadStatus>({
     error: null,
-    loadedDocId: initialSession ? initialDraft.docId || null : null,
+    loadedDocId: null,
     loading: false,
   })
   const [saveStatus, setSaveStatus] = useState<TDraftSaveStatus>({
@@ -116,10 +94,12 @@ export default function useDraftEditorState(
 
   const bodyStats = useMemo(() => countEditorText(draft.bodyValue), [draft.bodyValue])
   const dirty = isDraftDirty(draft, savedDraft)
-  const editable = !!activePage?.docId
+  const editable = !!activePage?.docId && !!workingCopyId
   const invalid = !draft.title.trim()
 
   const resetDraft = useCallback((): void => {
+    setWorkingCopyId(null)
+    setPublicSnapshotId(null)
     const emptyDraft = composeEmptyEditorDraft()
     const emptySavedDraft = composeEmptySavedDraft()
 
@@ -132,13 +112,15 @@ export default function useDraftEditorState(
   }, [])
 
   const applyLoaded = useCallback((session: TDocDraftSession): void => {
+    setWorkingCopyId(session.workingCopyId ?? null)
+    setPublicSnapshotId(session.publicSnapshotId ?? null)
     const nextDraft = composeEditorDraftFromSession(session)
 
     setDraft(nextDraft)
     setSavedDraft(
       composeSavedDraft(nextDraft, {
-        contentHash: session.serverContentHash,
-        baseRevisionId: session.baseRevisionId,
+        workingCopyId: session.workingCopyId,
+        publicSnapshotId: session.publicSnapshotId,
       }),
     )
     setDraftSource(session.source)
@@ -155,8 +137,8 @@ export default function useDraftEditorState(
     const canonical = composeEditorDraftFromSession(session)
     setSavedDraft(
       composeSavedDraft(canonical, {
-        contentHash: session.serverContentHash,
-        baseRevisionId: session.baseRevisionId,
+        workingCopyId: session.workingCopyId,
+        publicSnapshotId: session.publicSnapshotId,
       }),
     )
     setDraft((current) => composeEditorDraft({ ...current, version: session.version }))
@@ -178,15 +160,9 @@ export default function useDraftEditorState(
     }: TApplySavedParams) => {
       const persistedDraft = {
         ...requestDraft,
-        // The downstream publisher returns the new optimistic-concurrency
-        // version. Keep the started version as a narrow fallback for older
-        // publisher responses while the contract is rolled out.
-        version: savedDraftDTO?.version ?? startedDraft.version + 1,
+        version: savedDraftDTO.revision,
       }
-      const nextSavedDraft = composeSavedDraft(persistedDraft, {
-        contentHash: savedDraftDTO?.contentHash,
-        baseRevisionId: savedDraftDTO?.baseRevisionId,
-      })
+      const nextSavedDraft = composeSavedDraft(persistedDraft, { workingCopyId: savedDraftDTO.id })
 
       setSavedDraft(nextSavedDraft)
       setDraftSource('draft')
@@ -201,7 +177,7 @@ export default function useDraftEditorState(
 
         return composeEditorDraft({
           bodyValue,
-          docId: current.docId || savedDraftDTO?.docId || requestDraft.docId,
+          docId: current.docId || savedDraftDTO.articleId || requestDraft.docId,
           slug,
           subtitle,
           title,
@@ -280,6 +256,8 @@ export default function useDraftEditorState(
   }, [])
 
   return {
+    workingCopyId,
+    publicSnapshotId,
     activePage,
     bodyStats,
     dirty,

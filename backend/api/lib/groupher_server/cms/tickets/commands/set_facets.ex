@@ -37,10 +37,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.SetFacets do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_update, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.set_facets(canonical, ticket_id, facets, expected_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

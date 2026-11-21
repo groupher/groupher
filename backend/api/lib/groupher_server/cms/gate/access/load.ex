@@ -13,6 +13,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   defdelegate article(actor, community, thread, article),
     to: GroupherServer.CMS.Gate.Access.Load.Query
 
+  @doc "Builds Article authorization facts without requiring an ArticleBinding."
+  defdelegate article_author_management(actor, article),
+    to: GroupherServer.CMS.Gate.Access.Load.Query
+
   @doc "Delegates actor-scoped comment/5 to the owning implementation."
   defdelegate comment(actor, community, thread, article, comment),
     to: GroupherServer.CMS.Gate.Access.Load.Query
@@ -20,7 +24,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   @doc "Delegates community/2 to the owning implementation."
   defdelegate community(arg1, arg2), to: GroupherServer.CMS.Gate.Access.Load.Query
 
-  @doc "Delegates actor-scoped doc/4 to the owning implementation."
-  defdelegate doc(actor, community, article, branch_id),
+  @doc "Builds Community context from facts locked by the caller."
+  defdelegate community_snapshot(actor, community), to: GroupherServer.CMS.Gate.Access.Load.Query
+
+  @doc "Builds stable Doc site context from already locked facts."
+  defdelegate doc_site_snapshot(actor, community, article),
     to: GroupherServer.CMS.Gate.Access.Load.Query
 end

@@ -28,32 +28,30 @@ export const Route = createFileRoute('/$community')({
     }
   },
   loader: async ({ context, deps, params }) => {
-    const [shell, locale] = await Promise.all([
+    const [data, locale] = await Promise.all([
       loadCommunity({ data: { community: params.community, ...deps } }),
       loadLocale({ data: { lang: deps.lang } }),
     ])
 
     await Promise.all([
       context.queryClient.ensureQueryData(
-        communityQueries.config(params.community, () => shell.community),
+        communityQueries.slug(params.community, () => data.community),
       ),
+      context.queryClient.ensureQueryData(dsbQueries.slug(params.community, () => data.dashboard)),
       context.queryClient.ensureQueryData(
-        dsbQueries.config(params.community, () => shell.dashboard),
-      ),
-      context.queryClient.ensureQueryData(
-        wallpaperQueries.config(params.community, () => shell.wallpaper),
+        wallpaperQueries.slug(params.community, () => data.wallpaper),
       ),
     ])
 
     return {
-      shell: {
-        account: shell.account,
+      data: {
+        account: data.account,
         community: params.community,
-        demoMode: shell.demoMode,
+        demoMode: data.demoMode,
       },
       head: {
-        title: shell.dashboard.ogTitle || shell.dashboard.title || 'Groupher Dash',
-        themeCssText: shell.themeCssText,
+        title: data.dashboard.ogTitle || data.dashboard.title || 'Groupher Dash',
+        themeCssText: data.themeCssText,
       },
       locale,
     }
@@ -70,16 +68,16 @@ export const Route = createFileRoute('/$community')({
 })
 
 function CommunityLayout() {
-  const { shell, locale } = Route.useLoaderData()
+  const { data, locale } = Route.useLoaderData()
 
   return (
     <CommunityBoundary
-      key={shell.community}
-      account={shell.account}
-      community={shell.community}
+      key={data.community}
+      account={data.account}
+      community={data.community}
       locale={locale}
     >
-      <DsbShell shell={shell}>
+      <DsbShell data={data}>
         <Outlet />
       </DsbShell>
     </CommunityBoundary>

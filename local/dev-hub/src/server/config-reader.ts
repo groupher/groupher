@@ -62,11 +62,7 @@ export class ServiceConfigReader {
     }
   }
 
-  async getContent(
-    serviceId: string,
-    fileId: string,
-    reveal: boolean,
-  ): Promise<TServiceConfigContent> {
+  async getContent(serviceId: string, fileId: string): Promise<TServiceConfigContent> {
     const definition = this.getDefinition(serviceId)
     const file = (await this.discoverFiles(definition)).find((candidate) => candidate.id === fileId)
     if (!file)
@@ -84,7 +80,7 @@ export class ServiceConfigReader {
     }
 
     const source = await readFile(file.absolutePath, 'utf8')
-    const redacted = file.sensitive && !reveal
+    const redacted = file.sensitive
 
     return {
       serviceId,

@@ -38,10 +38,13 @@ defmodule GroupherServer.Test.CMS.Press.PreviewFixtureTest do
       assert delivery.children["article.search_sync"].status == :done
       assert delivery.children["article.cdn_purge"].status in [:done, :failed]
 
+      event = Repo.get!(Event, delivery.id)
+
       assert Repo.aggregate(
                from(e in Event,
                  where:
-                   e.command_id == ^delivery.id and e.status in [:waiting, :running, :retrying]
+                   e.operation_ref == ^event.operation_ref and
+                     e.status in [:waiting, :running, :retrying]
                ),
                :count
              ) == 0
@@ -55,12 +58,13 @@ defmodule GroupherServer.Test.CMS.Press.PreviewFixtureTest do
     assert {:ok, %{community_id: community_id}} = Fixtures.seed()
 
     {:ok, event} =
-      CMS.Outbox.send(%{
+      enqueue_outbox(%{
         event: "press.cache_invalidation",
         worker: GroupherServer.Jobs.CMSOutboxPress,
         resource_type: "community",
         resource_id: community_id,
-        identity: {:workflow, Ecto.UUID.generate()},
+        operation_ref: Ecto.UUID.generate(),
+        dedupe_key: CMS.Outbox.DedupeKey.encode([community_id, "preview-fixture"]),
         data: %{}
       })
 
@@ -70,5 +74,12 @@ defmodule GroupherServer.Test.CMS.Press.PreviewFixtureTest do
     assert Repo.get!(Event, event.id).status == :failed
     assert Repo.get!(Event, event.id).last_error_code == "preview_fixture_retired"
     assert previous == Application.fetch_env!(:groupher_server, :search_artiments)
+  end
+
+  defp enqueue_outbox(attrs) do
+    case Repo.transaction(fn -> CMS.Outbox.send(attrs) end) do
+      {:ok, result} -> result
+      {:error, reason} -> {:error, reason}
+    end
   end
 end

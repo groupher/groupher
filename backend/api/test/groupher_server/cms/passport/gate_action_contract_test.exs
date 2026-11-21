@@ -5,15 +5,23 @@ defmodule GroupherServer.Test.CMS.Passport.GateActionContract do
 
   alias GroupherServer.CMS
   alias CMS.GateAction
-  alias Helper.PermissionConfig
 
-  test "the cross-runtime Gate contract matches the complete Passport action registry" do
-    requirements = PermissionConfig.action_requirements()
+  test "the generated Gate metadata matches every canonical permission" do
+    contract =
+      File.read!(Path.expand("../../../../../../packages/contracts/gate.contract.json", __DIR__))
+      |> Jason.decode!()
 
-    assert GateAction.all() |> Enum.sort() == requirements |> Map.keys() |> Enum.sort()
+    permissions = Map.new(contract["permissions"], &{&1["action"], &1})
+    assert GateAction.actions() |> Enum.sort() == permissions |> Map.keys() |> Enum.sort()
 
-    for action <- GateAction.all() do
-      assert GateAction.requirement(action) == Map.fetch!(requirements, action)
+    for {action, permission} <- permissions do
+      assert GateAction.metadata(action) == %{
+               scope: String.to_existing_atom(permission["scope"]),
+               grantable: permission["grantable"],
+               owner_only: permission["owner_only"],
+               requires: permission["requires"],
+               requires_thread: permission["requires_thread"]
+             }
     end
   end
 end

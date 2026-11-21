@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler d1 migrations apply groupher-status --local && wrangler dev",
+    "dev": "pnpm --dir ../.. devhub start status",
+    "dev:managed": "wrangler dev --port 8793 --env-file \"$DEV_HUB_WORKER_ENV_FILE\" --persist-to \"$DEV_HUB_WORKER_STATE_DIR\"",
+    "db:migrate:local": "wrangler d1 migrations apply groupher-status --local",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "deploy:dry-run": "wrangler deploy --dry-run",
@@ -14,9 +16,9 @@
     "@groupher/contracts": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20261013.1",
+    "@cloudflare/workers-types": "5.20261115.1",
     "typescript": "7.0.2",
-    "vitest": "5.0.4",
-    "wrangler": "4.149.0"
+    "vitest": "5.1.0",
+    "wrangler": "4.162.0"
   }
 }

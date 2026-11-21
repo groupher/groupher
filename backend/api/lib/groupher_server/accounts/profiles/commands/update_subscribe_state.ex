@@ -14,7 +14,7 @@ defmodule GroupherServer.Accounts.Profiles.Commands.UpdateSubscribeState do
   @pipeline operation: :accounts_profile_update_subscribe_state, access: :open, target: :user
 
   direct_pipeline execute_pipeline(user) do
-    change(fn _user -> Persist.rebuild_subscribe_state(user) end)
+    change(fn _user, _operation_ref -> Persist.rebuild_subscribe_state(user) end)
   end
 
   @doc """

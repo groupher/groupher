@@ -1,9 +1,9 @@
 import useTrans from '~/hooks/useTrans'
-import type { TPaginationMode } from '~/spec'
+import type { TPaginationMode, TTransKey } from '~/spec'
 
 import useSalon from './salon/settings'
 
-const MODES = ['page', 'load_more', 'infinite_scroll'] as const
+const MODES = ['PAGE', 'LOAD_MORE', 'INFINITE_SCROLL'] as const
 
 type TProps = {
   name: string
@@ -29,7 +29,7 @@ export default function ModeOptions({ name, title, mode, disabled, onChange }: T
             checked={mode === value}
             onChange={() => onChange(value)}
           />
-          {t(`dsb.pagi.${value}`)}
+          {t(`dsb.pagi.${value.toLowerCase()}` as TTransKey)}
         </label>
       ))}
     </fieldset>

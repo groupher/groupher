@@ -115,7 +115,7 @@ const renderMesh = async (
   const renderMs = performance.now() - renderStartedAt
 
   const readbackStartedAt = performance.now()
-  const pixels = await offscreen.read()
+  const pixels = await offscreen.color.read({ mipLevel: 0, region: 'all' })
   const readbackMs = performance.now() - readbackStartedAt
   const blob = await canvasToWebp(canvas)
   const canvasBackingSize = [canvas.width, canvas.height] as const
@@ -163,7 +163,7 @@ const validateTopOrigin = async (
 
   await orientation.compile(orientationTarget)
   frame(gpu, (currentFrame) => currentFrame.pass(orientationTarget, orientation))
-  const pixels = await orientationTarget.read()
+  const pixels = await orientationTarget.color.read({ mipLevel: 0, region: 'all' })
   const topPixel = readPixel(pixels, width, 0, 0)
   const bottomPixel = readPixel(pixels, width, 0, height - 1)
 

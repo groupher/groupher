@@ -19,8 +19,6 @@ defmodule GroupherServer.CMS.Review.Results do
     ArticlePublic,
     CommentBody,
     CommentLifecycle,
-    DocLifecycle,
-    DocPublic,
     ArtimentReview
   }
 
@@ -70,14 +68,16 @@ defmodule GroupherServer.CMS.Review.Results do
     CMS.Review.load_for_update("comment:#{request.comment_id}", scope)
   end
 
-  defp lock_target(%ArtimentReview{target_type: :doc} = request) do
-    CMS.Review.load_for_update(
-      "doc:#{request.article_id}:#{request.branch_id}",
-      "platform"
-    )
-  end
-
   defp lock_target(_request), do: {:error, CMS.ErrorCat.invalid_review_block()}
+
+  @doc "Checks the current public resource using the same facts as opinion application."
+  def validate_current_target(%ArtimentReview{} = request) do
+    if current_content?(request) do
+      {:ok, :pass}
+    else
+      {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
 
   defp current_content?(%ArtimentReview{target_type: :article} = request) do
     Repo.exists?(
@@ -101,17 +101,7 @@ defmodule GroupherServer.CMS.Review.Results do
     )
   end
 
-  defp current_content?(%ArtimentReview{target_type: :doc} = request) do
-    Repo.exists?(
-      from(public in DocPublic,
-        join: lifecycle in DocLifecycle,
-        on: lifecycle.article_id == public.article_id and lifecycle.branch_id == public.branch_id,
-        where:
-          public.article_id == ^request.article_id and public.branch_id == ^request.branch_id and
-            lifecycle.state not in [:deleted, :destroy]
-      )
-    )
-  end
+  defp current_content?(_request), do: false
 
   defp lock_request(artiment_review_id) do
     Repo.one(
@@ -123,7 +113,7 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp apply_restrictions(request, context, result) do
-    CMS.Comments.Summary.for_lifecycle(context.lifecycle, fn ->
+    CMS.Comments.Summary.for_lifecycle(context.lifecycle, request.operation_ref, fn ->
       apply_restriction_facts(request, context, result)
     end)
   end
@@ -201,7 +191,7 @@ defmodule GroupherServer.CMS.Review.Results do
       scope_key: context.scope_key,
       type: type,
       artiment_review_id: request.id,
-      operation_ref: request.id,
+      operation_ref: request.operation_ref,
       source_ref: "request:#{request.id}:#{type}",
       source: :request,
       applied_at: DateTime.utc_now(:second)
@@ -265,10 +255,6 @@ defmodule GroupherServer.CMS.Review.Results do
       sus_notes: result["sus_notes"] || [],
       summary: result["summary"] || ""
     }
-  end
-
-  defp target_id(%ArtimentReview{target_type: :doc} = request) do
-    "#{request.article_id}:#{request.branch_id}"
   end
 
   defp target_id(%ArtimentReview{target_type: :article, article_id: article_id}), do: article_id

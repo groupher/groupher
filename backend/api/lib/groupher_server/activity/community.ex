@@ -11,6 +11,7 @@ defmodule GroupherServer.Activity.Community do
   alias CMS.Model.Community
 
   @contracts %{
+    docs_approval_policy_changed: Event.contract([:before, :after], [], [:community_log]),
     blocker_created: Event.contract([], [:kind, :ref, :reason], [:community_log]),
     blocker_released: Event.contract([], [:kind, :ref, :reason], [:community_log]),
     blocker_terminated: Event.contract([], [:kind, :ref, :reason], [:community_log]),
@@ -21,6 +22,94 @@ defmodule GroupherServer.Activity.Community do
     destroy_cancelled: Event.contract([], [:state], [:community_log]),
     destroyed: Event.contract([], [:state], [:community_log]),
     lifecycle_reconciled: Event.contract([], [:state, :reason], [:community_log]),
+    admin_request_created:
+      Event.contract(
+        [],
+        [
+          :subject_user_id,
+          :request_id,
+          :member_id,
+          :request_type,
+          :proposed_permissions,
+          :before_permissions,
+          :after_permissions
+        ],
+        [:community_log]
+      ),
+    admin_request_decided:
+      Event.contract(
+        [],
+        [
+          :subject_user_id,
+          :request_id,
+          :member_id,
+          :request_type,
+          :decision,
+          :proposed_permissions,
+          :approved_permissions,
+          :before_permissions,
+          :after_permissions
+        ],
+        [:community_log]
+      ),
+    admin_joined:
+      Event.contract(
+        [],
+        [
+          :subject_user_id,
+          :request_id,
+          :member_id,
+          :before_permissions,
+          :after_permissions
+        ],
+        [:community_log]
+      ),
+    admin_removed:
+      Event.contract(
+        [],
+        [:subject_user_id, :member_id, :before_permissions, :after_permissions],
+        [:community_log]
+      ),
+    admin_permissions_changed:
+      Event.contract(
+        [],
+        [
+          :subject_user_id,
+          :request_id,
+          :member_id,
+          :before_permissions,
+          :after_permissions
+        ],
+        [:community_log]
+      ),
+    admin_request_cancelled:
+      Event.contract(
+        [],
+        [
+          :subject_user_id,
+          :request_id,
+          :member_id,
+          :request_type,
+          :proposed_permissions,
+          :before_permissions,
+          :after_permissions
+        ],
+        [:community_log]
+      ),
+    admin_request_expired:
+      Event.contract(
+        [],
+        [
+          :subject_user_id,
+          :request_id,
+          :member_id,
+          :request_type,
+          :proposed_permissions,
+          :before_permissions,
+          :after_permissions
+        ],
+        [:community_log]
+      ),
     activity_exported:
       Event.contract(
         [:format, :query_context, :exported_count, :manifest],

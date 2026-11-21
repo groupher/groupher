@@ -46,14 +46,17 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   end
 
   @spec handle(Comment.t(), map()) :: subscribe_result()
-  def handle(%Comment{article_id: article_id}, user) when is_binary(article_id) do
-    with {:ok, article} <- comment_parent_article(article_id) do
+  def handle(%Comment{} = comment, user) do
+    with {:ok, article} <- comment_parent_article(comment) do
       Communities.subscribe_ifnot(article.community, user)
     end
   end
 
-  @spec comment_parent_article(Ecto.UUID.t()) :: {:ok, Article.t()} | {:error, map()}
-  defp comment_parent_article(article_id) do
-    FrontDesk.article(article_id, mode: :internal, view: :with_community)
+  @spec comment_parent_article(Comment.t()) :: {:ok, Article.t()} | {:error, map()}
+  defp comment_parent_article(%Comment{article_id: article_id} = comment)
+       when is_binary(article_id) do
+    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      FrontDesk.article(article_id, mode: :internal, community: community)
+    end
   end
 end

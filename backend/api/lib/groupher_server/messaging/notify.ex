@@ -1,10 +1,10 @@
 defmodule GroupherServer.Messaging.Notify do
   @moduledoc """
-  Placeholder dispatch boundary for future async notification delivery.
+  Dispatches durable notification events to their domain-owned delivery paths.
 
-  Today the function validates the event shape and returns `{:ok, :pass}`.
-  Keeping the boundary explicit lets callers depend on a stable notification
-  dispatch API while delivery channels are added later.
+  Request and first-publication events are projected into Notice and Inbox facts by
+  their delivery owners. Other event families retain the current
+  acknowledgement boundary until their producer migrations are complete.
 
   Business position:
 
@@ -14,6 +14,10 @@ defmodule GroupherServer.Messaging.Notify do
         -> inbox / notification store
   """
 
+  alias GroupherServer.{CMS, Messaging}
+  alias CMS.Outbox.Event
+  alias Messaging.Notices.{FirstPublication, RequestDelivery}
+
   @doc """
   Accepts a notification event at the stable dispatch boundary.
 
@@ -21,7 +25,19 @@ defmodule GroupherServer.Messaging.Notify do
 
       Messaging.Notify.dispatch(:comment_created, %{comment_id: comment.id})
   """
-  @spec dispatch(atom(), map()) :: {:ok, :pass} | {:error, term()}
+  @spec dispatch(atom(), map()) :: {:ok, term()} | {:error, term()}
+  def dispatch(:community_admin_request, %Event{} = event) do
+    RequestDelivery.deliver(event)
+  end
+
+  def dispatch(:article_co_author_request, %Event{} = event) do
+    RequestDelivery.deliver(event)
+  end
+
+  def dispatch(:notify_admin_new_article, event) do
+    FirstPublication.deliver(event)
+  end
+
   def dispatch(event, payload) when is_atom(event) and is_map(payload) do
     _ = {event, payload}
     {:ok, :pass}

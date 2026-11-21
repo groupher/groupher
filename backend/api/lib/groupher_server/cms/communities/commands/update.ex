@@ -35,10 +35,10 @@ defmodule GroupherServer.CMS.Communities.Commands.Update do
   receipt_pipeline execute_pipeline(community, args, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :update, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, canonical} <- Persist.update_fields(canonical, args),
            {:ok, :pass} <- Revision.bump(),
-           {:ok, _event} <- Effects.enqueue_presentation_changed(canonical, command_id) do
+           {:ok, _event} <- Effects.enqueue_presentation_changed(canonical, operation_ref) do
         {:ok, canonical}
       end
     end)
@@ -56,15 +56,16 @@ defmodule GroupherServer.CMS.Communities.Commands.Update do
   @pipeline operation: :community_update_workflow,
             access: :internal,
             target: :community,
-            params: [:args]
-  direct_pipeline execute_workflow(community, args, actor, identity) do
+            params: [:args],
+            operation_ref: :operation_ref
+  direct_pipeline execute_workflow(community, args, actor, operation_ref) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :update, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, canonical} <- Persist.update_fields(canonical, args),
            {:ok, :pass} <- Revision.bump(),
            {:ok, _event} <-
-             Effects.enqueue_presentation_changed(canonical, identity) do
+             Effects.enqueue_presentation_changed(canonical, operation_ref) do
         {:ok, canonical}
       end
     end)

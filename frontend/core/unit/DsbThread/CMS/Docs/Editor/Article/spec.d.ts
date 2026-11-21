@@ -1,35 +1,23 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 
 import type { TArticleStage } from '~/const/article'
+import type { TLocalDraftServerBase } from '~/lib/localDraftHistory/types'
 
 import type { TDocTreeNodePublishState } from '../SideTree/spec'
 import type { TDocDraftInfo } from '../store/spec'
 
-export type TDocDraftDTO = {
+export type TDocWorkingCopy = {
   id: string
-  docId?: string | null
-  branchId?: string | null
-  version?: number | null
-  contentHash?: string | null
-  baseRevisionId?: string | null
-  title?: string | null
-  subtitle?: string | null
+  articleId: string
+  scopeType: string
+  revision: number
+  title: string
   slug?: string | null
-  stage?: TArticleStage | null
-  digest?: string | null
+  bodyJson: string
+  threadFields?: { subtitle?: string | null } | null
   insertedAt?: string | null
   updatedAt?: string | null
-  author?: {
-    login?: string | null
-    nickname?: string | null
-    avatar?: string | null
-  } | null
-  body?: {
-    json?: string | null
-  } | null
 }
-
-export type TDocDraftInitialData = TDocDraftDTO
 
 export type TEditorDraft = {
   docId: string
@@ -49,14 +37,12 @@ export type TSavedDraft = {
   bodyValue: TRichEditorValue
   bodyJson: string
   revisionSignature: string
-  serverContentHash: string
-  baseRevisionId: string | null
+  base: TLocalDraftServerBase
 }
 
 export type TDocDraftSource = 'draft' | 'public'
 
 export type TEditorDraftMeta = {
-  branchId: string
   stage?: TArticleStage | null
   insertedAt: string | null
   updatedAt: string | null
@@ -81,6 +67,7 @@ export type TDraftSnapshotStatus = {
 }
 
 export type TEditorDraftStorePatchInput = {
+  workingCopyId?: string | null
   bodyStats: Pick<TDocDraftInfo, 'characterCount' | 'wordCount'>
   draft: TEditorDraft
   meta: TEditorDraftMeta
@@ -91,6 +78,8 @@ export type TEditorDraftStorePatchInput = {
 }
 
 export type TDocDraftSession = {
+  workingCopyId?: string | null
+  publicSnapshotId?: string | null
   body: TRichEditorValue
   bodyJson: string
   info: TDocDraftInfo
@@ -99,6 +88,9 @@ export type TDocDraftSession = {
   slug: string
   subtitle: string
   title: string
-  serverContentHash: string
-  baseRevisionId: string | null
+}
+
+export type TDocEditorSource = {
+  workingCopy: TDocWorkingCopy | null
+  publicSnapshot: Omit<TDocWorkingCopy, 'scopeType' | 'revision'> | null
 }

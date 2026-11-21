@@ -153,9 +153,10 @@ defmodule GroupherServer.Test.CMS.Interactions.ProjectionTest do
 
   test "duplicate upvote is idempotent and leaves projection, achievement and fact unchanged" do
     {_community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
+    Repo.insert!(Achievement.changeset(%Achievement{}, %{user_id: user.id}))
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
-    baseline = Repo.get_by!(Achievement, user_id: post.author.id)
+    baseline = Repo.get_by!(Achievement, user_id: user.id)
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
     assert 1 == upvotes_count(post.id)
@@ -163,7 +164,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ProjectionTest do
     assert 1 ==
              Repo.aggregate(from(row in ArticleUpvote, where: row.article_id == ^post.id), :count)
 
-    unchanged = Repo.get_by!(Achievement, user_id: post.author.id)
+    unchanged = Repo.get_by!(Achievement, user_id: user.id)
     assert baseline.articles_upvotes_count == unchanged.articles_upvotes_count
     assert baseline.reputation == unchanged.reputation
   end
@@ -268,7 +269,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ProjectionTest do
     {_community, zero, _attrs, _other_user} = mock_article(:post)
     {_community, absent, _attrs, _third_user} = mock_article(:post)
 
-    zero_article = Repo.get!(Article, zero.article_id)
+    zero_article = Repo.get!(Article, zero.id)
 
     assert {:ok, :pass} = CMS.ArticleStats.apply_interaction_counts(zero_article)
     Repo.delete_all(from(stats in CMS.Model.ArticleStats, where: stats.article_id == ^absent.id))

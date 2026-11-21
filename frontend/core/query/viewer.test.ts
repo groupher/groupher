@@ -39,12 +39,7 @@ describe('viewer query factories', () => {
     const options = viewerQueries.commentSummary('alice', 'home', THREAD.POST, '42')
 
     await expect(options.queryFn?.({} as never)).resolves.toEqual(summary)
-    expect(options.queryKey).toEqual([
-      'viewer',
-      'alice',
-      'comment-summary-shared-v1',
-      'home:POST:42',
-    ])
+    expect(options.queryKey).toEqual(['viewer', 'alice', 'comment-summary', 'home:POST:42'])
   })
 
   it('deduplicates and chunks article paths while keeping one canonical query key', async () => {

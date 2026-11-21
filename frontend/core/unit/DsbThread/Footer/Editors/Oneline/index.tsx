@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import Button from '~/ui/Buttons/Button'
 import { FIELD } from '~/unit/DsbThread/constant'
 
@@ -18,7 +18,7 @@ import useFooterEditorActions from '../useFooterEditorActions'
 const Oneline: FC = () => {
   const s = useSalon()
   const { t } = useTrans()
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
 
   const { footerOnelineLinks } = useFooter()
   const links = buildFooterOnelineDraftLinks(footerOnelineLinks)

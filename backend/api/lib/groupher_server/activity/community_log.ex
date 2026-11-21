@@ -16,6 +16,7 @@ defmodule GroupherServer.Activity.CommunityLog do
   alias Activity.{ErrorCat, Event, Filter}
   alias Activity.Model.CommunityTimelineRow
   alias CMS.Model.Community
+  alias CMS.Passport.Scope.Community, as: CommunityPassportScope
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order, Page}
 
@@ -33,6 +34,15 @@ defmodule GroupherServer.Activity.CommunityLog do
   @max_export_entries 5_000
   @max_time_window_days 366
   @utc "Etc/UTC"
+  @private_admin_actions ~w(
+    admin_joined
+    admin_removed
+    admin_permissions_changed
+    admin_request_created
+    admin_request_decided
+    admin_request_cancelled
+    admin_request_expired
+  )
 
   @row_fields [
     :log_type,
@@ -98,13 +108,35 @@ defmodule GroupherServer.Activity.CommunityLog do
       Activity.CommunityLog.list(community, actor, %{filter: %{actions: [:create]}}, %GroupherServer.Pagi.Params.Offset{page: 1, size: 20})
   """
   def list(%Community{} = community, actor, selection, pagi \\ nil) do
-    with {:ok, true} <-
-           CMS.passport_authorization_check(actor, "audit.read", %{community: community}),
+    do_list(community, actor, selection, pagi, :load)
+  end
+
+  @doc """
+  Lists CommunityLogs using a caller-supplied Passport scope; missing or invalid scopes fail closed.
+
+  ## Examples
+
+      Activity.CommunityLog.list(community, actor, selection, pagi, passport_scope: scope)
+  """
+  def list(%Community{} = community, actor, selection, pagi, opts) when is_list(opts) do
+    case Keyword.fetch(opts, :passport_scope) do
+      {:ok, scope} -> do_list(community, actor, selection, pagi, {:provided, scope})
+      :error -> {:error, CMS.passport_error_cat_permission_denied()}
+    end
+  end
+
+  def list(%Community{}, _actor, _selection, _pagi, _opts) do
+    {:error, CMS.passport_error_cat_permission_denied()}
+  end
+
+  defp do_list(community, actor, selection, pagi, scope_source) do
+    with {:ok, visibility} <-
+           authorize_audit_read(actor, community, scope_source),
          {:ok, resolved} <- Filter.resolve(selection, active_actions()),
          {:ok, normalized} <- normalize_filter(resolved.filter, :list),
          handlers <- if(resolved.empty?, do: [], else: select_handlers(normalized)),
          {:ok, page} <-
-           ORM.pagi(scoped_rows(handlers, community.id, normalized), pagi,
+           ORM.pagi(scoped_rows(handlers, community.id, normalized, visibility), pagi,
              for: CommunityTimelineRow,
              order: order(),
              surface: "activity.community",
@@ -129,17 +161,15 @@ defmodule GroupherServer.Activity.CommunityLog do
       Activity.CommunityLog.stats(community, actor, %{filter: %{outcomes: [:denied]}})
   """
   def stats(%Community{} = community, actor, selection) do
-    with {:ok, true} <-
-           GroupherServer.CMS.passport_authorization_check(actor, "audit.read", %{
-             community: community
-           }),
+    with {:ok, visibility} <-
+           authorize_audit_read(actor, community),
          {:ok, resolved} <- Filter.resolve(selection, active_actions()),
          {:ok, normalized} <- normalize_filter(resolved.filter, :stats) do
       {total_count, counts} =
         if resolved.empty? do
           {0, %{}}
         else
-          daily_counts(select_handlers(normalized), community.id, normalized)
+          daily_counts(select_handlers(normalized), community.id, normalized, visibility)
         end
 
       {:ok,
@@ -161,10 +191,7 @@ defmodule GroupherServer.Activity.CommunityLog do
       Activity.CommunityLog.config(community, actor)
   """
   def config(%Community{} = community, actor) do
-    with {:ok, true} <-
-           GroupherServer.CMS.passport_authorization_check(actor, "audit.read", %{
-             community: community
-           }) do
+    with {:ok, _visibility} <- authorize_audit_read(actor, community) do
       resources =
         Enum.map(@handlers, fn handler ->
           actions =
@@ -201,17 +228,15 @@ defmodule GroupherServer.Activity.CommunityLog do
   """
   def export_logs(%Community{} = community, actor, selection, format)
       when format in [:json, :csv] do
-    with {:ok, true} <-
-           GroupherServer.CMS.passport_authorization_check(actor, "audit.read", %{
-             community: community
-           }),
+    with {:ok, visibility} <-
+           authorize_audit_read(actor, community),
          {:ok, resolved} <- Filter.resolve(selection, active_actions()),
          {:ok, normalized} <- normalize_filter(resolved.filter, :list) do
       {total_count, entries} =
         if resolved.empty? do
           {0, []}
         else
-          export_rows(select_handlers(normalized), community.id, normalized)
+          export_rows(select_handlers(normalized), community.id, normalized, visibility)
         end
 
       manifest = export_manifest(community, actor, resolved.query_context, length(entries))
@@ -253,10 +278,8 @@ defmodule GroupherServer.Activity.CommunityLog do
       Activity.CommunityLog.get_event(community, actor, event_ref)
   """
   def get_event(%Community{} = community, actor, event_ref) do
-    with {:ok, true} <-
-           CMS.passport_authorization_check(actor, "audit.read", %{community: community}),
-         {:ok, entries} <- bounded_entries(community.id, %{filter: %{event_ref: event_ref}}, 1) do
-      {:ok, List.first(entries)}
+    with {:ok, visibility} <- authorize_audit_read(actor, community) do
+      get_event_with_visibility(community, event_ref, visibility)
     end
   end
 
@@ -268,9 +291,11 @@ defmodule GroupherServer.Activity.CommunityLog do
       Activity.CommunityLog.get_event_detail(community, actor, event_ref)
   """
   def get_event_detail(%Community{} = community, actor, event_ref) do
-    with {:ok, event} <- get_event(community, actor, event_ref),
-         {:ok, parent_event} <- related_event(community, actor, event && event.parent_event_ref),
-         {:ok, child_result} <- related_children(community, actor, event && event.event_ref) do
+    with {:ok, visibility} <- authorize_audit_read(actor, community),
+         {:ok, event} <- get_event_with_visibility(community, event_ref, visibility),
+         {:ok, parent_event} <-
+           related_event(community, event && event.parent_event_ref, visibility),
+         {:ok, child_result} <- related_children(community, event && event.event_ref, visibility) do
       {:ok,
        if event do
          Map.merge(event, %{
@@ -281,18 +306,56 @@ defmodule GroupherServer.Activity.CommunityLog do
     end
   end
 
-  defp related_event(_community, _actor, nil), do: {:ok, nil}
-
-  defp related_event(community, actor, event_ref) do
-    get_event(community, actor, event_ref)
+  defp authorize_audit_read(actor, community) do
+    with {:ok, scope} <- CMS.passport_community_scope(actor, community),
+         {:ok, true} <- CMS.passport_allowed?(actor, scope, "audit.read") do
+      {:ok, %{private_admin_events?: scope.global.is_root or scope.community.is_lord}}
+    else
+      _ -> {:error, CMS.passport_error_cat_permission_denied()}
+    end
   end
 
-  defp related_children(_community, _actor, nil), do: {:ok, %{entries: []}}
+  defp authorize_audit_read(actor, community, :load), do: authorize_audit_read(actor, community)
 
-  defp related_children(community, _actor, event_ref) do
+  defp authorize_audit_read(actor, %Community{id: community_id}, {:provided, scope}) do
+    with %GroupherServer.Accounts.Model.User{id: actor_id} <- actor,
+         %CommunityPassportScope{actor_id: ^actor_id, community_id: ^community_id} <- scope,
+         {:ok, true} <- CMS.passport_allowed?(actor, scope, "audit.read") do
+      {:ok, %{private_admin_events?: scope.global.is_root or scope.community.is_lord}}
+    else
+      _ -> {:error, CMS.passport_error_cat_permission_denied()}
+    end
+  end
+
+  defp related_event(_community, nil, _visibility), do: {:ok, nil}
+
+  defp related_event(community, event_ref, visibility) do
+    get_event_with_visibility(community, event_ref, visibility)
+  end
+
+  defp related_children(_community, nil, _visibility), do: {:ok, %{entries: []}}
+
+  defp related_children(community, event_ref, visibility) do
     with {:ok, entries} <-
-           bounded_entries(community.id, %{filter: %{parent_event_ref: event_ref}}, @page_size) do
+           bounded_entries(
+             community.id,
+             %{filter: %{parent_event_ref: event_ref}},
+             @page_size,
+             visibility
+           ) do
       {:ok, %{entries: entries}}
+    end
+  end
+
+  defp get_event_with_visibility(community, event_ref, visibility) do
+    with {:ok, entries} <-
+           bounded_entries(
+             community.id,
+             %{filter: %{event_ref: event_ref}},
+             1,
+             visibility
+           ) do
+      {:ok, List.first(entries)}
     end
   end
 
@@ -339,13 +402,13 @@ defmodule GroupherServer.Activity.CommunityLog do
     }
   end
 
-  defp bounded_entries(community_id, selection, limit) do
+  defp bounded_entries(community_id, selection, limit, visibility) do
     with {:ok, resolved} <- Filter.resolve(selection, active_actions()),
          {:ok, normalized} <- normalize_filter(resolved.filter, :list) do
       handlers = if resolved.empty?, do: [], else: select_handlers(normalized)
 
       entries =
-        scoped_rows(handlers, community_id, normalized)
+        scoped_rows(handlers, community_id, normalized, visibility)
         |> order_by([row], desc: row.occurred_at, desc: row.record_sequence)
         |> limit(^limit)
         |> Repo.all()
@@ -355,8 +418,8 @@ defmodule GroupherServer.Activity.CommunityLog do
     end
   end
 
-  defp export_rows(handlers, community_id, filter) do
-    query = scoped_rows(handlers, community_id, filter)
+  defp export_rows(handlers, community_id, filter, visibility) do
+    query = scoped_rows(handlers, community_id, filter, visibility)
     count = Repo.aggregate(query, :count)
 
     entries =
@@ -369,9 +432,9 @@ defmodule GroupherServer.Activity.CommunityLog do
     {count, entries}
   end
 
-  defp daily_counts(handlers, community_id, filter) do
+  defp daily_counts(handlers, community_id, filter, visibility) do
     counts =
-      scoped_rows(handlers, community_id, filter)
+      scoped_rows(handlers, community_id, filter, visibility)
       |> group_by([row], type(fragment("(? AT TIME ZONE 'UTC')::date", row.occurred_at), :date))
       |> select(
         [row],
@@ -384,7 +447,7 @@ defmodule GroupherServer.Activity.CommunityLog do
     {Enum.sum(Map.values(counts)), counts}
   end
 
-  defp scoped_rows(handlers, community_id, filter) do
+  defp scoped_rows(handlers, community_id, filter, visibility) do
     queries = Enum.map(handlers, &handler_rows(&1, community_id))
 
     query =
@@ -396,7 +459,13 @@ defmodule GroupherServer.Activity.CommunityLog do
           Enum.reduce(rest, first, fn query, union -> union_all(union, ^query) end)
       end
 
-    from(row in subquery(query)) |> filter_rows(filter)
+    query = from(row in subquery(query)) |> filter_rows(filter)
+
+    if visibility.private_admin_events? do
+      query
+    else
+      where(query, [row], row.action not in ^@private_admin_actions)
+    end
   end
 
   defp handler_rows(handler, community_id) do

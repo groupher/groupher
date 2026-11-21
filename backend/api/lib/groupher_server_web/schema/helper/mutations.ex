@@ -49,6 +49,15 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     end
   end
 
+  defmacro article_thread_content_args do
+    quote do
+      arg(:copy_right, :string)
+      arg(:link_addr, :string)
+      arg(:subtitle, :string)
+      arg(:template_key, :string)
+    end
+  end
+
   @doc """
   upvote mutation for article
 

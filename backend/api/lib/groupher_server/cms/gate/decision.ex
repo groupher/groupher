@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
   @known_reasons [
     :resource_not_found,
     :gate_resource_mismatch,
-    :doc_branch_required,
+    :permission_denied,
     :lifecycle_not_found,
     :ancestor_community_not_writable,
     :ancestor_article_archived,
@@ -58,8 +58,8 @@ defmodule GroupherServer.CMS.Gate.Decision do
     :comment_deleted,
     :comment_destroyed,
     :article_comments_locked,
-    :permission_denied,
     :unknown_action,
+    :published_article_editing_disabled,
     :lifecycle_not_loaded,
     :scope_root_mismatch,
     :scope_binding_conflict,
@@ -67,15 +67,17 @@ defmodule GroupherServer.CMS.Gate.Decision do
     :unknown_policy_mode,
     :scope_policy_actor_mismatch,
     :unsupported_resource,
-    :solution_not_supported
+    :solution_not_supported,
+    :dashboard_not_found
   ]
 
   @priority [
     :resource_not_found,
     :unsupported_resource,
     :gate_resource_mismatch,
-    :doc_branch_required,
+    :permission_denied,
     :lifecycle_not_found,
+    :lifecycle_not_loaded,
     :ancestor_community_not_writable,
     :ancestor_article_archived,
     :ancestor_article_deleted,
@@ -87,10 +89,10 @@ defmodule GroupherServer.CMS.Gate.Decision do
     :comment_deleted,
     :comment_destroyed,
     :article_comments_locked,
-    :permission_denied,
     :unknown_action,
-    :lifecycle_not_loaded,
-    :solution_not_supported
+    :published_article_editing_disabled,
+    :solution_not_supported,
+    :dashboard_not_found
   ]
 
   @doc "Builds an allowed Decision with the supplied internal context."
@@ -159,7 +161,6 @@ defmodule GroupherServer.CMS.Gate.Decision do
 
   defp source(reason)
        when reason in [
-              :doc_branch_required,
               :ancestor_community_not_writable,
               :ancestor_article_archived,
               :ancestor_article_deleted,
@@ -178,13 +179,15 @@ defmodule GroupherServer.CMS.Gate.Decision do
 
   defp source(:article_comments_locked), do: :policy
   defp source(:solution_not_supported), do: :policy
+  defp source(:published_article_editing_disabled), do: :policy
+  defp source(:dashboard_not_found), do: :resource
   defp source(reason) when reason in [:scope_root_mismatch, :scope_binding_conflict], do: :scope
   defp source(:scope_context_missing), do: :scope
   defp source(:unknown_policy_mode), do: :scope
   defp source(:scope_policy_actor_mismatch), do: :scope
   defp source(_reason), do: :resource
 
-  defp retryable?(reason) when reason in [:lifecycle_not_loaded, :doc_branch_required] do
+  defp retryable?(reason) when reason in [:lifecycle_not_loaded] do
     true
   end
 
@@ -213,7 +216,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
   end
 
   defp actions(:permission_denied), do: [:show_permission_notice]
+  defp actions(:published_article_editing_disabled), do: [:read_only_notice]
   defp actions(:lifecycle_not_loaded), do: [:retry]
-  defp actions(:doc_branch_required), do: [:return_to_list]
   defp actions(_reason), do: []
 end

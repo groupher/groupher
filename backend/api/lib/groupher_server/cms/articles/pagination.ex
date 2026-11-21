@@ -13,30 +13,25 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   they are never folded into the live cursor sequence.
   """
 
-  require GroupherServer.CMS.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS, Pagi, Repo}
   alias CMS.Articles.{ArticleLite, Query.Contract}
+  alias CMS.Review.SnapshotVersion
   alias CMS.Communities.Enable
   alias CMS.Dashboard.PagiMode
   alias CMS.ErrorCat
 
   alias CMS.Model.{
+    Author,
     Article,
     ArticleBinding,
     ArticleBindingTag,
+    ArticleSnapshotTag,
     ArticleLifecycle,
-    Author,
     ArticlePublic,
     Community,
     CommunityTag,
-    DocBranch,
-    DocBranchState,
-    DocTreeNode,
-    DocLifecycle,
-    DocPublic,
     PinnedArticle,
     PostState
   }
@@ -162,7 +157,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   def public_binding_ids(thread, actor \\ nil) do
     context =
       if thread == :doc do
-        CMS.Gate.Context.Scope.Doc.public_main()
+        CMS.Gate.Context.Scope.Doc.public()
       else
         CMS.Gate.Context.Scope.Article.public(thread)
       end
@@ -184,10 +179,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   end
 
   defp run_page(thread, filter, params, order, opts, viewer) do
-    query_opts = [
-      include_pinned: Keyword.get(opts, :include_pinned, false),
-      public_tree: Keyword.get(opts, :public_tree, false)
-    ]
+    query_opts = [include_pinned: Keyword.get(opts, :include_pinned, false)]
 
     query = public_query(thread, filter, order, query_opts, viewer)
     count = count_query(thread, filter, query_opts, viewer)
@@ -293,31 +285,22 @@ defmodule GroupherServer.CMS.Articles.Pagination do
       where: article.thread == ^thread and binding.id in subquery(visible)
     )
     |> add_public_joins(thread)
-    |> maybe_add_public_tree(thread, opts)
     |> apply_filter(filter)
     |> maybe_exclude_pinned(include_pinned)
   end
 
   defp add_public_joins(query, :doc) do
     query
-    |> join(:inner, [article_binding: binding], branch in DocBranch,
-      as: :doc_branch,
-      on: branch.community_id == binding.community_id and branch.type == :main
-    )
-    |> join(:inner, [article: article, doc_branch: branch], state in DocBranchState,
-      as: :stable_doc_state,
-      on: state.article_id == article.id and state.branch_id == branch.id
-    )
-    |> join(:inner, [article: article, doc_branch: branch], public in DocPublic,
+    |> join(:inner, [article: article], public in ArticlePublic,
       as: :stable_public,
-      on: public.article_id == article.id and public.branch_id == branch.id
+      on: public.article_id == article.id
     )
     |> join(
       :inner,
-      [article: article, doc_branch: branch],
-      lifecycle in DocLifecycle,
+      [article: article, article_binding: binding],
+      lifecycle in ArticleLifecycle,
       as: :doc_lifecycle,
-      on: lifecycle.article_id == article.id and lifecycle.branch_id == branch.id
+      on: lifecycle.article_id == article.id
     )
   end
 
@@ -335,27 +318,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
       on: lifecycle.article_id == article.id
     )
   end
-
-  defp maybe_add_public_tree(query, :doc, opts) do
-    if Keyword.get(opts, :public_tree, false) do
-      where(
-        query,
-        exists(
-          from(node in DocTreeNode,
-            where:
-              node.community_id == parent_as(:article_community).id and
-                node.branch_id == parent_as(:doc_branch).id and
-                node.stage == ^CMS.Const.stage(:public) and node.type == :page and
-                node.doc_id == parent_as(:article).id
-          )
-        )
-      )
-    else
-      query
-    end
-  end
-
-  defp maybe_add_public_tree(query, _thread, _opts), do: query
 
   defp apply_filter(query, filter) do
     Enum.reduce(filter, query, fn
@@ -456,7 +418,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
 
   defp page_pins(_thread, _filter, _viewer, %Params.Cursor{}, _order, _opts), do: {:ok, []}
 
-  defp load_pinned(thread, filter, viewer, order, opts) do
+  defp load_pinned(thread, filter, viewer, order, _opts) do
     content_order = %{order | bindings: [], projection: []}
 
     pinned_query =
@@ -464,7 +426,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         thread,
         filter,
         content_order,
-        [include_pinned: true, public_tree: Keyword.get(opts, :public_tree, false)],
+        [include_pinned: true],
         viewer
       )
 
@@ -487,22 +449,44 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   defp present_lite_entries([]), do: []
 
   defp present_lite_entries(rows) do
+    article_tags = snapshot_tags(Enum.map(rows, & &1.snapshot_id))
+
     Enum.map(rows, fn row ->
-      %{
-        id: row.article.id,
-        thread: row.article.thread,
-        inner_id: row.inner_id,
+      row.article
+      |> Map.merge(%{
         title: row.title,
-        cat: Map.get(row, :cat),
-        is_pinned: Map.get(row, :is_pinned, false),
         digest: row.digest,
-        author: row.author,
+        snapshot_id: row.snapshot_id,
+        version: SnapshotVersion.from_id(row.snapshot_id),
+        published_at: row.published_at,
+        public_updated_at: row.public_updated_at,
+        inserted_at: row.published_at,
+        updated_at: row.published_at,
+        active_at: row.active_at,
+        inner_id: row.inner_id,
         community: row.community,
         community_tags: ArticleLite.community_tags(row.community_tags, row.community),
-        active_at: row.active_at,
-        inserted_at: row.article.inserted_at
-      }
+        article_tags: Map.get(article_tags, row.snapshot_id, []),
+        is_pinned: Map.get(row, :is_pinned, false),
+        cat: Map.get(row, :cat),
+        author: row.author
+      })
     end)
+  end
+
+  defp snapshot_tags([]), do: %{}
+
+  defp snapshot_tags(snapshot_ids) do
+    Repo.all(
+      from(tag in CommunityTag,
+        join: assignment in ArticleSnapshotTag,
+        on: assignment.tag_id == tag.id,
+        where: assignment.snapshot_id in ^snapshot_ids,
+        order_by: [asc: tag.index, asc: tag.id],
+        select: {assignment.snapshot_id, tag}
+      )
+    )
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
   end
 
   defp maybe_attach_viewer(entries, _viewer), do: {:ok, entries}
@@ -513,7 +497,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     :crypto.hash(
       :sha256,
       :erlang.term_to_binary(
-        {thread, query_filter, Order.identity(order), Keyword.get(opts, :public_tree, false),
+        {thread, query_filter, Order.identity(order), thread == :doc,
          Keyword.get(opts, :include_pinned, false)}
       )
     )
@@ -549,22 +533,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
       on: user.id == author.user_id,
       left_join: public in ArticlePublic,
       on: public.article_id == article.id,
-      left_join: lifecycle in ArticleLifecycle,
-      on:
-        lifecycle.article_id == article.id and
-          lifecycle.state in [:published, :archived],
-      left_join: branch in DocBranch,
-      on: branch.community_id == binding.community_id and branch.type == :main,
-      left_join: doc_state in DocBranchState,
-      on: doc_state.article_id == article.id and doc_state.branch_id == branch.id,
-      left_join: doc_public in DocPublic,
-      on:
-        doc_public.article_id == article.id and doc_public.branch_id == branch.id and
-          doc_public.visible == true,
-      left_join: doc_lifecycle in DocLifecycle,
-      on:
-        doc_lifecycle.article_id == article.id and doc_lifecycle.branch_id == branch.id and
-          doc_lifecycle.state in [:published, :archived],
       where: ^path_filter,
       where: article.thread == ^thread,
       where: binding.id in subquery(visible_bindings),
@@ -574,10 +542,11 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         binding_id: binding.id,
         thread: article.thread,
         inner_id: binding.inner_id,
-        title: fragment("COALESCE(?, ?)", public.title, doc_public.title),
-        digest: fragment("COALESCE(?, ?)", public.digest, doc_public.digest),
-        active_at: fragment("COALESCE(?, ?)", public.active_at, doc_public.active_at),
-        published_at: fragment("COALESCE(?, ?)", public.published_at, doc_public.published_at),
+        title: public.title,
+        digest: public.digest,
+        active_at: article.active_at,
+        published_at: public.published_at,
+        public_updated_at: public.updated_at,
         inserted_at: article.inserted_at,
         updated_at: article.updated_at,
         author: user,

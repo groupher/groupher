@@ -113,8 +113,6 @@ export const FIELD = {
   TAG_INDEX: 'tagIndex',
   DOC_FAQ: 'docFaq',
   NAME_ALIAS: 'nameAlias',
-  RSS_FEED_TYPE: 'rssFeedType',
-  RSS_FEED_COUNT: 'rssFeedCount',
   WIDGETS_PRIMARY_COLOR: 'widgetsPrimaryColor',
   WIDGETS_SIZE: 'widgetsSize',
   WIDGETS_THREADS: 'widgetsThreads',

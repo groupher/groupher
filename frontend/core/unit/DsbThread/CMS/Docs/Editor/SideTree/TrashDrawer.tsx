@@ -1,7 +1,8 @@
 import { type FC, useState } from 'react'
 
 import TYPE from '~/const/type'
-import { browserGraphQLRequest } from '~/graphql/client'
+import { browserGraphQLRequest, GraphQLRequestError } from '~/graphql/client'
+import useTrans from '~/hooks/useTrans'
 import CloseLightSVG from '~/icons/CloseLight'
 import FileTextSVG from '~/icons/FileText'
 import RotateSVG from '~/icons/Rotate'
@@ -11,17 +12,12 @@ import Pagi from '~/ui/Pagi'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
 
-import { reloadDocPublishChecklist } from '../helper'
+import { reloadDocsPublishQueue } from '../helper'
+import ConfirmDeleteModal from './ConfirmDeleteModal'
 import { SIDE_TREE_NODE_TYPE } from './constant'
 import { formatMutationError } from './helper'
 import useSalon from './salon/trashDrawer'
-import type {
-  TDocTreeMutationData,
-  TDocTreeMutationPayload,
-  TDocTreeTrashItem,
-  TSideTreeGroup,
-  TSideTreeTab,
-} from './spec'
+import type { TDocTreeTrashItem, TSideTreeGroup, TSideTreeTab } from './spec'
 
 type TProps = {
   pageInfo?: import('~/spec').TGraphQLPagiPageInfo
@@ -32,6 +28,7 @@ type TProps = {
   tabs: TSideTreeTab[]
   loading: boolean
   baseRevision: number | null
+  queueRevision: number | null
   community: string
   onClose: () => void
   onReload: () => void
@@ -119,13 +116,20 @@ const TrashDrawer: FC<TProps> = ({
   tabs,
   loading,
   baseRevision,
+  queueRevision,
   community,
   onClose,
   onReload,
   onRestored,
 }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const [restoringId, setRestoringId] = useState<string | null>(null)
+  const [purgingId, setPurgingId] = useState<string | null>(null)
+  const [purgeCandidate, setPurgeCandidate] = useState<{
+    item: TDocTreeTrashItem
+    revision: number
+  } | null>(null)
   const [parentRequiredId, setParentRequiredId] = useState<string | null>(null)
   const [selectedParentByItem, setSelectedParentByItem] = useState<Record<string, string>>({})
 
@@ -133,31 +137,34 @@ const TrashDrawer: FC<TProps> = ({
     item: TDocTreeTrashItem,
     targetParentNodeId?: string,
   ): Promise<void> => {
-    if (baseRevision === null || restoringId !== null) return
+    if (
+      baseRevision === null ||
+      queueRevision === null ||
+      restoringId !== null ||
+      purgingId !== null
+    )
+      return
 
     setRestoringId(item.id)
 
     try {
       const data = await executeCommand({
         request: (variables) =>
-          browserGraphQLRequest<TDocTreeMutationData>(S.restoreDocTreeTrashItem, variables),
+          browserGraphQLRequest<{
+            restoreDocsWorkspaceNode?: { treeRevision: number; queueRevision: number } | null
+          }>(S.restoreDocsWorkspaceNode, variables),
         variables: {
           community,
-          id: item.id,
-          baseRevision,
+          trashActionId: item.id,
+          treeRevision: baseRevision,
+          queueRevision,
           targetParentNodeId,
           targetIndex: targetParentNodeId ? (item.deletedFromIndex ?? 0) : undefined,
         },
       })
-      const payload = data?.restoreDocTreeTrashItem as TDocTreeMutationPayload | null | undefined
+      if (!data?.restoreDocsWorkspaceNode) throw new Error('Unable to restore item')
 
-      if (payload?.conflict) {
-        onRestored()
-        toast('Tree changed. Reloaded latest docs tree.', 'error')
-        return
-      }
-
-      reloadDocPublishChecklist()
+      reloadDocsPublishQueue()
       onReload()
       onRestored()
       setParentRequiredId(null)
@@ -165,7 +172,10 @@ const TrashDrawer: FC<TProps> = ({
     } catch (err) {
       const message = formatMutationError(err)
 
-      if (message.toLowerCase().includes(RESTORE_TARGET_REQUIRED_MESSAGE)) {
+      if (
+        message.toLowerCase().includes(RESTORE_TARGET_REQUIRED_MESSAGE) ||
+        message.toLowerCase().includes('restore_parent_missing')
+      ) {
         setParentRequiredId(item.id)
       } else {
         toast(message, 'error')
@@ -176,8 +186,47 @@ const TrashDrawer: FC<TProps> = ({
     }
   }
 
+  const purgeItem = async (item: TDocTreeTrashItem, revision: number): Promise<void> => {
+    if (queueRevision !== revision || restoringId !== null || purgingId !== null) {
+      onReload()
+      return
+    }
+    setPurgingId(item.id)
+    try {
+      const data = await executeCommand({
+        request: (variables) =>
+          browserGraphQLRequest<{ purgeDocsWorkspaceTrash?: { done?: boolean | null } | null }>(
+            S.purgeDocsWorkspaceTrash,
+            variables,
+          ),
+        variables: { community, queueRevision: revision, trashActionId: item.id },
+      })
+      if (!data?.purgeDocsWorkspaceTrash?.done) throw new Error('Unable to delete item')
+      onReload()
+    } catch (err) {
+      const message = formatMutationError(err)
+      const inUse =
+        err instanceof GraphQLRequestError &&
+        err.errors.some((error) => String(error.extensions?.code) === '4574')
+      toast(inUse ? t('dsb.doc.queue.purge_in_use') : message, 'error')
+      onReload()
+      onRestored()
+    } finally {
+      setPurgingId(null)
+    }
+  }
+
   return (
     <BaseDrawer show={show} onClose={onClose} type={TYPE.DRAWER.DOC_TRASH}>
+      <ConfirmDeleteModal
+        message={purgeCandidate ? t('dsb.doc.queue.purge_confirm') : null}
+        onCancel={() => setPurgeCandidate(null)}
+        onConfirm={() => {
+          const candidate = purgeCandidate
+          setPurgeCandidate(null)
+          if (candidate) void purgeItem(candidate.item, candidate.revision)
+        }}
+      />
       <div className={s.drawer}>
         <div className={s.header}>
           <div className={s.titleGroup}>
@@ -236,12 +285,32 @@ const TrashDrawer: FC<TProps> = ({
                       <button
                         type='button'
                         className={s.restoreButton}
-                        disabled={baseRevision === null || restoringId !== null || parentRequired}
+                        disabled={
+                          baseRevision === null ||
+                          queueRevision === null ||
+                          restoringId !== null ||
+                          purgingId !== null ||
+                          parentRequired
+                        }
                         aria-busy={restoringId === item.id}
                         onClick={() => restoreItem(item)}
                       >
                         <RotateSVG className={s.restoreIcon} />
                         <span>{restoringId === item.id ? 'Restoring' : 'Restore'}</span>
+                      </button>
+                      <button
+                        type='button'
+                        className={s.restoreButton}
+                        disabled={
+                          queueRevision === null || restoringId !== null || purgingId !== null
+                        }
+                        aria-busy={purgingId === item.id}
+                        onClick={() =>
+                          queueRevision !== null &&
+                          setPurgeCandidate({ item, revision: queueRevision })
+                        }
+                      >
+                        {t('dsb.doc.queue.purge')}
                       </button>
                     </div>
                     {parentRequired && (

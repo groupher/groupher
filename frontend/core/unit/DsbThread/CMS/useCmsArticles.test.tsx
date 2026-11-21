@@ -42,8 +42,8 @@ vi.mock('~/query', () => ({
   },
 }))
 
-vi.mock('~/stores/dsbConfig/hooks', () => ({
-  default: () => ({ pagiMode: 'page', pagiRevision: 0 }),
+vi.mock('~/stores/dsb/hooks', () => ({
+  default: () => ({ pagiMode: 'PAGE', pagiRevision: 0 }),
 }))
 
 vi.mock('~/stores/community/hooks', () => ({

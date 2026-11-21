@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server'
 
 import usePagiConfig from './usePagiConfig'
 
-const preference = { pagiMode: 'page', pagiMobileMode: 'infinite_scroll', pagiRevision: 3 } as const
+const preference = { pagiMode: 'PAGE', pagiMobileMode: 'INFINITE_SCROLL', pagiRevision: 3 } as const
 const width = (value: number) =>
   Object.defineProperty(window, 'innerWidth', { configurable: true, value })
 const originalWidth = window.innerWidth
@@ -16,7 +16,7 @@ it.each([390, 768, 1024, 1279])('selects mobile cursor defaults at %ipx', (value
   const { result } = renderHook(() => usePagiConfig(preference, 'xx/post'))
   expect(result.current).toMatchObject({
     ready: true,
-    config: { api: 'cursor', mode: 'infinite_scroll', revision: 3 },
+    config: { api: 'cursor', mode: 'INFINITE_SCROLL', revision: 3 },
   })
 })
 
@@ -25,21 +25,21 @@ it('selects desktop at the xl boundary, preserves it on resize and reselects for
   const { result, rerender } = renderHook(({ scope }) => usePagiConfig(preference, scope), {
     initialProps: { scope: 'xx/post' },
   })
-  expect(result.current.config.mode).toBe('page')
+  expect(result.current.config.mode).toBe('PAGE')
   width(768)
   act(() => window.dispatchEvent(new Event('resize')))
   rerender({ scope: 'xx/post' })
-  expect(result.current.config.mode).toBe('page')
+  expect(result.current.config.mode).toBe('PAGE')
   rerender({ scope: 'xx/changelog' })
-  expect(result.current.config.mode).toBe('infinite_scroll')
+  expect(result.current.config.mode).toBe('INFINITE_SCROLL')
 })
 
 it('honors independent mobile overrides', () => {
   width(768)
   const { result } = renderHook(() =>
-    usePagiConfig({ ...preference, pagiMobileMode: 'load_more' }, 'xx'),
+    usePagiConfig({ ...preference, pagiMobileMode: 'LOAD_MORE' }, 'xx'),
   )
-  expect(result.current.config).toMatchObject({ api: 'cursor', mode: 'load_more' })
+  expect(result.current.config).toMatchObject({ api: 'cursor', mode: 'LOAD_MORE' })
 })
 
 it('keeps the SSR snapshot unresolved even when rendering in a browser-like environment', () => {
@@ -67,7 +67,7 @@ it('hydrates a mobile list without a desktop render or hydration mismatch', asyn
   await act(async () => {
     root = hydrateRoot(container, <Probe />, { onRecoverableError: error })
   })
-  expect(container.textContent).toBe('infinite_scroll')
+  expect(container.textContent).toBe('INFINITE_SCROLL')
   expect(error).not.toHaveBeenCalled()
   await act(async () => root.unmount())
 })

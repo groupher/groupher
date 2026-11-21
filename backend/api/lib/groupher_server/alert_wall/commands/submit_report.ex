@@ -69,7 +69,7 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
   receipt_pipeline execute_pipeline(target, report_type, details, actor, command_id) do
     prepare(fn -> prepare(target, report_type, details) end)
     gate(fn prepared -> authorize(prepared, actor) end)
-    change(fn prepared -> submit(prepared, actor, command_id) end)
+    change(fn prepared, operation_ref -> submit(prepared, actor, operation_ref) end)
     confirm(fn confirmation -> {:ok, confirmation} end)
     present(&present_report/1)
   end
@@ -99,12 +99,12 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
   defp authorize(prepared, %{id: id}) when is_integer(id), do: {:ok, prepared}
   defp authorize(_prepared, _actor), do: {:error, CMS.passport_error_cat_permission_denied()}
 
-  defp submit(prepared, %{id: reporter_id}, command_id) do
+  defp submit(prepared, %{id: reporter_id}, operation_ref) do
     attrs = Map.put(prepared, :reporter_id, reporter_id)
 
     with {:ok, :pass} <- validate_current_target(attrs),
          {:ok, %UserReport{id: report_id}} <-
-           AlertWall.Persist.submit_report_in_transaction(attrs, command_id),
+           AlertWall.Persist.submit_report_in_transaction(attrs, operation_ref),
          %UserReport{} = report <- Repo.get(UserReport, report_id),
          {:ok, :pass} <- CMS.apply_report_threshold_in_transaction(report) do
       {:ok, %Confirmation{data: %{"report_id" => report_id}}}
@@ -134,10 +134,9 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
          } = target
        ) do
     owner in [:cms, :accounts] and
-      ((owner == :cms and target_type in [:article, :comment, :doc]) or
+      ((owner == :cms and target_type in [:article, :comment]) or
          (owner == :accounts and target_type == :user)) and
       is_binary(target_id) and target_id != "" and
-      (target_type != :doc or is_nil(Map.get(target, :community_id))) and
       (owner != :cms or
          (is_integer(Map.get(target, :observed_version)) and target.observed_version > 0))
   end

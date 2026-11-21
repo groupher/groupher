@@ -73,9 +73,33 @@ defmodule GroupherServerWeb.ErrorResponse do
     message
   end
 
+  defp error_message(
+         %Error{namespace: {:cms, :gate}, reason: :published_article_editing_disabled} = error
+       ) do
+    translated(error)
+  end
+
   defp error_message(%Error{} = error) do
     {:error, [message: message, code: _code]} = ErrorCat.gq_format(error)
     message
+  end
+
+  defp domain_extensions(
+         %Error{namespace: {:cms, :gate}, reason: :published_article_editing_disabled} = error
+       ) do
+    %{
+      code: error.code,
+      retryable: error.retryable,
+      actions: Enum.map(error.actions, &(&1 |> Atom.to_string() |> String.upcase()))
+    }
+  end
+
+  defp domain_extensions(%Error{namespace: {:cms, :gate}} = error) do
+    %{
+      code: error.code,
+      retryable: error.retryable,
+      actions: Enum.map(error.actions, &(&1 |> Atom.to_string() |> String.upcase()))
+    }
   end
 
   defp domain_extensions(

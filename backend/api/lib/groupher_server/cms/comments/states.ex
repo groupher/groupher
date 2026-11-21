@@ -29,13 +29,19 @@ defmodule GroupherServer.CMS.Comments.States do
   @doc false
   @spec apply_in_transaction(atom(), Comment.t(), map(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Comment.t())
-  def apply_in_transaction(action, %Comment{} = comment, article, %User{} = user, command_id) do
-    CMS.Comments.Summary.with_change(comment, fn ->
-      apply_fact_in_transaction(action, comment, article, user, command_id)
+  def apply_in_transaction(action, %Comment{} = comment, article, %User{} = user, operation_ref) do
+    CMS.Comments.Summary.with_change(comment, operation_ref, fn ->
+      apply_fact_in_transaction(action, comment, article, user, operation_ref)
     end)
   end
 
-  defp apply_fact_in_transaction(:pin, %Comment{} = comment, article, %User{} = user, command_id) do
+  defp apply_fact_in_transaction(
+         :pin,
+         %Comment{} = comment,
+         article,
+         %User{} = user,
+         operation_ref
+       ) do
     case maybe_existing_pinned_comment(comment) do
       {:ok, canonical} ->
         with {:ok, thread} <- FrontDesk.thread_of(canonical),
@@ -46,7 +52,7 @@ defmodule GroupherServer.CMS.Comments.States do
                PinnedComment |> ORM.create(pinned_comment_attrs(article, canonical, thread)),
              {:ok, _activity} <-
                record_pin_activity(canonical, article, :comment_pinned, user,
-                 operation_ref: command_id
+                 operation_ref: operation_ref
                ) do
           {:ok, updated}
         end
@@ -64,42 +70,47 @@ defmodule GroupherServer.CMS.Comments.States do
          %Comment{} = comment,
          article,
          %User{} = user,
-         command_id
+         operation_ref
        ) do
     with {:ok, updated} <- ORM.update(comment, %{is_pinned: false}),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
          {:ok, _activity} <-
            record_pin_activity(comment, article, :comment_unpinned, user,
-             operation_ref: command_id
+             operation_ref: operation_ref
            ) do
       {:ok, updated}
     end
   end
 
-  @spec fold(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def fold(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, true)
+  @spec fold(T.id() | Comment.t(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
+  def fold(%Comment{} = comment, %User{} = _user, operation_ref) do
+    do_fold_comment(comment, true, operation_ref)
+  end
 
-  def fold(comment_id, %User{} = _user) do
+  def fold(comment_id, %User{} = _user, operation_ref) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      do_fold_comment(comment, true)
+      do_fold_comment(comment, true, operation_ref)
     end
   end
 
-  @spec unfold(Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def unfold(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, false)
+  @spec unfold(Comment.t(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
+  def unfold(%Comment{} = comment, %User{} = _user, operation_ref) do
+    do_fold_comment(comment, false, operation_ref)
+  end
 
-  @spec unfold(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def unfold(comment_id, %User{} = _user) do
+  @spec unfold(T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
+  def unfold(comment_id, %User{} = _user, operation_ref) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      do_fold_comment(comment, false)
+      do_fold_comment(comment, false, operation_ref)
     end
   end
 
-  defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded) do
+  defp do_fold_comment(%Comment{} = comment, is_folded, operation_ref)
+       when is_boolean(is_folded) do
     if comment.is_folded == is_folded do
       {:ok, comment}
     else
-      CMS.Comments.Summary.with_change(comment, fn ->
+      CMS.Comments.Summary.with_change(comment, operation_ref, fn ->
         ORM.update(comment, %{is_folded: is_folded})
       end)
     end

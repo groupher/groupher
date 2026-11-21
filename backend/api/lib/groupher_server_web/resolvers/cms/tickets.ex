@@ -192,7 +192,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Tickets do
       args.community,
       to_string(args.id),
       content,
-      args.expected_draft_version,
+      args.revision,
       args.expected_lifecycle_version,
       actor,
       args.command_id
@@ -205,7 +205,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Tickets do
       args.community,
       to_string(args.id),
       args.reason,
-      args.expected_draft_version,
+      args.revision,
       args.expected_lifecycle_version,
       args.expected_workflow_version,
       actor,

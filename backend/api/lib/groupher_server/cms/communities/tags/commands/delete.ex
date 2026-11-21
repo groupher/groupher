@@ -37,7 +37,8 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Delete do
     gate(fn
       %CommunityTag{} = candidate ->
         with {:ok, community} <- TagSupport.community(candidate.community_id),
-             {:ok, _canonical} <- Gate.check_in_transaction(actor, :update, community) do
+             {:ok, _canonical} <-
+               Gate.check_in_transaction(actor, :community_tag_delete, community) do
           {:ok, candidate}
         end
 
@@ -45,7 +46,9 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Delete do
         {:error, CMS.Communities.ErrorCat.not_exist("CommunityTag")}
     end)
 
-    change(fn candidate -> Mutation.delete(candidate.id, command_id: command_id) end)
+    change(fn candidate, operation_ref ->
+      Mutation.delete(candidate.id, operation_ref: operation_ref)
+    end)
 
     confirm(fn deleted ->
       {:ok, TagSupport.confirmation(TagConfirmation, "tag_id", deleted.id, command_id)}

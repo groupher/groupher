@@ -1,19 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { saveDocDraft } from './artimentPublisher'
+import { saveDocWorkingCopy } from './artimentPublisher'
 
 const input = {
   value: [{ type: 'p', children: [{ text: 'Draft body content' }] }],
   community: 'home',
-  id: 'doc-id',
+  articleId: 'doc-id',
+  workingCopyId: 'work-id',
   title: 'Introduction',
   subtitle: 'Intro',
   slug: 'introduction',
-  expectedVersion: 3,
+  revision: 3,
   commandId: '00000000-0000-4000-8000-000000000001',
 }
 
-describe('saveDocDraft', () => {
+describe('saveDocWorkingCopy', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it('sends Plate value to the same-origin publisher route', async () => {
@@ -22,7 +23,7 @@ describe('saveDocDraft', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(saveDocDraft(input)).resolves.toEqual({
+    await expect(saveDocWorkingCopy(input)).resolves.toEqual({
       docId: 'doc-id',
       title: 'Introduction',
     })
@@ -33,15 +34,15 @@ describe('saveDocDraft', () => {
     )
     const request = fetchMock.mock.calls[0][1] as RequestInit
     expect(JSON.parse(String(request.body))).toEqual({
-      action: 'docDraft.update',
-      target: { community: 'home', documentId: 'doc-id' },
+      action: 'article.working_copy.save',
+      target: { community: 'home', articleId: 'doc-id', workingCopyId: 'work-id' },
       payload: {
         content: { format: 'plate', value: input.value },
         slug: 'introduction',
         subtitle: 'Intro',
         title: 'Introduction',
       },
-      expectedVersion: 3,
+      revision: 3,
       commandId: expect.any(String),
     })
   })
@@ -57,7 +58,7 @@ describe('saveDocDraft', () => {
       ),
     )
 
-    await expect(saveDocDraft(input)).rejects.toMatchObject({
+    await expect(saveDocWorkingCopy(input)).rejects.toMatchObject({
       code: 'publisher_failure',
       message: 'Artiment BodyBag requires a verified publisher',
       status: 422,

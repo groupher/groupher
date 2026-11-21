@@ -395,9 +395,12 @@ defmodule GroupherServer.CMS.Seeds.Wallpaper do
 
     @doc false
     def create_batch(capability) when is_binary(capability) do
-      post("/generated-batches", %{capability: capability}, fn body ->
-        if match?(%{"ok" => true}, body), do: {:ok, :pass}, else: false
-      end)
+      post(
+        "/generated-batches",
+        %{capability: capability},
+        fn body -> if match?(%{"ok" => true}, body), do: {:ok, :pass}, else: false end,
+        "ASSETS_HUB_BATCH_ENDPOINT"
+      )
     end
 
     @doc false
@@ -411,9 +414,12 @@ defmodule GroupherServer.CMS.Seeds.Wallpaper do
 
     @doc false
     def cancel_batch(batch_ref, capability) when is_binary(batch_ref) and is_binary(capability) do
-      case post("/generated-batches/#{batch_ref}/cancel", %{capability: capability}, fn body ->
-             match?(%{"ok" => true}, body)
-           end) do
+      case post(
+             "/generated-batches/#{batch_ref}/cancel",
+             %{capability: capability},
+             fn body -> match?(%{"ok" => true}, body) end,
+             "ASSETS_HUB_BATCH_ENDPOINT"
+           ) do
         {:ok, _body} -> {:ok, :pass}
         {:error, reason} -> {:error, reason}
       end
@@ -454,8 +460,8 @@ defmodule GroupherServer.CMS.Seeds.Wallpaper do
       end)
     end
 
-    defp post(path, payload, success?) do
-      endpoint = Endpoints.fetch!("ASSETS_PUBLIC_ENDPOINT")
+    defp post(path, payload, success?, endpoint_key \\ "ASSETS_PUBLIC_ENDPOINT") do
+      endpoint = Endpoints.fetch!(endpoint_key)
 
       case Req.post("#{endpoint}#{path}",
              json: payload,

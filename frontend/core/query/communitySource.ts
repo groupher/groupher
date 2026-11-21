@@ -7,7 +7,7 @@ import type { TCommunity } from '~/spec'
 const inFlight = new Map<string, Promise<TCommunity>>()
 
 /** Coalesces concurrent domain refetches without retaining another confirmed cache. */
-export const fetchCommunitySnapshot = (community: string): Promise<TCommunity> => {
+export const fetchCommunity = (community: string): Promise<TCommunity> => {
   const existing = inFlight.get(community)
   if (existing) return existing
 

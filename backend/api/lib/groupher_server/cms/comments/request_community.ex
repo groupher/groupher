@@ -18,8 +18,11 @@ defmodule GroupherServer.CMS.Comments.RequestCommunity do
     end
   end
 
-  def resolve(%Comment{thread: :doc, article_id: article_id}) do
-    CMS.Articles.Bindings.doc_owner(article_id)
+  def resolve(%Comment{thread: :doc} = comment) do
+    case CMS.Articles.Bindings.all(comment) do
+      {:ok, [%ArticleBinding{community: %Community{} = community}]} -> {:ok, community}
+      _ -> {:error, CMS.Gate.ErrorCat.scope_context_missing()}
+    end
   end
 
   def resolve(%Comment{} = comment) do

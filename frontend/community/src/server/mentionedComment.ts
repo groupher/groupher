@@ -13,6 +13,7 @@ type MentionedComment = {
 }
 
 const mentionedCommentQuery = `
+  "Reads one Comment reached through a stored Mention, even when its parent body is restricted"
   query MentionedComment($community: String!, $locator: MentionsGraphLocatorInput!) {
     mentionedComment(community: $community, locator: $locator) {
       innerId

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 
+import { ARTICLE_STAGE } from '~/const/article'
 import { browserGraphQLRequest } from '~/graphql/client'
-import { saveDocDraft, type TSaveDocDraftInput } from '~/lib/artimentPublisher'
+import { saveDocWorkingCopy, type TSaveDocWorkingCopyInput } from '~/lib/artimentPublisher'
 import { ContentPublishError } from '~/lib/contentPublisher'
 import { slugify } from '~/lib/slug'
 import { createCommandHandle, executeCommand } from '~/query/mutation/optimistic/execute'
@@ -9,7 +10,7 @@ import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
 
-import { reloadDocPublishChecklist } from '../../helper'
+import { reloadDocsPublishQueue } from '../../helper'
 import type { TSideTreeChild } from '../../SideTree/spec'
 import useDocsEditor from '../../store/hooks'
 import { DOC_AUTO_SAVE_DELAY } from '../constant'
@@ -18,9 +19,9 @@ import {
   composeDraftSaveInput,
   composeEditorDraft,
   composeEditorDraftMeta,
-  composeLoadedDraftSession,
+  composeWorkingCopySession,
 } from '../helper'
-import type { TDocDraftDTO } from '../spec'
+import type { TDocWorkingCopy } from '../spec'
 import type { TDraftEditorState } from './useDraftEditorState'
 
 type TParams = {
@@ -35,13 +36,19 @@ export default function useDraftAutoSave(
   const { slug: community } = useCommunity()
   const { attachSaveDocDraft } = useDocsEditor()
   const failedAutoSaveDraftRef = useRef<TDraftEditorState['draft'] | null>(null)
+  const conflictPausedRef = useRef(false)
   const saveInFlightRef = useRef(false)
   const rateLimitUntilRef = useRef(0)
   const rateLimitTimerRef = useRef<number | null>(null)
   const latestSaveRef = useRef<() => Promise<void>>(async () => undefined)
   const latestDocIdRef = useRef(draftState.draft.docId)
+  const latestCopyIdRef = useRef(draftState.workingCopyId)
+  useLayoutEffect(() => {
+    latestCopyIdRef.current = draftState.workingCopyId
+  }, [draftState.workingCopyId])
 
   const {
+    workingCopyId,
     activePage,
     applySaved,
     reconcileConflict,
@@ -61,6 +68,7 @@ export default function useDraftAutoSave(
       rateLimitTimerRef.current = null
       rateLimitUntilRef.current = 0
       failedAutoSaveDraftRef.current = null
+      conflictPausedRef.current = false
     }
     latestDocIdRef.current = draft.docId
   }, [draft.docId])
@@ -68,6 +76,7 @@ export default function useDraftAutoSave(
   const save = useCallback(async (): Promise<void> => {
     if (
       !activePage?.docId ||
+      !workingCopyId ||
       !editable ||
       invalid ||
       loadStatus.loading ||
@@ -77,6 +86,7 @@ export default function useDraftAutoSave(
       return
 
     const startedDraft = draft
+    conflictPausedRef.current = false
     const requestDocId = startedDraft.docId || activePage.docId
     const nextTitle = startedDraft.title.trim()
     const nextSubtitle = startedDraft.subtitle.trim()
@@ -97,19 +107,21 @@ export default function useDraftAutoSave(
       const command = createCommandHandle({ docId: requestDocId })
       const executeSave = () =>
         executeCommand({
-          request: (variables: TSaveDocDraftInput) => saveDocDraft<TDocDraftDTO>(variables),
+          request: (variables: TSaveDocWorkingCopyInput) =>
+            saveDocWorkingCopy<TDocWorkingCopy>(variables),
           variables: {
             value: input.value,
             community,
-            id: input.id,
+            articleId: input.id,
+            workingCopyId: workingCopyId!,
             slug: input.slug,
             subtitle: input.subtitle,
             title: input.title,
-            expectedVersion: startedDraft.version,
+            revision: startedDraft.version,
           },
           commandId: command.commandId,
         })
-      let savedDraft: TDocDraftDTO
+      let savedDraft: TDocWorkingCopy
       try {
         savedDraft = await executeSave()
       } catch (error) {
@@ -123,35 +135,49 @@ export default function useDraftAutoSave(
       rateLimitUntilRef.current = 0
       const publishState = composeDraftPublishState(activePage.publishState)
 
-      if (latestDocIdRef.current !== requestDocId) return
+      if (latestDocIdRef.current !== requestDocId || latestCopyIdRef.current !== workingCopyId)
+        return
 
       patchSideTreeChild(activePage.id, { publishState })
       applySaved({
         meta: composeEditorDraftMeta({
-          author: savedDraft?.author ?? null,
+          author: null,
           insertedAt: savedDraft?.insertedAt ?? null,
-          stage: savedDraft?.stage ?? null,
+          stage: ARTICLE_STAGE.DRAFT,
           updatedAt: savedDraft?.updatedAt ?? new Date().toISOString(),
         }),
         requestDraft: {
           ...requestDraft,
-          docId: savedDraft?.docId || requestDraft.docId,
+          docId: savedDraft.articleId || requestDraft.docId,
           slug: savedDraft?.slug || requestDraft.slug,
         },
         savedDraft,
         startedDraft,
       })
-      reloadDocPublishChecklist()
+      reloadDocsPublishQueue()
     } catch (err) {
-      if (latestDocIdRef.current !== requestDocId) return
+      if (latestDocIdRef.current !== requestDocId || latestCopyIdRef.current !== workingCopyId)
+        return
 
       const message = err instanceof Error ? err.message : String(err)
-      if (err instanceof ContentPublishError && err.code === 'version_conflict') {
-        const data = await browserGraphQLRequest<{ docDraft?: TDocDraftDTO }>(S.docDraft, {
-          community,
-          id: requestDocId,
-        })
-        reconcileConflict(composeLoadedDraftSession(data?.docDraft, activePage))
+      if (err instanceof ContentPublishError && err.code === 'revision_conflict') {
+        conflictPausedRef.current = true
+        const data = await browserGraphQLRequest<{ articleWorkingCopies: TDocWorkingCopy[] }>(
+          S.docsWorkingCopies,
+          {
+            community,
+            articleId: requestDocId,
+          },
+        )
+        if (latestDocIdRef.current !== requestDocId || latestCopyIdRef.current !== workingCopyId)
+          return
+        const copy = data.articleWorkingCopies.find((item) => item.scopeType === 'default')
+        if (!copy || copy.id !== workingCopyId) {
+          setSaveError('This editing session has ended. Your local edits were preserved.')
+          toast('This editing session has ended. Your local edits were preserved.', 'error')
+          return
+        }
+        reconcileConflict(composeWorkingCopySession(copy, activePage))
         toast('The server draft changed. Your local edits were preserved.', 'error')
         return
       }
@@ -174,6 +200,7 @@ export default function useDraftAutoSave(
     }
   }, [
     activePage,
+    workingCopyId,
     applySaved,
     community,
     draft,
@@ -203,6 +230,7 @@ export default function useDraftAutoSave(
 
   useEffect(() => {
     if (!dirty || !editable || invalid || loadStatus.loading || saveStatus.saving) return
+    if (conflictPausedRef.current) return
     if (failedAutoSaveDraftRef.current === draft) return
 
     const timer = window.setTimeout(() => {

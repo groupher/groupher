@@ -53,7 +53,11 @@ defmodule GroupherServer.AlertWall.Commands.Resolve do
   receipt_pipeline execute_pipeline(item_id, resolution, expected_version, actor, command_id) do
     prepare(fn -> prepare(item_id, resolution, expected_version) end)
     gate(fn prepared -> authorize(prepared, actor) end)
-    change(fn prepared -> resolve(prepared, resolution, expected_version, actor, command_id) end)
+
+    change(fn prepared, operation_ref ->
+      resolve(prepared, resolution, expected_version, actor, operation_ref)
+    end)
+
     confirm(fn confirmation -> {:ok, confirmation} end)
     present(&present_result/1)
   end
@@ -82,8 +86,8 @@ defmodule GroupherServer.AlertWall.Commands.Resolve do
 
   defp authorize(%{item: %Item{community_id: community_id}} = prepared, actor) do
     case Repo.get(Community, community_id) do
-      %Community{slug: slug} ->
-        with {:ok, :pass} <- authorize_permission(actor, "review.decide", %{community: slug}) do
+      %Community{} = community ->
+        with {:ok, :pass} <- authorize_permission(actor, "review.decide", community) do
           {:ok, prepared}
         end
 
@@ -92,7 +96,21 @@ defmodule GroupherServer.AlertWall.Commands.Resolve do
     end
   end
 
-  defp authorize_permission(actor, permission, params \\ %{}) do
+  defp authorize_permission(actor, permission, params \\ %{})
+
+  defp authorize_permission(actor, permission, %Community{} = community) do
+    with {:ok, scope} <- CMS.passport_community_scope(actor, community),
+         {:ok, true} <-
+           CMS.passport_allowed?(actor, scope, permission) do
+      {:ok, :pass}
+    else
+      {:ok, false} -> {:error, CMS.passport_error_cat_permission_denied()}
+      {:error, _reason} = error -> error
+      _ -> {:error, CMS.passport_error_cat_permission_denied()}
+    end
+  end
+
+  defp authorize_permission(actor, permission, params) do
     case CMS.passport_authorization_check(actor, permission, params) do
       {:ok, true} -> {:ok, :pass}
       {:error, _reason} = error -> error
@@ -100,12 +118,12 @@ defmodule GroupherServer.AlertWall.Commands.Resolve do
     end
   end
 
-  defp resolve(%{item: item}, resolution, expected_version, actor, command_id) do
+  defp resolve(%{item: item}, resolution, expected_version, actor, operation_ref) do
     with {:ok, updated} <-
            AlertWall.Persist.resolve_in_transaction(
              item.id,
              resolution,
-             command_id,
+             operation_ref,
              actor,
              expected_version
            ) do

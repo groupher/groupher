@@ -2,6 +2,10 @@
 
 > 文档角色：Incident archive；本文中的 `staticRevision`、`staticAssetPublicRef` 只描述历史 v1
 > 故障现场，不是当前 Wallpaper API。当前数据边界以 `docs/feature/wallpaper/` 下的 Active contract 为准。
+>
+> 本文记录的 `.env` / 手工 `cf dev` 修复步骤已被统一方案取代。当前入口、身份来源和
+> 端口以 [`Dev Hub 统一本地运行环境`](../architecture/dev-hub-local-environment.md) 与
+> [`Assets Hub 本地运行时边界`](./local-runtime.md) 为准。
 
 ## 状态
 
@@ -115,18 +119,18 @@ Auth 侧的 `assets-hub-development` client 还必须注册
 
 ### 当前本地启动拓扑
 
-修复前 `dev:local` 会启动 Assets upload API 和独立的 read worker；Dev Hub 虽然启动了组合命令，但没有把 read worker 的 readiness 作为 Assets 服务就绪条件。现在 Assets Hub 的 Dev Hub 服务定义显式依赖 Auth/Phoenix，并将 read worker 的 `/health/ready` 作为 endpoint readiness。
+历史上 `dev:local` 曾启动组合 upload API/read Worker；当前 Dev Hub 将 Node provider 与
+Cloudflare Worker 分别登记，后者仅在显式集成时启动。Worker 独立的 `/health/ready`
+探针验证真实 token、scope 和 Phoenix origin lookup。
 
 ## 直接修复：本地运行时配置
 
 这是首版已落地的本地修复，不需要把 secret 提交到仓库：
 
-1. `dev:local` 从 `backend/assets-hub/.env` 加载 service-auth 配置，再以继承环境启动
-   `dev:read-worker` 的 `cf dev --mode development`；`.dev.vars` 不再是该链路的配置源。
-2. 使用现有本地 secret 来源提供 `SERVICE_AUTH_CLIENT_ID` 和 `SERVICE_AUTH_CLIENT_SECRET`，不要把 secret 提交到仓库。
-3. 在 `.env` 中同时显式覆盖 `SERVICE_AUTH_TOKEN_ENDPOINT`、`SERVICE_AUTH_ISSUER` 和 `SERVICE_AUTH_JWKS_URL`，不能依赖配置文件的默认值；确认 issuer、audience、scope 与 Phoenix 的验证配置一致。
-4. 重启 `cf` read worker；这些变量在 worker 启动时读取，运行中补变量不会自动生效。
-5. 直接请求 light/dark 两个 `/a/.../original` URL，必须返回 `200` 和 `image/*`，再排查浏览器缓存或页面层问题。
+1. 使用 `pnpm devhub start assets-read-worker`，由 Hub 交付独立的本地服务身份与 Worker bindings；
+2. 使用 `pnpm devhub logs assets-read-worker` 查看启动与 readiness 错误，不直接运行 `cf dev`；
+3. 通过 `https://assets-worker.groupher.localhost/health/ready` 验证集成 Worker 的 Auth/Phoenix 链路；
+4. 浏览器默认 Node provider 的静态资源仍使用 `https://assets.groupher.localhost`。
 
 同时，`cloudflare.config.ts` 以 `mode` 映射本地和生产 bindings；部署脚本显式使用 `--mode production`，避免本地默认值被部署。
 

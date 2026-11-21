@@ -38,7 +38,7 @@ it('automatically loads once per intersection and pauses on pending, errors and 
   const load = vi.fn()
   const retry = vi.fn()
   const props = {
-    mode: 'infinite_scroll' as const,
+    mode: 'INFINITE_SCROLL' as const,
     hasNextPage: true,
     isLoading: false,
     onLoadMore: load,
@@ -82,13 +82,13 @@ it('keeps load_more manual and falls back to an accessible button without observ
   const load = vi.fn()
   try {
     const { rerender } = render(
-      <CursorPagination mode='load_more' hasNextPage isLoading={false} onLoadMore={load} />,
+      <CursorPagination mode='LOAD_MORE' hasNextPage isLoading={false} onLoadMore={load} />,
     )
     expect(load).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: '加载更多' }))
     expect(load).toHaveBeenCalledTimes(1)
     rerender(
-      <CursorPagination mode='infinite_scroll' hasNextPage isLoading={false} onLoadMore={load} />,
+      <CursorPagination mode='INFINITE_SCROLL' hasNextPage isLoading={false} onLoadMore={load} />,
     )
     fireEvent.click(screen.getByRole('button', { name: '加载更多' }))
     expect(load).toHaveBeenCalledTimes(2)

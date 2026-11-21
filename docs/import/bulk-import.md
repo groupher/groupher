@@ -733,9 +733,9 @@ query PreviewDocContentImportTarget(
 ```
 
 - 该 query 校验 SourceTree schema/version/规模，只读取当前社区 Docs 状态，不创建 Connection、Snapshot、Plan 或 Job。
-- `targetRevision` 标识规划时主 Docs Draft/Tree 的状态。首版语义固定为 main branch identity 与 `DocsSiteState.tree_lock_version` 的版本化组合；API 可以返回 opaque string，但不能改成与 Tree revision 无关的随机 token。main branch 或 state 尚未惰性初始化时与 revision `0` 等价。
+- `targetRevision` 标识规划时当前站点 Docs 目录的状态，语义固定为站点 Queue 的 `tree_lock_version`；API 可以返回 opaque string，但不能改成与目录 revision 无关的随机 token。Queue 尚未初始化时与 revision `0` 等价。
 - Node 将 TargetTree、conflicts 和 targetRevision 合并进 Preview DTO；原始正文仍保存在当前 `previewRef` 的 Private Blob 前缀下。
-- Apply mutation 必须在包含整个写入过程的同一个 Phoenix `Repo` transaction 中解析 main branch，再获取普通 Doc Tree 写入共用的 PostgreSQL transaction advisory lock：`doc_tree:<community_id>:<branch_id>`，然后读取当前 `tree_lock_version` 并比较 targetRevision。
+- Apply mutation 必须在包含整个写入过程的同一个 Phoenix `Repo` transaction 中取得 Docs 站点锁 `docs_site:<community_id>`（`DocTree.Publish.SiteLock`），然后读取当前 Queue 的 `tree_lock_version` 并比较 targetRevision；不得再解析或锁定 Docs branch。
 - targetRevision 已变化时必须回滚并返回 `target_revision_conflict`，要求用户重新 Review。创建 Job 或 apply 不能静默重新规划并接受一套用户没有确认过的新映射。
 - targetRevision 未变化时继续持有同一把锁，直到 BodyBag/Draft 写入、Tree upsert、revision bump、ImportSourceMapping 更新和 Job completion 一起提交。不能在事务外做 `read → compare → write`，也不能只依赖所有写入方未共同参与的孤立 CAS。
 
@@ -820,7 +820,7 @@ Dashboard 只接收可展示的安全 DTO：
 4. Files SDK 后的 `PreviewStore` 保存不可变 `PreviewRecord + DocsDataset + Review artifact`，使用固定 `attemptRef`、write-once run association 和 attempt-local ready receipt。
 5. Import Worker 复用 document-importer/content-publisher，把 Markdown 转换为 BodyBag；固定容量为 2 MiB Plate input、每批最多 4 篇、完整 GraphQL request JSON 最多 6 MiB。
 6. Phoenix 只保留 ImportJob、JobItem、PostgreSQL BodyBag staging、Docs Validator/Writer 和 ImportSourceMapping。单篇 canonical BodyBag 最多 5 MiB，由 Phoenix 编码并记录权威 `body_size_bytes`。
-7. Writer 在一个数据库事务和 main Doc Tree advisory lock 内验证 `targetRevision`、过滤 skipped Page、写 Draft/Tree/Mapping、完成 Job 并删除 staging。same-hash stage、completed stage/apply 重放均幂等。
+7. Writer 在一个数据库事务和 Docs 站点锁内验证 `targetRevision`、过滤 skipped Page、写 Draft/Tree/Mapping、完成 Job 并删除 staging。same-hash stage、completed stage/apply 重放均幂等。
 8. 旧 Snapshot/Preparation/Plan/Checkpoints/PayloadStore、Phoenix GitHub/archive/framework 路径、Changelog/AssetStager 半成品和相关旧表已直接移除，不保留兼容读写或数据迁移。
 
 ### 17.2 已验收与后续

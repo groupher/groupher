@@ -60,6 +60,8 @@ defmodule GroupherServer.CMS.Articles.Query do
       CMS.Articles.count_published(:post, author)
   """
   @spec count_published(atom(), User.t()) :: T.domain_res(non_neg_integer())
+  # PublicReadReport.author_counts mirrors this formula for Doc: count visible
+  # Binding rows per author, without Article deduplication or extra Trash filters.
   def count_published(thread, %User{} = user) do
     with %Ecto.Query{} = query <- Scope.scope(Article, nil, :list, scope_context(thread)) do
       query
@@ -71,7 +73,7 @@ defmodule GroupherServer.CMS.Articles.Query do
     end
   end
 
-  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(:doc), do: DocContext.public()
   defp scope_context(thread), do: ArticleContext.public(thread)
 
   @doc """

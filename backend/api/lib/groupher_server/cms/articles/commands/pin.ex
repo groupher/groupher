@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Pin do
   receipt_pipeline execute_pipeline(article, community, community_id, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :pin, candidate, community) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with %Community{} = locked_community <- PinPersist.lock_community(community.id),
            {:ok, :pass} <- ensure_capacity(locked_community.id, canonical.thread),
            {:ok, _pin} <- PinPersist.insert(canonical, locked_community) do

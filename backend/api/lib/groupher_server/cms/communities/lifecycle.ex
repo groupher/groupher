@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   alias CMS.Communities.{Const, Effects, Transaction}
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Gate.ErrorCat, as: GateErrorCat
-  alias CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
+  alias CMS.Model.{Community, CommunityAdmin, CommunityLifecycle, CommunityLifecycleBlocker}
 
   @archive_blockers [:owner_archive, :moderation_archive]
   @hidden_blockers [:moderation_suspend, :moderation_archive, :owner_archive]
@@ -68,12 +68,12 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   @type capability :: :read | :write | :manage | :destroy
   @type read_mode ::
-          :public | :management | :owner_management | :moderator_management | :operations
+          :public | :admin | :owner | :moderator_management | :operations
 
   @doc "Returns the policy modes shared by Community Scope and access checks."
   @spec read_policy_modes() :: [read_mode()]
   def read_policy_modes do
-    [:public, :management, :owner_management, :moderator_management, :operations]
+    [:public, :admin, :owner, :moderator_management, :operations]
   end
 
   @doc """
@@ -86,8 +86,8 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   """
   @spec readable_states(read_mode()) :: [atom()]
   def readable_states(:public), do: @public_readable_states
-  def readable_states(:management), do: @management_readable_states
-  def readable_states(:owner_management), do: @management_readable_states
+  def readable_states(:admin), do: @management_readable_states
+  def readable_states(:owner), do: @management_readable_states
   def readable_states(:moderator_management), do: @management_readable_states
   def readable_states(:operations), do: @operations_readable_states
 
@@ -95,7 +95,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   @spec can_read_mode(Community.t() | CommunityLifecycle.t(), read_mode(), map()) ::
           {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_read_mode(resource, mode, _context)
-      when mode in [:public, :management, :owner_management, :moderator_management, :operations] do
+      when mode in [:public, :admin, :owner, :moderator_management, :operations] do
     with {:ok, lifecycle} <- lifecycle_from(resource) do
       {:ok, lifecycle.state in readable_states(mode)}
     end
@@ -563,6 +563,20 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp destroy_lifecycle(lifecycle, operation_ref, parent_event_ref) do
     case Repo.update(transition_changeset(lifecycle, :destroy)) do
       {:ok, destroyed} ->
+        case CMS.DocTree.HistoryPurge.run(destroyed, operation_ref) do
+          {:ok, :purged} -> {:ok, :pass}
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+        case CMS.Articles.RetainedHistory.purge_community(destroyed) do
+          {:ok, :purged} -> {:ok, :pass}
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+        Repo.delete_all(
+          from(admin in CommunityAdmin, where: admin.community_id == ^destroyed.community_id)
+        )
+
         case write_audit(
                destroyed,
                operation_ref,

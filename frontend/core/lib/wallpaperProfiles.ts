@@ -6,7 +6,16 @@
  * dependencies so Phoenix and future export adapters can mirror the same keys.
  */
 
-export type TWallpaperProfile = 'wide' | 'desktop' | 'tablet' | 'phone'
+import { lowerEnumValue, valueKeyedEnum } from '~/lib/enumValues'
+import { WallpaperProfile } from '~/lib/graphql/generated/enums'
+
+export type TWallpaperProfile = Lowercase<WallpaperProfile>
+
+const PROFILE_VALUES = valueKeyedEnum(WallpaperProfile)
+const WIDE = lowerEnumValue(PROFILE_VALUES.WIDE)
+const DESKTOP = lowerEnumValue(PROFILE_VALUES.DESKTOP)
+const TABLET = lowerEnumValue(PROFILE_VALUES.TABLET)
+const PHONE = lowerEnumValue(PROFILE_VALUES.PHONE)
 
 export type TWallpaperProfileSpec = {
   key: TWallpaperProfile
@@ -34,25 +43,25 @@ export const WALLPAPER_PROFILE_VERSION = 1
  */
 export const WALLPAPER_PROFILE_SPECS: readonly TWallpaperProfileSpec[] = [
   {
-    key: 'wide',
+    key: WIDE,
     logicalWidth: 1920,
     logicalHeight: 1080,
     mediaQuery: '(min-width: 1440px) and (min-aspect-ratio: 16/10)',
   },
   {
-    key: 'desktop',
+    key: DESKTOP,
     logicalWidth: 1440,
     logicalHeight: 900,
     mediaQuery: '(min-width: 1024px) and (max-aspect-ratio: 16/10)',
   },
   {
-    key: 'tablet',
+    key: TABLET,
     logicalWidth: 1024,
     logicalHeight: 1366,
     mediaQuery: '(min-width: 768px) and (max-width: 1023px)',
   },
   {
-    key: 'phone',
+    key: PHONE,
     logicalWidth: 390,
     logicalHeight: 844,
     mediaQuery: '(max-width: 767px)',
@@ -81,11 +90,11 @@ export const resolveWallpaperProfile = (
   viewportWidth: number,
   viewportHeight: number,
 ): TWallpaperProfile => {
-  if (viewportWidth <= 767) return 'phone'
-  if (viewportWidth <= 1023) return 'tablet'
+  if (viewportWidth <= 767) return PHONE
+  if (viewportWidth <= 1023) return TABLET
 
   const aspectRatio = viewportWidth / Math.max(1, viewportHeight)
-  return aspectRatio <= 16 / 10 ? 'desktop' : 'wide'
+  return aspectRatio <= 16 / 10 ? DESKTOP : WIDE
 }
 
 /** Returns the immutable responsive Wallpaper variant matrix for one theme. */

@@ -40,6 +40,7 @@ export const articleInteractionStateFields = graphql(`
 `)
 
 export const articleStats = graphql(`
+  "Current public Article headline stats for one Community/thread batch"
   query ArticleStats($community: String!, $thread: Thread!, $innerIds: [ID!]!) {
     articleStats(community: $community, thread: $thread, innerIds: $innerIds) {
       ...ArticleStatsFields

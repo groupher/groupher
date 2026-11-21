@@ -35,10 +35,6 @@
         "rules": ["react-doctor/duplicate-jsx-subtree"]
       },
       {
-        "files": ["stores/dsbEditorUi/hooks.ts"],
-        "rules": ["react-doctor/valtio-no-proxy-read-in-render"]
-      },
-      {
         "files": ["unit/DsbThread/CMS/Docs/ActionSnackbar/RevisionDrawer/diffClient.ts"],
         "rules": ["react-doctor/no-json-parse-stringify-clone"]
       }

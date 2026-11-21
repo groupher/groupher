@@ -17,7 +17,7 @@ defmodule GroupherServer.Messaging.Inbox.Persist do
   alias GroupherServer.{Messaging, Accounts}
 
   alias Accounts.Model.User
-  alias Messaging.Model.{Mention, Notification}
+  alias Messaging.Model.{Mention, Notice}
   alias Helper.ORM
 
   @doc """
@@ -38,7 +38,7 @@ defmodule GroupherServer.Messaging.Inbox.Persist do
   end
 
   def mark_read(:notification, ids, %User{} = user) when is_list(ids) do
-    Notification
+    Notice
     |> where(
       [message],
       message.id in ^ids and message.user_id == ^user.id and message.read == false
@@ -61,7 +61,7 @@ defmodule GroupherServer.Messaging.Inbox.Persist do
   end
 
   def mark_read_all(:notification, %User{} = user) do
-    Notification
+    Notice
     |> where([message], message.user_id == ^user.id and message.read == false)
     |> ORM.mark_read_all()
   end

@@ -1,26 +1,28 @@
 import { graphql } from '~/graphql/authoring'
 
 export const changelog = graphql(`
+  "Get changelog by id"
   query Changelog($article: ArticlePathInput!) {
     changelog(article: $article) {
-      ...PageChangelogFields
-      ...PageChangelogDetailFields
+      ...ChangelogFields
+      ...ChangelogDetailFields
     }
   }
 `)
 
 export const changelogPage = graphql(`
-  query ChangelogPage(
+  "Changelog Lite page using the shared offset/cursor pagination contract"
+  query PagedChangelogs(
     $pagi: PagiInput
     $filter: ChangelogFilter
     $thread: ChangelogThread = CHANGELOG
   ) {
     changelogPage(pagi: $pagi, filter: $filter, thread: $thread) {
       pinnedEntries {
-        ...PageChangelogLiteFields
+        ...ChangelogLiteFields
       }
       entries {
-        ...PageChangelogLiteFields
+        ...ChangelogLiteFields
       }
       pageInfo {
         __typename

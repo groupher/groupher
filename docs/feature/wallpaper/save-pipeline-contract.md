@@ -240,11 +240,10 @@ input WallpaperPublishInput {
 - 恢复不重新导出或上传图片，只将指定 theme 的 active 指针切到 retained Snapshot，并递增 version；
 - `wallpaperHistory(theme)` 只返回当前查询 theme 的最近历史；`dashboard.wallpaper` 不暴露 Snapshot ID。
 
-未初始化时：
-
-```json
-{ "version": 0, "light": null, "dark": null }
-```
+未初始化时，`version` 仍为 `0`；light/dark 分别返回内置默认 Profile 图片，source 与 Backend 默认
+settings 一致。默认 URL 为 `/wallpaper/default-v1/<theme>-<profile>.webp`，随应用静态资源分发，
+读取时不创建 Snapshot、不调用 Assets Hub。每个 theme 独立判断 active pointer，保存另一主题不改变
+尚未初始化主题的默认图片。
 
 `dashboard.wallpaper` 外层始终非空；保存 NONE 后仍保留外层，只将对应 theme branch 设为 `null`。编辑
 器的 `wallpaperSettings` 则在没有 active Snapshot 时读取 Backend 默认，有 active Snapshot（包括

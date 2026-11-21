@@ -28,6 +28,9 @@ const gracefulShutdown = {
   timeout: 5_000,
 }
 
+const appDevCommand = (packageName: string) =>
+  `pnpm --filter ${packageName} run ${process.env.CI ? 'dev:managed' : 'dev'}`
+
 const webServerCommand = (command: string) =>
   process.env.CI
     ? {
@@ -38,12 +41,12 @@ const webServerCommand = (command: string) =>
 
 const appConfig = {
   dash: {
-    cmd: `pnpm exec cross-env E2E_AUTH_STACK=1 PORT=${dashPort} GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} PHOENIX_GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} pnpm --filter @groupher/frontend-dash run dev`,
+    cmd: `pnpm exec cross-env E2E_AUTH_STACK=1 PORT=${dashPort} GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} PHOENIX_GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} ${appDevCommand('@groupher/frontend-dash')}`,
     url: `http://dash.groupher.localhost:${dashPort}`,
     testDir: path.join(repoRoot, 'frontend/e2e/tests/dash'),
   },
   landing: {
-    cmd: 'pnpm exec cross-env PORT=3102 pnpm --filter @groupher/frontend-landing run dev',
+    cmd: `pnpm exec cross-env PORT=3102 ${appDevCommand('@groupher/frontend-landing')}`,
     url: 'http://localhost:3102',
     testDir: path.join(repoRoot, 'frontend/e2e/tests/landing'),
   },
@@ -53,7 +56,7 @@ const appConfig = {
     testDir: path.join(repoRoot, 'frontend/e2e/tests/auth'),
   },
   community: {
-    cmd: `pnpm exec cross-env E2E_AUTH_STACK=1 PORT=3107 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql pnpm --filter @groupher/frontend-community run dev`,
+    cmd: `pnpm exec cross-env E2E_AUTH_STACK=1 PORT=3107 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql ${appDevCommand('@groupher/frontend-community')}`,
     url: 'http://community.groupher.localhost:3107/home/post',
     testDir: path.join(repoRoot, 'frontend/e2e/tests/community'),
   },
@@ -65,6 +68,13 @@ if (!(app in appConfig)) {
 
 const { cmd, url, testDir } = appConfig[app as keyof typeof appConfig]
 const authStack = app === 'auth'
+const mockServerCommand = (port: string, auth = false) => {
+  const env = `MOCK_GRAPHQL_PORT=${port}${auth ? ' E2E_AUTH_STACK=1' : ''}`
+  const server = process.env.CI
+    ? 'pnpm --filter @groupher/mock-server run start'
+    : 'pnpm run mock:server'
+  return `pnpm exec cross-env ${env} ${server}`
+}
 const authHostResolverRules = [
   'MAP dash.groupher.localhost 127.0.0.1',
   'MAP auth.groupher.localhost 127.0.0.1',
@@ -93,9 +103,7 @@ const webServer: TWebServer[] = communityStack
   : authStack
     ? [
         {
-          ...webServerCommand(
-            'pnpm exec cross-env MOCK_GRAPHQL_PORT=4104 E2E_AUTH_STACK=1 pnpm run mock:server',
-          ),
+          ...webServerCommand(mockServerCommand('4104', true)),
           cwd: repoRoot,
           gracefulShutdown,
           url: 'http://localhost:4104/health',
@@ -114,7 +122,7 @@ const webServer: TWebServer[] = communityStack
         },
         {
           ...webServerCommand(
-            'pnpm exec cross-env PORT=3103 GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql SERVICE_AUTH_CLIENT_ID=publisher-e2e SERVICE_AUTH_CLIENT_SECRET=e2e-secret SERVICE_AUTH_TOKEN_ENDPOINT=http://127.0.0.1:4104/oauth2/token NEXT_PUBLIC_AUTH_ENDPOINT=http://auth.groupher.localhost:3104/api/auth E2E_AUTH_STACK=1 pnpm --filter @groupher/frontend-dash run dev',
+            `pnpm exec cross-env PORT=3103 GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql SERVICE_AUTH_CLIENT_ID=publisher-e2e SERVICE_AUTH_CLIENT_SECRET=e2e-secret SERVICE_AUTH_TOKEN_ENDPOINT=http://127.0.0.1:4104/oauth2/token NEXT_PUBLIC_AUTH_ENDPOINT=http://auth.groupher.localhost:3104/api/auth E2E_AUTH_STACK=1 ${appDevCommand('@groupher/frontend-dash')}`,
           ),
           cwd: repoRoot,
           gracefulShutdown,
@@ -124,7 +132,7 @@ const webServer: TWebServer[] = communityStack
         },
         {
           ...webServerCommand(
-            'pnpm exec cross-env PORT=3107 GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql NEXT_PUBLIC_AUTH_ENDPOINT=http://auth.groupher.localhost:3104/api/auth E2E_AUTH_STACK=1 pnpm --filter @groupher/frontend-community run dev',
+            `pnpm exec cross-env PORT=3107 GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql NEXT_PUBLIC_AUTH_ENDPOINT=http://auth.groupher.localhost:3104/api/auth E2E_AUTH_STACK=1 ${appDevCommand('@groupher/frontend-community')}`,
           ),
           cwd: repoRoot,
           gracefulShutdown,
@@ -135,7 +143,7 @@ const webServer: TWebServer[] = communityStack
       ]
     : [
         {
-          ...webServerCommand('pnpm run mock:server'),
+          ...webServerCommand(mockServerCommand(process.env.MOCK_GRAPHQL_PORT ?? '4001')),
           cwd: repoRoot,
           gracefulShutdown,
           url: `http://localhost:${process.env.MOCK_GRAPHQL_PORT ?? '4001'}/health`,

@@ -59,6 +59,7 @@ defmodule GroupherServer.CMS.Model.Community do
   def max_pinned_article_count_per_thread, do: @max_pinned_article_count_per_thread
 
   schema "communities" do
+    field(:ref, :string, read_after_writes: true)
     field(:title, :string)
     field(:aka, :string)
     field(:desc, :string)
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.Model.Community do
     has_many(:subscribers, {"communities_subscribers", CommunitySubscriber})
 
     # this field will be rewrite as virtual for GQ workflow
-    has_many(:moderators, {"communities_moderators", CommunityModerator})
+    has_many(:moderators, {"communities_admins", CommunityModerator})
 
     has_one(:dashboard, CommunityDashboard)
     has_one(:lifecycle, CommunityLifecycle)
@@ -120,6 +121,7 @@ defmodule GroupherServer.CMS.Model.Community do
     # |> unique_constraint(:title, name: :communities_title_index)
     community
     |> cast(attrs, @optional_fields ++ @required_fields)
+    |> validate_ref_immutable(attrs)
     |> validate_required(@required_fields)
     |> cast_embed(:meta, with: &Embeds.CommunityMeta.changeset/2)
     |> cast_assoc(:dashboard)
@@ -129,6 +131,7 @@ defmodule GroupherServer.CMS.Model.Community do
     |> foreign_key_constraint(:user_id)
     |> unique_constraint(:slug, name: :communities_raw_index)
     |> unique_constraint(:aka, name: :communities_aka_index)
+    |> unique_constraint(:ref, name: :communities_ref_index)
 
     # |> foreign_key_constraint(:communities_author_fkey)
   end
@@ -139,6 +142,7 @@ defmodule GroupherServer.CMS.Model.Community do
     # |> unique_constraint(:title, name: :communities_title_index)
     community
     |> cast(attrs, @optional_fields ++ @required_fields)
+    |> validate_ref_immutable(attrs)
     |> cast_embed(:meta, with: &Embeds.CommunityMeta.changeset/2)
     |> validate_length(:title, min: 1, max: 30)
     |> validate_length(:slug, min: 1, max: 30)
@@ -147,7 +151,20 @@ defmodule GroupherServer.CMS.Model.Community do
     |> unique_constraint(:slug, name: :communities_raw_index)
     |> unique_constraint(:title, name: :communities_title_index)
     |> unique_constraint(:aka, name: :communities_aka_index)
+    |> unique_constraint(:ref, name: :communities_ref_index)
 
     # |> foreign_key_constraint(:communities_author_fkey)
+  end
+
+  # Community refs are assigned by the database trigger and are never client-writable.
+  defp validate_ref_immutable(changeset, attrs) do
+    supplied? = Map.has_key?(attrs, :ref) or Map.has_key?(attrs, "ref")
+    supplied_ref = Map.get(attrs, :ref, Map.get(attrs, "ref"))
+
+    if supplied? and supplied_ref != changeset.data.ref do
+      add_error(changeset, :ref, "is immutable")
+    else
+      changeset
+    end
   end
 end

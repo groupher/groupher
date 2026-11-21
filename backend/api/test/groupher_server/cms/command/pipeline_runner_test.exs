@@ -15,7 +15,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
               access: :internal,
               target: :resource
     direct_pipeline execute(resource) do
-      change(fn resource ->
+      change(fn resource, _operation_ref ->
         send(self(), {:generic_pipeline_stage, :change, Repo.in_transaction?()})
         {:ok, resource}
       end)
@@ -62,7 +62,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
         {:ok, value}
       end)
 
-      change(fn value ->
+      change(fn value, _operation_ref ->
         send(self(), {:pipeline_stage, :change, Repo.in_transaction?()})
         {:ok, {value, actor, opts}}
       end)
@@ -81,7 +81,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
     direct_pipeline execute_domain_workflow(resource, actor, opts) do
       gate(fn value -> {:ok, value} end)
 
-      change(fn value ->
+      change(fn value, _operation_ref ->
         _ = value
         {:error, Rejected.new(:domain_workflow_rejected, :domain_workflow_rejected)}
       end)
@@ -92,7 +92,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
     @pipeline operation: :pipeline_runner_write_audit, target: :resource
     direct_pipeline execute_audit(resource, actor, opts) do
       gate(fn _value -> {:error, Rejected.new(:write_rejected, :write_rejected)} end)
-      change(fn value -> {:ok, {value, opts}} end)
+      change(fn value, _operation_ref -> {:ok, {value, opts}} end)
 
       on_rejection(&build_audit_rejection/1)
     end
@@ -102,7 +102,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
               params: :opts
     direct_pipeline execute_rejection(resource, actor, opts) do
       gate(fn _value -> {:error, Rejected.new(:rejection_builder, :rejection_builder)} end)
-      change(fn value -> {:ok, value} end)
+      change(fn value, _operation_ref -> {:ok, value} end)
       on_rejection(&build_rejection/1)
     end
 
@@ -112,7 +112,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
               params: :opts
     direct_pipeline execute_invalid_rejection(resource, actor, opts) do
       gate(fn _value -> {:error, Rejected.new(:invalid_payload, :invalid_payload)} end)
-      change(fn value -> {:ok, value} end)
+      change(fn value, _operation_ref -> {:ok, value} end)
       on_rejection(&build_invalid_rejection/1)
     end
 
@@ -120,7 +120,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
               access: :internal,
               target: :resource
     direct_pipeline execute_gate_from_change(resource) do
-      change(fn candidate ->
+      change(fn candidate, _operation_ref ->
         GroupherServer.CMS.Gate.check_in_transaction(:operations, :edit, candidate)
       end)
     end
@@ -229,7 +229,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
 
     events =
       Repo.all(
-        from(log in PostLog, where: log.article_id == ^post.article_id and log.action == :trashed)
+        from(log in PostLog, where: log.article_id == ^post.id and log.action == :trashed)
       )
 
     assert length(events) == 3
@@ -246,7 +246,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
     event =
       Repo.one!(
         from(log in PostLog,
-          where: log.article_id == ^post.article_id and log.action == :trashed,
+          where: log.article_id == ^post.id and log.action == :trashed,
           order_by: [desc: log.record_sequence]
         )
       )

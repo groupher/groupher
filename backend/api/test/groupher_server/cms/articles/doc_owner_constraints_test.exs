@@ -9,24 +9,24 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
     {:ok, %{owner: owner, doc: doc, author: author, other: other}}
   end
 
-  test "the stable owner resolver and database reject a second Doc binding", ctx do
-    assert {:ok, owner} = CMS.Articles.Bindings.doc_owner(ctx.doc.article_id)
-    assert owner.id == ctx.owner.id
-
-    assert {:error, changeset} =
+  test "a Doc can have multiple independent Bindings and retained history", ctx do
+    assert {:ok, _binding} =
              Repo.insert(
                ArticleBinding.changeset(%ArticleBinding{}, %{
-                 article_id: ctx.doc.article_id,
+                 article_id: ctx.doc.id,
                  community_id: ctx.other.id
                }),
                mode: :savepoint
              )
 
-    assert changeset.errors[:article_id]
+    assert Repo.get_by!(CMS.Model.ArticleHistoryOwner,
+             article_id: ctx.doc.id,
+             community_id: ctx.other.id
+           )
   end
 
   test "direct SQL cannot fake a thread, move ownership or delete the owner binding", ctx do
-    id = Ecto.UUID.dump!(ctx.doc.article_id)
+    id = Ecto.UUID.dump!(ctx.doc.id)
     rejected("UPDATE cms.article_bindings SET thread='post' WHERE article_id=$1", [id], "23514")
 
     rejected(
@@ -35,34 +35,33 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
       "23514"
     )
 
-    rejected("DELETE FROM cms.article_bindings WHERE article_id=$1", [id], "23503")
+    assert {:ok, _} =
+             Repo.query("DELETE FROM cms.article_bindings WHERE article_id=$1", [id],
+               mode: :savepoint
+             )
   end
 
-  test "an owner Community cannot be physically deleted while its stable Doc exists", ctx do
+  test "a Community cannot be physically deleted while its stable Doc binding exists", ctx do
     rejected("DELETE FROM cms.communities WHERE id=$1", [ctx.owner.id], "23503")
-    assert {:ok, owner} = CMS.Articles.Bindings.doc_owner(ctx.doc.article_id)
-    assert owner.id == ctx.owner.id
   end
 
-  test "a Doc cannot join a branch from another Community", ctx do
-    branch = Repo.get_by!(CMS.Model.DocBranch, community_id: ctx.other.id, type: :main)
-
+  test "retained history ownership cannot move to another Community", ctx do
     rejected(
-      "INSERT INTO cms.doc_branch_states(article_id,branch_id,inserted_at,updated_at) VALUES ($1,$2,NOW(),NOW())",
-      [Ecto.UUID.dump!(ctx.doc.article_id), branch.id],
+      "UPDATE cms.article_history_owners SET community_id=$2 WHERE article_id=$1",
+      [Ecto.UUID.dump!(ctx.doc.id), ctx.other.id],
       "23514"
     )
   end
 
-  test "OWNER-06 deleting the stable Article permits its legitimate binding cascade", ctx do
-    assert {:ok, _} = Repo.delete(Repo.get!(CMS.Model.Article, ctx.doc.article_id))
-    refute Repo.get_by(ArticleBinding, article_id: ctx.doc.article_id)
-    Repo.query!("DELETE FROM review_bot.review_bot_configs WHERE community_id=$1", [ctx.owner.id])
+  test "OWNER-06 stable Article history cannot be deleted while its Community is active", ctx do
+    rejected(
+      "DELETE FROM cms.articles WHERE id=$1",
+      [Ecto.UUID.dump!(ctx.doc.id)],
+      "23503"
+    )
 
-    assert {:ok, %{num_rows: 1}} =
-             Repo.query("DELETE FROM cms.communities WHERE id=$1", [ctx.owner.id],
-               mode: :savepoint
-             )
+    assert Repo.get!(CMS.Model.Article, ctx.doc.id)
+    assert Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: ctx.doc.id)
   end
 
   test "OWNER-03 raw SQL cannot scope a Doc Comment review block to another Community", ctx do
@@ -85,6 +84,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
           type: :human_review_hold,
           source: :request,
           source_ref: "owner-test",
+          operation_ref: Ecto.UUID.generate(),
           applied_at: DateTime.utc_now(:second)
         })
       end)

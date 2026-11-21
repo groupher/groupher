@@ -2,6 +2,8 @@
 
 > Status: application implementation and local verification are complete. The hard-cutover runbook is operational guidance and has not been executed against a deployed environment.
 
+> **R9 field note:** This runbook's `observed_version` references describe the V2 `user_reports` field. The R9 target splits report identity into `observed_public_snapshot_id` for Article/Doc (`ArticlePublic.snapshot_id`) and `observed_body_version` for Comment; do not run the report-threshold checks against the old field after R9.
+
 ## 1. Product behavior
 
 ### Content review

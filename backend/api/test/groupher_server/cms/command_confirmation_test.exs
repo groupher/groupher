@@ -4,11 +4,10 @@ defmodule GroupherServer.Test.CMS.CommandConfirmationTest do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.CollectFolders.MembershipConfirmation
-  alias CMS.Articles.Commands.PublishConfirmation
-  alias CMS.Articles.Commands.RevisionConfirmation
+  alias CMS.Articles.Commands.PublishArticleConfirmation
   alias CMS.Command
   alias CMS.Comments.Commands.CommentConfirmation
-  alias CMS.DocTree.Commands.TreeConfirmation
+  alias CMS.DocTree.Commands.CreateWorkspaceNodeConfirmation
   alias CMS.Interactions.Reactions.UpvoteConfirmation, as: UpvoteConfirmation
   alias CMS.Interactions.Reactions.CollectConfirmation
 
@@ -28,65 +27,29 @@ defmodule GroupherServer.Test.CMS.CommandConfirmationTest do
       field_types: %{"value" => :string}
   end
 
-  test "Article Publish confirmation round-trips strict JSON" do
-    value = %PublishConfirmation{
-      article_id: "article-1",
-      revision_id: "revision-1",
-      publication_version: 3,
-      first_publish?: false,
-      changed_fields: [:title, :body_hash],
-      published_by_id: 7,
-      published_at: ~U[2026-10-03 00:00:00Z]
+  test "Article publishArticle confirmation round-trips strict Snapshot JSON" do
+    value = %PublishArticleConfirmation{
+      data: %{
+        "article_id" => "article-1",
+        "snapshot_id" => "snapshot-1",
+        "published_by_id" => 7,
+        "published_at" => "2026-10-03T00:00:00Z",
+        "command_id" => "command-1"
+      }
     }
 
-    assert {:ok, encoded} = PublishConfirmation.encode(value, :article_publish)
-    assert encoded["operation"] == "article.publish"
-    assert {:ok, ^value} = PublishConfirmation.decode(encoded, :article_publish)
-  end
-
-  test "Article Publish confirmation rejects extra fields and wrong operation" do
-    value = %PublishConfirmation{
-      article_id: "article-1",
-      revision_id: "revision-1",
-      publication_version: 1,
-      first_publish?: true,
-      changed_fields: [],
-      published_by_id: 7,
-      published_at: ~U[2026-10-03 00:00:00Z]
-    }
-
-    assert {:ok, encoded} = PublishConfirmation.encode(value, :article_publish)
+    assert {:ok, encoded} = PublishArticleConfirmation.encode(value, :article_publish_article)
+    assert encoded["operation"] == "article.publish_article"
+    assert {:ok, ^value} = PublishArticleConfirmation.decode(encoded, :article_publish_article)
 
     assert {:error, _} =
-             PublishConfirmation.decode(Map.put(encoded, "extra", true), :article_publish)
+             PublishArticleConfirmation.decode(
+               Map.put(encoded, "extra", true),
+               :article_publish_article
+             )
 
-    assert {:error, _} = PublishConfirmation.decode(encoded, :article_update)
-  end
-
-  test "Article Create and Update confirmations round-trip revision anchors" do
-    common = [
-      article_id: "article-1",
-      revision_id: "revision-1",
-      community_id: 3,
-      author_id: 7,
-      inner_id: 11,
-      thread: :post,
-      publication_version: 2,
-      published_at: ~U[2026-10-03 00:00:00Z],
-      command_id: "command-1"
-    ]
-
-    for operation <- [:article_create, :article_update] do
-      value = struct!(RevisionConfirmation, common)
-      assert {:ok, payload} = RevisionConfirmation.encode(value, operation)
-
-      assert {:ok, ^value} =
-               RevisionConfirmation.decode(Jason.decode!(Jason.encode!(payload)), operation)
-    end
-
-    value = struct!(RevisionConfirmation, common)
-    assert {:ok, payload} = RevisionConfirmation.encode(value, :article_create)
-    assert {:error, _} = RevisionConfirmation.decode(payload, :article_update)
+    assert {:error, _} =
+             PublishArticleConfirmation.decode(encoded, :article_create_and_publish_article)
   end
 
   test "shared write confirmations remain operation-bound" do
@@ -166,34 +129,27 @@ defmodule GroupherServer.Test.CMS.CommandConfirmationTest do
              UnknownTypeConfirmation.encode(value, :test_unknown_type_confirmation)
   end
 
-  test "DocTree Confirmation validates the nested result sum type" do
-    payload = %{
-      "schema_version" => 1,
-      "revision" => 4,
-      "tree_state" => %{"has_unpublished_changes" => false},
-      "node" => nil,
-      "affected_nodes" => [],
-      "conflict" => false
+  test "Docs workspace confirmation retains stable identity and current revision" do
+    value = %CreateWorkspaceNodeConfirmation{
+      data: %{
+        "community_id" => 1,
+        "node_id" => "node",
+        "article_id" => nil,
+        "working_copy_id" => nil,
+        "tree_revision" => 4
+      }
     }
 
-    value = %TreeConfirmation{
-      data: %{"result_key" => "community:article", "result_payload" => payload}
-    }
+    assert {:ok, encoded} =
+             CreateWorkspaceNodeConfirmation.encode(value, :docs_create_workspace_node)
 
-    assert {:ok, encoded} = TreeConfirmation.encode(value, :doc_tree_create_page)
-    assert {:ok, ^value} = TreeConfirmation.decode(encoded, :doc_tree_create_page)
-    assert :doc_tree_restore_trash_item in TreeConfirmation.operations()
+    assert {:ok, ^value} =
+             CreateWorkspaceNodeConfirmation.decode(encoded, :docs_create_workspace_node)
 
     assert {:error, :invalid_confirmation} =
-             TreeConfirmation.encode(
-               %{
-                 value
-                 | data: %{
-                     value.data
-                     | "result_payload" => Map.put(payload, "unexpected", true)
-                   }
-               },
-               :doc_tree_create_page
+             CreateWorkspaceNodeConfirmation.encode(
+               %{value | data: Map.put(value.data, "tree_revision", "4")},
+               :docs_create_workspace_node
              )
   end
 

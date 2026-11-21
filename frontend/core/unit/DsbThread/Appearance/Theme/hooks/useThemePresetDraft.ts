@@ -1,4 +1,4 @@
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { THEME_PRESET_STORE_FIELDS } from '../constant'
 import type { TUseThemePresetDraftRet } from '../spec'
@@ -18,7 +18,7 @@ import type { TUseThemePresetDraftRet } from '../spec'
  *   if (isThemePresetTouched) saveThemePreset()
  */
 export default function useThemePresetDraft(): TUseThemePresetDraftRet {
-  const dashboard$ = useDsbEdit()
+  const dashboard$ = useDsbShell()
 
   return {
     isThemePresetTouched: dashboard$.anyTouched(THEME_PRESET_STORE_FIELDS),

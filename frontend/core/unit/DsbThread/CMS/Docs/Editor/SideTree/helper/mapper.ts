@@ -40,6 +40,8 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
     type: SIDE_TREE_NODE_TYPE.PAGE,
     title: node.title || undefined,
     docId: node.docId || undefined,
+    workingCopyId: node.workingCopyId || undefined,
+    workingCopyRevision: node.workingCopyRevision ?? undefined,
     href: undefined,
     marker: node.marker || undefined,
     badge: node.badge || undefined,

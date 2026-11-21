@@ -1,5 +1,5 @@
 import type { TSimpleUser } from './account'
-import type { TDsb, TParseDashboard } from './dashboard'
+import type { TDsbRaw, TDsb } from './dashboard'
 import type { TMarkerValue } from './marker'
 import type { TGraphQLPagiPageInfo } from './pagination'
 import type { TThread, TCommunityThread } from './thread'
@@ -14,16 +14,16 @@ type TMeta = {
 }
 
 export type TModerator = {
-  isRoot?: boolean
-  passportItemCount: number
-  rules?: Record<string, boolean>
-  globalRules?: Record<string, boolean>
+  memberId: string
+  revision: number
+  isLord: boolean
+  permissions: string[]
   user: TSimpleUser
-  pending?: boolean
 }
 
 export type TCommunity = {
   id?: string
+  ref?: string
   index?: number
   title?: string
   logo?: string | null
@@ -42,12 +42,12 @@ export type TCommunity = {
   views?: number
 
   // TODO:
-  dashboard?: TDsb
+  dashboard?: TDsbRaw
 }
 
 export type TCommunityInfo = {
   community: TCommunity
-  dashboard?: TParseDashboard
+  dashboard?: TDsb
   wallpaper?: TParsedWallpaper
 }
 

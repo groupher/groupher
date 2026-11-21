@@ -1,13 +1,14 @@
 import { graphql } from '~/graphql/authoring'
 
 export const subscribedCommunities = graphql(`
-  query PageSubscribedCommunities($login: String!, $filter: UserListFilter, $pagi: PagiInput) {
+  "Anyone can get anyone's subscribed communities"
+  query PagedSubscribedCommunities($login: String!, $filter: UserListFilter, $pagi: PagiInput) {
     subscribedCommunities(login: $login, filter: $filter, pagi: $pagi) {
       entries {
-        ...PageCommunityFields
+        ...CommunityFields
         contributesDigest
       }
-      ...PageCommunityPageInfo
+      ...PagedCommunitiesPageInfo
     }
   }
 `)
@@ -15,8 +16,10 @@ export const subscribedCommunities = graphql(`
 // Keep the dashboard's large selection inline so it remains one static document
 // while the list/detail-independent operations share generated fragments.
 export const community = graphql(`
-  query PageCommunity($slug: String!, $userHasLogin: Boolean!, $incViews: Boolean) {
+  "Spec community info"
+  query Community($slug: String!, $userHasLogin: Boolean!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
+      ref
       title
       slug
       index
@@ -258,18 +261,15 @@ export const community = graphql(`
 `)
 
 export const pagedCommunities = graphql(`
-  query PagePagedCommunities(
-    $filter: CommunitiesFilter
-    $pagi: PagiInput
-    $userHasLogin: Boolean!
-  ) {
+  "Communities with pagination info"
+  query PagedCommunities($filter: CommunitiesFilter, $pagi: PagiInput, $userHasLogin: Boolean!) {
     pagedCommunities(filter: $filter, pagi: $pagi) {
       entries {
-        ...PageCommunityFields
+        ...CommunityFields
         contributesDigest
         viewerHasSubscribed @include(if: $userHasLogin)
       }
-      ...PageCommunityPageInfo
+      ...PagedCommunitiesPageInfo
     }
   }
 `)

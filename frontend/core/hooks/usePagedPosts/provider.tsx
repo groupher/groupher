@@ -5,14 +5,14 @@ import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { resolvePagiPosition } from '~/lib/pagination/params'
 import { hasExplicitPagiPosition } from '~/lib/pagination/viewport'
 import useCommunity from '~/stores/community/hooks'
-import useDsbConfig from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 import CursorPagedPostsProvider from './cursor'
 import OffsetPagedPostsProvider from './offset'
 
 /** Selects one pagination surface before its child registers any query hooks. */
 export default function PagedPostsProvider({ children }: PropsWithChildren) {
-  const dashboard = useDsbConfig()
+  const dashboard = useDsb()
   const search = useURLSearchParams()
   const { slug } = useCommunity()
   const policy = usePagiConfig(dashboard, slug)

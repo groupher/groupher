@@ -13,6 +13,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   import Ecto.Query
 
+  alias GroupherServer.CMS
+
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias CMS.Artiment.BodyBag
   alias Accounts.Model.User
@@ -21,10 +23,9 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   alias CMS.Model.{
     Article,
     ArticleBinding,
-    ArticleBodyDraft,
-    ArticleBodySnapshot,
+    ArticleSnapshot,
+    ArticleWorkingCopy,
     ArticleLifecycle,
-    ArticleRevision,
     ArticleReviewBlock,
     Author,
     Community,
@@ -90,8 +91,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                community,
                state,
                binding,
-               command_id,
-               "ticket_visibility:#{visibility_cause}:#{post_id}"
+               command_id
              ) do
         {:cont, {:ok, :pass}}
       else
@@ -101,9 +101,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   @doc "Enqueues cache invalidations for every User Ticket linked to a Post."
-  def invalidate_cache_linked_to_post(community, post_id, command_id, effect_key)
-      when is_binary(post_id) and (is_binary(command_id) or is_tuple(command_id)) and
-             is_binary(effect_key) do
+  def invalidate_cache_linked_to_post(community, post_id, operation_ref)
+      when is_binary(post_id) and is_binary(operation_ref) do
     states =
       from(state in TicketState,
         join: link in Source,
@@ -120,7 +119,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     Enum.reduce_while(states, {:ok, :pass}, fn {state, binding}, {:ok, _} ->
       with {:ok, state} <- Lifecycle.increment_version(state),
            {:ok, _cache} <-
-             invalidate_user_ticket_cache(community, state, binding, command_id, effect_key) do
+             invalidate_user_ticket_cache(community, state, binding, operation_ref) do
         {:cont, {:ok, :pass}}
       else
         {:error, reason} -> {:halt, {:error, reason}}
@@ -164,8 +163,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                  link,
                  post_binding.inner_id,
                  actor,
-                 command_id,
-                 "post_permanently_deleted"
+                 command_id
                ) do
           {:cont, {:ok, :pass}}
         else
@@ -180,14 +178,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   @doc "Advances the internal lifecycle version and cache after a Ticket ReviewBlock changes."
-  def review_block_changed(%Community{} = community, ticket_id, actor, command_id, effect_key)
-      when is_binary(ticket_id) and is_binary(command_id) and is_binary(effect_key) do
+  def review_block_changed(%Community{} = community, ticket_id, actor, command_id)
+      when is_binary(ticket_id) and is_binary(command_id) do
     with {:ok, state, article, binding} <- lock_state(community, ticket_id),
          {:ok, lifecycle} <- lock_ticket_lifecycle(article),
          {:ok, lifecycle} <-
            reconcile_ticket_review_lifecycle(state, article, lifecycle, actor, command_id),
          {:ok, _cache} <-
-           invalidate_user_ticket_cache(community, state, binding, command_id, effect_key) do
+           invalidate_user_ticket_cache(community, state, binding, command_id) do
       {:ok, lifecycle}
     end
   end
@@ -200,8 +198,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          link,
          old_post_inner_id,
          actor,
-         command_id,
-         effect_key
+         command_id
        ) do
     with {:ok, _deleted} <- CMS.Tickets.SourceWriter.delete(link),
          {:ok, updated_state} <- Lifecycle.increment_version(state),
@@ -230,7 +227,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              updated_state,
              binding,
              command_id,
-             effect_key,
              [old_post_inner_id]
            ) do
       {:ok, :pass}
@@ -423,21 +419,21 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   @doc false
   def create_user(community, post_id, attrs, context) do
-    with {:ok, post, _public, revision, post_binding} <- lock_public_post(community, post_id),
-         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
-         {:ok, body_bag} <- BodyBag.from_document(body),
+    with {:ok, post, _public, snapshot, post_binding} <- lock_public_post(community, post_id),
+         {:ok, body_bag} <- snapshot_body_bag(snapshot),
          {:ok, author} <- Persist.ensure_author_exists(context.actor),
-         {:ok, %{article: article, draft: draft}} <-
+         {:ok, %{article: article, working_copy: working_copy}} <-
            CMS.Tickets.Content.create_workspace(
              community,
              %{
-               title: attr_or_source(attrs, :title, revision.title),
-               digest: attr_or_source(attrs, :digest, revision.digest),
+               title: attr_or_source(attrs, :title, snapshot.title),
+               digest: attr_or_source(attrs, :digest, snapshot.digest),
                body_bag: body_bag
              },
              author
            ),
-         {:ok, :pass} <- CMS.Tickets.Content.clone_revision_refs(post, revision, article, draft),
+         {:ok, :pass} <-
+           CMS.Tickets.Content.clone_snapshot_refs(post, snapshot, article, working_copy),
          {:ok, ticket_binding} <- CMS.Articles.Bindings.fetch_binding(article.id, community.id),
          {:ok, _state} <- insert_state(article, ticket_binding, :user, :todo),
          {:ok, _link} <- insert_post_link(article, post),
@@ -449,10 +445,10 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              article,
              ticket_binding,
              context.actor,
-             context.command_id
+             context.operation_ref
            ),
          {:ok, _activity} <-
-           insert_created_activity(article, context.actor, context.command_id) do
+           insert_created_activity(article, context.actor, context.operation_ref) do
       {:ok, article.id}
     else
       nil -> {:error, ErrorCat.invalid_ticket_content()}
@@ -468,7 +464,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          false <- parent_state.status == :done,
          {:ok, parent_content} <- ticket_content_for_clone(parent),
          {:ok, author} <- Persist.ensure_author_exists(context.actor),
-         {:ok, %{article: article, draft: draft}} <-
+         {:ok, %{article: article, working_copy: working_copy}} <-
            CMS.Tickets.Content.create_workspace(
              community,
              parent_content
@@ -476,20 +472,20 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              |> Map.merge(Map.take(attrs, [:title, :digest])),
              author
            ),
-         {:ok, :pass} <- clone_parent_ticket_refs(parent, parent_content, article, draft),
+         {:ok, :pass} <-
+           clone_parent_ticket_refs(parent, parent_content, article, working_copy),
          {:ok, binding} <- CMS.Articles.Bindings.fetch_binding(article.id, community.id),
          {:ok, _state} <- insert_state(article, binding, :worker, :todo),
          {:ok, _relation} <- insert_worker(parent.id, article.id),
          {:ok, _activity} <-
-           insert_created_activity(article, context.actor, context.command_id),
+           insert_created_activity(article, context.actor, context.operation_ref),
          {:ok, parent_state} <- Lifecycle.increment_version(parent_state),
          {:ok, _cache} <-
            invalidate_user_ticket_cache(
              community,
              parent_state,
              parent_binding,
-             context.command_id,
-             "ticket_worker_created"
+             context.operation_ref
            ) do
       {:ok, article.id}
     else
@@ -509,7 +505,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              %{
                title: title,
-               digest: Map.get(attrs, :digest) || Map.get(attrs, "digest"),
+               digest: Map.get(attrs, :digest) || Map.get(attrs, "digest") || "",
                body_bag: body_bag
              },
              author
@@ -517,7 +513,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, binding} <- CMS.Articles.Bindings.fetch_binding(article.id, community.id),
          {:ok, _state} <- insert_state(article, binding, :case, :open),
          {:ok, _activity} <-
-           insert_created_activity(article, context.actor, context.command_id) do
+           insert_created_activity(article, context.actor, context.operation_ref) do
       case value(attrs, :member_ticket_id) do
         nil ->
           {:ok, article.id}
@@ -634,17 +630,16 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              from_status,
              state.status,
              context.actor,
-             context.command_id
+             context.operation_ref
            ),
          {:ok, _notification} <-
-           Notifications.enqueue_activity(community, state, activity, context.command_id),
+           Notifications.enqueue_activity(community, state, activity, context.operation_ref),
          {:ok, _cache} <-
            invalidate_user_ticket_cache(
              community,
              state,
              binding,
-             context.command_id,
-             "ticket_status"
+             context.operation_ref
            ) do
       {:ok, ticket_id}
     end
@@ -666,8 +661,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              state,
              binding,
-             context.command_id,
-             "ticket_reordered"
+             context.operation_ref
            ) do
       {:ok, ticket_id}
     else
@@ -686,8 +680,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              state,
              binding,
-             context.command_id,
-             "ticket_updated"
+             context.operation_ref
            ) do
       {:ok, ticket_id}
     else
@@ -720,7 +713,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         community,
         ticket_id,
         attrs,
-        expected_draft_version,
+        expected_revision,
         expected_lifecycle_version,
         context
       ) do
@@ -728,7 +721,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, lifecycle} <- lock_ticket_lifecycle(article),
          true <- lifecycle.version == expected_lifecycle_version,
          {:ok, draft} <- CMS.Tickets.Content.get_workspace(article),
-         true <- draft.version == expected_draft_version,
+         true <- draft.revision == expected_revision,
          {:ok, author} <- Persist.ensure_author_exists(context.actor),
          {:ok, changed_attrs} <- changed_content_attrs(article, draft, attrs),
          {:ok, _saved_draft} <-
@@ -745,7 +738,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         community,
         ticket_id,
         reason,
-        expected_draft_version,
+        expected_revision,
         expected_lifecycle_version,
         expected_workflow_version,
         expected_preview,
@@ -758,7 +751,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, lifecycle} <- lock_ticket_lifecycle(article),
          true <- lifecycle.version == expected_lifecycle_version,
          {:ok, draft} <- CMS.Tickets.Content.get_workspace(article),
-         true <- draft.version == expected_draft_version,
+         true <- draft.revision == expected_revision,
          true <- public_ticket_publish_allowed?(community.id, ticket_id),
          true <-
            expected_preview == CMS.Tickets.Publication.preview_anchor(community.id, ticket_id),
@@ -830,15 +823,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, _activity} <- insert_update_activity(article, update, context),
          {:ok, state} <- Lifecycle.increment_version(state),
          {:ok, _notification} <-
-           Notifications.enqueue_update(community, state, update, context.command_id),
+           Notifications.enqueue_update(community, state, update, context.operation_ref),
          {:ok, _cache} <-
            (if visibility == :public do
               invalidate_user_ticket_cache(
                 community,
                 state,
                 binding,
-                context.command_id,
-                "ticket_public_update"
+                context.operation_ref
               )
             else
               {:ok, :pass}
@@ -872,14 +864,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                    Repo.get!(Article, ticket_id),
                    binding,
                    context.actor,
-                   context.command_id
+                   context.operation_ref
                  ),
                {:ok, _activity} <-
                  log_ticket_activity(
                    Repo.get!(Article, ticket_id),
                    :source_linked,
                    context.actor,
-                   context.command_id,
+                   context.operation_ref,
                    metadata: %{
                      ticket_source_id: link.id,
                      source_type: "post",
@@ -891,8 +883,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                    community,
                    state,
                    binding,
-                   context.command_id,
-                   "ticket_source_linked",
+                   context.operation_ref,
                    [post_binding.inner_id]
                  ) do
             {:ok, ticket_id}
@@ -931,8 +922,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                    link,
                    post_binding.inner_id,
                    context.actor,
-                   context.command_id,
-                   "ticket_source_unlinked"
+                   context.operation_ref
                  ) do
             {:ok, ticket_id}
           end
@@ -954,27 +944,33 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          context
        ) do
     with {:ok, lifecycle} <- lock_ticket_lifecycle(article),
-         {:ok, lifecycle, revision} <-
-           prepare_visibility_content(article, lifecycle, target_lifecycle_state, context.actor),
+         {:ok, lifecycle, snapshot} <-
+           prepare_visibility_content(
+             article,
+             lifecycle,
+             target_lifecycle_state,
+             context.actor,
+             context.operation_ref
+           ),
          {:ok, updated_lifecycle} <-
            CMS.Articles.Lifecycle.transition(lifecycle, target_lifecycle_state),
          {:ok, updated_state} <- Lifecycle.increment_version(state),
          {:ok, updated_binding} <- ensure_ticket_number(binding, target_lifecycle_state),
          {:ok, _public} <-
-           maybe_select_ticket_public(article, revision, target_lifecycle_state, context.actor),
+           maybe_select_ticket_public(article, snapshot, target_lifecycle_state, context.actor),
          {:ok, activity} <-
            log_ticket_activity(
              article,
              if(target_lifecycle_state == :published, do: :published, else: :moved_to_draft),
              context.actor,
-             context.command_id,
+             context.operation_ref,
              metadata: %{
                lifecycle_version: updated_lifecycle.version,
                reason: reason,
                from_publication_state: Atom.to_string(lifecycle.state),
                to_publication_state: Atom.to_string(target_lifecycle_state)
              },
-             payload: visibility_payload(revision)
+             payload: visibility_payload(snapshot)
            ),
          {:ok, _notification} <-
            (if target_lifecycle_state == :published do
@@ -982,7 +978,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                 community,
                 updated_state,
                 activity,
-                context.command_id
+                context.operation_ref
               )
             else
               {:ok, :pass}
@@ -992,8 +988,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              updated_state,
              updated_binding,
-             context.command_id,
-             "ticket_visibility"
+             context.operation_ref
            ) do
       {:ok, article.id}
     else
@@ -1006,7 +1001,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          article,
          %ArticleLifecycle{state: :published} = lifecycle,
          :draft,
-         actor
+         actor,
+         _command_id
        ) do
     with {:ok, author} <- Persist.ensure_author_exists(actor),
          {:ok, _draft} <-
@@ -1021,7 +1017,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          _article,
          %ArticleLifecycle{state: :draft} = lifecycle,
          :draft,
-         _actor
+         _actor,
+         _command_id
        ) do
     {:ok, lifecycle, nil}
   end
@@ -1030,11 +1027,18 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          article,
          %ArticleLifecycle{state: :draft} = lifecycle,
          :published,
-         _actor
+         actor,
+         command_id
        ) do
-    with {:ok, draft} <- CMS.Tickets.Content.get_workspace(article),
-         {:ok, revision} <- CMS.Tickets.Content.create_revision(article, draft) do
-      {:ok, lifecycle, {revision, draft}}
+    with {:ok, working_copy} <- CMS.Tickets.Content.get_workspace(article),
+         {:ok, snapshot} <-
+           CMS.Tickets.Content.freeze_working_copy(
+             article,
+             working_copy,
+             actor,
+             command_id
+           ) do
+      {:ok, lifecycle, {snapshot, working_copy}}
     end
   end
 
@@ -1042,15 +1046,22 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          article,
          %ArticleLifecycle{state: :published} = lifecycle,
          :published,
-         _actor
+         actor,
+         command_id
        ) do
-    with {:ok, draft} <- CMS.Tickets.Content.get_workspace(article),
-         {:ok, revision} <- CMS.Tickets.Content.create_revision(article, draft) do
-      {:ok, lifecycle, {revision, draft}}
+    with {:ok, working_copy} <- CMS.Tickets.Content.get_workspace(article),
+         {:ok, snapshot} <-
+           CMS.Tickets.Content.freeze_working_copy(
+             article,
+             working_copy,
+             actor,
+             command_id
+           ) do
+      {:ok, lifecycle, {snapshot, working_copy}}
     end
   end
 
-  defp prepare_visibility_content(_article, _lifecycle, _target, _actor) do
+  defp prepare_visibility_content(_article, _lifecycle, _target, _actor, _command_id) do
     {:error, ErrorCat.invalid_visibility_transition()}
   end
 
@@ -1058,13 +1069,13 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   defp maybe_select_ticket_public(
          article,
-         {%ArticleRevision{} = revision, %CMS.Model.ArticleDraft{} = draft},
+         {%ArticleSnapshot{} = snapshot, %ArticleWorkingCopy{} = working_copy},
          :published,
          actor
        ) do
-    with {:ok, author} <- Persist.ensure_author_exists(actor),
-         {:ok, _public} <- CMS.Tickets.Content.select_public(article, revision, author),
-         {:ok, :pass} <- CMS.Tickets.Content.delete_workspace(article, draft) do
+    with {:ok, _public} <-
+           CMS.Tickets.Content.select_public(article, snapshot, actor),
+         {:ok, :pass} <- CMS.Tickets.Content.delete_workspace(article, working_copy) do
       {:ok, :pass}
     end
   end
@@ -1080,11 +1091,11 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   defp ensure_ticket_number(%ArticleBinding{} = binding, :draft), do: {:ok, binding}
 
-  defp visibility_payload({%ArticleRevision{id: revision_id}, _draft}) do
-    %{revision_id: revision_id}
+  defp visibility_payload({%ArticleSnapshot{id: snapshot_id}, _working_copy}) do
+    %{snapshot_id: snapshot_id}
   end
 
-  defp visibility_payload(_revision), do: %{}
+  defp visibility_payload(_snapshot), do: %{}
 
   defp lock_ticket_lifecycle(%Article{id: article_id}) do
     case Repo.one(
@@ -1241,41 +1252,76 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   defp ticket_content_for_clone(%Article{} = article) do
     case CMS.Tickets.Content.get_workspace(article) do
-      {:ok, draft} ->
-        with %ArticleBodyDraft{} = body <- Repo.get(ArticleBodyDraft, draft.body_draft_id),
-             {:ok, body_bag} <- BodyBag.from_document(body) do
+      {:ok, working_copy} ->
+        with {:ok, body_bag} <- working_copy_body_bag(working_copy) do
           {:ok,
-           %{title: draft.title, digest: draft.digest, body_bag: body_bag, source_draft: draft}}
-        else
-          nil -> {:error, ErrorCat.invalid_ticket_content()}
-          {:error, reason} -> {:error, reason}
+           %{
+             title: working_copy.title,
+             digest: working_copy.digest,
+             body_bag: body_bag,
+             source_working_copy: working_copy
+           }}
         end
 
       {:error, :not_found} ->
-        with {:ok, revision} <- CMS.Tickets.Content.get_public_revision(article),
-             %ArticleBodySnapshot{} = body <-
-               Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
-             {:ok, body_bag} <- BodyBag.from_document(body) do
+        with {:ok, snapshot} <- CMS.Tickets.Content.get_public_snapshot(article),
+             {:ok, body_bag} <- snapshot_body_bag(snapshot) do
           {:ok,
            %{
-             title: revision.title,
-             digest: revision.digest,
+             title: snapshot.title,
+             digest: snapshot.digest,
              body_bag: body_bag,
-             source_revision: revision
+             source_snapshot: snapshot
            }}
-        else
-          nil -> {:error, ErrorCat.invalid_ticket_content()}
-          {:error, reason} -> {:error, reason}
         end
     end
   end
 
-  defp clone_parent_ticket_refs(parent, %{source_draft: source_draft}, target, target_draft) do
-    CMS.Tickets.Content.clone_ticket_draft_refs(parent, source_draft, target, target_draft)
+  defp clone_parent_ticket_refs(
+         parent,
+         %{source_working_copy: source_working_copy},
+         target,
+         target_working_copy
+       ) do
+    CMS.Tickets.Content.clone_working_copy_refs(
+      parent,
+      source_working_copy,
+      target,
+      target_working_copy
+    )
   end
 
-  defp clone_parent_ticket_refs(parent, %{source_revision: revision}, target, target_draft) do
-    CMS.Tickets.Content.clone_revision_refs(parent, revision, target, target_draft)
+  defp clone_parent_ticket_refs(parent, %{source_snapshot: snapshot}, target, target_working_copy) do
+    CMS.Tickets.Content.clone_snapshot_refs(parent, snapshot, target, target_working_copy)
+  end
+
+  defp snapshot_body_bag(%ArticleSnapshot{} = snapshot) do
+    body_bag_from_fields(snapshot, :ticket)
+  end
+
+  defp working_copy_body_bag(%ArticleWorkingCopy{} = working_copy) do
+    body_bag_from_fields(working_copy, :ticket)
+  end
+
+  defp body_bag_from_fields(document, thread) do
+    stored_body = CMS.Articles.Body.document(document)
+    body_hash = :crypto.hash(:sha256, stored_body.json) |> Base.encode16(case: :lower)
+
+    BodyBag.cast(
+      %{
+        json: stored_body.json,
+        markdown: stored_body.markdown,
+        html: stored_body.html,
+        toc: get_in(stored_body.markdown_toc || %{}, [:items]) || [],
+        thumbnail: stored_body.thumbnail,
+        plain_text: stored_body.plain_text,
+        digest: document.digest,
+        body_hash: body_hash,
+        schema_version: stored_body.schema_version
+      },
+      thread: thread,
+      allow_empty: true
+    )
   end
 
   defp ticket_body_bag(attrs) do
@@ -1309,7 +1355,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     end
   end
 
-  defp changed_content_attrs(%CMS.Model.ArticleDraft{} = draft, attrs) do
+  defp changed_content_attrs(%ArticleWorkingCopy{} = draft, attrs) do
     Enum.reduce_while([:title, :digest], {:ok, %{}}, fn field, {:ok, changed} ->
       if has_attr?(attrs, field) do
         normalized = normalize_content_field(field, value(attrs, field))
@@ -1355,7 +1401,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   defp maybe_save_ticket_draft(article, attrs, author, lifecycle, draft) do
     CMS.Tickets.Content.save_workspace(article, attrs, author,
       expected_lifecycle_version: lifecycle.version,
-      expected_version: draft.version
+      revision: draft.revision
     )
   end
 
@@ -1372,11 +1418,10 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         {:ok, fields}
 
       input ->
-        with {:ok, body_bag} <- BodyBag.cast(input, thread: article.thread),
-             %ArticleBodyDraft{} = current <- Repo.get(ArticleBodyDraft, draft.body_draft_id) do
+        with {:ok, body_bag} <- BodyBag.cast(input, thread: article.thread) do
           next = BodyBag.to_document_attrs(body_bag)
 
-          if next.body_hash == current.body_hash do
+          if next.json == CMS.Articles.Body.document(draft).json do
             {:ok, fields}
           else
             {:ok, Map.put(fields, :body_bag, input)}
@@ -1518,7 +1563,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          ticket,
          ticket_binding,
          actor,
-         command_id
+         operation_ref
        ) do
     resource = post |> Map.from_struct() |> Map.put(:community_id, post_binding.community_id)
 
@@ -1531,7 +1576,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     GroupherServer.Activity.log(resource, action,
       actor: actor,
       source: :api,
-      operation_ref: command_id,
+      operation_ref: operation_ref,
       target: target
     )
   end
@@ -1761,7 +1806,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          state,
          binding,
          command_id,
-         effect_key,
          additional_post_ids \\ []
        )
 
@@ -1770,7 +1814,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          %TicketState{type: :user} = state,
          %ArticleBinding{} = binding,
          command_id,
-         effect_key,
          additional_post_ids
        ) do
     case binding.inner_id do
@@ -1787,13 +1830,12 @@ defmodule GroupherServer.CMS.Tickets.Persist do
           |> Repo.all()
           |> Enum.reject(&is_nil/1)
 
-        CMS.Tickets.Cache.enqueue(
+        CMS.Tickets.Cache.projection_changed(
           community,
-          state.article_id,
-          inner_id,
+          state,
+          binding,
           Enum.uniq(post_inner_ids ++ additional_post_ids),
-          command_id,
-          effect_key
+          command_id
         )
 
       _ ->
@@ -1801,7 +1843,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     end
   end
 
-  defp invalidate_user_ticket_cache(_community, _state, _binding, _command_id, _effect_key, _ids) do
+  defp invalidate_user_ticket_cache(_community, _state, _binding, _command_id, _ids) do
     {:ok, :pass}
   end
 
@@ -1838,11 +1880,17 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   defp maybe_insert_status_event(ticket_id, from_status, state, context) do
-    insert_status_event(ticket_id, from_status, state.status, context.actor, context.command_id)
+    insert_status_event(
+      ticket_id,
+      from_status,
+      state.status,
+      context.actor,
+      context.operation_ref
+    )
   end
 
   defp enqueue_status_event(community, state, %TicketLog{} = activity, context) do
-    Notifications.enqueue_activity(community, state, activity, context.command_id)
+    Notifications.enqueue_activity(community, state, activity, context.operation_ref)
   end
 
   defp enqueue_status_event(_community, _state, :pass, _context), do: {:ok, :pass}
@@ -1878,14 +1926,14 @@ defmodule GroupherServer.CMS.Tickets.Persist do
           {:public_update_superseded, %{update_id: update.id, supersedes_id: supersedes_id}}
       end
 
-    log_ticket_activity(article, action, context.actor, context.command_id, payload: payload)
+    log_ticket_activity(article, action, context.actor, context.operation_ref, payload: payload)
   end
 
   defp insert_update_activity(_article, %TicketUpdate{visibility: :internal}, _context) do
     {:ok, :pass}
   end
 
-  defp log_ticket_activity(article, action, actor, command_id, opts \\ []) do
+  defp log_ticket_activity(article, action, actor, operation_ref, opts \\ []) do
     case Repo.get_by(ArticleBinding, article_id: article.id) do
       %ArticleBinding{community_id: community_id} ->
         resource = article |> Map.from_struct() |> Map.put(:community_id, community_id)
@@ -1893,7 +1941,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         Activity.log(resource, action,
           actor: actor || :system,
           source: :api,
-          operation_ref: command_id,
+          operation_ref: operation_ref,
           payload: Keyword.get(opts, :payload, %{}),
           metadata: Keyword.get(opts, :metadata, %{}),
           changed_fields: Keyword.get(opts, :changed_fields, [])

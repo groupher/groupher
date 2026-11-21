@@ -11,7 +11,7 @@ vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: 'auth
 
 it('shows the author-safe status without requesting reviewer evidence', async () => {
   request.mockResolvedValue({
-    contentReviewNotice: { status: 'waiting_human', failureCode: null },
+    artimentReviewNotice: { status: 'waiting_human', failureCode: null },
   })
 
   render(

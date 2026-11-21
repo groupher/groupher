@@ -8,20 +8,19 @@ import {
 } from './canonical'
 
 describe('LocalDraftHistory canonical helpers', () => {
-  it('isolates workspaces by account, branch, and article coordinates', () => {
+  it('isolates workspaces by account, community, and article coordinates', () => {
     const base = {
       accountId: 'user:1',
       communityId: 'community/1',
       thread: 'doc' as const,
       articleId: 'article:1',
-      branchId: 'main',
     }
 
     expect(localDraftWorkspaceKey(base)).not.toBe(
       localDraftWorkspaceKey({ ...base, accountId: 'user:2' }),
     )
     expect(localDraftWorkspaceKey(base)).not.toBe(
-      localDraftWorkspaceKey({ ...base, branchId: 'preview' }),
+      localDraftWorkspaceKey({ ...base, articleId: 'article-2' }),
     )
   })
 
@@ -35,16 +34,13 @@ describe('LocalDraftHistory canonical helpers', () => {
 
   it('measures the complete canonical record without byteSize', () => {
     const record = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       workspaceKey: 'workspace',
       accountId: 'account',
       communityId: 'community',
       thread: 'doc' as const,
       articleId: 'article',
-      branchId: null,
-      baseRevisionId: null,
-      baseServerDraftVersion: 2,
-      baseServerContentHash: 'server',
+      base: { workingCopyId: 'copy', revision: 2, snapshotId: null },
       localPayloadHash: 'local',
       payload: { title: '你好', body: [] },
     }

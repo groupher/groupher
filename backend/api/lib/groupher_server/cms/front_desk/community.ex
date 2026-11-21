@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   @moduledoc """
   Reads Communities and Community Tags for the CMS FrontDesk facade.
 
-  The facade accepts public, actor-aware management, and trusted internal
+  The facade accepts public, actor-aware admin, and trusted internal
   reads. Internal mode uses the existing Gate operations lifecycle policy
   behind the stable `:internal` API; callers do not pass an operations actor.
 
@@ -24,12 +24,13 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{ORM, T}
 
-  @doc "Reads one Community by id or public slug."
-  @spec read(integer() | String.t()) :: {:ok, Community.t()} | {:error, map()}
+  @doc "Reads one Community by id, public slug, or explicitly tagged stable ref."
+  @spec read(integer() | String.t() | {:ref, String.t()}) ::
+          {:ok, Community.t()} | {:error, map()}
   def read(ref), do: read(ref, nil, [])
 
   @doc "Reads one Community with an explicit actor-aware policy mode."
-  @spec read(integer() | String.t(), term(), keyword()) ::
+  @spec read(integer() | String.t() | {:ref, String.t()}, term(), keyword()) ::
           {:ok, Community.t()} | {:error, map()}
   def read(ref, actor, opts) when is_list(opts) do
     mode = Keyword.get(opts, :mode, :public)
@@ -48,6 +49,10 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
 
   defp where_ref(query, id) when is_integer(id) do
     where(query, [community], community.id == ^id)
+  end
+
+  defp where_ref(query, {:ref, ref}) when is_binary(ref) and byte_size(ref) > 0 do
+    where(query, [community], community.ref == ^ref)
   end
 
   defp where_ref(query, slug) when is_binary(slug) do

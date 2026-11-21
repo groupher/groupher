@@ -503,6 +503,39 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     refute inspect(encoded) =~ "secret"
   end
 
+  test "Admin Receipt tags encode the configured request and membership parameters" do
+    requests = [
+      {"community.admin_request_create",
+       %{subject_user_id: 12, request_type: :invite, permissions: %{"doc.queue.write" => true}}},
+      {"community.admin_request_decide",
+       %{
+         request_id: "request-1",
+         revision: 2,
+         decision: :accept,
+         approved: %{"doc.queue.write" => true}
+       }},
+      {"community.admin_request_cancel", %{request_id: "request-1", revision: 2}},
+      {"community.admin_permissions_update",
+       %{member_id: 8, revision: 3, permissions: %{"doc.queue.write" => true}}},
+      {"community.admin_remove", %{member_id: 8, revision: 3}}
+    ]
+
+    for {tag, params} <- requests do
+      assert {:ok, encoded} = IntentCodec.encode_tag(tag, params)
+
+      case encoded do
+        %{"permissions" => %{"doc.queue.write" => %{"__redacted__" => true}}} ->
+          :ok
+
+        %{"approved" => %{"__redacted__" => true}} ->
+          :ok
+
+        _ ->
+          :ok
+      end
+    end
+  end
+
   test "IntentCodec digest is stable across nested map construction order" do
     assert {:ok, first} =
              IntentCodec.encode(:article_create, %{
@@ -535,6 +568,22 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     refute Jason.encode!(encoded) =~ "private prompt"
   end
 
+  test "fork snapshot Receipt intent includes redacted history context" do
+    params = %{
+      snapshot_id: Ecto.UUID.generate(),
+      scope_type: :default,
+      scope_id: Ecto.UUID.generate(),
+      history_context: %{source: :browser, service_ref: "private-service-ref"}
+    }
+
+    assert {:ok, encoded} = IntentCodec.encode(:article_fork_snapshot, params)
+    assert encoded["snapshot_id"] == params.snapshot_id
+    assert encoded["scope_type"] == "default"
+    assert encoded["scope_id"] == params.scope_id
+    assert Map.keys(encoded["history_context"]) == ["service_ref", "source"]
+    refute Jason.encode!(encoded) =~ "private-service-ref"
+  end
+
   test "a nil command id cannot bypass the receipt boundary" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
@@ -546,7 +595,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "post",
                "1",
                %{},
-               fn -> {:ok, %{id: "post-1"}} end,
+               fn _operation_ref -> {:ok, %{id: "post-1"}} end,
                ReceiptConfirmation
              )
   end
@@ -562,7 +611,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "post",
                "1",
                %{},
-               fn -> {:ok, %{id: "post-1"}} end,
+               fn _operation_ref -> {:ok, %{id: "post-1"}} end,
                ReceiptConfirmation
              )
   end
@@ -579,7 +628,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                  "post",
                  "1",
                  %{},
-                 fn -> {:ok, %{id: "post-1"}} end,
+                 fn _operation_ref -> {:ok, %{id: "post-1"}} end,
                  ReceiptConfirmation
                )
     end
@@ -592,7 +641,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     {_community, _post, _attrs, user} = mock_article(:post)
 
     assert_raise ArgumentError,
-                 "command receipt callbacks must be execute/0 and a confirmation module",
+                 "command receipt callbacks must be execute/1 and a confirmation module",
                  fn ->
                    CommandReceipt.execute(
                      user,
@@ -633,7 +682,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "post",
                post.id,
                %{},
-               fn -> {:error, :denied} end,
+               fn _operation_ref -> {:error, :denied} end,
                ReceiptConfirmation
              )
 
@@ -660,7 +709,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "post",
                "1",
                input,
-               fn -> {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}} end,
+               fn _operation_ref -> {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}} end,
                ReceiptConfirmation
              )
 
@@ -685,7 +734,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "post",
                "1",
                input,
-               fn -> {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}} end,
+               fn _operation_ref -> {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}} end,
                ReceiptConfirmation
              )
   end
@@ -705,7 +754,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
             "post",
             "concurrent-post",
             %{body: "same"},
-            fn ->
+            fn _operation_ref ->
               Agent.update(executions, &(&1 + 1))
               Process.sleep(100)
               {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}}
@@ -833,7 +882,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
     first =
       Task.async(fn ->
-        run.(fn ->
+        run.(fn _operation_ref ->
           send(parent, :claim_owned)
           Process.sleep(5_000)
           {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}}
@@ -844,7 +893,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
     second =
       Task.async(fn ->
-        run.(fn -> {:error, :must_not_execute} end)
+        run.(fn _operation_ref -> {:error, :must_not_execute} end)
       end)
 
     assert {:error,

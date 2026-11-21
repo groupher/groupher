@@ -58,7 +58,6 @@ defmodule GroupherServer.CMS.Communities.Setup do
                {:ok, :current} <- ensure_current_operation(application, operation_ref),
                {:ok, _} <- ensure_root(community, user),
                {:ok, :current} <- ensure_current_operation(application, operation_ref),
-               {:ok, _state} <- CMS.DocTree.initialize(community),
                {:ok, :current} <- ensure_current_operation(application, operation_ref),
                {:ok, _} <- ensure_analysis(community) do
             activate(community, application, operation_ref)

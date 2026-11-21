@@ -1,4 +1,4 @@
-import { GATE_ACTION } from '@groupher/contracts/gate'
+import { GATE_ACTION, type TGateAction } from '@groupher/contracts/gate'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -30,29 +30,80 @@ describe('useGate', () => {
     expect(result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_APPROVE)).toBe(false)
   })
 
-  it('allows god and community root passports', () => {
-    const god = renderHook(() => useGate(), {
-      wrapper: wrapperFor({ global: { god: true } }),
-    })
+  it('allows a system root and a Community lord only in their Passport scopes', () => {
     const root = renderHook(() => useGate(), {
-      wrapper: wrapperFor({ global: {}, home: { root: true } }),
+      wrapper: wrapperFor({ global: { is_root: true } }),
+    })
+    const lord = renderHook(() => useGate(), {
+      wrapper: wrapperFor({ global: {}, home: { is_lord: true } }),
     })
 
-    expect(god.result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_APPROVE)).toBe(true)
-    expect(root.result.current.can(GATE_ACTION.DOC_UPDATE, { community: 'home' })).toBe(true)
+    expect(root.result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_APPROVE)).toBe(true)
+    expect(
+      root.result.current.can(GATE_ACTION.DOC_QUEUE_PUBLISH, {
+        scope: 'community',
+        community: 'docs',
+      }),
+    ).toBe(true)
+    expect(
+      lord.result.current.can(GATE_ACTION.DOC_QUEUE_PUBLISH, {
+        scope: 'community',
+        community: 'home',
+      }),
+    ).toBe(true)
+    expect(lord.result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_APPROVE)).toBe(false)
   })
 
-  it('uses generated grants, owner fallbacks, and thread grants', () => {
+  it('uses canonical permission keys and requirements for the actual resource thread', () => {
     const moderator = renderHook(() => useGate(), {
       wrapper: wrapperFor({
-        global: { 'post.community.move': true },
-        home: { cms: { 'doc.edit': true } },
+        global: {},
+        home: {
+          cms: {
+            [GATE_ACTION.COMMUNITY_ARTICLE_HIDE]: true,
+            [GATE_ACTION.COMMUNITY_ARTICLE_TRASH_READ]: true,
+          },
+        },
       }),
     })
 
-    expect(moderator.result.current.can(GATE_ACTION.DOC_UPDATE, { community: 'home' })).toBe(true)
-    expect(moderator.result.current.can(GATE_ACTION.COMMENT_UPDATE, { owner: true })).toBe(true)
-    expect(moderator.result.current.can(GATE_ACTION.COMMUNITY_UPDATE, { owner: true })).toBe(false)
-    expect(moderator.result.current.can(GATE_ACTION.ARTICLE_MOVE, { thread: 'post' })).toBe(true)
+    expect(
+      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+        scope: 'community',
+        community: 'home',
+        thread: 'post',
+      }),
+    ).toBe(true)
+    expect(
+      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+        scope: 'community',
+        community: 'home',
+        thread: 'doc',
+      }),
+    ).toBe(false)
+    expect(
+      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+        scope: 'community',
+        community: 'home',
+      }),
+    ).toBe(false)
+    expect(
+      moderator.result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
+        scope: 'article',
+        article: {
+          permissions: {
+            [GATE_ACTION.ARTICLE_UPDATE]: true,
+            [GATE_ACTION.ARTICLE_READ_DRAFT]: true,
+          },
+        },
+      }),
+    ).toBe(true)
+    expect(
+      moderator.result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
+        scope: 'article',
+        article: { permissions: {} },
+      }),
+    ).toBe(false)
+    expect(moderator.result.current.can('bad.action' as TGateAction)).toBe(false)
   })
 })

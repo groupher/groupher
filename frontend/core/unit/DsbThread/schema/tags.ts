@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const communityTagGroups = graphql(`
+  "Get community tag groups"
   query DashboardCommunityTagGroups($community: String!, $thread: Thread) {
     communityTagGroups(community: $community, thread: $thread) {
       id
@@ -14,6 +15,7 @@ export const communityTagGroups = graphql(`
 `)
 
 export const updateCommunityTag = graphql(`
+  "Update a tag"
   mutation DashboardUpdateCommunityTag(
     $commandId: ID!
     $id: ID!
@@ -54,6 +56,7 @@ export const updateCommunityTag = graphql(`
 `)
 
 export const createCommunityTagGroup = graphql(`
+  "Create a tag group"
   mutation DashboardCreateCommunityTagGroup(
     $commandId: ID!
     $thread: Thread!
@@ -77,6 +80,7 @@ export const createCommunityTagGroup = graphql(`
 `)
 
 export const updateCommunityTagGroup = graphql(`
+  "Update a tag group"
   mutation DashboardUpdateCommunityTagGroup(
     $commandId: ID!
     $id: ID!
@@ -102,6 +106,7 @@ export const updateCommunityTagGroup = graphql(`
 `)
 
 export const createCommunityTag = graphql(`
+  "Create a tag"
   mutation DashboardCreateCommunityTag(
     $commandId: ID!
     $thread: Thread!
@@ -130,6 +135,7 @@ export const createCommunityTag = graphql(`
 `)
 
 export const reindexTagsInGroup = graphql(`
+  "Reindex tags in given group"
   mutation DashboardReindexTagsInGroup(
     $commandId: ID!
     $community: String!
@@ -150,6 +156,7 @@ export const reindexTagsInGroup = graphql(`
 `)
 
 export const reindexCommunityTags = graphql(`
+  "Reindex tags across groups"
   mutation DashboardReindexCommunityTags(
     $commandId: ID!
     $community: String!
@@ -168,6 +175,7 @@ export const reindexCommunityTags = graphql(`
 `)
 
 export const reindexCommunityTagGroups = graphql(`
+  "Reindex tag groups"
   mutation DashboardReindexCommunityTagGroups(
     $commandId: ID!
     $community: String!

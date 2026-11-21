@@ -51,6 +51,7 @@ const assertBatchPolicy = (env: Env): void => {
 }
 
 const wallpaperBatchPublishedQuery = `
+  "Service-scoped check for a successfully published Wallpaper Batch"
   query WallpaperBatchPublished($batchRef: String!) {
     wallpaperBatchPublished(batchRef: $batchRef)
   }

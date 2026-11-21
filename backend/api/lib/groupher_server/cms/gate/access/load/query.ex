@@ -27,7 +27,6 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   alias CMS.Gate.Context.Access.Doc, as: DocContext
   alias CMS.Gate.{ErrorCat, Config}
   alias CMS.Model.Comment
-  alias CMS.Passport.Registry
   alias GroupherServer.{Accounts}
   alias Accounts.Model.User
 
@@ -38,44 +37,84 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     CommentLifecycle,
     Community,
     CommunityLifecycle,
-    DocBranch,
-    DocLifecycle,
+    DocsTrashedArticle,
+    ArticlePublic,
     PostState
   }
 
   @article_threads Config.ordinary_article_threads()
 
-  @doc "Loads a stable Doc, its branch lifecycle, and current actor Passport facts."
-  def doc(actor, %Community{} = community, %Article{thread: :doc} = resource, branch_id) do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %Article{} = canonical <- Queries.resource(Article, resource.id),
-         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
+  @doc "Loads a branch-free Doc and its current site, lifecycle and review facts."
+  def doc_site(actor, %Community{} = community, %Article{thread: :doc} = resource) do
+    load_doc_site(actor, community, resource, :locked)
+  end
+
+  def doc_site(_, _, _), do: {:error, ErrorCat.gate_resource_mismatch()}
+
+  @doc "Loads the same Doc policy facts without row locks in a read-only snapshot."
+  def doc_site_snapshot(actor, %Community{} = community, %Article{thread: :doc} = resource) do
+    load_doc_site(actor, community, resource, :snapshot)
+  end
+
+  def doc_site_snapshot(_, _, _), do: {:error, ErrorCat.gate_resource_mismatch()}
+
+  defp load_doc_site(actor, community, resource, mode) do
+    with %Community{} = community <- Repo.get(Community, community.id),
+         %Article{thread: :doc} = canonical <- site_article(resource.id, mode),
+         %ArticleBinding{thread: :doc} <- site_binding(canonical.id, community.id, mode),
          canonical <- preload_article_author(canonical),
-         %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
-         %DocBranch{} = doc_branch <- Queries.doc_branch(community.id, branch_id),
-         %DocLifecycle{} = doc_lifecycle <- Queries.doc_lifecycle(canonical.id, branch_id),
-         review_scope_keys <- Queries.doc_review_scope_keys(doc_lifecycle.id),
-         %CMS.Model.DocBranchState{} = doc_branch_state <-
-           Queries.doc_branch_state(canonical.id, branch_id) do
+         {:ok, passport_scopes} <- community_passport_scopes(actor, community),
+         {:ok, article_passport_scope} <- article_passport_scope(actor, canonical),
+         %CommunityLifecycle{} = community_lifecycle <-
+           site_community_lifecycle(community.id, mode),
+         %ArticleLifecycle{} = doc_lifecycle <-
+           site_doc_lifecycle(canonical.id, community.id, mode),
+         review_scope_keys <-
+           Queries.article_review_scope_keys_for_article(canonical.id, community.id) do
       {:ok,
        %DocContext{
          doc: canonical,
          community: %{community | lifecycle: community_lifecycle},
          community_lifecycle: community_lifecycle,
-         passport_rules: passport_rules,
-         doc_branch: doc_branch,
+         passport_global_scope: passport_scopes.global,
+         community_passport_scope: passport_scopes.community,
+         article_passport_scope: article_passport_scope,
          doc_lifecycle: doc_lifecycle,
-         doc_branch_state: doc_branch_state,
+         public_available?:
+           Repo.exists?(from(p in ArticlePublic, where: p.article_id == ^canonical.id)),
+         trashed?:
+           Repo.exists?(from(t in DocsTrashedArticle, where: t.article_id == ^canonical.id)),
          review_scope_keys: review_scope_keys,
          review_restricted?: review_scope_keys != []
        }}
     else
       nil -> {:error, ErrorCat.lifecycle_not_found()}
+      %Article{} -> {:error, ErrorCat.gate_resource_mismatch()}
+      %ArticleBinding{} -> {:error, ErrorCat.gate_resource_mismatch()}
+      {:error, _reason} = error -> error
     end
   end
 
-  def doc(_actor, _community, _resource, _branch_id) do
-    {:error, ErrorCat.gate_resource_mismatch()}
+  defp site_article(id, :locked), do: Queries.resource(Article, id)
+  defp site_article(id, :snapshot), do: Queries.resource_snapshot(Article, id)
+
+  defp site_binding(article_id, community_id, :locked) do
+    Queries.article_binding(article_id, community_id)
+  end
+
+  defp site_binding(article_id, community_id, :snapshot) do
+    Queries.article_binding_snapshot(article_id, community_id)
+  end
+
+  defp site_community_lifecycle(id, :locked), do: Queries.community_lifecycle(id)
+  defp site_community_lifecycle(id, :snapshot), do: Queries.community_lifecycle_snapshot(id)
+
+  defp site_doc_lifecycle(article_id, community_id, :locked) do
+    Queries.doc_site_lifecycle(article_id, community_id)
+  end
+
+  defp site_doc_lifecycle(article_id, community_id, :snapshot) do
+    Queries.doc_site_lifecycle_snapshot(article_id, community_id)
   end
 
   @doc """
@@ -93,13 +132,24 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   @spec community(term(), Community.t()) ::
           {:ok, CommunityContext.t()} | {:error, ErrorCat.error() | term()}
   def community(actor, %Community{} = community) do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %CommunityLifecycle{} = lifecycle <- Queries.community_lifecycle(community.id) do
+    load_community(actor, community, :locked)
+  end
+
+  @doc "Loads Community policy facts without row locks in a read-only snapshot."
+  def community_snapshot(actor, %Community{} = community) do
+    load_community(actor, community, :snapshot)
+  end
+
+  defp load_community(actor, community, mode) do
+    with %Community{} = community <- Repo.get(Community, community.id),
+         {:ok, passport_scopes} <- community_passport_scopes(actor, community),
+         %CommunityLifecycle{} = lifecycle <- site_community_lifecycle(community.id, mode) do
       {:ok,
        %CommunityContext{
          community: %{community | lifecycle: lifecycle},
          community_lifecycle: lifecycle,
-         passport_rules: passport_rules
+         passport_global_scope: passport_scopes.global,
+         community_passport_scope: passport_scopes.community
        }}
     else
       nil -> {:error, ErrorCat.lifecycle_not_found()}
@@ -108,38 +158,24 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     end
   end
 
-  defp community_passport_rules(nil, _community_slug), do: {:ok, Registry.empty_rules()}
-
-  defp community_passport_rules(%{type: :operations}, _community_slug) do
-    {:ok, Registry.empty_rules()}
-  end
-
-  defp community_passport_rules(%User{} = user, community_slug) do
-    embedded =
-      user
-      |> Map.get(:cur_passport)
-      |> case do
-        map when is_map(map) -> map |> Map.get(:rules, Map.get(map, "rules", map))
-        _ -> nil
-      end
-      |> Registry.normalize_rules()
-
-    has_target_rules? =
-      case Map.get(embedded, community_slug) do
-        rules when is_map(rules) -> map_size(rules) > 0
-        _ -> false
-      end
-
-    if get_in(embedded, ["global", "god"]) == true or has_target_rules? do
-      {:ok, embedded}
+  defp community_passport_scopes(%User{} = actor, community) do
+    with {:ok, global} <- CMS.Passport.load_global_scope(actor),
+         {:ok, scoped_community} <- CMS.Passport.load_community_scope(actor, community) do
+      {:ok, %{global: global, community: scoped_community}}
     else
-      GroupherServer.CMS.Passport.get_passport(user)
+      {:error, _reason} -> {:error, ErrorCat.permission_denied()}
     end
-  rescue
-    error -> {:error, error}
   end
 
-  defp community_passport_rules(_actor, _community_slug), do: {:ok, Registry.empty_rules()}
+  defp community_passport_scopes(_actor, _community) do
+    {:ok, %{global: nil, community: nil}}
+  end
+
+  defp article_passport_scope(%User{} = actor, %Article{} = article) do
+    CMS.Passport.load_article_scope(actor, article)
+  end
+
+  defp article_passport_scope(_actor, _article), do: {:ok, nil}
 
   @doc """
   Reloads an Article or Doc and its authoritative lifecycle facts into a typed
@@ -156,35 +192,40 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
         %Article{thread: thread} = resource
       )
       when thread in @article_threads do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %Article{} = canonical <- Queries.resource(Article, resource.id),
-         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
-         canonical <- preload_article_author(canonical),
-         %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
-         %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id),
-         review_scope_keys <-
-           Queries.article_review_scope_keys(article_lifecycle.id, community.id) do
-      {:ok,
-       %ArticleContext{
-         article: canonical,
-         community: %{community | lifecycle: community_lifecycle},
-         community_lifecycle: community_lifecycle,
-         article_lifecycle: article_lifecycle,
-         passport_rules: passport_rules,
-         review_scope_keys: review_scope_keys,
-         review_restricted?: review_scope_keys != []
-       }}
-    else
-      nil -> {:error, ErrorCat.lifecycle_not_found()}
-    end
+    article_in_community(actor, community, thread, resource)
   end
 
-  def article(_actor, %Community{} = community, :doc, %{community_id: community_id})
-      when community_id == community.id do
-    {:error, ErrorCat.doc_branch_required()}
+  def article(actor, %Community{} = community, :doc, %Article{thread: :doc} = resource) do
+    doc_site(actor, community, resource)
   end
 
   def article(_actor, _community, _thread, _resource) do
+    {:error, ErrorCat.gate_resource_mismatch()}
+  end
+
+  @doc "Loads a canonical Article and its owner/co-author scope without a Community binding."
+  def article_author_management(actor, %Article{} = resource) do
+    with %Article{thread: thread} = canonical <- Queries.resource(Article, resource.id),
+         true <- thread in [:post, :blog, :changelog, :doc],
+         canonical <- preload_article_author(canonical),
+         {:ok, article_passport_scope} <- article_passport_scope(actor, canonical),
+         %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id) do
+      {:ok,
+       %ArticleContext{
+         article: canonical,
+         community: nil,
+         community_lifecycle: nil,
+         article_lifecycle: article_lifecycle,
+         article_passport_scope: article_passport_scope
+       }}
+    else
+      nil -> {:error, ErrorCat.resource_not_found()}
+      false -> {:error, ErrorCat.gate_resource_mismatch()}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  def article_author_management(_actor, _resource) do
     {:error, ErrorCat.gate_resource_mismatch()}
   end
 
@@ -196,10 +237,12 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
         %Article{thread: thread} = resource
       )
       when thread in @article_threads do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %Article{} = canonical <- Queries.resource(Article, resource.id),
-         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
+    with %Community{} = community <- Repo.get(Community, community.id),
+         %Article{thread: ^thread} = canonical <- Queries.resource(Article, resource.id),
+         %ArticleBinding{thread: ^thread} <- Queries.article_binding(canonical.id, community.id),
          canonical <- preload_article_author(canonical),
+         {:ok, passport_scopes} <- community_passport_scopes(actor, community),
+         {:ok, article_passport_scope} <- article_passport_scope(actor, canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id),
          review_scope_keys <-
@@ -210,13 +253,27 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
          community: %{community | lifecycle: community_lifecycle},
          community_lifecycle: community_lifecycle,
          article_lifecycle: article_lifecycle,
-         passport_rules: passport_rules,
+         passport_global_scope: passport_scopes.global,
+         community_passport_scope: passport_scopes.community,
+         article_passport_scope: article_passport_scope,
          review_scope_keys: review_scope_keys,
          review_restricted?: review_scope_keys != []
        }}
     else
       nil -> {:error, ErrorCat.lifecycle_not_found()}
+      %Article{} -> {:error, ErrorCat.gate_resource_mismatch()}
+      %ArticleBinding{} -> {:error, ErrorCat.gate_resource_mismatch()}
+      {:error, _reason} = error -> error
     end
+  end
+
+  def article_in_community(
+        actor,
+        %Community{} = community,
+        :doc,
+        %Article{thread: :doc} = resource
+      ) do
+    doc_site(actor, community, resource)
   end
 
   def article_in_community(_actor, _community, _thread, _resource) do
@@ -231,11 +288,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   mismatch fails closed rather than authorizing from caller-supplied structs.
   """
   def comment(actor, %Community{} = community, thread, article, %Comment{} = comment) do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
+    with %Community{} = community <- Repo.get(Community, community.id),
          canonical when not is_nil(canonical) <- Queries.resource(Comment, comment.id),
          true <- same_comment_identity?(canonical, comment, article, community, thread),
-         {:ok, parent_context} <-
-           parent_context(actor, community, thread, article),
+         {:ok, parent_context} <- parent_context(actor, community, thread, article),
          %CommentLifecycle{} = comment_lifecycle <- Queries.comment_lifecycle(canonical.id) do
       {:ok,
        %CommentContext{
@@ -249,7 +305,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
          article_cat: article_cat(parent_context),
          community: parent_context.community,
          community_lifecycle: parent_context.community_lifecycle,
-         passport_rules: passport_rules
+         passport_global_scope: parent_passport_scope(parent_context, :global),
+         community_passport_scope: parent_passport_scope(parent_context, :community),
+         article_passport_scope: parent_passport_scope(parent_context, :article)
        }}
     else
       nil -> {:error, ErrorCat.lifecycle_not_found()}
@@ -269,13 +327,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   end
 
   defp parent_context(actor, community, :doc, %Article{thread: :doc} = article) do
-    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article.id),
-         true <- owner.id == community.id,
-         %DocBranch{id: branch_id} <- Repo.get_by(DocBranch, community_id: owner.id, type: :main) do
-      doc(actor, community, article, branch_id)
-    else
-      _ -> {:error, ErrorCat.gate_resource_mismatch()}
-    end
+    doc_site(actor, community, article)
   end
 
   defp parent_context(actor, community, thread, article) do
@@ -287,6 +339,17 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
 
   defp parent_lifecycle(%ArticleContext{article_lifecycle: lifecycle}), do: lifecycle
   defp parent_lifecycle(%DocContext{doc_lifecycle: lifecycle}), do: lifecycle
+
+  defp parent_passport_scope(%ArticleContext{passport_global_scope: scope}, :global), do: scope
+  defp parent_passport_scope(%DocContext{passport_global_scope: scope}, :global), do: scope
+
+  defp parent_passport_scope(%ArticleContext{community_passport_scope: scope}, :community) do
+    scope
+  end
+
+  defp parent_passport_scope(%DocContext{community_passport_scope: scope}, :community), do: scope
+  defp parent_passport_scope(%ArticleContext{article_passport_scope: scope}, :article), do: scope
+  defp parent_passport_scope(%DocContext{article_passport_scope: scope}, :article), do: scope
 
   defp preload_article_author(resource), do: Repo.preload(resource, author: :user)
 

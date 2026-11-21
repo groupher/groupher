@@ -53,7 +53,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{order: "PUBLISH"}}
 
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
@@ -121,7 +128,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{order: "VIEWS"}}
 
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       track_view(changelog, user)
       track_view(changelog, user2)
@@ -135,7 +149,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     test "should get valid article document", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       Process.sleep(2000)
-      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       variables = %{pagi: %{offset: %{page: 1, size: 10}}, filter: %{}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
@@ -147,7 +168,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
     test "support community_tag filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       community_tag_attrs = mock_attrs(:community_tag)
 
@@ -184,9 +212,24 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
     test "support community filter", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
+
       changelog_attrs2 = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs2, user)
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs2,
+          user
+        )
 
       variables = %{
         pagi: %{offset: %{page: 1, size: 10, config_revision: 0}},
@@ -268,7 +311,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   describe "[query paged_changelogs filter sort]" do
     test "filter community should get changelogs which belongs to that community",
          ~m(guest_conn community user)a do
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
@@ -280,7 +329,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     end
 
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
-      {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
@@ -332,9 +387,29 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     test "public content never exposes viewer-private fields", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
-      {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
-      {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)

@@ -4,6 +4,8 @@
 >
 > 目标：将 Press 的公开 HTTP 输出运行时从 Fly.io Node Machine 硬切到 Cloudflare Worker。切换完成后保持 Phoenix 领域权威、公开 URL、错误语义和缓存失效合同；cutover window 为 best-effort，接受中断，不保证输出。
 
+> **2026-11-14 Docs 目标更新：**下文 Doc Feed 读取 DocPublic / main branch 的描述记录该次 Press 迁移时的运行态。新 Docs 目标从 ArticlePublic / ArticlePublicBody 读取共享当前正文，站点可见资格按 Article Binding 与 Docs 当前发布树校验；详情见 [Docs 发布队列合同 §1.1.6](../migrations/docs-publish-queue-refactor.md)。
+
 ## 决策
 
 采用**一次性硬切到 Cloudflare Workers**：切换后 Press 的唯一生产运行时为 Worker，`press.groupher.com` 直接绑定 Worker，旧 Fly Press 退役。Press 是只读、短请求、可缓存的 Markdown、RSS/Atom/JSON Feed、`llms.txt` 和 sitemap 输出；Worker 能直接处于现有 Cloudflare 公共入口之后，并随 Human/Agent 流量扩缩。

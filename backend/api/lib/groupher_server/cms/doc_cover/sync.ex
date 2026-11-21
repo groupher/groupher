@@ -18,23 +18,23 @@ defmodule GroupherServer.CMS.DocCover.Sync do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Model.{Community, DocCoverCard, DocTreeNode}
+  alias CMS.Model.{Community, DocCoverCard, DocsTreeNode}
   alias Helper.{ORM, T}
 
   @doc """
   Keeps the publish hook stable without implicitly creating Cover Cards.
   """
-  @spec sync_published_page(Community.t(), DocTreeNode.t(), DocTreeNode.t()) ::
+  @spec sync_published_page(Community.t(), DocsTreeNode.t(), DocsTreeNode.t()) ::
           T.domain_res(term())
   def sync_published_page(_community, _group, _node), do: {:ok, :skipped}
 
   @doc """
   Ensures a published Group has one persisted Cover Card row.
   """
-  @spec ensure_cover_card(Community.t(), DocTreeNode.t()) :: T.domain_res(DocCoverCard.t())
+  @spec ensure_cover_card(Community.t(), DocsTreeNode.t()) :: T.domain_res(DocCoverCard.t())
   def ensure_cover_card(
         %Community{} = community,
-        %DocTreeNode{type: :group} = group_node
+        %DocsTreeNode{type: :group} = group_node
       ) do
     case ORM.find_by(
            DocCoverCard,

@@ -64,7 +64,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
   test "read modes expose one shared Community state matrix" do
     matrix = %{
       public: [:active, :read_only],
-      owner_management: [
+      owner: [
         :setting_up,
         :setup_failed,
         :active,
@@ -180,7 +180,13 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
              )
 
     assert same_blocker.id == blocker.id
-    assert Repo.aggregate(CommunityLifecycleBlocker, :count) == 1
+
+    assert Repo.aggregate(
+             from(blocker in CommunityLifecycleBlocker,
+               where: blocker.community_id == ^community.id
+             ),
+             :count
+           ) == 1
 
     assert {:error, %Ecto.Changeset{}} =
              Lifecycle.apply_blocker(
@@ -207,7 +213,12 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     assert {:error, %ErrorCat.Error{reason: :invalid_operation_ref}} =
              Lifecycle.request_destroy(community.slug, operation_ref: "op_owner_archive")
 
-    assert Repo.aggregate(CommunityLifecycleBlocker, :count) == 0
+    assert Repo.aggregate(
+             from(blocker in CommunityLifecycleBlocker,
+               where: blocker.community_id == ^community.id
+             ),
+             :count
+           ) == 0
 
     refute Repo.exists?(
              from(audit in CommunityLog,

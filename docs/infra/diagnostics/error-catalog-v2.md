@@ -276,6 +276,15 @@ Gate 的 article_archived 是另一条决策错误：
 
 它不能与 Article 的 archived/6004 合并。
 
+Article 已发布内容编辑策略和必有 Dashboard 行不变量由 Gate catalog 声明：
+
+| namespace       | reason                                | code | message_key                                   | 语义                                                                  |
+| --------------- | ------------------------------------- | ---: | --------------------------------------------- | --------------------------------------------------------------------- |
+| `{:cms, :gate}` | `:published_article_editing_disabled` | 4633 | `cms.gate.published_article_editing_disabled` | 产品策略拒绝已发布 Article 的作者内容写入                             |
+| `{:cms, :gate}` | `:dashboard_not_found`                | 4634 | `cms.gate.dashboard_not_found`                | Community 创建时应有的 Dashboard 行缺失，按数据不变量损坏 fail closed |
+
+两项定义位于 `GroupherServer.CMS.Gate.ErrorCat`，均属于 Gate `4600..4699` range；决策顺序和来源由 `Gate.Decision` 声明。错误的使用与验收见 [Article Gate 策略合同](../../migrations/article-working-copy-gate-policy-fix.md)。
+
 ## 7. Code range
 
 ### 7.1 range 只在全局 ErrorCat 声明

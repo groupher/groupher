@@ -78,7 +78,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
       CMS.Gate.check_comment_in_transaction(actor, :edit, candidate, community)
     end)
 
-    change(fn {canonical, article} ->
+    change(fn {canonical, article}, operation_ref ->
       update_new(
         canonical,
         article,
@@ -86,7 +86,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
         expected_version,
         actor,
         command_id,
-        community.id
+        community.id,
+        operation_ref
       )
     end)
 
@@ -117,8 +118,17 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
     end
   end
 
-  defp update_new(canonical, article, body_bag, expected_version, actor, command_id, community_id) do
-    CMS.Comments.Summary.with_change(canonical, fn ->
+  defp update_new(
+         canonical,
+         article,
+         body_bag,
+         expected_version,
+         actor,
+         command_id,
+         community_id,
+         operation_ref
+       ) do
+    CMS.Comments.Summary.with_change(canonical, operation_ref, fn ->
       update_content_new(
         canonical,
         article,
@@ -126,7 +136,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
         expected_version,
         actor,
         command_id,
-        community_id
+        community_id,
+        operation_ref
       )
     end)
   end
@@ -138,20 +149,22 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
          expected_version,
          actor,
          command_id,
-         community_id
+         community_id,
+         operation_ref
        ) do
     with {:ok, lifecycle} <- Comments.Lifecycle.lock(canonical.id),
          {:ok, updated} <- Persist.update_content(canonical, body_bag, expected_version),
          {:ok, _review} <-
-           register_comment_review(updated, lifecycle, community_id, command_id),
-         {:ok, _} <- Mentions.update(updated, command_id, community_id),
+           register_comment_review(updated, lifecycle, community_id, operation_ref),
+         {:ok, _} <- Mentions.update(updated, operation_ref, community_id),
          {:ok, :pass} <- Revision.bump(),
-         {:ok, _} <- enqueue_comment_effects(updated, actor, command_id, community_id) do
+         {:ok, _} <-
+           enqueue_comment_effects(updated, actor, command_id, community_id, operation_ref) do
       {:ok, %{comment: updated, article: article, command_id: command_id}}
     end
   end
 
-  defp register_comment_review(%Comment{} = comment, lifecycle, community_id, _command_id) do
+  defp register_comment_review(%Comment{} = comment, lifecycle, community_id, operation_ref) do
     with {:ok, configs} <- ReviewBot.configs(community_id, :comment) do
       content = %{
         title: "",
@@ -162,7 +175,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
       target = %{
         type: :comment,
         comment_id: comment.id,
-        lifecycle: lifecycle
+        lifecycle: lifecycle,
+        operation_ref: operation_ref
       }
 
       CMS.Review.RequestSubmission.register_in_transaction(target, content, configs, :edit)
@@ -179,14 +193,14 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
     }
   end
 
-  defp enqueue_comment_effects(%Comment{} = comment, %User{} = actor, command_id, community_id) do
-    case Effects.enqueue(
-           "comment.updated",
-           "comment",
-           comment.id,
-           command_id,
-           %{actor_id: actor.id, article_id: comment.article_id, community_id: community_id}
-         ) do
+  defp enqueue_comment_effects(
+         %Comment{} = comment,
+         %User{} = actor,
+         _command_id,
+         community_id,
+         operation_ref
+       ) do
+    case Effects.updated(comment, actor, community_id, operation_ref) do
       {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end

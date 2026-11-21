@@ -24,28 +24,130 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Assets.{Effects, ErrorCat, Persist, Workflow}
-  alias CMS.Model.{AssetWorkflowRun, Community, CommunityAsset}
+  alias CMS.Model.{AssetWorkflowRun, Community, CommunityApplicationLogoUpload, CommunityAsset}
+  alias CMS.Outbox.DedupeKey
 
   @timeout 10_000
 
   plug(Tesla.Middleware.JSON, engine: Jason)
   plug(Tesla.Middleware.Timeout, timeout: @timeout)
 
+  @doc "Checks the frozen provider target before both recovery and external delivery."
+  def provider_delete_target(
+        %{
+          event: "asset.provider_delete",
+          resource_type: "community_asset"
+        } = event
+      ) do
+    case load_provider_target(CommunityAsset, event.resource_id) do
+      %CommunityAsset{status: :deleted, deleted_at: %DateTime{}} = asset ->
+        if target_matches?(event, asset, "asset_id") do
+          {:ok, asset}
+        else
+          {:error, ErrorCat.provider_delete_target_invalid()}
+        end
+
+      _ ->
+        {:error, ErrorCat.provider_delete_target_invalid()}
+    end
+  end
+
+  def provider_delete_target(
+        %{
+          event: "asset.application_upload_provider_delete",
+          resource_type: "application_logo_upload"
+        } = event
+      ) do
+    case load_provider_target(CommunityApplicationLogoUpload, event.resource_id) do
+      %CommunityApplicationLogoUpload{status: :expired} = upload ->
+        if target_matches?(event, upload, "id") do
+          {:ok,
+           %CommunityAsset{
+             id: upload.id,
+             public_ref: upload.public_ref,
+             storage: upload.storage,
+             storage_key: upload.storage_key
+           }}
+        else
+          {:error, ErrorCat.provider_delete_target_invalid()}
+        end
+
+      _ ->
+        {:error, ErrorCat.provider_delete_target_invalid()}
+    end
+  end
+
+  def provider_delete_target(%{resource_type: resource_type})
+      when resource_type not in ["community_asset", "application_logo_upload"] do
+    {:error, ErrorCat.unsupported_asset_cleanup_resource(%{resource_type: resource_type})}
+  end
+
+  def provider_delete_target(_event), do: {:error, ErrorCat.provider_delete_target_invalid()}
+
+  defp target_matches?(event, target, id_field) do
+    event.worker == "GroupherServer.Jobs.CMSOutboxAsset" and
+      Enum.all?([id_field, "public_ref", "storage", "storage_key"], &Map.has_key?(event.data, &1)) and
+      event.data[id_field] == target.id and event.data["public_ref"] == target.public_ref and
+      event.data["storage"] == target.storage and event.data["storage_key"] == target.storage_key and
+      event.dedupe_key ==
+        DedupeKey.encode([target.public_ref, target.storage, target.storage_key]) and
+      is_binary(target.storage) and target.storage != "" and
+      is_binary(target.storage_key) and target.storage_key != ""
+  end
+
+  defp load_provider_target(schema, resource_id) do
+    case Ecto.Type.cast(:id, resource_id) do
+      {:ok, id} ->
+        query = from(row in schema, where: row.id == ^id)
+        Repo.one(query)
+
+      :error ->
+        nil
+    end
+  end
+
   @doc "Builds the provider-deletion projection for an expired Application upload."
   @spec delete_application_upload_object(map()) :: {:ok, :pass}
   def delete_application_upload_object(upload) do
-    workflow_ref = "application-upload-cleanup:#{upload.public_ref}"
+    workflow_ref = "application-upload-cleanup:#{upload.id}"
+    owner = "application-upload-cleanup:#{Ecto.UUID.generate()}"
 
-    Repo.transaction(fn ->
-      case Effects.enqueue_application_upload_delete(upload, workflow_ref) do
-        {:ok, _event} -> :pass
-        {:error, reason} -> Repo.rollback(reason)
+    with {:ok, run} <-
+           Workflow.ensure_run(%{
+             workflow_ref: workflow_ref,
+             workflow_type: "application_upload_cleanup",
+             resource_type: "application_logo_upload",
+             resource_id: to_string(upload.id),
+             status: :pending
+           }),
+         {:ok, step} <-
+           Workflow.ensure_step(run, %{
+             step_ref: "upload:#{upload.id}",
+             resource_type: "application_logo_upload",
+             resource_id: to_string(upload.id),
+             status: :pending,
+             payload: %{upload_id: upload.id, public_ref: upload.public_ref},
+             result: %{},
+             attempts: 0
+           }),
+         {:ok, claimed} <- Workflow.claim_step(step, owner),
+         {:ok, :pass} <- enqueue_application_upload(claimed, upload, owner) do
+      {:ok, :pass}
+    else
+      {:completed, _step} -> {:ok, :pass}
+      {:busy, seconds} -> {:error, {:workflow_step_busy, seconds}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp enqueue_application_upload(claimed, upload, owner) do
+    Repo.transact_result(fn ->
+      with {:ok, _event} <-
+             Effects.enqueue_application_upload_delete(upload, claimed.operation_ref),
+           {:ok, _step} <- Workflow.complete_step(claimed, owner, %{"outbox" => "created"}) do
+        {:ok, :pass}
       end
     end)
-    |> case do
-      {:ok, :pass} -> {:ok, :pass}
-      {:error, _reason} -> {:ok, :pass}
-    end
   end
 
   @doc "Soft-deletes generated assets and enqueues provider cleanup."
@@ -112,7 +214,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     end
   end
 
-  defp process_deletion_steps(steps, community, workflow_ref, owner) do
+  defp process_deletion_steps(steps, community, _workflow_ref, owner) do
     Enum.reduce(steps, {nil, 0}, fn step, {first_error, processed} ->
       case Workflow.claim_step(step, owner) do
         {:completed, _step} ->
@@ -122,7 +224,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
           {first_error || {:workflow_step_busy, seconds}, processed}
 
         {:ok, claimed} ->
-          case delete_one_generated_asset(community, claimed.resource_id, workflow_ref) do
+          case delete_one_generated_asset(community, claimed) do
             {:ok, :pass} ->
               _ = Workflow.complete_step(claimed, owner, %{"status" => "deleted"})
               {first_error, processed + 1}
@@ -135,11 +237,11 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     end)
   end
 
-  defp delete_one_generated_asset(community, asset_id, workflow_ref) do
+  defp delete_one_generated_asset(community, claimed) do
     Repo.transaction(fn ->
-      with {:ok, deleted} <- Persist.delete(community, asset_id),
+      with {:ok, deleted} <- Persist.delete(community, claimed.resource_id),
            {:ok, _event} <-
-             Effects.enqueue_provider_delete(deleted, {:workflow, workflow_ref}) do
+             Effects.enqueue_provider_delete(deleted, claimed.operation_ref) do
         :pass
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -203,11 +305,11 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   defp safe_enqueue(%CommunityAsset{} = asset) do
     do_enqueue(asset)
   rescue
-    exception ->
-      {:error, ErrorCat.delete_enqueue_failed(Exception.message(exception))}
+    _exception ->
+      {:error, ErrorCat.provider_delete_failure_unclassified()}
   catch
-    kind, reason ->
-      {:error, ErrorCat.delete_enqueue_failed({kind, reason})}
+    _kind, _reason ->
+      {:error, ErrorCat.provider_delete_failure_unclassified()}
   end
 
   defp do_enqueue(%CommunityAsset{storage: "r2", storage_key: storage_key} = asset)
@@ -251,19 +353,58 @@ defmodule GroupherServer.CMS.Assets.Deletion do
 
         {:ok, :pass}
 
-      {:ok, %Tesla.Env{status: status, body: body}} ->
-        {:error,
-         ErrorCat.delete_enqueue_failed(%{status: status, body: body, duration_ms: duration_ms})}
+      {:ok, %Tesla.Env{status: status}}
+      when status in [408, 425, 429] or status in 500..599 ->
+        {:error, ErrorCat.delete_enqueue_failed(%{status: status, duration_ms: duration_ms})}
+
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, ErrorCat.provider_delete_rejected(%{status: status, duration_ms: duration_ms})}
 
       {:error, reason} ->
-        {:error, ErrorCat.delete_enqueue_failed(%{reason: reason, duration_ms: duration_ms})}
+        transport_failure(reason)
     end
   end
+
+  @doc "Classifies transport failures without guessing from arbitrary error strings."
+  def transport_failure(reason) do
+    if temporary_transport?(reason) do
+      {:error, ErrorCat.delete_enqueue_failed(%{kind: :transport})}
+    else
+      {:error, ErrorCat.provider_delete_failure_unclassified()}
+    end
+  end
+
+  defp temporary_transport?(reason)
+       when reason in [
+              :timeout,
+              :connect_timeout,
+              :closed,
+              :econnrefused,
+              :econnreset,
+              :enetunreach,
+              :ehostunreach,
+              :nxdomain
+            ] do
+    true
+  end
+
+  defp temporary_transport?(%{reason: reason}), do: temporary_transport?(reason)
+  defp temporary_transport?({:timeout, _context}), do: true
+
+  defp temporary_transport?({:failed_connect, details}) when is_list(details) do
+    Enum.any?(details, fn
+      {:inet, _options, reason} -> temporary_transport?(reason)
+      {:inet6, _options, reason} -> temporary_transport?(reason)
+      _ -> false
+    end)
+  end
+
+  defp temporary_transport?(_reason), do: false
 
   defp endpoint do
     case GroupherServer.CMS.Assets.Endpoints.fetch("ASSETS_HUB_DELETE_ENDPOINT") do
       {:ok, endpoint} -> {:ok, endpoint}
-      :error -> {:error, ErrorCat.delete_enqueue_failed("ASSETS_HUB_DELETE_ENDPOINT is required")}
+      :error -> {:error, ErrorCat.provider_delete_configuration_invalid()}
     end
   end
 end

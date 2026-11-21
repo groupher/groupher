@@ -17,7 +17,6 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish.Workflow do
   alias Accounts.Model.User
   alias CMS.Gate.ErrorCat
   alias CMS.Gate.RateLimit.Publish.{Config, Model.PublishThrottle}
-  alias CMS.Passport.Registry
   alias Helper.{Datetime, ORM}
   alias Helper.ORM.AdvisoryLock
 
@@ -37,23 +36,79 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish.Workflow do
   def check(user, opts \\ [])
 
   def check(user, opts) when is_map(user) do
-    passport = Map.get(user, :cur_passport)
     user = %User{id: Map.get(user, :id)}
 
-    if get_in(Registry.normalize_rules(passport), ["global", "god"]) == true do
+    if system_root?(user.id) do
       {:ok, :publish}
     else
-      with {:ok, record} <- load_and_reset(user),
-           {:ok, _} <- interval_check(record, opts),
-           {:ok, _} <- hour_limit_check(record, opts),
-           {:ok, _} <- day_limit_check(record, opts) do
-        {:ok, :publish}
+      case load_and_reset(user) do
+        {:ok, record} ->
+          with {:ok, _} <- interval_check(record, opts),
+               {:ok, _} <- hour_limit_check(record, opts),
+               {:ok, _} <- day_limit_check(record, opts) do
+            {:ok, :publish}
+          end
+
+        {:error, %{details: %{reason: :not_exist}}} ->
+          {:ok, :publish}
+
+        {:error, reason} ->
+          {:error, reason}
       end
     end
   end
 
   def check(_user, _opts) do
     {:error, GroupherServer.Accounts.profiles_error_cat_account_login()}
+  end
+
+  @doc "Checks publish limits while retaining the caller's transaction and advisory lock."
+  @spec check_in_transaction(map(), keyword()) :: {:ok, :publish} | {:error, term()}
+  def check_in_transaction(user, opts \\ [])
+
+  def check_in_transaction(user, opts) when is_map(user) and is_list(opts) do
+    user_id = Map.get(user, :id)
+
+    cond do
+      not Repo.in_transaction?() ->
+        {:error, :transaction_required}
+
+      system_root?(user_id) ->
+        {:ok, :publish}
+
+      true ->
+        with {:ok, :acquired} <- AdvisoryLock.acquire!(lock_key(user_id)),
+             result <- check_locked(user_id, opts) do
+          result
+        end
+    end
+  end
+
+  def check_in_transaction(_user, _opts), do: {:error, :invalid_actor}
+
+  defp system_root?(user_id) do
+    case CMS.Passport.system_root?(user_id) do
+      {:ok, true} -> true
+      _ -> false
+    end
+  rescue
+    _ -> false
+  end
+
+  defp check_locked(user_id, opts) do
+    case load_and_reset_locked(user_id) do
+      {:ok, record} -> check_record(record, opts)
+      {:error, %{details: %{reason: :not_exist}}} -> {:ok, :publish}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp check_record(record, opts) do
+    with {:ok, _} <- interval_check(record, opts),
+         {:ok, _} <- hour_limit_check(record, opts),
+         {:ok, _} <- day_limit_check(record, opts) do
+      {:ok, :publish}
+    end
   end
 
   defp interval_check(%PublishThrottle{last_publish_time: last_publish_time}, opts) do

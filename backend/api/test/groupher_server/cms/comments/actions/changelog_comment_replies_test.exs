@@ -238,7 +238,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, state} =
-        CMS.Comments.comments_state(:changelog, changelog.article_id, nil, community.slug)
+        CMS.Comments.comments_state(:changelog, changelog.id, nil, community.slug)
 
       assert exist_in?(user, state.participants)
       assert exist_in?(user2, state.participants)

@@ -47,8 +47,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.create" => true
+          "community_tag.create" => true
         }
       }
 
@@ -90,8 +89,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.create" => true
+          "community_tag.create" => true
         }
       }
 
@@ -179,8 +177,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.update" => true
+          "community_tag.update" => true
         }
       }
 
@@ -225,8 +222,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.update" => true
+          "community_tag.update" => true
         }
       }
 
@@ -267,8 +263,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.update" => true
+          "community_tag.update" => true
         }
       }
 
@@ -299,8 +294,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
         simu_conn(:user,
           cms: %{
             community.title => %{
-              "community.update" => true,
-              "post.community_tag.delete" => true
+              "community_tag.delete" => true
             }
           }
         )
@@ -368,8 +362,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.update" => true
+          "community_tag.update" => true
         }
       }
 
@@ -404,8 +397,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.delete" => true
+          "community_tag.delete" => true
         }
       }
 

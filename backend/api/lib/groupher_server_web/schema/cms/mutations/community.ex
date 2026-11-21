@@ -247,7 +247,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:user, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "moderator.set")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :user)
 
@@ -261,7 +260,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:users, non_null(list_of(non_null(:string))))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "moderator.set")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :users)
 
@@ -275,7 +273,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:user, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "moderator.unset")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :user)
 
@@ -290,7 +287,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:rules, non_null(:json))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "moderator.update")
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :user)
 

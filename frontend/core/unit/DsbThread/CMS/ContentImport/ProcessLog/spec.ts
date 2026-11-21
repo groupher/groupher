@@ -1,13 +1,20 @@
-export type TImportProcessState = 'queued' | 'running' | 'completed' | 'failed'
+import type {
+  ContentImportProcessItemState,
+  ContentImportProcessStage,
+  ContentImportProcessState,
+  ContentImportProcessUnit,
+} from '~/lib/graphql/generated/graphql'
 
-export type TImportProcessStage = 'analyzing' | 'building_preview' | 'preparing' | 'applying'
+export type TImportProcessState = ContentImportProcessState
 
-export type TImportProcessUnit = 'document' | 'release' | 'discussion' | 'post' | 'comment'
+export type TImportProcessStage = ContentImportProcessStage
+
+export type TImportProcessUnit = ContentImportProcessUnit
 
 export type TImportProcessItem = {
   ref: string
   label: string
-  state: 'completed' | 'failed' | 'skipped'
+  state: ContentImportProcessItemState
 }
 
 export type TImportProcess = {

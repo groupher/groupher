@@ -75,45 +75,20 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
   def present_done({:ok, %BindingConfirmation{}}), do: {:ok, :done}
   def present_done(error), do: error
 
-  def invalidate_scope(_community, %{inner_id: inner_id}, _thread, _command_id)
+  def invalidate_scope(_community, %{inner_id: inner_id}, _thread, _operation_ref)
       when not is_integer(inner_id) do
     {:ok, :pass}
   end
 
-  def invalidate_scope(community, binding, thread, command_id) do
-    invalidate_scope(community, binding, thread, command_id, scope_key(community, binding))
-  end
-
   def invalidate_scope(
         %Community{} = community,
-        %{article_id: article_id, inner_id: inner_id},
-        thread,
-        command_id,
-        effect_key
+        %ArticleBinding{} = binding,
+        _thread,
+        operation_ref
       ) do
-    case Effects.enqueue(
-           "article.visibility_changed",
-           "article",
-           article_id,
-           {:command, command_id},
-           %{
-             community: community.slug,
-             community_id: community.id,
-             thread: thread,
-             inner_id: inner_id,
-             article_id: article_id
-           },
-           effect_key: effect_key
-         ) do
+    case Effects.visibility_changed(binding, community, operation_ref) do
       {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
-    end
-  end
-
-  defp scope_key(%Community{id: community_id}, binding) do
-    case Map.get(binding, :id) do
-      nil -> "community-inner:#{community_id}:#{Map.get(binding, :inner_id)}"
-      binding_id -> "community-binding:#{community_id}:#{binding_id}"
     end
   end
 end

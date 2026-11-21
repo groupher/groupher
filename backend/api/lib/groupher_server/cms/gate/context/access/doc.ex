@@ -1,24 +1,26 @@
 defmodule GroupherServer.CMS.Gate.Context.Access.Doc do
   @moduledoc """
-  Authoritative facts for one branch-scoped Doc mutation admission.
+  Authoritative facts for one site-owned Doc mutation admission.
 
   The Gate Doc loader constructs this context with the canonical Doc, its
-  selected DocBranch, branch-scoped DocLifecycle, ancestor Community facts,
+  shared ArticleLifecycle, ancestor Community facts,
   and current actor Passport rules. It is intentionally not interchangeable
   with Article access context.
 
       Gate.access_check -> Doc loader -> this context -> Doc policy
   """
 
-  @enforce_keys [:doc, :doc_lifecycle, :doc_branch, :community, :community_lifecycle]
+  @enforce_keys [:doc, :doc_lifecycle, :community, :community_lifecycle]
   defstruct [
     :doc,
     :doc_lifecycle,
-    :doc_branch,
-    :doc_branch_state,
     :community,
     :community_lifecycle,
-    :passport_rules,
+    :passport_global_scope,
+    :community_passport_scope,
+    :article_passport_scope,
+    :public_available?,
+    trashed?: false,
     review_scope_keys: [],
     review_restricted?: false
   ]
@@ -26,11 +28,12 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Doc do
   @type t :: %__MODULE__{
           doc: struct(),
           doc_lifecycle: struct(),
-          doc_branch: struct(),
-          doc_branch_state: struct() | nil,
           community: struct(),
           community_lifecycle: struct(),
-          passport_rules: map() | nil,
+          passport_global_scope: struct() | nil,
+          community_passport_scope: struct() | nil,
+          article_passport_scope: struct() | nil,
+          trashed?: boolean(),
           review_scope_keys: [String.t()],
           review_restricted?: boolean()
         }

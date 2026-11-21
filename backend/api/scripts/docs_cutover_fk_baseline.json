@@ -1,0 +1,1424 @@
+{
+  "version": 1,
+  "constraints": [
+    {
+      "source": "account.collect_folder_entries",
+      "constraint": "collect_folder_entries_article_binding_id_fkey",
+      "target": "cms.article_bindings",
+      "definition": "FOREIGN KEY (article_binding_id) REFERENCES cms.article_bindings(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "account.collect_folder_entries",
+      "constraint": "collect_folder_entries_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "activity.doc_logs",
+      "constraint": "doc_logs_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.analysis_metric_events",
+      "constraint": "analysis_metric_events_binding_id_fkey",
+      "target": "cms.article_bindings",
+      "definition": "FOREIGN KEY (binding_id) REFERENCES cms.article_bindings(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.analysis_metric_events",
+      "constraint": "analysis_metric_events_stable_article_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_asset_refs",
+      "constraint": "article_asset_refs_asset_id_fkey",
+      "target": "cms.community_assets",
+      "definition": "FOREIGN KEY (asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_asset_refs",
+      "constraint": "article_asset_refs_body_draft_id_fkey",
+      "target": "cms.article_body_drafts",
+      "definition": "FOREIGN KEY (body_draft_id) REFERENCES cms.article_body_drafts(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_asset_refs",
+      "constraint": "article_asset_refs_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_asset_refs",
+      "constraint": "article_asset_refs_snapshot_id_fkey",
+      "target": "cms.article_snapshots",
+      "definition": "FOREIGN KEY (snapshot_id) REFERENCES cms.article_snapshots(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_asset_refs",
+      "constraint": "article_asset_refs_working_copy_id_fkey",
+      "target": "cms.article_working_copies",
+      "definition": "FOREIGN KEY (working_copy_id) REFERENCES cms.article_working_copies(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_binding_tags",
+      "constraint": "article_binding_tags_article_binding_id_fkey",
+      "target": "cms.article_bindings",
+      "definition": "FOREIGN KEY (article_binding_id) REFERENCES cms.article_bindings(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_bindings",
+      "constraint": "article_bindings_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_bindings",
+      "constraint": "article_bindings_article_thread_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id, thread) REFERENCES cms.articles(id, thread) ON UPDATE RESTRICT ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_collects",
+      "constraint": "article_collects_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_collects",
+      "constraint": "article_collects_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_drafts",
+      "constraint": "article_drafts_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_drafts",
+      "constraint": "article_drafts_base_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (base_revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_drafts",
+      "constraint": "article_drafts_body_draft_id_fkey",
+      "target": "cms.article_body_drafts",
+      "definition": "FOREIGN KEY (body_draft_id) REFERENCES cms.article_body_drafts(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_emotion_counts",
+      "constraint": "article_emotion_counts_stable_article_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_hourly_metrics",
+      "constraint": "article_hourly_metrics_binding_id_fkey",
+      "target": "cms.article_bindings",
+      "definition": "FOREIGN KEY (binding_id) REFERENCES cms.article_bindings(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_hourly_metrics",
+      "constraint": "article_hourly_metrics_stable_article_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_lifecycles",
+      "constraint": "article_lifecycles_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_publics",
+      "constraint": "article_publics_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_publics",
+      "constraint": "article_publics_snapshot_owner_fkey",
+      "target": "cms.article_snapshots",
+      "definition": "FOREIGN KEY (article_id, snapshot_id) REFERENCES cms.article_snapshots(article_id, id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_review_blocks",
+      "constraint": "article_review_blocks_artiment_review_id_fkey",
+      "target": "cms.artiment_reviews",
+      "definition": "FOREIGN KEY (artiment_review_id) REFERENCES cms.artiment_reviews(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_review_blocks",
+      "constraint": "article_review_restrictions_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_revisions",
+      "constraint": "article_revisions_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_revisions",
+      "constraint": "article_revisions_body_snapshot_id_fkey",
+      "target": "cms.article_body_snapshots",
+      "definition": "FOREIGN KEY (body_snapshot_id) REFERENCES cms.article_body_snapshots(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_snapshot_blogs",
+      "constraint": "article_snapshot_blogs_snapshot_id_fkey",
+      "target": "cms.article_snapshots",
+      "definition": "FOREIGN KEY (snapshot_id) REFERENCES cms.article_snapshots(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_snapshot_changelogs",
+      "constraint": "article_snapshot_changelogs_snapshot_id_fkey",
+      "target": "cms.article_snapshots",
+      "definition": "FOREIGN KEY (snapshot_id) REFERENCES cms.article_snapshots(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_snapshot_docs",
+      "constraint": "article_snapshot_docs_snapshot_id_fkey",
+      "target": "cms.article_snapshots",
+      "definition": "FOREIGN KEY (snapshot_id) REFERENCES cms.article_snapshots(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_snapshot_posts",
+      "constraint": "article_snapshot_posts_snapshot_id_fkey",
+      "target": "cms.article_snapshots",
+      "definition": "FOREIGN KEY (snapshot_id) REFERENCES cms.article_snapshots(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_snapshot_tags",
+      "constraint": "article_snapshot_tags_snapshot_id_fkey",
+      "target": "cms.article_snapshots",
+      "definition": "FOREIGN KEY (snapshot_id) REFERENCES cms.article_snapshots(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_snapshots",
+      "constraint": "article_snapshots_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_snapshots",
+      "constraint": "article_snapshots_cover_edit_snapshot_fkey",
+      "target": "cms.cover_edit_snapshots",
+      "definition": "FOREIGN KEY (cover_edit_snapshot_id) REFERENCES cms.cover_edit_snapshots(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_stats",
+      "constraint": "article_stats_stable_article_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_upvotes",
+      "constraint": "article_upvotes_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_upvotes",
+      "constraint": "article_upvotes_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_view_dedupe_states",
+      "constraint": "article_view_dedupe_states_stable_article_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_viewer_states",
+      "constraint": "article_viewer_states_stable_article_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_working_copies",
+      "constraint": "article_working_copies_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_working_copies",
+      "constraint": "article_working_copies_cover_edit_fkey",
+      "target": "cms.cover_edit_working_copies",
+      "definition": "FOREIGN KEY (cover_edit_working_copy_id) REFERENCES cms.cover_edit_working_copies(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_working_copy_blogs",
+      "constraint": "article_working_copy_blogs_working_copy_id_fkey",
+      "target": "cms.article_working_copies",
+      "definition": "FOREIGN KEY (working_copy_id) REFERENCES cms.article_working_copies(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_working_copy_changelogs",
+      "constraint": "article_working_copy_changelogs_working_copy_id_fkey",
+      "target": "cms.article_working_copies",
+      "definition": "FOREIGN KEY (working_copy_id) REFERENCES cms.article_working_copies(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_working_copy_docs",
+      "constraint": "article_working_copy_docs_working_copy_id_fkey",
+      "target": "cms.article_working_copies",
+      "definition": "FOREIGN KEY (working_copy_id) REFERENCES cms.article_working_copies(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_working_copy_posts",
+      "constraint": "article_working_copy_posts_working_copy_id_fkey",
+      "target": "cms.article_working_copies",
+      "definition": "FOREIGN KEY (working_copy_id) REFERENCES cms.article_working_copies(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.article_working_copy_tags",
+      "constraint": "article_working_copy_tags_working_copy_id_fkey",
+      "target": "cms.article_working_copies",
+      "definition": "FOREIGN KEY (working_copy_id) REFERENCES cms.article_working_copies(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.articles_users_emotions",
+      "constraint": "articles_users_emotions_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.articles_users_emotions",
+      "constraint": "articles_users_emotions_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.artiment_reviews",
+      "constraint": "review_requests_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.artiment_reviews",
+      "constraint": "review_requests_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.artiment_reviews",
+      "constraint": "review_requests_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.asset_replacement_plans",
+      "constraint": "asset_replacement_plans_from_asset_id_fkey",
+      "target": "cms.community_assets",
+      "definition": "FOREIGN KEY (from_asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.asset_replacement_plans",
+      "constraint": "asset_replacement_plans_to_asset_id_fkey",
+      "target": "cms.community_assets",
+      "definition": "FOREIGN KEY (to_asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.asset_uploads",
+      "constraint": "asset_uploads_asset_id_fkey",
+      "target": "cms.community_assets",
+      "definition": "FOREIGN KEY (asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.blog_draft_tags",
+      "constraint": "blog_draft_tags_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.blog_drafts",
+      "constraint": "blog_drafts_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.blog_emotion_infos",
+      "constraint": "blog_emotion_infos_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.blog_emotion_infos",
+      "constraint": "blog_emotion_infos_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.blog_reaction_infos",
+      "constraint": "blog_reaction_infos_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.blog_reaction_infos",
+      "constraint": "blog_reaction_infos_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.blog_revision_tags",
+      "constraint": "blog_revision_tags_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.blog_revisions",
+      "constraint": "blog_revisions_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.changelog_draft_tags",
+      "constraint": "changelog_draft_tags_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.changelog_drafts",
+      "constraint": "changelog_drafts_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.changelog_emotion_infos",
+      "constraint": "changelog_emotion_infos_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.changelog_emotion_infos",
+      "constraint": "changelog_emotion_infos_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.changelog_reaction_infos",
+      "constraint": "changelog_reaction_infos_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.changelog_reaction_infos",
+      "constraint": "changelog_reaction_infos_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.changelog_revision_tags",
+      "constraint": "changelog_revision_tags_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.changelog_revisions",
+      "constraint": "changelog_revisions_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comment_bodies",
+      "constraint": "comment_bodies_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comment_emotion_infos",
+      "constraint": "comment_emotion_infos_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comment_lifecycles",
+      "constraint": "comment_lifecycles_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comment_reaction_infos",
+      "constraint": "comment_reaction_infos_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comment_review_blocks",
+      "constraint": "comment_review_blocks_artiment_review_id_fkey",
+      "target": "cms.artiment_reviews",
+      "definition": "FOREIGN KEY (artiment_review_id) REFERENCES cms.artiment_reviews(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comment_review_blocks",
+      "constraint": "comment_review_restrictions_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comments",
+      "constraint": "articles_comments_reply_to_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (reply_to_comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comments",
+      "constraint": "comments_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comments_replies",
+      "constraint": "comments_replies_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comments_replies",
+      "constraint": "comments_replies_reply_to_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (reply_to_comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comments_upvotes",
+      "constraint": "comments_upvotes_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.comments_users_emotions",
+      "constraint": "comments_users_emotions_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.community_application_logo_uploads",
+      "constraint": "community_application_logo_uploads_community_asset_id_fkey",
+      "target": "cms.community_assets",
+      "definition": "FOREIGN KEY (community_asset_id) REFERENCES cms.community_assets(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_branch_states",
+      "constraint": "doc_branch_states_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_branch_states",
+      "constraint": "doc_branch_states_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_branch_version_counters",
+      "constraint": "doc_branch_version_counters_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_branch_version_counters",
+      "constraint": "doc_branch_version_counters_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_branch_versions",
+      "constraint": "doc_branch_versions_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_branch_versions",
+      "constraint": "doc_branch_versions_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_branch_versions",
+      "constraint": "doc_branch_versions_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_branches",
+      "constraint": "doc_branches_source_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (source_branch_id) REFERENCES cms.doc_branches(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_cover_cards",
+      "constraint": "doc_cover_cards_group_node_id_fkey",
+      "target": "cms.doc_tree_nodes",
+      "definition": "FOREIGN KEY (group_node_id) REFERENCES cms.doc_tree_nodes(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_cover_items",
+      "constraint": "doc_cover_items_cover_card_id_fkey",
+      "target": "cms.doc_cover_cards",
+      "definition": "FOREIGN KEY (cover_card_id) REFERENCES cms.doc_cover_cards(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_cover_items",
+      "constraint": "doc_cover_items_node_id_fkey",
+      "target": "cms.doc_tree_nodes",
+      "definition": "FOREIGN KEY (node_id) REFERENCES cms.doc_tree_nodes(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_cover_pinned_docs",
+      "constraint": "doc_cover_pinned_items_node_id_fkey",
+      "target": "cms.doc_tree_nodes",
+      "definition": "FOREIGN KEY (node_id) REFERENCES cms.doc_tree_nodes(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_draft_tags",
+      "constraint": "doc_draft_tags_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_draft_tags",
+      "constraint": "doc_draft_tags_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_drafts",
+      "constraint": "doc_drafts_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_drafts",
+      "constraint": "doc_drafts_base_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (base_revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_drafts",
+      "constraint": "doc_drafts_body_draft_id_fkey",
+      "target": "cms.article_body_drafts",
+      "definition": "FOREIGN KEY (body_draft_id) REFERENCES cms.article_body_drafts(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_drafts",
+      "constraint": "doc_drafts_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_drafts",
+      "constraint": "doc_drafts_source_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (source_revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_emotion_infos",
+      "constraint": "doc_emotion_infos_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_emotion_infos",
+      "constraint": "doc_emotion_infos_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_lifecycles",
+      "constraint": "doc_lifecycles_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_lifecycles",
+      "constraint": "doc_lifecycles_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publics",
+      "constraint": "doc_publics_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publics",
+      "constraint": "doc_publics_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publics",
+      "constraint": "doc_publics_branch_version_id_fkey",
+      "target": "cms.doc_branch_versions",
+      "definition": "FOREIGN KEY (branch_version_id) REFERENCES cms.doc_branch_versions(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publish_release_articles",
+      "constraint": "doc_publish_release_articles_branch_version_id_fkey",
+      "target": "cms.doc_branch_versions",
+      "definition": "FOREIGN KEY (branch_version_id) REFERENCES cms.doc_branch_versions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publish_release_articles",
+      "constraint": "publish_release_articles_release_id_fkey",
+      "target": "cms.doc_publish_releases",
+      "definition": "FOREIGN KEY (release_id) REFERENCES cms.doc_publish_releases(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publish_release_tree_events",
+      "constraint": "publish_release_tree_events_doc_tree_event_id_fkey",
+      "target": "cms.doc_tree_events",
+      "definition": "FOREIGN KEY (doc_tree_event_id) REFERENCES cms.doc_tree_events(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publish_release_tree_events",
+      "constraint": "publish_release_tree_events_release_id_fkey",
+      "target": "cms.doc_publish_releases",
+      "definition": "FOREIGN KEY (release_id) REFERENCES cms.doc_publish_releases(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publish_releases",
+      "constraint": "doc_publish_releases_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_publish_releases",
+      "constraint": "publish_releases_tree_snapshot_id_fkey",
+      "target": "cms.doc_tree_snapshots",
+      "definition": "FOREIGN KEY (tree_snapshot_id) REFERENCES cms.doc_tree_snapshots(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_reaction_infos",
+      "constraint": "doc_reaction_infos_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_reaction_infos",
+      "constraint": "doc_reaction_infos_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_review_blocks",
+      "constraint": "doc_review_blocks_artiment_review_id_fkey",
+      "target": "cms.artiment_reviews",
+      "definition": "FOREIGN KEY (artiment_review_id) REFERENCES cms.artiment_reviews(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_review_blocks",
+      "constraint": "doc_review_restrictions_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_review_blocks",
+      "constraint": "doc_review_restrictions_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_revision_tags",
+      "constraint": "doc_revision_tags_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_revisions",
+      "constraint": "doc_revisions_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_tree_events",
+      "constraint": "doc_tree_events_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_tree_events",
+      "constraint": "doc_tree_events_reverted_by_event_id_fkey",
+      "target": "cms.doc_tree_events",
+      "definition": "FOREIGN KEY (reverted_by_event_id) REFERENCES cms.doc_tree_events(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_tree_events",
+      "constraint": "doc_tree_events_snapshot_id_fkey",
+      "target": "cms.doc_tree_snapshots",
+      "definition": "FOREIGN KEY (snapshot_id) REFERENCES cms.doc_tree_snapshots(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_tree_nodes",
+      "constraint": "doc_tree_nodes_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.doc_tree_nodes",
+      "constraint": "doc_tree_nodes_parent_node_fk",
+      "target": "cms.doc_tree_nodes",
+      "definition": "FOREIGN KEY (community_id, branch_id, stage, parent_node_id) REFERENCES cms.doc_tree_nodes(community_id, branch_id, stage, node_id) DEFERRABLE INITIALLY DEFERRED",
+      "deferrable": true,
+      "initially_deferred": true
+    },
+    {
+      "source": "cms.doc_tree_snapshots",
+      "constraint": "doc_tree_snapshots_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.docs_site_states",
+      "constraint": "docs_site_states_base_snapshot_id_fkey",
+      "target": "cms.doc_tree_snapshots",
+      "definition": "FOREIGN KEY (base_snapshot_id) REFERENCES cms.doc_tree_snapshots(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.docs_site_states",
+      "constraint": "docs_site_states_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.draft_cover_edits",
+      "constraint": "draft_cover_edits_body_draft_id_fkey",
+      "target": "cms.article_body_drafts",
+      "definition": "FOREIGN KEY (body_draft_id) REFERENCES cms.article_body_drafts(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.mention_current_edges",
+      "constraint": "mention_current_edge_target_identity_fk",
+      "target": "cms.mention_endpoints",
+      "definition": "FOREIGN KEY (target_endpoint_id, target_type) REFERENCES cms.mention_endpoints(id, type) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.mention_current_edges",
+      "constraint": "mention_current_edges_source_endpoint_id_fkey",
+      "target": "cms.mention_endpoints",
+      "definition": "FOREIGN KEY (source_endpoint_id) REFERENCES cms.mention_endpoints(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.mention_endpoints",
+      "constraint": "mention_endpoints_parent_endpoint_id_fkey",
+      "target": "cms.mention_endpoints",
+      "definition": "FOREIGN KEY (parent_endpoint_id) REFERENCES cms.mention_endpoints(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.pinned_articles",
+      "constraint": "pinned_articles_article_binding_id_fkey",
+      "target": "cms.article_bindings",
+      "definition": "FOREIGN KEY (article_binding_id) REFERENCES cms.article_bindings(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.pinned_comments",
+      "constraint": "pinned_comments_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.pinned_comments",
+      "constraint": "pinned_comments_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_draft_tags",
+      "constraint": "post_draft_tags_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_drafts",
+      "constraint": "post_drafts_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_emotion_infos",
+      "constraint": "post_emotion_infos_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_emotion_infos",
+      "constraint": "post_emotion_infos_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_reaction_infos",
+      "constraint": "post_reaction_infos_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_reaction_infos",
+      "constraint": "post_reaction_infos_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_revision_tags",
+      "constraint": "post_revision_tags_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_revisions",
+      "constraint": "post_revisions_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_solutions",
+      "constraint": "post_solutions_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_solutions",
+      "constraint": "post_solutions_comment_belongs_to_article_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id, article_id) REFERENCES cms.comments(id, article_id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_solutions",
+      "constraint": "post_solutions_comment_id_fkey",
+      "target": "cms.comments",
+      "definition": "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.post_states",
+      "constraint": "post_states_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.revision_cover_edits",
+      "constraint": "revision_cover_edits_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.revision_covers",
+      "constraint": "revision_covers_asset_id_fkey",
+      "target": "cms.community_assets",
+      "definition": "FOREIGN KEY (asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.revision_covers",
+      "constraint": "revision_covers_revision_id_fkey",
+      "target": "cms.article_revisions",
+      "definition": "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_assignees",
+      "constraint": "ticket_assignees_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_case_members",
+      "constraint": "ticket_case_members_case_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (case_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_case_members",
+      "constraint": "ticket_case_members_user_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (user_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_case_workers",
+      "constraint": "ticket_case_workers_case_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (case_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_case_workers",
+      "constraint": "ticket_case_workers_worker_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (worker_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_facets",
+      "constraint": "ticket_facets_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_sources",
+      "constraint": "ticket_sources_post_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (post_id) REFERENCES cms.articles(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_sources",
+      "constraint": "ticket_sources_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE RESTRICT",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_states",
+      "constraint": "ticket_states_article_binding_fkey",
+      "target": "cms.article_bindings",
+      "definition": "FOREIGN KEY (article_id, article_binding_id) REFERENCES cms.article_bindings(article_id, id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_states",
+      "constraint": "ticket_states_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_tags",
+      "constraint": "ticket_tags_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_updates",
+      "constraint": "ticket_updates_supersedes_id_fkey",
+      "target": "cms.ticket_updates",
+      "definition": "FOREIGN KEY (supersedes_id) REFERENCES cms.ticket_updates(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_updates",
+      "constraint": "ticket_updates_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_workers",
+      "constraint": "ticket_workers_parent_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (parent_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.ticket_workers",
+      "constraint": "ticket_workers_worker_ticket_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (worker_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.trashed_articles",
+      "constraint": "trashed_articles_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.trashed_doc_articles",
+      "constraint": "trashed_doc_articles_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.trashed_doc_articles",
+      "constraint": "trashed_doc_articles_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "cms.trashed_doc_tree_nodes",
+      "constraint": "trashed_doc_tree_nodes_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "messaging.mentions",
+      "constraint": "mentions_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "messaging.mentions",
+      "constraint": "mentions_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "messaging.notification_deliveries",
+      "constraint": "notification_deliveries_notification_id_fkey",
+      "target": "messaging.notifications",
+      "definition": "FOREIGN KEY (notification_id) REFERENCES messaging.notifications(id) ON DELETE SET NULL",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "messaging.notifications",
+      "constraint": "notifications_article_id_fkey",
+      "target": "cms.articles",
+      "definition": "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    },
+    {
+      "source": "messaging.notifications",
+      "constraint": "notifications_branch_id_fkey",
+      "target": "cms.doc_branches",
+      "definition": "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "deferrable": false,
+      "initially_deferred": false
+    }
+  ],
+  "migration_versions_sha256": "d82479a5d441f36fa8cea25c36096e8b316183776b07c8a3eb3c562b2df25c36",
+  "migration_count": 769,
+  "migration_max_version": "20261110170000"
+}

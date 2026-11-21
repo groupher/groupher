@@ -34,7 +34,9 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Comment do
     :article_cat,
     :community,
     :community_lifecycle,
-    :passport_rules
+    :passport_global_scope,
+    :community_passport_scope,
+    :article_passport_scope
   ]
 
   @type t :: %__MODULE__{
@@ -48,6 +50,8 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Comment do
           article_cat: atom() | nil,
           community: struct(),
           community_lifecycle: struct(),
-          passport_rules: map() | nil
+          passport_global_scope: struct() | nil,
+          community_passport_scope: struct() | nil,
+          article_passport_scope: struct() | nil
         }
 end

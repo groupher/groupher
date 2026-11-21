@@ -1,6 +1,6 @@
 # Doc Editor Rename & Refactor Plan
 
-> 状态：已被 [Gate V3](../gate/v3.md) 取代，仅保留历史重命名方案。本文中的 ArticleWorkspace、ArticleBranch 和 ArticleSnapshot 不代表当前运行时模型；当前 Doc 专属模型以 `DocBranch`、`DocSnapshot` 和 `DocLifecycle` 为准。
+> 状态：已被 [Gate V3](../gate/v3.md) 取代，仅保留历史重命名方案。本文中的 ArticleWorkspace、ArticleBranch、ArticleSnapshot、DocBranch、DocSnapshot 和 DocLifecycle 均为历史模型；2026-11-14 后 Doc 目标以 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 为准。
 
 ---
 

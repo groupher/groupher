@@ -1,185 +1,998 @@
 {
-  "actions": [
-    "analysis.web.read",
-    "article.insights.read",
-    "article.mirror",
-    "article.move",
-    "article.permanent_delete",
-    "article.restore",
-    "article.trash",
-    "article.trash.read",
-    "article.unmirror",
-    "asset.upload",
-    "audit.read",
-    "blog.draft.publish",
-    "blog.draft.update",
-    "blog.lock_comment",
-    "blog.permanent_delete",
-    "blog.pin",
-    "blog.restore",
-    "blog.sink",
-    "blog.trash",
-    "blog.undo_lock_comment",
-    "blog.undo_pin",
-    "blog.undo_sink",
-    "blog.update",
-    "category.create",
-    "category.delete",
-    "category.set",
-    "category.unset",
-    "category.update",
-    "changelog.draft.publish",
-    "changelog.draft.update",
-    "changelog.lock_comment",
-    "changelog.permanent_delete",
-    "changelog.pin",
-    "changelog.restore",
-    "changelog.sink",
-    "changelog.trash",
-    "changelog.undo_lock_comment",
-    "changelog.undo_pin",
-    "changelog.undo_sink",
-    "changelog.update",
-    "comment.delete",
-    "comment.pin",
-    "comment.undo_pin",
-    "comment.update",
-    "community.application.approve",
-    "community.application.reject",
-    "community.application.retry_creation",
-    "community.application.retry_setup",
-    "community.application.review",
-    "community.create",
-    "community.request_destroy",
-    "community.update",
-    "community_tag.create",
-    "community_tag.delete",
-    "community_tag.reindex",
-    "community_tag.set",
-    "community_tag.unset",
-    "community_tag.update",
-    "dashboard.rss.update",
-    "dashboard.theme.update",
-    "doc.import",
-    "doc.lock_comment",
-    "doc.permanent_delete",
-    "doc.pin",
-    "doc.restore",
-    "doc.sink",
-    "doc.trash",
-    "doc.undo_lock_comment",
-    "doc.undo_pin",
-    "doc.undo_sink",
-    "doc.update",
-    "moderator.set",
-    "moderator.unset",
-    "moderator.update",
-    "post.draft.publish",
-    "post.draft.update",
-    "post.lock_comment",
-    "post.permanent_delete",
-    "post.pin",
-    "post.restore",
-    "post.set_category",
-    "post.sink",
-    "post.trash",
-    "post.undo_lock_comment",
-    "post.undo_pin",
-    "post.undo_sink",
-    "post.update",
-    "ticket.assign",
-    "ticket.create",
-    "ticket.link_source",
-    "ticket.manage_case",
-    "ticket.manage_visibility",
-    "ticket.read_internal",
-    "ticket.transition",
-    "ticket.update",
-    "review.configure",
-    "review.decide",
-    "review.platform.configure",
-    "review.platform.decide",
-    "review.platform.read",
-    "review.read",
-    "thread.create",
-    "thread.set",
-    "thread.unset"
-  ],
-  "globalActions": [
-    "article.mirror",
-    "article.move",
-    "article.unmirror",
-    "category.create",
-    "category.delete",
-    "category.set",
-    "category.unset",
-    "category.update",
-    "community.application.approve",
-    "community.application.reject",
-    "community.application.retry_creation",
-    "community.application.retry_setup",
-    "community.application.review",
-    "community.create",
-    "community.request_destroy",
-    "community.update",
-    "review.platform.configure",
-    "review.platform.decide",
-    "review.platform.read"
-  ],
-  "ownerFallbackActions": [
-    "article.trash",
-    "blog.draft.publish",
-    "blog.draft.update",
-    "blog.update",
-    "changelog.draft.publish",
-    "changelog.draft.update",
-    "changelog.update",
-    "comment.delete",
-    "comment.pin",
-    "comment.undo_pin",
-    "comment.update",
-    "doc.update",
-    "post.draft.publish",
-    "post.draft.update",
-    "post.set_category",
-    "post.update"
-  ],
-  "ownerOnlyActions": [
-    "blog.draft.publish",
-    "blog.draft.update",
-    "changelog.draft.publish",
-    "changelog.draft.update",
-    "comment.delete",
-    "comment.pin",
-    "comment.undo_pin",
-    "comment.update",
-    "post.draft.publish",
-    "post.draft.update"
-  ],
-  "grantAliases": {
-    "analysis.web.read": "community.update",
-    "audit.read": "community.update",
-    "blog.update": "blog.edit",
-    "changelog.update": "changelog.edit",
-    "dashboard.rss.update": "community.update",
-    "dashboard.theme.update": "community.update",
-    "doc.update": "doc.edit",
-    "post.set_category": "post.edit",
-    "post.update": "post.edit"
-  },
-  "threadGrantSuffixes": {
-    "article.mirror": "community.mirror",
-    "article.move": "community.move",
-    "article.permanent_delete": "permanent_delete",
-    "article.restore": "restore",
-    "article.trash": "trash",
-    "article.trash.read": "trash",
-    "article.unmirror": "community.unmirror",
-    "community_tag.create": "community_tag.create",
-    "community_tag.delete": "community_tag.delete",
-    "community_tag.reindex": "community_tag.update",
-    "community_tag.set": "community_tag.set",
-    "community_tag.unset": "community_tag.unset",
-    "community_tag.update": "community_tag.update"
-  }
+  "permissions": [
+    {
+      "action": "admin.apply",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "admin.invite",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "admin.permissions.update",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "admin.remove",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "admin.request.decide",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "analysis.web.read",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.author.manage",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.history.read",
+      "scope": "article",
+      "grantable": true,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.history.restore",
+      "scope": "article",
+      "grantable": true,
+      "owner_only": true,
+      "requires": ["article.history.read", "article.update", "article.read_draft"],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.insights.read",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.mirror",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {
+        "doc": ["doc.queue.write"]
+      }
+    },
+    {
+      "action": "article.move",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": ["article.unmirror"],
+      "requires_thread": {
+        "doc": ["doc.queue.write"]
+      }
+    },
+    {
+      "action": "article.permanent_delete",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": ["article.trash.read"],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.publish",
+      "scope": "article",
+      "grantable": true,
+      "owner_only": true,
+      "requires": ["article.read_draft"],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.read_draft",
+      "scope": "article",
+      "grantable": true,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.restore",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": ["article.trash.read"],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.trash",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": ["article.trash.read"],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.trash.read",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "article.unmirror",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {
+        "doc": ["doc.queue.write"]
+      }
+    },
+    {
+      "action": "article.update",
+      "scope": "article",
+      "grantable": true,
+      "owner_only": true,
+      "requires": ["article.read_draft"],
+      "requires_thread": {}
+    },
+    {
+      "action": "asset.upload",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "audit.read",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.draft.publish",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.draft.update",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.lock_comment",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.permanent_delete",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.pin",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.restore",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.sink",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.trash",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.undo_lock_comment",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.undo_pin",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.undo_sink",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "blog.update",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "category.create",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "category.delete",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "category.set",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "category.unset",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "category.update",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.draft.publish",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.draft.update",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.lock_comment",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.permanent_delete",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.pin",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.restore",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.sink",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.trash",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.undo_lock_comment",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.undo_pin",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.undo_sink",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "changelog.update",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "comment.delete",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "comment.pin",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "comment.undo_pin",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "comment.update",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.application.approve",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.application.reject",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.application.retry_creation",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.application.retry_setup",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.application.review",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.article.hide",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": ["community.article.trash.read"],
+      "requires_thread": {
+        "doc": ["doc.queue.write"]
+      }
+    },
+    {
+      "action": "community.article.restore",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": ["community.article.trash.read"],
+      "requires_thread": {
+        "doc": ["doc.queue.write"]
+      }
+    },
+    {
+      "action": "community.article.trash.read",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.create",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.request_destroy",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community.update",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community_tag.create",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community_tag.delete",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community_tag.reindex",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community_tag.set",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community_tag.unset",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "community_tag.update",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "dashboard.rss.update",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "dashboard.theme.update",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.history.read",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.import",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.lock_comment",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.permanent_delete",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.pin",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.queue.approve",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.queue.configure",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.queue.preview",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.queue.publish",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.queue.write",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.restore",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.sink",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.trash",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.undo_lock_comment",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.undo_pin",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "doc.undo_sink",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "moderator.set",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "moderator.unset",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "moderator.update",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.draft.publish",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.draft.update",
+      "scope": "article",
+      "grantable": false,
+      "owner_only": true,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.lock_comment",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.permanent_delete",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.pin",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.restore",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.set_category",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.sink",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.trash",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.undo_lock_comment",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.undo_pin",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.undo_sink",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "post.update",
+      "scope": "community",
+      "grantable": false,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "review.configure",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "review.decide",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "review.platform.configure",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "review.platform.decide",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "review.platform.read",
+      "scope": "global",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "review.read",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "thread.create",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "thread.set",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "thread.unset",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "ticket.assign",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "ticket.create",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "ticket.link_source",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "ticket.manage_case",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "ticket.manage_visibility",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "ticket.read_internal",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "ticket.transition",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    },
+    {
+      "action": "ticket.update",
+      "scope": "community",
+      "grantable": true,
+      "owner_only": false,
+      "requires": [],
+      "requires_thread": {}
+    }
+  ]
 }

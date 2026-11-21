@@ -14,11 +14,11 @@ export type TQueryInvalidationTarget =
   | { domain: 'article'; target: 'lists'; scope: TArticleListScope }
   | { domain: 'article'; target: 'tag-groups'; community: string; thread: TThread }
   | { domain: 'comment'; target: 'list'; path: TArticlePath }
-  | { domain: 'community'; target: 'config'; community: string }
+  | { domain: 'community'; target: 'slug'; community: string }
   | { domain: 'community'; target: 'dashboard'; community: string }
   | { domain: 'community'; target: 'wallpaper'; community: string }
   | { domain: 'community'; target: 'wallpaper-editor'; community: string }
-  | { domain: 'community'; target: 'press-config'; community: string }
+  | { domain: 'press'; target: 'slug'; community: string }
   | { domain: 'viewer'; target: 'article-state'; accountScope: string }
   | { domain: 'viewer'; target: 'comment-state'; accountScope: string; articleKey: string }
 

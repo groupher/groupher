@@ -1,8 +1,12 @@
 # Community Gate
 
+> **2026-11-16 Doc 公共读取本地实施：**Doc root 继续使用 typed Doc Context 和 Gate.Scope.Article，不新增 Scope facade。仅 public stage 且 policy_mode: public 增加行内 Binding Community 的公开 page EXISTS 与当前 PublicBody 版本 EXISTS；Scope 无请求 Community 参数，由调用方限定目标站点。owner_management / insights_management 保持原合同。读取子批次已完成本地验证、尚未部署；历史 Doc branch / 独占 owner 说明不作为当前读取实现依据。实施及发布边界见 [公共读取专项](../../migrations/docs-public-read-scope-fix.md) 与 [验收记录](../../migrations/docs-public-read-scope-implementation.md)，整体产品合同归 [Mirror Fix](../../migrations/docs-mirror-fix.md)。
+
 > 状态：current
 
 本文是 Gate 的当前入口。Gate 只负责读取 scope 和写入 admission，不拥有业务状态迁移或 transport：
+
+> **2026-11-14 Docs 目标更新：**当前 Gate 运行态仍按单一 Docs owner / DocsLifecycle 执行；这只是待迁移的实现事实。新目标允许 Doc 多社区 Binding，Gate 按显式请求 Community 验证对应 Binding，并从共享 ArticleLifecycle 读取单篇状态。Docs 站点读取和发布继续使用站点级 Queue / Release。当前运行态说明不得作为新目标合同。
 
 ```text
 read caller
@@ -23,7 +27,7 @@ write command
 - 新代码以本文、V4 typed context 和对应资源 Lifecycle 合同为准，不从历史版本恢复旧入口。
 - 审核限制、内容待审、AI 意见和 AlertWall 的职责见 [ReviewBot / AlertWall V2](../alert-wall/v2.md)。
 
-> 共享评论当前合同：`Comment.for_thread(thread, community_id: canonical_id)` 强制显式请求社区，`all_public()` 为跨 thread 公共聚合入口；Comment 不接受 branch selector。Doc 评论通过唯一 owner 的当前可读 main 准入，评论身份和统计仍归稳定 Article。Doc/Document 正文的 branch selector 保持。实现及验收见 [共享评论计划](../../migrations/comment-reaction-snapshot-counts.md) 与 [实施记录](../../migrations/comment-reaction-snapshot-counts-implementation.md)。
+> 共享评论运行态：`Comment.for_thread(thread, community_id: canonical_id)` 强制显式请求社区，`all_public()` 为跨 thread 公共聚合入口；Comment 不接受 branch selector。Doc 评论当前仍按旧 owner/main 实现；切换后按对应 Binding 和 Article Gate 读取，评论身份与统计继续归稳定 Article。实施目标见 [共享评论计划](../../migrations/comment-reaction-snapshot-counts.md) 与 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md)。
 
 ## 版本状态
 
@@ -35,6 +39,7 @@ write command
 ## 补充与历史
 
 - [读取与操作准入收口](../../migrations/gate-admission-convergence.md)：已确认、待实施的调用覆盖与重复准入清理计划；不新增另一套 Gate 合同。
+- [Article WorkingCopy Gate 与已发布编辑策略收口](../../migrations/article-working-copy-gate-policy-fix.md)：Article 作者专属 `:edit_article`、默认允许且可配置的发布后编辑策略及 Receipt / Asset workflow 规则；实现和本地验收记录见合同 F4，完整后端套件未运行。
 
 - [`lifecycle-cleanup.md`](./lifecycle-cleanup.md)：已确认、待实施的 Lifecycle 清理设计。
 - [`implementation-history.md`](./implementation-history.md)：V2 一次性切换记录。

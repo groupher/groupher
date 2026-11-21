@@ -1,6 +1,7 @@
 export const LOCAL_SERVICE_ENDPOINTS = {
   assetsHub: 'http://127.0.0.1:8002',
   assetsHubRead: 'http://127.0.0.1:8002',
+  assetsReadWorker: 'http://127.0.0.1:8787',
   apply: 'http://127.0.0.1:3006',
   auth: 'http://127.0.0.1:3004',
   community: 'http://127.0.0.1:3007',

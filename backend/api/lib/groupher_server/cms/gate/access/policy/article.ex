@@ -20,6 +20,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   """
 
   alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.ErrorCat, as: DomainErrors
+  alias DomainErrors.Error, as: DomainError
 
   alias Accounts.Model.User
 
@@ -36,6 +38,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     :read,
     :publish,
     :edit,
+    :edit_article,
+    :manage_coauthors,
     :discard_draft,
     :create_comment,
     :delete,
@@ -53,6 +57,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     :set_category,
     :community_tag_set,
     :community_tag_unset,
+    :community_hide,
+    :community_restore,
     :lock_comments,
     :unlock_comments,
     :moderate,
@@ -65,33 +71,39 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   @interaction_actions [:upvote, :emotion, :collect, :report]
 
   @doc "Checks Article or Doc mutation admission without loading or locking resources."
-  @spec check_access(User.t() | nil, atom(), map(), ArticleContext.t() | DocContext.t()) ::
+  @spec check_access(User.t() | atom() | nil, atom(), ArticleContext.t() | DocContext.t()) ::
           {:ok, :pass} | {:error, ErrorCat.error()}
-  def check_access(%User{} = user, action, article, context)
-      when action in @actions and is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+  def check_access(actor, action, %ArticleContext{article: article} = context)
+      when is_map(article) do
+    check_loaded(actor, action, article, context)
+  end
+
+  def check_access(actor, action, %DocContext{doc: doc} = context) when is_map(doc) do
+    check_loaded(actor, action, doc, context)
+  end
+
+  def check_access(_actor, _action, _context), do: {:error, ErrorCat.unknown_action()}
+
+  defp check_loaded(%User{} = user, action, article, context) when action in @actions do
     check_allowed(user, action, article, context)
   end
 
-  def check_access(:operations, action, article, context)
-      when action in [:delete, :permanently_delete, :moderate] and is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+  defp check_loaded(:operations, action, article, context)
+       when action in [:delete, :permanently_delete, :moderate] do
     check_allowed(:operations, action, article, context)
   end
 
-  def check_access(:system, :permanently_delete, article, context)
-      when is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+  defp check_loaded(:system, :permanently_delete, article, context) do
     check_allowed(:operations, :permanently_delete, article, context)
   end
 
-  def check_access(nil, :read, article, context), do: check_allowed(nil, :read, article, context)
+  defp check_loaded(nil, :read, article, context), do: check_allowed(nil, :read, article, context)
 
-  def check_access(nil, action, _article, _context) when action in @actions do
+  defp check_loaded(nil, action, _article, _context) when action in @actions do
     {:error, ErrorCat.permission_denied()}
   end
 
-  def check_access(_user, _action, _article, _context), do: {:error, ErrorCat.unknown_action()}
+  defp check_loaded(_user, _action, _article, _context), do: {:error, ErrorCat.unknown_action()}
 
   defp check_allowed(actor, :read_insights, article, context) do
     with {:ok, community} <- community(context),
@@ -107,6 +119,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   defp check_allowed(actor, :read, article, context) do
     with {:ok, lifecycle} <- article_lifecycle(context),
          true <- lifecycle.state in [:published, :archived],
+         true <- not is_struct(context, DocContext) or context.public_available? != false,
+         {:ok, true} <- public_community_readable(context),
          true <-
            not Map.get(context, :review_restricted?, false) or article_owner?(actor, article) or
              review_scopes_readable?(actor, context) do
@@ -116,13 +130,25 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     end
   end
 
+  defp check_allowed(actor, :manage_coauthors, article, context) do
+    with {:ok, :pass} <- authorize_action(actor, :manage_coauthors, article, context),
+         {:ok, lifecycle} <- article_lifecycle(context),
+         {:ok, :pass} <- context_action_allowed(:manage_coauthors, lifecycle, article, context) do
+      {:ok, :pass}
+    else
+      {:error, _reason} = error -> error
+      _ -> {:error, ErrorCat.article_not_mutable()}
+    end
+  end
+
   defp check_allowed(actor, action, article, context) do
     with {:ok, :pass} <- authorize_action(actor, action, article, context),
          {:ok, lifecycle} <- article_lifecycle(context),
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
-         {:ok, _} <- doc_branch_allowed(action, context),
-         {:ok, _} <- action_allowed(action, lifecycle, article),
+         {:ok, :pass} <- doc_trash_allowed(action, context),
+         {:ok, _} <- context_action_allowed(action, lifecycle, article, context),
+         {:ok, :pass} <- article_editing_allowed(action, context),
          {:ok, :pass} <- discussion_parent_readable(actor, action, article, context) do
       {:ok, :pass}
     else
@@ -131,57 +157,82 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     end
   end
 
+  defp doc_trash_allowed(action, %DocContext{trashed?: true})
+       when action in [:edit, :edit_article, :delete] do
+    {:error, ErrorCat.article_deleted()}
+  end
+
+  defp doc_trash_allowed(_action, _context), do: {:ok, :pass}
+
+  defp context_action_allowed(:restore, %{state: state}, _article, %DocContext{trashed?: true})
+       when state in [:draft, :published, :archived, :deleted] do
+    {:ok, :pass}
+  end
+
+  defp context_action_allowed(:permanently_delete, %{state: state}, _article, %DocContext{
+         trashed?: true
+       })
+       when state in [:draft, :published, :deleted] do
+    {:ok, :pass}
+  end
+
+  defp context_action_allowed(action, lifecycle, article, _context) do
+    action_allowed(action, lifecycle, article)
+  end
+
+  defp public_community_readable(%DocContext{community_lifecycle: lifecycle}) do
+    Communities.Lifecycle.can_read(lifecycle)
+  end
+
+  defp public_community_readable(_context), do: {:ok, true}
+
+  defp article_editing_allowed(:edit_article, %ArticleContext{published_article_editable?: true}) do
+    {:ok, :pass}
+  end
+
+  defp article_editing_allowed(
+         :edit_article,
+         %ArticleContext{published_article_editing_error: %DomainError{} = error}
+       ) do
+    {:error, error}
+  end
+
+  defp article_editing_allowed(:edit_article, %ArticleContext{}) do
+    {:error, ErrorCat.published_article_editing_disabled()}
+  end
+
+  defp article_editing_allowed(_action, _context), do: {:ok, :pass}
+
   defp discussion_parent_readable(actor, :create_comment, article, context) do
     check_allowed(actor, :read, article, context)
   end
 
   defp discussion_parent_readable(_actor, _action, _article, _context), do: {:ok, :pass}
 
-  defp review_scopes_readable?(%User{}, context) do
+  defp review_scopes_readable?(%User{} = user, context) do
     scopes = Map.get(context, :review_scope_keys, [])
-    passport_rules = Map.get(context, :passport_rules)
     community = Map.get(context, :community)
 
     is_list(scopes) and scopes != [] and match?(%Community{}, community) and
       Enum.all?(scopes, fn
         "platform" ->
-          CMS.Passport.Authorization.allowed?(
-            passport_rules,
-            nil,
-            CMS.GateAction.review_platform_read()
-          ) == {:ok, true}
+          passport_allowed?(context, CMS.GateAction.review_platform_read(), nil, user, community)
 
         "community:" <> _community_id ->
-          CMS.Passport.Authorization.allowed?(
-            passport_rules,
-            community.slug,
-            CMS.GateAction.review_read()
-          ) == {:ok, true}
+          passport_allowed?(context, CMS.GateAction.review_read(), nil, user, community)
 
         _scope ->
           false
       end)
   end
 
+  defp review_scopes_readable?(_, _context), do: false
+
   defp authorize_insights(:operations, _article, _community, _context), do: {:ok, :pass}
 
   defp authorize_insights(%User{id: user_id} = user, article, community, context) do
-    owner? =
-      Map.get(Map.get(article, :author, %{}), :user_id) == user_id or
-        community.user_id == user_id
-
-    if owner? do
-      {:ok, :pass}
-    else
-      authorize_passport(
-        user,
-        CMS.GateAction.article_insights_read(),
-        false,
-        community,
-        nil,
-        context
-      )
-    end
+    _ = {user_id, article}
+    authorize_passport(user, CMS.GateAction.article_insights_read(), community, nil, context)
   end
 
   defp authorize_insights(_actor, _article, _community, _context) do
@@ -196,19 +247,16 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:ok, :pass}
   end
 
+  defp authorize_action(%User{} = user, :manage_coauthors, article, context) do
+    with {:ok, passport_action} <- passport_action(:manage_coauthors, article, context) do
+      authorize_passport(user, passport_action, nil, Map.get(article, :thread), context)
+    end
+  end
+
   defp authorize_action(%User{} = user, action, article, context) do
     with {:ok, passport_action} <- passport_action(action, article, context),
          {:ok, community} <- community(context) do
-      owner? = action != :moderate and article_owner?(user, article)
-
-      authorize_passport(
-        user,
-        passport_action,
-        owner?,
-        community,
-        Map.get(article, :thread),
-        context
-      )
+      authorize_passport(user, passport_action, community, Map.get(article, :thread), context)
     end
   end
 
@@ -221,57 +269,137 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:error, ErrorCat.permission_denied()}
   end
 
-  defp authorize_passport(user, action, owner?, community, thread, context) do
-    case CMS.GateAction.requirement(action) do
-      nil ->
+  defp authorize_passport(user, action, community, thread, context) do
+    case CMS.Passport.Catalog.get(action) do
+      {:error, :unknown_action} ->
         {:error, ErrorCat.unknown_action()}
 
-      requirement ->
-        if owner? and Map.get(requirement, :owner_fallback, false) do
+      {:ok, _metadata} ->
+        if passport_allowed?(context, action, thread, user, community) do
           {:ok, :pass}
         else
-          passport_rules = Map.get(context, :passport_rules) || Map.get(user, :cur_passport)
-
-          case CMS.Passport.Authorization.allowed?(passport_rules, community.slug, action, thread) do
-            {:ok, true} -> {:ok, :pass}
-            {:ok, false} -> {:error, ErrorCat.permission_denied()}
-            {:error, _} -> {:error, ErrorCat.permission_denied()}
-          end
+          {:error, ErrorCat.permission_denied()}
         end
     end
   end
 
+  defp passport_allowed?(context, action, thread, actor, community) do
+    with {:ok, %{scope: scope_kind}} <- CMS.Passport.Catalog.get(action),
+         {:ok, passport_scope} <- passport_scope(context, scope_kind),
+         %User{} = actor <- actor || scope_actor(passport_scope),
+         {:ok, :pass} <- matching_scope(context, passport_scope, scope_kind, community),
+         {:ok, true} <- allowed_passport_scope(actor, passport_scope, action, scope_kind, thread) do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp allowed_passport_scope(actor, passport_scope, action, :article, _thread) do
+    CMS.Passport.allowed?(actor, passport_scope, action)
+  end
+
+  defp allowed_passport_scope(actor, passport_scope, action, _scope, thread) do
+    CMS.Passport.allowed?(actor, passport_scope, action, thread)
+  end
+
+  defp passport_scope(context, :global) do
+    case Map.get(context, :passport_global_scope) do
+      %CMS.Passport.Scope.Global{} = scope -> {:ok, scope}
+      _ -> {:error, :scope_not_loaded}
+    end
+  end
+
+  defp passport_scope(context, :community) do
+    case Map.get(context, :community_passport_scope) do
+      %CMS.Passport.Scope.Community{} = scope -> {:ok, scope}
+      _ -> {:error, :scope_not_loaded}
+    end
+  end
+
+  defp passport_scope(context, :article) do
+    case Map.get(context, :article_passport_scope) do
+      %CMS.Passport.Scope.Article{} = scope -> {:ok, scope}
+      _ -> {:error, :scope_not_loaded}
+    end
+  end
+
+  defp passport_scope(_context, _scope), do: {:error, :invalid_scope}
+
+  defp scope_actor(%{actor_id: actor_id}), do: %User{id: actor_id}
+
+  defp matching_scope(_context, %CMS.Passport.Scope.Global{}, :global, _community) do
+    {:ok, :pass}
+  end
+
+  defp matching_scope(
+         %{} = context,
+         %CMS.Passport.Scope.Community{community_id: id},
+         :community,
+         %Community{id: id}
+       ) do
+    case Map.get(context, :community) do
+      %Community{id: ^id} -> {:ok, :pass}
+      _ -> {:error, :scope_mismatch}
+    end
+  end
+
+  defp matching_scope(context, %CMS.Passport.Scope.Article{article_id: id}, :article, _community) do
+    article = Map.get(context, :article) || Map.get(context, :doc)
+
+    if is_map(article) and Map.get(article, :id) == id do
+      {:ok, :pass}
+    else
+      {:error, :scope_mismatch}
+    end
+  end
+
+  defp matching_scope(_, _, _, _), do: {:error, :scope_mismatch}
+
   defp passport_action(:publish, %{thread: :doc}, _context) do
-    {:ok, CMS.GateAction.doc_update()}
+    {:ok, CMS.GateAction.doc_queue_publish()}
   end
 
-  defp passport_action(:publish, %{thread: thread}, _context)
+  defp passport_action(:publish, _article, _context) do
+    {:ok, CMS.GateAction.article_publish()}
+  end
+
+  defp passport_action(:edit_article, %{thread: thread}, _context)
        when thread in [:post, :blog, :changelog] do
-    {:ok, "#{thread}.draft.publish"}
+    {:ok, CMS.GateAction.article_update()}
   end
 
-  defp passport_action(:edit, %{thread: :doc}, _context), do: {:ok, CMS.GateAction.doc_update()}
-
-  defp passport_action(:edit, %{thread: thread}, _context)
-       when thread in [:post, :blog, :changelog] do
-    {:ok, "#{thread}.update"}
+  defp passport_action(:manage_coauthors, _article, _context) do
+    {:ok, CMS.GateAction.article_author_manage()}
   end
 
-  defp passport_action(action, %{thread: :doc}, _context)
-       when action in [:discard_draft, :restore_revision_to_draft] do
-    {:ok, CMS.GateAction.doc_update()}
+  defp passport_action(
+         action,
+         %{thread: :doc},
+         _context
+       )
+       when action in [:edit, :discard_draft, :restore_revision_to_draft] do
+    {:ok, CMS.GateAction.doc_queue_write()}
   end
 
-  defp passport_action(action, %{thread: thread}, _context)
-       when action in [:discard_draft, :restore_revision_to_draft] and
-              thread in [:post, :blog, :changelog] do
-    {:ok, "#{thread}.draft.update"}
+  defp passport_action(action, _article, _context)
+       when action in [:edit, :discard_draft, :restore_revision_to_draft] do
+    {:ok, CMS.GateAction.article_update()}
   end
 
+  defp passport_action(:delete, %{thread: :doc}, _context), do: {:ok, CMS.GateAction.doc_trash()}
   defp passport_action(:delete, _article, _context), do: {:ok, CMS.GateAction.article_trash()}
+
+  defp passport_action(:permanently_delete, %{thread: :doc}, _context) do
+    {:ok, CMS.GateAction.doc_permanent_delete()}
+  end
 
   defp passport_action(:permanently_delete, _article, _context) do
     {:ok, CMS.GateAction.article_permanent_delete()}
+  end
+
+  defp passport_action(:restore, %{thread: :doc}, _context) do
+    {:ok, CMS.GateAction.doc_restore()}
   end
 
   defp passport_action(:restore, _article, _context), do: {:ok, CMS.GateAction.article_restore()}
@@ -287,8 +415,6 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:ok, CMS.GateAction.article_unmirror()}
   end
 
-  defp passport_action(:moderate, _article, _context), do: {:ok, CMS.GateAction.article_trash()}
-
   defp passport_action(:community_tag_set, _article, _context) do
     {:ok, CMS.GateAction.community_tag_set()}
   end
@@ -297,25 +423,90 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:ok, CMS.GateAction.community_tag_unset()}
   end
 
-  defp passport_action(action, %{thread: thread}, _context)
-       when thread in [:post, :blog, :changelog, :doc] do
-    suffix =
-      case action do
-        :pin -> "pin"
-        :unpin -> "undo_pin"
-        :sink -> "sink"
-        :undo_sink -> "undo_sink"
-        :set_category -> "set_category"
-        :lock_comments -> "lock_comment"
-        :unlock_comments -> "undo_lock_comment"
-        _ -> nil
-      end
+  defp passport_action(:pin, %{thread: :post}, _), do: {:ok, CMS.GateAction.post_pin()}
+  defp passport_action(:unpin, %{thread: :post}, _), do: {:ok, CMS.GateAction.post_undo_pin()}
+  defp passport_action(:sink, %{thread: :post}, _), do: {:ok, CMS.GateAction.post_sink()}
 
-    if is_binary(suffix) do
-      {:ok, "#{thread}.#{suffix}"}
-    else
-      {:error, ErrorCat.unknown_action()}
-    end
+  defp passport_action(:undo_sink, %{thread: :post}, _) do
+    {:ok, CMS.GateAction.post_undo_sink()}
+  end
+
+  defp passport_action(:set_category, %{thread: :post}, _) do
+    {:ok, CMS.GateAction.post_set_category()}
+  end
+
+  defp passport_action(:lock_comments, %{thread: :post}, _) do
+    {:ok, CMS.GateAction.post_lock_comment()}
+  end
+
+  defp passport_action(:unlock_comments, %{thread: :post}, _) do
+    {:ok, CMS.GateAction.post_undo_lock_comment()}
+  end
+
+  defp passport_action(:pin, %{thread: :blog}, _), do: {:ok, CMS.GateAction.blog_pin()}
+  defp passport_action(:unpin, %{thread: :blog}, _), do: {:ok, CMS.GateAction.blog_undo_pin()}
+  defp passport_action(:sink, %{thread: :blog}, _), do: {:ok, CMS.GateAction.blog_sink()}
+
+  defp passport_action(:undo_sink, %{thread: :blog}, _) do
+    {:ok, CMS.GateAction.blog_undo_sink()}
+  end
+
+  defp passport_action(:lock_comments, %{thread: :blog}, _) do
+    {:ok, CMS.GateAction.blog_lock_comment()}
+  end
+
+  defp passport_action(:unlock_comments, %{thread: :blog}, _) do
+    {:ok, CMS.GateAction.blog_undo_lock_comment()}
+  end
+
+  defp passport_action(:pin, %{thread: :changelog}, _), do: {:ok, CMS.GateAction.changelog_pin()}
+
+  defp passport_action(:unpin, %{thread: :changelog}, _) do
+    {:ok, CMS.GateAction.changelog_undo_pin()}
+  end
+
+  defp passport_action(:sink, %{thread: :changelog}, _) do
+    {:ok, CMS.GateAction.changelog_sink()}
+  end
+
+  defp passport_action(:undo_sink, %{thread: :changelog}, _) do
+    {:ok, CMS.GateAction.changelog_undo_sink()}
+  end
+
+  defp passport_action(:lock_comments, %{thread: :changelog}, _) do
+    {:ok, CMS.GateAction.changelog_lock_comment()}
+  end
+
+  defp passport_action(:unlock_comments, %{thread: :changelog}, _) do
+    {:ok, CMS.GateAction.changelog_undo_lock_comment()}
+  end
+
+  defp passport_action(:pin, %{thread: :doc}, _), do: {:ok, CMS.GateAction.doc_pin()}
+  defp passport_action(:unpin, %{thread: :doc}, _), do: {:ok, CMS.GateAction.doc_undo_pin()}
+  defp passport_action(:sink, %{thread: :doc}, _), do: {:ok, CMS.GateAction.doc_sink()}
+  defp passport_action(:undo_sink, %{thread: :doc}, _), do: {:ok, CMS.GateAction.doc_undo_sink()}
+
+  defp passport_action(:lock_comments, %{thread: :doc}, _) do
+    {:ok, CMS.GateAction.doc_lock_comment()}
+  end
+
+  defp passport_action(:unlock_comments, %{thread: :doc}, _) do
+    {:ok, CMS.GateAction.doc_undo_lock_comment()}
+  end
+
+  defp passport_action(:moderate, _article, _), do: {:ok, CMS.GateAction.community_article_hide()}
+
+  defp passport_action(:community_hide, _article, _) do
+    {:ok, CMS.GateAction.community_article_hide()}
+  end
+
+  defp passport_action(:community_restore, _article, _) do
+    {:ok, CMS.GateAction.community_article_restore()}
+  end
+
+  defp passport_action(:set_category, %{thread: thread}, _)
+       when thread in [:blog, :changelog, :doc] do
+    {:error, ErrorCat.unknown_action()}
   end
 
   defp passport_action(_action, _article, _context), do: {:error, ErrorCat.unknown_action()}
@@ -324,12 +515,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     Map.get(Map.get(article, :author, %{}), :user_id) == user_id
   end
 
-  defp doc_branch_allowed(action, %{doc_branch: %{type: type}})
-       when action in @interaction_actions and type != :main do
-    {:error, ErrorCat.article_not_mutable()}
-  end
-
-  defp doc_branch_allowed(_action, _context), do: {:ok, :pass}
+  defp article_owner?(_, _article), do: false
 
   defp article_lifecycle(%{article_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}
   defp article_lifecycle(%{doc_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}
@@ -359,7 +545,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   # Editing an existing public Article and updating its editor Draft share the
   # same logical lifecycle. Keep this separate from :publish so both write
   # entry points reject a non-writable ancestor before touching Draft rows.
-  defp action_allowed(:edit, %{state: state} = lifecycle, _article) do
+  defp action_allowed(action, %{state: state} = lifecycle, _article)
+       when action in [:edit, :edit_article] do
     case ArticleLifecycle.editable?(lifecycle) do
       {:ok, true} -> {:ok, :pass}
       {:ok, false} -> edit_lifecycle_error(state)
@@ -469,6 +656,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:ok, :pass}
   end
 
+  defp action_allowed(:manage_coauthors, %{state: state}, _article)
+       when state in [:draft, :published, :archived] do
+    {:ok, :pass}
+  end
+
   defp action_allowed(action, _lifecycle, _article)
        when action in [:move, :mirror, :unmirror, :pin, :unpin] do
     {:error, ErrorCat.article_not_mutable()}
@@ -486,6 +678,21 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
               :moderate
             ] and state in [:draft, :published] do
     {:ok, :pass}
+  end
+
+  defp action_allowed(:community_hide, %{state: state}, _article)
+       when state in [:draft, :published] do
+    {:ok, :pass}
+  end
+
+  defp action_allowed(:community_restore, %{state: state}, _article)
+       when state in [:draft, :published, :archived, :deleted] do
+    {:ok, :pass}
+  end
+
+  defp action_allowed(action, _lifecycle, _article)
+       when action in [:community_hide, :community_restore] do
+    {:error, ErrorCat.article_not_mutable()}
   end
 
   defp action_allowed(_action, _lifecycle, _article), do: {:error, ErrorCat.article_not_mutable()}

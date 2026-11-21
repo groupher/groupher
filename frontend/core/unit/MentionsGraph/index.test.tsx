@@ -3,8 +3,8 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { print } from 'graphql'
 
 import { GraphQLRequestError } from '~/graphql/client'
-import type { MentionsGraphPageQuery } from '~/lib/graphql/generated/graphql'
-import { mentionsGraphQueries } from '~/query/mentionsGraph'
+import type { PagedMentionsGraphQuery } from '~/lib/graphql/generated/graphql'
+import { mentionsGraphKeys } from '~/query/mentionsGraph'
 
 import MentionsGraph from './index'
 
@@ -18,6 +18,10 @@ vi.mock('~/graphql/client', async (importOriginal) => ({
 vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key, locale: 'en' }) }))
 
 const focus = { type: 'POST' as const, articleInnerId: '1' }
+
+// jsdom 31 resolves an SVG node's <title> into the accessibility tree, so the graph
+// anchors and the link list both expose the node title; assertions target the list.
+const graphLinks = () => within(screen.getByRole('list', { name: 'mentions_graph.links' }))
 
 function page() {
   const focusNode = {
@@ -104,8 +108,8 @@ it('keeps both direct relationship pages after loading more', async () => {
   )
 
   fireEvent.click(await screen.findByRole('button', { name: 'mentions_graph.more' }))
-  await screen.findByRole('link', { name: 'Second target' })
-  expect(screen.getByRole('link', { name: 'Target' })).toBeInTheDocument()
+  await graphLinks().findByRole('link', { name: 'Second target' })
+  expect(graphLinks().getByRole('link', { name: 'Target' })).toBeInTheDocument()
   expect(screen.getAllByRole('listitem')).toHaveLength(2)
   expect(screen.queryByRole('button', { name: 'mentions_graph.more' })).not.toBeInTheDocument()
 })
@@ -126,7 +130,7 @@ it('keeps a restricted node title and link alongside its status', async () => {
     </QueryClientProvider>,
   )
 
-  const target = await screen.findByRole('link', {
+  const target = await graphLinks().findByRole('link', {
     name: 'Target (mentions_graph.node.unavailable)',
   })
   expect(target).toHaveAttribute('href', '/home/post/2')
@@ -137,7 +141,7 @@ it('links an unnumbered Article through its stable ID locator', async () => {
   state.request.mockReset().mockImplementation(async (document) => {
     if (print(document).includes('query MentionsGraphRevision'))
       return { mentionsGraphRevision: '1' }
-    const result = page() as unknown as MentionsGraphPageQuery['mentionsGraph']
+    const result = page() as unknown as PagedMentionsGraphQuery['mentionsGraph']
     result.nodes[1].locator = {
       type: 'POST',
       articleId,
@@ -155,7 +159,7 @@ it('links an unnumbered Article through its stable ID locator', async () => {
     </QueryClientProvider>,
   )
 
-  expect(await screen.findByRole('link', { name: 'Target' })).toHaveAttribute(
+  expect(await graphLinks().findByRole('link', { name: 'Target' })).toHaveAttribute(
     'href',
     `/home/post/${articleId}`,
   )
@@ -193,7 +197,7 @@ it('drops a rejected cursor and returns to one fresh first page', async () => {
       expect(screen.queryByRole('button', { name: 'mentions_graph.more' })).not.toBeInTheDocument(),
     )
     expect(cursorCalls).toBe(1)
-    expect(screen.getByRole('link', { name: 'Target' })).toBeInTheDocument()
+    expect(graphLinks().getByRole('link', { name: 'Target' })).toBeInTheDocument()
   } finally {
     unmount()
     client.clear()
@@ -226,11 +230,11 @@ it('hides cached graph data after a non-recoverable page error and retries from 
   try {
     fireEvent.click(await screen.findByRole('button', { name: 'mentions_graph.more' }))
     await screen.findByText('mentions_graph.failed')
-    expect(screen.queryByRole('link', { name: 'Target' })).not.toBeInTheDocument()
+    expect(graphLinks().queryByRole('link', { name: 'Target' })).not.toBeInTheDocument()
     expect(cursorCalls).toBe(1)
     fireEvent.click(screen.getByRole('button', { name: 'mentions_graph.recheck' }))
     await waitFor(() => expect(firstPages).toBe(2))
-    expect(screen.getByRole('link', { name: 'Target' })).toBeInTheDocument()
+    expect(graphLinks().getByRole('link', { name: 'Target' })).toBeInTheDocument()
     expect(cursorCalls).toBe(1)
   } finally {
     unmount()
@@ -266,7 +270,7 @@ it('refreshes the graph when its active revision query observes a change', async
     return { mentionsGraph: { ...page(), revision } }
   })
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const revisionKey = mentionsGraphQueries.revisionKey('home', focus)
+  const revisionKey = mentionsGraphKeys.revision('home', focus)
   client.setQueryData(revisionKey, revision)
 
   render(
@@ -304,7 +308,7 @@ it('starts one fresh focus page when the Community changes', async () => {
     </QueryClientProvider>,
   )
   try {
-    await screen.findByRole('link', { name: 'Target' })
+    await graphLinks().findByRole('link', { name: 'Target' })
     rerender(
       <QueryClientProvider client={client}>
         <MentionsGraph community='another' focus={focus} />
@@ -363,16 +367,16 @@ it('clears previously readable graph fields before refetching a changed revision
     return { mentionsGraph: page() }
   })
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  client.setQueryData(mentionsGraphQueries.revisionKey('home', focus), '1')
+  client.setQueryData(mentionsGraphKeys.revision('home', focus), '1')
   const { unmount } = render(
     <QueryClientProvider client={client}>
       <MentionsGraph community='home' focus={focus} />
     </QueryClientProvider>,
   )
   try {
-    await screen.findByRole('link', { name: 'Target' })
+    await graphLinks().findByRole('link', { name: 'Target' })
     holdRefresh = true
-    await act(async () => client.setQueryData(mentionsGraphQueries.revisionKey('home', focus), '2'))
+    await act(async () => client.setQueryData(mentionsGraphKeys.revision('home', focus), '2'))
     await waitFor(() =>
       expect(
         state.request.mock.calls.filter(
@@ -380,7 +384,7 @@ it('clears previously readable graph fields before refetching a changed revision
         ),
       ).toHaveLength(2),
     )
-    expect(screen.queryByRole('link', { name: 'Target' })).not.toBeInTheDocument()
+    expect(graphLinks().queryByRole('link', { name: 'Target' })).not.toBeInTheDocument()
   } finally {
     unmount()
     client.clear()

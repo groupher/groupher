@@ -479,7 +479,13 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
           cat: GroupherServer.CMS.Artiment.Const.cat_map().qa
         })
 
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       total_count = 20
       thread = :post
@@ -498,7 +504,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         acc ++ [comment]
       end)
 
-      stable = Repo.get!(CMS.Model.Article, post.article_id) |> Repo.preload(author: :user)
+      stable = Repo.get!(CMS.Model.Article, post.id) |> Repo.preload(author: :user)
       post_author = stable.author.user
 
       {:ok, comment} =
@@ -832,7 +838,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       page_size = 12
       thread = :post
 
-      author_user = post.author
+      author_user = post.author.user
 
       all_comments =
         Enum.reduce(0..total_count, [], fn i, acc ->
@@ -1116,7 +1122,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       page_size = 10
       thread = :post
 
-      author_user = post.author
+      author_user = post.author.user
 
       {:ok, parent_comment} =
         CMS.Comments.create_comment(

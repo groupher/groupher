@@ -16,8 +16,22 @@ defmodule GroupherServer.Test.CMS.FrontDeskTest do
     assert loaded.id == community.id
   end
 
+  test "community stable refs remain readable when the public slug changes", ~m(community)a do
+    ref = community.ref
+
+    changed =
+      Ecto.Changeset.change(community, slug: "renamed-#{System.unique_integer([:positive])}")
+
+    assert {:ok, _} = GroupherServer.Repo.update(changed)
+
+    assert {:ok, loaded} = CMS.FrontDesk.community({:ref, ref})
+    assert loaded.id == community.id
+    assert loaded.ref == ref
+    assert {:error, _} = CMS.FrontDesk.community({:ref, "cm_missing"})
+  end
+
   test "community reads accept an explicit management actor and mode", ~m(owner community)a do
-    assert {:ok, loaded} = CMS.FrontDesk.community(community.slug, owner, mode: :management)
+    assert {:ok, loaded} = CMS.FrontDesk.community(community.slug, owner, mode: :admin)
     assert loaded.id == community.id
   end
 
@@ -79,8 +93,10 @@ defmodule GroupherServer.Test.CMS.FrontDeskTest do
 
     second_path = %{first_path | inner_id: second_binding.inner_id}
 
-    assert {:ok, [%{article: %{id: ^first_id}}]} =
+    assert {:ok, [%CMS.Model.Article{id: ^first_id, community: loaded_community}]} =
              CMS.FrontDesk.article([first_path, second_path])
+
+    assert loaded_community.id == community.id
 
     assert {:error, %ErrorCat.Error{reason: :batch_limit_exceeded}} =
              CMS.FrontDesk.article(List.duplicate(first_path, 101))

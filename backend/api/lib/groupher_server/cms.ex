@@ -25,6 +25,166 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Communities,
     as: :moderator_candidates
 
+  @doc "Lists canonical Passport Actions for cross-context contract generation."
+  defdelegate passport_actions(), to: GroupherServer.CMS.GateAction, as: :actions
+
+  @doc "Returns the registered Article Insights read action."
+  defdelegate gate_action_article_insights_read(),
+    to: GroupherServer.CMS.GateAction,
+    as: :article_insights_read
+
+  @doc "Returns candidate Users for a Community Admin invitation."
+  defdelegate communities_admins_candidates(community_ref, name, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :candidates
+
+  @doc "Pages Community Admins with their current Passport permissions."
+  defdelegate communities_admins_page(community_ref, pagi, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :page_admins
+
+  @doc "Pages readable Community Admin memberships."
+  defdelegate communities_admins_members(community_ref, filter, pagi, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :page_members
+
+  @doc "Pages Community Admin requests visible to the actor."
+  defdelegate communities_admins_requests(community_ref, pagi, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :page_requests
+
+  @doc "Creates a Community Admin invite or application."
+  defdelegate communities_admins_create(
+                community_ref,
+                subject_login,
+                type,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Communities.Admins,
+              as: :create
+
+  @doc "Decides a Community Admin request."
+  defdelegate communities_admins_decide(
+                request_id,
+                revision,
+                decision,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Communities.Admins,
+              as: :decide
+
+  @doc "Cancels a Community Admin request."
+  defdelegate communities_admins_cancel(request_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :cancel
+
+  @doc "Updates a Community Admin's Passport permissions."
+  defdelegate communities_admins_update_permissions(
+                community_ref,
+                member_id,
+                revision,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Communities.Admins,
+              as: :update_permissions
+
+  @doc "Removes a Community Admin membership."
+  defdelegate communities_admins_remove(community_ref, member_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :remove
+
+  @doc "Leaves the actor's Community Admin membership."
+  defdelegate communities_admins_leave(community_ref, revision, actor, command_id),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :leave
+
+  @doc "Returns the current actor's Community Admin membership."
+  defdelegate communities_admins_current(community_ref, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :current
+
+  @doc "Checks whether the actor can manage Community Admins."
+  defdelegate communities_admins_management_allowed(community_ref, actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :management_allowed
+
+  @doc "Pages Article co-authors visible to an authorized manager."
+  defdelegate articles_co_authors_members(article_id, actor, pagi),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :members
+
+  @doc "Searches Article co-author invitation candidates."
+  defdelegate articles_co_authors_candidates(article_id, actor, name),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :candidates
+
+  @doc "Pages Article co-author requests visible to the actor."
+  defdelegate articles_co_authors_requests(article_id, actor, pagi),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :requests
+
+  @doc "Returns the actor's effective Article permissions."
+  defdelegate articles_co_authors_permissions(article_id, actor),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :permissions
+
+  @doc "Creates an Article co-author invitation or application."
+  defdelegate articles_co_authors_create_request(
+                article_id,
+                subject_login,
+                type,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Articles.CoAuthors,
+              as: :create_request
+
+  @doc "Decides a revisioned Article co-author request."
+  defdelegate articles_co_authors_decide_request(
+                request_id,
+                revision,
+                decision,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Articles.CoAuthors,
+              as: :decide_request
+
+  @doc "Cancels a pending Article co-author request."
+  defdelegate articles_co_authors_cancel_request(request_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :cancel_request
+
+  @doc "Replaces one Article co-author's permissions."
+  defdelegate articles_co_authors_update_permissions(
+                article_id,
+                member_id,
+                revision,
+                permissions,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Articles.CoAuthors,
+              as: :update_permissions
+
+  @doc "Removes one Article co-author membership."
+  defdelegate articles_co_authors_remove_member(article_id, member_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :remove_member
+
+  @doc "Leaves the actor's Article co-author membership."
+  defdelegate articles_co_authors_leave_member(article_id, revision, actor, command_id),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :leave_member
+
   @doc "Builds the public Community query used by relation-backed collections."
   defdelegate communities_public_query(), to: GroupherServer.CMS.Communities, as: :public_query
 
@@ -309,10 +469,6 @@ defmodule GroupherServer.CMS do
     GroupherServer.CMS.Comments.Lifecycle.apply_review_block(lifecycle, attrs)
   end
 
-  def apply_review_block(%GroupherServer.CMS.Model.DocLifecycle{} = lifecycle, attrs) do
-    GroupherServer.CMS.Docs.Lifecycle.apply_review_block(lifecycle, attrs)
-  end
-
   def apply_review_block(_lifecycle, _attrs) do
     {:error, ErrorCat.invalid_review_block()}
   end
@@ -341,15 +497,6 @@ defmodule GroupherServer.CMS do
       %GroupherServer.CMS.Model.CommentLifecycle{} = comment_lifecycle ->
         GroupherServer.CMS.Comments.Lifecycle.end_review_blocks(
           comment_lifecycle,
-          scope_key,
-          ids,
-          operation_ref,
-          reason
-        )
-
-      %GroupherServer.CMS.Model.DocLifecycle{} = doc_lifecycle ->
-        GroupherServer.CMS.Docs.Lifecycle.end_review_blocks(
-          doc_lifecycle,
           scope_key,
           ids,
           operation_ref,
@@ -432,6 +579,35 @@ defmodule GroupherServer.CMS do
   @spec deliver_outbox(atom(), Oban.Job.t()) :: Oban.Worker.result()
   def deliver_outbox(kind, job), do: GroupherServer.CMS.Outbox.Workflow.perform(kind, job)
 
+  @doc """
+  Diagnoses failed effects from immutable publication facts without resetting them.
+
+  ## Examples
+
+      CMS.diagnose_outbox_failures(root_user, 50)
+      #=> {:ok, %{scanned: 0, pending: [], superseded: []}}
+  """
+  def diagnose_outbox_failures(actor, limit \\ 50) do
+    GroupherServer.CMS.Outbox.diagnose_failures(actor, limit)
+  end
+
+  @doc "Retries one dead Outbox event after checking the current system-root Passport."
+  @spec retry_outbox_event(
+          Ecto.UUID.t(),
+          pos_integer(),
+          GroupherServer.Accounts.Model.User.t(),
+          String.t()
+        ) ::
+          {:ok, map()} | {:error, term()}
+  def retry_outbox_event(event_id, expected_failure_generation, actor, reason) do
+    GroupherServer.CMS.Outbox.retry_event(
+      event_id,
+      expected_failure_generation,
+      actor,
+      reason
+    )
+  end
+
   @doc "Executes a typed Article effect through the public CMS boundary."
   @spec articles_effect(map()) :: {:ok, term()} | {:error, term()}
   defdelegate articles_effect(effect), to: GroupherServer.CMS.Articles.Effects, as: :run
@@ -481,25 +657,93 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :cover_edit_info
 
-  @doc "Delegates GroupherServer.CMS.Articles.create_stable_draft_result/4 through the CMS Context boundary."
-  defdelegate articles_create_stable_draft_result(arg1, arg2, arg3, arg4),
+  @doc "Delegates stable Article WorkingCopy creation through the CMS boundary."
+  defdelegate articles_create_article(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Articles,
-    as: :create_stable_draft_result
+    as: :create_article
 
-  @doc "Delegates GroupherServer.CMS.Articles.create_stable_draft_result/5 through the CMS Context boundary."
-  defdelegate articles_create_stable_draft_result(arg1, arg2, arg3, arg4, arg5),
+  @doc "Delegates one-transaction Article creation and first publication through CMS."
+  defdelegate articles_create_and_publish_article(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Articles,
-    as: :create_stable_draft_result
+    as: :create_and_publish_article
 
-  @doc "Delegates GroupherServer.CMS.Articles.create/4 through the CMS Context boundary."
-  defdelegate articles_create(arg1, arg2, arg3, arg4),
+  @doc "Delegates Article WorkingCopy save through the CMS boundary."
+  defdelegate articles_save_working_copy(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
     to: GroupherServer.CMS.Articles,
-    as: :create
+    as: :save_working_copy
 
-  @doc "Delegates GroupherServer.CMS.Articles.create/5 through the CMS Context boundary."
-  defdelegate articles_create(arg1, arg2, arg3, arg4, arg5),
+  @doc "Delegates a WorkingCopy save with trusted history provenance."
+  defdelegate articles_save_working_copy(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8),
     to: GroupherServer.CMS.Articles,
-    as: :create
+    as: :save_working_copy
+
+  @doc "Delegates Snapshot-based WorkingCopy creation through the CMS boundary."
+  defdelegate articles_fork_snapshot(arg1, arg2, arg3, arg4, arg5, arg6),
+    to: GroupherServer.CMS.Articles,
+    as: :fork_snapshot
+
+  @doc "Delegates Snapshot fork with trusted history provenance."
+  defdelegate articles_fork_snapshot(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+    to: GroupherServer.CMS.Articles,
+    as: :fork_snapshot
+
+  @doc "Lists editable WorkingCopies for one Article through the CMS boundary."
+  defdelegate articles_working_copies(arg1, arg2),
+    to: GroupherServer.CMS.Articles,
+    as: :working_copies
+
+  @doc "Lists immutable Snapshots for one Article through the CMS boundary."
+  defdelegate articles_snapshots(arg1, arg2),
+    to: GroupherServer.CMS.Articles,
+    as: :snapshots
+
+  @doc "Loads one immutable Article Snapshot through the CMS boundary."
+  defdelegate articles_snapshot(arg1, arg2, arg3),
+    to: GroupherServer.CMS.Articles,
+    as: :snapshot
+
+  @doc "Reads an Article event page through its history permission boundary."
+  defdelegate articles_history_events(article_id, actor, opts),
+    to: GroupherServer.CMS.Articles,
+    as: :history_events
+
+  @doc "Reads one Article history event through its history permission boundary."
+  defdelegate articles_history_event(article_id, event_id, actor, opts),
+    to: GroupherServer.CMS.Articles,
+    as: :history_event
+
+  @doc "Compares explicit Article versions through its history permission boundary."
+  defdelegate articles_history_diff(article_id, before, after_version, actor),
+    to: GroupherServer.CMS.Articles,
+    as: :history_diff
+
+  @doc "Checks Article WorkingCopy admission through the owner capability."
+  defdelegate articles_working_copy_access_check(actor, action, article, community),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :access_check
+
+  @doc "Returns the typed fields owned by one WorkingCopy."
+  defdelegate articles_working_copy_thread_fields(working_copy),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :working_copy_thread_fields
+
+  @doc "Returns the tag IDs owned by one Article WorkingCopy."
+  defdelegate articles_working_copy_tag_ids(working_copy),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :working_copy_tag_ids
+
+  @doc "Returns the typed fields fixed into one Article Snapshot."
+  defdelegate articles_snapshot_thread_fields(snapshot),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :snapshot_thread_fields
+
+  @doc "Reads the complete body of an authorized Article content owner."
+  defdelegate articles_body_document(owner), to: GroupherServer.CMS.Articles.Body, as: :document
+
+  @doc "Returns the tag IDs captured by one Article Snapshot."
+  defdelegate articles_snapshot_tag_ids(snapshot),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :snapshot_tag_ids
 
   @doc "Delegates GroupherServer.CMS.Articles.get_trashed/1 through the CMS Context boundary."
   defdelegate articles_get_trashed(arg1), to: GroupherServer.CMS.Articles, as: :get_trashed
@@ -882,8 +1126,20 @@ defmodule GroupherServer.CMS do
   @doc "Delegates GroupherServer.CMS.Articles.pin/4 through the CMS Context boundary."
   defdelegate articles_pin(arg1, arg2, arg3, arg4), to: GroupherServer.CMS.Articles, as: :pin
 
-  @doc "Delegates GroupherServer.CMS.Articles.publish/3 through the CMS Context boundary."
-  defdelegate articles_publish(arg1, arg2, arg3), to: GroupherServer.CMS.Articles, as: :publish
+  @doc "Delegates Snapshot-based Article publication through the CMS boundary."
+  defdelegate articles_publish_article(arg1, arg2, arg3, arg4, arg5, arg6),
+    to: GroupherServer.CMS.Articles,
+    as: :publish_article
+
+  @doc "Delegates Article publication with trusted history provenance."
+  defdelegate articles_publish_article(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+    to: GroupherServer.CMS.Articles,
+    as: :publish_article
+
+  @doc "Delegates deletion of one Article WorkingCopy through CMS."
+  defdelegate articles_delete_working_copy(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.CMS.Articles,
+    as: :delete_working_copy
 
   @doc "Delegates GroupherServer.CMS.Articles.restore_trashed/2 through the CMS Context boundary."
   defdelegate articles_restore_trashed(arg1, arg2),
@@ -916,11 +1172,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_sink_result(arg1, arg2, arg3),
     to: GroupherServer.CMS.Articles,
     as: :sink_result
-
-  @doc "Delegates GroupherServer.CMS.Articles.Store.body_draft/1 through the CMS Context boundary."
-  defdelegate articles_store_body_draft(arg1),
-    to: GroupherServer.CMS.Articles.Store,
-    as: :body_draft
 
   @doc "Delegates GroupherServer.CMS.Articles.trash/2 through the CMS Context boundary."
   defdelegate articles_trash(arg1, arg2), to: GroupherServer.CMS.Articles, as: :trash
@@ -961,16 +1212,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_unmirror(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Articles,
     as: :unmirror
-
-  @doc "Delegates GroupherServer.CMS.Articles.update_draft/4 through the CMS Context boundary."
-  defdelegate articles_update_draft(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Articles,
-    as: :update_draft
-
-  @doc "Delegates GroupherServer.CMS.Articles.update/4 through the CMS Context boundary."
-  defdelegate articles_update(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Articles,
-    as: :update
 
   @doc "Delegates GroupherServer.CMS.Artiment.Config.comment_emotions/0 through the CMS Context boundary."
   defdelegate artiment_config_comment_emotions(),
@@ -1051,7 +1292,9 @@ defmodule GroupherServer.CMS do
   defdelegate assets_page(community, filter, pagi), to: GroupherServer.CMS.Assets, as: :page
 
   @doc "Pages version-owned asset references using Pagi parameters."
-  defdelegate assets_refs(community, asset_id, pagi), to: GroupherServer.CMS.Assets, as: :refs
+  defdelegate assets_refs(community, asset_id, pagi, actor),
+    to: GroupherServer.CMS.Assets,
+    as: :refs
 
   @doc "Delegates GroupherServer.CMS.Assets.register_to_community/3 through the CMS Context boundary."
   defdelegate assets_register_to_community(arg1, arg2, arg3),
@@ -1842,167 +2085,148 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.DocCover,
     as: :update_pinned_doc_appearance
 
-  @doc "Delegates the explicit internal DocTree create-node entry."
-  defdelegate doc_tree_create_node_internal(arg1, arg2),
-    to: GroupherServer.CMS.DocTree,
-    as: :create_node_internal
-
-  defdelegate doc_tree_create_node_internal(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :create_node_internal
-
-  defdelegate doc_tree_create_node_receipt(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :create_node_receipt
-
-  @doc "Delegates the explicit internal DocTree delete-node entry."
-  defdelegate doc_tree_delete_node_internal(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :delete_node_internal
-
-  @doc "Delegates GroupherServer.CMS.DocTree.delete_node/4 through the CMS Context boundary."
-  defdelegate doc_tree_delete_node(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :delete_node
-
-  @doc "Delegates the explicit internal DocTree duplicate-node entry."
-  defdelegate doc_tree_duplicate_node_internal(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :duplicate_node_internal
-
-  @doc "Delegates GroupherServer.CMS.DocTree.duplicate_node/4 through the CMS Context boundary."
-  defdelegate doc_tree_duplicate_node(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :duplicate_node
-
-  @doc "Delegates GroupherServer.CMS.DocTree.move_doc_to_draft_result/3 through the CMS Context boundary."
-  defdelegate doc_tree_move_doc_to_draft_result(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :move_doc_to_draft_result
-
-  @doc "Delegates GroupherServer.CMS.DocTree.move_doc_to_draft_result/4 through the CMS Context boundary."
-  defdelegate doc_tree_move_doc_to_draft_result(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :move_doc_to_draft_result
-
-  @doc "Delegates the explicit internal DocTree move-node entry."
-  defdelegate doc_tree_move_node_internal(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :move_node_internal
-
-  @doc "Delegates GroupherServer.CMS.DocTree.move_node/4 through the CMS Context boundary."
-  defdelegate doc_tree_move_node(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :move_node
-
-  @doc "Delegates GroupherServer.CMS.DocTree.move_subtree_to_draft/3 through the CMS Context boundary."
-  defdelegate doc_tree_move_subtree_to_draft(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :move_subtree_to_draft
-
-  @doc "Delegates GroupherServer.CMS.DocTree.move_subtree_to_draft/4 through the CMS Context boundary."
-  defdelegate doc_tree_move_subtree_to_draft(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :move_subtree_to_draft
-
-  @doc "Delegates GroupherServer.CMS.DocTree.publish_changes/3 through the CMS Context boundary."
-  defdelegate doc_tree_publish_changes(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :publish_changes
-
-  @doc "Delegates GroupherServer.CMS.DocTree.publish_changes/4 through the CMS Context boundary."
-  defdelegate doc_tree_publish_changes(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :publish_changes
-
-  @doc "Delegates GroupherServer.CMS.DocTree.publish_checklist/1 through the CMS Context boundary."
-  defdelegate doc_tree_publish_checklist(arg1),
-    to: GroupherServer.CMS.DocTree,
-    as: :publish_checklist
-
-  @doc "Delegates GroupherServer.CMS.DocTree.publish_checklist/2 through the CMS Context boundary."
-  defdelegate doc_tree_publish_checklist(arg1, arg2),
-    to: GroupherServer.CMS.DocTree,
-    as: :publish_checklist
-
   @doc "Delegates GroupherServer.CMS.DocTree.read_public/1 through the CMS Context boundary."
   defdelegate doc_tree_read_public(arg1), to: GroupherServer.CMS.DocTree, as: :read_public
 
-  @doc "Delegates GroupherServer.CMS.DocTree.read_public/2 through the CMS Context boundary."
-  defdelegate doc_tree_read_public(arg1, arg2), to: GroupherServer.CMS.DocTree, as: :read_public
+  @doc "Reads an authorized Docs publication queue."
+  defdelegate docs_queue_save(
+                community,
+                queue_revision,
+                article_id,
+                work_revision,
+                attrs,
+                actor,
+                command_id
+              ), to: GroupherServer.CMS.DocTree.Commands.SaveQueue, as: :execute
 
-  @doc "Delegates GroupherServer.CMS.DocTree.read/1 through the CMS Context boundary."
-  defdelegate doc_tree_read(arg1), to: GroupherServer.CMS.DocTree, as: :read
+  defdelegate docs_queue_merge(
+                community,
+                queue_revision,
+                article_id,
+                default_revision,
+                work_revision,
+                choices,
+                actor,
+                command_id
+              ), to: GroupherServer.CMS.DocTree.Commands.MergeQueue, as: :execute
 
-  @doc "Delegates GroupherServer.CMS.DocTree.read/2 through the CMS Context boundary."
-  defdelegate doc_tree_read(arg1, arg2), to: GroupherServer.CMS.DocTree, as: :read
+  defdelegate docs_editor_read(community, article_id, actor),
+    to: GroupherServer.CMS.DocTree.DefaultCopy,
+    as: :read
 
-  @doc "Delegates the explicit internal DocTree restore-trash entry."
-  defdelegate doc_tree_restore_trash_item_internal(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :restore_trash_item_internal
+  defdelegate docs_begin_edit(community, article_id, snapshot_id, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.BeginEdit,
+    as: :execute
 
-  @doc "Delegates GroupherServer.CMS.DocTree.restore_trash_item/4 through the CMS Context boundary."
-  defdelegate doc_tree_restore_trash_item(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :restore_trash_item
+  defdelegate docs_workspace_read(community, actor),
+    to: GroupherServer.CMS.DocTree.WorkspaceRead,
+    as: :read
 
-  @doc "Pages branch-scoped Docs Trash actions."
-  defdelegate doc_tree_trash_items(community, pagi, opts),
-    to: GroupherServer.CMS.DocTree,
-    as: :trash_items
+  defdelegate docs_workspace_trash_read(community, pagi, actor),
+    to: GroupherServer.CMS.DocTree.WorkspaceTrashRead,
+    as: :list
 
-  @doc "Delegates GroupherServer.CMS.DocTree.update_draft/4 through the CMS Context boundary."
-  defdelegate doc_tree_update_draft(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :update_draft
+  defdelegate docs_dequeue_preview(community, revision, ids, actor),
+    to: GroupherServer.CMS.DocTree.Publish.Queue.DequeuePreview,
+    as: :read
 
-  defdelegate doc_tree_update_draft(arg1, arg2, arg3, arg4, arg5),
-    to: GroupherServer.CMS.DocTree,
-    as: :update_draft
+  defdelegate docs_delete_preview(community, tree_revision, queue_revision, node_id, actor),
+    to: GroupherServer.CMS.DocTree.WorkspaceDeletePreview,
+    as: :read
 
-  @doc "Delegates the explicit internal DocTree update-node entry."
-  defdelegate doc_tree_update_node_internal(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree,
-    as: :update_node_internal
+  defdelegate docs_trash_purge(community, revision, action_id, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.PurgeWorkspaceTrash,
+    as: :execute
 
-  @doc "Delegates GroupherServer.CMS.DocTree.update_node/4 through the CMS Context boundary."
-  defdelegate doc_tree_update_node(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree,
-    as: :update_node
+  defdelegate docs_approve_queue(community, revision, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.ApproveQueue,
+    as: :execute
 
-  @doc "Delegates GroupherServer.CMS.Docs.Branch.resolve/2 through the CMS Context boundary."
-  defdelegate docs_branch_resolve(arg1, arg2), to: GroupherServer.CMS.Docs.Branch, as: :resolve
+  defdelegate docs_post_publish_conflict(community, article_id, actor),
+    to: GroupherServer.CMS.DocTree.PostPublishConflictRead,
+    as: :read
 
-  @doc "Delegates GroupherServer.CMS.Docs.get_branch_version/3 through the CMS Context boundary."
-  defdelegate docs_get_branch_version(arg1, arg2, arg3, actor),
-    to: GroupherServer.CMS.Docs,
-    as: :get_branch_version
+  defdelegate docs_resolve_post_publish(
+                community,
+                article_id,
+                working_copy_id,
+                default_revision,
+                public_snapshot_id,
+                choices,
+                actor,
+                command_id
+              ), to: GroupherServer.CMS.DocTree.Commands.ResolvePostPublish, as: :execute
 
-  @doc "Pages authorized Doc publication history."
-  defdelegate docs_list_branch_versions(doc_id, branch_id, pagi, actor),
-    to: GroupherServer.CMS.Docs,
-    as: :list_branch_versions
+  defdelegate docs_workspace_restore(
+                community,
+                tree_revision,
+                queue_revision,
+                action_id,
+                parent,
+                index,
+                actor,
+                command_id
+              ), to: GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNode, as: :execute
 
-  @doc "Delegates GroupherServer.CMS.Docs.read_editor_head/2 through the CMS Context boundary."
-  defdelegate docs_read_editor_head(arg1, arg2),
-    to: GroupherServer.CMS.Docs,
-    as: :read_editor_head
+  defdelegate docs_workspace_delete(
+                community,
+                tree_revision,
+                queue_revision,
+                node_id,
+                confirmation,
+                actor,
+                command_id
+              ), to: GroupherServer.CMS.DocTree.Commands.DeleteWorkspaceNode, as: :execute
 
-  @doc "Delegates GroupherServer.CMS.Docs.read_editor_head/3 through the CMS Context boundary."
-  defdelegate docs_read_editor_head(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Docs,
-    as: :read_editor_head
+  defdelegate docs_dequeue(community, revision, ids, confirmation, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.Dequeue,
+    as: :execute
 
-  @doc "Delegates GroupherServer.CMS.Docs.restore_revision_to_draft/4 through the CMS Context boundary."
-  defdelegate docs_restore_revision_to_draft(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Docs,
-    as: :restore_revision_to_draft
+  defdelegate docs_workspace_move(
+                community,
+                revision,
+                node_id,
+                parent,
+                position,
+                actor,
+                command_id
+              ), to: GroupherServer.CMS.DocTree.Commands.MoveWorkspaceNode, as: :execute
 
-  @doc "Delegates GroupherServer.CMS.Docs.restore_revision_to_draft/5 through the CMS Context boundary."
-  defdelegate docs_restore_revision_to_draft(arg1, arg2, arg3, arg4, arg5),
-    to: GroupherServer.CMS.Docs,
-    as: :restore_revision_to_draft
+  defdelegate docs_workspace_update(community, revision, node_id, patch, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.UpdateWorkspaceNode,
+    as: :execute
+
+  defdelegate docs_workspace_duplicate(community, revision, node_id, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.DuplicateWorkspaceNode,
+    as: :execute
+
+  defdelegate docs_workspace_create(community, revision, attrs, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.CreateWorkspaceNode,
+    as: :execute
+
+  defdelegate docs_enqueue(community, revision, entries, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.Enqueue,
+    as: :execute
+
+  defdelegate docs_state_conflict(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_invalid_merge_choice(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_approval_not_allowed(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_self_approval_forbidden(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_approval_required(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_discard_confirmation_required(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_discard_confirmation_stale(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_restore_node_conflict(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_delete_diverged_tree(), to: GroupherServer.CMS.ErrorCat
+  defdelegate docs_trash_in_use(), to: GroupherServer.CMS.ErrorCat
+
+  defdelegate docs_publish_queue(community, actor),
+    to: GroupherServer.CMS.DocTree.Publish.QueueRead,
+    as: :read
+
+  @doc "Publishes the complete Docs queue under its expected revision."
+  defdelegate docs_release_queue(community, revision, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.ReleaseQueue,
+    as: :execute
 
   @doc "Delegates GroupherServer.CMS.FrontDesk.community/1 through the CMS Context boundary."
   defdelegate front_desk_community(arg1), to: GroupherServer.CMS.FrontDesk, as: :community
@@ -2294,18 +2518,13 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles.ErrorCat,
     as: :not_exist
 
-  @doc "Delegates CMS.Gate.Context.Scope.Doc.draft/1 through the CMS Context boundary."
-  defdelegate gate_context_scope_doc_draft(arg1),
-    to: GroupherServer.CMS.Gate.Context.Scope.Doc,
-    as: :draft
+  @doc "Delegates CMS.Articles.ErrorCat.unsupported_community_trash_thread/0 through the CMS Context boundary."
+  defdelegate articles_error_cat_unsupported_community_trash_thread(),
+    to: GroupherServer.CMS.Articles.ErrorCat,
+    as: :unsupported_community_trash_thread
 
-  @doc "Delegates CMS.Gate.Context.Scope.Doc.draft/2 through the CMS Context boundary."
-  defdelegate gate_context_scope_doc_draft(arg1, arg2),
-    to: GroupherServer.CMS.Gate.Context.Scope.Doc,
-    as: :draft
-
-  @doc "Delegates CMS.Gate.Context.Scope.Doc.draft/3 through the CMS Context boundary."
-  defdelegate gate_context_scope_doc_draft(arg1, arg2, arg3),
+  @doc "Builds a management-scoped Doc workspace read context."
+  defdelegate gate_context_scope_doc_draft(policy_mode),
     to: GroupherServer.CMS.Gate.Context.Scope.Doc,
     as: :draft
 
@@ -2357,27 +2576,10 @@ defmodule GroupherServer.CMS do
   @doc "Delegates CMS.Gate.scope/4 through the CMS Context boundary."
   defdelegate gate_scope(arg1, arg2, arg3, arg4), to: GroupherServer.CMS.Gate, as: :scope
 
-  @doc "Delegates CMS.Gate.Context.Scope.Doc.public_branch/1 through the CMS Context boundary."
-  defdelegate gate_context_scope_doc_public_branch(arg1),
+  @doc "Builds the public Doc read context."
+  defdelegate gate_context_scope_doc_public(),
     to: GroupherServer.CMS.Gate.Context.Scope.Doc,
-    as: :public_branch
-
-  @doc "Delegates CMS.Gate.Context.Scope.Doc.public_branch/2 through the CMS Context boundary."
-  defdelegate gate_context_scope_doc_public_branch(arg1, arg2),
-    to: GroupherServer.CMS.Gate.Context.Scope.Doc,
-    as: :public_branch
-
-  @doc """
-  Builds the public Doc read context for the official main branch.
-
-  ## Examples
-
-      gate_context_scope_doc_public_main()
-      #=> %CMS.Gate.Context.Scope.Doc{stage: :public, branch_policy: :main}
-  """
-  defdelegate gate_context_scope_doc_public_main(),
-    to: GroupherServer.CMS.Gate.Context.Scope.Doc,
-    as: :public_main
+    as: :public
 
   @doc "Delegates CMS.Artiment.Matcher.match/1 through the CMS Context boundary."
   defdelegate artiment_matcher_match(arg1), to: GroupherServer.CMS.Artiment.Matcher, as: :match
@@ -2502,6 +2704,30 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.FrontDesk.article/3 through the CMS Context boundary."
   defdelegate front_desk_article(arg1, arg2, arg3), to: GroupherServer.CMS.FrontDesk, as: :article
+
+  @doc "Delegates an explicitly selected Article Snapshot read through CMS.FrontDesk."
+  defdelegate front_desk_article_snapshot(article_id, snapshot_id, community, actor),
+    to: GroupherServer.CMS.FrontDesk,
+    as: :article_snapshot
+
+  defdelegate front_desk_article_snapshot(article_id, snapshot_id, community, actor, opts),
+    to: GroupherServer.CMS.FrontDesk,
+    as: :article_snapshot
+
+  @doc "Delegates an explicitly selected Article WorkingCopy read through CMS.FrontDesk."
+  defdelegate front_desk_article_working_copy(article_id, working_copy_id, community, actor),
+    to: GroupherServer.CMS.FrontDesk,
+    as: :article_working_copy
+
+  defdelegate front_desk_article_working_copy(
+                article_id,
+                working_copy_id,
+                community,
+                actor,
+                opts
+              ),
+              to: GroupherServer.CMS.FrontDesk,
+              as: :article_working_copy
 
   @doc "Delegates CMS.FrontDesk.article_author/1 through the CMS Context boundary."
   defdelegate front_desk_article_author(arg1),
@@ -2789,4 +3015,88 @@ defmodule GroupherServer.CMS do
   defdelegate dashboard_kanban_boards_values_list(),
     to: GroupherServer.CMS.Dashboard.KanbanBoards,
     as: :values_list
+
+  @doc "Reads a version-bound Docs site preview."
+  defdelegate docs_queue_preview(site, actor, opts),
+    to: GroupherServer.CMS.DocTree.Publication,
+    as: :preview
+
+  @doc "Reads the explicit public or approval comparison."
+  defdelegate docs_approval_diff(site, actor, opts),
+    to: GroupherServer.CMS.DocTree.Publication,
+    as: :diff
+
+  @doc "Reads paginated Docs releases."
+  defdelegate docs_release_history(site, actor, opts),
+    to: GroupherServer.CMS.DocTree.Publication,
+    as: :releases
+
+  @doc "Reads one immutable Docs release."
+  defdelegate docs_release_detail(site, actor, id, article_id),
+    to: GroupherServer.CMS.DocTree.Publication,
+    as: :release
+
+  @doc "Reads a Doc's retained Snapshot history."
+  defdelegate docs_snapshot_history(site, actor, id, opts),
+    to: GroupherServer.CMS.DocTree.Publication,
+    as: :snapshots
+
+  @doc "Reads only the actor's approval status notices."
+  defdelegate docs_publication_notices(site, actor),
+    to: GroupherServer.CMS.DocTree.Publication.Notifications,
+    as: :read
+
+  @doc "Configures the independent Docs approval policy."
+  defdelegate docs_configure_queue(site, revision, required, self_approval, actor, command_id),
+    to: GroupherServer.CMS.DocTree.Commands.ConfigureQueue,
+    as: :execute
+
+  @doc "Reads approval policy without content-preview permission."
+  defdelegate docs_queue_policy(site, actor),
+    to: GroupherServer.CMS.DocTree.Publication,
+    as: :policy
+
+  @doc "Restores a historical Doc Snapshot into the selected default editing session."
+  defdelegate docs_restore_snapshot(site, article, snapshot, work, revision, actor, command),
+    to: GroupherServer.CMS.DocTree.Commands.RestoreSnapshot,
+    as: :execute
+
+  @doc "Looks up one registered Passport action at the CMS boundary."
+  defdelegate passport_catalog_action(action), to: GroupherServer.CMS.Passport.Catalog, as: :get
+
+  @doc "Validates a permission map for one canonical Passport scope."
+  @spec passport_validate_permissions(atom(), map()) :: {:ok, map()} | {:error, term()}
+  defdelegate passport_validate_permissions(scope, permissions),
+    to: GroupherServer.CMS.Passport.Catalog,
+    as: :validate_permissions
+
+  @doc "Loads current Global Passport facts for an authenticated actor."
+  defdelegate passport_global_scope(actor),
+    to: GroupherServer.CMS.Passport,
+    as: :load_global_scope
+
+  @doc "Loads current Community Passport facts for an authenticated actor."
+  defdelegate passport_community_scope(actor, community),
+    to: GroupherServer.CMS.Passport,
+    as: :load_community_scope
+
+  @doc "Checks an actor-bound Passport scope against one registered action."
+  defdelegate passport_allowed?(actor, scope, action),
+    to: GroupherServer.CMS.Passport,
+    as: :allowed?
+
+  @doc "Checks an actor-bound Passport scope against an action and thread."
+  defdelegate passport_allowed?(actor, scope, action, thread),
+    to: GroupherServer.CMS.Passport,
+    as: :allowed?
+
+  @doc "Reconciles one bounded batch of CMS Outbox wakeups."
+  defdelegate reconcile_outbox_schedules(),
+    to: GroupherServer.CMS.Outbox.ScheduleCheck,
+    as: :reconcile
+
+  @doc "Expires pending Community Admin requests due at the supplied UTC time."
+  defdelegate expire_community_admin_requests(now),
+    to: GroupherServer.CMS.Communities.Admins.Requests,
+    as: :expire_due
 end

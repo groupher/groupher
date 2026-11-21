@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Tickets.Publication do
   @moduledoc """
-  Captures the source revisions and public Updates reviewed for one publication.
+      Captures the source Snapshot heads and public Updates reviewed for one publication.
 
       Internal read -> ephemeral preview anchor -> locked Publish comparison
   """
@@ -14,8 +14,7 @@ defmodule GroupherServer.CMS.Tickets.Publication do
                 community,
                 ticket_id,
                 actor,
-                operation_ref,
-                effect_key
+                operation_ref
               ), to: CMS.Tickets.Persist, as: :review_block_changed
 
   @doc "Hashes the currently visible source heads and effective PUBLIC Updates without persisting a version."
@@ -34,7 +33,7 @@ defmodule GroupherServer.CMS.Tickets.Publication do
           on: public.article_id == source.post_id,
           where: source.ticket_id in ^ticket_ids and source.post_id in subquery(visible),
           order_by: source.id,
-          select: {source.ticket_id, {source.id, source.post_id, public.revision_id}}
+          select: {source.ticket_id, {source.id, source.post_id, public.snapshot_id}}
         )
       )
       |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))

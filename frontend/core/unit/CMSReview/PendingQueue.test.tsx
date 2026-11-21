@@ -24,13 +24,12 @@ it('retries a recheck with the same command id after an ambiguous failure', asyn
       }
 
       return {
-        pendingContentReviews: [
+        pendingArtimentReviews: [
           {
             artimentReviewId: 'review-1',
             targetType: 'ARTICLE',
             articleId: 'article-1',
             commentId: null,
-            branchId: null,
             communityId: 'community-1',
             state: 'FAILED',
             reviewMode: 'IMMEDIATE',
@@ -64,22 +63,21 @@ it('retries a recheck with the same command id after an ambiguous failure', asyn
   expect(rechecks[1][1].scope).toEqual({ type: 'COMMUNITY', community: 'home' })
 })
 
-it('offers Doc decision and recheck commands for platform review work', async () => {
+it('uses the shared Article decision and recheck commands for Doc review work', async () => {
   state.request.mockImplementation(
     async (_document: unknown, variables: Record<string, unknown> = {}) => {
       if ('commandId' in variables) {
         return 'scope' in variables
-          ? { recheckDocV2: { action: 'RECHECK' } }
-          : { approveDocV2: { action: 'APPROVE' } }
+          ? { recheckArticleV2: { action: 'RECHECK' } }
+          : { approveArticleV2: { action: 'APPROVE' } }
       }
       return {
-        pendingContentReviews: [
+        pendingArtimentReviews: [
           {
             artimentReviewId: 'doc-review',
-            targetType: 'DOC',
+            targetType: 'ARTICLE',
             articleId: 'article-1',
             commentId: null,
-            branchId: 7,
             communityId: null,
             state: 'COMPLETED',
             reviewMode: null,
@@ -87,11 +85,10 @@ it('offers Doc decision and recheck commands for platform review work', async ()
             communityOpinion: null,
           },
           {
-            artimentReviewId: 'doc-review-branch-8',
-            targetType: 'DOC',
-            articleId: 'article-1',
+            artimentReviewId: 'doc-review-2',
+            targetType: 'ARTICLE',
+            articleId: 'article-2',
             commentId: null,
-            branchId: 8,
             communityId: null,
             state: 'COMPLETED',
             reviewMode: null,
@@ -124,13 +121,13 @@ it('offers Doc decision and recheck commands for platform review work', async ()
     ).toBe(true),
   )
   const decision = state.request.mock.calls.find((call) => 'commandId' in (call[1] || {}))![1]
-  expect(decision.target).toEqual({ type: 'DOC', articleId: 'article-1', branchId: 7 })
+  expect(decision.target).toEqual({ type: 'ARTICLE', articleId: 'article-1', communityId: null })
   const rechecks = state.request.mock.calls.filter(
     (call) => 'scope' in (call[1] || {}) && 'commandId' in (call[1] || {}),
   )
   expect(rechecks).toHaveLength(2)
   expect(rechecks[0][1].commandId).not.toBe(rechecks[1][1].commandId)
-  expect(rechecks.map((call) => call[1].target.branchId)).toEqual([7, 8])
+  expect(rechecks.map((call) => call[1].target.articleId)).toEqual(['article-1', 'article-2'])
   expect(rechecks[0][1].scope).toEqual({ type: 'PLATFORM' })
   expect(rechecks[0][1].target).toEqual(decision.target)
 })

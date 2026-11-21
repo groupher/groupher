@@ -1,0 +1,2282 @@
+{
+  "app": "groupher-api",
+  "read_only": true,
+  "columns": ["schema", "table", "constraint", "definition", "target"],
+  "foreign_keys": [
+    [
+      "account",
+      "achievements",
+      "user_achievements_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "account",
+      "browser_sessions",
+      "browser_sessions_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "account",
+      "collect_folder_entries",
+      "collect_folder_entries_article_binding_id_fkey",
+      "FOREIGN KEY (article_binding_id) REFERENCES cms.article_bindings(id) ON DELETE RESTRICT",
+      "cms.article_bindings"
+    ],
+    [
+      "account",
+      "collect_folder_entries",
+      "collect_folder_entries_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE RESTRICT",
+      "cms.articles"
+    ],
+    [
+      "account",
+      "collect_folder_entries",
+      "collect_folder_entries_folder_id_fkey",
+      "FOREIGN KEY (folder_id) REFERENCES account.collect_folders(id) ON DELETE CASCADE",
+      "account.collect_folders"
+    ],
+    [
+      "account",
+      "collect_folder_entry_backfill_failures",
+      "collect_folder_entry_backfill_failures_folder_id_fkey",
+      "FOREIGN KEY (folder_id) REFERENCES account.collect_folders(id) ON DELETE CASCADE",
+      "account.collect_folders"
+    ],
+    [
+      "account",
+      "collect_folders",
+      "collect_folders_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "account",
+      "followers",
+      "users_followers_follower_id_fkey",
+      "FOREIGN KEY (follower_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "account",
+      "followers",
+      "users_followers_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "account",
+      "followings",
+      "users_followings_following_id_fkey",
+      "FOREIGN KEY (following_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "account",
+      "followings",
+      "users_followings_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "account",
+      "oauth_providers",
+      "oauth_providers_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id)",
+      "account.users"
+    ],
+    [
+      "account",
+      "profile_view_dedupe_states",
+      "profile_view_dedupe_states_profile_id_fkey",
+      "FOREIGN KEY (profile_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "account",
+      "socials",
+      "user_socials_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "activity",
+      "doc_logs",
+      "doc_logs_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE SET NULL",
+      "cms.doc_branches"
+    ],
+    [
+      "alert_wall",
+      "actions",
+      "actions_actor_id_fkey",
+      "FOREIGN KEY (actor_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "alert_wall",
+      "actions",
+      "actions_item_id_fkey",
+      "FOREIGN KEY (item_id) REFERENCES alert_wall.items(id) ON DELETE RESTRICT",
+      "alert_wall.items"
+    ],
+    [
+      "alert_wall",
+      "items",
+      "items_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "alert_wall",
+      "user_reports",
+      "reports_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE SET NULL",
+      "cms.communities"
+    ],
+    [
+      "alert_wall",
+      "user_reports",
+      "reports_origin_item_id_fkey",
+      "FOREIGN KEY (item_id) REFERENCES alert_wall.items(id) ON DELETE RESTRICT",
+      "alert_wall.items"
+    ],
+    [
+      "alert_wall",
+      "user_reports",
+      "reports_reporter_id_fkey",
+      "FOREIGN KEY (reporter_id) REFERENCES account.users(id) ON DELETE RESTRICT",
+      "account.users"
+    ],
+    [
+      "cms",
+      "analysis_metric_events",
+      "analysis_metric_events_binding_id_fkey",
+      "FOREIGN KEY (binding_id) REFERENCES cms.article_bindings(id) ON DELETE CASCADE",
+      "cms.article_bindings"
+    ],
+    [
+      "cms",
+      "analysis_metric_events",
+      "analysis_metric_events_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "analysis_metric_events",
+      "analysis_metric_events_stable_article_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_asset_refs",
+      "article_asset_refs_asset_id_fkey",
+      "FOREIGN KEY (asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "cms.community_assets"
+    ],
+    [
+      "cms",
+      "article_asset_refs",
+      "article_asset_refs_body_draft_id_fkey",
+      "FOREIGN KEY (body_draft_id) REFERENCES cms.article_body_drafts(id) ON DELETE CASCADE",
+      "cms.article_body_drafts"
+    ],
+    [
+      "cms",
+      "article_asset_refs",
+      "article_asset_refs_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "article_asset_refs",
+      "article_asset_refs_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "article_binding_tags",
+      "article_binding_tags_article_binding_id_fkey",
+      "FOREIGN KEY (article_binding_id) REFERENCES cms.article_bindings(id) ON DELETE CASCADE",
+      "cms.article_bindings"
+    ],
+    [
+      "cms",
+      "article_binding_tags",
+      "article_binding_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "article_bindings",
+      "article_bindings_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_bindings",
+      "article_bindings_article_thread_fkey",
+      "FOREIGN KEY (article_id, thread) REFERENCES cms.articles(id, thread) ON UPDATE RESTRICT ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_bindings",
+      "article_bindings_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "article_collects",
+      "article_collects_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_collects",
+      "article_collects_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "article_collects",
+      "article_collects_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "article_drafts",
+      "article_drafts_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_drafts",
+      "article_drafts_base_revision_id_fkey",
+      "FOREIGN KEY (base_revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "article_drafts",
+      "article_drafts_body_draft_id_fkey",
+      "FOREIGN KEY (body_draft_id) REFERENCES cms.article_body_drafts(id) ON DELETE RESTRICT",
+      "cms.article_body_drafts"
+    ],
+    [
+      "cms",
+      "article_drafts",
+      "article_drafts_updated_by_id_fkey",
+      "FOREIGN KEY (updated_by_id) REFERENCES cms.authors(id) ON DELETE SET NULL",
+      "cms.authors"
+    ],
+    [
+      "cms",
+      "article_emotion_counts",
+      "article_emotion_counts_stable_article_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_hourly_metrics",
+      "article_hourly_metrics_binding_id_fkey",
+      "FOREIGN KEY (binding_id) REFERENCES cms.article_bindings(id) ON DELETE CASCADE",
+      "cms.article_bindings"
+    ],
+    [
+      "cms",
+      "article_hourly_metrics",
+      "article_hourly_metrics_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "article_hourly_metrics",
+      "article_hourly_metrics_stable_article_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_lifecycles",
+      "article_lifecycles_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_publics",
+      "article_publics_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_publics",
+      "article_publics_published_by_id_fkey",
+      "FOREIGN KEY (published_by_id) REFERENCES cms.authors(id) ON DELETE SET NULL",
+      "cms.authors"
+    ],
+    [
+      "cms",
+      "article_publics",
+      "article_publics_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "article_review_blocks",
+      "article_review_blocks_artiment_review_id_fkey",
+      "FOREIGN KEY (artiment_review_id) REFERENCES cms.artiment_reviews(id) ON DELETE RESTRICT",
+      "cms.artiment_reviews"
+    ],
+    [
+      "cms",
+      "article_review_blocks",
+      "article_review_restrictions_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_review_blocks",
+      "article_review_restrictions_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "article_review_blocks",
+      "article_review_restrictions_item_id_fkey",
+      "FOREIGN KEY (item_id) REFERENCES alert_wall.items(id) ON DELETE RESTRICT",
+      "alert_wall.items"
+    ],
+    [
+      "cms",
+      "article_revisions",
+      "article_revisions_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_revisions",
+      "article_revisions_body_snapshot_id_fkey",
+      "FOREIGN KEY (body_snapshot_id) REFERENCES cms.article_body_snapshots(id) ON DELETE RESTRICT",
+      "cms.article_body_snapshots"
+    ],
+    [
+      "cms",
+      "article_stats",
+      "article_stats_stable_article_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_upvotes",
+      "article_upvotes_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_upvotes",
+      "article_upvotes_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "article_upvotes",
+      "article_upvotes_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "article_view_dedupe_states",
+      "article_view_dedupe_states_stable_article_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_viewer_states",
+      "article_viewer_states_stable_article_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "article_viewer_states",
+      "article_viewer_states_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "articles",
+      "articles_author_id_fkey",
+      "FOREIGN KEY (author_id) REFERENCES cms.authors(id) ON DELETE RESTRICT",
+      "cms.authors"
+    ],
+    [
+      "cms",
+      "articles_users_emotions",
+      "articles_users_emotions_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "articles_users_emotions",
+      "articles_users_emotions_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "articles_users_emotions",
+      "articles_users_emotions_received_user_id_fkey",
+      "FOREIGN KEY (received_user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "articles_users_emotions",
+      "articles_users_emotions_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "artiment_reviews",
+      "review_requests_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "artiment_reviews",
+      "review_requests_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "artiment_reviews",
+      "review_requests_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "artiment_reviews",
+      "review_requests_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "artiment_reviews",
+      "review_requests_updated_by_id_fkey",
+      "FOREIGN KEY (updated_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "asset_replacement_plans",
+      "asset_replacement_plans_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "asset_replacement_plans",
+      "asset_replacement_plans_created_by_id_fkey",
+      "FOREIGN KEY (created_by_id) REFERENCES account.users(id) ON DELETE RESTRICT",
+      "account.users"
+    ],
+    [
+      "cms",
+      "asset_replacement_plans",
+      "asset_replacement_plans_from_asset_id_fkey",
+      "FOREIGN KEY (from_asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "cms.community_assets"
+    ],
+    [
+      "cms",
+      "asset_replacement_plans",
+      "asset_replacement_plans_to_asset_id_fkey",
+      "FOREIGN KEY (to_asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "cms.community_assets"
+    ],
+    [
+      "cms",
+      "asset_uploads",
+      "asset_uploads_asset_id_fkey",
+      "FOREIGN KEY (asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "cms.community_assets"
+    ],
+    [
+      "cms",
+      "asset_uploads",
+      "asset_uploads_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "asset_uploads",
+      "asset_uploads_uploader_id_fkey",
+      "FOREIGN KEY (uploader_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "asset_usage_completeness",
+      "asset_usage_completeness_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "asset_workflow_runs",
+      "asset_workflow_runs_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "asset_workflow_steps",
+      "asset_workflow_steps_run_id_fkey",
+      "FOREIGN KEY (run_id) REFERENCES cms.asset_workflow_runs(id) ON DELETE CASCADE",
+      "cms.asset_workflow_runs"
+    ],
+    [
+      "cms",
+      "authors",
+      "cms_authors_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "blog_draft_tags",
+      "blog_draft_tags_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "blog_draft_tags",
+      "blog_draft_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "blog_drafts",
+      "blog_drafts_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "blog_emotion_infos",
+      "blog_emotion_infos_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "blog_emotion_infos",
+      "blog_emotion_infos_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "blog_reaction_infos",
+      "blog_reaction_infos_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "blog_reaction_infos",
+      "blog_reaction_infos_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "blog_revision_tags",
+      "blog_revision_tags_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "blog_revision_tags",
+      "blog_revision_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "blog_revisions",
+      "blog_revisions_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "categories",
+      "categories_author_id_fkey",
+      "FOREIGN KEY (author_id) REFERENCES cms.authors(id) ON DELETE CASCADE",
+      "cms.authors"
+    ],
+    [
+      "cms",
+      "changelog_draft_tags",
+      "changelog_draft_tags_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "changelog_draft_tags",
+      "changelog_draft_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "changelog_drafts",
+      "changelog_drafts_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "changelog_emotion_infos",
+      "changelog_emotion_infos_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "changelog_emotion_infos",
+      "changelog_emotion_infos_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "changelog_reaction_infos",
+      "changelog_reaction_infos_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "changelog_reaction_infos",
+      "changelog_reaction_infos_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "changelog_revision_tags",
+      "changelog_revision_tags_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "changelog_revision_tags",
+      "changelog_revision_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "changelog_revisions",
+      "changelog_revisions_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "comment_bodies",
+      "comment_bodies_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comment_emotion_infos",
+      "comment_emotion_infos_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comment_lifecycles",
+      "comment_lifecycles_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comment_reaction_infos",
+      "comment_reaction_infos_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comment_review_blocks",
+      "comment_review_blocks_artiment_review_id_fkey",
+      "FOREIGN KEY (artiment_review_id) REFERENCES cms.artiment_reviews(id) ON DELETE RESTRICT",
+      "cms.artiment_reviews"
+    ],
+    [
+      "cms",
+      "comment_review_blocks",
+      "comment_review_restrictions_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comment_review_blocks",
+      "comment_review_restrictions_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "comment_review_blocks",
+      "comment_review_restrictions_item_id_fkey",
+      "FOREIGN KEY (item_id) REFERENCES alert_wall.items(id) ON DELETE RESTRICT",
+      "alert_wall.items"
+    ],
+    [
+      "cms",
+      "comments",
+      "articles_comments_author_id_fkey",
+      "FOREIGN KEY (author_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "comments",
+      "articles_comments_reply_to_id_fkey",
+      "FOREIGN KEY (reply_to_comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comments",
+      "comments_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "comments_replies",
+      "comments_replies_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comments_replies",
+      "comments_replies_reply_to_comment_id_fkey",
+      "FOREIGN KEY (reply_to_comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comments_upvotes",
+      "comments_upvotes_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comments_upvotes",
+      "comments_upvotes_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "comments_users_emotions",
+      "comments_users_emotions_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "comments_users_emotions",
+      "comments_users_emotions_received_user_id_fkey",
+      "FOREIGN KEY (received_user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "comments_users_emotions",
+      "comments_users_emotions_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "communities",
+      "communities_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id)",
+      "account.users"
+    ],
+    [
+      "cms",
+      "communities_join_categories",
+      "communities_categories_category_id_fkey",
+      "FOREIGN KEY (category_id) REFERENCES cms.categories(id) ON DELETE CASCADE",
+      "cms.categories"
+    ],
+    [
+      "cms",
+      "communities_join_categories",
+      "communities_categories_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "communities_moderators",
+      "communities_editors_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "communities_moderators",
+      "communities_editors_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "communities_subscribers",
+      "communities_subscribers_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "communities_subscribers",
+      "communities_subscribers_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "community_application_events",
+      "community_application_events_actor_id_fkey",
+      "FOREIGN KEY (actor_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "community_application_events",
+      "community_application_events_application_id_fkey",
+      "FOREIGN KEY (application_id) REFERENCES cms.community_applications(id) ON DELETE CASCADE",
+      "cms.community_applications"
+    ],
+    [
+      "cms",
+      "community_application_logo_uploads",
+      "community_application_logo_uploads_application_id_fkey",
+      "FOREIGN KEY (application_id) REFERENCES cms.community_applications(id) ON DELETE SET NULL",
+      "cms.community_applications"
+    ],
+    [
+      "cms",
+      "community_application_logo_uploads",
+      "community_application_logo_uploads_community_asset_id_fkey",
+      "FOREIGN KEY (community_asset_id) REFERENCES cms.community_assets(id) ON DELETE SET NULL",
+      "cms.community_assets"
+    ],
+    [
+      "cms",
+      "community_application_logo_uploads",
+      "community_application_logo_uploads_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "community_applications",
+      "community_applications_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE SET NULL",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_applications",
+      "community_applications_reviewer_id_fkey",
+      "FOREIGN KEY (reviewer_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "community_applications",
+      "community_applications_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "community_assets",
+      "community_assets_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_assets",
+      "community_assets_uploader_id_fkey",
+      "FOREIGN KEY (uploader_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "community_dashboards",
+      "community_dashboards_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_inner_id_counters",
+      "community_inner_id_counters_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_lifecycle_blockers",
+      "community_lifecycle_blockers_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_lifecycle_blockers",
+      "community_lifecycle_blockers_lifecycle_id_fkey",
+      "FOREIGN KEY (lifecycle_id) REFERENCES cms.community_lifecycles(id) ON DELETE CASCADE",
+      "cms.community_lifecycles"
+    ],
+    [
+      "cms",
+      "community_lifecycles",
+      "community_lifecycles_application_id_fkey",
+      "FOREIGN KEY (application_id) REFERENCES cms.community_applications(id) ON DELETE SET NULL",
+      "cms.community_applications"
+    ],
+    [
+      "cms",
+      "community_lifecycles",
+      "community_lifecycles_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_slug_claims",
+      "community_slug_claims_application_id_fkey",
+      "FOREIGN KEY (application_id) REFERENCES cms.community_applications(id) ON DELETE SET NULL",
+      "cms.community_applications"
+    ],
+    [
+      "cms",
+      "community_slug_claims",
+      "community_slug_claims_claimed_by_user_id_fkey",
+      "FOREIGN KEY (claimed_by_user_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "community_slug_claims",
+      "community_slug_claims_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE SET NULL",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_tag_groups",
+      "community_tag_groups_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_tag_stats",
+      "community_tag_stats_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_tag_stats",
+      "community_tag_stats_community_tag_id_fkey",
+      "FOREIGN KEY (community_tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "community_tags",
+      "article_tags_author_id_fkey",
+      "FOREIGN KEY (author_id) REFERENCES cms.authors(id) ON DELETE CASCADE",
+      "cms.authors"
+    ],
+    [
+      "cms",
+      "community_tags",
+      "article_tags_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "community_tags",
+      "community_tags_group_id_fkey",
+      "FOREIGN KEY (group_id) REFERENCES cms.community_tag_groups(id) ON DELETE CASCADE",
+      "cms.community_tag_groups"
+    ],
+    [
+      "cms",
+      "community_wallpapers",
+      "community_wallpapers_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "content_import_connections",
+      "content_import_connections_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "content_import_job_bodies",
+      "content_import_job_bodies_job_id_fkey",
+      "FOREIGN KEY (job_id) REFERENCES cms.content_import_jobs(id) ON DELETE CASCADE",
+      "cms.content_import_jobs"
+    ],
+    [
+      "cms",
+      "content_import_job_bodies",
+      "content_import_job_bodies_job_item_id_fkey",
+      "FOREIGN KEY (job_item_id) REFERENCES cms.content_import_job_items(id) ON DELETE CASCADE",
+      "cms.content_import_job_items"
+    ],
+    [
+      "cms",
+      "content_import_job_items",
+      "content_import_job_items_job_id_fkey",
+      "FOREIGN KEY (job_id) REFERENCES cms.content_import_jobs(id) ON DELETE CASCADE",
+      "cms.content_import_jobs"
+    ],
+    [
+      "cms",
+      "content_import_jobs",
+      "content_import_jobs_actor_id_fkey",
+      "FOREIGN KEY (actor_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "content_import_jobs",
+      "content_import_jobs_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "content_import_jobs",
+      "content_import_jobs_connection_id_fkey",
+      "FOREIGN KEY (connection_id) REFERENCES cms.content_import_connections(id) ON DELETE CASCADE",
+      "cms.content_import_connections"
+    ],
+    [
+      "cms",
+      "content_import_source_mappings",
+      "content_import_source_mappings_connection_id_fkey",
+      "FOREIGN KEY (connection_id) REFERENCES cms.content_import_connections(id) ON DELETE CASCADE",
+      "cms.content_import_connections"
+    ],
+    [
+      "cms",
+      "doc_branch_states",
+      "doc_branch_states_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_branch_states",
+      "doc_branch_states_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_branch_version_counters",
+      "doc_branch_version_counters_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_branch_version_counters",
+      "doc_branch_version_counters_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_branch_versions",
+      "doc_branch_versions_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_branch_versions",
+      "doc_branch_versions_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_branch_versions",
+      "doc_branch_versions_published_by_id_fkey",
+      "FOREIGN KEY (published_by_id) REFERENCES cms.authors(id) ON DELETE SET NULL",
+      "cms.authors"
+    ],
+    [
+      "cms",
+      "doc_branch_versions",
+      "doc_branch_versions_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "doc_branches",
+      "doc_branches_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_branches",
+      "doc_branches_created_by_id_fkey",
+      "FOREIGN KEY (created_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "doc_branches",
+      "doc_branches_source_branch_id_fkey",
+      "FOREIGN KEY (source_branch_id) REFERENCES cms.doc_branches(id) ON DELETE SET NULL",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_cover_cards",
+      "doc_cover_cards_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_cover_cards",
+      "doc_cover_cards_group_node_id_fkey",
+      "FOREIGN KEY (group_node_id) REFERENCES cms.doc_tree_nodes(id) ON DELETE CASCADE",
+      "cms.doc_tree_nodes"
+    ],
+    [
+      "cms",
+      "doc_cover_items",
+      "doc_cover_items_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_cover_items",
+      "doc_cover_items_cover_card_id_fkey",
+      "FOREIGN KEY (cover_card_id) REFERENCES cms.doc_cover_cards(id) ON DELETE CASCADE",
+      "cms.doc_cover_cards"
+    ],
+    [
+      "cms",
+      "doc_cover_items",
+      "doc_cover_items_node_id_fkey",
+      "FOREIGN KEY (node_id) REFERENCES cms.doc_tree_nodes(id) ON DELETE CASCADE",
+      "cms.doc_tree_nodes"
+    ],
+    [
+      "cms",
+      "doc_cover_pinned_docs",
+      "doc_cover_pinned_items_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_cover_pinned_docs",
+      "doc_cover_pinned_items_node_id_fkey",
+      "FOREIGN KEY (node_id) REFERENCES cms.doc_tree_nodes(id) ON DELETE CASCADE",
+      "cms.doc_tree_nodes"
+    ],
+    [
+      "cms",
+      "doc_draft_tags",
+      "doc_draft_tags_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_draft_tags",
+      "doc_draft_tags_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_draft_tags",
+      "doc_draft_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "doc_drafts",
+      "doc_drafts_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_drafts",
+      "doc_drafts_base_revision_id_fkey",
+      "FOREIGN KEY (base_revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "doc_drafts",
+      "doc_drafts_body_draft_id_fkey",
+      "FOREIGN KEY (body_draft_id) REFERENCES cms.article_body_drafts(id) ON DELETE RESTRICT",
+      "cms.article_body_drafts"
+    ],
+    [
+      "cms",
+      "doc_drafts",
+      "doc_drafts_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_drafts",
+      "doc_drafts_source_revision_id_fkey",
+      "FOREIGN KEY (source_revision_id) REFERENCES cms.article_revisions(id) ON DELETE RESTRICT",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "doc_drafts",
+      "doc_drafts_updated_by_id_fkey",
+      "FOREIGN KEY (updated_by_id) REFERENCES cms.authors(id) ON DELETE SET NULL",
+      "cms.authors"
+    ],
+    [
+      "cms",
+      "doc_emotion_infos",
+      "doc_emotion_infos_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_emotion_infos",
+      "doc_emotion_infos_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_lifecycles",
+      "doc_lifecycles_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_lifecycles",
+      "doc_lifecycles_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_lifecycles",
+      "doc_lifecycles_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_publics",
+      "doc_publics_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_publics",
+      "doc_publics_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_publics",
+      "doc_publics_branch_version_id_fkey",
+      "FOREIGN KEY (branch_version_id) REFERENCES cms.doc_branch_versions(id) ON DELETE RESTRICT",
+      "cms.doc_branch_versions"
+    ],
+    [
+      "cms",
+      "doc_publics",
+      "doc_publics_published_by_id_fkey",
+      "FOREIGN KEY (published_by_id) REFERENCES cms.authors(id) ON DELETE SET NULL",
+      "cms.authors"
+    ],
+    [
+      "cms",
+      "doc_publish_release_articles",
+      "doc_publish_release_articles_branch_version_id_fkey",
+      "FOREIGN KEY (branch_version_id) REFERENCES cms.doc_branch_versions(id) ON DELETE CASCADE",
+      "cms.doc_branch_versions"
+    ],
+    [
+      "cms",
+      "doc_publish_release_articles",
+      "publish_release_articles_release_id_fkey",
+      "FOREIGN KEY (release_id) REFERENCES cms.doc_publish_releases(id) ON DELETE CASCADE",
+      "cms.doc_publish_releases"
+    ],
+    [
+      "cms",
+      "doc_publish_release_tree_events",
+      "publish_release_tree_events_doc_tree_event_id_fkey",
+      "FOREIGN KEY (doc_tree_event_id) REFERENCES cms.doc_tree_events(id) ON DELETE SET NULL",
+      "cms.doc_tree_events"
+    ],
+    [
+      "cms",
+      "doc_publish_release_tree_events",
+      "publish_release_tree_events_release_id_fkey",
+      "FOREIGN KEY (release_id) REFERENCES cms.doc_publish_releases(id) ON DELETE CASCADE",
+      "cms.doc_publish_releases"
+    ],
+    [
+      "cms",
+      "doc_publish_releases",
+      "doc_publish_releases_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_publish_releases",
+      "publish_releases_author_id_fkey",
+      "FOREIGN KEY (author_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "doc_publish_releases",
+      "publish_releases_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_publish_releases",
+      "publish_releases_tree_snapshot_id_fkey",
+      "FOREIGN KEY (tree_snapshot_id) REFERENCES cms.doc_tree_snapshots(id) ON DELETE SET NULL",
+      "cms.doc_tree_snapshots"
+    ],
+    [
+      "cms",
+      "doc_reaction_infos",
+      "doc_reaction_infos_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_reaction_infos",
+      "doc_reaction_infos_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_review_blocks",
+      "doc_review_blocks_artiment_review_id_fkey",
+      "FOREIGN KEY (artiment_review_id) REFERENCES cms.artiment_reviews(id) ON DELETE RESTRICT",
+      "cms.artiment_reviews"
+    ],
+    [
+      "cms",
+      "doc_review_blocks",
+      "doc_review_restrictions_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "doc_review_blocks",
+      "doc_review_restrictions_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_review_blocks",
+      "doc_review_restrictions_item_id_fkey",
+      "FOREIGN KEY (item_id) REFERENCES alert_wall.items(id) ON DELETE RESTRICT",
+      "alert_wall.items"
+    ],
+    [
+      "cms",
+      "doc_revision_tags",
+      "doc_revision_tags_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "doc_revision_tags",
+      "doc_revision_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "doc_revisions",
+      "doc_revisions_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "doc_tree_events",
+      "doc_tree_events_author_id_fkey",
+      "FOREIGN KEY (author_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "doc_tree_events",
+      "doc_tree_events_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_tree_events",
+      "doc_tree_events_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_tree_events",
+      "doc_tree_events_reverted_by_event_id_fkey",
+      "FOREIGN KEY (reverted_by_event_id) REFERENCES cms.doc_tree_events(id) ON DELETE SET NULL",
+      "cms.doc_tree_events"
+    ],
+    [
+      "cms",
+      "doc_tree_events",
+      "doc_tree_events_snapshot_id_fkey",
+      "FOREIGN KEY (snapshot_id) REFERENCES cms.doc_tree_snapshots(id) ON DELETE SET NULL",
+      "cms.doc_tree_snapshots"
+    ],
+    [
+      "cms",
+      "doc_tree_nodes",
+      "doc_tree_nodes_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "doc_tree_nodes",
+      "doc_tree_nodes_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_tree_nodes",
+      "doc_tree_nodes_parent_node_fk",
+      "FOREIGN KEY (community_id, branch_id, stage, parent_node_id) REFERENCES cms.doc_tree_nodes(community_id, branch_id, stage, node_id) DEFERRABLE INITIALLY DEFERRED",
+      "cms.doc_tree_nodes"
+    ],
+    [
+      "cms",
+      "doc_tree_snapshots",
+      "doc_tree_revisions_author_id_fkey",
+      "FOREIGN KEY (author_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "doc_tree_snapshots",
+      "doc_tree_revisions_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "doc_tree_snapshots",
+      "doc_tree_snapshots_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "docs_site_states",
+      "docs_site_states_base_snapshot_id_fkey",
+      "FOREIGN KEY (base_snapshot_id) REFERENCES cms.doc_tree_snapshots(id) ON DELETE SET NULL",
+      "cms.doc_tree_snapshots"
+    ],
+    [
+      "cms",
+      "docs_site_states",
+      "docs_site_states_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "docs_site_states",
+      "docs_site_states_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "docs_site_states",
+      "docs_site_states_last_published_by_id_fkey",
+      "FOREIGN KEY (last_published_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "draft_cover_edits",
+      "draft_cover_edits_body_draft_id_fkey",
+      "FOREIGN KEY (body_draft_id) REFERENCES cms.article_body_drafts(id) ON DELETE CASCADE",
+      "cms.article_body_drafts"
+    ],
+    [
+      "cms",
+      "draft_cover_edits",
+      "draft_cover_edits_dark_background_id_fkey",
+      "FOREIGN KEY (dark_background_id) REFERENCES cms.cover_backgrounds(id) ON DELETE SET NULL",
+      "cms.cover_backgrounds"
+    ],
+    [
+      "cms",
+      "draft_cover_edits",
+      "draft_cover_edits_dark_original_background_id_fkey",
+      "FOREIGN KEY (dark_original_background_id) REFERENCES cms.cover_backgrounds(id) ON DELETE SET NULL",
+      "cms.cover_backgrounds"
+    ],
+    [
+      "cms",
+      "draft_cover_edits",
+      "draft_cover_edits_light_background_id_fkey",
+      "FOREIGN KEY (light_background_id) REFERENCES cms.cover_backgrounds(id) ON DELETE SET NULL",
+      "cms.cover_backgrounds"
+    ],
+    [
+      "cms",
+      "draft_cover_edits",
+      "draft_cover_edits_light_original_background_id_fkey",
+      "FOREIGN KEY (light_original_background_id) REFERENCES cms.cover_backgrounds(id) ON DELETE SET NULL",
+      "cms.cover_backgrounds"
+    ],
+    [
+      "cms",
+      "mention_current_edges",
+      "mention_current_edge_source_set_fk",
+      "FOREIGN KEY (source_set_id, source_endpoint_id) REFERENCES cms.mention_sets(id, source_endpoint_id) ON DELETE RESTRICT",
+      "cms.mention_sets"
+    ],
+    [
+      "cms",
+      "mention_current_edges",
+      "mention_current_edge_target_identity_fk",
+      "FOREIGN KEY (target_endpoint_id, target_type) REFERENCES cms.mention_endpoints(id, type) ON DELETE RESTRICT",
+      "cms.mention_endpoints"
+    ],
+    [
+      "cms",
+      "mention_endpoints",
+      "mention_endpoints_parent_endpoint_id_fkey",
+      "FOREIGN KEY (parent_endpoint_id) REFERENCES cms.mention_endpoints(id) ON DELETE RESTRICT",
+      "cms.mention_endpoints"
+    ],
+    [
+      "cms",
+      "mention_occurrences",
+      "mention_occurrence_target_identity_fk",
+      "FOREIGN KEY (target_endpoint_id, target_type) REFERENCES cms.mention_endpoints(id, type) ON DELETE RESTRICT",
+      "cms.mention_endpoints"
+    ],
+    [
+      "cms",
+      "mention_occurrences",
+      "mention_occurrences_set_id_fkey",
+      "FOREIGN KEY (set_id) REFERENCES cms.mention_sets(id) ON DELETE CASCADE",
+      "cms.mention_sets"
+    ],
+    [
+      "cms",
+      "mention_sets",
+      "mention_sets_source_endpoint_id_fkey",
+      "FOREIGN KEY (source_endpoint_id) REFERENCES cms.mention_endpoints(id) ON DELETE RESTRICT",
+      "cms.mention_endpoints"
+    ],
+    [
+      "cms",
+      "mention_sync_states",
+      "mention_sync_desired_set_fk",
+      "FOREIGN KEY (desired_set_id, source_endpoint_id) REFERENCES cms.mention_sets(id, source_endpoint_id) ON DELETE RESTRICT",
+      "cms.mention_sets"
+    ],
+    [
+      "cms",
+      "mention_sync_states",
+      "mention_sync_states_source_endpoint_id_fkey",
+      "FOREIGN KEY (source_endpoint_id) REFERENCES cms.mention_endpoints(id) ON DELETE RESTRICT",
+      "cms.mention_endpoints"
+    ],
+    [
+      "cms",
+      "mention_sync_states",
+      "mention_sync_synced_set_fk",
+      "FOREIGN KEY (synced_set_id, source_endpoint_id) REFERENCES cms.mention_sets(id, source_endpoint_id) ON DELETE RESTRICT",
+      "cms.mention_sets"
+    ],
+    [
+      "cms",
+      "passports",
+      "cms_passports_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id)",
+      "account.users"
+    ],
+    [
+      "cms",
+      "pinned_articles",
+      "pinned_articles_article_binding_id_fkey",
+      "FOREIGN KEY (article_binding_id) REFERENCES cms.article_bindings(id) ON DELETE CASCADE",
+      "cms.article_bindings"
+    ],
+    [
+      "cms",
+      "pinned_articles",
+      "pinned_articles_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "pinned_comments",
+      "pinned_comments_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "pinned_comments",
+      "pinned_comments_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "post_draft_tags",
+      "post_draft_tags_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "post_draft_tags",
+      "post_draft_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "post_drafts",
+      "post_drafts_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "post_emotion_infos",
+      "post_emotion_infos_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "post_emotion_infos",
+      "post_emotion_infos_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "post_reaction_infos",
+      "post_reaction_infos_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "post_reaction_infos",
+      "post_reaction_infos_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "post_revision_tags",
+      "post_revision_tags_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "post_revision_tags",
+      "post_revision_tags_tag_id_fkey",
+      "FOREIGN KEY (tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "post_revisions",
+      "post_revisions_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "post_solutions",
+      "post_solutions_accepted_by_id_fkey",
+      "FOREIGN KEY (accepted_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "post_solutions",
+      "post_solutions_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "post_solutions",
+      "post_solutions_comment_belongs_to_article_fkey",
+      "FOREIGN KEY (comment_id, article_id) REFERENCES cms.comments(id, article_id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "post_solutions",
+      "post_solutions_comment_id_fkey",
+      "FOREIGN KEY (comment_id) REFERENCES cms.comments(id) ON DELETE CASCADE",
+      "cms.comments"
+    ],
+    [
+      "cms",
+      "post_states",
+      "post_states_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "press_configs",
+      "press_configs_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "publish_requests",
+      "publish_requests_requested_by_id_fkey",
+      "FOREIGN KEY (requested_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "publish_requests",
+      "publish_requests_reviewed_by_id_fkey",
+      "FOREIGN KEY (reviewed_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "revision_cover_edits",
+      "revision_cover_edits_dark_background_id_fkey",
+      "FOREIGN KEY (dark_background_id) REFERENCES cms.cover_backgrounds(id) ON DELETE SET NULL",
+      "cms.cover_backgrounds"
+    ],
+    [
+      "cms",
+      "revision_cover_edits",
+      "revision_cover_edits_dark_original_background_id_fkey",
+      "FOREIGN KEY (dark_original_background_id) REFERENCES cms.cover_backgrounds(id) ON DELETE SET NULL",
+      "cms.cover_backgrounds"
+    ],
+    [
+      "cms",
+      "revision_cover_edits",
+      "revision_cover_edits_light_background_id_fkey",
+      "FOREIGN KEY (light_background_id) REFERENCES cms.cover_backgrounds(id) ON DELETE SET NULL",
+      "cms.cover_backgrounds"
+    ],
+    [
+      "cms",
+      "revision_cover_edits",
+      "revision_cover_edits_light_original_background_id_fkey",
+      "FOREIGN KEY (light_original_background_id) REFERENCES cms.cover_backgrounds(id) ON DELETE SET NULL",
+      "cms.cover_backgrounds"
+    ],
+    [
+      "cms",
+      "revision_cover_edits",
+      "revision_cover_edits_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "revision_covers",
+      "revision_covers_asset_id_fkey",
+      "FOREIGN KEY (asset_id) REFERENCES cms.community_assets(id) ON DELETE RESTRICT",
+      "cms.community_assets"
+    ],
+    [
+      "cms",
+      "revision_covers",
+      "revision_covers_revision_id_fkey",
+      "FOREIGN KEY (revision_id) REFERENCES cms.article_revisions(id) ON DELETE CASCADE",
+      "cms.article_revisions"
+    ],
+    [
+      "cms",
+      "ticket_assignees",
+      "ticket_assignees_ticket_id_fkey",
+      "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_assignees",
+      "ticket_assignees_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "cms",
+      "ticket_case_members",
+      "ticket_case_members_case_ticket_id_fkey",
+      "FOREIGN KEY (case_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_case_members",
+      "ticket_case_members_user_ticket_id_fkey",
+      "FOREIGN KEY (user_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_case_workers",
+      "ticket_case_workers_case_ticket_id_fkey",
+      "FOREIGN KEY (case_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_case_workers",
+      "ticket_case_workers_worker_ticket_id_fkey",
+      "FOREIGN KEY (worker_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_facets",
+      "ticket_facets_ticket_id_fkey",
+      "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_sources",
+      "ticket_sources_post_id_fkey",
+      "FOREIGN KEY (post_id) REFERENCES cms.articles(id) ON DELETE RESTRICT",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_sources",
+      "ticket_sources_ticket_id_fkey",
+      "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE RESTRICT",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_states",
+      "ticket_states_article_binding_fkey",
+      "FOREIGN KEY (article_id, article_binding_id) REFERENCES cms.article_bindings(article_id, id) ON DELETE CASCADE",
+      "cms.article_bindings"
+    ],
+    [
+      "cms",
+      "ticket_states",
+      "ticket_states_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_tags",
+      "ticket_tags_community_tag_id_fkey",
+      "FOREIGN KEY (community_tag_id) REFERENCES cms.community_tags(id) ON DELETE CASCADE",
+      "cms.community_tags"
+    ],
+    [
+      "cms",
+      "ticket_tags",
+      "ticket_tags_ticket_id_fkey",
+      "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_updates",
+      "ticket_updates_author_id_fkey",
+      "FOREIGN KEY (author_id) REFERENCES account.users(id) ON DELETE RESTRICT",
+      "account.users"
+    ],
+    [
+      "cms",
+      "ticket_updates",
+      "ticket_updates_supersedes_id_fkey",
+      "FOREIGN KEY (supersedes_id) REFERENCES cms.ticket_updates(id) ON DELETE SET NULL",
+      "cms.ticket_updates"
+    ],
+    [
+      "cms",
+      "ticket_updates",
+      "ticket_updates_ticket_id_fkey",
+      "FOREIGN KEY (ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_workers",
+      "ticket_workers_parent_ticket_id_fkey",
+      "FOREIGN KEY (parent_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "ticket_workers",
+      "ticket_workers_worker_ticket_id_fkey",
+      "FOREIGN KEY (worker_ticket_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "trash_actions",
+      "trash_actions_actor_id_fkey",
+      "FOREIGN KEY (actor_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "trash_actions",
+      "trash_actions_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "trashed_articles",
+      "trashed_articles_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "trashed_articles",
+      "trashed_articles_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "trashed_articles",
+      "trashed_articles_deleted_by_id_fkey",
+      "FOREIGN KEY (deleted_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "trashed_articles",
+      "trashed_articles_trash_action_id_fkey",
+      "FOREIGN KEY (trash_action_id) REFERENCES cms.trash_actions(id) ON DELETE RESTRICT",
+      "cms.trash_actions"
+    ],
+    [
+      "cms",
+      "trashed_doc_articles",
+      "trashed_doc_articles_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "cms",
+      "trashed_doc_articles",
+      "trashed_doc_articles_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "trashed_doc_articles",
+      "trashed_doc_articles_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "trashed_doc_articles",
+      "trashed_doc_articles_deleted_by_id_fkey",
+      "FOREIGN KEY (deleted_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "trashed_doc_articles",
+      "trashed_doc_articles_trash_action_id_fkey",
+      "FOREIGN KEY (trash_action_id) REFERENCES cms.trash_actions(id) ON DELETE RESTRICT",
+      "cms.trash_actions"
+    ],
+    [
+      "cms",
+      "trashed_doc_tree_nodes",
+      "trashed_doc_tree_nodes_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "cms",
+      "trashed_doc_tree_nodes",
+      "trashed_doc_tree_nodes_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "trashed_doc_tree_nodes",
+      "trashed_doc_tree_nodes_deleted_by_id_fkey",
+      "FOREIGN KEY (deleted_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "cms",
+      "trashed_doc_tree_nodes",
+      "trashed_doc_tree_nodes_trash_action_id_fkey",
+      "FOREIGN KEY (trash_action_id) REFERENCES cms.trash_actions(id) ON DELETE RESTRICT",
+      "cms.trash_actions"
+    ],
+    [
+      "cms",
+      "wallpaper_publish_receipts",
+      "wallpaper_publish_receipts_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "cms",
+      "wallpaper_snapshot_images",
+      "wallpaper_snapshot_images_wallpaper_snapshot_ref_fkey",
+      "FOREIGN KEY (wallpaper_snapshot_ref) REFERENCES cms.wallpaper_snapshots(public_ref) ON DELETE CASCADE",
+      "cms.wallpaper_snapshots"
+    ],
+    [
+      "cms",
+      "wallpaper_snapshots",
+      "wallpaper_snapshots_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "messaging",
+      "mentions",
+      "mentions_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "messaging",
+      "mentions",
+      "mentions_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "messaging",
+      "mentions",
+      "mentions_from_user_id_fkey",
+      "FOREIGN KEY (from_user_id) REFERENCES account.users(id)",
+      "account.users"
+    ],
+    [
+      "messaging",
+      "mentions",
+      "mentions_to_user_id_fkey",
+      "FOREIGN KEY (to_user_id) REFERENCES account.users(id)",
+      "account.users"
+    ],
+    [
+      "messaging",
+      "notification_deliveries",
+      "notification_deliveries_notification_id_fkey",
+      "FOREIGN KEY (notification_id) REFERENCES messaging.notifications(id) ON DELETE SET NULL",
+      "messaging.notifications"
+    ],
+    [
+      "messaging",
+      "notifications",
+      "notifications_article_id_fkey",
+      "FOREIGN KEY (article_id) REFERENCES cms.articles(id) ON DELETE CASCADE",
+      "cms.articles"
+    ],
+    [
+      "messaging",
+      "notifications",
+      "notifications_branch_id_fkey",
+      "FOREIGN KEY (branch_id) REFERENCES cms.doc_branches(id) ON DELETE CASCADE",
+      "cms.doc_branches"
+    ],
+    [
+      "messaging",
+      "notifications",
+      "notifications_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id)",
+      "account.users"
+    ],
+    [
+      "public",
+      "production_seed_logins",
+      "production_seed_logins_run_id_fkey",
+      "FOREIGN KEY (run_id) REFERENCES production_seed_runs(id) ON DELETE RESTRICT",
+      "production_seed_runs"
+    ],
+    [
+      "public",
+      "production_seed_logins",
+      "production_seed_logins_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE RESTRICT",
+      "account.users"
+    ],
+    [
+      "review_bot",
+      "review_bot_configs",
+      "review_bot_configs_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE RESTRICT",
+      "cms.communities"
+    ],
+    [
+      "review_bot",
+      "review_bot_configs",
+      "review_bot_configs_updated_by_id_fkey",
+      "FOREIGN KEY (updated_by_id) REFERENCES account.users(id) ON DELETE SET NULL",
+      "account.users"
+    ],
+    [
+      "statistics",
+      "community_contributes",
+      "community_contributes_community_id_fkey",
+      "FOREIGN KEY (community_id) REFERENCES cms.communities(id) ON DELETE CASCADE",
+      "cms.communities"
+    ],
+    [
+      "statistics",
+      "publish_throttles",
+      "publish_throttles_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ],
+    [
+      "statistics",
+      "user_contributes",
+      "user_contributes_user_id_fkey",
+      "FOREIGN KEY (user_id) REFERENCES account.users(id) ON DELETE CASCADE",
+      "account.users"
+    ]
+  ]
+}

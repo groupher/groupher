@@ -1,11 +1,19 @@
+import type {
+  TicketPublicationState,
+  TicketSourceTypeEnum,
+  TicketStatusEnum,
+  TicketTypeEnum,
+  TicketUpdateVisibilityEnum,
+} from '~/lib/graphql/generated/enums'
+
 import type { TGraphQLPagiPageInfo } from './pagination'
 
-export type TTicketStatus = 'TODO' | 'WIP' | 'DONE' | 'OPEN' | 'RESOLVED'
-export type TTicketPublicationState = 'DRAFT' | 'PUBLISHED'
+export type TTicketStatus = TicketStatusEnum
+export type TTicketPublicationState = TicketPublicationState
 
 export type TTicketSourceRef = {
   id: string
-  type: 'POST'
+  type: TicketSourceTypeEnum
   innerId: number | null
   title: string | null
   isPublic?: boolean
@@ -15,7 +23,7 @@ export type TTicketSourceRef = {
 export type TTicketRelationRef = {
   id: string
   innerId: number | null
-  type: 'USER' | 'WORKER' | 'CASE'
+  type: TicketTypeEnum
   status: TTicketStatus
   priority: number
   workflowVersion: number
@@ -48,7 +56,7 @@ export type TTicketActivityConnection = {
 export type TTicketUpdate = {
   id: string
   body: string
-  visibility: 'PUBLIC' | 'INTERNAL'
+  visibility: TicketUpdateVisibilityEnum
   authorId: string | null
   publishedAt: string | null
   supersedesId: string | null
@@ -73,7 +81,7 @@ export type TTicketFacet = {
 }
 
 export type TTicketFilter = {
-  type?: 'USER' | 'WORKER' | 'CASE'
+  type?: TicketTypeEnum
   status?: TTicketStatus
   assigneeId?: number
   priority?: number
@@ -92,14 +100,14 @@ export type TTicketFilter = {
 export type TTicket = {
   id: string
   innerId: number | null
-  type: 'USER' | 'WORKER' | 'CASE'
+  type: TicketTypeEnum
   status: TTicketStatus
   publicationState: TTicketPublicationState
   canPublishPublicUpdates: boolean
   priority: number
   lifecycleVersion: number | null
   workflowVersion: number | null
-  draftVersion: number | null
+  workingCopyRevision: number | null
   publicationPreview: string | null
   draftContent: TTicketContent | null
   publishedContent: TTicketContent | null

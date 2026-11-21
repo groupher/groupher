@@ -1,14 +1,12 @@
 'use client'
 
-import { use } from 'react'
 import { useSnapshot } from 'valtio'
 
-import { DsbShellUiContext } from './context'
+import { useDsbShellStore } from '~/stores/dsbShell/hooks'
 
-/** Reads Dash-only shell UI state such as submenu collapse. */
+/** Reads Dash-only shell UI state backed by the DsbEditor session store. */
 export default function useDsbShellUi() {
-  const context = use(DsbShellUiContext)
-  if (!context) throw new Error('useDsbShellUi must be used within a DsbShellUiProvider')
+  const store = useDsbShellStore()
 
-  return useSnapshot(context)
+  return useSnapshot(store.ui)
 }

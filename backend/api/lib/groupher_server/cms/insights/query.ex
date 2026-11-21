@@ -34,8 +34,7 @@ defmodule GroupherServer.CMS.Insights.Query do
   @spec authorize(Article.t(), term(), atom(), keyword()) ::
           {:ok, :pass} | {:error, term()}
   def authorize(article, viewer, :doc, opts) do
-    with {:ok, :pass} <- validate_insights_options(opts),
-         {:ok, :pass} <- validate_doc_insights_options(opts) do
+    with {:ok, :pass} <- validate_insights_options(opts) do
       authorize_with_scope(article, viewer, DocContext.insights(passport_opts(opts)), opts)
     end
   end
@@ -81,7 +80,7 @@ defmodule GroupherServer.CMS.Insights.Query do
   end
 
   defp scope_query(context, viewer) do
-    scope_actor = if global_god?(viewer), do: :operations, else: viewer
+    scope_actor = if global_root?(viewer), do: :operations, else: viewer
     Gate.scope(Article, scope_actor, :read_insights, context)
   end
 
@@ -105,7 +104,7 @@ defmodule GroupherServer.CMS.Insights.Query do
   end
 
   defp authorize_scoped_article(id, viewer, context, opts) do
-    scope_actor = if global_god?(viewer), do: :operations, else: viewer
+    scope_actor = if global_root?(viewer), do: :operations, else: viewer
 
     case scope_query(context, scope_actor) do
       %Ecto.Query{} = query ->
@@ -119,14 +118,6 @@ defmodule GroupherServer.CMS.Insights.Query do
 
       {:error, _reason} = error ->
         error
-    end
-  end
-
-  defp validate_doc_insights_options(opts) do
-    case Keyword.fetch(opts, :branch_id) do
-      :error -> {:ok, :pass}
-      {:ok, :main} -> {:ok, :pass}
-      {:ok, _branch_id} -> {:error, GateErrorCat.scope_context_missing()}
     end
   end
 
@@ -167,17 +158,16 @@ defmodule GroupherServer.CMS.Insights.Query do
     end
   end
 
-  defp global_god?(viewer) when is_map(viewer) do
-    viewer
-    |> Map.get(:cur_passport)
-    |> Helper.PermissionRegistry.normalize_rules()
-    |> get_in(["global", "god"])
-    |> Kernel.==(true)
+  defp global_root?(viewer) when is_map(viewer) do
+    case CMS.Passport.system_root?(Map.get(viewer, :id)) do
+      {:ok, true} -> true
+      _ -> false
+    end
   rescue
     _ -> false
   end
 
-  defp global_god?(_viewer), do: false
+  defp global_root?(_viewer), do: false
 
   defp passport_opts(opts) do
     [

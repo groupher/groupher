@@ -7,7 +7,7 @@ const state = vi.hoisted(() => ({ homepage: undefined as string | null | undefin
 
 vi.mock('~/hooks/useHover', () => ({ default: () => [null, false] }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'dev' }) }))
-vi.mock('~/stores/dsbConfig/hooks', () => ({ default: () => state }))
+vi.mock('~/stores/dsb/hooks', () => ({ default: () => state }))
 vi.mock('~/unit/CommunityBrand', () => ({ default: () => null }))
 vi.mock('~/ui/Tooltip', () => ({
   default: ({ children, content }: { children: ReactNode; content: ReactNode }) => (

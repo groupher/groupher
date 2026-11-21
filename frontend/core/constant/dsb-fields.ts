@@ -18,7 +18,6 @@ import {
   KANBAN_LAYOUT,
   NAV_ACTIVE_LAYOUT,
   POST_LAYOUT,
-  RSS_TYPE,
   TAG_LAYOUT,
 } from '~/const/layout'
 import SIZE from '~/const/size'
@@ -161,8 +160,9 @@ export const FIELDS: TDsbFieldMap = {
   nameAlias: BUILTIN_ALIAS,
   enable: DEFAULT_ENABLE,
   docFaq: DEFAULT_DOC_FAQ,
-  rssFeedType: RSS_TYPE.DIGEST,
-  rssFeedCount: 20,
+  contentShadow: false,
+  pagiMode: 'PAGE',
+  pagiMobileMode: 'INFINITE_SCROLL',
   headerLayout: HEADER_LAYOUT.CENTER,
   footerLayout: FOOTER_LAYOUT.GROUP,
   footerLinks: [],

@@ -3,11 +3,11 @@ import type { FC, ReactNode } from 'react'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import { InitialNowProvider } from '~/hooks/useInitialNow'
-import type { TCommunity, TLocale, TMetric, TParseDashboard, TThemeMode, TThemeName } from '~/spec'
+import type { TCommunity, TLocale, TMetric, TDsb, TThemeMode, TThemeName } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
-import DsbConfigProvider from '~/stores/dsbConfig/provider'
+import DsbProvider from '~/stores/dsb/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import { MetricProvider } from '~/stores/metric'
 import StaticWallpaperProvider from '~/stores/staticWallpaper/provider'
@@ -19,7 +19,7 @@ type TProps = {
   children: ReactNode
   initData: {
     community: TCommunity
-    dashboard: TParseDashboard
+    dashboard: TDsb
     theme: {
       theme: TThemeName
       themeMode: TThemeMode
@@ -59,13 +59,13 @@ export default function CommunityShellProvider({
           <MetricProvider value={metric}>
             <AccountWrapper initData={account} noAccount={noAccount}>
               <CommunityStoreProvider initData={community}>
-                <DsbConfigProvider initData={dashboard}>
+                <DsbProvider initData={dashboard}>
                   <ThemePresetStoreProvider initData={dashboard}>
                     <StaticWallpaperProvider initData={wallpaper?.wallpaper}>
                       {children}
                     </StaticWallpaperProvider>
                   </ThemePresetStoreProvider>
-                </DsbConfigProvider>
+                </DsbProvider>
               </CommunityStoreProvider>
             </AccountWrapper>
           </MetricProvider>

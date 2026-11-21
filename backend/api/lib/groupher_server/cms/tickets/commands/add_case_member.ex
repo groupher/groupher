@@ -37,10 +37,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.AddCaseMember do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_manage_case, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.add_case_member(canonical, case_id, ticket_id, expected_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

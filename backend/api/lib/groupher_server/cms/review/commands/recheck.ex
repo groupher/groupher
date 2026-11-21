@@ -20,15 +20,11 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
 
   alias CMS.Model.{
     ArticleBinding,
-    ArticleBodySnapshot,
     ArticlePublic,
-    ArticleRevision,
+    ArticleSnapshot,
     ArticleLifecycle,
     CommentBody,
-    CommentLifecycle,
-    DocBranchVersion,
-    DocLifecycle,
-    DocPublic
+    CommentLifecycle
   }
 
   @pipeline operation: :cms_review_recheck,
@@ -65,7 +61,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   receipt_pipeline execute_pipeline(target_key, scope_key, actor, command_id) do
     prepare(fn -> prepare(target_key, scope_key) end)
     gate(fn prepared -> authorize(prepared, actor) end)
-    change(fn prepared -> register(prepared) end)
+    change(fn prepared, operation_ref -> register(prepared, operation_ref) end)
     confirm(fn confirmation -> {:ok, confirmation} end)
     present(fn confirmation -> present_result(confirmation, command_id) end)
   end
@@ -74,7 +70,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     with {:ok, _community_id} <- parse_scope(scope_key) do
       target_type = target_key |> String.split(":") |> hd()
 
-      if target_type in ["article", "comment", "doc"] do
+      if target_type in ["article", "comment"] do
         {:ok, %{target_key: target_key, scope_key: scope_key, target_type: target_type},
          target: {:cms_review_target, target_key}, params: %{scope_key: scope_key}}
       else
@@ -108,12 +104,15 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp register(%{target_key: target_key, scope_key: scope_key, target_type: target_type}) do
+  defp register(
+         %{target_key: target_key, scope_key: scope_key, target_type: target_type},
+         operation_ref
+       ) do
     with {:ok, context} <- Target.load_for_update(target_key, scope_key),
          {:ok, content} <- current_content(context),
          {:ok, configs} <- current_configs(context, scope_key),
          {:ok, requested_scope} <- request_scope(scope_key),
-         target <- request_target(context),
+         target <- Map.put(request_target(context), :operation_ref, operation_ref),
          {:ok, requests} <-
            RequestSubmission.register_in_transaction(
              target,
@@ -139,16 +138,14 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
          lifecycle: %ArticleLifecycle{state: state}
        })
        when state in [:published, :archived] do
-    with %ArticlePublic{revision_id: revision_id} = public <-
+    with %ArticlePublic{snapshot_id: snapshot_id} = public <-
            Repo.get_by(ArticlePublic, article_id: article.id),
-         %ArticleRevision{body_snapshot_id: body_id} = revision <-
-           Repo.get(ArticleRevision, revision_id),
-         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, body_id) do
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id) do
       {:ok,
        %{
-         title: public.title || revision.title || "",
-         body: body.plain_text || "",
-         images: CMS.Review.Media.article_images(revision.id)
+         title: public.title || snapshot.title || "",
+         body: CMS.Articles.Body.document(snapshot).plain_text || "",
+         images: CMS.Review.Media.article_snapshot_images(snapshot.id)
        }}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
@@ -179,38 +176,9 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp current_content(%{
-         type: :doc,
-         target: article,
-         lifecycle: %DocLifecycle{state: state},
-         branch_id: branch_id
-       })
-       when state in [:published, :archived] do
-    with %DocPublic{branch_version_id: version_id, title: title} <-
-           Repo.get_by(DocPublic, article_id: article.id, branch_id: branch_id),
-         %DocBranchVersion{revision_id: revision_id} <- Repo.get(DocBranchVersion, version_id),
-         %ArticleRevision{body_snapshot_id: body_id} = revision <-
-           Repo.get(ArticleRevision, revision_id),
-         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, body_id) do
-      {:ok,
-       %{
-         title: title || revision.title || "",
-         body: body.plain_text || "",
-         images: CMS.Review.Media.article_images(revision.id)
-       }}
-    else
-      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
-    end
-  end
-
   defp comment_parent_title(%{thread: :doc, id: article_id}, _comment) do
-    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article_id),
-         %{id: branch_id} <- Repo.get_by(CMS.Model.DocBranch, community_id: owner.id, type: :main),
-         %DocPublic{branch_version_id: version_id, title: title} <-
-           Repo.get_by(DocPublic, article_id: article_id, branch_id: branch_id),
-         %DocBranchVersion{revision_id: revision_id} <- Repo.get(DocBranchVersion, version_id),
-         %ArticleRevision{title: revision_title} <- Repo.get(ArticleRevision, revision_id) do
-      {:ok, title || revision_title || ""}
+    with %ArticlePublic{title: title} <- Repo.get(ArticlePublic, article_id) do
+      {:ok, title || ""}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
@@ -263,8 +231,6 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp current_configs(%{type: :doc}, _scope_key), do: ReviewBot.configs(nil, :doc)
-
   defp request_scope("platform"), do: {:ok, :system}
 
   defp request_scope("community:" <> id) do
@@ -292,21 +258,8 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     %{type: :comment, comment_id: comment.id, lifecycle: lifecycle}
   end
 
-  defp request_target(%{
-         type: :doc,
-         target: article,
-         lifecycle: %DocLifecycle{} = lifecycle,
-         branch_id: branch_id
-       }) do
-    %{type: :doc, article_id: article.id, branch_id: branch_id, lifecycle: lifecycle}
-  end
-
   defp request_target_id(%{type: :article, target: article}), do: article.id
   defp request_target_id(%{type: :comment, target: comment}), do: to_string(comment.id)
-
-  defp request_target_id(%{type: :doc, target: article, branch_id: branch_id}) do
-    "#{article.id}:#{branch_id}"
-  end
 
   defp parse_scope("platform"), do: {:ok, nil}
 
@@ -336,5 +289,4 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
 
   defp target_type("article"), do: :article
   defp target_type("comment"), do: :comment
-  defp target_type("doc"), do: :doc
 end

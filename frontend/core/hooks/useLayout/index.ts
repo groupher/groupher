@@ -11,7 +11,7 @@ import type {
   TPostLayout,
   TTagLayout,
 } from '~/spec'
-import useDsb from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 type TRet = {
   avatarLayout: TAvatarLayout

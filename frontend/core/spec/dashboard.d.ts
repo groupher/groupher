@@ -1,24 +1,23 @@
-import type {
-  AVATAR_LAYOUT,
-  BRAND_LAYOUT,
-  BROADCAST_ARTICLE_LAYOUT,
-  BROADCAST_LAYOUT,
-  CHANGELOG_LAYOUT,
-  COMMUNITY_LAYOUT,
-  DOC_COVER_LAYOUT,
-  DOC_FAQ_LAYOUT,
-  FOOTER_LAYOUT,
-  HEADER_LAYOUT,
-  INLINE_TAG_LAYOUT,
-  KANBAN_CARD_LAYOUT,
-  KANBAN_LAYOUT,
-  NAV_ACTIVE_LAYOUT,
-  POST_LAYOUT,
-  RSS_TYPE,
-  TAG_LAYOUT,
-} from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
-import type { KANBAN_BOARD } from '~/const/thread'
+import type {
+  DsbAvatarLayout,
+  DsbBrandLayout,
+  DsbBroadcastArticleLayout,
+  DsbBroadcastLayout,
+  DsbChangelogLayout,
+  DsbCommunityLayout,
+  DsbDocCoverLayout,
+  DsbDocFaqLayout,
+  DsbFooterLayout,
+  DsbHeaderLayout,
+  DsbInlineTagLayout,
+  DsbKanbanCardLayout,
+  DsbKanbanLayout,
+  DsbNavActiveLayout,
+  DsbPostLayout,
+  DsbTagLayout,
+  KanbanBoard,
+} from '~/lib/graphql/generated/enums'
 import type { TThirdPartyAnalyticsConfig } from '~/lib/thirdPartyAnalytics'
 import type { TConstValues } from '~/spec'
 
@@ -39,30 +38,29 @@ import type {
   TWallpaperSettingsTransportByTheme,
 } from './wallpaper'
 
-export type TTagLayout = TConstValues<typeof TAG_LAYOUT>
-export type TInlineTagLayout = TConstValues<typeof INLINE_TAG_LAYOUT>
-export type TAvatarLayout = TConstValues<typeof AVATAR_LAYOUT>
-export type TBrandLayout = TConstValues<typeof BRAND_LAYOUT>
-export type TCommunityLayout = TConstValues<typeof COMMUNITY_LAYOUT>
-export type TNavActiveLayout = TConstValues<typeof NAV_ACTIVE_LAYOUT>
+export type TTagLayout = DsbTagLayout
+export type TInlineTagLayout = DsbInlineTagLayout
+export type TAvatarLayout = DsbAvatarLayout
+export type TBrandLayout = DsbBrandLayout
+export type TCommunityLayout = DsbCommunityLayout
+export type TNavActiveLayout = DsbNavActiveLayout
 
-export type TPostLayout = TConstValues<typeof POST_LAYOUT>
-export type TKanbanLayout = TConstValues<typeof KANBAN_LAYOUT>
-export type TKanbanCardLayout = TConstValues<typeof KANBAN_CARD_LAYOUT>
-export type TKanbanBoard = TConstValues<typeof KANBAN_BOARD>
-export type TChangelogLayout = TConstValues<typeof CHANGELOG_LAYOUT>
-export type TDocCoverLayout = TConstValues<typeof DOC_COVER_LAYOUT>
-export type TDocFAQLayout = TConstValues<typeof DOC_FAQ_LAYOUT>
-export type THeaderLayout = TConstValues<typeof HEADER_LAYOUT>
-export type TFooterLayout = TConstValues<typeof FOOTER_LAYOUT>
+export type TPostLayout = DsbPostLayout
+export type TKanbanLayout = DsbKanbanLayout
+export type TKanbanCardLayout = DsbKanbanCardLayout
+export type TKanbanBoard = KanbanBoard
+export type TChangelogLayout = DsbChangelogLayout
+export type TDocCoverLayout = DsbDocCoverLayout
+export type TDocFAQLayout = DsbDocFaqLayout
+export type THeaderLayout = DsbHeaderLayout
+export type TFooterLayout = DsbFooterLayout
 export type TFooterLinks = {
   layout: TFooterLayout
   links: readonly TLinkItem[]
   onelineLinks: readonly TFooterOnelineLink[]
 }
-export type TRSSType = TConstValues<typeof RSS_TYPE>
-export type TBroadcastLayout = TConstValues<typeof BROADCAST_LAYOUT>
-export type TBroadcastArticleLayout = TConstValues<typeof BROADCAST_ARTICLE_LAYOUT>
+export type TBroadcastLayout = DsbBroadcastLayout
+export type TBroadcastArticleLayout = DsbBroadcastArticleLayout
 
 export type TDsbTab = (typeof DSB_TAB)[keyof typeof DSB_TAB]
 
@@ -97,7 +95,7 @@ export type TDocFaq = {
   flatItems: readonly TDocFaqItem[]
 }
 
-export type TDsb = {
+export type TDsbRaw = {
   pagiMode?: TPaginationMode
   pagiMobileMode?: TPaginationMode
   pagiRevision?: number
@@ -135,11 +133,6 @@ export type TDsb = {
     footerLayout: TFooterLayout
   } | null
 
-  rss?: {
-    rssFeedType: TRSSType
-    rssFeedCount: number
-  }
-
   headerLinks?: readonly TLinkItem[]
   footerLinks?: readonly TLinkItem[]
   footerOnelineLinks?: readonly TFooterOnelineLink[]
@@ -158,12 +151,8 @@ export type TDsb = {
   umamiWebsiteId?: string | null
 }
 
-export type TParseDashboard = TDsbFieldMap & {
-  contentShadow?: boolean
-  pagiMode?: TPaginationMode
-  pagiMobileMode?: TPaginationMode
+export type TDsb = TDsbFieldMap & {
   pagiRevision?: number
-  original: TDsbFieldMap
 }
 
 export type TBroadcastConf = {

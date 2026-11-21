@@ -1,5 +1,7 @@
 # Backend 基础模块清理与源码文档审计
 
+> **2026-11-14 Docs 目标更新：**本文的 DocPublic / branch 可见性描述是 2026-10 的旧运行态记录。Doc 新目标使用 ArticleLifecycle、ArticlePublic / ArticlePublicBody 和多社区 Binding；不要按本文旧 Docs 投影描述实施。
+
 > 状态：F/G、E1–E4、N1–N3 与 D1 有定点实现；整体验收未完成。最近一次串行全量为 2380/2444 passed、64 failures，发生在普通 Article/Docs 发布后 Binding 可见性同步变更之前；该修复后的 G1 + locator 定向测试 6/6 通过，但全量尚未复跑。D2 源码文档候选仍未逐项处置。Audit/Sentinel 暂停，不属于本轮范围。
 > 清单仍是 2026-10-21 的基线快照，不代表 166 个文件全部完成源码注释整改；本轮新增、修改的 public API 已补齐对应合同，D2 附录其余候选需按下表继续分批处理。
 

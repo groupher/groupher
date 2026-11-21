@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Wallpaper do
     Upload.prepare(community, input, user)
   end
 
-  @doc "Returns the published image tree used by ordinary pages."
+  @doc "Returns published images, with built-in defaults for themes not yet saved."
   def wallpaper(community_id), do: Query.wallpaper(community_id)
 
   @doc "Returns complete settings for the editor, using Backend defaults when absent."

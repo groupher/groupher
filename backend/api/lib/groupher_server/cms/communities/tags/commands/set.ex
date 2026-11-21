@@ -19,39 +19,38 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Set do
   @spec execute(Article.t() | map(), T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(Article.t())
   def execute(article, tag_id, %User{} = actor, command_id) do
     with {:ok, command_id} <- TagSupport.command_id(command_id),
-         {:ok, article, branch_id} <- article_resource(article),
+         {:ok, article} <- article_resource(article),
          {:ok, tag} <- FrontDesk.community_tag(tag_id),
          {:ok, %Community{} = community} <- TagSupport.community(tag.community_id) do
-      execute_pipeline(article, tag, community, branch_id, actor, command_id)
+      execute_pipeline(article, tag, community, actor, command_id)
     end
   end
 
   @pipeline operation: :article_tag_set, target: :article
-  direct_pipeline execute_pipeline(article, tag, community, branch_id, actor, command_id) do
-    gate(fn candidate -> check_article_gate(actor, community, candidate, branch_id) end)
-    change(fn canonical -> Assignment.add(canonical, tag.id, command_id: command_id) end)
+  direct_pipeline execute_pipeline(article, tag, community, actor, command_id) do
+    gate(fn candidate -> check_article_gate(actor, community, candidate) end)
+
+    change(fn canonical, operation_ref ->
+      Assignment.add(canonical, tag.id, operation_ref: operation_ref)
+    end)
   end
 
-  defp article_resource(%Article{} = article), do: {:ok, article, nil}
+  defp article_resource(%Article{} = article), do: {:ok, article}
 
-  defp article_resource(%{article: %Article{} = article} = resource) do
-    {:ok, article, Map.get(resource, :branch_id)}
+  defp article_resource(%{article: %Article{} = article}) do
+    {:ok, article}
   end
 
-  defp article_resource(%{article_id: article_id} = resource) do
+  defp article_resource(%{article_id: article_id}) do
     case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{} = article} -> {:ok, article, Map.get(resource, :branch_id)}
+      {:ok, %Article{} = article} -> {:ok, article}
       {:error, _reason} -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
 
   defp article_resource(_article), do: {:error, CMS.Gate.ErrorCat.resource_not_found()}
 
-  defp check_article_gate(actor, community, article, branch_id) when is_integer(branch_id) do
-    Gate.check_in_transaction(actor, :community_tag_set, article, community, branch_id)
-  end
-
-  defp check_article_gate(actor, community, article, _branch_id) do
+  defp check_article_gate(actor, community, article) do
     Gate.check_in_transaction(actor, :community_tag_set, article, community)
   end
 end

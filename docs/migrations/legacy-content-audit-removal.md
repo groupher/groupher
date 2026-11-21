@@ -1,5 +1,7 @@
 # 旧内容 Audit 全链路退役
 
+> **2026-11-14 Docs 目标更新：**本文的 ArticlePublic / Binding / DocPublic 可见性盘点描述旧审核链路切换时的运行态。Doc 新目标使用 ArticleLifecycle、ArticlePublic / ArticlePublicBody 和多社区 Binding；本文件仅作旧内容 Audit 退役证据。
+
 > 状态：2026-10-22 当前工作树已完成 D1–D5 运行时删除与本地 schema 清理；旧链扫描、全套测试和旧数据库 key 断言通过。目标环境停旧 worker/cron、维护窗口迁移仍待 N8 执行。以 [AlertBoard 批次记录](../feature/alert-wall/delivery.md) 为当前实现快照。
 > 证据基于当前共享工作树，不代表远端分支或生产状态；工作树包含未提交的并行修改。
 > 新合同：[AlertBoard / ReviewBot](../feature/alert-wall/design.md)；逐文件证据：[扫描清单](./legacy-content-audit-inventory.md)。
@@ -148,9 +150,9 @@ Comment 则要求 create/reply/update 事务内 enqueue 成功；删除旧 Requi
   的 `pending: 0` 占位和 `article_view.ex:48` 的透传；不保留恒定 0 的兼容字段。
   `backend/api/lib/support/factory/articles.ex:371` 的 article_base `pending: 0` 同步删除，属于本次 fixture 清理范围。
 - Comment GraphQL 类型没有 pending；其数据库 pending 与 GraphQL meta 是不同删除项。
-- `schema/cms/cms_types.ex:1755` 是 Community.pending，不属于此次内容 Audit 删除，不能误碰。
+- `schema/cms/spec.ex:1755` 是 Community.pending，不属于此次内容 Audit 删除，不能误碰。
   同文件 Article/Comment meta 的 is_legal/illegal_reason/illegal_words 删除；
-  `schema/account/account_types.ex` 的作者违规信息同步删除。
+  `schema/account/spec.ex` 的作者违规信息同步删除。
 - `backend/api/schema.graphql`：Article.pending 定位为 2621、2655、2684、2714、3706；
   对应类型/interface 字段与旧审核 meta 从 schema 来源删除后重新导出。3225 为 Community.pending，保留。
 - `frontend/mock-server/schema.graphql` 是共享 schema 链接，跟随真实 schema，不维护另一份旧协议。

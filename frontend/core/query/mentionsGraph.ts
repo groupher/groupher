@@ -7,7 +7,8 @@ import type { MentionsGraphLocatorInput } from '~/lib/graphql/generated/graphql'
 import { readMentionsGraphWithRestart } from './mentionsGraphRecovery'
 
 export const mentionsGraphPage = graphql(`
-  query MentionsGraphPage(
+  "Pages mention relationships around a focused resource in a community."
+  query PagedMentionsGraph(
     $community: String!
     $focus: MentionsGraphLocatorInput!
     $after: String
@@ -42,6 +43,7 @@ export const mentionsGraphPage = graphql(`
 `)
 
 export const mentionsGraphArticleComments = graphql(`
+  "Pages article comments associated with a focused mention graph resource."
   query MentionsGraphArticleComments(
     $community: String!
     $focus: MentionsGraphLocatorInput!
@@ -67,6 +69,7 @@ export const mentionsGraphArticleComments = graphql(`
 `)
 
 export const mentionsGraphRevision = graphql(`
+  "Reads the revision of the mention graph around a focused resource."
   query MentionsGraphRevision($community: String!, $focus: MentionsGraphLocatorInput!) {
     mentionsGraphRevision(community: $community, focus: $focus)
   }
@@ -78,15 +81,20 @@ export type MentionsGraphFocus = MentionsGraphLocatorInput
 export const mentionsGraphLocatorKey = (locator: MentionsGraphFocus): string =>
   `${locator.type}:${locator.articleId ? `id:${locator.articleId}` : `inner:${locator.articleInnerId}`}:${locator.commentInnerId ?? ''}`
 
+export const mentionsGraphKeys = {
+  all: ['mentions-graph'] as const,
+  revision: (community: string, focus: MentionsGraphFocus) =>
+    [...mentionsGraphKeys.all, community, 'revision', focus] as const,
+  page: (community: string, focus: MentionsGraphFocus) =>
+    [...mentionsGraphKeys.all, community, 'page', focus] as const,
+  articleComments: (community: string, focus: MentionsGraphFocus) =>
+    [...mentionsGraphKeys.all, community, 'article-comments', focus] as const,
+}
+
 export const mentionsGraphQueries = {
-  key: (community: string) => ['mentions-graph', community, 'public-current'] as const,
-  revisionKey: (community: string, focus: MentionsGraphFocus) =>
-    ['mentions-graph-revision', community, focus] as const,
-  articleCommentsKey: (community: string, focus: MentionsGraphFocus) =>
-    [...mentionsGraphQueries.key(community), 'article-comments', focus] as const,
   revision: (community: string, focus: MentionsGraphFocus) =>
     queryOptions({
-      queryKey: mentionsGraphQueries.revisionKey(community, focus),
+      queryKey: mentionsGraphKeys.revision(community, focus),
       queryFn: async ({ signal }) =>
         (await browserGraphQLRequest(mentionsGraphRevision, { community, focus }, { signal }))
           .mentionsGraphRevision,
@@ -98,7 +106,7 @@ export const mentionsGraphQueries = {
     }),
   page: (community: string, focus: MentionsGraphFocus) =>
     infiniteQueryOptions({
-      queryKey: [...mentionsGraphQueries.key(community), focus, 'page'] as const,
+      queryKey: mentionsGraphKeys.page(community, focus),
       initialPageParam: null as string | null,
       staleTime: 30_000,
       queryFn: async ({ pageParam, signal }) =>
@@ -118,7 +126,7 @@ export const mentionsGraphQueries = {
     }),
   articleComments: (community: string, focus: MentionsGraphFocus) =>
     infiniteQueryOptions({
-      queryKey: mentionsGraphQueries.articleCommentsKey(community, focus),
+      queryKey: mentionsGraphKeys.articleComments(community, focus),
       initialPageParam: null as string | null,
       queryFn: async ({ pageParam, signal }) =>
         (

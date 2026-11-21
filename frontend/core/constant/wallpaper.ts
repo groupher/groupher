@@ -1,3 +1,5 @@
+import { lowerEnumValue, valueKeyedEnum } from '~/lib/enumValues'
+import { WallpaperType } from '~/lib/graphql/generated/enums'
 import { GRADIENT_RENDERER, type TGradientRecipe } from '~/lib/wallpaperMesh'
 import type { TGradientEffectInit, TGradientPalette } from '~/spec'
 
@@ -17,12 +19,14 @@ export enum WALLPAPER_PATTERN_TONE {
   LIGHT = 'light',
 }
 
-export enum WALLPAPER_TYPE {
-  PATTERN = 'picture',
-  GRADIENT = 'gradient',
-  UPLOAD = 'upload',
-  NONE = 'none',
-}
+const WALLPAPER_TYPE_VALUES = valueKeyedEnum(WallpaperType)
+
+export const WALLPAPER_TYPE = {
+  PATTERN: lowerEnumValue(WALLPAPER_TYPE_VALUES.PICTURE),
+  GRADIENT: lowerEnumValue(WALLPAPER_TYPE_VALUES.GRADIENT),
+  UPLOAD: lowerEnumValue(WALLPAPER_TYPE_VALUES.UPLOAD),
+  NONE: lowerEnumValue(WALLPAPER_TYPE_VALUES.NONE),
+} as const
 
 export const GRADIENT_WALLPAPER_NAME = {
   AMBER_MAUVE: 'amber_mauve',

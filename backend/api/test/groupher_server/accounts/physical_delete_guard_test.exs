@@ -123,12 +123,12 @@ defmodule GroupherServer.Test.Accounts.PhysicalDeleteGuardTest do
 
   defp snapshot(community, article, root) do
     root = Repo.get!(Comment, root.id)
-    stats = Repo.get_by!(ArticleStats, article_id: article.article_id)
+    stats = Repo.get_by!(ArticleStats, article_id: article.id)
 
     {:ok, state} =
-      CMS.Comments.comments_state(article.thread, article.article_id, nil, community.slug)
+      CMS.Comments.comments_state(article.thread, article.id, nil, community.slug)
 
-    {:ok, search} = CMS.ArticleStats.search_counts(article.thread, article.article_id)
+    {:ok, search} = CMS.ArticleStats.search_counts(article.thread, article.id)
 
     %{
       root:
@@ -153,11 +153,11 @@ defmodule GroupherServer.Test.Accounts.PhysicalDeleteGuardTest do
       },
       search: search,
       facts:
-        Repo.aggregate(from(c in Comment, where: c.article_id == ^article.article_id), :count),
+        Repo.aggregate(from(c in Comment, where: c.article_id == ^article.id), :count),
       events:
         Repo.aggregate(
           from(e in Event,
-            where: e.event == "comment.changed" and e.resource_id == ^article.article_id
+            where: e.event == "comment.changed" and e.resource_id == ^article.id
           ),
           :count
         )

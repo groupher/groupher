@@ -15,16 +15,46 @@ defmodule GroupherServer.CMS.WallpaperTest do
     assert Enum.map(Wallpaper.profile_specs(), & &1.key) == [:wide, :desktop, :tablet, :phone]
   end
 
-  test "returns an empty published wallpaper before the first save" do
+  test "returns built-in profiles and editor defaults without creating snapshots before the first save" do
     {community, _article, _attrs, _user} = mock_article(:post)
 
-    assert Wallpaper.wallpaper(community.id) == %{
-             version: 0,
-             light: nil,
-             dark: nil,
-             light_source: nil,
-             dark_source: nil
-           }
+    wallpaper = Wallpaper.wallpaper(community.id)
+    settings = Wallpaper.wallpaper_settings(community.id)
+
+    assert wallpaper.version == 0
+
+    for theme <- [:light, :dark] do
+      assert wallpaper[theme].wide.url == "/wallpaper/default-v1/#{theme}-wide.webp"
+      assert wallpaper[theme].phone.width == 390
+      assert wallpaper[theme].phone.height == 844
+      assert wallpaper[:"#{theme}_source"] == settings[theme].source
+      assert settings[theme].type == :gradient
+    end
+
+    refute Repo.get_by(CMS.Model.CommunityWallpaper, community_id: community.id)
+  end
+
+  test "an explicit NONE does not replace the other theme's uninitialized default" do
+    {community, _article, _attrs, user} = mock_article(:post)
+
+    assert {:ok, _} =
+             Wallpaper.publish(
+               community,
+               %{
+                 base_version: 0,
+                 command_id: Ecto.UUID.generate(),
+                 theme: :light,
+                 settings: %{settings_schema_version: 1, type: :none}
+               },
+               user
+             )
+
+    wallpaper = Wallpaper.wallpaper(community.id)
+    assert wallpaper.version == 1
+    assert wallpaper.light == nil
+    assert wallpaper.light_source == nil
+    assert wallpaper.dark.wide.url == "/wallpaper/default-v1/dark-wide.webp"
+    assert Wallpaper.wallpaper_settings(community.id).light.type == :none
   end
 
   test "lifecycle reconciliation returns a typed empty summary" do

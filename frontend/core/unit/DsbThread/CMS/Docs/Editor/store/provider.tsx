@@ -8,14 +8,14 @@ import type { TInit, TStore } from './spec'
 
 type TProps = {
   children: ReactNode
-  initData: TInit
+  initData?: TInit
 }
 
-export default function Provider({ children, initData }: TProps) {
+export default function Provider({ children, initData = {} }: TProps) {
   const [store] = useState<TStore>(() => setupStore(initData))
 
   useEffect(() => {
-    store.attachSideTree(initData.sideTree)
+    if (initData.sideTree) store.attachSideTree(initData.sideTree)
   }, [initData.sideTree, store])
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>

@@ -1,5 +1,7 @@
 # Search Artiments 重构方案
 
+> Article 数据源更新（2026-11-12）：当前工作区已按 [R3](../../migrations/article-public-body-r3.md)使用 Public + ArticlePublicBody；Indexer 重新读取当前公开 DTO，以 indexedSnapshotId 标识内容身份。本文早期的 ArticleDocument / contentHash 数据源描述不再作为 Article 实施依据；Comment 和其他搜索阶段不在本次改造范围，目标环境未切换。
+
 > 状态：Phase 0 工具链和 Phase 1 Article 搜索已实现；Phase 2 Comment
 > 搜索和 Phase 4 AI 搜索仍在规划中。
 >

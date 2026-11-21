@@ -25,10 +25,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
     Article,
     ArticlePublic,
     Comment,
-    CommentBody,
-    DocPublic,
-    DocBranch,
-    DocBranchVersion
+    CommentBody
   }
 
   @doc "Reads existing and undelivered User recipients for one Mention source."
@@ -80,74 +77,30 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
          title: selected.title,
          article_id: parent.id,
          thread: parent.thread,
-         author_user_id: comment.author_id,
-         branch_id: selected.branch_id
+         author_user_id: comment.author_id
        }}
     else
       _ -> {:error, :mention_current_source_missing}
     end
   end
 
-  def selected_source(%{type: :doc, article_id: id}) do
-    query =
-      from(public in DocPublic,
-        join: branch in DocBranch,
-        on: branch.id == public.branch_id and branch.type == :main,
-        join: version in DocBranchVersion,
-        on: version.id == public.branch_version_id,
-        where: public.article_id == ^id,
-        select: {public, version.revision_id}
-      )
-
-    case Repo.all(query) do
-      [{public, revision_id}] ->
-        with {:ok, %Article{thread: :doc} = article} <-
-               CMS.FrontDesk.article(id, mode: :internal) do
-          content = %{
-            article_id: id,
-            thread: :doc,
-            branch_id: public.branch_id,
-            revision_id: revision_id,
-            title: public.title
-          }
-
-          {:ok,
-           %{
-             content: content,
-             published_revision_identity:
-               "#{public.branch_id}:#{public.branch_version_id}:#{public.publication_version}",
-             title: public.title,
-             article_id: id,
-             thread: :doc,
-             author_id: article.author_id,
-             branch_id: public.branch_id
-           }}
-        else
-          _ -> {:error, :mention_current_source_missing}
-        end
-
-      [] ->
-        {:error, :mention_current_source_missing}
-
-      _ ->
-        {:error, :mention_current_source_ambiguous}
-    end
-  end
-
   def selected_source(%{type: type, article_id: id})
-      when type in [:post, :blog, :changelog, :ticket] do
+      when type in [:post, :blog, :changelog, :doc, :ticket] do
     with {:ok, %Article{thread: ^type} = article} <-
            CMS.FrontDesk.article(id, mode: :internal),
-         %ArticlePublic{} = public <- Repo.get(ArticlePublic, id) do
+         %ArticlePublic{snapshot_id: snapshot_id} = public <- Repo.get(ArticlePublic, id) do
       {:ok,
        %{
          content: article,
-         published_revision_identity: "#{public.revision_id}:#{public.publication_version}",
+         published_revision_identity:
+           if(type == :ticket,
+             do: "article-snapshot:#{snapshot_id}:#{public.published_at}",
+             else: "article-snapshot:#{snapshot_id}"
+           ),
          title: public.title,
          article_id: id,
          thread: type,
-         author_id: article.author_id,
-         branch_id: nil
+         author_id: article.author_id
        }}
     else
       _ -> {:error, :mention_current_source_missing}
@@ -476,7 +429,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       end)
 
     doc =
-      CMS.Gate.scope(Article, nil, :read, DocContext.public_main())
+      CMS.Gate.scope(Article, nil, :read, DocContext.public())
       |> scope_query()
       |> join(:inner, [article, ...], endpoint in Endpoint,
         on: endpoint.type == :doc and endpoint.article_id == article.id,

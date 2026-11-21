@@ -11,17 +11,17 @@ defmodule GroupherServer.CMS.Review.Target do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Review.SnapshotVersion
 
   alias CMS.Model.{
     Article,
     ArticleBinding,
     ArticleLifecycle,
     ArticlePublic,
+    ArticleSnapshot,
     Comment,
     CommentBody,
-    CommentLifecycle,
-    DocLifecycle,
-    DocPublic
+    CommentLifecycle
   }
 
   @doc """
@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Review.Target do
         community_id: community_id,
         observed_version: version
       })
-      when type in [:article, :comment, :doc] and is_binary(id) and is_integer(version) and
+      when type in [:article, :comment] and is_binary(id) and is_integer(version) and
              version > 0 do
     scope_key = if is_nil(community_id), do: "platform", else: "community:#{community_id}"
 
@@ -82,8 +82,14 @@ defmodule GroupherServer.CMS.Review.Target do
        })
        when state in [:published, :archived] do
     case Repo.get(ArticlePublic, article.id) do
-      %ArticlePublic{publication_version: version} -> version
-      nil -> nil
+      %ArticlePublic{snapshot_id: snapshot_id} ->
+        case Repo.get(ArticleSnapshot, snapshot_id) do
+          %ArticleSnapshot{} -> SnapshotVersion.from_id(snapshot_id)
+          nil -> nil
+        end
+
+      nil ->
+        nil
     end
   end
 
@@ -94,18 +100,6 @@ defmodule GroupherServer.CMS.Review.Target do
        }) do
     case Repo.get_by(CommentBody, comment_id: comment.id) do
       %CommentBody{version: version} -> version
-      nil -> nil
-    end
-  end
-
-  defp current_public_version(%{
-         type: :doc,
-         target: article,
-         lifecycle: %{state: state} = lifecycle
-       })
-       when state in [:published, :archived] do
-    case Repo.get_by(DocPublic, article_id: article.id, branch_id: lifecycle.branch_id) do
-      %DocPublic{publication_version: version} -> version
       nil -> nil
     end
   end
@@ -123,21 +117,6 @@ defmodule GroupherServer.CMS.Review.Target do
     case Integer.parse(id) do
       {id, ""} when id > 0 -> {:ok, {:comment, id}}
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
-    end
-  end
-
-  defp parse_target("doc:" <> rest) do
-    case String.split(rest, ":", parts: 2) do
-      [article_id, branch_id] ->
-        with {:ok, article_id} <- Ecto.UUID.cast(article_id),
-             {branch_id, ""} when branch_id > 0 <- Integer.parse(branch_id) do
-          {:ok, {:doc, article_id, branch_id}}
-        else
-          _ -> {:error, CMS.ErrorCat.invalid_review_block()}
-        end
-
-      _ ->
-        {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end
 
@@ -182,28 +161,6 @@ defmodule GroupherServer.CMS.Review.Target do
     end
   end
 
-  defp lock_target({:doc, article_id, branch_id}, "platform") do
-    with {:ok, article} <- lock_article(article_id),
-         %DocLifecycle{} = lifecycle <- lock_doc_lifecycle(article_id, branch_id) do
-      {:ok,
-       %{
-         type: :doc,
-         target: article,
-         lifecycle: lifecycle,
-         target_key: "doc:#{article.id}:#{branch_id}",
-         scope_key: "platform",
-         branch_id: branch_id
-       }}
-    else
-      nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}
-      {:error, _reason} = error -> error
-    end
-  end
-
-  defp lock_target({:doc, _article_id, _branch_id}, _scope_key) do
-    {:error, CMS.ErrorCat.invalid_review_block()}
-  end
-
   defp lock_article(article_id) do
     {:ok, :pass} = CMS.Articles.MutationLock.lock_community_admission(article_id)
 
@@ -230,15 +187,6 @@ defmodule GroupherServer.CMS.Review.Target do
     Repo.one(
       from(lifecycle in CommentLifecycle,
         where: lifecycle.comment_id == ^comment_id,
-        lock: "FOR UPDATE"
-      )
-    )
-  end
-
-  defp lock_doc_lifecycle(article_id, branch_id) do
-    Repo.one(
-      from(lifecycle in DocLifecycle,
-        where: lifecycle.article_id == ^article_id and lifecycle.branch_id == ^branch_id,
         lock: "FOR UPDATE"
       )
     )

@@ -114,6 +114,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     |> validate_length(:mime_type, max: 120)
     |> validate_length(:storage, max: 80)
     |> validate_length(:storage_key, max: 500)
+    |> validate_storage_identity()
     |> validate_length(:public_ref, max: 80)
     |> validate_length(:content_hash, max: 160)
     |> foreign_key_constraint(:community_id)
@@ -121,10 +122,27 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     |> unique_constraint([:community_id, :url_hash],
       name: :community_assets_community_url_hash_index
     )
-    |> unique_constraint([:community_id, :storage, :storage_key],
-      name: :community_assets_community_storage_key_index
-    )
+    |> unique_constraint([:storage, :storage_key], name: :community_assets_storage_key_index)
     |> unique_constraint(:public_ref, name: :community_assets_public_ref_index)
+  end
+
+  defp validate_storage_identity(changeset) do
+    changeset
+    |> validate_change(:storage, fn :storage, value ->
+      if is_binary(value) and String.trim(value) == "" do
+        [storage: "must be non-blank"]
+      else
+        []
+      end
+    end)
+    |> validate_change(:storage_key, fn :storage_key, value ->
+      if is_binary(value) and String.trim(value) == "" do
+        [storage_key: "must be non-blank"]
+      else
+        []
+      end
+    end)
+    |> check_constraint(:storage, name: :community_assets_storage_identity_non_blank_check)
   end
 
   @doc """

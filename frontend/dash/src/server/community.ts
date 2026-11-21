@@ -5,7 +5,7 @@ import { parseDashboard, parseWallpaper } from '~/lib/ssr/parse'
 import { serializeCommunityThemePresetCss } from '~/lib/theme'
 import { community as communityQuery } from '~/schemas/pages/community'
 import { sessionState as sessionStateQuery } from '~/schemas/pages/user'
-import type { TCommunity, TParseDashboard, TUser } from '~/spec'
+import type { TCommunity, TDsb, TUser } from '~/spec'
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 import wallpaperDocument from '~/unit/DsbThread/Appearance/Wallpaper/schema'
 
@@ -34,7 +34,7 @@ const makeOverview = (community: TCommunity) => ({
 export type TCommunityShell = {
   account: TAccountInit
   community: TCommunity
-  dashboard: TParseDashboard
+  dashboard: TDsb
   wallpaper: ReturnType<typeof parseWallpaper>
   themeCssText: string
   demoMode: boolean

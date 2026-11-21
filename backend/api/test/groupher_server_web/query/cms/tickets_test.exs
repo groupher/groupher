@@ -2,6 +2,9 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityAdmin
+
   setup do
     {community, post, _attrs, user} = mock_article(:post)
 
@@ -11,13 +14,11 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
       "ticket.read_internal" => true
     }
 
-    actor = %{
-      user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => grants}
-        }
-    }
+    admin = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: user.id)
+
+    Repo.update!(CommunityAdmin.changeset(admin, %{is_lord: false, permissions: grants}))
+
+    actor = user
 
     {:ok, ticket} =
       CMS.Tickets.create_from_post(
@@ -35,7 +36,7 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
                community,
                ticket.id,
                "Reviewed for public release",
-               draft.draft_version,
+               draft.working_copy_revision,
                draft.lifecycle_version,
                draft.workflow_version,
                actor,
@@ -109,7 +110,7 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
 
     assert result["id"] == ticket.id
     assert result["publicationState"] == "PUBLISHED"
-    assert is_nil(result["draftVersion"])
+    assert is_nil(result["workingCopyRevision"])
     assert is_integer(result["lifecycleVersion"])
     assert is_integer(result["workflowVersion"])
     assert byte_size(result["publicationPreview"]) == 64

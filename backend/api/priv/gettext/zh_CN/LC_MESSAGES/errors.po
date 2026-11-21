@@ -91,6 +91,12 @@ msgstr ""
 msgid "cms.gate.read_only"
 msgstr "当前内容处于只读状态。"
 
+msgid "cms.gate.published_article_editing_disabled"
+msgstr "此社区已关闭已发布内容的编辑。"
+
+msgid "cms.gate.dashboard_not_found"
+msgstr "社区设置不可用，请重试或联系支持人员。"
+
 msgid "cms.gate.unavailable"
 msgstr "内容不可用。"
 

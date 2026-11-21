@@ -37,10 +37,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.UnlinkSource do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_link_source, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.unlink_source(canonical, ticket_id, source_id, expected_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

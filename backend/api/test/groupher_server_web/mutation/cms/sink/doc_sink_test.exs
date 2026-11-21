@@ -30,8 +30,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       result = rule_conn |> gq_mutation(S.Article.m(:sink_article, :doc), variables)
       assert result["innerId"] == to_string(article_inner_id(doc, community))
 
-      branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
-      state = Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id)
+      state = Repo.get!(CMS.Model.Article, doc.id)
       assert state.is_sunk
     end
 
@@ -66,14 +65,13 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
       passport_rules = %{community.slug => %{"doc.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
-      {:ok, _} = CMS.Articles.sink(doc.id, user, branch_id: branch.id, community: community)
+      {:ok, _} = CMS.Articles.sink(doc.id, user, community: community)
 
       updated = rule_conn |> gq_mutation(S.Article.m(:undo_sink_article, :doc), variables)
 
       assert updated["innerId"] == to_string(article_inner_id(doc, community))
 
-      state = Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id)
+      state = Repo.get!(CMS.Model.Article, doc.id)
       refute state.is_sunk
     end
 

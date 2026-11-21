@@ -20,7 +20,7 @@ import type {
   TTicketViewModel,
 } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbConfig from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 const boards = ['todo', 'wip', 'done'] as const
 type Board = (typeof boards)[number]
@@ -43,7 +43,7 @@ type TRes = Record<Board, TKanbanPage> & { resState: TResState }
 export default function useKanbanTickets(internal = false, filter: TTicketFilter = {}): TRes {
   const { slug } = useCommunity()
   const queryClient = useQueryClient()
-  const { config, ready } = usePagiConfig(useDsbConfig(), slug)
+  const { config, ready } = usePagiConfig(useDsb(), slug)
   const initialPagi = toPagiGraphQLInput({
     api: 'offset',
     page: 1,
@@ -65,7 +65,7 @@ export default function useKanbanTickets(internal = false, filter: TTicketFilter
       const existing = current.scope === scope ? current.requests : {}
       const prior = existing[board] || []
       if (
-        config.mode !== 'page' &&
+        config.mode !== 'PAGE' &&
         request.api === 'offset' &&
         prior.some((item) => item.api === 'offset' && item.page === request.page)
       )
@@ -74,7 +74,7 @@ export default function useKanbanTickets(internal = false, filter: TTicketFilter
         scope,
         requests: {
           ...existing,
-          [board]: config.mode === 'page' ? [request] : [...prior, request],
+          [board]: config.mode === 'PAGE' ? [request] : [...prior, request],
         },
       }
     })
@@ -100,7 +100,7 @@ export default function useKanbanTickets(internal = false, filter: TTicketFilter
     const head = query.data?.[board] as TKanbanPageData | undefined
     const loaded = indices.flatMap((index) => (pages[index].data ? [pages[index].data!] : []))
     const selectedPages = requests[board]?.length
-      ? config.mode === 'page'
+      ? config.mode === 'PAGE'
         ? loaded.slice(-1)
         : [...(head ? [head] : []), ...loaded]
       : head

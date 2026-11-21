@@ -29,10 +29,10 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     ArticleBinding,
     CommentLifecycle,
     Community,
+    CommunityAdmin,
     CommunityLifecycle,
     CommunityModerator,
-    Author,
-    DocBranch
+    Author
   }
 
   @community_normal CMS.Communities.Const.pending_state(:normal)
@@ -42,9 +42,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     :gate_article_lifecycle,
     :gate_comment_lifecycle,
     :gate_community,
-    :gate_community_lifecycle,
-    :gate_doc_branch,
-    :gate_comment_doc_branch
+    :gate_community_lifecycle
   ]
 
   @doc false
@@ -99,8 +97,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
              CommentLifecycle,
              ArticleLifecycle,
              Community,
-             CommunityLifecycle,
-             DocBranch
+             CommunityLifecycle
            ]) do
       from(comment in query,
         join: binding in ArticleBinding,
@@ -123,7 +120,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   def community_actor(query, :public, _actor), do: query
 
   @doc false
-  def community_actor(query, :owner_management, %{id: actor_id}) when is_integer(actor_id) do
+  def community_actor(query, :owner, %{id: actor_id}) when is_integer(actor_id) do
     from([gate_community: community] in query, where: community.user_id == ^actor_id)
   end
 
@@ -169,10 +166,15 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
           community.user_id == ^actor_id or
           (community.slug in ^granted_community_slugs and
              exists(
-               from(moderator in CommunityModerator,
+               from(admin in CommunityAdmin,
                  where:
-                   moderator.community_id == parent_as(:gate_community).id and
-                     moderator.user_id == ^actor_id,
+                   admin.community_id == parent_as(:gate_community).id and
+                     admin.user_id == ^actor_id and
+                     (admin.is_lord or
+                        fragment(
+                          "? -> 'article.insights.read' = 'true'::jsonb",
+                          admin.permissions
+                        )),
                  select: 1
                )
              ))
@@ -193,13 +195,13 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   defp apply_community_lifecycle(query, policy_mode)
        when policy_mode in [
-              :owner_management,
+              :owner,
               :moderator_management,
               :operations,
               :insights_management
             ] do
     lifecycle_mode =
-      if policy_mode == :insights_management, do: :owner_management, else: policy_mode
+      if policy_mode == :insights_management, do: :owner, else: policy_mode
 
     from([gate_community_lifecycle: lifecycle] in query,
       where: lifecycle.state in ^Communities.Lifecycle.readable_states(lifecycle_mode)

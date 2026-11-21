@@ -13,6 +13,7 @@ export type TSideTreeNodeType = (typeof SIDE_TREE_NODE_TYPE)[keyof typeof SIDE_T
 export type TSideTreeChildType = typeof SIDE_TREE_NODE_TYPE.PAGE | typeof SIDE_TREE_NODE_TYPE.LINK
 
 export type TDocTreeNodePublishState = {
+  queued?: boolean
   status?: TArticleStage | null
   published: boolean
   publishedBefore?: boolean | null
@@ -72,12 +73,30 @@ export type TSideTreePage = {
   type: typeof SIDE_TREE_NODE_TYPE.PAGE
   title?: string
   docId?: string | null
+  workingCopyId?: string | null
+  workingCopyRevision?: number | null
   path?: string
   href?: string
   marker?: TMarkerValue
   badge?: string
   hidden?: boolean
 } & TSideTreePublishable
+
+export type TWorkspaceNode = {
+  nodeId: string
+  type: 'TAB' | 'GROUP' | 'PAGE' | 'LINK' | 'PIN'
+  parentNodeId?: string | null
+  index: number
+  title: string
+  href?: string | null
+  docId?: string | null
+  marker?: TMarkerValue | null
+  badge?: string | null
+  hidden: boolean
+  published: boolean
+  workingCopyId?: string | null
+  workingCopyRevision?: number | null
+}
 
 export type TSideTreeLink = {
   id: string
@@ -121,6 +140,8 @@ export type TSideTreeController = {
   pins: TSideTreePin[]
   groups: TSideTreeGroup[]
   treeState: TDocTreeState | null
+  workspaceRevision: number | null
+  queueRevision: number | null
   stagedEvents: TDocTreeEvent[]
   trashItems: TDocTreeTrashItem[]
   trashPageInfo?: import('~/spec').TGraphQLPagiPageInfo
@@ -130,6 +151,8 @@ export type TSideTreeController = {
   activeId: string | null
   editingTarget: TEditingTarget
   coverWarning: string | null
+  deleteConfirmation: string | null
+  finishDeleteConfirmation: (confirmed: boolean) => void
   activate: (id: string) => void
   addTab: () => void
   activateTab: (id: string) => void
@@ -169,6 +192,8 @@ export type TDocTreeNodeDTO = {
   /** Direct parent's logical `node_id`, never the parent's physical row `id`. */
   parentNodeId?: string | null
   docId?: string | null
+  workingCopyId?: string | null
+  workingCopyRevision?: number | null
   type:
     | TSideTreeGroup['type']
     | TSideTreeChild['type']

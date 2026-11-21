@@ -9,7 +9,6 @@ import { describe, expect, it } from 'vitest'
 import { DOC_TREE_MAX_VISIBLE_LEVELS } from '../constant/dsb/docs'
 import { THREAD, THREAD_PATH } from '../constant/thread'
 import AboutSchema from '../unit/AboutThread/schema'
-import ArticleEditorSchema from '../unit/ArticleEditor/schema'
 import ArticleMenuSchema from '../unit/ArticleSettingMenu/schema'
 import ArticleViewSchema from '../unit/ArticleView/schema'
 import ChangelogSchema from '../unit/ChangelogThread/schema'
@@ -31,11 +30,11 @@ import DashboardSettingsSchema from '../unit/DsbThread/schema/settings'
 import DashboardShellSchema from '../unit/DsbThread/schema/shell'
 import DashboardTagsSchema from '../unit/DsbThread/schema/tags'
 import KanbanSchema from '../unit/KanbanThread/schema'
-import PassportSchema from '../unit/PassportEditor/schema'
 import PostThreadSchema from '../unit/PostThread/schema'
 import RichEditorSchema from '../unit/RichEditor/schema'
 import TagSettingSchema from '../unit/TagSettingEditor/schema'
 import { pageDocuments } from './pages/contract-inventory'
+import PressSchema from './pages/press'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const schemaPath = path.join(__dirname, '../../../backend/api/schema.graphql')
@@ -90,7 +89,6 @@ type SchemaValue = string | DocumentNode
 const featureDocuments: Record<string, Record<string, SchemaValue>> = {
   pages: pageDocuments,
   about: AboutSchema,
-  articleEditor: ArticleEditorSchema,
   articleMenu: ArticleMenuSchema,
   articleView: {
     setTag: ArticleViewSchema.setTag,
@@ -115,12 +113,12 @@ const featureDocuments: Record<string, Record<string, SchemaValue>> = {
   },
   dashboardAnalysis: AnalysisSchema,
   dashboardTheme: ThemeSchema,
+  press: PressSchema,
   dashboardWallpaper: WallpaperSchema,
   docsImport: ImportSchema,
   docCovers: DocCoversSchema,
   doc: DocSchema,
   kanban: KanbanSchema,
-  passport: PassportSchema,
   postThread: {
     communityTagStats: PostThreadSchema.communityTagStats,
     pagedPosts: PostThreadSchema.getPagedArticlesSchema(THREAD_PATH.POST),
@@ -146,9 +144,9 @@ describe('feature GraphQL documents', () => {
 
   it('keeps the Dashboard document tree at three visible levels', () => {
     const document =
-      typeof DashboardDocsSchema.docTree === 'string'
-        ? parse(DashboardDocsSchema.docTree)
-        : DashboardDocsSchema.docTree
+      typeof DocSchema.docPublicTree === 'string'
+        ? parse(DocSchema.docPublicTree)
+        : DocSchema.docPublicTree
 
     expect(documentPagesDepth(document) + 1).toBe(DOC_TREE_MAX_VISIBLE_LEVELS)
   })

@@ -4,7 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 import type { TThirdPartyAnalyticsConfig } from '~/lib/thirdPartyAnalytics'
 import { isValidThirdPartyAnalyticsConfig } from '~/lib/thirdPartyAnalytics'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import ArrowLinker from '~/ui/ArrowLinker'
 import Button from '~/ui/Buttons/Button'
 import ToggleSwitch from '~/ui/Buttons/ToggleSwitch'
@@ -35,7 +35,7 @@ const getIdentityConfigField = (
 const SettingModal = ({ show, onClose, service }: TProps) => {
   const s = useSalon()
   const { t } = useTrans()
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { onSave, isPending } = useHelper()
   const [enabled, setEnabled] = useState(false)
   const [value, setValue] = useState('')

@@ -13,18 +13,21 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Queries do
   use Helper.GqlSchemaSuite
 
   object :cms_press_queries do
+    @desc "Loads the Press configuration for a community."
     field :press_config, :press_config do
       arg(:community, non_null(:string))
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Press.press_config/3)
     end
 
+    @desc "Loads an article for the Press service."
     field :press_article, :press_article do
       arg(:article, non_null(:article_path_input))
       middleware(M.ServiceScope, audience: "phoenix:press-api", scope: "press:article:read")
       resolve(&R.CMS.Press.press_article/3)
     end
 
+    @desc "Loads a community RSS feed for the Press service."
     field :press_community_rss_feed, :press_community_rss_feed do
       arg(:community, non_null(:string))
       arg(:input, non_null(:press_community_rss_feed_input))
@@ -32,6 +35,7 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Queries do
       resolve(&R.CMS.Press.press_community_rss_feed/3)
     end
 
+    @desc "Loads a thread RSS feed for the Press service."
     field :press_thread_rss_feed, :press_thread_rss_feed do
       arg(:community, non_null(:string))
       arg(:thread, non_null(:thread))
@@ -40,6 +44,7 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Queries do
       resolve(&R.CMS.Press.press_thread_rss_feed/3)
     end
 
+    @desc "Loads a community site manifest for the Press service."
     field :press_site_manifest, :press_site_manifest do
       arg(:community, non_null(:string))
       middleware(M.ServiceScope, audience: "phoenix:press-api", scope: "press:site:read")

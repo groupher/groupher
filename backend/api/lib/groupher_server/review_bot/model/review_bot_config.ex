@@ -16,7 +16,7 @@ defmodule GroupherServer.ReviewBot.Model.ReviewBotConfig do
 
   @schema_prefix DBPrefix.review_bot()
   @primary_key {:id, Ecto.UUID, autogenerate: true}
-  @subject_types [:article, :comment, :doc]
+  @subject_types [:article, :comment]
   @review_modes [:immediate, :ai_first, :human_first]
 
   @type t :: %__MODULE__{}
@@ -53,7 +53,6 @@ defmodule GroupherServer.ReviewBot.Model.ReviewBotConfig do
     end)
     |> validate_ban_words()
     |> validate_prompt()
-    |> validate_doc_scope()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:updated_by_id)
     |> unique_constraint(:subject_type, name: :review_bot_configs_system_subject_unique)
@@ -75,22 +74,6 @@ defmodule GroupherServer.ReviewBot.Model.ReviewBotConfig do
           []
       end
     end)
-  end
-
-  defp validate_doc_scope(changeset) do
-    cond do
-      get_field(changeset, :subject_type) != :doc ->
-        changeset
-
-      not is_nil(get_field(changeset, :community_id)) ->
-        add_error(changeset, :community_id, "Doc policies are platform-only")
-
-      not is_nil(get_field(changeset, :review_mode)) ->
-        add_error(changeset, :review_mode, "System policies do not have a review mode")
-
-      true ->
-        changeset
-    end
   end
 
   defp validate_review_mode(changeset) do

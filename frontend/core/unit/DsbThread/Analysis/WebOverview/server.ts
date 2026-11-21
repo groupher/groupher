@@ -3,6 +3,7 @@ import { graphql } from '~/graphql/authoring'
 import type { TAnalysisTrendsOverview, TAnalysisWebMetric } from './spec'
 
 export const ANALYSIS_TRENDS_OVERVIEW_QUERY = graphql(`
+  "Built-in community Analysis Trends summary and chart"
   query AnalysisTrendsOverview($community: String!, $days: Int) {
     analysisTrendsOverview(community: $community, days: $days) {
       status

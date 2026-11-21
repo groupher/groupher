@@ -1,6 +1,6 @@
 import { equals } from 'ramda'
 
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../../constant'
 import type { TDsbEditableFieldKey, TDsbFieldKey } from '../../spec'
@@ -19,7 +19,7 @@ const LEGACY_COMPARE_FIELDS = new Set<TDsbEditableFieldKey>([
 
 /** Exposes touch state and actions through the shared React hook boundary. */
 export default function useTouch(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
 
   const { original, touchedFields } = dsb$
 

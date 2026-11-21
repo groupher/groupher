@@ -1,13 +1,12 @@
+import { valueKeyedEnum } from '~/lib/enumValues'
+import { MarkerType } from '~/lib/graphql/generated/enums'
 import type { TMarkerValue } from '~/spec'
 import { getIconFilePath } from '~/ui/IconHub/sprite'
 
 import { COLOR, RAINBOW_COLOR_HEX, RAINBOW_LITE_COLOR_HEX } from './colors'
 import THEME from './theme'
 
-export const MARKER = {
-  ICON: 'ICON',
-  EMOJI: 'EMOJI',
-} as const
+export const MARKER = valueKeyedEnum(MarkerType)
 
 export const DEFAULT_PAGE_MARKER: TMarkerValue = {
   type: MARKER.ICON,

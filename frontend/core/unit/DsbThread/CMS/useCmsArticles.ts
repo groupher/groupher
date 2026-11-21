@@ -9,7 +9,7 @@ import { Q } from '~/query'
 import { articlePathKey } from '~/query/articlePath'
 import type { TPagedArticleViewModels, TArticleViewerState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbConfig from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 type TArticleKind = 'changelog' | 'post'
 
@@ -18,9 +18,9 @@ export default function useCmsArticles(kind: TArticleKind) {
   const queryClient = useQueryClient()
   const { slug: community } = useCommunity()
   const config = {
-    ...toEffectivePagiConfig(useDsbConfig()),
+    ...toEffectivePagiConfig(useDsb()),
     api: 'offset' as const,
-    mode: 'page' as const,
+    mode: 'PAGE' as const,
   }
   const position = usePagiPosition(`${community}:${kind}:${config.revision}`, config.defaultSize)
   const filter = {

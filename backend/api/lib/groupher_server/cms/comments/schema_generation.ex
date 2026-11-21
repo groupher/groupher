@@ -9,8 +9,8 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
   Migrations cannot mint this record. No business row is initialized or repaired.
   """
   @contract "shared-comments-v1"
-  @tables ~w(articles article_bindings article_stats comments comment_review_blocks pinned_comments communities doc_branches doc_drafts doc_lifecycles doc_branch_states doc_branch_versions doc_branch_version_counters doc_publics doc_review_blocks trashed_doc_articles doc_tree_nodes doc_publish_release_articles post_reaction_infos blog_reaction_infos changelog_reaction_infos doc_reaction_infos comment_reaction_infos post_emotion_infos blog_emotion_infos changelog_emotion_infos doc_emotion_infos comment_emotion_infos)
-  @functions ~w(guard_doc_binding_identity guard_immutable_identity guard_doc_binding_delete guard_doc_owner_community_delete guard_doc_membership_owner guard_comment_parent_identity enforce_comment_review_block_scope require_doc_owner_at_commit)
+  @tables ~w(articles article_bindings article_stats comments comment_review_blocks pinned_comments communities article_history_owners trashed_doc_articles doc_tree_nodes doc_publish_release_articles post_reaction_infos blog_reaction_infos changelog_reaction_infos doc_reaction_infos comment_reaction_infos post_emotion_infos blog_emotion_infos changelog_emotion_infos doc_emotion_infos comment_emotion_infos)
+  @functions ~w(guard_doc_binding_identity guard_immutable_identity guard_doc_binding_delete guard_doc_owner_community_delete guard_comment_parent_identity enforce_comment_review_block_scope require_doc_owner_at_commit)
 
   @doc "Attests an explicitly named empty database before business DDL."
   def bootstrap!(repo, expected_database, generation, source, build) do
@@ -138,10 +138,7 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
     if not Enum.all?(required, &MapSet.member?(present, &1)) or
          Enum.any?(
            [
-             {"comments", "branch_id"},
-             {"comments", "replies"},
-             {"pinned_comments", "branch_id"},
-             {"doc_branch_states", "comments_locked"}
+             {"comments", "replies"}
            ],
            &MapSet.member?(present, &1)
          ) do
@@ -187,20 +184,21 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
       raise("shared comment identity guards are missing")
     end
 
-    delivery_guards =
+    delivery_identity_columns =
       repo.query!(
         """
-        SELECT c.relname,pg_get_constraintdef(con.oid)
-        FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid
-        JOIN pg_namespace n ON n.oid=c.relnamespace
-        WHERE n.nspname='messaging' AND c.relname IN ('mentions','notifications')
-          AND con.conname='comment_delivery_has_no_body_branch' ORDER BY c.relname
+        SELECT table_name,column_name,data_type,is_nullable
+        FROM information_schema.columns
+        WHERE table_schema='messaging' AND table_name IN ('mentions','notices')
+          AND column_name IN ('comment_id','branch_id')
+        ORDER BY table_name,column_name
         """,
         []
       ).rows
 
-    if Enum.map(delivery_guards, &hd/1) != ["mentions", "notifications"] do
-      raise "stable Comment delivery guards are missing"
+    if Enum.map(delivery_identity_columns, fn [table, column | _] -> {table, column} end) !=
+         [{"mentions", "comment_id"}, {"notices", "comment_id"}] do
+      raise "stable Comment delivery schema is incomplete"
     end
 
     account_guards = account_deletion_guards!(repo)
@@ -213,7 +211,7 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
         indexes,
         triggers,
         functions,
-        delivery_guards,
+        delivery_identity_columns,
         account_guards
       ])
     )

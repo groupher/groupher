@@ -19,7 +19,7 @@ import ChangelogSVG from '~/icons/TadaRaw'
 import Img from '~/Img'
 import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
-import useDsb from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import ImgFallback from '~/ui/ImgFallback'
 import Tooltip from '~/ui/Tooltip'
 

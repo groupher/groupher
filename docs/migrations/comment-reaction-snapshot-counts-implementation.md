@@ -8,6 +8,8 @@
 >
 > [执行计划](comment-reaction-snapshot-counts.md) 是产品合同；[inventory](comment-reaction-snapshot-counts-inventory.md) 是 B0 的读写/case 设计；原审计源码副本和 SHA 清单已从仓库移除。本记录描述随后实施，不覆盖历史静态结论，不继承另一个 session 的测试通过记录。
 
+> **2026-11-14 架构决定：**本文中 Doc 单一 owner / 单社区限制及其测试记录描述当时实现，不是当前目标合同。Doc 多社区 Binding、共享 Article 状态/正文、显式 Community 评论 scope 与站点级 Release 的目标见 [Article–Community](../feature/article/article-community.md)、[共享评论计划](./comment-reaction-snapshot-counts.md) 和 [Docs 发布队列合同](./docs-publish-queue-refactor.md)。此前通过的单 owner 测试不验收多社区目标。
+
 ## 1. 交付与边界
 
 B1–B4、B6 已在当前工作区集成并完成下列本地验收。B5 仅完成私有新库准入、只读事实核对和本地真实页面验证；真实发布未执行，仍受 §6 的准入清单约束。

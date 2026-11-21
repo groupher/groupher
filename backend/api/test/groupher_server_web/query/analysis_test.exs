@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Query.Analysis do
 
   setup do
     {community, _post, _attrs, _user} = mock_article(:post)
-    conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+    conn = simu_conn(:user, cms: %{community.slug => %{"analysis.web.read" => true}})
     guest_conn = simu_conn(:guest)
     previous = Application.get_env(:groupher_server, :web_analysis)
 

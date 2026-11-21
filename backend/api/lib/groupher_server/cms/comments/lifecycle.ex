@@ -100,32 +100,37 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
   ## Examples
 
-      Comments.Lifecycle.transition(comment.id, :deleted)
-      Comments.Lifecycle.transition(locked_lifecycle, :deleted)
+      Comments.Lifecycle.transition(comment.id, :deleted, operation_ref)
+      Comments.Lifecycle.transition(locked_lifecycle, :deleted, operation_ref)
   """
-  @spec transition(integer(), CommentLifecycle.state()) ::
+  @spec transition(integer(), CommentLifecycle.state(), Ecto.UUID.t()) ::
           {:ok, CommentLifecycle.t()}
           | {:error, ErrorCat.error() | Ecto.Changeset.t()}
-  def transition(comment_id, state) when is_integer(comment_id) and state in @states do
+  def transition(comment_id, state, operation_ref)
+      when is_integer(comment_id) and state in @states and is_binary(operation_ref) do
     Repo.transaction(fn ->
-      case CMS.Comments.Summary.for_lifecycle(%CommentLifecycle{comment_id: comment_id}, fn ->
-             lifecycle =
-               CommentLifecycle
-               |> where([lifecycle], lifecycle.comment_id == ^comment_id)
-               |> lock("FOR UPDATE")
-               |> Repo.one()
+      case CMS.Comments.Summary.for_lifecycle(
+             %CommentLifecycle{comment_id: comment_id},
+             operation_ref,
+             fn ->
+               lifecycle =
+                 CommentLifecycle
+                 |> where([lifecycle], lifecycle.comment_id == ^comment_id)
+                 |> lock("FOR UPDATE")
+                 |> Repo.one()
 
-             case lifecycle do
-               nil ->
-                 Repo.rollback(ErrorCat.lifecycle_not_found())
+               case lifecycle do
+                 nil ->
+                   Repo.rollback(ErrorCat.lifecycle_not_found())
 
-               %CommentLifecycle{} = lifecycle ->
-                 case transition(lifecycle, state) do
-                   {:ok, updated} -> {:ok, updated}
-                   {:error, reason} -> Repo.rollback(reason)
-                 end
+                 %CommentLifecycle{} = lifecycle ->
+                   case transition_fact(lifecycle, state) do
+                     {:ok, updated} -> {:ok, updated}
+                     {:error, reason} -> Repo.rollback(reason)
+                   end
+               end
              end
-           end) do
+           ) do
         {:ok, updated} -> updated
         {:error, reason} -> Repo.rollback(reason)
       end
@@ -136,10 +141,13 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
     end
   end
 
-  @spec transition(CommentLifecycle.t(), CommentLifecycle.state()) ::
+  @spec transition(CommentLifecycle.t(), CommentLifecycle.state(), Ecto.UUID.t()) ::
           {:ok, CommentLifecycle.t()} | {:error, Ecto.Changeset.t() | :lifecycle_state_conflict}
-  def transition(%CommentLifecycle{} = lifecycle, state) when state in @states do
-    CMS.Comments.Summary.for_lifecycle(lifecycle, fn -> transition_fact(lifecycle, state) end)
+  def transition(%CommentLifecycle{} = lifecycle, state, operation_ref)
+      when state in @states and is_binary(operation_ref) do
+    CMS.Comments.Summary.for_lifecycle(lifecycle, operation_ref, fn ->
+      transition_fact(lifecycle, state)
+    end)
   end
 
   defp transition_fact(%CommentLifecycle{state: state} = lifecycle, state), do: {:ok, lifecycle}

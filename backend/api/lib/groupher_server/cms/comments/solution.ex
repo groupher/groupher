@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
   @spec accept(Comment.t(), User.t()) :: {:error, term()}
   def accept(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @doc "Accepts or replaces the solution while binding retries to `command_id`."
+  @doc "Accepts or replaces the solution through its Receipt-backed operation."
   @spec accept(Comment.t(), User.t(), Ecto.UUID.t()) :: {:ok, Comment.t()} | {:error, term()}
   def accept(%Comment{} = comment, %User{} = actor, command_id) do
     CMS.Comments.Commands.SolutionChange.execute(:accept_solution, comment, actor, command_id)
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
   @spec revoke(Comment.t(), User.t()) :: {:error, term()}
   def revoke(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @doc "Revokes the current solution while binding retries to `command_id`."
+  @doc "Revokes the current solution through its Receipt-backed operation."
   @spec revoke(Comment.t(), User.t(), Ecto.UUID.t()) :: {:ok, Comment.t()} | {:error, term()}
   def revoke(%Comment{} = comment, %User{} = actor, command_id) do
     CMS.Comments.Commands.SolutionChange.execute(:revoke_solution, comment, actor, command_id)
@@ -97,11 +97,11 @@ defmodule GroupherServer.CMS.Comments.Solution do
         %Article{thread: :post} = post,
         %Comment{} = comment,
         %User{} = actor,
-        command_id
+        operation_ref
       ) do
     case action do
-      :accept_solution -> accept_in_transaction(post, comment, actor, command_id)
-      :revoke_solution -> revoke_in_transaction(post, comment, actor, command_id)
+      :accept_solution -> accept_in_transaction(post, comment, actor, operation_ref)
+      :revoke_solution -> revoke_in_transaction(post, comment, actor, operation_ref)
     end
   end
 
@@ -109,7 +109,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
          %Article{thread: :post} = post,
          %Comment{} = comment,
          %User{} = actor,
-         command_id
+         operation_ref
        ) do
     current = current(post)
 
@@ -120,7 +120,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
 
       with {:ok, _solution} <- upsert(current, post, comment, actor, occurred_at),
            {:ok, _activity} <-
-             record_accept(current, post, comment, actor, command_id, occurred_at) do
+             record_accept(current, post, comment, actor, operation_ref, occurred_at) do
         {:ok, %{comment | is_solution: true}}
       end
     end
@@ -130,7 +130,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
          %Article{thread: :post} = post,
          %Comment{} = comment,
          %User{} = actor,
-         command_id
+         operation_ref
        ) do
     case current(post) do
       nil ->
@@ -151,7 +151,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
                Effects.activity(post, :solution_revoked,
                  actor: actor,
                  target: comment,
-                 operation_ref: command_id,
+                 operation_ref: operation_ref,
                  occurred_at: occurred_at,
                  payload: %{}
                ) do

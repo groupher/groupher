@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('~/hooks/usePagiConfig', () => ({
   default: () => ({
-    config: { defaultSize: 20, mode: 'page', revision: 1 },
+    config: { defaultSize: 20, mode: 'PAGE', revision: 1 },
     ready: true,
   }),
 }))
@@ -25,7 +25,7 @@ vi.mock('~/query', () => ({
   },
 }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
-vi.mock('~/stores/dsbConfig/hooks', () => ({ default: () => ({}) }))
+vi.mock('~/stores/dsb/hooks', () => ({ default: () => ({}) }))
 
 const createTicket = (postInnerId: number): TTicket =>
   ({

@@ -1,11 +1,6 @@
-import type {
-  ARTICLE_CAT,
-  ARTICLE_CAT_MODE,
-  ARTICLE_STATUS_REJECT,
-  ARTICLE_ORDER,
-  ARTICLE_STATUS,
-} from '~/const/gtd'
+import type { ARTICLE_CAT_MODE, ARTICLE_STATUS_REJECT, ARTICLE_STATUS } from '~/const/gtd'
 import type { UPVOTE_LAYOUT } from '~/const/layout'
+import type { ArticleCatEnum, ArticleOrderEnum } from '~/lib/graphql/generated/enums'
 import type { ArticleEmotion, EmotionType, ReactionOutcome } from '~/lib/graphql/generated/graphql'
 import type { TConstValues } from '~/spec'
 
@@ -259,8 +254,8 @@ export type TCommentsState = {
 
 export type TArticleStatusReject = TConstValues<typeof ARTICLE_STATUS_REJECT>
 export type TArticleStatus = TConstValues<typeof ARTICLE_STATUS>
-export type TArticleOrder = TConstValues<typeof ARTICLE_ORDER>
-export type TArticleCat = TConstValues<typeof ARTICLE_CAT>
+export type TArticleOrder = ArticleOrderEnum
+export type TArticleCat = ArticleCatEnum
 
 export type TArticlePubSelector = {
   cat?: TArticleCat | null

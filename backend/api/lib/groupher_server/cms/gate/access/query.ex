@@ -18,17 +18,18 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   and return only `:ok` or `{:error, reason}`.
   """
 
+  require GroupherServer.CMS.Gate.ErrorCat
+
   import Ecto.Query
 
-  alias GroupherServer.CommandPipeline
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CommandPipeline, CMS, Repo}
   alias CommandPipeline.StageContext
 
   alias CMS.Gate.Access.Check
   alias CMS.Gate.Access.Policy.Application, as: ApplicationPolicy
   alias CMS.Gate.{Decision, ErrorCat}
   alias CMS.{Articles, FrontDesk}
-  alias CMS.Model.{Article, Comment, Community, DocBranch}
+  alias CMS.Model.{Article, Comment, Community}
   alias CMS.Model.CommunityApplication
   alias CMS.Articles.MutationLock
   alias Helper.ORM.AdvisoryLock
@@ -56,6 +57,14 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     Check.comment(actor, action, resource)
   end
 
+  def access_check(actor, :manage_coauthors, %Article{} = resource) do
+    case Repo.transaction(fn -> Check.article(actor, :manage_coauthors, resource) end) do
+      {:ok, result} -> result
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+      {:error, _reason} -> {:error, Decision.deny(ErrorCat.resource_not_found())}
+    end
+  end
+
   def access_check(actor, action, %Article{} = resource) do
     Check.article(actor, action, resource)
   end
@@ -63,33 +72,6 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   def access_check(actor, action, %model{} = resource)
       when model in @article_models do
     Check.article(actor, action, resource)
-  end
-
-  def access_check(
-        actor,
-        action,
-        %{
-          id: article_id,
-          thread: :doc,
-          branch_id: branch_id,
-          community: %Community{} = community
-        }
-      )
-      when is_binary(article_id) and is_integer(branch_id) do
-    case Repo.get(Article, article_id) do
-      %Article{} = article ->
-        with_branch_check(actor, action, community, article, branch_id, fn canonical ->
-          {:ok, canonical}
-        end)
-
-      nil ->
-        {:error, Decision.deny(ErrorCat.resource_not_found())}
-    end
-  end
-
-  def access_check(_actor, _action, %{thread: :doc, branch_id: branch_id})
-      when is_integer(branch_id) do
-    {:error, ErrorCat.doc_branch_required()}
   end
 
   def access_check(
@@ -157,6 +139,13 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     end
   end
 
+  def check_in_transaction(actor, :manage_coauthors, %Article{} = article) do
+    with {:ok, :pass} <- require_transaction() do
+      Check.article(actor, :manage_coauthors, article)
+      |> normalize_join_decision()
+    end
+  end
+
   def check_in_transaction(_actor, _action, _resource) do
     {:error, ErrorCat.unsupported_resource()}
   end
@@ -187,23 +176,9 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   def check_interaction_in_transaction(
         actor,
         action,
-        %{
-          id: article_id,
-          thread: :doc,
-          branch_id: branch_id,
-          community: %Community{} = community
-        }
-      )
-      when is_binary(article_id) and is_integer(branch_id) do
-    check_in_transaction(actor, action, %{id: article_id, thread: :doc}, community, branch_id)
-  end
-
-  def check_interaction_in_transaction(
-        actor,
-        action,
         %{id: article_id, thread: thread, community: %Community{} = community}
       )
-      when is_binary(article_id) and thread in [:post, :blog, :changelog] do
+      when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
     check_in_transaction(actor, action, %{id: article_id, thread: thread}, community)
   end
 
@@ -246,6 +221,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   def check_in_transaction(actor, action, %Article{} = article, %Community{} = community) do
     with {:ok, :pass} <- require_transaction(),
+         {:ok, :pass} <- MutationLock.lock_community_admission(article.id),
          {:ok, :pass} <- acquire_article_lock(community, article) do
       Check.with_authorized_article_binding(actor, action, {community, article}, fn value ->
         {:ok, value}
@@ -262,75 +238,8 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
       )
       when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
     case Repo.get(Article, article_id) do
-      %Article{thread: :doc} ->
-        {:error, ErrorCat.doc_branch_required()}
-
       %Article{} = article ->
         check_in_transaction(actor, action, article, community)
-
-      nil ->
-        {:error, ErrorCat.resource_not_found()}
-    end
-  end
-
-  @doc "Joins the caller transaction for a branch-scoped Doc check."
-  def check_in_transaction(actor, action, resource, community, branch_id)
-
-  # Doc discussion is attached to the stable Article. Creation therefore uses
-  # the same aggregate lock as reply/edit/delete, while Gate still checks main.
-  def check_in_transaction(
-        actor,
-        :create_comment,
-        %Article{thread: :doc} = article,
-        %Community{} = community,
-        branch_id
-      )
-      when is_integer(branch_id) do
-    with {:ok, :pass} <- require_transaction(),
-         {:ok, :pass} <- acquire_comment_parent_lock(community, article, nil) do
-      Check.with_authorized_doc(
-        actor,
-        :create_comment,
-        {community, article, branch_id},
-        fn value ->
-          {:ok, value}
-        end
-      )
-      |> normalize_join_decision()
-    end
-  end
-
-  def check_in_transaction(
-        actor,
-        action,
-        %Article{thread: :doc} = article,
-        %Community{} = community,
-        branch_id
-      )
-      when is_integer(branch_id) do
-    with {:ok, :pass} <- require_transaction(),
-         {:ok, :pass} <- acquire_doc_lock(community, article, branch_id) do
-      Check.with_authorized_doc(actor, action, {community, article, branch_id}, fn value ->
-        {:ok, value}
-      end)
-      |> normalize_join_decision()
-    end
-  end
-
-  def check_in_transaction(
-        actor,
-        action,
-        %{id: article_id, thread: :doc},
-        %Community{} = community,
-        branch_id
-      )
-      when is_binary(article_id) and is_integer(branch_id) do
-    case Repo.get(Article, article_id) do
-      %Article{thread: :doc} = article ->
-        check_in_transaction(actor, action, article, community, branch_id)
-
-      %Article{} ->
-        {:error, ErrorCat.doc_branch_required()}
 
       nil ->
         {:error, ErrorCat.resource_not_found()}
@@ -354,26 +263,20 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   end
 
   defp acquire_article_lock(%Community{} = community, %Article{thread: thread, id: article_id})
-       when thread in [:post, :blog, :changelog] do
+       when thread in [:post, :blog, :changelog, :doc] do
     AdvisoryLock.acquire!(MutationLock.key(community, thread, article_id))
     {:ok, :pass}
   end
 
-  defp acquire_article_lock(_community, _article), do: {:error, ErrorCat.doc_branch_required()}
+  defp acquire_article_lock(_community, _article), do: {:error, ErrorCat.unsupported_resource()}
 
   defp acquire_comment_parent_lock(
          %Community{} = community,
          %Article{thread: :doc, id: id},
          _comment
        ) do
-    case Repo.get_by(DocBranch, community_id: community.id, type: :main) do
-      %DocBranch{id: branch_id} ->
-        AdvisoryLock.acquire!(MutationLock.doc_key(community, branch_id, id))
-        {:ok, :pass}
-
-      nil ->
-        {:error, ErrorCat.doc_branch_required()}
-    end
+    AdvisoryLock.acquire!(MutationLock.key(community, :doc, id))
+    {:ok, :pass}
   end
 
   defp acquire_comment_parent_lock(
@@ -382,11 +285,6 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
          _comment
        ) do
     AdvisoryLock.acquire!(MutationLock.key(community, thread, id))
-    {:ok, :pass}
-  end
-
-  defp acquire_doc_lock(%Community{} = community, %Article{id: article_id}, branch_id) do
-    AdvisoryLock.acquire!(MutationLock.doc_key(community, branch_id, article_id))
     {:ok, :pass}
   end
 
@@ -433,17 +331,6 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   def with_check(actor, action, %model{} = article, callback)
       when model in @article_models and is_function(callback, 1) do
     _ = {actor, action, article, callback}
-    {:error, ErrorCat.scope_context_missing()}
-  end
-
-  def with_check(
-        actor,
-        action,
-        %{id: article_id, thread: :doc, branch_id: branch_id},
-        callback
-      )
-      when is_binary(article_id) and is_integer(branch_id) and is_function(callback, 1) do
-    _ = {actor, action, article_id, branch_id, callback}
     {:error, ErrorCat.scope_context_missing()}
   end
 
@@ -566,30 +453,6 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     |> normalize_decision()
   end
 
-  @doc "Runs a branch-scoped command with an explicit ArticleBinding Community."
-  @spec with_branch_check(
-          term(),
-          atom(),
-          Community.t(),
-          Article.t(),
-          pos_integer(),
-          (Article.t() -> term())
-        ) :: {:ok, term()} | {:error, term()}
-  def with_branch_check(
-        actor,
-        action,
-        %Community{} = community,
-        %Article{thread: :doc} = article,
-        branch_id,
-        callback
-      )
-      when is_integer(branch_id) and is_function(callback, 1) do
-    Articles.MutationLock.transact_doc(community, article, branch_id, fn ->
-      Check.with_authorized_doc(actor, action, {community, article, branch_id}, callback)
-    end)
-    |> normalize_decision()
-  end
-
   defp normalize_decision({:error, %Decision{} = decision}) do
     {:error, Decision.primary_error(decision)}
   end
@@ -607,7 +470,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
 
-  defp transact_parent(community, article, _branch_id, fun) do
+  defp transact_parent(community, article, _unused, fun) do
     Articles.MutationLock.transact_article(community, article, fun)
   end
 end

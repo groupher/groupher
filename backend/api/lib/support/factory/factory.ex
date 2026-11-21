@@ -23,8 +23,10 @@ defmodule GroupherServer.Support.Factory do
     Category,
     Comment,
     Community,
+    CommunityAdmin,
     CommunityTag,
-    CommunityTagGroup
+    CommunityTagGroup,
+    GlobalPassport
   }
 
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
@@ -56,7 +58,8 @@ defmodule GroupherServer.Support.Factory do
       plain_text: plain_text,
       digest: String.slice(text, 0, 500),
       body_hash: :crypto.hash(:sha256, json) |> Base.encode16(case: :lower),
-      schema_version: CMS.Artiment.BodyBag.schema_version()
+      schema_version: CMS.Artiment.BodyBag.schema_version(),
+      thumbnail: %{version: 1, blocks: [%{type: "paragraph", text: text}]}
     }
   end
 
@@ -199,7 +202,7 @@ defmodule GroupherServer.Support.Factory do
   # not use changeset because in test we may insert some attrs which not in schema
   # like: views, insert/update ... to test filter-sort,when ...
   # """
-  @doc "Inserts a fixture; Article threads use the production stable Draft/Publish boundary."
+  @doc "Inserts a fixture; Article threads use the production WorkingCopy/Snapshot boundary."
   def db_insert(factory_name, attributes \\ [])
 
   def db_insert(factory_name, attributes) when factory_name in [:post, :blog, :changelog, :doc] do
@@ -210,20 +213,71 @@ defmodule GroupherServer.Support.Factory do
     public_attrs =
       mock_attrs(factory_name, attrs) |> Map.drop([:author, :community, :communities])
 
-    CMS.Articles.create(community, factory_name, public_attrs, user,
-      command_id: Ecto.UUID.generate()
-    )
+    if factory_name == :doc do
+      create_published_doc(community, public_attrs, user)
+    else
+      create_published_article(community, factory_name, public_attrs, user)
+    end
   end
 
   def db_insert(factory_name, attributes) do
     db_insert_with_retry(factory_name, attributes, 3)
   end
 
+  defp ensure_test_system_root!(%User{id: user_id}) do
+    passport = Repo.get_by(GlobalPassport, user_id: user_id) || %GlobalPassport{}
+
+    passport
+    |> GlobalPassport.changeset(%{
+      user_id: user_id,
+      is_root: true,
+      permissions: passport.permissions
+    })
+    |> Repo.insert_or_update!()
+  end
+
+  @doc "Creates a public Article fixture through the single-command Snapshot publisher."
+  def create_published_article(community, thread, attrs, user, opts \\ [])
+
+  def create_published_article(
+        %Community{} = community,
+        thread,
+        attrs,
+        %User{} = user,
+        opts
+      )
+      when thread in [:post, :blog, :changelog] and is_map(attrs) and is_list(opts) do
+    ensure_test_system_root!(user)
+    actor = user
+    attrs = with_body_bag(attrs)
+    opts = Keyword.put_new(opts, :command_id, Ecto.UUID.generate())
+
+    with {:ok, %{article: article}} <-
+           CMS.Articles.create_and_publish_article(community, thread, attrs, actor, opts),
+         {:ok, %{inner_id: inner_id}} <-
+           CMS.Articles.Bindings.fetch_binding(article.id, community.id),
+         {:ok, public} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: inner_id
+           }) do
+      {:ok, public}
+    end
+  end
+
+  def create_published_article(%Community{} = community, :doc, attrs, %User{} = user, _opts) do
+    create_published_doc(community, attrs, user)
+  end
+
+  def create_published_article(_community, _thread, _attrs, _user, _opts) do
+    {:error, :unsupported_article_thread}
+  end
+
   defp db_insert_with_retry(factory_name, attributes, attempts_left) do
     factory_name
     |> mock(attributes)
     |> maybe_put_default_article_binding()
-    |> maybe_put_default_doc_branch()
     |> maybe_put_default_tag_group()
     |> Repo.insert()
     |> ensure_community_lifecycle()
@@ -252,8 +306,6 @@ defmodule GroupherServer.Support.Factory do
   defp maybe_put_default_tag_group(record), do: record
 
   defp maybe_put_default_article_binding(record), do: record
-
-  defp maybe_put_default_doc_branch(record), do: record
 
   defp ensure_community_lifecycle({:ok, %Community{} = community} = result) do
     with {:ok, _lifecycle} <- CMS.Communities.Lifecycle.ensure_created(community.id) do
@@ -381,12 +433,12 @@ defmodule GroupherServer.Support.Factory do
       thread: :post,
       article_id: post.id,
       title: post.title,
-      action: :upvote,
+      type: :upvote,
       user_id: user.id,
       read: false
     }
 
-    Messaging.send_notification(notify_attrs, from_user)
+    Messaging.send_notice(notify_attrs, from_user)
   end
 
   def mock_community do
@@ -414,9 +466,11 @@ defmodule GroupherServer.Support.Factory do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
 
     {:ok, article} =
-      CMS.Articles.create(community, thread, with_body_bag(attrs), user,
-        command_id: Ecto.UUID.generate()
-      )
+      if thread == :doc do
+        create_published_doc(community, attrs, user)
+      else
+        create_published_article(community, thread, attrs, user)
+      end
 
     {community, article, attrs, user}
   end
@@ -439,11 +493,42 @@ defmodule GroupherServer.Support.Factory do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
 
     {:ok, article} =
-      CMS.Articles.create(community, thread, with_body_bag(attrs), user,
-        command_id: Ecto.UUID.generate()
-      )
+      if thread == :doc do
+        create_published_doc(community, attrs, user)
+      else
+        create_published_article(community, thread, attrs, user)
+      end
 
     {community, article, attrs, user}
+  end
+
+  defp create_published_doc(community, attrs, user) do
+    doc_permissions = %{"doc.queue.publish" => true, "doc.queue.write" => true}
+
+    case Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) do
+      %CommunityAdmin{} = member ->
+        member
+        |> CommunityAdmin.changeset(%{
+          permissions: Map.merge(member.permissions, doc_permissions)
+        })
+        |> Repo.update!()
+
+      nil ->
+        %CommunityAdmin{}
+        |> CommunityAdmin.changeset(%{
+          user_id: user.id,
+          community_id: community.id,
+          permissions: doc_permissions
+        })
+        |> Repo.insert!()
+    end
+
+    attrs =
+      attrs
+      |> with_body_bag()
+      |> Map.take([:title, :slug, :digest, :body_bag, :cover, :cover_edit, :tag_ids])
+
+    CMS.Seeds.Docs.create(community, attrs, user, Ecto.UUID.generate())
   end
 
   defp with_body_bag(%{body: body} = attrs) when is_binary(body) do

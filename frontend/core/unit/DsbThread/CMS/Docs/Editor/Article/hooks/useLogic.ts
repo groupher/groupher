@@ -1,5 +1,5 @@
 import type { TSideTreeController } from '../../SideTree/spec'
-import type { TDocDraftInitialData } from '../spec'
+import useBeginDocEdit from './useBeginDocEdit'
 import useDraftAutoSave from './useDraftAutoSave'
 import useDraftEditorState from './useDraftEditorState'
 import useDraftLoader from './useDraftLoader'
@@ -7,20 +7,20 @@ import useDraftStoreSync from './useDraftStoreSync'
 import useLocalDraftHistory from './useLocalDraftHistory'
 
 /** Exposes logic state and actions through the shared React hook boundary. */
-export default function useLogic(
-  sideTree: TSideTreeController,
-  initialData?: TDocDraftInitialData | null,
-) {
-  const draftState = useDraftEditorState(sideTree, initialData)
+export default function useLogic(sideTree: TSideTreeController) {
+  const draftState = useDraftEditorState(sideTree)
   const { save } = useDraftAutoSave(draftState, {
     patchSideTreeChild: sideTree.patchChild,
   })
 
+  const begin = useBeginDocEdit(draftState)
   useDraftLoader(draftState)
   const localDraftHistory = useLocalDraftHistory(draftState)
   useDraftStoreSync(draftState)
 
   return {
+    ...begin,
+    canBeginEdit: !!draftState.publicSnapshotId && !draftState.workingCopyId && !draftState.dirty,
     activePage: draftState.activePage,
     bodyValue: draftState.draft.bodyValue,
     dirty: draftState.dirty,

@@ -3,7 +3,7 @@ import { pick } from 'ramda'
 import { COLOR } from '~/const/colors'
 import useTrans from '~/hooks/useTrans'
 import type { TDocCoverLayout, TDocFAQLayout, TEditFunc } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -21,7 +21,7 @@ type TRet = {
 
 /** Exposes doc state and actions through the shared React hook boundary. */
 export default function useDoc(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { isChanged, edit, isPending } = useHelper()
   const { t } = useTrans()
 

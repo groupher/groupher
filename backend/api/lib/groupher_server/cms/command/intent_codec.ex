@@ -20,11 +20,91 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
   @type policy :: :digest | :digest_each | :empty | {:fields, %{String.t() => policy() | :raw}}
 
   @policies %{
+    community_admin_remove: {:fields, %{"member_id" => :raw, "revision" => :raw}},
+    community_admin_permissions_update:
+      {:fields, %{"member_id" => :raw, "revision" => :raw, "permissions" => :digest_each}},
+    community_admin_request_cancel: {:fields, %{"request_id" => :raw, "revision" => :raw}},
+    community_admin_request_create:
+      {:fields,
+       %{
+         "subject_user_id" => :raw,
+         "request_type" => :raw,
+         "permissions" => :digest_each
+       }},
+    community_admin_request_decide:
+      {:fields,
+       %{
+         "request_id" => :raw,
+         "revision" => :raw,
+         "decision" => :raw,
+         "approved" => :digest
+       }},
+    docs_restore_snapshot:
+      {:fields,
+       %{
+         "article_id" => :raw,
+         "snapshot_id" => :raw,
+         "working_copy_id" => :raw,
+         "revision" => :raw
+       }},
+    docs_configure_queue:
+      {:fields, %{"revision" => :raw, "required" => :raw, "self_approval" => :raw}},
     article_create: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
-    article_create_draft:
-      {:fields, %{"thread" => :raw, "attrs" => :digest_each, "opts" => :digest_each}},
+    article_create_article:
+      {:fields, %{"thread" => :raw, "attrs" => :digest_each, "history_context" => :digest_each}},
+    article_create_and_publish_article:
+      {:fields, %{"thread" => :raw, "attrs" => :digest_each, "history_context" => :digest_each}},
+    article_save_working_copy:
+      {:fields,
+       %{
+         "working_copy_id" => :raw,
+         "attrs" => :digest_each,
+         "revision" => :raw,
+         "community_id" => :raw,
+         "history_context" => :digest_each
+       }},
+    article_publish_article:
+      {:fields,
+       %{
+         "source" => :digest_each,
+         "expected_public_snapshot_id" => :raw,
+         "history_context" => :digest_each
+       }},
+    article_fork_snapshot:
+      {:fields,
+       %{
+         "snapshot_id" => :raw,
+         "scope_type" => :raw,
+         "scope_id" => :raw,
+         "history_context" => :digest_each
+       }},
+    article_delete_working_copy: {:fields, %{"working_copy_id" => :raw}},
+    article_co_author_request_create:
+      {:fields,
+       %{
+         "subject_user_id" => :raw,
+         "request_type" => :raw,
+         "permissions" => :digest_each
+       }},
+    article_co_author_request_decide:
+      {:fields,
+       %{
+         "request_id" => :raw,
+         "revision" => :raw,
+         "decision" => :raw,
+         "approved" => :digest
+       }},
+    article_co_author_request_cancel: {:fields, %{"request_id" => :raw, "revision" => :raw}},
+    article_co_author_permissions_update:
+      {:fields,
+       %{
+         "member_id" => :raw,
+         "revision" => :raw,
+         "permissions" => :digest_each
+       }},
+    article_co_author_member_remove: {:fields, %{"member_id" => :raw, "revision" => :raw}},
+    article_co_author_member_leave: {:fields, %{"revision" => :raw}},
     article_update: :digest_each,
-    article_publish: :digest_each,
     article_mirror:
       {:fields,
        %{
@@ -86,6 +166,9 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     category_delete: {:fields, %{"community_id" => :raw}},
     category_set: {:fields, %{"category_id" => :raw}},
     category_unset: {:fields, %{"category_id" => :raw}},
+    community_article_hide: {:fields, %{"community_id" => :raw}},
+    community_article_restore:
+      {:fields, %{"community_id" => :raw, "trash_id" => :raw, "revision" => :raw}},
     community_subscribe: {:fields, %{"community_id" => :raw}},
     community_unsubscribe: {:fields, %{"community_id" => :raw}},
     community_application_submit: :digest,
@@ -151,6 +234,61 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     upvote_add: {:fields, %{"operation" => :raw}},
     upvote_remove: {:fields, %{"operation" => :raw}},
     doc_publish_changes: :digest_each,
+    doc_release_queue: {:fields, %{"revision" => :raw}},
+    docs_approve_queue: {:fields, %{"revision" => :raw}},
+    doc_enqueue_queue: {:fields, %{"revision" => :raw, "entries" => :digest}},
+    docs_merge_queue:
+      {:fields,
+       %{
+         "queue_revision" => :raw,
+         "article_id" => :raw,
+         "default_revision" => :raw,
+         "work_revision" => :raw,
+         "choices" => :digest
+       }},
+    docs_save_queue:
+      {:fields,
+       %{
+         "queue_revision" => :raw,
+         "article_id" => :raw,
+         "work_revision" => :raw,
+         "attrs" => :digest_each
+       }},
+    docs_begin_edit: {:fields, %{"article_id" => :raw, "public_snapshot_id" => :raw}},
+    docs_resolve_post_publish:
+      {:fields,
+       %{
+         "article_id" => :raw,
+         "working_copy_id" => :raw,
+         "default_revision" => :raw,
+         "public_snapshot_id" => :raw,
+         "choices" => :digest
+       }},
+    docs_duplicate_workspace_node: {:fields, %{"revision" => :raw, "node_id" => :raw}},
+    docs_create_workspace_node: {:fields, %{"revision" => :raw, "attrs" => :digest_each}},
+    docs_update_workspace_node:
+      {:fields, %{"revision" => :raw, "node_id" => :raw, "patch" => :digest_each}},
+    docs_move_workspace_node:
+      {:fields, %{"revision" => :raw, "node_id" => :raw, "parent" => :raw, "position" => :raw}},
+    docs_dequeue: {:fields, %{"revision" => :raw, "ids" => :digest, "confirmation" => :digest}},
+    docs_delete_workspace_node:
+      {:fields,
+       %{
+         "tree_revision" => :raw,
+         "queue_revision" => :raw,
+         "node_id" => :raw,
+         "confirmation" => :digest
+       }},
+    docs_restore_workspace_node:
+      {:fields,
+       %{
+         "tree_revision" => :raw,
+         "queue_revision" => :raw,
+         "action_id" => :raw,
+         "target_parent" => :raw,
+         "target_index" => :raw
+       }},
+    docs_purge_workspace_trash: {:fields, %{"queue_revision" => :raw, "action_id" => :raw}},
     doc_move_to_draft: {:fields, %{"id" => :raw, "opts" => :digest_each}},
     doc_move_subtree_to_draft: {:fields, %{"id" => :raw, "opts" => :digest_each}},
     doc_update_draft: {:fields, %{"id" => :raw, "opts" => :digest_each}},

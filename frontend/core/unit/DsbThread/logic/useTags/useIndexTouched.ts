@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
 import type { TTagGroup } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 type TPlacementType = 'group' | 'tag'
 
@@ -99,7 +99,7 @@ export const hasTagPlacementChanged = (
 
 /** Exposes index touched state and actions through the shared React hook boundary. */
 export default function useIndexTouched(): boolean {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const tagGroups = dsb$.tagGroups
   const originalTagGroups = dsb$.original.tagGroups || EMPTY_TAG_GROUPS
 

@@ -1,12 +1,12 @@
 import useTwBelt from '~/hooks/useTwBelt'
-import useContentShadowStore from '~/stores/contentShadow/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import useBase from '../../../../useDsbSalon'
 
 export default function useSalon() {
   const { cn, br, bg, shadow, primary } = useTwBelt()
 
-  const contentShadow = useContentShadowStore().enabled
+  const contentShadow = useDsbShell().contentShadow
   const base = useBase()
 
   return {

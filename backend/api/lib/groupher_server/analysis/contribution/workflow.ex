@@ -13,7 +13,7 @@ defmodule GroupherServer.Analysis.Contribution.Workflow do
   alias Accounts.Model.User
   alias CMS.Model.Community
   alias Analysis.Contribution.{Effects, Persist, Query}
-  alias Helper.{Datetime, ORM}
+  alias Helper.ORM
 
   @doc """
   Records today's user contribution and refreshes the embedded digest.
@@ -40,7 +40,7 @@ defmodule GroupherServer.Analysis.Contribution.Workflow do
                   CMS.communities_update_operations(
                     community,
                     %{contributes_digest: digest},
-                    "analysis:community-contribution:#{community.id}:#{Datetime.today()}:#{contribute.count}"
+                    Ecto.UUID.generate()
                   ) do
              %{contribute: contribute, community: result}
            else

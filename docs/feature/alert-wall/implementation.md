@@ -2,6 +2,8 @@
 
 > 版本说明：本文是 V1 实施基线；新一轮重构按 [V2：ReviewBot / AlertWall](./v2.md) 的边界、接口、迁移和验收执行。下文“冻结”仅指 V1，不覆盖 V2。
 
+> **历史说明：**本文中的 ReviewConfig、目标输入及 JSON 字段形状仅描述 V1。当前目标命名和直接迁移要求以 [V2 合同](./v2.md) 与 [Docs 发布队列合同 §1.1.3–§1.1.4](../../migrations/docs-publish-queue-refactor.md) 为准；不得把本文的旧字段当作兼容 alias 或新 schema 合同。
+
 > 状态：实施合同，2026-10-22；本文件冻结目标决策，D1–D5 与 N1–N7 运行时代码及本地自动化回归已完成；真实浏览器验收与 N8 维护切换证据见 [delivery.md](./delivery.md)，这些步骤完成前不可视为已上线。
 > 与 [产品合同](./design.md)、[批次和验收](./delivery.md)、[旧链删除清单](../../migrations/legacy-content-audit-removal.md) 配套。
 > 下文标为“新增”的表、模块、接口描述本轮最终合同；代码实现状态以批次文档为准。无旧 Audit 兼容层。
@@ -435,8 +437,8 @@ Report 与 Audit 一样在 D5 删除旧应用链、接口、GraphQL 类型、生
 | CMS.AbuseReports.account/undo_account -> AbuseReports.Report                                                                                                                                                                          | D5 删除旧 facade/Report 与嵌入写入；N4 以 User typed target 建立全新举报事实                               |
 | `cms/interactions.ex`、Reactions 中 report delegates/result                                                                                                                                                                           | 删除举报 delegates；非举报 reactions 不动                                                                  |
 | `schema/cms/cms_queries.ex` paged_abuse_reports + `web/resolvers/cms/reporting.ex`                                                                                                                                                    | D5 删除旧 field/resolver；N5 建立 AlertBoard resolver，无旧 query alias                                    |
-| `schema/cms/cms_metrics.ex:280` report_filter；`schema/cms/cms_types.ex:1889/1895/2008` abuse_report_case/abuse_report/report_page                                                                                                    | D5 删除旧 GraphQL 类型/输入，N5 生成新 Board 类型                                                          |
-| `backend/api/lib/groupher_server_web/schema/account/account_types.ex:51` + `backend/api/lib/groupher_server/accounts/model/embeds/user_meta.ex:83-84` + `backend/api/lib/groupher_server/accounts/model/embeds/user_contribute.ex:22` | D5 删除旧账号举报计数、举报者 ID 数组和贡献摘要计数；N5 的 `reported_count` 由 AlertBoard reports 聚合派生 |
+| `schema/cms/cms_metrics.ex:280` report_filter；`schema/cms/spec.ex:1889/1895/2008` abuse_report_case/abuse_report/report_page                                                                                                    | D5 删除旧 GraphQL 类型/输入，N5 生成新 Board 类型                                                          |
+| `backend/api/lib/groupher_server_web/schema/account/spec.ex:51` + `backend/api/lib/groupher_server/accounts/model/embeds/user_meta.ex:83-84` + `backend/api/lib/groupher_server/accounts/model/embeds/user_contribute.ex:22` | D5 删除旧账号举报计数、举报者 ID 数组和贡献摘要计数；N5 的 `reported_count` 由 AlertBoard reports 聚合派生 |
 | Article/Comment 旧 report/undo_report mutations                                                                                                                                                                                       | 删除旧 schema 声明/生成 helper 分支；N7 只生成新 submitReport/withdrawReport 合同                          |
 | AbuseReport 表、report_cases embed、viewer_has_reported 旧投影                                                                                                                                                                        | D5 直接 DROP/移除，不迁移；N4 从空的新 facts 建立 Interaction 投影                                         |
 | maybe_fold_comment、fold_for_report、report_threshold_for_fold                                                                                                                                                                        | 删除仅由举报阈值驱动的路径；手动 fold 独立保留                                                             |
@@ -446,7 +448,7 @@ Report 与 Audit 一样在 D5 删除旧应用链、接口、GraphQL 类型、生
 ### 11.1 举报前后端接线与投影
 
 已定位的后端消费者：`groupher_server_web/schema/helper/mutations.ex`、`schema/cms/mutations/{post,blog,changelog,doc}.ex`、
-`resolvers/cms/interactions.ex`、`resolvers/cms/comments.ex`、`resolvers/cms/reporting.ex`、`schema/account/account_types.ex`。
+`resolvers/cms/interactions.ex`、`resolvers/cms/comments.ex`、`resolvers/cms/reporting.ex`、`schema/account/spec.ex`。
 删除旧报告 mutation/query 生成分支，不删除同文件 upvote/emotion 等独立行为。
 前端 `frontend/core/unit/Comments/schema.ts`、`Comments/Comment/Actions.tsx`、
 `frontend/core/query/mutation/comment/moderation.ts`、`query/mutation/comment.ts`、`query/mutation/useCommentModeration.ts`

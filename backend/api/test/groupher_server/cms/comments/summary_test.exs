@@ -205,7 +205,7 @@ defmodule GroupherServer.Test.CMS.Comments.SummaryTest do
   test "CNT-04 a corrupted Comment counter rolls the tombstone and facts back", ctx do
     {:ok, comment} = create(ctx, ctx.author)
 
-    Repo.update_all(from(s in ArticleStats, where: s.article_id == ^ctx.article.article_id),
+    Repo.update_all(from(s in ArticleStats, where: s.article_id == ^ctx.article.id),
       set: [comments_count: 0]
     )
 
@@ -244,7 +244,7 @@ defmodule GroupherServer.Test.CMS.Comments.SummaryTest do
       drain.(drain, [])
 
       assert {:ok, _} =
-               CMS.Comments.comments_state(:post, ctx.article.article_id, nil, ctx.community.slug)
+               CMS.Comments.comments_state(:post, ctx.article.id, nil, ctx.community.slug)
 
       drain.(drain, [])
     end
@@ -301,14 +301,14 @@ defmodule GroupherServer.Test.CMS.Comments.SummaryTest do
 
   test "REL-01 missing summary rows fail closed without lazy initialization", ctx do
     Repo.delete!(stats(ctx.article))
-    assert {:error, _} = CMS.ArticleStats.fetch(:post, ctx.article.article_id)
+    assert {:error, _} = CMS.ArticleStats.fetch(:post, ctx.article.id)
 
     assert {:error, _} =
-             CMS.Comments.comments_state(:post, ctx.article.article_id, nil, ctx.community.slug)
+             CMS.Comments.comments_state(:post, ctx.article.id, nil, ctx.community.slug)
 
     assert {:error, _} = create(ctx, ctx.author)
-    refute Repo.exists?(from(c in Comment, where: c.article_id == ^ctx.article.article_id))
-    refute Repo.exists?(from(s in ArticleStats, where: s.article_id == ^ctx.article.article_id))
+    refute Repo.exists?(from(c in Comment, where: c.article_id == ^ctx.article.id))
+    refute Repo.exists?(from(s in ArticleStats, where: s.article_id == ^ctx.article.id))
   end
 
   defp create(ctx, actor, id \\ Ecto.UUID.generate()) do
@@ -335,6 +335,7 @@ defmodule GroupherServer.Test.CMS.Comments.SummaryTest do
           type: :human_review_hold,
           source: :request,
           source_ref: source,
+          operation_ref: Ecto.UUID.generate(),
           applied_at: DateTime.utc_now(:second)
         })
       end)

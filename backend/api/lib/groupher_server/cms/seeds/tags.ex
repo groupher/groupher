@@ -102,9 +102,9 @@ defmodule GroupherServer.CMS.Seeds.Tags do
     index = current_count + 1
     attrs = build_tag_attrs(thread, groups, group_by_title, target_count, index)
 
-    workflow_ref = "seed-tags:#{community.id}:#{thread}"
+    operation_ref = Ecto.UUID.generate()
 
-    case Maintenance.create(community, thread, attrs, bot, workflow_ref) do
+    case Maintenance.create(community, thread, attrs, bot, operation_ref) do
       {:ok, _tag} ->
         ensure_tags_count(community, thread, bot, groups, group_by_title, target_count, index)
 
@@ -124,9 +124,9 @@ defmodule GroupherServer.CMS.Seeds.Tags do
           {:cont, {:ok, acc}}
 
         :error ->
-          workflow_ref = "seed-tag-groups:#{community.id}:#{thread}"
+          operation_ref = Ecto.UUID.generate()
 
-          case Maintenance.create_group(community, thread, %{title: title}, workflow_ref) do
+          case Maintenance.create_group(community, thread, %{title: title}, operation_ref) do
             {:ok, group} -> {:cont, {:ok, Map.put(acc, title, group)}}
             {:error, reason} -> {:halt, {:error, reason}}
           end

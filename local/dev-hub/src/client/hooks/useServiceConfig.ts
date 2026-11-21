@@ -1,12 +1,11 @@
 import type { TServiceConfigContent, TServiceConfigManifest } from '@shared/contracts'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { fetchServiceConfig, fetchServiceConfigContent } from '@/lib/hub-client'
 
 export function useServiceConfig(serviceId: string) {
   const [manifest, setManifest] = useState<TServiceConfigManifest | null>(null)
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
-  const [revealedFileIds, setRevealedFileIds] = useState(() => new Set<string>())
   const [content, setContent] = useState<TServiceConfigContent | null>(null)
   const [loading, setLoading] = useState(true)
   const [contentLoading, setContentLoading] = useState(false)
@@ -15,7 +14,6 @@ export function useServiceConfig(serviceId: string) {
   const [requestVersion, setRequestVersion] = useState(0)
   const [contentRequestVersion, setContentRequestVersion] = useState(0)
   const selectedFile = manifest?.files.find((file) => file.id === selectedFileId) || null
-  const selectedRevealed = selectedFileId ? revealedFileIds.has(selectedFileId) : false
 
   useEffect(() => {
     const controller = new AbortController()
@@ -26,7 +24,6 @@ export function useServiceConfig(serviceId: string) {
       .then((nextManifest) => {
         setManifest(nextManifest)
         setSelectedFileId(nextManifest.files[0]?.id || null)
-        setRevealedFileIds(new Set())
       })
       .catch((cause: unknown) => {
         if (!controller.signal.aborted) {
@@ -53,7 +50,7 @@ export function useServiceConfig(serviceId: string) {
     setContentLoading(true)
     setContentError(null)
 
-    void fetchServiceConfigContent(serviceId, selectedFileId, selectedRevealed, controller.signal)
+    void fetchServiceConfigContent(serviceId, selectedFileId, controller.signal)
       .then(setContent)
       .catch((cause: unknown) => {
         if (!controller.signal.aborted) {
@@ -67,23 +64,12 @@ export function useServiceConfig(serviceId: string) {
       })
 
     return () => controller.abort()
-  }, [contentRequestVersion, selectedFileId, selectedRevealed, serviceId])
-
-  const toggleSelectedReveal = useCallback(() => {
-    if (!selectedFileId) return
-    setRevealedFileIds((current) => {
-      const next = new Set(current)
-      if (next.has(selectedFileId)) next.delete(selectedFileId)
-      else next.add(selectedFileId)
-      return next
-    })
-  }, [selectedFileId])
+  }, [contentRequestVersion, selectedFileId, serviceId])
 
   return {
     manifest,
     selectedFile,
     selectedFileId,
-    selectedRevealed,
     content,
     loading,
     contentLoading,
@@ -92,6 +78,5 @@ export function useServiceConfig(serviceId: string) {
     selectFile: setSelectedFileId,
     refresh: () => setRequestVersion((value) => value + 1),
     retryContent: () => setContentRequestVersion((value) => value + 1),
-    toggleSelectedReveal,
   }
 }

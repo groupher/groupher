@@ -64,9 +64,7 @@ export function ConfigDrawerBody({ manifest, config }: TProps) {
           content={config.content}
           loading={config.contentLoading}
           error={config.contentError}
-          revealed={config.selectedRevealed}
           onRetry={config.retryContent}
-          onToggleReveal={config.toggleSelectedReveal}
         />
       ) : null}
     </div>

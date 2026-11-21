@@ -6,20 +6,36 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.MutationLock do
   alias GroupherServer.CMS
   alias CMS.Articles.MutationLock
 
-  test "Doc lock keys are scoped by branch" do
-    {community, _existing_post, _attrs, _user} = mock_article(:post)
+  test "ordinary Article lock identity is shared by all Community bindings" do
+    article_id = Ecto.UUID.generate()
+    first = %CMS.Model.Community{id: 1}
+    second = %CMS.Model.Community{id: 2}
+
+    assert MutationLock.key(first, :post, article_id) ==
+             MutationLock.key(second, :post, article_id)
+
+    refute MutationLock.key(first, :post, article_id) ==
+             MutationLock.key(first, :post, Ecto.UUID.generate())
+  end
+
+  test "Doc lock keys use the stable Article and owner Community" do
+    community = %CMS.Model.Community{id: 1}
+    other = %CMS.Model.Community{id: 2}
     article_id = Ecto.UUID.generate()
 
-    refute MutationLock.doc_key(community, 11, article_id) ==
-             MutationLock.doc_key(community, 12, article_id)
+    assert MutationLock.key(community, :doc, article_id) ==
+             MutationLock.key(community, :doc, article_id)
 
-    assert MutationLock.key(community, :post, article_id) !=
-             MutationLock.doc_key(community, 11, article_id)
+    refute MutationLock.key(community, :doc, article_id) ==
+             MutationLock.key(other, :doc, article_id)
+
+    refute MutationLock.key(community, :doc, article_id) ==
+             MutationLock.key(community, :doc, Ecto.UUID.generate())
   end
 
   test "observed hold telemetry closes after the surrounding command transaction" do
     {community, post, _attrs, _user} = mock_article(:post)
-    article = Repo.get!(CMS.Model.Article, post.article_id)
+    article = Repo.get!(CMS.Model.Article, post.id)
     handler_id = {__MODULE__, make_ref()}
     event = [:groupher, :cms, :articles, :mutation_lock, :hold]
     test_pid = self()

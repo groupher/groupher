@@ -10,8 +10,8 @@ import type {
   TThread,
 } from '~/spec'
 import type { TChangeTagMode } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
-import { useTagEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useTagsEditor } from '~/stores/dsbShell/editor'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import useHelper from '../useHelper'
 import useDerived, { type TRet as TDrived } from './useDerived'
@@ -41,8 +41,8 @@ type TRet = {
 
 /** Exposes tags state and actions through the shared React hook boundary. */
 export default function useTags(): TRet {
-  const dsb$ = useDsbEdit()
-  const tagUi$ = useTagEditorUi()
+  const dsb$ = useDsbShell()
+  const tagsEditor = useTagsEditor()
   const { edit } = useHelper()
   const derived = useDerived()
 
@@ -59,21 +59,22 @@ export default function useTags(): TRet {
 
   const exportState = ['tagLayout', 'inlineTagLayout', 'activeTagGroup', 'activeTagThread']
 
-  const editTag = (key: TChangeTagMode, tag: TTag): void => tagUi$.patch({ [key]: tag })
+  const editTag = (key: TChangeTagMode, tag: TTag): void => tagsEditor.setTag(key, tag)
   const changeThread = (thread: TThread): void => {
     dsb$.editMany({
       activeTagThread: thread,
       activeTagGroup: null,
     })
-    tagUi$.patch({ editingTag: null, settingTag: null })
+    tagsEditor.setEditingTag(null)
+    tagsEditor.setSettingTag(null)
     loadTags(thread)
   }
 
   return {
     // @ts-expect-error
     ...pick(exportState, dsb$),
-    editingTag: tagUi$.editingTag,
-    settingTag: tagUi$.settingTag,
+    editingTag: tagsEditor.editingTag,
+    settingTag: tagsEditor.settingTag,
     loading,
     ...derived,
     saving,

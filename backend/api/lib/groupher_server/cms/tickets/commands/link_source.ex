@@ -46,10 +46,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.LinkSource do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_link_source, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.link_source(canonical, ticket_id, type, post_id, expected_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { KANBAN_BOARD } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import useKanban from '../../../logic/useKanban'
 import Boards from '../Boards'
@@ -11,12 +11,12 @@ vi.mock('~/hooks/useTrans', () => ({
   default: () => ({
     t: (key: string) =>
       (
-        ({
+        {
           'article.status.backlog': 'Backlog',
           'article.status.todo': 'Todo',
           'article.status.wip': 'In progress',
           'article.status.done': 'Done',
-        }) as Record<string, string>
+        } as Record<string, string>
       )[key] || key,
   }),
 }))
@@ -28,7 +28,7 @@ vi.mock('~/hooks/useDsbTab', () => ({
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: vi.fn() }))
 
 function Probe() {
-  const { kanbanBoards, original } = useDsbEdit()
+  const { kanbanBoards, original } = useDsbShell()
   const { isKanbanBoardsTouched } = useKanban()
 
   return (

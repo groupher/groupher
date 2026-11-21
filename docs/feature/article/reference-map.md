@@ -5,6 +5,10 @@
 > 历史合同：2026-11-06 [MentionsGraph 一次切换](../../deploy/runbooks/mentions-graph-cutover.md)已开放新 API/Community Worker，本文不再是当前运行时合同。新数据驱动的产品验收和 B2 代表性性能出口仍未签收；以下 M0–M5 仅保留旧实现的环境证据。当前合同见 [MentionsGraph 重构](mentions-graph-refactor.md)。
 
 > 历史状态：M0–M4 已在本地实现并回归；M5 按用户指定的本地隔离环境完成 report/apply、失败续跑、巡检遥测和六类公开入口验收（2026-11-03）。下文所称“当前”和“后续切换”均按当时旧实现阅读；文件级落点与环境证据见 [实施 inventory](reference-map-inventory.md)。
+
+> **2026-11-14 Docs 目标更新：**本文 Doc branch / DocPublic 选版及 Doc Comment branch 身份是历史 Mention Map 合同，不定义新 Docs 行为。新目标以共享 Article 身份和 ArticlePublic / ArticlePublicBody 为正文来源，按显式请求社区验证 ArticleBinding；须按 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 重审 Doc / Comment locator 与验收。
+
+> 下方含 Doc branch ID、单一 owner 和 DocPublic URL fallback 的段落均为该历史合同的实施记录；它们不是当前 locator 或社区归属规则。
 > 普通 Comment 不持久化创建 Community；ArticleLifecycle 只按 Article ID 管理状态。具体审核与迁移验收规则见 [ArticleLifecycle 与 Comment 社区解耦重构合同](article-lifecycle-comment-decoupling.md)。
 
 ## 1. 目标、范围与完成定义

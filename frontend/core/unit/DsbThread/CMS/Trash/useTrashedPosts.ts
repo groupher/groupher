@@ -18,6 +18,7 @@ import { normalizeTrashedPost } from './normalize'
 import type { TPagedTrashedPosts, TRawPagedTrashedPosts, TTrashedPostsData } from './spec'
 
 const PAGE_SIZE = 20
+type TOrdinaryThread = 'POST' | 'BLOG' | 'CHANGELOG'
 const EMPTY_PAGE: TPagedTrashedPosts = {
   entries: [],
   pageInfo: {
@@ -37,24 +38,28 @@ const normalizePage = (page: TTrashedPostsData['trashedArticles']): TPagedTrashe
 })
 
 /** Exposes trashed posts state and actions through the shared React hook boundary. */
-export default function useTrashedPosts(initialData?: TRawPagedTrashedPosts | null) {
+export default function useTrashedPosts(
+  initialData?: TRawPagedTrashedPosts | null,
+  thread: TOrdinaryThread = 'POST',
+) {
   const { slug: community } = useCommunity()
   const { t } = useTrans()
   const { accountScope } = useAccount()
   const queryClient = useQueryClient()
-  const scope = `${accountScope}:${community}`
+  const scope = `${accountScope}:${community}:${thread}`
   const [seedScope] = useState(scope)
   const position = usePagiPosition(scope, PAGE_SIZE)
   const page = position.request.api === 'offset' ? position.request.page : 1
   const setPage = position.setPage
   const [activeActionId, setActiveActionId] = useState<string | null>(null)
-  const queryRoot = [...viewerQueryKeys.all, accountScope, 'article-trash', community]
+  const queryRoot = [...viewerQueryKeys.all, accountScope, 'article-trash', community, thread]
   const query = useQuery({
     queryKey: [...queryRoot, position.input],
     queryFn: async () =>
       (
         await browserGraphQLRequest<TTrashedPostsData>(S.trashedPosts, {
           community,
+          thread,
           pagi: position.input,
         })
       ).trashedArticles,
@@ -84,6 +89,7 @@ export default function useTrashedPosts(initialData?: TRawPagedTrashedPosts | nu
           variables: {
             community,
             id,
+            thread,
           },
         })
 
@@ -98,7 +104,7 @@ export default function useTrashedPosts(initialData?: TRawPagedTrashedPosts | nu
         setActiveActionId(null)
       }
     },
-    [activeActionId, community, refreshAfterRemoval, t],
+    [activeActionId, community, refreshAfterRemoval, t, thread],
   )
 
   const permanentlyDelete = useCallback(
@@ -109,7 +115,7 @@ export default function useTrashedPosts(initialData?: TRawPagedTrashedPosts | nu
       try {
         const data = await executeCommand({
           request: (variables) => browserGraphQLRequest(S.permanentlyDeleteTrashedPost, variables),
-          variables: { community, id },
+          variables: { community, id, thread },
         })
 
         if (!data.permanentlyDeleteTrashedArticle?.done) return false
@@ -123,7 +129,7 @@ export default function useTrashedPosts(initialData?: TRawPagedTrashedPosts | nu
         setActiveActionId(null)
       }
     },
-    [activeActionId, community, refreshAfterRemoval, t],
+    [activeActionId, community, refreshAfterRemoval, t, thread],
   )
 
   return {

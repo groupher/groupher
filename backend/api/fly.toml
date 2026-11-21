@@ -12,6 +12,10 @@ kill_signal = 'SIGTERM'
 [deploy]
 release_command = '/app/bin/migrate'
 
+[[mounts]]
+source = 'groupher_data'
+destination = '/data'
+
 [env]
   SEARCH_ARTIMENTS_ENABLED = 'false'
 PHX_HOST = 'api.groupher.com'

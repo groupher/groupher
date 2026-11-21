@@ -17,9 +17,17 @@ import useTrashedPosts from './useTrashedPosts'
 
 const getTrashRowId = (item: TTrashedPost): string => item.id
 
-export default function PostTrash({ initialData }: { initialData?: TRawPagedTrashedPosts | null }) {
+type TOrdinaryThread = 'POST' | 'BLOG' | 'CHANGELOG'
+
+export default function PostTrash({
+  initialData,
+  thread = 'POST',
+}: {
+  initialData?: TRawPagedTrashedPosts | null
+  thread?: TOrdinaryThread
+}) {
   const { activeActionId, loading, error, retry, pagedPosts, permanentlyDelete, restore, setPage } =
-    useTrashedPosts(initialData)
+    useTrashedPosts(initialData, thread)
   const [sorting, setSorting] = useState<SortingState>([])
   const [deleteCandidate, setDeleteCandidate] = useState<TTrashedPost | null>(null)
   const requestPermanentDelete = useCallback((item: TTrashedPost) => {

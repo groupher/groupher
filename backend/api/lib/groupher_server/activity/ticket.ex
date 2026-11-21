@@ -35,7 +35,7 @@ defmodule GroupherServer.Activity.Ticket do
       ),
     published:
       Event.contract(
-        [:revision_id],
+        [:snapshot_id],
         [:lifecycle_version, :reason, :from_publication_state, :to_publication_state],
         []
       ),

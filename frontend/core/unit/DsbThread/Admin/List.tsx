@@ -9,7 +9,7 @@ import UserItem from './UserItem'
 export default function List() {
   const s = useSalon()
   const {
-    moderators,
+    admins,
     activeModerator,
     setActiveSettingAdmin,
     pageInfo,
@@ -23,19 +23,19 @@ export default function List() {
     <div className={s.wrapper}>
       {loading && <p role='status'>加载中...</p>}
       {error && <PaginationError isRetrying={loading} onRetry={() => void retry()} />}
-      {moderators.flatMap((item) => {
+      {admins.flatMap((item) => {
         const { user } = item
         if (!user?.login) return []
 
-        const active = user.login === activeModerator?.login
+        const active = user.login === activeModerator?.user.login
 
         return [
           <UserItem
             key={user.login}
             item={item}
             active={active}
-            onOpen={(targetUser) => {
-              setActiveSettingAdmin(targetUser)
+            onOpen={() => {
+              setActiveSettingAdmin(item)
               callPassportEditor()
             }}
           />,

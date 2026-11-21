@@ -28,6 +28,7 @@ export const ApplyApplicationFields = graphql(`
 `)
 
 export const ApplyAccountDocument = graphql(`
+  "Get cur user"
   query ApplyAccount {
     me {
       login
@@ -36,6 +37,7 @@ export const ApplyAccountDocument = graphql(`
 `)
 
 export const ApplyInitialStateDocument = graphql(`
+  "Current user's Apply admission state and blocking application"
   query ApplyInitialState {
     communityApplicationState {
       canApply {
@@ -58,6 +60,7 @@ export const ApplyInitialStateDocument = graphql(`
 `)
 
 export const OwnedApplicationDocument = graphql(`
+  "One Community Application owned by the current user"
   query OwnedApplication($ref: ID!) {
     communityApplication(ref: $ref) {
       ...ApplyApplicationFields
@@ -66,6 +69,7 @@ export const OwnedApplicationDocument = graphql(`
 `)
 
 export const ReviewQueueDocument = graphql(`
+  "Reviewer-scoped Community Application queue"
   query ReviewQueue($pagi: PagiInput) {
     pagedCommunityApplications(
       filter: { statuses: [SUBMITTED, REVIEWING, APPROVED, CREATION_FAILED, SETUP_FAILED] }
@@ -97,6 +101,7 @@ export const ReviewQueueDocument = graphql(`
 `)
 
 export const ReviewApplicationDocument = graphql(`
+  "Reviewer-scoped detail for any Community Application"
   query ReviewApplication($ref: ID!, $pagi: PagiInput) {
     reviewCommunityApplication(ref: $ref) {
       ...ApplyApplicationFields
@@ -149,6 +154,7 @@ export const ReviewApplicationDocument = graphql(`
 `)
 
 export const SubmitApplicationDocument = graphql(`
+  "Submit a new Community Application"
   mutation SubmitApplication($input: CommunityApplicationInput!, $commandId: ID!) {
     submitCommunityApplication(input: $input, commandId: $commandId) {
       publicRef
@@ -172,6 +178,7 @@ export const SubmitApplicationDocument = graphql(`
 `)
 
 export const StartApplicationReviewDocument = graphql(`
+  "Move a submitted Application into review"
   mutation StartApplicationReview($ref: ID!, $expectedVersion: Int!, $commandId: ID!) {
     startCommunityApplicationReview(
       ref: $ref
@@ -198,6 +205,7 @@ export const StartApplicationReviewDocument = graphql(`
 `)
 
 export const ApproveApplicationDocument = graphql(`
+  "Approve a reviewed Community Application"
   mutation ApproveApplication($ref: ID!, $expectedVersion: Int!, $commandId: ID!, $note: String) {
     approveCommunityApplication(
       ref: $ref
@@ -225,6 +233,7 @@ export const ApproveApplicationDocument = graphql(`
 `)
 
 export const RejectApplicationDocument = graphql(`
+  "Reject a reviewed Community Application"
   mutation RejectApplication(
     $ref: ID!
     $expectedVersion: Int!
@@ -259,6 +268,7 @@ export const RejectApplicationDocument = graphql(`
 `)
 
 export const RetryCommunityCreationDocument = graphql(`
+  "Retry Community identity creation for a failed Application"
   mutation RetryCommunityCreation($ref: ID!, $expectedVersion: Int!, $commandId: ID!) {
     retryCommunityCreation(ref: $ref, expectedVersion: $expectedVersion, commandId: $commandId) {
       publicRef
@@ -281,6 +291,7 @@ export const RetryCommunityCreationDocument = graphql(`
 `)
 
 export const RetryCommunitySetupDocument = graphql(`
+  "Retry Community setup for a failed Application"
   mutation RetryCommunitySetup($ref: ID!, $expectedVersion: Int!, $commandId: ID!) {
     retryCommunitySetup(ref: $ref, expectedVersion: $expectedVersion, commandId: $commandId) {
       publicRef
@@ -303,6 +314,7 @@ export const RetryCommunitySetupDocument = graphql(`
 `)
 
 export const CancelApplicationDocument = graphql(`
+  "Cancel an owned Community Application"
   mutation CancelApplication($ref: ID!, $expectedVersion: Int!, $commandId: ID!) {
     cancelCommunityApplication(
       ref: $ref
@@ -329,6 +341,7 @@ export const CancelApplicationDocument = graphql(`
 `)
 
 export const ApplicationLogoIntentDocument = graphql(`
+  "Create an Application-scoped Community Logo upload intent"
   mutation ApplicationLogoIntent($input: ApplicationLogoUploadInput!) {
     createCommunityApplicationLogoUploadIntent(input: $input) {
       uploadRef

@@ -1,6 +1,7 @@
 import { type FC, type KeyboardEvent, type MouseEvent, useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import PaperPlaneTilt from '~/icons/PaperPlaneTilt'
 import MarkerPicker from '~/ui/MarkerPicker'
 
 import {
@@ -9,7 +10,7 @@ import {
   SIDE_TREE_NODE_TYPE,
   UNTITLED_TITLE_I18N_KEY,
 } from '../constant'
-import { isPublicDoc, needsPublishAttention } from '../helper'
+import { needsPublishAttention } from '../helper'
 import useSalon from '../salon/group/file'
 import type { TEditingTarget, TSideTreeNodeMenuAction, TSideTreePage } from '../spec'
 import ChildMenu from './ChildMenu'
@@ -51,7 +52,6 @@ const File: FC<TProps> = ({
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.PAGE && editingTarget.childId === item.id
   const showPublishDot = needsPublishAttention(item.publishState)
-  const publicDoc = isPublicDoc(item.publishState)
   const pinnedToCover = item.publishState?.pinnedToCover === true
   const canPinToCover =
     item.publishState?.published === true && item.publishState?.hasUnpublishedChanges !== true
@@ -108,15 +108,21 @@ const File: FC<TProps> = ({
       )}
       {item.badge && <div className={s.badge}>{item.badge}</div>}
       <div className={s.meta}>
-        {showPublishDot && (
-          <div className={s.publishDotSlot}>
-            <span className={s.unpublishedDot} aria-hidden='true' />
+        {(showPublishDot || item.publishState?.queued) && (
+          <div
+            className={s.publishDotSlot}
+            title={t(item.publishState?.queued ? 'dsb.doc.queue.enqueued' : 'dsb.doc.queue.draft')}
+          >
+            {item.publishState?.queued ? (
+              <PaperPlaneTilt className='size-3' aria-label={t('dsb.doc.queue.enqueued')} />
+            ) : (
+              <span className={s.unpublishedDot} aria-label={t('dsb.doc.queue.draft')} />
+            )}
           </div>
         )}
         {!searching && (
           <div className={s.actions}>
             <ChildMenu
-              moveToDraftVisible={publicDoc}
               pinAction={pinnedToCover ? 'unpin' : canPinToCover ? 'pin' : undefined}
               onOpenChange={setMenuOpen}
               onSelect={(action) => {

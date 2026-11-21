@@ -1,6 +1,6 @@
 import { COMMUNITY_LAYOUT, NAV_ACTIVE_LAYOUT } from '~/const/layout'
 import type { TCommunityLayout, TEditFunc, TNavActiveLayout } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -16,7 +16,7 @@ type TRet = {
 
 /** Exposes nav active layout state and actions through the shared React hook boundary. */
 export default function useNavActiveLayout(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { isChanged, edit, isPending } = useHelper()
 
   const { navActiveLayout, communityLayout } = dsb$

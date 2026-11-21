@@ -17,17 +17,66 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
          ~m(guest_conn community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
-      {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
 
-      {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
-      {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
 
-      {:ok, _} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
-      {:ok, _} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
-      {:ok, _} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
 
-      {:ok, _} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          mock_attrs(:blog),
+          user
+        )
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)

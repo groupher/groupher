@@ -1,7 +1,7 @@
 import { pick } from 'ramda'
 
 import type { TDsdSEOConf, TEditFunc } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { SEO_KEYS } from '../constant'
 import useHelper from './useHelper'
@@ -16,7 +16,7 @@ type TRet = TDsdSEOConf & {
 
 /** Exposes seo state and actions through the shared React hook boundary. */
 export default function useSEO(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { edit, anyChanged, isPending } = useHelper()
 
   const isTouched = anyChanged(SEO_KEYS)

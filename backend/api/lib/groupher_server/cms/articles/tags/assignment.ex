@@ -98,7 +98,6 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
                  community_tags,
                  Repo.get!(Community, community_id),
                  thread,
-                 "article-tags:#{binding.id}:#{:erlang.phash2(Enum.map(community_tags, & &1.id))}",
                  opts
                ) do
           {:ok, updated_article}
@@ -113,14 +112,14 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
     {:error, ArticleErrorCat.binding_context_required()}
   end
 
-  defp maybe_invalidate_taxonomy(old_tags, new_tags, community, thread, effect_key, opts) do
+  defp maybe_invalidate_taxonomy(old_tags, new_tags, community, thread, opts) do
     old_ids = MapSet.new(old_tags, & &1.id)
     new_ids = MapSet.new(new_tags, & &1.id)
 
     if old_ids == new_ids do
       {:ok, :pass}
     else
-      invalidate_taxonomy(community, thread, effect_key, opts)
+      invalidate_taxonomy(community, thread, opts)
     end
   end
 
@@ -162,38 +161,20 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
     end
   end
 
-  defp invalidate_taxonomy(%Community{} = community, thread, effect_key, opts) do
-    with {:ok, identity} <- taxonomy_identity(community, thread, opts),
+  defp invalidate_taxonomy(%Community{} = community, thread, opts) do
+    with {:ok, operation_ref} <- taxonomy_identity(community, thread, opts),
          {:ok, _event} <-
-           Effects.enqueue_taxonomy_changed(community, thread, identity, effect_key) do
+           Effects.enqueue_taxonomy_changed(community, thread, operation_ref) do
       {:ok, :pass}
     end
   end
 
   defp taxonomy_identity(%Community{}, _thread, opts) do
-    case Keyword.get(opts, :identity) do
-      {:command, command_id} when is_binary(command_id) ->
-        {:ok, {:command, command_id}}
-
-      {:workflow, workflow_ref} when is_binary(workflow_ref) and workflow_ref != "" ->
-        {:ok, {:workflow, workflow_ref}}
-
-      nil ->
-        command_identity(Keyword.get(opts, :command_id))
-
-      _ ->
-        {:error, :invalid_taxonomy_identity}
+    case Ecto.UUID.cast(Keyword.get(opts, :operation_ref)) do
+      {:ok, operation_ref} -> {:ok, operation_ref}
+      :error -> {:error, :taxonomy_operation_ref_required}
     end
   end
-
-  defp command_identity(command_id) when is_binary(command_id) do
-    case Ecto.UUID.cast(command_id) do
-      {:ok, command_id} -> {:ok, {:command, command_id}}
-      :error -> {:error, :invalid_taxonomy_identity}
-    end
-  end
-
-  defp command_identity(_command_id), do: {:error, :taxonomy_identity_required}
 
   defp in_caller_transaction(fun) when is_function(fun, 0) do
     if Repo.in_transaction?(), do: fun.(), else: {:error, :article_tag_transaction_required}

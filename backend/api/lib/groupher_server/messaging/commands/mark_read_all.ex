@@ -17,7 +17,7 @@ defmodule GroupherServer.Messaging.Commands.MarkReadAll do
   @pipeline operation: :messaging_mark_read_all, access: :open, target: :user, params: [:type]
 
   direct_pipeline run(type, user) do
-    change(fn _user -> Persist.mark_read_all(type, user) end)
+    change(fn _user, _operation_ref -> Persist.mark_read_all(type, user) end)
   end
 
   @doc """

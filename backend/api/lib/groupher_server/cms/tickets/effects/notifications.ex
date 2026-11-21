@@ -26,25 +26,26 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
     ArticleLifecycle,
     ArticlePublic,
     ArticleReviewBlock,
-    ArticleRevision,
+    ArticleSnapshot,
     Author,
     TicketState,
     TicketUpdate
   }
 
   alias Activity.Model.TicketLog
+  alias CMS.Outbox.DedupeKey
 
   alias CMS.Tickets.{PublicPosts, Model.Source}
 
   @doc "Enqueues an eligible public Ticket Activity in the caller transaction."
-  def enqueue_activity(_community, state, %TicketLog{} = activity, command_id) do
+  def enqueue_activity(_community, state, %TicketLog{} = activity, operation_ref) do
     cond do
       state.type != :user ->
         {:ok, :pass}
 
       activity.action in [:work_status_changed, :published] and
           eligible_public_ticket?(state.article_id) ->
-        enqueue(state, "ticket_activity", activity.id, command_id)
+        enqueue(state, "ticket_activity", activity.id, operation_ref)
 
       true ->
         {:ok, :pass}
@@ -54,9 +55,14 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
   def enqueue_activity(_community, _state, _activity, _command_id), do: {:ok, :pass}
 
   @doc "Enqueues a public User Ticket update in the caller transaction."
-  def enqueue_update(_community, state, %TicketUpdate{visibility: :public} = update, command_id) do
+  def enqueue_update(
+        _community,
+        state,
+        %TicketUpdate{visibility: :public} = update,
+        operation_ref
+      ) do
     if state.type == :user and eligible_public_ticket?(state.article_id) do
-      enqueue(state, "ticket_update", update.id, command_id)
+      enqueue(state, "ticket_update", update.id, operation_ref)
     else
       {:ok, :pass}
     end
@@ -91,14 +97,14 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
 
   def deliver(_event), do: {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
 
-  defp enqueue(state, source_type, source_id, command_id) do
+  defp enqueue(state, source_type, source_id, operation_ref) do
     CMS.Outbox.send(%{
       event: "ticket.notification",
       worker: GroupherServer.Jobs.CMSOutboxTicket,
       resource_type: "ticket",
       resource_id: state.article_id,
-      identity: {:command, command_id},
-      effect_key: "ticket_notification:#{source_id}",
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([source_type, source_id]),
       data: %{"source_type" => source_type, "source_id" => source_id}
     })
     |> case do
@@ -144,14 +150,14 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
          %ArticleLifecycle{state: :published} <-
            Repo.get_by(ArticleLifecycle, article_id: ticket_id, thread: :ticket),
          %ArticlePublic{} = public_ticket <- Repo.get(ArticlePublic, ticket_id),
-         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public_ticket.revision_id),
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, public_ticket.snapshot_id),
          false <- active_ticket_review?(ticket_id),
          %{} = post <- first_public_post(ticket_id, ticket_binding.community_id) do
       {:ok,
        %{
          ticket_id: ticket_id,
          ticket_number: ticket_binding.inner_id,
-         ticket_title: revision.title,
+         ticket_title: snapshot.title,
          post_id: post.article_id,
          community_id: ticket_binding.community_id,
          action: notification_action(event_type),
@@ -267,9 +273,9 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
   end
 
   defp notify_recipient(context, sender, recipient, source_id) do
-    Messaging.send_notification(
+    Messaging.send_notice(
       %{
-        action: context.action,
+        type: context.action,
         thread: :post,
         article_id: context.post_id,
         title: "Ticket ##{context.ticket_number}: #{context.ticket_title}",
@@ -293,4 +299,12 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
   end
 
   defp parse_actor_id(_actor_ref), do: nil
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "ticket.notification" -> CMS.Outbox.Event.project_fields(data, ["source_type", "source_id"])
+      _ -> {:error, {:outbox_event_owner_missing, event}}
+    end
+  end
 end

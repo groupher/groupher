@@ -13,7 +13,13 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
 
-    {:ok, post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+    {:ok, post} =
+      GroupherServer.Support.Factory.create_published_article(
+        community,
+        :post,
+        mock_attrs(:post),
+        user
+      )
 
     {:ok, ~m(user community post)a}
   end
@@ -35,12 +41,26 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
 
     test "one community & thread can only pin certain count of post", ~m(community user)a do
       Enum.reduce(1..@max_pinned_article_count_per_thread, [], fn _, acc ->
-        {:ok, new_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+        {:ok, new_post} =
+          GroupherServer.Support.Factory.create_published_article(
+            community,
+            :post,
+            mock_attrs(:post),
+            user
+          )
+
         {:ok, _} = CMS.Articles.pin(community, new_post.id, user, Ecto.UUID.generate())
         acc
       end)
 
-      {:ok, new_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+      {:ok, new_post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
+
       {:error, reason} = CMS.Articles.pin(community, new_post.id, user, Ecto.UUID.generate())
 
       assert error_code(reason) ==

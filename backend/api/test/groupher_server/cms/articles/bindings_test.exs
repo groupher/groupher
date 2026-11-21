@@ -7,7 +7,27 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   alias CMS.Articles.Commands.BindingSupport
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Articles.Bindings.Tags
-  alias CMS.Model.{Article, ArticleBinding, ArticleBindingTag}
+  alias CMS.Model.{Article, ArticleBinding, ArticleBindingTag, ArticleHistoryOwner}
+
+  test "moving an Article preserves source history ownership and records the destination",
+       ~m(community destination post)a do
+    article = Repo.get!(Article, post.id)
+
+    assert {:ok, _} =
+             Repo.transact(fn -> BindingPersist.move(article, community, destination) end)
+
+    assert Repo.get_by!(ArticleHistoryOwner,
+             article_id: article.id,
+             community_id: community.id
+           )
+
+    assert Repo.get_by!(ArticleHistoryOwner,
+             article_id: article.id,
+             community_id: destination.id
+           )
+
+    refute Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id)
+  end
 
   setup do
     {community, post, _, user} = mock_article(:post)
@@ -39,17 +59,17 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
     assert {:ok, mirrored} =
              CMS.Articles.mirror(
                destination,
-               post.article_id,
+               post.id,
                [],
                user,
                community,
                command_id
              )
 
-    assert mirrored.id == post.article_id
+    assert mirrored.id == post.id
 
     assert {:ok, replayed} =
-             CMS.Articles.mirror(destination, post.article_id, [], user, community, command_id)
+             CMS.Articles.mirror(destination, post.id, [], user, community, command_id)
 
     assert replayed.id == mirrored.id
 
@@ -66,7 +86,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
     assert {:ok, _article} =
              CMS.Articles.mirror(
                destination,
-               post.article_id,
+               post.id,
                [],
                user,
                community,
@@ -79,7 +99,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
     assert {:ok, _article} =
              CMS.Articles.mirror(
                destination,
-               post.article_id,
+               post.id,
                [],
                user,
                community,
@@ -93,9 +113,9 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   test "fetch_binding/2 and fetch_pin/2 return tagged catalog errors for missing rows",
        ~m(community post)a do
     assert {:ok, %ArticleBinding{article_id: article_id, community_id: community_id}} =
-             Bindings.fetch_binding(post.article_id, community.id)
+             Bindings.fetch_binding(post.id, community.id)
 
-    assert article_id == post.article_id
+    assert article_id == post.id
     assert community_id == community.id
 
     assert {:error,
@@ -106,7 +126,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
              Bindings.fetch_binding(Ecto.UUID.generate(), community.id)
 
     assert {:error, %ErrorCat.Error{namespace: {:cms, :article}, reason: :pin_not_found}} =
-             Bindings.fetch_pin(post.article_id, community.id)
+             Bindings.fetch_pin(post.id, community.id)
   end
 
   test "Tags.replace/2 and list/1 own binding-local assignments",
@@ -149,7 +169,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
     binding =
       Repo.get_by!(ArticleBinding,
-        article_id: post.article_id,
+        article_id: post.id,
         community_id: community.id
       )
 
@@ -188,7 +208,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
     binding =
       Repo.get_by!(ArticleBinding,
-        article_id: post.article_id,
+        article_id: post.id,
         community_id: community.id
       )
 
@@ -206,7 +226,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   test "Tags.replace/2 fails closed without an owner transaction", ~m(community post)a do
     binding =
       Repo.get_by!(ArticleBinding,
-        article_id: post.article_id,
+        article_id: post.id,
         community_id: community.id
       )
 
@@ -215,7 +235,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
   test "a collected binding is rejected before unmirror deletes it",
        ~m(community destination post user)a do
-    article = Repo.get!(Article, post.article_id)
+    article = Repo.get!(Article, post.id)
 
     assert {:ok, _binding} =
              Repo.transact(fn -> BindingPersist.mirror(article, destination) end)
@@ -228,7 +248,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
     source_binding =
       Repo.get_by!(ArticleBinding,
-        article_id: post.article_id,
+        article_id: post.id,
         community_id: community.id
       )
 
@@ -236,7 +256,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
              %CollectFolderEntry{}
              |> CollectFolderEntry.changeset(%{
                folder_id: folder.id,
-               article_id: post.article_id,
+               article_id: post.id,
                article_binding_id: source_binding.id
              })
              |> Repo.insert()
@@ -267,7 +287,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
     {:ok, ticket} =
       CMS.Tickets.create_from_post(
         community,
-        post.article_id,
+        post.id,
         %{title: "Linked Ticket", digest: "Public summary"},
         user,
         Ecto.UUID.generate()
@@ -276,7 +296,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
     assert {:ok, _mirrored} =
              CMS.Articles.mirror(
                destination,
-               post.article_id,
+               post.id,
                [],
                user,
                community,
@@ -285,13 +305,14 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
     {:ok, other_destination} = mock_community(user)
 
-    article = Repo.get!(Article, post.article_id)
+    article = Repo.get!(Article, post.id)
 
     assert {:ok, _restriction} =
              Repo.transaction(fn ->
                with {:ok, lifecycle} <- CMS.Articles.Lifecycle.lock(article),
                     {:ok, restriction} <-
                       CMS.Articles.Lifecycle.apply_review_block(lifecycle, %{
+                        operation_ref: Ecto.UUID.generate(),
                         scope_key: "community:#{community.id}",
                         type: :manual_hold,
                         source_ref: "ticket-binding-review:#{Ecto.UUID.generate()}",
@@ -306,7 +327,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
              end)
 
     source_binding =
-      Repo.get_by!(ArticleBinding, article_id: post.article_id, community_id: community.id)
+      Repo.get_by!(ArticleBinding, article_id: post.id, community_id: community.id)
 
     assert {:error, %ErrorCat.Error{reason: :post_linked_to_ticket}} =
              Repo.transact(fn -> BindingPersist.unmirror(article, community) end)
@@ -323,10 +344,10 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
              end)
 
     assert Repo.get(ArticleBinding, source_binding.id)
-    assert Repo.get_by(ArticleBinding, article_id: post.article_id, community_id: destination.id)
+    assert Repo.get_by(ArticleBinding, article_id: post.id, community_id: destination.id)
 
     refute Repo.get_by(ArticleBinding,
-             article_id: post.article_id,
+             article_id: post.id,
              community_id: other_destination.id
            )
 
@@ -338,7 +359,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
     end
 
     destination_binding =
-      Repo.get_by!(ArticleBinding, article_id: post.article_id, community_id: destination.id)
+      Repo.get_by!(ArticleBinding, article_id: post.id, community_id: destination.id)
 
     assert_raise Postgrex.Error, fn ->
       Repo.query!("DELETE FROM cms.article_bindings WHERE id = $1", [destination_binding.id])

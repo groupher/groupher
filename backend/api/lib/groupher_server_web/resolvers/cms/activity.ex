@@ -23,7 +23,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Activity do
     actor = Map.get(info.context, :cur_user)
 
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      Activity.list_community_logs(community, actor, args.selection, pagi)
+      passport_scope = get_in(args, [:passport_scopes, :community])
+
+      Activity.list_community_logs(community, actor, args.selection, pagi,
+        passport_scope: passport_scope
+      )
     end
   end
 

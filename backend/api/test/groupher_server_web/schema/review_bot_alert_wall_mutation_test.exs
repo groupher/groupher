@@ -5,6 +5,8 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   alias GroupherServer
   alias GroupherServer.{AlertWall, Repo}
+  alias GroupherServer.CMS
+  alias CMS.Model.{Community, CommunityAdmin, GlobalPassport}
   alias AlertWall.Model.Item
   alias GroupherServerWeb.Schema
 
@@ -13,7 +15,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
     assert Map.has_key?(fields, :recheck_article_v2)
     assert Map.has_key?(fields, :recheck_comment_v2)
-    assert Map.has_key?(fields, :recheck_doc_v2)
+    refute Map.has_key?(fields, :recheck_doc_v2)
     assert Map.has_key?(fields, :approve_article_v2)
     assert Map.has_key?(fields, :reject_article_v2)
     refute Map.has_key?(fields, :deny_article)
@@ -41,7 +43,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     reviewer = put_community_permission(reviewer, community.slug, "review.decide")
 
     mutation = """
-    mutation Recheck($target: CmsReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
+    mutation Recheck($target: ArtimentReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
       recheckArticleV2(target: $target, scope: $scope, commandId: $commandId) {
         commandId
         targetType
@@ -84,10 +86,10 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
       )
 
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.decide" => true})
 
     mutation = """
-    mutation Recheck($target: CmsReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
+    mutation Recheck($target: ArtimentReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
       recheckCommentV2(target: $target, scope: $scope, commandId: $commandId) {
         commandId
         targetType
@@ -115,14 +117,13 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     assert result["targetId"] == to_string(comment.id)
   end
 
-  test "recheckDocV2 succeeds through GraphQL" do
-    {_community, doc, _attrs, _author} = mock_article(:doc)
-    {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+  test "a Doc recheck uses the shared Article command" do
+    {community, doc, _attrs, reviewer} = mock_article(:doc)
+    reviewer = put_community_permission(reviewer, community.slug, "review.decide")
 
     mutation = """
-    mutation Recheck($target: CmsReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
-      recheckDocV2(target: $target, scope: $scope, commandId: $commandId) {
+    mutation Recheck($target: ArtimentReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
+      recheckArticleV2(target: $target, scope: $scope, commandId: $commandId) {
         commandId
         targetType
         targetId
@@ -131,23 +132,23 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     }
     """
 
-    assert {:ok, %{data: %{"recheckDocV2" => result}}} =
+    assert {:ok, %{data: %{"recheckArticleV2" => result}}} =
              Absinthe.run(mutation, Schema,
                variables: %{
                  "target" => %{
-                   "type" => "DOC",
+                   "type" => "ARTICLE",
                    "articleId" => doc.id,
-                   "branchId" => doc.branch_id
+                   "communityId" => community.id
                  },
-                 "scope" => %{"type" => "PLATFORM"},
+                 "scope" => %{"type" => "COMMUNITY", "community" => community.slug},
                  "commandId" => Ecto.UUID.generate()
                },
                context: %{cur_user: reviewer}
              )
 
     assert result["action"] == "RECHECK"
-    assert result["targetType"] == "DOC"
-    assert result["targetId"] == "#{doc.id}:#{doc.branch_id}"
+    assert result["targetType"] == "ARTICLE"
+    assert result["targetId"] == doc.id
   end
 
   test "approve and reject serialize through the ReviewAction enum" do
@@ -165,7 +166,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     }
 
     reject = """
-    mutation Decide($target: CmsReviewTargetInput!, $commandId: ID!) {
+    mutation Decide($target: ArtimentReviewTargetInput!, $commandId: ID!) {
       rejectArticleV2(target: $target, commandId: $commandId) { action }
     }
     """
@@ -174,7 +175,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
              Absinthe.run(reject, Schema, variables: variables, context: %{cur_user: reviewer})
 
     approve = """
-    mutation Decide($target: CmsReviewTargetInput!, $commandId: ID!) {
+    mutation Decide($target: ArtimentReviewTargetInput!, $commandId: ID!) {
       approveArticleV2(target: $target, commandId: $commandId) { action }
     }
     """
@@ -187,6 +188,16 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   test "submitReport succeeds through GraphQL" do
     {community, post, _attrs, reporter} = mock_article(:post)
+    observed_version = public_article_version(post)
+
+    assert {:ok, public_article} =
+             GroupherServer.CMS.FrontDesk.article(%{
+               community: community.slug,
+               thread: :post,
+               inner_id: Integer.to_string(article_inner_id(post, community))
+             })
+
+    assert public_article.version == observed_version
 
     mutation = """
     mutation Submit($input: AlertReportInput!, $commandId: ID!) {
@@ -203,7 +214,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                  "input" => %{
                    "target" => %{
                      "type" => "ARTICLE",
-                     "observedVersion" => 1,
+                     "observedVersion" => observed_version,
                      "article" => %{
                        "community" => community.slug,
                        "thread" => "POST",
@@ -227,8 +238,8 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     {:ok, other_reader} = db_insert(:user)
 
     query = """
-    query Notice($target: CmsReviewTargetInput!) {
-      contentReviewNotice(target: $target) { status failureCode }
+    query Notice($target: ArtimentReviewTargetInput!) {
+      artimentReviewNotice(target: $target) { status failureCode }
     }
     """
 
@@ -243,12 +254,12 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
       }
     }
 
-    assert {:ok, %{data: %{"contentReviewNotice" => notice}}} =
+    assert {:ok, %{data: %{"artimentReviewNotice" => notice}}} =
              Absinthe.run(query, Schema, variables: variables, context: %{cur_user: author})
 
     assert Map.keys(notice) |> Enum.sort() == ["failureCode", "status"]
 
-    assert {:ok, %{data: %{"contentReviewNotice" => nil}, errors: [_ | _]}} =
+    assert {:ok, %{data: %{"artimentReviewNotice" => nil}, errors: [_ | _]}} =
              Absinthe.run(query, Schema, variables: variables, context: %{cur_user: other_reader})
   end
 
@@ -265,7 +276,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                    target_type: :article,
                    target_id: post.id,
                    community_id: community.id,
-                   observed_version: 1
+                   observed_version: public_article_version(post)
                  },
                  :spam,
                  "Please review this post",
@@ -275,8 +286,8 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     end)
 
     query = """
-    query Notice($target: CmsReviewTargetInput!) {
-      contentReviewNotice(target: $target) { status failureCode }
+    query Notice($target: ArtimentReviewTargetInput!) {
+      artimentReviewNotice(target: $target) { status failureCode }
     }
     """
 
@@ -291,13 +302,18 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
       }
     }
 
-    assert {:ok, %{data: %{"contentReviewNotice" => %{"status" => "waiting_human"}}}} =
+    assert {:ok, %{data: %{"artimentReviewNotice" => %{"status" => "waiting_human"}}}} =
              Absinthe.run(query, Schema, variables: variables, context: %{cur_user: author})
   end
 
-  test "contentReviewHistory exposes a failed check for manual recheck" do
+  defp public_article_version(article) do
+    snapshot_id = Repo.get!(GroupherServer.CMS.Model.ArticlePublic, article.id).snapshot_id
+    GroupherServer.CMS.Review.SnapshotVersion.from_id(snapshot_id)
+  end
+
+  test "artimentReviewHistory exposes a failed check for manual recheck" do
     {_community, post, _attrs, reviewer} = mock_article(:post)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.read" => true})
 
     request =
       Repo.one!(
@@ -314,8 +330,8 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     |> Repo.update!()
 
     query = """
-    query History($target: CmsReviewTargetInput!) {
-      contentReviewHistory(target: $target) {
+    query History($target: ArtimentReviewTargetInput!) {
+      artimentReviewHistory(target: $target) {
         artimentReviewId
         state
         failureCode
@@ -325,7 +341,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     }
     """
 
-    assert {:ok, %{data: %{"contentReviewHistory" => [entry | _]}}} =
+    assert {:ok, %{data: %{"artimentReviewHistory" => [entry | _]}}} =
              Absinthe.run(query, Schema,
                variables: %{"target" => %{"type" => "ARTICLE", "articleId" => post.id}},
                context: %{cur_user: reviewer}
@@ -352,15 +368,15 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
       )
 
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.read" => true})
 
     query = """
-    query History($target: CmsReviewTargetInput!) {
-      contentReviewHistory(target: $target) { artimentReviewId communityId }
+    query History($target: ArtimentReviewTargetInput!) {
+      artimentReviewHistory(target: $target) { artimentReviewId communityId }
     }
     """
 
-    assert {:ok, %{data: %{"contentReviewHistory" => [entry | _]}}} =
+    assert {:ok, %{data: %{"artimentReviewHistory" => [entry | _]}}} =
              Absinthe.run(query, Schema,
                variables: %{
                  "target" => %{
@@ -408,14 +424,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
   test "updateReviewBotConfig succeeds through GraphQL" do
     {:ok, community} = db_insert(:community)
     {:ok, user} = db_insert(:user)
-
-    reviewer = %{
-      user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.configure" => true}}
-        }
-    }
+    reviewer = put_community_permission(user, community.slug, "review.configure")
 
     mutation = """
     mutation Update($input: UpdateReviewBotConfigInput!, $commandId: ID!) {
@@ -452,7 +461,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   test "resolveAlertItem succeeds through GraphQL" do
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.decide" => true})
 
     assert {:ok, {:ok, item}} =
              Repo.transaction(fn ->
@@ -501,7 +510,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   test "alertItems closed filter returns earlier items through GraphQL" do
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.read" => true})
 
     assert {:ok, {:ok, item}} =
              Repo.transaction(fn ->
@@ -558,7 +567,32 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
   end
 
   defp put_community_permission(user, slug, permission) do
-    passport = Map.put(user.cur_passport || %{}, slug, %{"cms" => %{permission => true}})
-    %{user | cur_passport: Map.put_new(passport, "global", %{})}
+    community = Repo.get_by!(Community, slug: slug)
+
+    member =
+      Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) ||
+        %CommunityAdmin{}
+
+    member
+    |> CommunityAdmin.changeset(%{
+      user_id: user.id,
+      community_id: community.id,
+      permissions: Map.put(member.permissions || %{}, permission, true)
+    })
+    |> Repo.insert_or_update!()
+
+    user
+  end
+
+  defp grant_global_permissions(user, permissions) do
+    (Repo.get_by(GlobalPassport, user_id: user.id) || %GlobalPassport{})
+    |> GlobalPassport.changeset(%{
+      user_id: user.id,
+      is_root: false,
+      permissions: permissions
+    })
+    |> Repo.insert_or_update!()
+
+    user
   end
 end

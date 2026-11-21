@@ -10,7 +10,6 @@ defmodule GroupherServer.CMS.Gate do
     * `with_community_check/4` checks a Community and runs a callback in its lock;
     * `with_check/4` checks a resource and runs a callback in its lock boundary;
     * `with_community_check/5` checks an Article binding with an explicit Community;
-    * `with_branch_check/6` checks a Doc binding with an explicit branch.
 
   Community Enable, Passport, and publish rate limiting are separate internal
   seams and are not re-exported from this facade.
@@ -108,23 +107,6 @@ defmodule GroupherServer.CMS.Gate do
           {:ok, term()} | {:error, GroupherServer.CMS.Gate.Decision.t()}
   def check_in_transaction(actor, action, resource, community) do
     Access.check_in_transaction(actor, action, resource, community)
-  end
-
-  @doc """
-  Loads and checks an Article or Doc against an explicit Community and branch.
-
-  Docs Commands pass the target `branch_id` explicitly so Gate never guesses a
-  branch from the resource's Article ID. The canonical row is locked inside the
-  existing mutation transaction; the caller owns commit/rollback.
-
-  ## Examples
-
-      CMS.Gate.check_in_transaction(actor, :edit, article, community, branch_id)
-  """
-  @spec check_in_transaction(term(), atom(), term(), term(), term()) ::
-          {:ok, term()} | {:error, GroupherServer.CMS.Gate.Decision.t()}
-  def check_in_transaction(actor, action, resource, community, branch_id) do
-    Access.check_in_transaction(actor, action, resource, community, branch_id)
   end
 
   @doc """
@@ -260,26 +242,5 @@ defmodule GroupherServer.CMS.Gate do
         ) :: {:ok, term()} | {:error, term()}
   def with_community_check(actor, action, community, article, callback) do
     Access.with_community_check(actor, action, community, article, callback)
-  end
-
-  @doc """
-  Runs a branch-scoped Doc command with an explicit Community and branch.
-
-  ## Examples
-
-      CMS.Gate.with_branch_check(actor, :edit, community, doc, branch_id, fn canonical ->
-        {:ok, canonical}
-      end)
-  """
-  @spec with_branch_check(
-          term(),
-          atom(),
-          GroupherServer.CMS.Model.Community.t(),
-          GroupherServer.CMS.Model.Article.t(),
-          pos_integer(),
-          (GroupherServer.CMS.Model.Article.t() -> {:ok, term()} | {:error, term()})
-        ) :: {:ok, term()} | {:error, term()}
-  def with_branch_check(actor, action, community, article, branch_id, callback) do
-    Access.with_branch_check(actor, action, community, article, branch_id, callback)
   end
 end

@@ -14,10 +14,9 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   alias CMS.ContentImport.Model.Job.Body
   alias CMS.ContentImport.DocValidator
   alias CMS.DocTree.Workflows.ContentImport
-  alias CMS.Docs.Branch
-  alias CMS.DocTree
-  alias CMS.DocTree.{Revision, State}
-  alias CMS.Model.{DocLifecycle, DocTreeNode}
+  alias CMS.DocTree.Publish.Queue
+  alias CMS.DocTree.Commands.{Enqueue, ReleaseQueue, DeleteWorkspaceNode, CreateWorkspaceNode}
+  alias CMS.Model.{ArticleLifecycle, DocsTreeNode}
 
   test "an imported canonical Doc enters Mention capture only through its publish Command" do
     %{actor: actor, community: community, job: job} =
@@ -57,9 +56,19 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
            )
 
     command_id = Ecto.UUID.generate()
+    work = Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: imported.first_imported_doc_id)
+    assert {:ok, queue} = Queue.read(community)
 
-    assert {:ok, %{done: true}} =
-             DocTree.publish_changes(community, %{}, actor, command_id: command_id)
+    assert {:ok, queued} =
+             Enqueue.execute(
+               community,
+               queue.queue_revision,
+               [%{article_id: work.article_id, default_revision: work.revision}],
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, _} = ReleaseQueue.execute(community, queued.queue_revision, actor, command_id)
 
     endpoint =
       Repo.get_by!(CMS.Model.Mentions.Endpoint,
@@ -75,12 +84,11 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              )
 
     assert Repo.get!(CMS.Model.Mentions.Endpoint, edge.target_endpoint_id).article_id ==
-             target.article_id
+             target.id
 
     event_count = Repo.aggregate(CMS.Outbox.Event, :count)
 
-    assert {:ok, %{done: true}} =
-             DocTree.publish_changes(community, %{}, actor, command_id: command_id)
+    assert {:ok, _} = ReleaseQueue.execute(community, queued.queue_revision, actor, command_id)
 
     assert Repo.aggregate(CMS.Outbox.Event, :count) == event_count
 
@@ -109,7 +117,6 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
         }
         updatedAt
       }
-      targetBranch
       sourceInfo {
         repo
         repoUrl
@@ -131,7 +138,9 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   """
 
   test "stages same-hash BodyBags idempotently and atomically completes Docs and mappings" do
-    %{community: community, job: job} = create_job([document("docs/start.md", "/start")])
+    %{actor: actor, community: community, job: job} =
+      create_job([document("docs/start.md", "/start")])
+
     body_bag = body_bag("Published body content", "a")
 
     assert {:ok, %{status: :ready}} =
@@ -150,7 +159,6 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert completed.status == :completed
     assert completed.counts.pages == 1
     assert completed.skipped == []
-    assert completed.target_branch == Branch.main_slug()
     assert Repo.aggregate(Body, :count) == 0
 
     assert [mapping] = Repo.all(ImportSourceMapping)
@@ -159,13 +167,10 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert mapping.groupher_hash =~ "doc-sync-v1:"
 
     assert {:ok, _draft} =
-             CMS.Docs.read_editor_head(community, completed.first_imported_doc_id)
+             CMS.docs_editor_read(community, completed.first_imported_doc_id, actor)
 
-    assert {:ok, tree} = DocTree.read(community)
-    [tab] = tree.tabs
-    [group] = tab.groups
-
-    assert Enum.any?(group.pages, &(&1.doc_id == completed.first_imported_doc_id))
+    assert {:ok, tree} = CMS.docs_workspace_read(community, actor)
+    assert Enum.any?(tree.nodes, &(&1.doc_id == completed.first_imported_doc_id))
 
     assert {:ok, replayed} = ContentImport.apply(community, job.job_ref)
     assert replayed == completed
@@ -191,7 +196,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
   test "applies multiple ready Docs with complete source mappings" do
     documents = Enum.map(1..6, &document("docs/page-#{&1}.md", "/page-#{&1}"))
-    %{community: community, job: job} = create_job(documents)
+    %{actor: actor, community: community, job: job} = create_job(documents)
 
     Enum.each(1..6, fn index ->
       assert {:ok, _job} =
@@ -212,10 +217,8 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert Enum.map(mappings, & &1.external_ref) == Enum.map(1..6, &"docs/page-#{&1}.md")
     assert Enum.all?(mappings, &String.starts_with?(&1.groupher_hash, "doc-sync-v1:"))
 
-    assert {:ok, tree} = DocTree.read(community)
-    [tab] = tree.tabs
-    [group] = tab.groups
-    assert length(Enum.filter(group.pages, &(&1.type == :page))) == 6
+    assert {:ok, tree} = CMS.docs_workspace_read(community, actor)
+    assert length(Enum.filter(tree.nodes, &(&1.type == :page))) == 6
   end
 
   test "preserves recursive source sections as nested TargetTree groups" do
@@ -293,29 +296,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert {:ok, first_import} = ContentImport.apply(community, first_job.job_ref)
     first_doc_id = first_import.first_imported_doc_id
 
-    {:ok, branch} = Branch.resolve(community, nil)
-
-    assert Repo.get_by(DocLifecycle,
-             article_id: first_doc_id,
-             branch_id: branch.id
-           )
-
-    # Simulate a tree written by the previous revision-scoped namespace.
-    tab = Repo.get_by!(DocTreeNode, community_id: community.id, type: :tab)
-    group = Repo.get_by!(DocTreeNode, community_id: community.id, type: :group)
-    page = Repo.get_by!(DocTreeNode, community_id: community.id, type: :page)
-
-    Repo.update_all(from(node in DocTreeNode, where: node.id == ^tab.id),
-      set: [node_id: "import:tab:legacy"]
-    )
-
-    Repo.update_all(from(node in DocTreeNode, where: node.id == ^group.id),
-      set: [node_id: "import:group:legacy", parent_node_id: "import:tab:legacy"]
-    )
-
-    Repo.update_all(from(node in DocTreeNode, where: node.id == ^page.id),
-      set: [node_id: "import:page:legacy", parent_node_id: "import:group:legacy"]
-    )
+    assert Repo.get_by(ArticleLifecycle, article_id: first_doc_id)
 
     documents = [document("docs/start.md", "/start", "b")]
     next_source_info = Map.put(source_info(), "commit", String.duplicate("d", 40))
@@ -352,10 +333,10 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert {:ok, second_import} = ContentImport.apply(community, second_job.job_ref)
     assert second_import.first_imported_doc_id == first_doc_id
     assert Repo.aggregate(ImportSourceMapping, :count) == 1
-    assert Repo.aggregate(DocTreeNode, :count) == 3
+    assert Repo.aggregate(DocsTreeNode, :count) == 3
 
-    assert {:ok, draft} = CMS.Docs.read_editor_head(community, first_doc_id)
-    assert draft.body.body_hash == String.duplicate("b", 64)
+    assert {:ok, %{working_copy: draft}} = CMS.docs_editor_read(community, first_doc_id, actor)
+    assert CMS.Articles.Body.document(draft).plain_text == "Second version"
 
     assert [mapping] = Repo.all(ImportSourceMapping)
     assert mapping.thread_ref == first_doc_id
@@ -374,29 +355,25 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
     assert {:ok, first_import} = ContentImport.apply(community, first_job.job_ref)
     first_doc_id = first_import.first_imported_doc_id
-    page = Repo.get_by!(DocTreeNode, community_id: community.id, type: :page)
+    page = Repo.get_by!(DocsTreeNode, community_id: community.id, type: :page)
     assert page.doc_id == first_doc_id
 
-    {:ok, branch} = Branch.resolve(community, nil)
-
-    assert Repo.get_by(DocLifecycle,
-             article_id: first_doc_id,
-             branch_id: branch.id
-           )
-
-    assert {:ok, tree} = DocTree.read(community)
+    assert Repo.get_by(ArticleLifecycle, article_id: first_doc_id)
+    assert {:ok, queue} = Queue.read(community)
 
     assert {:ok, _deleted} =
-             DocTree.delete_node_internal(community, page.node_id, %{
-               actor_id: actor.id,
-               base_revision: tree.revision
-             })
+             DeleteWorkspaceNode.execute(
+               community,
+               queue.tree_lock_version,
+               queue.queue_revision,
+               page.node_id,
+               nil,
+               actor,
+               Ecto.UUID.generate()
+             )
 
-    assert {:error, :doc_not_readable} =
-             CMS.Docs.read_editor_head(community, first_doc_id)
-
-    assert {:ok, %{entries: [trash_item]}} =
-             DocTree.trash_items(community, nil, actor: :operations, policy_mode: :operations)
+    assert {:error, _} = CMS.docs_editor_read(community, first_doc_id, actor)
+    assert {:ok, %{entries: [trash_item]}} = CMS.docs_workspace_trash_read(community, nil, actor)
 
     documents = [document("docs/start.md", "/start", "b")]
     next_source_info = Map.put(source_info(), "commit", String.duplicate("d", 40))
@@ -440,13 +417,13 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
            )
 
     assert {:ok, %{entries: []}} =
-             DocTree.trash_items(community, nil, actor: :operations, policy_mode: :operations)
+             CMS.docs_workspace_trash_read(community, nil, actor)
 
     assert Repo.aggregate(ImportSourceMapping, :count) == 1
-    assert Repo.aggregate(DocTreeNode, :count) == 3
+    assert Repo.aggregate(DocsTreeNode, :count) == 3
 
-    assert {:ok, draft} = CMS.Docs.read_editor_head(community, first_doc_id)
-    assert draft.body.body_hash == String.duplicate("b", 64)
+    assert {:ok, %{working_copy: draft}} = CMS.docs_editor_read(community, first_doc_id, actor)
+    assert CMS.Articles.Body.document(draft).plain_text == "Second version"
   end
 
   test "cancels an unfinished Job idempotently and deletes staged BodyBags" do
@@ -658,8 +635,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
                "repo" => "acme/docs",
                "repoUrl" => "https://github.com/acme/docs"
              },
-             "status" => "STAGING",
-             "targetBranch" => "main"
+             "status" => "STAGING"
            }
   end
 
@@ -718,16 +694,24 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   end
 
   test "target revision conflicts roll back without consuming staged bodies" do
-    %{community: community, job: job} = create_job([document("docs/start.md", "/start")])
+    %{actor: actor, community: community, job: job} =
+      create_job([document("docs/start.md", "/start")])
 
     assert {:ok, %{status: :ready}} =
              Staging.stage(community, job.job_ref, [
                %{external_ref: "docs/start.md", body_bag: body_bag("Published body content", "a")}
              ])
 
-    assert {:ok, branch} = Branch.resolve(community, Branch.main_slug())
-    assert {:ok, state} = State.ensure_draft_state(community, branch_id: branch.id)
-    assert {:ok, _state} = Revision.bump_tree_draft(community, state)
+    assert {:ok, queue} = Queue.read(community)
+
+    assert {:ok, _} =
+             CreateWorkspaceNode.execute(
+               community,
+               queue.tree_lock_version,
+               %{type: :tab, title: "Changed target"},
+               actor,
+               Ecto.UUID.generate()
+             )
 
     assert {:error,
             %ErrorCat.Error{
@@ -814,15 +798,13 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
     query = """
     query ImportedDraftReadback($community: String!, $id: ID!) {
-      docDraft(community: $community, id: $id) {
-        branchId
-        version
-        body { json markdown toc { id level title } }
+      docsEditor(community: $community, articleId: $id) {
+        workingCopy { revision bodyJson bodyMarkdown bodyMarkdownToc }
       }
     }
     """
 
-    assert {:ok, %{data: %{"docDraft" => draft}} = response} =
+    assert {:ok, %{data: %{"docsEditor" => %{"workingCopy" => draft}}} = response} =
              Absinthe.run(query, GroupherServerWeb.Schema,
                variables: %{
                  "community" => community.slug,
@@ -833,7 +815,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
     refute Map.has_key?(response, :errors)
 
-    assert draft["body"]["toc"] == [
+    assert draft["bodyMarkdownToc"]["items"] == [
              %{"id" => "import-heading", "level" => 2, "title" => "Import heading"}
            ]
   end
@@ -842,14 +824,18 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = db_insert(:community)
 
-    assert {:ok, _passport} =
-             CMS.Passport.stamp_passport(
-               %{
-                 "global" => %{},
-                 community.slug => %{"cms" => %{"doc.import" => true}}
-               },
-               actor
-             )
+    _conn =
+      simu_conn(:user, actor,
+        cms: %{
+          community.slug => %{
+            "doc.import" => true,
+            "doc.queue.write" => true,
+            "doc.queue.publish" => true,
+            "doc.restore" => true,
+            "doc.trash" => true
+          }
+        }
+      )
 
     source_info = source_info()
     source_tree = source_tree(documents)
@@ -927,6 +913,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
       markdown: text,
       plain_text: text,
       schema_version: BodyBag.schema_version(),
+      thumbnail: %{version: 1, blocks: [%{type: "paragraph", text: text}]},
       toc: []
     }
   end

@@ -16,7 +16,8 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
 
   test "basic graphql query on blog with login user",
        ~m(user_conn community user blog_attrs)a do
-    {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+    {:ok, blog} =
+      GroupherServer.Support.Factory.create_published_article(community, :blog, blog_attrs, user)
 
     variables = %{
       article: %{
@@ -38,7 +39,8 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
 
   test "basic graphql query on blog with stranger(un-login user)",
        ~m(guest_conn community blog_attrs user)a do
-    {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+    {:ok, blog} =
+      GroupherServer.Support.Factory.create_published_article(community, :blog, blog_attrs, user)
 
     variables = %{
       article: %{
@@ -56,7 +58,8 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
 
   test "returns cancan error when blog thread is disabled",
        ~m(guest_conn community blog_attrs user)a do
-    {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+    {:ok, blog} =
+      GroupherServer.Support.Factory.create_published_article(community, :blog, blog_attrs, user)
 
     {:ok, _} =
       CMS.Dashboard.update(

@@ -84,18 +84,18 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
     )
   end
 
-  defp apply_read_policy(query, %{id: actor_id}, :owner_management)
+  defp apply_read_policy(query, %{id: actor_id}, :owner)
        when is_integer(actor_id) do
-    management_states = Communities.Lifecycle.readable_states(:owner_management)
+    management_states = Communities.Lifecycle.readable_states(:owner)
 
     from([gate_community: community, gate_lifecycle: lifecycle] in query,
       where: lifecycle.state in ^management_states and community.user_id == ^actor_id
     )
   end
 
-  defp apply_read_policy(query, %{id: actor_id}, :management)
+  defp apply_read_policy(query, %{id: actor_id}, :admin)
        when is_integer(actor_id) do
-    management_states = Communities.Lifecycle.readable_states(:management)
+    management_states = Communities.Lifecycle.readable_states(:admin)
 
     from([gate_community: community, gate_lifecycle: lifecycle] in query,
       where:
@@ -155,7 +155,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
   end
 
   defp validate_actor(mode, %{id: actor_id})
-       when mode in [:management, :owner_management, :moderator_management] and
+       when mode in [:admin, :owner, :moderator_management] and
               is_integer(actor_id) do
     {:ok, :pass}
   end

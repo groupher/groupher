@@ -34,14 +34,13 @@ defmodule GroupherServer.Messaging.Model.Notification do
   @schema_prefix DBPrefix.messaging()
 
   @required_fields ~w(user_id action)a
-  @optional_fields ~w(thread article_id branch_id comment_id title read)a
+  @optional_fields ~w(thread article_id comment_id title read)a
 
   @type t :: %Notification{}
   schema "notifications" do
     belongs_to(:user, User)
     field(:thread, Ecto.Enum, values: GroupherServer.CMS.artiment_threads_enums())
     field(:article_id, Ecto.UUID)
-    field(:branch_id, :id)
     field(:title, :string)
     field(:comment_id, :id)
     field(:action, :string)

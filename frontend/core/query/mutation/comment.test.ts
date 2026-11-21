@@ -132,7 +132,7 @@ describe('comment query mutation helpers', () => {
   })
 
   it('never lets an emotion count become negative', () => {
-    const emotion = updateCommentEmotion(root, 'heart', false).emotions[0]
+    const emotion = updateCommentEmotion(root, 'HEART', false).emotions[0]
 
     expect(emotion).toMatchObject({ count: 0 })
     expect(emotion).not.toHaveProperty('viewerHasReacted')

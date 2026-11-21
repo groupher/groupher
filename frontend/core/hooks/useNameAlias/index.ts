@@ -2,7 +2,7 @@ import { filter } from 'ramda'
 import { useMemo } from 'react'
 
 import type { TNameAlias } from '~/spec'
-import useDsb from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 const useNameAlias = (group = 'kanban'): Record<string, TNameAlias> => {
   const { nameAlias } = useDsb()

@@ -27,8 +27,12 @@ defmodule GroupherServer.CMS.Tickets.Commands.CreateCase do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_manage_case, candidate)
     end)
 
-    change(fn canonical ->
-      CMS.Tickets.Persist.create_case(canonical, attrs, %{actor: actor, command_id: command_id})
+    change(fn canonical, operation_ref ->
+      CMS.Tickets.Persist.create_case(canonical, attrs, %{
+        actor: actor,
+        command_id: command_id,
+        operation_ref: operation_ref
+      })
     end)
 
     confirm(fn ticket_id ->

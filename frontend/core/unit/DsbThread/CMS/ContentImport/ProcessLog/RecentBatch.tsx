@@ -18,23 +18,23 @@ export default function RecentBatch({ items }: { items: TImportProcessItem[] }) 
           <li className={s.item} key={item.ref}>
             <span
               className={
-                item.state === 'completed'
+                item.state === 'COMPLETED'
                   ? s.completedMark
-                  : item.state === 'failed'
+                  : item.state === 'FAILED'
                     ? s.failedMark
                     : s.skippedMark
               }
               aria-hidden
             >
-              {item.state === 'completed' ? '✓' : item.state === 'failed' ? '!' : '–'}
+              {item.state === 'COMPLETED' ? '✓' : item.state === 'FAILED' ? '!' : '–'}
             </span>
             <span className={s.label} title={item.label}>
               {item.label}
             </span>
-            {item.state === 'completed' ? null : (
+            {item.state === 'COMPLETED' ? null : (
               <span className={s.state}>
                 {t(
-                  item.state === 'failed'
+                  item.state === 'FAILED'
                     ? 'dsb.content_import.process.failed'
                     : 'dsb.content_import.process.skipped',
                 )}

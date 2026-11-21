@@ -26,6 +26,9 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
   """
   defdelegate check(user, opts \\ []), to: __MODULE__.Workflow
 
+  @doc "Checks publish limits in the caller's existing transaction."
+  defdelegate check_in_transaction(user, opts \\ []), to: __MODULE__.Workflow
+
   @doc """
   Records a successful publish for the actor.
 

@@ -77,8 +77,9 @@ with {:ok, article} <- Persist.publish(...),
          worker: GroupherServer.Jobs.CMSOutboxArticle,
          resource_type: "article",
          resource_id: article.id,
-         identity: {:command, command_id},
-         effect_key: "publish",
+         operation_ref: operation_ref,
+         dedupe_key:
+           GroupherServer.CMS.Outbox.DedupeKey.encode([:publish, article.id, snapshot.id]),
          data: %{
            binding_id: binding.id,
            community: community.slug,
@@ -90,7 +91,9 @@ with {:ok, article} <- Persist.publish(...),
 end
 ```
 
-禁止在事务提交后再补写 Event：
+`operation_ref` 记录首次登记该效果的来源操作；`dedupe_key` 由具体 Effects 按固定顺序的
+业务维度生成。同一业务效果跨操作命中时复用首次 Event，不覆盖其来源。`send/1` 要求调用方
+已处于领域事务中，并在同一事务内写 Event 与 Oban wakeup。禁止在事务提交后再补写 Event：
 
 ```text
 domain COMMIT
@@ -194,17 +197,36 @@ done replay
 ```
 
 - Command Receipt 防止同一用户命令重复写入，并恢复 canonical result；
-- Outbox Event 保证已提交命令产生的外部副作用最终执行；
-- 两者可共享 `command_id/resource_type/resource_id`，但不能互相替代。
+- Outbox Event 保留已提交命令的副作用意图，支持重试与失败诊断；永久失败仍须领域恢复；
+- Command 与 Outbox 使用同一服务端 `operation_ref` 记录操作来源；Outbox 的业务去重键独立于该 UUID。
+
+### 7.1 失败恢复与只读诊断
+
+`CMS.retry_outbox_event(event_id, expected_failure_generation, root_actor, reason)` 在实时 root
+检查后，锁定失败代次，校验当前版本、固定 event/worker 路由与领域目标，并原子重置、写入一次
+重试凭据和 Oban 唤醒。Assets 的恢复与投递共享 frozen provider 目标守卫；自动 provider 恢复
+另外复查持久 run/step 的操作身份与当前租约，不相信进入巡检时的旧 claimed struct。仅明确的临时失败
+5603 可自动重排；永久 HTTP 拒绝 5608、未知失败 5609、配置错误 5610 均拒绝。
+同代次凭据已存在时复用 already_retried，不重复重置。
+Review 恢复共享锁定原请求，核对原操作身份、未替代/未过期、有效请求内容及当前目标；
+completed 只确认已有结果，不恢复私有 payload。
+
+`CMS.diagnose_outbox_failures(root_actor, limit \\ 50)` 是有界维护入口，上限 100，返回
+`pending` 和 `superseded`。纯 Article 缓存/投影只有在 publish History 或 sealed Docs Release
+祖先链及完整替代意图共同证明替代时，才从当前待处理集合中移出。恢复共用这一判定，返回两个
+事件 ID 和替代行状态；旧行仍为 failed，保留首次 O/key/payload/generation 和失败事实，不重排、
+不写成功重试凭据。首次发布通知不会因新版本被替代；替代行 waiting 也不表示已送达。
+没有增加持久告警表或管理页面。其他领域恢复有效性的剩余验收见
+[Operation Identity 当前证据](./command-operation-identity.md#93-未完成项与单独验收边界)。
 
 ## 8. 测试合同
 
 公共 Outbox suite 至少覆盖：
 
-- 同一 event 重复投递只执行一次；
+- 已 done 的 event 不再调用 action；投递完成前中断允许重试，外部效果依靠稳定业务身份实现幂等，不宣称通用 exactly-once；
 - effect 失败后进入 `retrying`，后续可恢复；
 - 活动 lease 返回 busy/snooze，过期 lease 可重新认领；
-- 同一 identity/effect scope 唯一；
+- 同 event/resource/dedupe_key 的意图唯一，命中时保留首次 operation_ref；
 - 领域事务回滚时 Event 与 Job 一起回滚；
 - 达到最大尝试次数后标记 `failed`。
 

@@ -7,8 +7,17 @@ import type { TDraftEditorState } from './useDraftEditorState'
 /** Exposes draft store sync state and actions through the shared React hook boundary. */
 export default function useDraftStoreSync(draftState: TDraftEditorState): void {
   const { setDocDraftSession } = useDocsEditor()
-  const { activePage, bodyStats, dirty, draft, loadStatus, meta, savedDraft, saveStatus } =
-    draftState
+  const {
+    workingCopyId,
+    activePage,
+    bodyStats,
+    dirty,
+    draft,
+    loadStatus,
+    meta,
+    savedDraft,
+    saveStatus,
+  } = draftState
 
   useEffect(() => {
     if (!draft.docId) {
@@ -28,6 +37,7 @@ export default function useDraftStoreSync(draftState: TDraftEditorState): void {
 
     setDocDraftSession(
       composeDraftEditorStorePatch({
+        workingCopyId,
         bodyStats,
         draft,
         meta,
@@ -38,6 +48,7 @@ export default function useDraftStoreSync(draftState: TDraftEditorState): void {
       }),
     )
   }, [
+    workingCopyId,
     activePage?.publishState,
     bodyStats,
     dirty,

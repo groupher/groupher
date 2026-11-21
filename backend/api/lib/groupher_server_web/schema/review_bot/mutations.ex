@@ -12,6 +12,7 @@ defmodule GroupherServerWeb.Schema.ReviewBot.Mutations do
   use Helper.GqlSchemaSuite
 
   object :review_bot_mutations do
+    @desc "Updates ReviewBot policy for the requested scope and subject type."
     field :update_review_bot_config, non_null(:review_bot_config) do
       arg(:input, non_null(:update_review_bot_config_input))
       arg(:command_id, non_null(:id))

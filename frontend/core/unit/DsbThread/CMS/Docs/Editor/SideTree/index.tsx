@@ -210,7 +210,8 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
         )}
       </SideTreeDndContext>
       <Footer
-        baseRevision={controller.treeState?.revision ?? null}
+        baseRevision={controller.workspaceRevision}
+        queueRevision={controller.queueRevision}
         tabs={controller.tabs}
         trashItems={controller.trashItems}
         pageInfo={controller.trashPageInfo}

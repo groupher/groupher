@@ -4,11 +4,11 @@ defmodule GroupherServer.CMS.Articles.CoverEdit do
 
       Article projection + viewer
         -> author admission
-        -> Draft or Revision cover edit
+        -> WorkingCopy or Snapshot cover edit
         -> stable cover editor DTO
   """
 
-  alias GroupherServer.{CMS, Accounts}
+  alias GroupherServer.{CMS, Accounts, Repo}
 
   alias Accounts.Model.User
   alias CMS.Articles.Store
@@ -27,32 +27,38 @@ defmodule GroupherServer.CMS.Articles.CoverEdit do
 
   def read(_article, _viewer), do: {:ok, nil}
 
-  defp load(%{body_draft_id: body_draft_id}) when is_binary(body_draft_id) do
-    value(Store.draft_cover_edit(body_draft_id))
+  defp load(%{cover_edit_working_copy_id: id}) when is_binary(id) do
+    Repo.get(CMS.Model.CoverEditWorkingCopy, id)
   end
 
-  defp load(%{revision_id: revision_id}) when is_binary(revision_id) do
-    value(Store.revision_cover_edit(revision_id))
+  defp load(%{snapshot_id: id}) when is_binary(id) do
+    case Repo.get(CMS.Model.ArticleSnapshot, id) do
+      %{cover_edit_snapshot_id: cover_id} when is_binary(cover_id) ->
+        Repo.get(CMS.Model.CoverEditSnapshot, cover_id)
+
+      _ ->
+        nil
+    end
   end
 
   defp load(_article), do: nil
 
-  defp value({:ok, value}), do: value
-  defp value({:error, _reason}), do: nil
-
   defp present(edit) do
-    edit
-    |> Map.from_struct()
-    |> Map.put(:id, Map.get(edit, :body_draft_id) || Map.get(edit, :revision_id))
-    |> Map.put(:light, %{
-      background_id: edit.light_background_id,
-      original_background_id: edit.light_original_background_id,
-      images: edit.light_images
-    })
-    |> Map.put(:dark, %{
-      background_id: edit.dark_background_id,
-      original_background_id: edit.dark_original_background_id,
-      images: edit.dark_images
-    })
+    %{
+      id: edit.id,
+      canvas_width: edit.canvas_width,
+      canvas_height: edit.canvas_height,
+      format_version: edit.format_version,
+      light: theme(edit.light),
+      dark: theme(edit.dark),
+      inserted_at: edit.inserted_at,
+      updated_at: Map.get(edit, :updated_at)
+    }
+  end
+
+  defp theme(data) when is_map(data) do
+    Map.new([:background_id, :original_background_id, :images], fn key ->
+      {key, Map.get(data, key) || Map.get(data, Atom.to_string(key))}
+    end)
   end
 end

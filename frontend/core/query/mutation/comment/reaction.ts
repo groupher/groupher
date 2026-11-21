@@ -128,7 +128,7 @@ export type TCommentEmotionTarget = TCommentTarget & { emotionName: TEmotionType
 export const commentEmotionOperation = {
   name: 'comment.emotion',
   entityKey: (target: TCommentEmotionTarget) =>
-    `${target.articleKey}:${target.commentInnerId}:${target.emotionName.toUpperCase()}`,
+    `${target.articleKey}:${target.commentInnerId}:${target.emotionName}`,
   queueKey: (target: TCommentEmotionTarget) => commentOperationQueueKey(target),
   read: (context: TReadOperationContext, target: TCommentEmotionTarget): boolean => {
     if (context.accountScope) {
@@ -138,14 +138,12 @@ export const commentEmotionOperation = {
         .findAll({ queryKey: prefix })) {
         const state =
           context.queryClient.getQueryData<TCommentViewerStates>(queryKey)?.[target.commentInnerId]
-        const value = state?.emotionFlags[target.emotionName.toUpperCase() as never]
+        const value = state?.emotionFlags[target.emotionName as never]
         if (typeof value === 'boolean') return value
       }
     }
     const comment = selectCommentFromCache(context.queryClient, target.scope, target.comment)
-    const emotion = (comment.emotions || []).find(
-      (item) => item.type === target.emotionName.toUpperCase(),
-    )
+    const emotion = (comment.emotions || []).find((item) => item.type === target.emotionName)
     return Boolean(emotion?.viewerHasReacted)
   },
   queriesToCancel: commentReactionCancelTargets,
@@ -164,7 +162,7 @@ export const commentEmotionOperation = {
     target: TCommentEmotionTarget,
     next: boolean,
   ): Promise<TCommentMutationResult> => {
-    const emotion = target.emotionName.toUpperCase() as Exclude<TEmotionRawType, 'UPVOTE'>
+    const emotion = target.emotionName as Exclude<TEmotionRawType, 'UPVOTE'>
     const result = next
       ? (
           await browserGraphQLRequest(commentsSchema.emotionToComment, {
@@ -198,7 +196,7 @@ export const commentEmotionOperation = {
     }))
     if (context.accountScope) {
       const confirmed = (result.emotions || []).find(
-        (emotion) => emotion.type === target.emotionName.toUpperCase(),
+        (emotion) => emotion.type === target.emotionName,
       )
       patchCommentViewerState(
         context.queryClient,
@@ -209,7 +207,7 @@ export const commentEmotionOperation = {
           ...state,
           emotionFlags: {
             ...state.emotionFlags,
-            [target.emotionName.toUpperCase()]:
+            [target.emotionName]:
               typeof confirmed?.viewerHasReacted === 'boolean'
                 ? confirmed.viewerHasReacted
                 : nextViewerState,

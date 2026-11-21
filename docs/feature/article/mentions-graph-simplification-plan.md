@@ -2,6 +2,8 @@
 
 > 状态：当前关系简化、模块收口及 Article／Doc 的 Comment 定点访问已在工作区实现；跨资源验收与发布门禁仍待完成，尚未部署。当前代码合同见[当前关系合同](./mentions-graph-sync-contract.md)。下方未勾选项是**最终代码的剩余工作或发布验收门禁**；单资源一跳图和 Comment 公共定位已在工作区实施；其中某些步骤已有工作区实现，未勾选不表示从未实现，也不代表生产验收通过。
 
+> **2026-11-14 Docs 目标更新：**本文的 Doc 单站 main / owner 和 DocPublic 前提属于既有 MentionsGraph 方案，不能作为新目标。新目标允许 Doc 多社区 Binding，稳定 Article / Comment 身份和关系共享；每次图查询按请求 Community 验证对应 Binding，并从 ArticlePublic 读取共享当前正文。下文的 DocPublic / branch 发布引用仅描述旧运行态；需更新 Doc 解析、可见性和验收 cases 后，才可用本文作为 Docs 目标的实施清单。合同见 [Article–Community](./article-community.md) 与 [Docs 发布队列](../../migrations/docs-publish-queue-refactor.md)。
+
 ## 已定合同
 
 - **全新空库上线，不兼容老数据。** B4 的旧内容不带入新目标库；上线前清空目标库或新建空库。旧边不迁移，旧正文不回填、不做一次性重算，也不列数据缺口。这是发布环境前提，不是运行时架构的一部分。

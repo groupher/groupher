@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const saveCustomThemePreset = graphql(`
+  "Save custom theme preset in dashboard"
   mutation SaveCustomThemePreset(
     $community: String!
     $commandId: ID!
@@ -29,6 +30,7 @@ export const saveCustomThemePreset = graphql(`
 `)
 
 export const selectThemePreset = graphql(`
+  "Select read-only theme preset in dashboard"
   mutation SelectThemePreset($community: String!, $commandId: ID!, $themePreset: DsbThemePreset!) {
     selectThemePreset(community: $community, commandId: $commandId, themePreset: $themePreset) {
       layout {

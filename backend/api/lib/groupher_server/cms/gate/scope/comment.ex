@@ -20,15 +20,12 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   alias Accounts.Model.User
   alias CMS.Gate.{ErrorCat, Scope.Policy}
-  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, ReviewRead}
+  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain}
 
   alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
-    CommentReviewBlock,
-    Community,
-    DocBranch,
-    DocLifecycle
+    CommentReviewBlock
   }
 
   @behaviour Policy
@@ -40,17 +37,17 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
           Ecto.Query.t() | {:error, ErrorCat.error()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, :read, %{policy_mode: :mentioned_target} = context) do
-    with {:ok, _} <- validate_thread(context) do
+    with {:ok, _} <- validate_thread(context),
+         %Ecto.Query{} = query <- CommunityChain.comment_parent(query) do
       from(comment in query,
         join: lifecycle in CommentLifecycle,
         as: :gate_comment_lifecycle,
         on: lifecycle.comment_id == comment.id,
-        join: community in Community,
-        as: :gate_community,
-        on: community.id == ^context.community_id,
         where: lifecycle.state == :visible
       )
       |> maybe_filter_thread(context)
+      |> filter_community(context)
+      |> public_parent(actor, context)
       |> public_comment(actor)
     end
   end
@@ -108,17 +105,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
       on: lifecycle.comment_id == comment.id,
-      join: doc_branch in DocBranch,
-      as: :gate_doc_branch,
-      on: doc_branch.community_id == as(:gate_community).id and doc_branch.type == :main,
-      join: doc_lifecycle in DocLifecycle,
+      join: doc_lifecycle in ArticleLifecycle,
       as: :gate_doc_lifecycle,
-      on:
-        doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.branch_id == as(:gate_doc_branch).id,
+      on: doc_lifecycle.article_id == comment.article_id,
       where: lifecycle.state != :destroy,
-      where: doc_lifecycle.state in [:published, :archived],
-      where: doc_branch.type == :main
+      where: doc_lifecycle.state in [:published, :archived]
     )
   end
 
@@ -133,21 +124,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       left_join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
       on: article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
-      left_join: doc_branch in DocBranch,
-      as: :gate_doc_branch,
-      on:
-        doc_branch.community_id == as(:gate_community).id and doc_branch.type == :main and
-          comment.thread == ^:doc,
-      left_join: doc_lifecycle in DocLifecycle,
+      left_join: doc_lifecycle in ArticleLifecycle,
       as: :gate_doc_lifecycle,
-      on:
-        doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.branch_id == as(:gate_doc_branch).id and comment.thread == ^:doc,
+      on: doc_lifecycle.article_id == comment.article_id and comment.thread == ^:doc,
       where: lifecycle.state != :destroy,
       where:
         (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or
-          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived] and
-             doc_branch.type == :main)
+          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived])
     )
   end
 
@@ -172,13 +155,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       Enum.reduce(threads, dynamic(false), fn thread, predicate ->
         scope =
           if thread == :doc do
-            GroupherServer.CMS.Gate.Context.Scope.Doc.public_main()
+            GroupherServer.CMS.Gate.Context.Scope.Doc.public()
           else
             GroupherServer.CMS.Gate.Context.Scope.Article.public(thread)
           end
 
         binding_ids =
-          GroupherServer.CMS.Gate.Scope.Article.scope(
+          GroupherServer.CMS.Gate.Scope.Article.scope_with_review_policy(
             Ecto.Queryable.to_query(GroupherServer.CMS.Model.Article),
             actor,
             :read,
@@ -195,8 +178,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     where(query, ^allowed)
   end
 
-  defp public_comment(query, %User{id: user_id} = actor) do
-    %{platform?: platform_read?, community_slugs: community_slugs} = ReviewRead.grants(actor)
+  defp public_comment(query, %User{id: user_id}) do
+    {platform_read?, community_read?} = review_access_predicates(user_id)
 
     from(comment in query,
       where:
@@ -208,7 +191,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
                     is_nil(restriction.community_id) and is_nil(restriction.resolved_at),
                 select: 1
               )
-            ) or ^platform_read?) and
+            ) or exists(subquery(platform_read?))) and
              (comment.thread != :doc or
                 not exists(
                   from(restriction in CommentReviewBlock,
@@ -218,7 +201,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
                         is_nil(restriction.resolved_at),
                     select: 1
                   )
-                ) or as(:gate_community).slug in ^community_slugs))
+                ) or exists(subquery(platform_read?)) or
+                  exists(subquery(community_read?))))
     )
   end
 
@@ -244,5 +228,28 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
                )
              ))
     )
+  end
+
+  defp review_access_predicates(user_id) do
+    with {:ok, platform_read?} <-
+           CMS.Passport.Store.action_predicate(
+             user_id,
+             :global,
+             CMS.GateAction.review_platform_read()
+           ),
+         {:ok, community_read?} <-
+           CMS.Passport.Store.action_predicate(
+             user_id,
+             {:community_binding, :gate_community},
+             CMS.GateAction.review_read()
+           ) do
+      {platform_read?, community_read?}
+    else
+      _ -> {denied_action_query(), denied_action_query()}
+    end
+  end
+
+  defp denied_action_query do
+    from(passport in CMS.Model.GlobalPassport, where: false, select: 1)
   end
 end

@@ -1,50 +1,48 @@
 import { describe, expect, it } from 'vitest'
 
-import { ARTICLE_STAGE } from '~/const/article'
-
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
-import type { TSideTreePage } from '../SideTree/spec'
-import { composeLoadedDraftSession, resolveDraftSource } from './helper'
+import {
+  composeDocDraftInfo,
+  composeEditorDraftFromSession,
+  composeEditorDraftMeta,
+  composeWorkingCopySession,
+  countEditorText,
+} from './helper'
 
-const activePage: TSideTreePage = {
-  id: 'page-1',
-  type: SIDE_TREE_NODE_TYPE.PAGE,
-  title: 'Intro',
-  docId: 'doc-1',
-  publishState: {
-    status: ARTICLE_STAGE.PUBLIC,
-    published: true,
-  },
-}
-
-describe('docs editor article helper', () => {
-  it('marks editor fallback content as public source', () => {
-    const session = composeLoadedDraftSession(
+describe('Docs working copy editor session', () => {
+  it('loads the saved body, Article identity and optimistic revision', () => {
+    const session = composeWorkingCopySession(
       {
-        id: 'article-1',
-        docId: 'doc-1',
-        title: 'Published intro',
-        stage: ARTICLE_STAGE.PUBLIC,
+        id: 'copy-1',
+        articleId: 'doc-1',
+        scopeType: 'default',
+        revision: 4,
+        title: 'Intro',
+        slug: 'intro',
+        bodyJson: '[{"type":"p","children":[{"text":"Hello"}]}]',
+        threadFields: { subtitle: 'Guide' },
       },
-      activePage,
+      { id: 'page-1', type: SIDE_TREE_NODE_TYPE.PAGE, docId: 'doc-1' },
     )
 
-    expect(session.source).toBe('public')
-    expect(resolveDraftSource({ stage: ARTICLE_STAGE.PUBLIC })).toBe('public')
-  })
+    expect(session).toMatchObject({
+      source: 'draft',
+      version: 4,
+      title: 'Intro',
+      subtitle: 'Guide',
+      info: { id: 'doc-1', workingCopyRevision: 4 },
+      body: [{ type: 'p', children: [{ text: 'Hello' }] }],
+    })
 
-  it('marks loaded draft content as draft source', () => {
-    const session = composeLoadedDraftSession(
-      {
-        id: 'article-2',
-        docId: 'doc-1',
-        title: 'Draft intro',
-        stage: ARTICLE_STAGE.DRAFT,
-      },
-      activePage,
-    )
-
-    expect(session.source).toBe('draft')
-    expect(resolveDraftSource({ stage: ARTICLE_STAGE.DRAFT })).toBe('draft')
+    const draft = composeEditorDraftFromSession(session)
+    expect(
+      composeDocDraftInfo({
+        workingCopyId: session.workingCopyId,
+        bodyStats: countEditorText(draft.bodyValue),
+        draft,
+        meta: composeEditorDraftMeta(session.info),
+        publishState: null,
+      }),
+    ).toMatchObject({ id: 'doc-1', workingCopyRevision: 4 })
   })
 })

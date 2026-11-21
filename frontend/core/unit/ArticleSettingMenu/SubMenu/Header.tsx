@@ -74,6 +74,17 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
+    case SUB_MENU.HISTORY: {
+      Content = (
+        <>
+          <EditSVG className={s.icon} />
+          历史记录
+          <div className='grow' />
+        </>
+      )
+      break
+    }
+
     default: {
       Content = (
         <>

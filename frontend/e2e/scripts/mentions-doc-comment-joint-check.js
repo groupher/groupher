@@ -40,7 +40,7 @@ async function checkMentionsDocCommentJoint(page) {
       // A native cancelled fetch has no complete response body.
     }
   }
-  const graphRequests = () => requests.filter((item) => item.operation === 'MentionsGraphPage')
+  const graphRequests = () => requests.filter((item) => item.operation === 'PagedMentionsGraph')
   page.on('request', observe)
   page.on('response', observeResponse)
   await page.addInitScript(() => {
@@ -128,7 +128,7 @@ async function checkMentionsDocCommentJoint(page) {
       await page.getByRole('button', { name: 'Back to article mentions', exact: true }).click()
       await waitFor(() =>
         page.evaluate(() =>
-          window.__mentionsJointAborts.some((body) => body.includes('MentionsGraphPage')),
+          window.__mentionsJointAborts.some((body) => body.includes('PagedMentionsGraph')),
         ),
       )
       verify(true, 'Returning from in-flight Doc Comment focus aborts native graph fetch')

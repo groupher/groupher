@@ -10,14 +10,14 @@ defmodule GroupherServer.CMS.Comments.Mentions do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.PlateJSON
   alias CMS.ArtimentMentions
-  alias CMS.Model.{Article, Comment, CommentBody, DocBranch, DocBranchVersion}
+  alias CMS.Model.{Article, ArticleHistoryOwner, Comment, CommentBody}
 
   @doc "Updates the graph for one selected Comment body in the owning transaction."
-  def update(%Comment{id: id}, command_id, community_id)
-      when is_binary(command_id) and (is_nil(community_id) or is_integer(community_id)) do
+  def update(%Comment{id: id}, operation_ref, community_id)
+      when is_binary(operation_ref) and (is_nil(community_id) or is_integer(community_id)) do
     with %Comment{} = comment <- Repo.get(Comment, id),
          %CommentBody{} = body <- Repo.get_by(CommentBody, comment_id: id) do
-      capture_comment_body(comment, body, {:command, command_id}, community_id)
+      capture_comment_body(comment, body, operation_ref, community_id)
     else
       nil -> {:error, :comment_mention_source_missing}
     end
@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Comments.Mentions do
   defp capture_comment_body(
          %Comment{id: id, article_id: article_id, thread: thread},
          %CommentBody{version: version, body_hash: hash, json: json, updated_at: updated_at},
-         identity,
+         operation_ref,
          requested_community_id
        )
        when is_integer(id) and is_binary(article_id) and is_integer(version) and is_binary(hash) and
@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Comments.Mentions do
                community_id: community_id,
                mentioned_at: updated_at
              },
-             identity
+             operation_ref
            ) do
       {:ok, captured}
     else
@@ -65,12 +65,9 @@ defmodule GroupherServer.CMS.Comments.Mentions do
 
   defp comment_community_id(:doc, article_id, requested_community_id) do
     owners =
-      from(version in DocBranchVersion,
-        join: branch in DocBranch,
-        on: branch.id == version.branch_id and branch.type == :main,
-        where: version.article_id == ^article_id,
-        select: branch.community_id,
-        distinct: true
+      from(owner in ArticleHistoryOwner,
+        where: owner.article_id == ^article_id,
+        select: owner.community_id
       )
       |> Repo.all()
 

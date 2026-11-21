@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { normalizeHeaderLinks } from '~/hooks/useHeaderLinks/helper'
 import type { TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from '../logic/useHelper'
@@ -23,7 +23,7 @@ type TRet = {
 
 /** Exposes header links draft state and actions through the shared React hook boundary. */
 export default function useHeaderLinksDraft(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { slug } = useCommunity()
   const { onSave } = useHelper()
   const source = useMemo(

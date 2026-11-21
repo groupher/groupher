@@ -2,8 +2,9 @@ defmodule GroupherServer.CMS.Comments.Effects do
   @moduledoc """
   Owns durable effect intents emitted by Comment mutations.
 
-  The caller owns the current Command transaction. This module only builds the
-  bounded Outbox intent; the Comment cleanup worker performs post-commit
+  The caller owns the current Command transaction. This module builds bounded
+  Outbox intent and loads the dependencies shared by recovery and delivery;
+  the Comment cleanup worker performs post-commit
   cache, search, and subscription delivery. Mentions are updated by the
   owning Comment Command before commit.
 
@@ -17,11 +18,13 @@ defmodule GroupherServer.CMS.Comments.Effects do
 
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Model.{Article, Community}
+  alias CMS.Model.{Article, Comment, CommentBody, Community}
+  alias CMS.Outbox.DedupeKey
 
   @doc "Persists summary invalidation for every public binding in the owner transaction."
-  @spec summary_changed(Article.t(), pos_integer(), boolean()) :: {:ok, :pass} | {:error, term()}
-  def summary_changed(article, revision, count_changed?) do
+  @spec summary_changed(Article.t(), pos_integer(), boolean(), Ecto.UUID.t()) ::
+          {:ok, :pass} | {:error, term()}
+  def summary_changed(article, revision, count_changed?, operation_ref) do
     bindings =
       from(binding in CMS.Model.ArticleBinding,
         join: community in CMS.Model.Community,
@@ -37,8 +40,8 @@ defmodule GroupherServer.CMS.Comments.Effects do
              worker: GroupherServer.Jobs.CMSOutboxComment,
              resource_type: "article",
              resource_id: article.id,
-             identity: {:workflow, "comment-summary:#{article.id}:#{revision}"},
-             effect_key: "comment.changed:#{community.id}",
+             operation_ref: operation_ref,
+             dedupe_key: DedupeKey.encode([revision, community.id]),
              data: %{
                article_id: article.id,
                community_id: community.id,
@@ -55,28 +58,94 @@ defmodule GroupherServer.CMS.Comments.Effects do
     end)
   end
 
-  @doc "Records one Comment effect in the caller-owned transaction."
-  @spec enqueue(String.t(), String.t(), term(), Ecto.UUID.t(), map(), keyword()) ::
-          {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue(event, resource_type, resource_id, command_id, data, opts \\ [])
+  @doc "Records the creation's frozen subscription Community."
+  def created(%Comment{} = comment, %User{} = actor, %Community{} = community, operation_ref) do
+    enqueue("comment.created", "comment", comment.id, [community.id], operation_ref, %{
+      article_id: comment.article_id,
+      actor_id: actor.id,
+      community_id: community.id
+    })
+  end
 
-  def enqueue(event, resource_type, resource_id, command_id, data, opts)
-      when is_binary(event) and is_binary(resource_type) and is_binary(command_id) and
-             is_map(data) and is_list(opts) do
+  @doc "Records a reply once for its creation Community."
+  def replied(%Comment{} = comment, %User{} = actor, %Community{} = community, operation_ref) do
+    enqueue("comment.replied", "comment", comment.id, [community.id], operation_ref, %{
+      article_id: comment.article_id,
+      actor_id: actor.id,
+      community_id: community.id
+    })
+  end
+
+  @doc "Records an edit at its durable body version instead of reusing the first edit's key."
+  def updated(
+        %Comment{body: %CommentBody{version: version}} = comment,
+        %User{} = actor,
+        community_id,
+        operation_ref
+      ) do
+    enqueue("comment.updated", "comment", comment.id, [version, community_id], operation_ref, %{
+      article_id: comment.article_id,
+      actor_id: actor.id,
+      community_id: community_id,
+      body_version: version
+    })
+  end
+
+  @doc "Records metrics refresh independently for each deleted Comment on the same Article."
+  def deleted(%Comment{} = comment, %Article{} = article, operation_ref) do
+    enqueue("comment.deleted", "article", article.id, [comment.id], operation_ref, %{
+      article_id: article.id,
+      comment_id: comment.id
+    })
+  end
+
+  defp enqueue(event, resource_type, resource_id, dimensions, operation_ref, data) do
     CMS.Outbox.send(%{
       event: event,
       worker: GroupherServer.Jobs.CMSOutboxComment,
       resource_type: resource_type,
       resource_id: resource_id,
-      identity: {:command, command_id},
-      effect_key: Keyword.get(opts, :effect_key, "default"),
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode(dimensions),
       data: data
     })
   end
 
-  def enqueue(_event, _resource_type, _resource_id, _command_id, _data, _opts) do
-    {:error, :comment_effect_identity_required}
+  @doc "Loads only dependencies the Comment consumer needs, preserving its legal no-op cases."
+  def delivery_context(%{
+        event: "comment.created",
+        resource_type: "comment",
+        resource_id: id,
+        data: data
+      }) do
+    with {id, ""} when id > 0 <- Integer.parse(to_string(id)),
+         %Comment{} = comment <- Repo.get(Comment, id),
+         true <- comment.article_id == data["article_id"],
+         actor_id when is_integer(actor_id) <- data["actor_id"],
+         %User{} = actor <- Repo.get(User, actor_id),
+         community_id when is_integer(community_id) <- data["community_id"] do
+      {:ok, %{comment: comment, actor: actor, community: Repo.get(Community, community_id)}}
+    else
+      _ -> {:error, CMS.Comments.ErrorCat.effect_target_not_found()}
+    end
   end
+
+  def delivery_context(%{
+        event: "comment.deleted",
+        resource_type: "article",
+        resource_id: id,
+        data: data
+      }) do
+    with {:ok, id} <- Ecto.UUID.cast(id),
+         true <- id == data["article_id"],
+         %Article{} = article <- Repo.get(Article, id) do
+      {:ok, %{article: article}}
+    else
+      _ -> {:error, CMS.Comments.ErrorCat.not_exist("Comment parent Article")}
+    end
+  end
+
+  def delivery_context(_event), do: {:error, CMS.Comments.ErrorCat.unknown_outbox_event()}
 
   @doc "Records one Comment activity in the caller-owned transaction."
   def activity(resource, event, opts), do: Activity.log(resource, event, opts)
@@ -98,6 +167,42 @@ defmodule GroupherServer.CMS.Comments.Effects do
     case Repo.get(User, id) do
       %User{} = user -> {:ok, user}
       nil -> {:error, :comment_effect_actor_not_found}
+    end
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "comment.changed" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "article_id",
+          "community_id",
+          "community",
+          "inner_id",
+          "thread",
+          "comments_revision",
+          "count_changed"
+        ])
+
+      "comment.created" ->
+        CMS.Outbox.Event.project_fields(data, ["article_id", "actor_id", "community_id"])
+
+      "comment.deleted" ->
+        CMS.Outbox.Event.project_fields(data, ["article_id", "comment_id"])
+
+      "comment.replied" ->
+        CMS.Outbox.Event.project_fields(data, ["article_id", "actor_id", "community_id"])
+
+      "comment.updated" ->
+        CMS.Outbox.Event.project_fields(data, [
+          "article_id",
+          "actor_id",
+          "community_id",
+          "body_version"
+        ])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
     end
   end
 end

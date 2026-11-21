@@ -1,4 +1,4 @@
-// import useDsbEdit from '~/stores/dsbEdit/hooks'
+// import useDsbShell from '~/stores/dsbShell/hooks'
 // import useHelper from '../useHelper'
 
 export type TRet = {

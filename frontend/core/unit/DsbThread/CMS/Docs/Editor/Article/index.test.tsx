@@ -38,6 +38,7 @@ const mocks = vi.hoisted(() => ({
   }),
 }))
 
+vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }) }))
 vi.mock('~/hooks/useEvent', () => ({ default: vi.fn() }))
 vi.mock('../store/hooks', () => ({
   default: () => ({ mode: DOC_EDITOR_MODE.EDIT }),

@@ -723,7 +723,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       page_size = 12
       thread = :doc
 
-      author_user = doc.author
+      author_user = doc.author.user
 
       all_comments =
         Enum.reduce(0..total_count, [], fn i, acc ->
@@ -1006,7 +1006,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       page_size = 10
       thread = :doc
 
-      author_user = doc.author
+      author_user = doc.author.user
 
       {:ok, parent_comment} =
         CMS.Comments.create_comment(

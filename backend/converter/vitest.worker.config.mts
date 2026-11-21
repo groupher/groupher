@@ -9,7 +9,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [
     cloudflareTest({
-      experimental: { newConfig: { configPath: './cloudflare.test.config.ts' } },
+      config: './cloudflare.test.config.ts',
     }),
   ],
   test: {

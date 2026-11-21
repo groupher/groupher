@@ -5,12 +5,13 @@ import { useEffect, useRef } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useDsbTab from '~/hooks/useDsbTab'
-import { patchCommunityConfig } from '~/query'
+import { patchCommunity } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDsbFieldMap } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import { useDsbEditStore } from '~/stores/dsbEdit/hooks'
-import { useFaqEditorUi, useTagEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useFaqEditorState } from '~/stores/dsbShell/editor'
+import { useTagsEditor } from '~/stores/dsbShell/editor'
+import { useDsbShellStore } from '~/stores/dsbShell/hooks'
 import { toast } from '~/ui/Toaster'
 import TagsSchema from '~/unit/DsbThread/schema/tags'
 import { slugify } from '~/utils/slug'
@@ -55,15 +56,15 @@ type TRet = {
 
 /** Routes editor field intent to its domain request builder and the shared save runner. */
 export default function useDsbFieldSave(): TRet {
-  const dashboardStore = useDsbEditStore()
-  const tagUi$ = useTagEditorUi()
-  const faqUi$ = useFaqEditorUi()
+  const dashboardStore = useDsbShellStore()
+  const tagsEditor = useTagsEditor()
+  const faqEditor = useFaqEditorState()
   const community$ = useCommunity()
   const { subTab } = useDsbTab()
 
   const storeRef = useRef(dashboardStore)
-  const tagUiRef = useRef(tagUi$)
-  const faqUiRef = useRef(faqUi$)
+  const tagEditorRef = useRef(tagsEditor)
+  const faqEditorRef = useRef(faqEditor)
   const { slug: community } = community$
   const queryClient = useQueryClient()
   const { save, isPending, error } = useDsbSaveRunner({ community, dashboardStore })
@@ -76,12 +77,12 @@ export default function useDsbFieldSave(): TRet {
 
   // get latest store, for those state not in UI render cycle
   useEffect(() => {
-    tagUiRef.current = tagUi$
-    faqUiRef.current = faqUi$
-  }, [faqUi$, tagUi$])
+    tagEditorRef.current = tagsEditor
+    faqEditorRef.current = faqEditor
+  }, [faqEditor, tagsEditor])
 
   const mergeBackEditingTag = (): void => {
-    const { editingTag } = tagUiRef.current
+    const { editingTag } = tagEditorRef.current
     if (!editingTag) return
     const { tagGroups } = storeRef.current
     const targetIdx = findIndex(
@@ -97,7 +98,7 @@ export default function useDsbFieldSave(): TRet {
     }))
 
     storeRef.current.editMany({ tagGroups: updatedTagGroups })
-    tagUiRef.current.patch({ editingTag: null })
+    tagEditorRef.current.setEditingTag(null)
 
     return undefined
   }
@@ -123,7 +124,7 @@ export default function useDsbFieldSave(): TRet {
       submitted[field] = clone(current[field]) as never
     }
 
-    const editingTag = tagUiRef.current.editingTag
+    const editingTag = tagEditorRef.current.editingTag
     if (editingTag && fields.includes(FIELD.TAGS)) {
       submitted.tagGroups = current.tagGroups.map((group) => ({
         ...group,
@@ -150,7 +151,7 @@ export default function useDsbFieldSave(): TRet {
       submitted: snapshotFields(savedFields),
       afterConfirmed: (data) => {
         if (field === FIELD.TAG) mergeBackEditingTag()
-        if (field === FIELD.DOC_FAQ) faqUiRef.current.patch({ docFaqSaveZone: null })
+        if (field === FIELD.DOC_FAQ) faqEditorRef.current.setDocFaqSaveZone(null)
         okCb?.(data)
       },
     })
@@ -219,7 +220,7 @@ export default function useDsbFieldSave(): TRet {
             if (request.params[key] !== undefined) communityPatch[key] = request.params[key]
           }
 
-          patchCommunityConfig(queryClient, community, communityPatch)
+          patchCommunity(queryClient, community, communityPatch)
         },
         savedFields,
       )
@@ -259,11 +260,11 @@ export default function useDsbFieldSave(): TRet {
     }
 
     if (field === FIELD.TAG) {
-      const { editingTag } = tagUiRef.current
+      const { editingTag } = tagEditorRef.current
       if (!editingTag?.title) return
       slugify(editingTag.title)
         .then((slug) => {
-          tagUiRef.current.patch({ editingTag: { ...editingTag, slug } })
+          tagEditorRef.current.setEditingTag({ ...editingTag, slug })
           const request = buildTagSave({
             ...saveContext(),
             editingTag,

@@ -44,11 +44,14 @@ end)
 IO.puts("Seeding lite home community#{if reset?, do: " with reset", else: ""}")
 
 result =
-  if reset? do
-    GroupherServer.CMS.Seeds.LiteHome.reset_and_seed()
-  else
-    GroupherServer.CMS.Seeds.LiteHome.seed()
-  end
+  [command_id_factory: &Ecto.UUID.generate/0]
+  |> then(fn seed_opts ->
+    if reset? do
+      GroupherServer.CMS.Seeds.LiteHome.reset_and_seed(seed_opts)
+    else
+      GroupherServer.CMS.Seeds.LiteHome.seed(seed_opts)
+    end
+  end)
 
 case result do
   {:ok, community} ->

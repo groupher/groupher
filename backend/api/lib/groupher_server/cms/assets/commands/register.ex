@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Assets.Commands.Register do
 
   receipt_pipeline execute_pipeline(community, attrs, user, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(user, :update, candidate) end)
-    change(fn canonical -> Persist.register(canonical, attrs, user) end)
+    change(fn canonical, _operation_ref -> Persist.register(canonical, attrs, user) end)
 
     confirm(fn asset ->
       {:ok, %Confirmation{data: %{"asset_id" => asset.id, "command_id" => command_id}}}

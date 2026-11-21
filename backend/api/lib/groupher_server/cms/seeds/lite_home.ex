@@ -55,25 +55,44 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   Pass `reset: true` to delete the existing home community first. Returns the
   fetched community with a `seed_summary` of per-thread counts.
 
+  Community and content commit before external Wallpaper uploads. If publication
+  fails, the committed data remains and a retry resumes the idempotent seed.
+
   ## Examples
 
-      CMS.Seeds.LiteHome.seed()
+      CMS.Seeds.LiteHome.seed(command_id_factory: &Ecto.UUID.generate/0)
 
-      CMS.Seeds.LiteHome.seed(reset: true)
+      CMS.Seeds.LiteHome.seed(reset: true, command_id_factory: &Ecto.UUID.generate/0)
 
   """
   @spec seed(keyword()) :: T.domain_res(Community.t())
   def seed(opts \\ []) when is_list(opts) do
+    result =
+      Repo.transaction(fn ->
+        case seed_in_transaction(opts) do
+          {:ok, value} -> value
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+
+    # Assets Hub finalizes uploads through a separate Phoenix connection. Commit
+    # the community first and let each upload intent commit before that callback.
+    with {:ok, community} <- result,
+         {:ok, _} <- maybe_seed_wallpaper(community, opts) do
+      {:ok, community}
+    end
+  end
+
+  defp seed_in_transaction(opts) do
     reset? = Keyword.get(opts, :reset, false)
 
     with {:ok, :ok} <- maybe_reset(reset?),
          {:ok, community} <- Communities.mock(@slug, title: "Home"),
          {:ok, _} <- configure_dashboard(community),
-         {:ok, _} <- maybe_seed_wallpaper(community, opts),
          {:ok, post_tag_ids} <- seed_tags(community, :post),
          {:ok, changelog_tag_ids} <- seed_tags(community, :changelog),
-         {:ok, _posts} <- seed_posts(community, post_tag_ids),
-         {:ok, _} <- seed_changelogs(community, changelog_tag_ids),
+         {:ok, _posts} <- seed_posts(community, post_tag_ids, opts),
+         {:ok, _} <- seed_changelogs(community, changelog_tag_ids, opts),
          {:ok, community} <- CMS.Communities.fetch(@slug, inc_views: false) do
       {:ok, Map.put(community, :seed_summary, summary(community))}
     end
@@ -142,15 +161,15 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     Tags.mock(community, thread, count: @tag_count, group_count: @tag_group_count)
   end
 
-  defp seed_posts(%Community{} = community, tag_ids) when is_list(tag_ids) do
-    seed_articles(community, :post, @post_titles, tag_ids)
+  defp seed_posts(%Community{} = community, tag_ids, opts) when is_list(tag_ids) do
+    seed_articles(community, :post, @post_titles, tag_ids, opts)
   end
 
-  defp seed_changelogs(%Community{} = community, tag_ids) when is_list(tag_ids) do
-    seed_articles(community, :changelog, @changelog_titles, tag_ids)
+  defp seed_changelogs(%Community{} = community, tag_ids, opts) when is_list(tag_ids) do
+    seed_articles(community, :changelog, @changelog_titles, tag_ids, opts)
   end
 
-  defp seed_articles(%Community{} = community, thread, titles, tag_ids)
+  defp seed_articles(%Community{} = community, thread, titles, tag_ids, opts)
        when thread in [:post, :changelog] do
     existing_articles = existing_articles_by_title(thread, community.id, titles)
 
@@ -163,7 +182,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
               {:cont, {:ok, [article | acc]}}
 
             :error ->
-              seed_new_article(community, thread, title, author, acc)
+              seed_new_article(community, thread, title, author, acc, opts)
           end
         end)
         |> case do
@@ -178,12 +197,43 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     end
   end
 
-  defp seed_new_article(community, thread, title, author, acc) do
+  defp seed_new_article(community, thread, title, author, acc, opts) do
     attrs = mock_attrs(thread, %{community_id: community.id, title: title})
 
-    case CMS.Articles.create(community, thread, attrs, author) do
-      {:ok, article} -> {:cont, {:ok, [article | acc]}}
-      {:error, reason} -> {:halt, {:error, reason}}
+    case Keyword.get(opts, :command_id_factory) do
+      factory when is_function(factory, 0) ->
+        case create_public_article(community, thread, attrs, author, factory.()) do
+          {:ok, article} -> {:cont, {:ok, [article | acc]}}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+
+      _ ->
+        {:halt, {:error, :command_id_factory_required}}
+    end
+  end
+
+  defp create_public_article(community, thread, attrs, actor, command_id)
+       when thread in [:post, :blog, :changelog] do
+    attrs =
+      if is_map(Map.get(attrs, :body_bag)),
+        do: attrs,
+        else: Map.put(attrs, :body_bag, mock_body_bag(Map.get(attrs, :body, "")))
+
+    actor = %{actor | cur_passport: %{"global" => %{"god" => true}}}
+
+    with {:ok, %{article: article}} <-
+           CMS.Articles.create_and_publish_article(community, thread, attrs, actor,
+             command_id: command_id
+           ),
+         {:ok, %{inner_id: inner_id}} <-
+           CMS.Articles.Bindings.fetch_binding(article.id, community.id),
+         {:ok, public} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: inner_id
+           }) do
+      {:ok, public}
     end
   end
 
@@ -208,9 +258,9 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
     tag_ids
     |> Enum.reduce_while({:ok, article}, fn tag_id, {:ok, article} ->
-      workflow_ref = "seed-article-tags:#{article.id}:#{tag_id}"
+      operation_ref = Ecto.UUID.generate()
 
-      case Maintenance.add(article, tag_id, workflow_ref) do
+      case Maintenance.add(article, tag_id, operation_ref) do
         {:ok, article} -> {:cont, {:ok, article}}
         {:error, reason} -> {:halt, {:error, reason}}
       end

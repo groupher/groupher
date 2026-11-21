@@ -23,24 +23,27 @@ defmodule GroupherServer.Activity.Post do
   ]
 
   @contracts %{
-    created: Event.contract([], [], [:article_log, :community_log]),
+    created: Event.contract([], [:snapshot_id], [:article_log, :community_log]),
     ticket_created: Event.contract([], [], [:article_log], :ticket),
     ticket_linked: Event.contract([], [], [:article_log], :ticket),
-    title_changed: Event.contract([:title], [:revision_id], [:article_log, :community_log]),
+    title_changed: Event.contract([:title], [:snapshot_id], [:article_log, :community_log]),
     body_updated:
       Event.contract(
-        [:body_hash, :schema_version, :summary],
-        [:revision_id],
-        [:article_log, :community_log]
+        [:schema_version, :summary],
+        [:snapshot_id],
+        [:article_log, :community_log],
+        nil,
+        changed_fields: [:body]
       ),
     trashed:
-      Event.contract([], [], [:community_log], nil,
+      Event.contract([:operation_scope, :effect], [], [:community_log], nil,
         outcomes: %{
           allowed: %{producer_status: :active},
           denied: %{producer_status: :active, rejection_codes: @trash_rejection_codes}
         }
       ),
-    restored: Event.contract([], [], [:article_log, :community_log]),
+    restored:
+      Event.contract([:operation_scope, :effect], [], [:article_log, :community_log]),
     archived: Event.contract([], [:batch], [:article_log, :community_log]),
     permanently_deleted: Event.contract([], [], [:community_log]),
     comment_created: Event.contract([], [], []) |> Event.contract_only(),

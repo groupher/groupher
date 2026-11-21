@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Communities.Moderators.Commands.Add do
                      command_id
                    ) do
     gate(fn candidate -> Support.check_in_transaction(actor, candidate) end)
-    change(fn canonical -> Persist.add(canonical, target) end)
+    change(fn canonical, _operation_ref -> Persist.add(canonical, target) end)
 
     confirm(fn result ->
       Support.confirmation(community, command_id, result, %{target_user_id: target_user_id})

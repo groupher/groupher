@@ -1,5 +1,7 @@
 # Groupher Action Matrix 与 Transition Contract
 
+> **2026-11-14 Docs 目标更新：**本文中的 Doc branch / DocLifecycle action matrix 是旧架构基线，不再定义当前 Docs 生命周期。Doc 单篇状态使用 ArticleLifecycle，站点发布状态使用 Docs Queue / Release；按新边界重做 Docs actions 与验收时以 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 为准。其他资源的 transition 分析不因此自动变更。
+
 本文只回答三个问题：
 
 1. Community、普通 Article、Doc branch 当前有哪些 action，它们的理想 transition contract 是什么；
@@ -368,7 +370,7 @@ Gate 必须在拥有 Lifecycle lock 的同一事务里完成准入。现在 reso
 普通 Article 的内容版本和资源生命周期是两套 version：Draft row 的 `version` 保护编辑内容，`ArticleLifecycle.version`
 保护资源状态。公开 Draft update 和 publish 分别携带对应的 expected version，publish 同时校验两者。
 
-实现位置：[Article Publish](../../../backend/api/lib/groupher_server/cms/articles/publish.ex)、[Article Lifecycle](../../../backend/api/lib/groupher_server/cms/articles/lifecycle.ex)、[Article Trash](../../../backend/api/lib/groupher_server/cms/articles/trash.ex)。
+实现位置：`Article Publish`（旧路径已在 R7 退场）、[Article Lifecycle](../../../backend/api/lib/groupher_server/cms/articles/lifecycle.ex)、[Article Trash](../../../backend/api/lib/groupher_server/cms/articles/trash.ex)。
 
 #### 切换前基线 action matrix
 
@@ -395,7 +397,7 @@ Gate 必须在拥有 Lifecycle lock 的同一事务里完成准入。现在 reso
 
 A 实际确认的是 version 4，却发布了 B 的 version 5。这里不会出现数据库冲突，因为代码主动读取了最新 Draft；但从用户意图看，这是错误的 last-observed-write 语义。
 
-尤其需要指出，[Article Publish](../../../backend/api/lib/groupher_server/cms/articles/publish.ex) 中的 `validate_version/1` 实际只校验 slug，并没有校验任何 version。这个命名会让维护者误以为 publish 已经有并发保护。
+尤其需要指出，`Article Publish`（旧路径已在 R7 退场） 中的 `validate_version/1` 实际只校验 slug，并没有校验任何 version。这个命名会让维护者误以为 publish 已经有并发保护。
 
 合理形态：publish 同时绑定内容和生命周期：
 
@@ -475,7 +477,7 @@ Community + DocBranch
 
 当前 tree mutation 已经要求 `baseRevision`，但 publish release 没有携带用户读取 checklist 时的 revision，也没有稳定的客户端 command identity。
 
-实现位置：[Doc Publish](../../../backend/api/lib/groupher_server/cms/doc_tree/publish.ex)、[Doc Lifecycle](../../../backend/api/lib/groupher_server/cms/docs/lifecycle.ex)、[Docs publish UI](../../../frontend/core/unit/DsbThread/CMS/Docs/ActionSnackbar/Publish/usePublishActions.ts)、[SideTree persistence](../../../frontend/core/unit/DsbThread/CMS/Docs/Editor/SideTree/usePersistence.ts)。
+历史实现位置：[Doc Publish](../../../backend/api/lib/groupher_server/cms/doc_tree/publish.ex)、`Doc Lifecycle`（旧路径已在 R7 退场）、[SideTree persistence](../../../frontend/core/unit/DsbThread/CMS/Docs/Editor/SideTree/usePersistence.ts)。旧发布 UI 已移除，新入口见 [Docs Queue 控制器](../../../frontend/core/unit/DsbThread/CMS/Docs/ActionSnackbar/Publish/usePublishQueue.ts)。
 
 #### 切换前基线 action matrix
 
@@ -730,7 +732,7 @@ GraphQL resolver / CMS facade
 
 - `backend/api/lib/groupher_server_web/resolvers/cms/communities.ex`：`request_destroy_community/3`；
 - `backend/api/lib/groupher_server_web/schema/cms/mutations/community.ex`：`commandId` 入参；
-- `backend/api/lib/groupher_server/cms/model/community.ex`、`cms_types.ex`：`commandId` 出参；服务端不暴露 replay 状态。
+- `backend/api/lib/groupher_server/cms/model/community.ex`、`spec.ex`：`commandId` 出参；服务端不暴露 replay 状态。
 
 `restore`、`schedule_destroy`、`cancel_destroy`、`destroy` 仍是 operations/job 侧 Lifecycle command，当前尚未接入
 用户 Command API。它们不能伪造 actor Gate；未来接入时应设计独立的 job/system 入口，initiator 由 job 记录并在 retry

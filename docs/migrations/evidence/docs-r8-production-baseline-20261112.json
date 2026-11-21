@@ -1,0 +1,193 @@
+{
+  "generation": {
+    "build": "deployment-01M6Q486M39HMBV6HQCZD1PKQP",
+    "phase": "ready",
+    "contract": "shared-comments-v1",
+    "singleton": true,
+    "created_at": "2026-11-06T00:45:01.036883+00:00",
+    "generation": "7f39fe0a-d3e9-4d4b-982a-edbdbe8a6c3f",
+    "database_oid": "1138699",
+    "database_name": "groupher_mentions_graph_20261106",
+    "schema_sha256": "fbc51ba8c1750dfd6205d144c79ac6aa2e90af46563fe44a0b9e463d9cacb5ae",
+    "bootstrap_source": "mentions-b4-new-database"
+  },
+  "active_jobs": 0,
+  "old_bindings": [
+    {
+      "thread": "doc",
+      "inner_id": 4,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 5,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 1,
+      "community": "tmp"
+    },
+    {
+      "thread": "post",
+      "inner_id": 6,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 8,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 9,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 1,
+      "community": "mock"
+    },
+    {
+      "thread": "post",
+      "inner_id": 10,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 11,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 12,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 13,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 14,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 15,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 16,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 17,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 18,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 19,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 20,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 21,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 22,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 23,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 24,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 25,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 26,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 1,
+      "community": "dev"
+    },
+    {
+      "thread": "blog",
+      "inner_id": 2,
+      "community": "dev"
+    },
+    {
+      "thread": "changelog",
+      "inner_id": 3,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 7,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 27,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 28,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 29,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 30,
+      "community": "dev"
+    },
+    {
+      "thread": "post",
+      "inner_id": 2,
+      "community": "mock"
+    },
+    {
+      "thread": "post",
+      "inner_id": 3,
+      "community": "mock"
+    },
+    {
+      "thread": "ticket",
+      "inner_id": 31,
+      "community": "dev"
+    }
+  ],
+  "article_count": 33
+}

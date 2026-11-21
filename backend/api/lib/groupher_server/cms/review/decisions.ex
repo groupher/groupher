@@ -10,9 +10,12 @@ defmodule GroupherServer.CMS.Review.Decisions do
             -> one committed resource result
   """
 
+  import Ecto.Query
+
   alias GroupherServer.{AlertWall, CMS, Repo}
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
-  alias CMS.Model.Author
+  alias CMS.Articles.WorkingCopy.History.Query, as: ArticleHistory
+  alias CMS.Model.{ArticleCoAuthor, ArticlePublic, Author}
   alias CMS.Review.Const
 
   @actions Const.decision_actions()
@@ -63,6 +66,20 @@ defmodule GroupherServer.CMS.Review.Decisions do
     {:error, CMS.Passport.ErrorCat.permission_denied()}
   end
 
+  defp reject_author_review(
+         %{type: :article, target: %{id: article_id, author_id: author_id}},
+         %{id: user_id}
+       )
+       when is_binary(article_id) and is_integer(user_id) do
+    case Repo.get(Author, author_id) do
+      %Author{user_id: ^user_id} ->
+        {:error, CMS.Passport.ErrorCat.permission_denied()}
+
+      _ ->
+        reject_article_contributor_review(article_id, user_id)
+    end
+  end
+
   defp reject_author_review(%{target: %{author_id: author_id}}, %{id: user_id})
        when not is_nil(author_id) and is_integer(user_id) do
     case Repo.get(Author, author_id) do
@@ -75,6 +92,32 @@ defmodule GroupherServer.CMS.Review.Decisions do
   end
 
   defp reject_author_review(_context, _actor), do: {:ok, :pass}
+
+  defp reject_article_contributor_review(article_id, user_id) do
+    coauthor_query =
+      from(member in ArticleCoAuthor,
+        join: author in Author,
+        on: author.id == member.author_id,
+        where: member.article_id == ^article_id and author.user_id == ^user_id,
+        select: 1
+      )
+
+    if Repo.exists?(coauthor_query) do
+      {:error, CMS.Passport.ErrorCat.permission_denied()}
+    else
+      case Repo.get(ArticlePublic, article_id) do
+        %ArticlePublic{snapshot_id: snapshot_id} ->
+          case ArticleHistory.contributor_to_snapshot?(article_id, snapshot_id, user_id) do
+            {:ok, true} -> {:error, CMS.Passport.ErrorCat.permission_denied()}
+            {:ok, false} -> {:ok, :pass}
+            {:error, _reason} -> {:error, CMS.ErrorCat.invalid_review_block()}
+          end
+
+        _ ->
+          {:error, CMS.ErrorCat.invalid_review_block()}
+      end
+    end
+  end
 
   defp ensure_ai_finished(_requests, :reject), do: {:ok, :pass}
 
@@ -95,14 +138,10 @@ defmodule GroupherServer.CMS.Review.Decisions do
     %{type: :comment, comment_id: comment.id, community_id: scope_community_id(scope_key)}
   end
 
-  defp request_scope(%{type: :doc, target: article, branch_id: branch_id}) do
-    %{type: :doc, article_id: article.id, branch_id: branch_id}
-  end
-
   defp request_scope(_context), do: %{}
 
   defp update_restrictions(context, action, requests, actor, operation_ref) do
-    CMS.Comments.Summary.for_lifecycle(context.lifecycle, fn ->
+    CMS.Comments.Summary.for_lifecycle(context.lifecycle, operation_ref, fn ->
       update_restriction_facts(context, action, requests, actor, operation_ref)
     end)
   end
@@ -180,10 +219,6 @@ defmodule GroupherServer.CMS.Review.Decisions do
 
   defp wall_target(%{type: :comment, comment_id: id, community_id: community_id}) do
     %{owner: :cms, target_type: :comment, target_id: to_string(id), community_id: community_id}
-  end
-
-  defp wall_target(%{type: :doc, article_id: id, branch_id: branch_id}) do
-    %{owner: :cms, target_type: :doc, target_id: "#{id}:#{branch_id}", community_id: nil}
   end
 
   defp scope_community_id("community:" <> id) do

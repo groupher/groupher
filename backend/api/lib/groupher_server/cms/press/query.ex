@@ -16,7 +16,6 @@ defmodule GroupherServer.CMS.Press.Query do
   service-scoped request path and is not a pagination N+1 exception.
   """
 
-  require GroupherServer.CMS.Const
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
@@ -25,14 +24,7 @@ defmodule GroupherServer.CMS.Press.Query do
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
 
   alias CMS.Model.{
-    ArticleBodySnapshot,
-    ArticlePublic,
-    ArticleRevision,
     Community,
-    DocBranch,
-    DocBranchVersion,
-    DocPublic,
-    DocTreeNode,
     PressConfig
   }
 
@@ -140,35 +132,8 @@ defmodule GroupherServer.CMS.Press.Query do
     end
   end
 
-  defp current_article(community, :doc, inner_id) do
-    with {:ok, article} <-
-           FrontDesk.article(%{community: community.slug, thread: :doc, inner_id: inner_id}),
-         {:ok, _} <- validate_stable_public_doc(article, community) do
-      {:ok, article}
-    else
-      {:error, _reason} = error -> error
-    end
-  end
-
   defp current_article(community, thread, inner_id) do
     FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id})
-  end
-
-  defp validate_stable_public_doc(article, community) do
-    visible =
-      DocTreeNode
-      |> where([node], node.community_id == ^community.id)
-      |> where([node], node.branch_id == ^article.branch_id)
-      |> where([node], node.stage == ^CMS.Const.stage(:public))
-      |> where([node], node.type == :page)
-      |> where([node], node.doc_id == ^article.id)
-      |> Repo.exists?()
-
-    if visible do
-      {:ok, :pass}
-    else
-      {:error, CMS.Articles.ErrorCat.not_exist("Published Doc")}
-    end
   end
 
   defp feed_items(community, threads, limit, hydrate) do
@@ -227,7 +192,6 @@ defmodule GroupherServer.CMS.Press.Query do
 
   defp article_paths(community, thread, limit) do
     page_count = div(limit + @pagination_page_size - 1, @pagination_page_size)
-    public_tree = thread == :doc
 
     1..page_count
     |> Enum.reduce_while({[], 0, limit}, fn page, {path_batches, collected, target} ->
@@ -245,8 +209,7 @@ defmodule GroupherServer.CMS.Press.Query do
                  config_revision: 0
                },
                nil,
-               config: press_pagination_config(),
-               public_tree: public_tree
+               config: press_pagination_config()
              ) do
           {:ok, %{entries: entries, pinned_entries: pinned_entries}} ->
             page_entries = if page == 1, do: pinned_entries ++ entries, else: entries
@@ -277,97 +240,23 @@ defmodule GroupherServer.CMS.Press.Query do
     path_entries
     |> Enum.chunk_every(@pagination_page_size)
     |> Enum.reduce_while({:ok, []}, fn chunk, {:ok, collected} ->
-      with {:ok, admitted} <- CMS.FrontDesk.article(Enum.map(chunk, & &1.path)),
-           paths = MapSet.new(admitted, &path_key(&1.path)),
-           visible = Enum.filter(chunk, &MapSet.member?(paths, path_key(&1.path))),
-           {:ok, publications} <- publications(Enum.map(visible, & &1.entry)) do
-        {:cont, {:ok, collected ++ publications}}
+      with {:ok, articles} <- CMS.FrontDesk.article(Enum.map(chunk, & &1.path)),
+           by_path <- Map.new(articles, &{path_key(article_path_key(&1)), &1}),
+           visible <-
+             Enum.map(chunk, &Map.get(by_path, path_key(&1.path))) |> Enum.reject(&is_nil/1) do
+        {:cont, {:ok, collected ++ visible}}
       else
         {:error, _} = error -> {:halt, error}
       end
     end)
   end
 
-  # Feed/manifest bodies belong to immutable public revisions, not list DTOs.
-  defp publications(entries) do
-    ordinary_ids = entries |> Enum.reject(&(&1.thread == :doc)) |> Enum.map(& &1.id)
-    doc_ids = entries |> Enum.filter(&(&1.thread == :doc)) |> Enum.map(& &1.id)
-    communities = Enum.map(entries, & &1.community.id)
-
-    ordinary =
-      from(public in ArticlePublic,
-        join: revision in ArticleRevision,
-        on: revision.id == public.revision_id,
-        join: body in ArticleBodySnapshot,
-        on: body.id == revision.body_snapshot_id,
-        where: public.article_id in ^ordinary_ids,
-        select: {public.article_id, public, body}
-      )
-      |> Repo.all()
-      |> Map.new(fn {id, public, body} -> {id, {public, body}} end)
-
-    docs =
-      from(public in DocPublic,
-        join: branch in DocBranch,
-        on: branch.id == public.branch_id and branch.type == :main,
-        join: version in DocBranchVersion,
-        on: version.id == public.branch_version_id,
-        join: revision in ArticleRevision,
-        on: revision.id == version.revision_id,
-        join: body in ArticleBodySnapshot,
-        on: body.id == revision.body_snapshot_id,
-        where:
-          public.article_id in ^doc_ids and branch.community_id in ^communities and public.visible,
-        select: {public.article_id, branch.community_id, public, body}
-      )
-      |> Repo.all()
-      |> Map.new(fn {id, community, public, body} -> {{id, community}, {public, body}} end)
-
-    Enum.reduce_while(entries, {:ok, []}, fn entry, {:ok, collected} ->
-      publication =
-        if entry.thread == :doc do
-          Map.get(docs, {entry.id, entry.community.id})
-        else
-          Map.get(ordinary, entry.id)
-        end
-
-      case publication do
-        {public, body} ->
-          item =
-            public
-            |> Map.take([
-              :title,
-              :digest,
-              :subtitle,
-              :slug,
-              :body_hash,
-              :published_at,
-              :updated_at
-            ])
-            |> Map.merge(%{
-              article_id: entry.id,
-              inner_id: entry.inner_id,
-              thread: entry.thread,
-              body: body,
-              author: entry.author,
-              community_tags: entry.community_tags,
-              inserted_at: entry.inserted_at
-            })
-
-          {:cont, {:ok, [item | collected]}}
-
-        nil ->
-          {:halt, {:error, ErrorCat.invalid_body("Article body projection is missing")}}
-      end
-    end)
-    |> case do
-      {:ok, items} -> {:ok, Enum.reverse(items)}
-      error -> error
-    end
-  end
-
   defp path_key(%{community: community, thread: thread, inner_id: inner_id}) do
     {community, thread, inner_id}
+  end
+
+  defp article_path_key(%{community: community, thread: thread, inner_id: inner_id}) do
+    %{community: community.slug, thread: thread, inner_id: inner_id}
   end
 
   defp press_pagination_config do

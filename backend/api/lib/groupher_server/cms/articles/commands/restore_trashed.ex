@@ -14,9 +14,8 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
   alias Accounts.Model.User
   alias CMS.Articles.ErrorCat, as: ArticlesErrorCat
   alias CMS.Articles.Trash, as: TrashAgg
-  alias CMS.Docs.Trash, as: DocTrash
   alias CMS.{FrontDesk, Articles.Bindings}
-  alias CMS.Model.{Article, TrashedArticle, TrashedDocArticle}
+  alias CMS.Model.{Article, TrashedArticle}
   alias CMS.Articles.Commands.TrashRestoreConfirmation, as: Confirmation
 
   @pipeline operation: :article_restore,
@@ -40,8 +39,13 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
       end
     end)
 
-    change(fn %{item: item, article: article} ->
-      TrashAgg.restore_loaded(item, article, actor, opts)
+    change(fn %{item: item, article: article}, operation_ref ->
+      TrashAgg.restore_loaded(
+        item,
+        article,
+        actor,
+        Keyword.put(opts, :operation_ref, operation_ref)
+      )
     end)
 
     confirm(fn article ->
@@ -66,11 +70,13 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
       end
     end)
 
-    change(fn loaded -> restore_loaded(loaded, actor, opts) end)
+    change(fn loaded, operation_ref ->
+      restore_loaded(loaded, actor, Keyword.put(opts, :operation_ref, operation_ref))
+    end)
   end
 
   @spec execute(
-          Ecto.UUID.t() | TrashedArticle.t() | TrashedDocArticle.t(),
+          Ecto.UUID.t() | TrashedArticle.t(),
           User.t() | nil,
           keyword()
         ) :: {:ok, term()} | {:error, term()}
@@ -115,21 +121,8 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
           {:error, reason} -> {:error, reason}
         end
 
-      {:ok, %TrashedDocArticle{} = item} ->
-        DocTrash.load_context(item)
-
       {:error, reason} ->
         {:error, reason}
-    end
-  end
-
-  defp authorize_restore(
-         %{article: article, community: community, branch: branch} = loaded,
-         actor
-       ) do
-    with {:ok, canonical} <-
-           CMS.Gate.check_in_transaction(actor, :restore, article, community, branch.id) do
-      {:ok, Map.put(loaded, :article, canonical)}
     end
   end
 
@@ -138,14 +131,6 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
            CMS.Gate.check_in_transaction(actor, :restore, article, community) do
       {:ok, Map.put(loaded, :article, canonical)}
     end
-  end
-
-  defp restore_loaded(
-         %{item: %TrashedDocArticle{} = item, article: article, branch: branch},
-         actor,
-         opts
-       ) do
-    DocTrash.restore_loaded(item, article, branch, actor, opts)
   end
 
   defp restore_loaded(%{item: item, article: article}, actor, opts) do

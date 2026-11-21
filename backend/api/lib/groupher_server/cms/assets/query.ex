@@ -24,17 +24,13 @@ defmodule GroupherServer.CMS.Assets.Query do
     Article,
     ArticleAssetRef,
     ArticleBinding,
-    ArticleDraft,
     ArticleLifecycle,
     ArticlePublic,
-    ArticleRevision,
+    ArticleSnapshot,
+    ArticleWorkingCopy,
     Community,
     CommunityAsset,
     CommunityLifecycle,
-    DocBranch,
-    DocBranchState,
-    DocDraft,
-    DocLifecycle,
     TicketState,
     TrashedArticle
   }
@@ -133,57 +129,38 @@ defmodule GroupherServer.CMS.Assets.Query do
     {:ok, normalize_usage_result(result)}
   end
 
-  @doc """
-  Returns a page of article document refs for one active asset.
+  @doc "Returns a page of asset refs visible to the authenticated actor."
+  @spec refs(Community.t(), T.id(), Params.t() | nil, term()) :: T.domain_res(T.paged_data())
+  def refs(%Community{} = community, asset_id, pagi, actor) do
+    with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
+         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community),
+         {:ok, history_ids, draft_ids} <- article_usage_scope_ids(actor) do
+      query =
+        usage_query(
+          community.id,
+          asset_id,
+          ticket_scope_ids(community, actor),
+          history_ids,
+          draft_ids,
+          public_usage_ids(community.id)
+        )
+        |> exclude(:select)
+        |> select_merge([_ref, _work, _snapshot, article], %{
+          article_id: article.id,
+          thread: article.thread
+        })
 
-  The asset lookup is scoped to the supplied community before refs are loaded,
-  which prevents cross-community ref discovery.
-
-  ## Examples
-
-      Query.refs(community, asset.id, %{page: 1, size: 10})
-      #=> {:ok, %Helper.ORM.Pagi.Page.Offset{entries: refs}}
-
-  """
-  @spec refs(Community.t(), T.id(), Params.t() | nil) :: T.domain_res(T.paged_data())
-  def refs(%Community{id: community_id}, asset_id, pagi) do
-    with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community_id, asset_id) do
-      ArticleAssetRef
-      |> where([ref], ref.community_id == ^community_id and ref.asset_id == ^asset_id)
-      |> join(:left, [ref], draft in ArticleDraft, on: draft.body_draft_id == ref.body_draft_id)
-      |> join(:left, [ref, _draft], doc_draft in DocDraft,
-        on: doc_draft.body_draft_id == ref.body_draft_id
+      ORM.pagi(query, pagi,
+        for: ArticleAssetRef,
+        surface: "assets.refs",
+        query_fingerprint:
+          :erlang.term_to_binary({community.id, asset_id, actor.id}) |> Base.encode64(),
+        order: %Order{
+          fields: [:inserted_at, :id],
+          directions: [:desc, :desc],
+          cursor_fields: [:inserted_at, :id]
+        }
       )
-      |> join(:left, [ref, _draft, _doc_draft], revision in ArticleRevision,
-        on: revision.id == ref.revision_id
-      )
-      |> join(:inner, [ref, draft, doc_draft, revision], article in Article,
-        on:
-          article.id == draft.article_id or article.id == doc_draft.article_id or
-            article.id == revision.article_id
-      )
-      |> select_merge([ref, _draft, _doc_draft, _revision, article], %{
-        article_id: article.id,
-        thread: article.thread
-      })
-      |> then(fn query ->
-        with {:ok, paged} <-
-               ORM.pagi(
-                 query,
-                 pagi,
-                 for: ArticleAssetRef,
-                 surface: "assets.refs",
-                 query_fingerprint:
-                   :erlang.term_to_binary({community_id, asset_id}) |> Base.encode64(),
-                 order: %Order{
-                   fields: [:inserted_at, :id],
-                   directions: [:desc, :desc],
-                   cursor_fields: [:inserted_at, :id]
-                 }
-               ) do
-          {:ok, paged}
-        end
-      end)
     end
   end
 
@@ -208,11 +185,19 @@ defmodule GroupherServer.CMS.Assets.Query do
   @spec usages(Community.t(), T.id(), term()) :: T.domain_res([map()])
   def usages(%Community{} = community, asset_id, actor) do
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
-         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community) do
+         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community),
+         {:ok, history_ids, draft_ids} <- article_usage_scope_ids(actor) do
       ticket_ids = ticket_scope_ids(community, actor)
 
       collect_usage_batches(
-        usage_query(community.id, asset_id, ticket_ids),
+        usage_query(
+          community.id,
+          asset_id,
+          ticket_ids,
+          history_ids,
+          draft_ids,
+          public_usage_ids(community.id)
+        ),
         1,
         [],
         &format_usage_row/1
@@ -231,9 +216,17 @@ defmodule GroupherServer.CMS.Assets.Query do
   @spec replacement_usages(Community.t(), T.id(), term()) :: T.domain_res([map()])
   def replacement_usages(%Community{} = community, asset_id, actor) do
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
-         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community) do
+         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community),
+         {:ok, history_ids, draft_ids} <- article_usage_scope_ids(actor) do
       collect_usage_batches(
-        usage_query(community.id, asset_id, ticket_scope_ids(community, actor)),
+        usage_query(
+          community.id,
+          asset_id,
+          ticket_scope_ids(community, actor),
+          history_ids,
+          draft_ids,
+          public_usage_ids(community.id)
+        ),
         1,
         [],
         &format_replacement_usage_row/1
@@ -258,58 +251,78 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  defp usage_query(community_id, asset_id, ticket_ids) do
+  defp article_usage_scope_ids(nil) do
+    public_only = from(article in Article, where: false, select: article.id)
+    {:ok, public_only, public_only}
+  end
+
+  defp article_usage_scope_ids(actor) do
+    with {:ok, global_scope} <- CMS.Passport.load_global_scope(actor),
+         {:ok, history} <-
+           CMS.Passport.scope_articles(Article, actor, global_scope, "article.history.read"),
+         {:ok, draft} <-
+           CMS.Passport.scope_articles(Article, actor, global_scope, "article.read_draft") do
+      {:ok, select(history, [article], article.id), select(draft, [article], article.id)}
+    end
+  end
+
+  defp public_usage_ids(community_id) do
+    contexts = [
+      CMS.Gate.Context.Scope.Article.public(:post),
+      CMS.Gate.Context.Scope.Article.public(:blog),
+      CMS.Gate.Context.Scope.Article.public(:changelog),
+      CMS.Gate.Context.Scope.Doc.public()
+    ]
+
+    Enum.reduce(contexts, from(article in Article, where: false, select: article.id), fn context,
+                                                                                         acc ->
+      case CMS.Gate.scope(Article, nil, :read, context) do
+        %Ecto.Query{} = scoped ->
+          scoped =
+            from([article, gate_community: community] in scoped,
+              where: community.id == ^community_id,
+              select: article.id
+            )
+
+          union_all(acc, ^scoped)
+
+        {:error, _} ->
+          acc
+      end
+    end)
+  end
+
+  defp usage_query(community_id, asset_id, ticket_ids, history_ids, draft_ids, public_ids) do
+    public_snapshot_ids = union_all(public_ids, ^ticket_ids)
+
     from(ref in ArticleAssetRef,
       where: ref.community_id == ^community_id and ref.asset_id == ^asset_id,
-      left_join: draft in ArticleDraft,
-      on: draft.body_draft_id == ref.body_draft_id,
-      left_join: doc_draft in DocDraft,
-      on: doc_draft.body_draft_id == ref.body_draft_id,
-      left_join: revision in ArticleRevision,
-      on: revision.id == ref.revision_id,
+      left_join: work in ArticleWorkingCopy,
+      on: work.id == ref.working_copy_id,
+      left_join: snapshot in ArticleSnapshot,
+      on: snapshot.id == ref.snapshot_id,
       join: article in Article,
-      on:
-        article.id == draft.article_id or article.id == doc_draft.article_id or
-          article.id == revision.article_id,
-      left_join: current_draft in ArticleDraft,
-      on: current_draft.article_id == article.id,
+      on: article.id == work.article_id or article.id == snapshot.article_id,
       left_join: binding in ArticleBinding,
       on: binding.article_id == article.id and binding.community_id == ref.community_id,
       join: community_lifecycle in CommunityLifecycle,
       on: community_lifecycle.community_id == ref.community_id,
       left_join: article_lifecycle in ArticleLifecycle,
       on: article_lifecycle.article_id == article.id,
-      left_join: branch in DocBranch,
-      on: branch.id == doc_draft.branch_id and branch.community_id == ref.community_id,
-      left_join: doc_lifecycle in DocLifecycle,
-      on: doc_lifecycle.article_id == article.id and doc_lifecycle.branch_id == branch.id,
-      left_join: doc_branch_state in DocBranchState,
-      on: doc_branch_state.article_id == article.id and doc_branch_state.branch_id == branch.id,
       left_join: public in ArticlePublic,
       on: public.article_id == article.id,
       left_join: trash in TrashedArticle,
-      on: trash.article_id == article.id,
+      on: trash.article_id == article.id and trash.community_id == ref.community_id,
       where:
-        (is_nil(ref.body_draft_id) or
-           not is_nil(trash.id) or
-           (not is_nil(binding.id) and community_lifecycle.state == :active and
-              ((article.thread != :doc and article_lifecycle.state in [:draft, :published]) or
-                 (article.thread == :doc and not is_nil(doc_draft.id) and
-                    not is_nil(branch.id) and doc_lifecycle.state in [:draft, :published] and
-                    not is_nil(doc_branch_state.id))))) and
+        not is_nil(binding.id) and community_lifecycle.state in [:active, :read_only] and
+          ((not is_nil(ref.snapshot_id) and
+              (article.id in subquery(history_ids) or
+                 (ref.snapshot_id == public.snapshot_id and
+                    article.id in subquery(public_snapshot_ids)))) or
+             (not is_nil(ref.working_copy_id) and article.id in subquery(draft_ids))) and
           (article.thread != :ticket or article.id in subquery(ticket_ids)),
-      select: {
-        ref,
-        article,
-        current_draft,
-        doc_draft,
-        public,
-        trash,
-        article_lifecycle,
-        doc_lifecycle,
-        community_lifecycle,
-        branch
-      }
+      select:
+        {ref, article, public, trash, article_lifecycle, community_lifecycle, work, snapshot}
     )
   end
 
@@ -347,43 +360,29 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  defp format_usage_row(
-         {ref, article, _draft, _doc_draft, public, trash, article_lifecycle, doc_lifecycle, _, _}
-       ) do
+  defp format_usage_row({ref, article, public, trash, article_lifecycle, _, _, _}) do
     Map.merge(Map.from_struct(ref), %{
       article_id: article.id,
       thread: article.thread,
-      lifecycle: lifecycle(ref, article, public, trash, article_lifecycle, doc_lifecycle)
+      lifecycle: lifecycle(ref, article, public, trash, article_lifecycle)
     })
   end
 
-  defp format_replacement_usage_row({
-         ref,
-         article,
-         draft,
-         doc_draft,
-         public,
-         trash,
-         article_lifecycle,
-         doc_lifecycle,
-         community_lifecycle,
-         branch
-       }) do
-    {ref, article, draft, doc_draft, public, trash, article_lifecycle, doc_lifecycle,
-     community_lifecycle, branch}
+  defp format_replacement_usage_row(
+         {_ref, _article, public, _trash, article_lifecycle, community_lifecycle, working_copy,
+          snapshot} = row
+       ) do
+    row
     |> format_usage_row()
     |> Map.merge(%{
-      branch_id: branch && branch.id,
-      resource_lifecycle: article_lifecycle || doc_lifecycle,
+      resource_lifecycle: article_lifecycle,
       community_lifecycle: community_lifecycle,
-      observed_draft_version: draft_version(draft, doc_draft),
-      observed_live_revision_id: public && public.revision_id
+      observed_working_copy_id: working_copy && working_copy.id,
+      observed_working_copy_revision: working_copy && working_copy.revision,
+      observed_snapshot_id: snapshot && snapshot.id,
+      observed_live_snapshot_id: public && public.snapshot_id
     })
   end
-
-  defp draft_version(%ArticleDraft{version: version}, _doc_draft), do: version
-  defp draft_version(_draft, %DocDraft{version: version}), do: version
-  defp draft_version(_draft, _doc_draft), do: nil
 
   @doc """
   Returns public-read origin metadata for one active asset public ref.
@@ -422,65 +421,72 @@ defmodule GroupherServer.CMS.Assets.Query do
          _article,
          _public,
          %TrashedArticle{},
-         _article_lifecycle,
-         _doc_lifecycle
+         _article_lifecycle
        ) do
     :trashed
   end
 
   defp lifecycle(
-         %ArticleAssetRef{body_draft_id: body_draft_id},
+         %ArticleAssetRef{working_copy_id: id},
          _article,
          _public,
          _trash,
-         _article_lifecycle,
-         _doc_lifecycle
+         %ArticleLifecycle{state: :deleted}
        )
-       when not is_nil(body_draft_id) do
+       when not is_nil(id) do
+    :trashed
+  end
+
+  defp lifecycle(
+         %ArticleAssetRef{working_copy_id: working_copy_id},
+         _article,
+         _public,
+         _trash,
+         _article_lifecycle
+       )
+       when not is_nil(working_copy_id) do
     :draft
   end
 
   defp lifecycle(
-         %ArticleAssetRef{revision_id: revision_id},
+         %ArticleAssetRef{snapshot_id: snapshot_id},
          %Article{thread: :ticket},
-         %ArticlePublic{revision_id: revision_id},
+         %ArticlePublic{snapshot_id: snapshot_id},
          _trash,
-         %ArticleLifecycle{state: :published},
-         _doc_lifecycle
-       ) do
+         %ArticleLifecycle{state: :published}
+       )
+       when not is_nil(snapshot_id) do
     :live
   end
 
   defp lifecycle(
-         %ArticleAssetRef{revision_id: revision_id},
+         %ArticleAssetRef{snapshot_id: snapshot_id},
          %Article{thread: :ticket},
-         %ArticlePublic{revision_id: revision_id},
+         %ArticlePublic{snapshot_id: snapshot_id},
          _trash,
-         _article_lifecycle,
-         _doc_lifecycle
+         _article_lifecycle
        ) do
     :historical
   end
 
   defp lifecycle(
-         %ArticleAssetRef{revision_id: revision_id},
+         %ArticleAssetRef{snapshot_id: snapshot_id},
          _article,
-         %ArticlePublic{revision_id: revision_id},
+         %ArticlePublic{snapshot_id: snapshot_id},
          _trash,
-         _article_lifecycle,
-         _doc_lifecycle
+         _article_lifecycle
        ) do
     :live
   end
 
   defp lifecycle(
-         %ArticleAssetRef{revision_id: _revision_id},
+         %ArticleAssetRef{snapshot_id: snapshot_id},
          _article,
          _public,
          _trash,
-         _article_lifecycle,
-         _doc_lifecycle
-       ) do
+         _article_lifecycle
+       )
+       when not is_nil(snapshot_id) do
     :historical
   end
 

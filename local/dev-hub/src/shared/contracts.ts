@@ -12,6 +12,7 @@ export type TTechnology =
   | 'wasm'
   | 'graphql'
   | 'hono'
+  | 'lit'
   | 'nodejs'
   | 'oauth'
   | 'phoenix'

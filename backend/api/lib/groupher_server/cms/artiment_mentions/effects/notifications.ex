@@ -99,7 +99,6 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
             to_user_id: user.id,
             article_id: selected.article_id,
             comment_id: endpoint.comment_id,
-            branch_id: delivery_branch(endpoint, selected),
             thread: selected.thread,
             title: selected.title,
             read: false,
@@ -147,7 +146,4 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
   defp source_visibility(endpoint, community_id) do
     if Query.source_visible?(endpoint, community_id), do: :visible, else: :unavailable
   end
-
-  defp delivery_branch(%{type: :comment}, _selected), do: nil
-  defp delivery_branch(_endpoint, selected), do: selected.branch_id
 end

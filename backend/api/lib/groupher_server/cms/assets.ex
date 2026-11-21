@@ -85,24 +85,29 @@ defmodule GroupherServer.CMS.Assets do
   Lists article document refs for one community asset.
 
   This is the paged lookup used by the asset-library detail view. The asset must
-  belong to the given community and must still be active.
+  belong to the given community and must still be active. Results are filtered
+  by the actor's history and draft read scopes.
 
   ## Examples
 
-      CMS.Assets.refs(community, asset.id, %{page: 1, size: 20})
+      CMS.Assets.refs(community, asset.id, %{page: 1, size: 20}, actor)
       #=> {:ok, %{entries: refs, total_count: total_count}}
 
   """
-  @spec refs(Community.t(), T.id(), GroupherServer.Pagi.Params.t() | nil) ::
+  @spec refs(Community.t(), T.id(), GroupherServer.Pagi.Params.t() | nil, User.t()) ::
           T.domain_res(T.paged_data())
-  def refs(%Community{} = community, asset_id, pagi) do
-    Query.refs(community, asset_id, pagi)
+  def refs(%Community{} = community, asset_id, pagi, actor) do
+    Query.refs(community, asset_id, pagi, actor)
   end
 
-  @doc "Returns the version-owned asset relations for one Draft or Revision body owner."
-  @spec content_refs(:draft | :revision, Ecto.UUID.t()) :: T.domain_res([struct()])
-  def content_refs(:draft, body_draft_id), do: {:ok, Refs.draft_refs(body_draft_id)}
-  def content_refs(:revision, revision_id), do: {:ok, Refs.revision_refs(revision_id)}
+  @doc "Returns the version-owned asset relations for one WorkingCopy or Snapshot body owner."
+  @spec content_refs(:working_copy | :snapshot, Ecto.UUID.t()) :: T.domain_res([struct()])
+
+  def content_refs(:working_copy, working_copy_id) do
+    {:ok, Refs.working_copy_refs(working_copy_id)}
+  end
+
+  def content_refs(:snapshot, snapshot_id), do: {:ok, Refs.snapshot_refs(snapshot_id)}
 
   @doc """
   Returns the active public-read origin metadata for one asset public ref.
@@ -252,65 +257,24 @@ defmodule GroupherServer.CMS.Assets do
     Commands.ReplaceUse.execute(article, attrs, user, command_id)
   end
 
-  @doc "Replaces one Draft asset use through the explicit replacement workflow entry."
-  def replace_use_workflow(article, attrs, %User{} = user, workflow_ref) do
-    Commands.ReplaceUse.execute_for_workflow(article, attrs, user, workflow_ref)
+  @doc "Replaces one Draft asset use using its persisted workflow-step operation identity."
+  def replace_use_workflow(_article, _attrs, %User{}, _workflow_ref, nil) do
+    {:error, :operation_ref_required}
+  end
+
+  def replace_use_workflow(article, attrs, %User{} = user, workflow_ref, operation_ref)
+      when is_binary(operation_ref) do
+    Commands.ReplaceUse.execute_for_workflow(article, attrs, user, workflow_ref, operation_ref)
+  end
+
+  def replace_use_workflow(_article, _attrs, %User{}, _workflow_ref) do
+    {:error, :operation_ref_required}
   end
 
   @doc "Lists old, unreferenced assets eligible for a later GC decision."
   def gc_candidates(%Community{} = community, opts \\ []) do
     GroupherServer.CMS.Assets.GC.candidates(community, opts)
   end
-
-  @doc """
-  Links an article to the assets used by its current saved content.
-
-  The article document row is locked while the article's ref set is updated to
-  match the saved body and cover inputs. Pass `community: community` when the
-  caller already resolved the community boundary, such as the GraphQL article
-  mutation path.
-
-  ## Examples
-
-      CMS.Assets.link_refs(post, %{
-        asset_refs: [%{asset_id: asset.id, block_id: "hero"}],
-        cur_user: user
-      }, community: community)
-      #=> {:ok, %{body: body_refs, cover: cover_refs}}
-
-      CMS.Assets.link_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
-      #=> {:ok, %{body: body_refs, cover: cover_refs}}
-
-      CMS.Assets.link_refs(article_without_community, %{})
-      #=> {:ok, :pass}
-
-  """
-  @spec link_refs(T.article(), map(), Keyword.t()) :: T.domain_res(term())
-  def link_refs(article, attrs, opts \\ []) do
-    case Keyword.get(opts, :community) do
-      %Community{} = community -> Refs.sync_refs(community, article, attrs)
-      nil -> Refs.sync_refs(article, attrs)
-    end
-  end
-
-  @doc "Copies all derived document asset refs between two versions of one Article."
-  @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
-  def copy_refs(source, target), do: Refs.copy_refs(source, target)
-
-  @doc """
-  Cleans up all persisted asset refs for one permanently deleted article.
-
-  This is called from article deletion so the resource library keeps ownership
-  data in `community_assets` while removing stale document usage rows.
-
-  ## Examples
-
-      CMS.Assets.cleanup_refs(:post, post.id)
-      #=> {:ok, {deleted_count, nil}}
-
-  """
-  @spec cleanup_refs(atom(), T.id()) :: T.domain_res(term())
-  def cleanup_refs(thread, article_id), do: Refs.purge_refs(thread, article_id)
 
   @doc "Creates an immutable, reviewable global replacement plan."
   def create_replacement_plan(%Community{} = community, attrs, %User{} = user) do

@@ -15,7 +15,7 @@
     "build": "echo 'skip build'"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5",
-    "vitest": "^5.0.4"
+    "@types/node": "^26.6.6",
+    "vitest": "^5.1.0"
   }
 }

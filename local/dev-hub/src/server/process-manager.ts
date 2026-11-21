@@ -1,7 +1,6 @@
 import { execFile, spawn, type ChildProcess } from 'node:child_process'
-import { readFileSync } from 'node:fs'
 import net from 'node:net'
-import { parseEnv, promisify } from 'node:util'
+import { promisify } from 'node:util'
 
 import type {
   THubEvent,
@@ -13,6 +12,14 @@ import type {
   TServiceStartPolicy,
   TServiceStatus,
 } from '../shared/contracts.ts'
+import {
+  createSpawnEnvironment,
+  ensureLocalWorkerStateDirectory,
+  resolveExternalEnvironment,
+  resolveLocalEnvironment,
+  type TLocalEnvironmentState,
+  writeLocalWorkerEnvironment,
+} from './local-environment.ts'
 import type { TServiceDefinition, TServiceStartupCheck } from './services.ts'
 
 const MAX_LOG_CHARS = 300_000
@@ -57,25 +64,6 @@ type TExternalProcessControls = {
 
 type TStartupCheckRunner = (check: TServiceStartupCheck) => Promise<void>
 
-const readEnvFallback = (definition: TServiceDefinition): Record<string, string> => {
-  if (!definition.envFallback) return {}
-
-  let parsed: NodeJS.Dict<string>
-  try {
-    parsed = parseEnv(readFileSync(definition.envFallback.file, 'utf8'))
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {}
-    throw error
-  }
-
-  const fallback: Record<string, string> = {}
-  for (const key of definition.envFallback.keys) {
-    const value = parsed[key]
-    if (value !== undefined) fallback[key] = value
-  }
-  return fallback
-}
-
 export type TManagedProcessTarget = {
   serviceId: string
   pid: number
@@ -96,6 +84,7 @@ export class ServiceManager {
   private readonly subscribers = new Set<THubSubscriber>()
   private readonly externalPollTimer: NodeJS.Timeout
   private readonly devHubOrigin: string | null
+  private localEnvironmentState: TLocalEnvironmentState | null = null
 
   constructor(
     definitions: TServiceDefinition[],
@@ -106,6 +95,7 @@ export class ServiceManager {
       terminateProcessGroup: terminateExternalProcessGroup,
     },
     private readonly startupCheckRunner: TStartupCheckRunner = runHttpStartupCheck,
+    private readonly prepareEnvironment?: () => Promise<TLocalEnvironmentState>,
   ) {
     this.devHubOrigin = devHubOrigin
     for (const definition of definitions) {
@@ -185,6 +175,7 @@ export class ServiceManager {
   }
 
   async start(id: string, reason: 'start' | 'restart' = 'start'): Promise<TPublicService> {
+    await this.prepareLocalEnvironment()
     const runtime = this.getRuntime(id)
     const { definition } = runtime
 
@@ -236,26 +227,10 @@ export class ServiceManager {
       `\u001b[38;5;75m$ ${[definition.command, ...(definition.args || [])].join(' ')}\u001b[0m\r\n`,
     )
 
-    const childEnv = { ...process.env }
-    delete childEnv.NO_COLOR
-
+    const environment = await this.resolveSpawnEnvironment(definition)
     const child = spawn(definition.command, definition.args || [], {
       cwd: definition.cwd,
-      env: {
-        ...readEnvFallback(definition),
-        ...childEnv,
-        FORCE_COLOR: '3',
-        CLICOLOR_FORCE: '1',
-        TERM: 'xterm-256color',
-        ...(this.devHubOrigin
-          ? {
-              DEV_HUB_URL: this.devHubOrigin,
-              NEXT_PUBLIC_DEV_HUB_URL: this.devHubOrigin,
-              VITE_DEV_HUB_URL: this.devHubOrigin,
-            }
-          : {}),
-        ...definition.env,
-      },
+      env: environment,
       detached: process.platform !== 'win32',
       stdio: ['ignore', 'pipe', 'pipe'],
     })
@@ -284,6 +259,7 @@ export class ServiceManager {
     id: string,
     mode: TServiceStartMode | 'default' = 'default',
   ): Promise<TPublicService[]> {
+    await this.prepareLocalEnvironment()
     const resolvedMode = this.resolveStartMode(id, mode)
     const requiredIds = resolvedMode === 'self' ? [] : this.resolveRequiredStartPlan(id)
     const optionalIds =
@@ -345,6 +321,7 @@ export class ServiceManager {
   }
 
   async restart(id: string): Promise<TPublicService> {
+    await this.prepareLocalEnvironment()
     const runtime = this.getRuntime(id)
     if (runtime.status === 'stopping') {
       throw new ServiceManagerError(`${runtime.definition.name} is already stopping.`, 409)
@@ -380,6 +357,60 @@ export class ServiceManager {
     const runtime = this.runtimes.get(id)
     if (!runtime) throw new ServiceManagerError(`Unknown service: ${id}`, 404)
     return runtime
+  }
+
+  private async prepareLocalEnvironment(): Promise<void> {
+    if (this.prepareEnvironment && !this.localEnvironmentState) {
+      this.localEnvironmentState = await this.prepareEnvironment()
+    }
+  }
+
+  private async resolveSpawnEnvironment(
+    definition: TServiceDefinition,
+  ): Promise<Record<string, string>> {
+    if (!this.prepareEnvironment || !this.localEnvironmentState) {
+      const inherited = { ...process.env }
+      delete inherited.NO_COLOR
+      return {
+        ...inherited,
+        FORCE_COLOR: '3',
+        CLICOLOR_FORCE: '1',
+        TERM: 'xterm-256color',
+        ...(this.devHubOrigin
+          ? {
+              DEV_HUB_URL: this.devHubOrigin,
+              NEXT_PUBLIC_DEV_HUB_URL: this.devHubOrigin,
+              VITE_DEV_HUB_URL: this.devHubOrigin,
+            }
+          : {}),
+        ...definition.env,
+      }
+    }
+
+    const resolved = resolveLocalEnvironment(
+      definition.id,
+      this.localEnvironmentState,
+      definition,
+      process.env,
+    )
+    const external = await resolveExternalEnvironment(definition)
+    const resolvedEnv = { ...resolved.env, ...external }
+    if (definition.workerEnvFile) {
+      const workerPaths = await writeLocalWorkerEnvironment(
+        definition.id,
+        resolvedEnv,
+        this.localEnvironmentState.repoRoot,
+      )
+      resolvedEnv.DEV_HUB_WORKER_ENV_FILE = workerPaths.envFile
+      resolvedEnv.DEV_HUB_WORKER_STATE_DIR = workerPaths.directory
+    } else if (definition.workerStateDir) {
+      const workerPaths = await ensureLocalWorkerStateDirectory(
+        definition.id,
+        this.localEnvironmentState.repoRoot,
+      )
+      resolvedEnv.DEV_HUB_WORKER_STATE_DIR = workerPaths.directory
+    }
+    return createSpawnEnvironment(definition, process.env, { env: resolvedEnv }, this.devHubOrigin)
   }
 
   private resolveStartPlan(id: string, mode: TServiceStartMode | 'default'): string[] {

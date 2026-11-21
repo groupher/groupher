@@ -134,6 +134,10 @@ export const PATTERN_WALLPAPER = {
     image: '/wallpaper/picture/recordly-luisdelrio.webp',
     preview: '/wallpaper/picture-preview/recordly-luisdelrio.webp',
   },
+  'starry-tide': {
+    image: '/wallpaper/picture/starry-tide.webp',
+    preview: '/wallpaper/picture-preview/starry-tide.webp',
+  },
   'sw-1': {
     image: '/wallpaper/picture/sw-1.webp',
     preview: '/wallpaper/picture-preview/sw-1.webp',

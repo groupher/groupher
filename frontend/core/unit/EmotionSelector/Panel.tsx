@@ -10,14 +10,14 @@ import { isViewerReacted } from './helper'
 import useSalon, { cn } from './salon/panel'
 
 const Trans = {
-  downvote: '踩',
-  beer: '啤酒',
-  heart: '感谢',
-  biceps: '强',
-  orz: '跪了',
-  confused: '狗头',
-  popcorn: '吃瓜',
-  pill: '药丸',
+  DOWNVOTE: '踩',
+  BEER: '啤酒',
+  HEART: '感谢',
+  BICEPS: '强',
+  ORZ: '跪了',
+  CONFUSED: '狗头',
+  POPCORN: '吃瓜',
+  PILL: '药丸',
 }
 
 type TProps = {
@@ -40,7 +40,7 @@ const EmojiPanel: FC<TProps> = ({ emotions, onAction }) => {
             key={name}
             onClick={() => onAction?.(name, viewerHasReacted)}
           >
-            <Img className={s.icon} src={`${ICON}/emotion/${name}.png`} noLazy />
+            <Img className={s.icon} src={`${ICON}/emotion/${name.toLowerCase()}.png`} noLazy />
             <div className={cn(s.name, viewerHasReacted && s.nameActive)}>{Trans[name]}</div>
           </button>
         )

@@ -62,7 +62,26 @@ defmodule GroupherServer.CMS.Review.Media do
 
   def comment_images(_body_json, _community_id), do: []
 
-  @doc "Returns immutable image identities attached to one published Article revision."
+  @doc "Returns immutable image identities attached to one published Article Snapshot."
+  def article_snapshot_images(snapshot_id) when is_binary(snapshot_id) do
+    from(ref in ArticleAssetRef,
+      join: asset in CommunityAsset,
+      on: asset.id == ref.asset_id,
+      where:
+        ref.snapshot_id == ^snapshot_id and ref.usage in [:inline, :cover, :cover_dark] and
+          asset.status == :active and asset.asset_type == :image,
+      order_by: [asc: ref.position, asc: ref.id],
+      select: %{
+        asset_id: ref.asset_id,
+        immutable_version: fragment("COALESCE(?, ?)", asset.content_hash, asset.url_hash)
+      }
+    )
+    |> Repo.all()
+  end
+
+  def article_snapshot_images(_snapshot_id), do: []
+
+  @doc "Returns immutable image identities attached to one legacy Doc revision."
   def article_images(revision_id) when is_binary(revision_id) do
     from(ref in ArticleAssetRef,
       join: asset in CommunityAsset,

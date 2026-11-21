@@ -8,6 +8,12 @@
 - 修改时优先遵守项目现有目录结构、命名方式和封装习惯
 - 如果发现规则与当前实现明显冲突，先指出冲突点，再讨论处理方式
 
+## GraphQL 与 Query 命名
+
+- GraphQL operation、fragment、取数函数和 TanStack Query key 的命名遵守 [`naming.md`](./naming.md)
+- 单资源查询使用资源名（`Community`、`Doc`、`CommunityTagGroups`），分页集合使用 `PagedXxx`
+- 不使用 `Page*`、`Bootstrap`、`Shell` 等页面或加载实现前缀；Query key 不是网络请求
+
 ## class 书写
 
 - 尽量不要使用 `[]` 这类自定义 Tailwind 写法

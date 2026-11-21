@@ -1,5 +1,7 @@
 # Dsb Edit Store 重组方案
 
+> 历史实施合同：本文记录 2026-08 的 Query / DsbEdit 重组及验收。2026-11 讨论确认的下一轮命名、公共 Dsb 读取边界和编辑器状态归属，以 [Community / Dsb / DsbEditor 状态边界重构](./store-boundary-refactor.md)为目标；特别是本文“不保留通用 DsbStore”的结论不再代表下一轮目标。新目标尚未实施。
+>
 > 状态：Dsb Query/EditStore/save 主线和 2026-08-29 边界收口均已完成。confirmed owner、后台
 > reconcile、compatibility facade、窄订阅和 server-owned CacheEffect 已按
 > [`query_store_boundary_hardening.md`](../architecture/query-store-boundary.md) 落地。真实 Cloudflare

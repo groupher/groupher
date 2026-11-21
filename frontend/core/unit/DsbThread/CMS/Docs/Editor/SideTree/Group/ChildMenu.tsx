@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import ArchivedSVG from '~/icons/Archived'
 import CopySVG from '~/icons/Copy'
 import MoreSVG from '~/icons/menu/MoreL'
 import EditSVG from '~/icons/PencilSimple'
@@ -15,18 +14,12 @@ import useSalon from '../salon/group/child_menu'
 import type { TSideTreeNodeMenuAction } from '../spec'
 
 type TProps = {
-  moveToDraftVisible?: boolean
   pinAction?: 'pin' | 'unpin'
   onSelect: (action: TSideTreeNodeMenuAction) => void
   onOpenChange?: (open: boolean) => void
 }
 
-const ChildMenu: FC<TProps> = ({
-  moveToDraftVisible = false,
-  pinAction,
-  onSelect,
-  onOpenChange,
-}) => {
+const ChildMenu: FC<TProps> = ({ pinAction, onSelect, onOpenChange }) => {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -68,21 +61,6 @@ const ChildMenu: FC<TProps> = ({
               className={s.itemTitle}
             />
           </button>
-          {moveToDraftVisible && (
-            <button
-              type='button'
-              className={s.item}
-              onClick={() => onSelect(SIDE_TREE_NODE_MENU_ACTION.MOVE_TO_DRAFT)}
-            >
-              <div className={s.iconBox}>
-                <ArchivedSVG className={s.itemIcon} />
-              </div>
-              <OverflowMarqueeText
-                text={t('dsb.cms.docs.side_tree.menu.move_to_draft')}
-                className={s.itemTitle}
-              />
-            </button>
-          )}
           {pinAction && (
             <button
               type='button'

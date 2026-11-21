@@ -16,6 +16,9 @@ type RootQueryType {
   "get cur user"
   me: User
 
+  "The authenticated viewer's Global Passport facts"
+  currentGlobalPassport: GlobalPassport!
+
   "get user by login"
   user(login: String!): User
 
@@ -56,7 +59,7 @@ type RootQueryType {
   allPassportRulesString: Rules
 
   "search user by name"
-  searchUsers(name: String!): [User!]!
+  searchUsers(name: String!): [CommonUser!]!
 
   "get paged published article comments"
   pagedPublishedComments(login: String!, filter: CommentPageFilter, pagi: PagiInput, thread: Thread): CommentCollectionPage
@@ -72,6 +75,80 @@ type RootQueryType {
 
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: ArticlePageFilter, pagi: PagiInput, thread: DocThread): DocPage
+
+  "Admin candidates excluding current members and pending requests"
+  adminCandidates(communityRef: String!, name: String!): [CommonUser!]!
+
+  "Paged Community Admin memberships"
+  pagedCommunityAdmins(communityRef: String!, pagi: PagiInput): CommunityAdminPage!
+
+  "Paged Admin requests visible to the current user"
+  pagedCommunityAdminRequests(communityRef: String!, pagi: PagiInput): CommunityAdminRequestPage!
+
+  "Current viewer's Admin membership in a Community"
+  currentCommunityAdmin(communityRef: String!): CommunityAdmin
+
+  "Whether the viewer can manage Community Admin memberships"
+  communityAdminManagementAllowed(communityRef: String!): Boolean!
+
+  "Paged current co-authors for one Article; requires article.author.manage"
+  pagedArticleCoAuthors(articleId: ID!, pagi: PagiInput): ArticleCoAuthorPage!
+
+  "Search bounded Article co-author invite candidates; requires article.author.manage"
+  articleCoAuthorCandidates(articleId: ID!, name: String!): [CommonUser!]!
+
+  "Paged Article co-author requests visible to the manager or current subject"
+  pagedArticleCoAuthorRequests(articleId: ID!, pagi: PagiInput): ArticleCoAuthorRequestPage!
+
+  "The current viewer's effective permissions for one Article"
+  articlePermissions(articleId: ID!): ArticlePermissions!
+
+  "Paged ordinary Article Trash for one Community Binding"
+  communityArticleTrashItems(communityRef: String!, thread: CommunityArticleTrashThread!, pagi: PagiInput): CommunityArticleTrashPage!
+
+  "One ordinary Article Trash record for a Community Binding"
+  communityArticleTrash(communityRef: String!, thread: CommunityArticleTrashThread!, id: ID!): CommunityArticleTrashItem
+
+  docsQueuePolicy(community: String!): Json
+
+  "Authorized Docs publication read"
+  docsQueuePreview(community: String!, articleId: ID, versions: Json): Json
+
+  "Authorized Docs publication read"
+  docsApprovalDiff(community: String!, articleId: ID, versions: Json, baseline: DocsDiffBaseline): Json
+
+  "Authorized Docs publication read"
+  docsReleaseHistory(community: String!, beforeId: Int, limit: Int): Json
+
+  "Authorized Docs publication read"
+  docsReleaseDetail(community: String!, releaseId: Int!, articleId: ID): Json
+
+  "Authorized Docs publication read"
+  docsSnapshotHistory(community: String!, articleId: ID!, snapshotId: ID, cursor: Json): Json
+
+  "Authorized Docs publication read"
+  docsPublicationNotices(community: String!): Json
+
+  "Read the current post-publication conflict for an editable Doc"
+  docsPostPublishConflict(community: String!, articleId: ID!): DocsPostPublishConflict
+
+  "Editable WorkingCopies for one Article"
+  articleWorkingCopies(articleId: ID!, community: String!): [ArticleWorkingCopy!]!
+
+  "Immutable Snapshots for one Article"
+  articleSnapshots(articleId: ID!, community: String!): [ArticleSnapshot!]!
+
+  "One immutable Snapshot for an Article editor"
+  articleSnapshot(articleId: ID!, snapshotId: ID!, community: String!): ArticleSnapshot
+
+  "Paged immutable editing and publication events for one Article"
+  pagedArticleEvents(articleId: ID!, pagi: Json, type: ArticleEventType, actorId: ID): Json!
+
+  "One immutable Article event and its before\/after Diff"
+  articleEvent(articleId: ID!, eventId: ID!, pagi: Json): Json
+
+  "Compares explicit saved Article versions"
+  articleDiff(articleId: ID!, before: ArticleVersionRefInput!, after: ArticleVersionRefInput!): Json
 
   "Safe product ArticleLog for one readable Article"
   articleLogs(article: ArticlePathInput!, pagi: PagiInput): ArticleLogPage!
@@ -153,29 +230,28 @@ type RootQueryType {
   "dashboard third-party analytics provider registry"
   thirdPartyAnalyticsProviders: [DsbThirdPartyAnalyticsProvider!]!
 
-  "community docs side tree"
-  docTree(community: String!): DocTree
+  "Authorized branch-free Docs workspace tree"
+  docsEditor(community: String!, articleId: ID!): DocsEditor
+
+  docsWorkspaceTree(community: String!): DocsWorkspaceTree
 
   "public community docs side tree"
   docPublicTree(community: String!): DocPublicTree
 
-  "dashboard docs unified publish checklist"
-  docPublishChecklist(community: String!): DocPublishChecklist
+  "Current authorized Docs publication queue"
+  docsPublishQueue(community: String!): DocsPublishQueue
+
+  "Check whether removing Docs from the Queue discards unique edits"
+  docsDequeuePreview(community: String!, queueRevision: Int!, articleIds: [ID!]!): DocsDequeuePreview
+
+  "Preview a workspace deletion and any Queue-only edits it would discard"
+  docsWorkspaceDeletePreview(community: String!, treeRevision: Int!, queueRevision: Int!, nodeId: ID!): DocsWorkspaceDeletePreview
 
   "dashboard docs trash items"
   docTreeTrashItems(community: String!, pagi: PagiInput): DocTreeTrashPage!
 
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
-
-  "dashboard docs editor document, preferring draft and falling back to public"
-  docDraft(community: String!, id: ID!): DocDraft
-
-  "immutable published versions for one stable Doc branch"
-  docBranchVersions(docId: ID!, branchId: ID!, pagi: PagiInput): DocBranchVersionPage!
-
-  "one immutable published version for a stable Doc branch"
-  docBranchVersion(docId: ID!, branchId: ID!, branchVersionId: ID!): DocBranchVersionView
 
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
@@ -261,13 +337,16 @@ type RootQueryType {
   "artiments mentioning an internal target"
   mentionedBy(community: String!, target: MentionTargetInput!, pagi: PagiInput): ArtimentMentionPage
 
+  "Pages mention relationships around a focused resource in a community."
   mentionsGraph(community: String!, focus: MentionsGraphLocatorInput!, after: String, first: Int): MentionsGraphPage!
 
   "Reads Artiment title, URL and body status by stable resource identity"
   artimentStatus(community: String!, locator: ArtimentStatusInput!): ArtimentStatus
 
+  "Reads the revision of the mention graph around a focused resource."
   mentionsGraphRevision(community: String!, focus: MentionsGraphLocatorInput!): ID!
 
+  "Pages article comments associated with a focused mention graph resource."
   mentionsGraphArticleComments(community: String!, focus: MentionsGraphLocatorInput!, after: ID, first: Int): MentionsGraphArticleCommentsPage!
 
   "search communities by title"
@@ -336,22 +415,31 @@ type RootQueryType {
   "get doc by id"
   doc(article: ArticlePathInput!): Doc!
 
-  pendingContentReviews(scope: ReviewBotScopeInput!, limit: Int, offset: Int): [CmsContentReview!]!
+  "Lists pending content reviews in a review scope."
+  pendingArtimentReviews(scope: ReviewBotScopeInput!, limit: Int, offset: Int): [CmsArtimentReview!]!
 
-  contentReview(target: CmsReviewTargetInput!): CmsContentReview
+  "Loads the current review for a content target."
+  artimentReview(target: ArtimentReviewTargetInput!): CmsArtimentReview
 
-  contentReviewNotice(target: CmsReviewTargetInput!): CmsReviewNotice
+  "Loads the review notice for a content target."
+  artimentReviewNotice(target: ArtimentReviewTargetInput!): ArtimentReviewNotice
 
-  contentReviewHistory(target: CmsReviewTargetInput!, limit: Int, offset: Int): [CmsContentReview!]!
+  "Lists past reviews for a content target."
+  artimentReviewHistory(target: ArtimentReviewTargetInput!, limit: Int, offset: Int): [CmsArtimentReview!]!
 
+  "Loads the Press configuration for a community."
   pressConfig(community: String!): PressConfig
 
+  "Loads an article for the Press service."
   pressArticle(article: ArticlePathInput!): PressArticle
 
+  "Loads a community RSS feed for the Press service."
   pressCommunityRssFeed(community: String!, input: PressCommunityRSSFeedInput!): PressCommunityRSSFeed
 
+  "Loads a thread RSS feed for the Press service."
   pressThreadRssFeed(community: String!, thread: Thread!, input: PressThreadRSSFeedInput!): PressThreadRSSFeed
 
+  "Loads a community site manifest for the Press service."
   pressSiteManifest(community: String!): PressSiteManifest
 
   "check one registered action against the current user's Passport"
@@ -363,14 +451,19 @@ type RootQueryType {
   "read one community-scoped ContentImport Job and its safe Doc preview"
   contentImportJob(community: String!, jobRef: ID!): ContentImportJob
 
+  "Lists reports submitted by the current user."
   myReports(filter: AlertReportFilter, pagi: PagiInput): AlertReportPage!
 
+  "Lists alert items in the requested review scope."
   alertItems(scope: ReviewBotScopeInput!, filter: AlertItemFilter, pagi: PagiInput): AlertItemPage!
 
+  "Loads an alert item by its ID."
   alertItem(id: ID!): AlertItem
 
+  "Lists reports associated with an alert item."
   alertItemReports(id: ID!, pagi: PagiInput): AlertReportPage!
 
+  "Loads ReviewBot policy for a scope and subject type."
   reviewBotConfig(scope: ReviewBotScopeInput!, subjectType: ReviewBotSubjectType!): ReviewBotConfig!
 }
 
@@ -393,8 +486,10 @@ type RootMutationType {
   "Revoke the current persisted Browser Session for canonical Auth only."
   revokeBrowserSession(browserSessionRef: String!): Done
 
+  "Revokes a browser session identified by its public reference through Auth."
   revokeBrowserSessionPublic(browserSessionRef: String!, publicRef: String!): Done
 
+  "Revokes the other browser sessions while retaining the current session."
   revokeOtherBrowserSessions(browserSessionRef: String!): Done
 
   "Link a verified OAuth identity through canonical Auth."
@@ -523,6 +618,86 @@ type RootMutationType {
   "delete a tag by thread"
   deleteCommunityTag(commandId: ID!, id: ID!, community: String!, thread: Thread): CommunityTag
 
+  "Create an Admin invitation or submit the current user's application"
+  createCommunityAdminRequest(
+    communityRef: String!, type: String!, subjectLogin: String, permissions: Json!, commandId: ID!
+  ): CommunityAdminRequest!
+
+  "Accept or reject an Admin invitation or application"
+  decideCommunityAdminRequest(
+    requestId: ID!, revision: Int!, decision: String!, approvedPermissions: Json, commandId: ID!
+  ): CommunityAdminRequest!
+
+  "Cancel an Admin request at its current revision"
+  cancelCommunityAdminRequest(requestId: ID!, revision: Int!, commandId: ID!): CommunityAdminRequest!
+
+  "Replace one Admin's grantable permissions at its current revision"
+  updateCommunityAdminPermissions(
+    communityRef: String!, memberId: ID!, revision: Int!, permissions: Json!, commandId: ID!
+  ): CommunityAdmin!
+
+  "Remove one Admin membership at its current revision"
+  removeCommunityAdmin(communityRef: String!, memberId: ID!, revision: Int!, commandId: ID!): Boolean!
+
+  "Leave the current user's ordinary Admin membership"
+  leaveCommunityAdmins(communityRef: String!, revision: Int!, commandId: ID!): Boolean!
+
+  "Hide one ordinary Article from a Community without deleting the Article"
+  hideCommunityArticle(communityRef: String!, thread: CommunityArticleTrashThread!, articleId: ID!, commandId: ID!): CommunityArticleBindingTrashItem!
+
+  "Restore one Article Binding from its exact Community Trash record"
+  restoreCommunityArticle(
+    communityRef: String!, thread: CommunityArticleTrashThread!, articleId: ID!, id: ID!, recordRevision: String!, commandId: ID!
+  ): CommunityArticleBindingTrashItem!
+
+  "Create an Article co-author invitation or submit the current user's application"
+  createArticleCoAuthorRequest(
+    articleId: ID!, subjectLogin: String, type: ArticleCoAuthorRequestType!, permissions: Json!, commandId: ID!
+  ): ArticleCoAuthorRequest!
+
+  "Accept or reject an Article co-author invitation or application"
+  decideArticleCoAuthorRequest(
+    requestId: ID!, revision: Int!, decision: ArticleCoAuthorDecision!, approvedPermissions: Json, commandId: ID!
+  ): ArticleCoAuthorRequest!
+
+  "Cancel a pending Article co-author request at its current revision"
+  cancelArticleCoAuthorRequest(requestId: ID!, revision: Int!, commandId: ID!): ArticleCoAuthorRequest!
+
+  "Replace one co-author's grantable Article permissions at its current revision"
+  updateArticleCoAuthorPermissions(articleId: ID!, memberId: ID!, revision: Int!, permissions: Json!, commandId: ID!): ArticleCoAuthor!
+
+  "Remove one current Article co-author membership"
+  removeArticleCoAuthor(articleId: ID!, memberId: ID!, revision: Int!, commandId: ID!): ArticleCoAuthor!
+
+  "Leave the current user's Article co-author membership"
+  leaveArticleCoAuthors(articleId: ID!, revision: Int!, commandId: ID!): ArticleCoAuthor!
+
+  "Create a stable Article and its default mutable WorkingCopy"
+  createArticle(
+    commandId: ID!, community: String!, thread: Thread!, title: String, digest: String, slug: String, bodyBag: ArtimentBodyBagInput, tagIds: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, copyRight: String, linkAddr: String, subtitle: String, templateKey: String, assetRefs: [ArticleAssetRefInput]
+  ): ArticleWorkingCopy
+
+  "Create and publish an Article atomically through one command and Receipt"
+  createAndPublishArticle(
+    commandId: ID!, community: String!, thread: Thread!, title: String, digest: String, slug: String, bodyBag: ArtimentBodyBagInput!, tagIds: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, copyRight: String, linkAddr: String, subtitle: String, templateKey: String, assetRefs: [ArticleAssetRefInput]
+  ): ArticlePublicSnapshot
+
+  "Save one Article WorkingCopy patch at its current revision"
+  saveWorkingCopy(
+    commandId: ID!, articleId: ID!, workingCopyId: ID!, revision: Int!, community: String!, title: String, digest: String, slug: String, bodyBag: ArtimentBodyBagInput, tagIds: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, copyRight: String, linkAddr: String, subtitle: String, templateKey: String, assetRefs: [ArticleAssetRefInput]
+  ): ArticleWorkingCopy
+
+  "Create an independent WorkingCopy from an immutable Article Snapshot"
+  forkSnapshot(commandId: ID!, snapshotId: ID!, community: String!, scopeType: String!, scopeId: ID!): ArticleWorkingCopyResult
+
+  "Discard one editable WorkingCopy"
+  deleteWorkingCopy(commandId: ID!, articleId: ID!, workingCopyId: ID!, community: String!): DoneState
+
+  "Select a saved Article Snapshot as the current public version"
+  publishArticle(
+    commandId: ID!, articleId: ID!, community: String!, source: ArticleWorkingCopySourceInput!, expectedPublicSnapshotId: ID
+  ): ArticlePublicSnapshot
+
   "Records one visible public Article read through ViewTracker"
   trackArticleView(article: ArticlePathInput!): ArticleViewTrackResult!
 
@@ -574,29 +749,6 @@ type RootMutationType {
   "move article to other community"
   moveArticle(commandId: ID!, article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
 
-  "create a post"
-  createPost(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], cat: ArticleCatEnum, coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): Post
-
-  "save a new post as a draft"
-  createPostDraft(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], cat: ArticleCatEnum, coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): ArticleDraft
-
-  "update a cms\/post"
-  updatePost(
-    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], cat: ArticleCatEnum, coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): Post
-
-  "save changes to a post draft without publishing"
-  updatePostDraft(
-    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): ArticleDraft
-
-  "publish an existing post draft"
-  publishPostDraft(commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Post
-
   "set cat for a post"
   setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!, commandId: ID!): Post
 
@@ -630,29 +782,6 @@ type RootMutationType {
   "undo lock to a post"
   undoLockPostComment(article: ArticlePathInput!, commandId: ID!): Article
 
-  "create a blog"
-  createBlog(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): Blog
-
-  "save a new blog as a draft"
-  createBlogDraft(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): ArticleDraft
-
-  "update a cms\/blog"
-  updateBlog(
-    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): Blog
-
-  "save changes to a blog draft without publishing"
-  updateBlogDraft(
-    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): ArticleDraft
-
-  "publish an existing blog draft"
-  publishBlogDraft(commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Blog
-
   "upvote to blog"
   upvoteBlog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
@@ -682,31 +811,6 @@ type RootMutationType {
 
   "undo lock to a blog"
   undoLockBlogComment(article: ArticlePathInput!, commandId: ID!): Article
-
-  "create a changelog"
-  createChangelog(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): Changelog
-
-  "save a new changelog as a draft"
-  createChangelogDraft(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): ArticleDraft
-
-  "update a cms\/changelog"
-  updateChangelog(
-    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): Changelog
-
-  "save changes to a changelog draft without publishing"
-  updateChangelogDraft(
-    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
-  ): ArticleDraft
-
-  "publish an existing changelog draft"
-  publishChangelogDraft(
-    commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!
-  ): Changelog
 
   "upvote to changelog"
   upvoteChangelog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
@@ -829,12 +933,12 @@ type RootMutationType {
 
   "Save the Ticket content Draft with Draft and Lifecycle versions"
   saveTicketDraft(
-    commandId: ID!, community: String!, id: ID!, content: TicketContentInput!, expectedDraftVersion: Int!, expectedLifecycleVersion: Int!
+    commandId: ID!, community: String!, id: ID!, content: TicketContentInput!, revision: Int!, expectedLifecycleVersion: Int!
   ): Ticket
 
   "Publish the reviewed Ticket Draft with all three expected versions"
   publishTicket(
-    commandId: ID!, community: String!, id: ID!, expectedPreview: String!, reason: String!, expectedDraftVersion: Int!, expectedLifecycleVersion: Int!, expectedWorkflowVersion: Int!
+    commandId: ID!, community: String!, id: ID!, expectedPreview: String!, reason: String!, revision: Int!, expectedLifecycleVersion: Int!, expectedWorkflowVersion: Int!
   ): Ticket
 
   "Move a published Ticket to Draft with its lifecycle version"
@@ -909,7 +1013,7 @@ type RootMutationType {
 
   "update enable in dashboard"
   updateDashboardEnable(
-    community: String!, dsbSection: DsbSection, commandId: ID!, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
+    community: String!, dsbSection: DsbSection, commandId: ID!, post: Boolean, postPublishedEditing: Boolean, blog: Boolean, blogPublishedEditing: Boolean, kanban: Boolean, changelog: Boolean, changelogPublishedEditing: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
   ): Dsb
 
   "update thread-specific emotion settings in dashboard"
@@ -967,79 +1071,79 @@ type RootMutationType {
   "update docs FAQ in dashboard"
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, commandId: ID!, docFaq: DsbDocFaqInput!): Dsb
 
+  "Updates a community's Press configuration."
   updatePressConfig(input: UpdatePressConfigInput!, commandId: ID!): PressConfigPayload
 
-  "create one recursive docs navigation node"
-  createDocTreeNode(
-    commandId: ID!
+  restoreDocsSnapshot(
+    community: String!, articleId: ID!, snapshotId: ID!, workingCopyId: ID, revision: Int, commandId: ID!
+  ): DocsBeginEditResult
 
-    community: String!
+  configureDocsQueue(
+    community: String!, approvalPolicyRevision: Int!, approvalRequired: Boolean!, allowSelfApproval: Boolean!, commandId: ID!
+  ): Json
 
-    baseRevision: Int!
+  "Begin editing a public Doc by explicitly creating its default copy when needed"
+  beginDocsEdit(commandId: ID!, community: String!, articleId: ID!, publicSnapshotId: ID!): DocsBeginEditResult
 
-    "Immediate parent logical node id; null only for a root Tab."
-    parentNodeId: ID
+  "Approve the current complete Docs queue"
+  approveDocsQueue(commandId: ID!, community: String!, queueRevision: Int!): DocsQueueApprovalResult
 
-    input: DocTreeNodeInput!
-  ): DocTreeMutationPayload
+  "Resolve a Doc's post-publication conflict into its default working copy"
+  resolveDocsPostPublish(
+    commandId: ID!, community: String!, articleId: ID!, workingCopyId: ID!, defaultRevision: Int!, publicSnapshotId: ID!, choices: [DocsMergeChoiceInput!]!
+  ): DocsPostPublishResolution
 
-  "update a docs tree node"
-  updateDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
+  "Save the queued working copy of a Doc"
+  saveDocsQueueCopy(
+    commandId: ID!, community: String!, articleId: ID!, queueRevision: Int!, workingCopyRevision: Int!, title: String, digest: String, slug: String, bodyBag: ArtimentBodyBagInput, tagIds: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, copyRight: String, linkAddr: String, subtitle: String, templateKey: String, assetRefs: [ArticleAssetRefInput]
+  ): DocsQueueSaveResult
 
-  "update a docs draft document"
-  updateDocDraft(
-    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, subtitle: String, slug: String, bodyBag: ArtimentBodyBagInput
-  ): DocDraft
+  "Merge the current default Doc copy into its queued copy"
+  mergeDocsQueueCopy(
+    commandId: ID!, community: String!, queueRevision: Int!, articleId: ID!, defaultRevision: Int!, workingCopyRevision: Int!, choices: [DocsMergeChoiceInput!]!
+  ): DocsQueueMergeResult
 
-  "publish selected docs content and tree changes as one release"
-  publishDocChanges(commandId: ID!, community: String!, input: DocPublishChangesInput, mode: DocPublishMode): DocPublishChangesPayload
+  "Permanently remove an unreferenced Docs Trash action"
+  purgeDocsWorkspaceTrash(commandId: ID!, community: String!, queueRevision: Int!, trashActionId: ID!): DoneState
 
-  "move one published docs page back to draft visibility"
-  moveDocToDraft(commandId: ID!, community: String!, id: ID!): MoveDocToDraftPayload
+  "Restore a Docs workspace Trash action"
+  restoreDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, queueRevision: Int!, trashActionId: ID!, targetParentNodeId: ID, targetIndex: Int
+  ): DocsWorkspaceRestoreResult
 
-  "create missing article drafts for every published Page in one navigation subtree"
-  moveDocTreeSubtreeToDraft(commandId: ID!, community: String!, nodeId: ID!): DoneState
+  "Move a Docs workspace subtree to Trash and queue its public deletion"
+  deleteDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, queueRevision: Int!, nodeId: ID!, confirmation: DocsDiscardConfirmationInput
+  ): DocsWorkspaceDeleteResult
 
-  "restore one immutable Doc Revision into its branch Draft workspace"
-  restoreDocRevisionToDraft(commandId: ID!, docId: ID!, branchId: ID!, revisionId: ID!, expectedVersion: Int): DocDraft
+  "Remove Docs from the publication queue"
+  dequeueDocs(
+    commandId: ID!, community: String!, queueRevision: Int!, articleIds: [ID!]!, confirmation: DocsDiscardConfirmationInput
+  ): DocsQueueEnqueueResult
 
-  "delete a docs tree node"
-  deleteDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
+  "Move a Docs workspace directory node"
+  moveDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, nodeId: ID!, parentNodeId: ID, position: Int!
+  ): DocsWorkspaceUpdateResult
 
-  "restore a docs tree item from product trash"
-  restoreDocTreeTrashItem(
-    commandId: ID!
+  "Update a Docs workspace directory node"
+  updateDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, nodeId: ID!, patch: DocsWorkspaceNodePatchInput!
+  ): DocsWorkspaceUpdateResult
 
-    community: String!
+  "Duplicate a page or link into a new Docs workspace identity"
+  duplicateDocsWorkspaceNode(commandId: ID!, community: String!, treeRevision: Int!, nodeId: ID!): DocsWorkspaceNodeResult
 
-    id: ID!
+  "Create a Docs workspace directory node"
+  createDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, parentNodeId: ID, input: DocsWorkspaceNodeInput!
+  ): DocsWorkspaceNodeResult
 
-    baseRevision: Int!
+  "Enqueue Doc working copies and their required navigation nodes"
+  enqueueDocs(commandId: ID!, community: String!, queueRevision: Int!, entries: [DocsQueueEntryInput!]!): DocsQueueEnqueueResult
 
-    "Replacement parent logical node id when the original parent no longer exists."
-    targetParentNodeId: ID
-
-    targetIndex: Int
-  ): DocTreeMutationPayload
-
-  "duplicate a docs tree node"
-  duplicateDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
-
-  "move a docs tree node"
-  moveDocTreeNode(
-    commandId: ID!
-
-    community: String!
-
-    id: ID!
-
-    baseRevision: Int!
-
-    "Target parent logical node id; null only when moving a root Tab."
-    targetParentNodeId: ID
-
-    targetIndex: Int
-  ): DocTreeMutationPayload
+  "Publish the complete Docs queue at its expected revision"
+  releaseDocsQueue(commandId: ID!, community: String!, queueRevision: Int!): DocsQueueReleaseResult
 
   "add a published Group as a Cover Card"
   addDocCoverCard(commandId: ID!, community: String!, groupNodeId: ID!): DocCoverCard
@@ -1082,30 +1186,34 @@ type RootMutationType {
   "cancel an unfinished import Job and discard its staged BodyBags"
   cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
 
-  recheckArticleV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
+  "Requests another review of an article in the given scope."
+  recheckArticleV2(target: ArtimentReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
-  recheckCommentV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
+  "Requests another review of a comment in the given scope."
+  recheckCommentV2(target: ArtimentReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
-  recheckDocV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
+  "Approves the current review of an article."
+  approveArticleV2(target: ArtimentReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  approveArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
+  "Rejects the current review of an article."
+  rejectArticleV2(target: ArtimentReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  rejectArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
+  "Approves the current review of a comment."
+  approveCommentV2(target: ArtimentReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  approveCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
+  "Rejects the current review of a comment."
+  rejectCommentV2(target: ArtimentReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  rejectCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
-
-  approveDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
-
-  rejectDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
-
+  "Updates ReviewBot policy for the requested scope and subject type."
   updateReviewBotConfig(input: UpdateReviewBotConfigInput!, commandId: ID!): ReviewBotConfig!
 
+  "Submits a report for a target to AlertWall."
   submitReport(input: AlertReportInput!, commandId: ID!): AlertReport!
 
+  "Withdraws a report submitted by the current user."
   withdrawReport(reportId: ID!, commandId: ID!): AlertReport!
 
+  "Resolves an alert item using its expected version."
   resolveAlertItem(id: ID!, resolution: String!, expectedVersion: Int!, commandId: ID!): AlertWallCommandResult!
 }
 
@@ -1223,7 +1331,6 @@ type ContentImportJob {
   counts: ContentImportCounts!
   tree: Json!
   badSmells: Json!
-  targetBranch: String!
   firstImportedDocId: ID
 }
 
@@ -1248,7 +1355,6 @@ type ContentImportApplyResult {
   jobRef: ID!
   status: ContentImportJobStatus!
   firstImportedDocId: ID
-  targetBranch: String!
   counts: Json!
   failedItems: Json!
   skipped: Json!
@@ -1270,7 +1376,6 @@ enum ReviewBotScopeType {
 enum ReviewBotSubjectType {
   ARTICLE
   COMMENT
-  DOC
 }
 
 enum ReviewBotMode {
@@ -1318,7 +1423,6 @@ enum AlertItemStatus {
 enum AlertTargetType {
   ARTICLE
   COMMENT
-  DOC
   USER
 }
 
@@ -1359,7 +1463,6 @@ input AlertReportTargetInput {
   observedVersion: Int
   article: ArticlePathInput
   comment: CommentPathInput
-  docBranchId: Int
   userLogin: String
 }
 
@@ -1742,7 +1845,7 @@ type PressCommunity {
 type PressArticle {
   communityRef: String!
   articleId: ID!
-  articleRevision: String!
+  contentVersion: String!
   thread: Thread!
   canonicalPath: String!
   canonicalOrigin: String!
@@ -1752,7 +1855,6 @@ type PressArticle {
   markdown: String!
   html: String
   digest: String
-  bodyHash: String
   publishedAt: DateTime!
   updatedAt: DateTime!
   author: PressAuthor
@@ -1762,7 +1864,7 @@ type PressArticle {
 
 type PressRSSFeedItem {
   itemId: String!
-  articleRevision: String!
+  contentVersion: String!
   thread: Thread!
   title: String!
   digest: String
@@ -1807,38 +1909,41 @@ enum ReviewAction {
 
 type ReviewCommandResult {
   commandId: ID!
-  targetType: ReviewBotSubjectType!
+  targetType: ArtimentReviewTargetType!
   targetId: String!
   action: ReviewAction!
 }
 
-input CmsReviewTargetInput {
-  type: ReviewBotSubjectType!
+enum ArtimentReviewTargetType {
+  ARTICLE
+  COMMENT
+}
+
+input ArtimentReviewTargetInput {
+  type: ArtimentReviewTargetType!
   article: ArticlePathInput
   comment: CommentPathInput
   articleId: ID
   commentId: ID
-  branchId: Int
   communityId: ID
 }
 
-type CmsReviewOpinion {
+type ArtimentReviewOpinion {
   status: String
   summary: String
   susNotes: [SusNote!]!
 }
 
-type CmsReviewNotice {
+type ArtimentReviewNotice {
   status: String!
   failureCode: String
 }
 
-type CmsContentReview {
+type CmsArtimentReview {
   artimentReviewId: ID
-  targetType: ReviewBotSubjectType!
+  targetType: ArtimentReviewTargetType!
   articleId: ID
   commentId: ID
-  branchId: Int
   communityId: ID
   state: String!
   replacedAt: DateTime
@@ -1846,8 +1951,315 @@ type CmsContentReview {
   failureCode: String
   failureMessage: String
   reviewMode: String
-  systemOpinion: CmsReviewOpinion
-  communityOpinion: CmsReviewOpinion
+  systemOpinion: ArtimentReviewOpinion
+  communityOpinion: ArtimentReviewOpinion
+}
+
+enum ArticleCoAuthorRequestType {
+  INVITE
+  APPLY
+}
+
+enum ArticleCoAuthorRequestStatus {
+  PENDING
+  DECIDED
+  CANCELLED
+  EXPIRED
+}
+
+enum ArticleCoAuthorDecision {
+  ACCEPT
+  REJECT
+}
+
+type ArticleCoAuthor {
+  memberId: ID!
+  articleId: ID!
+  revision: Int!
+  permissions: [PassportAction!]!
+  joinedAt: DateTime!
+  user: CommonUser!
+}
+
+type ArticleCoAuthorPage {
+  entries: [ArticleCoAuthor!]!
+  pageInfo: PageInfo!
+}
+
+type ArticleCoAuthorRequest {
+  id: ID!
+  articleId: ID!
+  type: ArticleCoAuthorRequestType!
+  status: ArticleCoAuthorRequestStatus!
+  decision: ArticleCoAuthorDecision
+  revision: Int!
+  proposedPermissions: Json!
+  approvedPermissions: Json
+  expiresAt: DateTime!
+  decidedAt: DateTime
+  cancelledAt: DateTime
+  subjectUser: CommonUser
+  createdBy: CommonUser
+  currentMember: ArticleCoAuthor
+}
+
+type ArticleCoAuthorRequestPage {
+  entries: [ArticleCoAuthorRequest!]!
+  pageInfo: PageInfo!
+}
+
+type ArticlePermissions {
+  articleId: ID!
+  isOwner: Boolean!
+  permissions: [PassportAction!]!
+}
+
+type CommunityAdmin {
+  memberId: ID!
+  revision: Int!
+  isLord: Boolean!
+  permissions: [PassportAction!]!
+  user: CommonUser!
+}
+
+type CommunityAdminPage {
+  entries: [CommunityAdmin!]!
+  pageInfo: PageInfo!
+}
+
+type CommunityAdminRequest {
+  id: ID!
+  communityId: ID!
+  subjectUserId: ID!
+  createdById: ID!
+  type: String!
+  status: String!
+  decision: String
+  revision: Int!
+  proposedPermissions: Json
+  approvedPermissions: Json
+  expiresAt: DateTime
+  decidedAt: DateTime
+  cancelledAt: DateTime
+  expiredAt: DateTime
+  subjectUser: CommonUser
+  createdBy: CommonUser
+}
+
+type CommunityAdminRequestPage {
+  entries: [CommunityAdminRequest!]!
+  pageInfo: PageInfo!
+}
+
+enum PassportAction {
+  ADMIN_APPLY
+  ADMIN_INVITE
+  ADMIN_PERMISSIONS_UPDATE
+  ADMIN_REMOVE
+  ADMIN_REQUEST_DECIDE
+  ANALYSIS_WEB_READ
+  ARTICLE_AUTHOR_MANAGE
+  ARTICLE_HISTORY_READ
+  ARTICLE_HISTORY_RESTORE
+  ARTICLE_INSIGHTS_READ
+  ARTICLE_MIRROR
+  ARTICLE_MOVE
+  ARTICLE_PERMANENT_DELETE
+  ARTICLE_PUBLISH
+  ARTICLE_READ_DRAFT
+  ARTICLE_RESTORE
+  ARTICLE_TRASH
+  ARTICLE_TRASH_READ
+  ARTICLE_UNMIRROR
+  ARTICLE_UPDATE
+  ASSET_UPLOAD
+  AUDIT_READ
+  BLOG_DRAFT_PUBLISH
+  BLOG_DRAFT_UPDATE
+  BLOG_LOCK_COMMENT
+  BLOG_PERMANENT_DELETE
+  BLOG_PIN
+  BLOG_RESTORE
+  BLOG_SINK
+  BLOG_TRASH
+  BLOG_UNDO_LOCK_COMMENT
+  BLOG_UNDO_PIN
+  BLOG_UNDO_SINK
+  BLOG_UPDATE
+  CATEGORY_CREATE
+  CATEGORY_DELETE
+  CATEGORY_SET
+  CATEGORY_UNSET
+  CATEGORY_UPDATE
+  CHANGELOG_DRAFT_PUBLISH
+  CHANGELOG_DRAFT_UPDATE
+  CHANGELOG_LOCK_COMMENT
+  CHANGELOG_PERMANENT_DELETE
+  CHANGELOG_PIN
+  CHANGELOG_RESTORE
+  CHANGELOG_SINK
+  CHANGELOG_TRASH
+  CHANGELOG_UNDO_LOCK_COMMENT
+  CHANGELOG_UNDO_PIN
+  CHANGELOG_UNDO_SINK
+  CHANGELOG_UPDATE
+  COMMENT_DELETE
+  COMMENT_PIN
+  COMMENT_UNDO_PIN
+  COMMENT_UPDATE
+  COMMUNITY_APPLICATION_APPROVE
+  COMMUNITY_APPLICATION_REJECT
+  COMMUNITY_APPLICATION_RETRY_CREATION
+  COMMUNITY_APPLICATION_RETRY_SETUP
+  COMMUNITY_APPLICATION_REVIEW
+  COMMUNITY_ARTICLE_HIDE
+  COMMUNITY_ARTICLE_RESTORE
+  COMMUNITY_ARTICLE_TRASH_READ
+  COMMUNITY_CREATE
+  COMMUNITY_REQUEST_DESTROY
+  COMMUNITY_UPDATE
+  COMMUNITY_TAG_CREATE
+  COMMUNITY_TAG_DELETE
+  COMMUNITY_TAG_REINDEX
+  COMMUNITY_TAG_SET
+  COMMUNITY_TAG_UNSET
+  COMMUNITY_TAG_UPDATE
+  DASHBOARD_RSS_UPDATE
+  DASHBOARD_THEME_UPDATE
+  DOC_HISTORY_READ
+  DOC_IMPORT
+  DOC_LOCK_COMMENT
+  DOC_PERMANENT_DELETE
+  DOC_PIN
+  DOC_QUEUE_APPROVE
+  DOC_QUEUE_CONFIGURE
+  DOC_QUEUE_PREVIEW
+  DOC_QUEUE_PUBLISH
+  DOC_QUEUE_WRITE
+  DOC_RESTORE
+  DOC_SINK
+  DOC_TRASH
+  DOC_UNDO_LOCK_COMMENT
+  DOC_UNDO_PIN
+  DOC_UNDO_SINK
+  MODERATOR_SET
+  MODERATOR_UNSET
+  MODERATOR_UPDATE
+  POST_DRAFT_PUBLISH
+  POST_DRAFT_UPDATE
+  POST_LOCK_COMMENT
+  POST_PERMANENT_DELETE
+  POST_PIN
+  POST_RESTORE
+  POST_SET_CATEGORY
+  POST_SINK
+  POST_TRASH
+  POST_UNDO_LOCK_COMMENT
+  POST_UNDO_PIN
+  POST_UNDO_SINK
+  POST_UPDATE
+  REVIEW_CONFIGURE
+  REVIEW_DECIDE
+  REVIEW_PLATFORM_CONFIGURE
+  REVIEW_PLATFORM_DECIDE
+  REVIEW_PLATFORM_READ
+  REVIEW_READ
+  THREAD_CREATE
+  THREAD_SET
+  THREAD_UNSET
+  TICKET_ASSIGN
+  TICKET_CREATE
+  TICKET_LINK_SOURCE
+  TICKET_MANAGE_CASE
+  TICKET_MANAGE_VISIBILITY
+  TICKET_READ_INTERNAL
+  TICKET_TRANSITION
+  TICKET_UPDATE
+}
+
+type GlobalPassport {
+  isRoot: Boolean!
+  permissions: [PassportAction!]!
+}
+
+enum CommunityArticleTrashThread {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+}
+
+enum CommunityArticleTrashStatus {
+  PENDING
+  EFFECTIVE
+}
+
+enum ArticleEventType {
+  CREATE
+  EDIT
+  RESTORE
+  FORK
+  PUBLISH
+}
+
+enum ArticleVersionType {
+  SNAPSHOT
+  WORKING_COPY
+}
+
+input ArticleVersionRefInput {
+  type: ArticleVersionType!
+  snapshotId: ID
+  workingCopyId: ID
+  revision: Int
+}
+
+interface CommunityArticleTrashItem {
+  id: ID!
+  communityId: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+}
+
+type CommunityArticleBindingTrashItem implements CommunityArticleTrashItem {
+  id: ID!
+  communityId: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+  bindingId: ID!
+  articleId: ID!
+  hiddenAt: DateTime!
+  title: String
+  commandId: ID
+}
+
+type CommunityDocTreeTrashItem implements CommunityArticleTrashItem {
+  id: ID!
+  communityId: ID!
+  thread: CommunityArticleTrashThread!
+  status: CommunityArticleTrashStatus!
+  publicVisible: Boolean!
+  recordRevision: String!
+  createdAt: DateTime!
+  treePath: [CommunityDocTrashPathSegment!]!
+  pendingMemberCount: Int!
+  removedMemberCount: Int!
+}
+
+type CommunityDocTrashPathSegment {
+  nodeId: ID!
+  title: String!
+}
+
+type CommunityArticleTrashPage {
+  entries: [CommunityArticleTrashItem!]!
+  pageInfo: PageInfo!
 }
 
 enum ArtimentType {
@@ -2082,7 +2494,7 @@ type Ticket {
   priority: Int!
   lifecycleVersion: Int
   workflowVersion: Int
-  draftVersion: Int
+  workingCopyRevision: Int
   rank: Int!
   title: String!
   digest: String!
@@ -2559,21 +2971,6 @@ enum DocTreeNodeType {
   PIN
 }
 
-enum ArticleStage {
-  DRAFT
-  PUBLIC
-}
-
-enum DocPublishMode {
-  WITH_COVER_SYNC
-  DOC_ONLY
-}
-
-enum DocPublishStatus {
-  DRAFT
-  PUBLIC
-}
-
 enum DocCoverView {
   PUBLIC
   DASHBOARD
@@ -2650,89 +3047,6 @@ input MarkerInput {
   appearance: MarkerAppearanceInput
 }
 
-type DocTreeNode {
-  """
-  Stable logical node identity (`doc_tree_nodes.node_id`). The physical
-  database row id is intentionally not exposed by the Tree API.
-  """
-  id: ID
-
-  """
-  Immediate parent logical node id in the same Community, Branch, and Stage.
-  This references another row's `node_id`, which is exposed as GraphQL `id`;
-  it never references the physical database row id. Null only for root Tabs.
-  """
-  parentNodeId: ID
-
-  docId: ID
-
-  type: DocTreeNodeType
-
-  title: String
-
-  index: Int
-
-  href: String
-
-  marker: Marker
-
-  badge: String
-
-  hidden: Boolean
-
-  publishState: DocTreeNodePublishState
-
-  groups: [DocTreeNode]
-
-  pages: [DocTreeNode]
-
-  pins: [DocTreeNode]
-}
-
-type DocTreeNodePublishState {
-  status: DocPublishStatus
-  published: Boolean
-  publishedBefore: Boolean
-  hasDraft: Boolean
-  publicNodeId: ID
-  publicDocId: ID
-  hasUnpublishedChanges: Boolean
-  lastPublishedAt: DateTime
-  inCover: Boolean
-  hiddenFromCover: Boolean
-  pinnedToCover: Boolean
-}
-
-type DocTreeState {
-  hasUnpublishedChanges: Boolean
-  stagedEventCount: Int
-  baseSnapshotId: ID
-  latestSnapshotId: ID
-  latestReleaseId: ID
-  latestReleaseNumber: Int
-  latestVersionSlug: String
-  revision: Int
-}
-
-type DocTreeEvent {
-  id: ID
-  seq: Int
-  eventType: String
-  payload: Json
-  inversePayload: Json
-  status: String
-  owner: String
-  docId: ID
-  insertedAt: DateTime
-}
-
-type DocTree {
-  revision: Int
-  treeState: DocTreeState
-  stagedEvents: [DocTreeEvent]
-  tabs: [DocTreeNode]
-}
-
 type DocPublicTreeNode {
   "Stable logical `node_id`; the physical database row id is not exposed."
   id: ID
@@ -2765,40 +3079,218 @@ type DocPublicTree {
   tabs: [DocPublicTreeNode]
 }
 
-type DocPublishChecklistItem {
-  id: ID!
-  title: String!
-  action: String!
-  selectedByDefault: Boolean!
-  selectable: Boolean!
-  disabledReason: String
+enum DocsQueueTreeChangeType {
+  UPSERT
+  DELETE
 }
 
-type DocPublishChecklist {
+type DocsQueueArticle {
+  articleId: ID!
+  workingCopyId: ID!
   revision: Int!
-  totalCount: Int!
-  docChanges: [DocPublishChecklistItem!]!
-  treeChanges: [DocPublishChecklistItem!]!
+  title: String!
 }
 
-type DocPublishScope {
-  totalCount: Int!
+type DocsQueueTreeChange {
+  nodeId: ID!
+  changeType: DocsQueueTreeChangeType!
+  target: Json
 }
 
-type DocPublishRelease {
-  id: ID!
-  releaseNumber: Int!
-  versionSlug: String!
-  publishedAt: DateTime!
+type DocsPublishQueue {
+  revision: Int!
+  approvalRequired: Boolean!
+  allowSelfApproval: Boolean!
+  approvalPolicyRevision: Int!
+  approvalStatus: DocsQueueApprovalStatus
+  articles: [DocsQueueArticle!]!
+  treeChanges: [DocsQueueTreeChange!]!
+}
+
+enum DocsQueueApprovalStatus {
+  IDLE
+  PENDING
+  APPROVED
+  NEEDS_REAPPROVAL
+}
+
+type DocsQueueReleaseResult {
+  releaseId: ID!
+  queueRevision: Int!
+}
+
+input DocsQueueEntryInput {
+  articleId: ID!
+  defaultRevision: Int!
+}
+
+type DocsQueueEnqueueResult {
+  queueRevision: Int!
+}
+
+type DocsQueueSaveResult {
+  queueRevision: Int!
+  workingCopyRevision: Int!
+}
+
+type DocsQueueApprovalResult {
+  approvalId: ID!
+  queueRevision: Int!
+}
+
+enum DocsMergeField {
+  TITLE
+  DIGEST
+  SLUG
+  SUBTITLE
+  LINK_ADDR
+  TEMPLATE_KEY
+  COVER_URL
+  COVER_URL_DARK
+  BODY
+  TAGS
+  COVER_EDIT
+  ASSET_REFS
+}
+
+enum DocsMergeSide {
+  SOURCE
+  TARGET
+}
+
+input DocsMergeChoiceInput {
+  field: DocsMergeField!
+  side: DocsMergeSide!
+}
+
+type DocsQueueMergeConflict {
+  fields: [DocsMergeField!]!
+  queueRevision: Int!
+  defaultRevision: Int!
+  workingCopyRevision: Int!
+}
+
+type DocsQueueMergeResult {
+  queueRevision: Int
+  workingCopyRevision: Int
+  conflict: DocsQueueMergeConflict
+}
+
+type DocsPostPublishConflict {
+  publicSnapshotId: ID!
+  workingCopyId: ID!
+  defaultRevision: Int!
+}
+
+type DocsPostPublishResolution {
+  workingCopyRevision: Int
+  conflictFields: [DocsMergeField!]
+}
+
+type DocsDiscardDocument {
+  articleId: ID!
+  exclusiveFields: [String!]!
+}
+
+type DocsDequeuePreview {
+  requiresConfirmation: Boolean!
+  confirmation: DocsDiscardConfirmation
+  documents: [DocsDiscardDocument!]!
+}
+
+type DocsWorkspaceDeletePreview {
+  requiresConfirmation: Boolean!
+  confirmation: DocsDiscardConfirmation
+  documents: [DocsDiscardDocument!]!
+  publicCount: Int!
+  draftCount: Int!
+}
+
+type DocsWorkspaceDeleteResult {
+  trashActionId: ID!
+  treeRevision: Int!
+  queueRevision: Int!
+}
+
+type DocsWorkspaceRestoreResult {
+  nodeId: ID!
+  treeRevision: Int!
+  queueRevision: Int!
+}
+
+type DocsDiscardConfirmation {
+  formatVersion: Int!
+  hash: String!
+}
+
+input DocsDiscardConfirmationInput {
+  formatVersion: Int!
+  hash: String!
+}
+
+input DocsWorkspaceNodePatchInput {
+  title: String
+  href: String
+  marker: MarkerInput
+  badge: String
+  hidden: Boolean
+}
+
+type DocsWorkspaceNodeResult {
+  nodeId: ID!
+  articleId: ID
+  workingCopyId: ID
+  treeRevision: Int!
+}
+
+type DocsWorkspaceUpdateResult {
+  treeRevision: Int!
+}
+
+input DocsWorkspaceNodeInput {
+  type: DocTreeNodeType!
+  title: String!
+  index: Int
+  href: String
+  marker: MarkerInput
+  badge: String
+  hidden: Boolean
+}
+
+type DocsWorkspaceNode {
+  nodeId: ID!
+  type: DocTreeNodeType!
+  parentNodeId: ID
+  index: Int!
+  title: String!
+  href: String
+  docId: ID
+  marker: Json
+  badge: String
+  hidden: Boolean!
+  published: Boolean!
+  workingCopyId: ID
+  workingCopyRevision: Int
+}
+
+type DocsEditor {
+  workingCopy: ArticleWorkingCopy
+  publicSnapshot: ArticleSnapshot
+}
+
+type DocsBeginEditResult {
+  workingCopyId: ID!
+  revision: Int!
+}
+
+type DocsWorkspaceTree {
+  treeRevision: Int!
+  queueRevision: Int!
+  nodes: [DocsWorkspaceNode!]!
 }
 
 type DocTreeTrashPage {
   entries: [DocTreeTrashItem!]!
-  pageInfo: PageInfo!
-}
-
-type DocBranchVersionPage {
-  entries: [DocBranchVersionView!]!
   pageInfo: PageInfo!
 }
 
@@ -2827,21 +3319,6 @@ type CommentReconcileEntry {
 type CommentReconcilePayload {
   article: CommentMutationArticle!
   entries: [CommentReconcileEntry!]!
-}
-
-type DocPublishChangesPayload {
-  done: Boolean!
-  release: DocPublishRelease
-  checklist: DocPublishChecklist!
-  scope: DocPublishScope!
-  commandId: ID
-}
-
-input DocPublishChangesInput {
-  expectedChecklistRevision: Int
-  docChangeIds: [ID]
-  treeChangeIds: [ID]
-  restoreTreeChangeIds: [ID]
 }
 
 type DocCover {
@@ -2879,77 +3356,71 @@ type DocCoverPinnedDoc {
   doc: Doc!
 }
 
-type DocDraft {
-  id: ID
-  docId: ID
-  branchId: ID!
-  version: Int!
-  contentHash: String
-  baseRevisionId: ID
-  title: String
-  subtitle: String
-  slug: String
-  commandId: ID
-  stage: ArticleStage
-  digest: String
-  author: User
-  insertedAt: DateTime
-  updatedAt: DateTime
-  body: ArtimentBody!
-  thumbnail: Json
-  assetRefs: [ArticleAssetRef!]!
-}
-
-type ArticleDraft {
+type ArticleWorkingCopy {
   id: ID!
-  thread: Thread!
-  version: Int!
-  contentHash: String!
-  baseRevisionId: ID
-  stage: ArticleStage!
+  articleId: ID!
+  scopeType: String!
+  scopeId: ID!
+  revision: Int!
   title: String!
-  digest: String
+  digest: String!
   slug: String
-  subtitle: String
-  commandId: ID
-  body: ArtimentBody!
-  insertedAt: DateTime
-  updatedAt: DateTime
+  bodyJson: String!
+  bodyMarkdown: String!
+  bodyHtml: String!
+  bodyMarkdownToc: Json!
+  bodyPlainText: String!
+  bodyThumbnail: Json!
+  coverEditWorkingCopyId: ID
+  tagIds: [ID!]!
+  threadFields: Json!
+  createdById: ID!
+  updatedById: ID!
+  insertedAt: DateTime!
+  updatedAt: DateTime!
 }
 
-type DocTreeMutationPayload {
-  revision: Int
-  treeState: DocTreeState
-  node: DocTreeNode
-  affectedNodes: [DocTreeNode]
-  conflict: Boolean
-  commandId: ID
-}
-
-type MoveDocToDraftPayload {
-  docId: ID
-  stage: ArticleStage
-  publishState: DocTreeNodePublishState
-  commandId: ID
-}
-
-input DocTreeNodeInput {
-  type: DocTreeNodeType!
+type ArticleSnapshot {
+  id: ID!
+  articleId: ID!
+  sourceWorkingCopyId: ID!
+  sourceRevision: Int!
   title: String!
-  docId: ID
-  index: Int
-  href: String
-  marker: MarkerInput
-  badge: String
-  hidden: Boolean
+  digest: String!
+  slug: String
+  bodyJson: String!
+  bodyMarkdown: String!
+  bodyHtml: String!
+  bodyMarkdownToc: Json!
+  bodyPlainText: String!
+  bodyThumbnail: Json!
+  coverEditSnapshotId: ID
+  tagIds: [ID!]!
+  threadFields: Json!
+  capturedById: ID!
+  capturedAt: DateTime!
 }
 
-input DocTreeNodePatchInput {
-  title: String
-  href: String
-  marker: MarkerInput
-  badge: String
-  hidden: Boolean
+type ArticlePublicSnapshot {
+  articleId: ID!
+  snapshotId: ID!
+  publishedAt: DateTime!
+  publishedById: ID!
+  title: String!
+  digest: String!
+  slug: String
+  plainText: String!
+  thumbnail: Json!
+}
+
+input ArticleWorkingCopySourceInput {
+  workingCopyId: ID
+  revision: Int
+  snapshotId: ID
+}
+
+type ArticleWorkingCopyResult {
+  workingCopy: ArticleWorkingCopy!
 }
 
 type DsbThemePresetOption {
@@ -3163,6 +3634,7 @@ input ArtimentBodyBagInput {
   digest: String!
   bodyHash: String!
   schemaVersion: Int!
+  thumbnail: Json!
 }
 
 type ArtimentBody {
@@ -3172,33 +3644,13 @@ type ArtimentBody {
   html: String!
   plainText: String!
   digest: String!
-  bodyHash: String!
-  schemaVersion: Int!
-}
-
-type DocBranchVersionContent {
-  title: String
-  slug: String
-  subtitle: String
-  digest: String
-  linkAddr: String
-  templateKey: String
   bodyHash: String
-  body: ArtimentBody!
-  plainText: String
-  schemaVersion: Int
-}
-
-type DocBranchVersionView {
-  id: ID!
-  revisionId: ID!
-  versionNumber: Int!
-  publishedAt: DateTime
-  message: String
-  content: DocBranchVersionContent!
+  schemaVersion: Int!
+  thumbnail: Json!
 }
 
 type Post implements Article {
+  id: ID!
   innerId: ID
   version: Int!
   title: String
@@ -3212,6 +3664,7 @@ type Post implements Article {
   coverUrlDark: String
   coverEditInfo: CoverEditInfo
   communityTags: [CommunityTag]
+  articleTags: [CommunityTag]
   author: User
   community: Community
   communities: [Community]
@@ -3231,6 +3684,7 @@ type Post implements Article {
 }
 
 type Changelog implements Article {
+  id: ID!
   innerId: ID
   version: Int!
   title: String
@@ -3244,6 +3698,7 @@ type Changelog implements Article {
   coverUrlDark: String
   coverEditInfo: CoverEditInfo
   communityTags: [CommunityTag]
+  articleTags: [CommunityTag]
   author: User
   community: Community
   communities: [Community]
@@ -3259,6 +3714,7 @@ type Changelog implements Article {
 }
 
 type Doc implements Article {
+  id: ID!
   innerId: ID
   version: Int!
   title: String
@@ -3272,6 +3728,7 @@ type Doc implements Article {
   coverUrlDark: String
   coverEditInfo: CoverEditInfo
   communityTags: [CommunityTag]
+  articleTags: [CommunityTag]
   author: User
   community: Community
   communities: [Community]
@@ -3288,6 +3745,7 @@ type Doc implements Article {
 }
 
 type Blog implements Article {
+  id: ID!
   innerId: ID
   version: Int!
   title: String
@@ -3301,6 +3759,7 @@ type Blog implements Article {
   coverUrlDark: String
   coverEditInfo: CoverEditInfo
   communityTags: [CommunityTag]
+  articleTags: [CommunityTag]
   author: User
   community: Community
   communities: [Community]
@@ -3375,7 +3834,7 @@ type CoverEditInfo {
   id: ID
   canvasWidth: Int
   canvasHeight: Int
-  version: Int
+  formatVersion: Int
   light: CoverConfig
   dark: CoverConfig
   insertedAt: DateTime
@@ -3404,7 +3863,7 @@ input CoverConfigInput {
 input CoverEditInfoInput {
   canvasWidth: Int!
   canvasHeight: Int!
-  version: Int
+  formatVersion: Int
   light: CoverConfigInput!
   dark: CoverConfigInput!
 }
@@ -3545,9 +4004,12 @@ type DsbLayout {
 
 type DsbEnable {
   post: Boolean
+  postPublishedEditing: Boolean
   blog: Boolean
+  blogPublishedEditing: Boolean
   kanban: Boolean
   changelog: Boolean
+  changelogPublishedEditing: Boolean
   doc: Boolean
   docLastUpdate: Boolean
   docReaction: Boolean
@@ -3770,6 +4232,9 @@ type AllRules {
 }
 
 type Community {
+  "Stable, immutable Community identity."
+  ref: String!
+
   "Community display title."
   title: String!
 
@@ -4186,7 +4651,7 @@ type ArticleSearchArtiment {
   communityRef: String!
   thread: Thread!
   articleId: ID!
-  indexedRevisionId: ID!
+  indexedSnapshotId: ID
   title: String!
   digest: String
   locator: SearchArticleLocator!
@@ -4197,7 +4662,6 @@ type ArticleSearchArtiment {
   publishedAt: DateTime
   insertedAt: DateTime!
   updatedAt: DateTime!
-  contentHash: String!
   schemaVersion: Int!
 }
 
@@ -4266,7 +4730,13 @@ type OpenGraph {
   siteName: String
 }
 
+enum DocsDiffBaseline {
+  PUBLIC
+  APPROVAL
+}
+
 interface Article {
+  id: ID!
   innerId: ID
   title: String
   articleStats: ArticleStats

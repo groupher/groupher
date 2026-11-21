@@ -35,10 +35,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.EnsureDraft do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_update, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.ensure_draft(canonical, ticket_id, expected_lifecycle_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

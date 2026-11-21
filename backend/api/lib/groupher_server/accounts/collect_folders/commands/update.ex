@@ -16,7 +16,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Commands.Update do
             params: [:attrs]
 
   direct_pipeline execute_pipeline(folder_id, attrs) do
-    change(fn _folder_id -> Persist.update(folder_id, attrs) end)
+    change(fn _folder_id, _operation_ref -> Persist.update(folder_id, attrs) end)
   end
 
   @doc """

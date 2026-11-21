@@ -52,7 +52,7 @@ async function checkMentionsGraphHost(page) {
     const input = route.request().postDataJSON()
     const operation = /\bquery\s+(\w+)/.exec(input.query)?.[1] || 'anonymous'
     requests.push({ operation, variables: input.variables })
-    if (operation === 'MentionsGraphPage') {
+    if (operation === 'PagedMentionsGraph') {
       if (holdGraph)
         await new Promise((resolve) => {
           releaseGraph = resolve
@@ -91,7 +91,7 @@ async function checkMentionsGraphHost(page) {
       await route.fulfill({ json: { data: { mentionsGraphRevision: 'host-revision-1' } } })
       return
     }
-    if (operation === 'ArticleLogsPage') {
+    if (operation === 'PagedArticleLogs') {
       if (holdActivity)
         await new Promise((resolve) => {
           releaseActivity = resolve
@@ -115,8 +115,8 @@ async function checkMentionsGraphHost(page) {
     const response = await route.fetch({ url: 'http://127.0.0.1:4191/graphiql' })
     await route.fulfill({ response })
   })
-  const graphCount = () => requests.filter((r) => r.operation === 'MentionsGraphPage').length
-  const activityCount = () => requests.filter((r) => r.operation === 'ArticleLogsPage').length
+  const graphCount = () => requests.filter((r) => r.operation === 'PagedMentionsGraph').length
+  const activityCount = () => requests.filter((r) => r.operation === 'PagedArticleLogs').length
   const footer = page.locator('#article-footer')
   const tab = (name) => footer.getByText(name, { exact: true })
 
@@ -130,7 +130,7 @@ async function checkMentionsGraphHost(page) {
     await tab('Mentions').click()
     await waitFor(() => graphCount() === before + 1)
     await footer.getByRole('img', { name: 'Directed mention relationships' }).waitFor()
-    const last = requests.filter((r) => r.operation === 'MentionsGraphPage').at(-1)
+    const last = requests.filter((r) => r.operation === 'PagedMentionsGraph').at(-1)
     verify(
       last.variables.community === 'home' &&
         last.variables.focus.type === thread.toUpperCase() &&
@@ -154,7 +154,7 @@ async function checkMentionsGraphHost(page) {
   await tab('Mentions').click()
   await waitFor(() => graphCount() === beforeOther + 1)
   verify(
-    requests.filter((r) => r.operation === 'MentionsGraphPage').at(-1).variables.focus
+    requests.filter((r) => r.operation === 'PagedMentionsGraph').at(-1).variables.focus
       .articleInnerId === '2',
     'route change: graph cache did not reuse Article 1 as Article 2',
   )
@@ -170,7 +170,7 @@ async function checkMentionsGraphHost(page) {
   releaseGraph()
   await waitFor(() =>
     page.evaluate(() =>
-      window.__mentionsNativeAborts.some((body) => body.includes('query MentionsGraphPage')),
+      window.__mentionsNativeAborts.some((body) => body.includes('query PagedMentionsGraph')),
     ),
   )
   verify(true, 'tab switch: browser aborted the in-flight GraphQL graph request')
@@ -178,7 +178,7 @@ async function checkMentionsGraphHost(page) {
 
   const graphAbortCount = await page.evaluate(
     () =>
-      window.__mentionsNativeAborts.filter((body) => body.includes('query MentionsGraphPage'))
+      window.__mentionsNativeAborts.filter((body) => body.includes('query PagedMentionsGraph'))
         .length,
   )
   holdActivity = true
@@ -190,14 +190,15 @@ async function checkMentionsGraphHost(page) {
   releaseActivity()
   await waitFor(() =>
     page.evaluate(() =>
-      window.__mentionsNativeAborts.some((body) => body.includes('query ArticleLogsPage')),
+      window.__mentionsNativeAborts.some((body) => body.includes('query PagedArticleLogs')),
     ),
   )
   verify(true, 'tab switch: browser aborted the in-flight Activity request')
   holdActivity = false
   const activityAbortCount = await page.evaluate(
     () =>
-      window.__mentionsNativeAborts.filter((body) => body.includes('query ArticleLogsPage')).length,
+      window.__mentionsNativeAborts.filter((body) => body.includes('query PagedArticleLogs'))
+        .length,
   )
 
   const beforeDrawer = graphCount()
@@ -215,7 +216,7 @@ async function checkMentionsGraphHost(page) {
   await tab('Mentions').click()
   await waitFor(() => graphCount() === beforeDrawer + 1)
   verify(
-    requests.filter((r) => r.operation === 'MentionsGraphPage').at(-1).variables.focus.type ===
+    requests.filter((r) => r.operation === 'PagedMentionsGraph').at(-1).variables.focus.type ===
       'POST',
     'Post preview: Mentions uses the drawer Article locator',
   )
@@ -234,7 +235,7 @@ async function checkMentionsGraphHost(page) {
   )
   await page.getByRole('button', { name: 'Mentions', exact: true }).click()
   await waitFor(() => graphCount() === beforeTicketGraph + 1)
-  const ticketRequest = requests.filter((r) => r.operation === 'MentionsGraphPage').at(-1)
+  const ticketRequest = requests.filter((r) => r.operation === 'PagedMentionsGraph').at(-1)
   verify(
     ticketRequest.variables.focus.type === 'TICKET' &&
       ticketRequest.variables.focus.articleInnerId === '71',

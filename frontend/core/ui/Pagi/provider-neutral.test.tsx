@@ -32,7 +32,7 @@ it('renders offset controls without community providers and validates page input
 it('renders cursor loading and retry without community providers and blocks duplicate requests', () => {
   const load = vi.fn()
   const retry = vi.fn()
-  const props = { mode: 'load_more' as const, hasNextPage: true, onLoadMore: load, onRetry: retry }
+  const props = { mode: 'LOAD_MORE' as const, hasNextPage: true, onLoadMore: load, onRetry: retry }
   const { rerender } = render(<CursorPagination {...props} isLoading />)
   fireEvent.click(screen.getByRole('button'))
   expect(load).not.toHaveBeenCalled()

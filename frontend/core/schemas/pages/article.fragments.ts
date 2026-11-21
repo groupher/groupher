@@ -1,7 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
-export const PageAuthorFields = graphql(`
-  fragment PageAuthorFields on User {
+export const AuthorFields = graphql(`
+  fragment AuthorFields on User {
     login
     nickname
     avatar
@@ -10,8 +10,8 @@ export const PageAuthorFields = graphql(`
   }
 `)
 
-export const PageCommonUserFields = graphql(`
-  fragment PageCommonUserFields on CommonUser {
+export const CommonUserFields = graphql(`
+  fragment CommonUserFields on CommonUser {
     login
     nickname
     avatar
@@ -20,8 +20,8 @@ export const PageCommonUserFields = graphql(`
   }
 `)
 
-export const PageCommunityFields = graphql(`
-  fragment PageCommunityFields on Community {
+export const CommunityFields = graphql(`
+  fragment CommunityFields on Community {
     title
     slug
     index
@@ -37,8 +37,8 @@ export const PageCommunityFields = graphql(`
   }
 `)
 
-export const PageTagFields = graphql(`
-  fragment PageTagFields on CommunityTag {
+export const TagFields = graphql(`
+  fragment TagFields on CommunityTag {
     id
     title
     layout
@@ -62,8 +62,8 @@ export const PageTagFields = graphql(`
   }
 `)
 
-export const PagePostFields = graphql(`
-  fragment PagePostFields on Post {
+export const PostFields = graphql(`
+  fragment PostFields on Post {
     innerId
     version
     isPinned
@@ -72,27 +72,27 @@ export const PagePostFields = graphql(`
     activeAt
     updatedAt
     author {
-      ...PageAuthorFields
+      ...AuthorFields
     }
     community {
-      ...PageCommunityFields
+      ...CommunityFields
     }
     communities {
-      ...PageCommunityFields
+      ...CommunityFields
     }
     communityTags {
-      ...PageTagFields
+      ...TagFields
     }
   }
 `)
 
-export const PagePostDetailFields = graphql(`
-  fragment PagePostDetailFields on Post {
+export const PostDetailFields = graphql(`
+  fragment PostDetailFields on Post {
     meta {
       thread
       isEdited
       latestUpvotedUsers {
-        ...PageCommonUserFields
+        ...CommonUserFields
       }
     }
     body {
@@ -121,8 +121,8 @@ export const PagePostDetailFields = graphql(`
   }
 `)
 
-export const PageChangelogFields = graphql(`
-  fragment PageChangelogFields on Changelog {
+export const ChangelogFields = graphql(`
+  fragment ChangelogFields on Changelog {
     innerId
     version
     isPinned
@@ -131,27 +131,27 @@ export const PageChangelogFields = graphql(`
     activeAt
     updatedAt
     author {
-      ...PageAuthorFields
+      ...AuthorFields
     }
     community {
-      ...PageCommunityFields
+      ...CommunityFields
     }
     communities {
-      ...PageCommunityFields
+      ...CommunityFields
     }
     communityTags {
-      ...PageTagFields
+      ...TagFields
     }
   }
 `)
 
-export const PageChangelogDetailFields = graphql(`
-  fragment PageChangelogDetailFields on Changelog {
+export const ChangelogDetailFields = graphql(`
+  fragment ChangelogDetailFields on Changelog {
     meta {
       thread
       isEdited
       latestUpvotedUsers {
-        ...PageCommonUserFields
+        ...CommonUserFields
       }
     }
     body {
@@ -180,8 +180,8 @@ export const PageChangelogDetailFields = graphql(`
   }
 `)
 
-export const PageDocFields = graphql(`
-  fragment PageDocFields on Doc {
+export const DocFields = graphql(`
+  fragment DocFields on Doc {
     innerId
     isPinned
     title
@@ -189,27 +189,27 @@ export const PageDocFields = graphql(`
     activeAt
     updatedAt
     author {
-      ...PageAuthorFields
+      ...AuthorFields
     }
     community {
-      ...PageCommunityFields
+      ...CommunityFields
     }
     communities {
-      ...PageCommunityFields
+      ...CommunityFields
     }
     communityTags {
-      ...PageTagFields
+      ...TagFields
     }
   }
 `)
 
-export const PageDocDetailFields = graphql(`
-  fragment PageDocDetailFields on Doc {
+export const DocDetailFields = graphql(`
+  fragment DocDetailFields on Doc {
     meta {
       thread
       isEdited
       latestUpvotedUsers {
-        ...PageCommonUserFields
+        ...CommonUserFields
       }
     }
     body {
@@ -238,8 +238,8 @@ export const PageDocDetailFields = graphql(`
   }
 `)
 
-export const PageCommunityPageInfo = graphql(`
-  fragment PageCommunityPageInfo on CommunityPage {
+export const PagedCommunitiesPageInfo = graphql(`
+  fragment PagedCommunitiesPageInfo on CommunityPage {
     pageInfo {
       __typename
       hasNextPage
@@ -258,8 +258,8 @@ export const PageCommunityPageInfo = graphql(`
   }
 `)
 
-export const PagePostLiteFields = graphql(`
-  fragment PagePostLiteFields on PostLite {
+export const PostLiteFields = graphql(`
+  fragment PostLiteFields on PostLite {
     id
     thread
     innerId
@@ -292,8 +292,8 @@ export const PagePostLiteFields = graphql(`
   }
 `)
 
-export const PageChangelogLiteFields = graphql(`
-  fragment PageChangelogLiteFields on ChangelogLite {
+export const ChangelogLiteFields = graphql(`
+  fragment ChangelogLiteFields on ChangelogLite {
     id
     thread
     innerId
@@ -327,8 +327,8 @@ export const PageChangelogLiteFields = graphql(`
   }
 `)
 
-export const PageDocLiteFields = graphql(`
-  fragment PageDocLiteFields on DocLite {
+export const DocLiteFields = graphql(`
+  fragment DocLiteFields on DocLite {
     id
     thread
     innerId

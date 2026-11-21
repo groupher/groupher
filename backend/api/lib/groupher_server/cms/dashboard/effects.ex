@@ -15,43 +15,32 @@ defmodule GroupherServer.CMS.Dashboard.Effects do
 
   alias GroupherServer.CMS
   alias CMS.Model.Community
+  alias CMS.Outbox.DedupeKey
 
   @doc """
-  Enqueues the public-presentation cleanup using the caller's command identity.
+  Enqueues public-presentation cleanup with the caller's operation identity.
 
   The event is inserted into the current transaction; this function never
   creates a second identity or opens a transaction.
 
   ## Examples
 
-      Dashboard.Effects.enqueue_presentation_changed(community, command_id)
+      Dashboard.Effects.enqueue_presentation_changed(community, operation_ref)
       #=> {:ok, %CMS.Outbox.Event{}} | {:error, reason}
   """
-  @spec enqueue_presentation_changed(Community.t(), Ecto.UUID.t() | {:workflow, String.t()}) ::
+  @spec enqueue_presentation_changed(Community.t(), Ecto.UUID.t()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_presentation_changed(%Community{} = community, identity) do
-    identity_attrs =
-      case identity do
-        {:workflow, workflow_ref} -> %{identity: {:workflow, workflow_ref}}
-        command_id -> %{command_id: command_id}
-      end
-
-    Map.merge(identity_attrs, %{
-      event: "community.presentation_changed",
-      worker: GroupherServer.Jobs.CMSOutboxCommunity,
-      resource_type: "community",
-      resource_id: community.id,
-      data: %{community: community.slug, community_id: community.id}
-    })
-    |> CMS.Outbox.send()
+  def enqueue_presentation_changed(%Community{} = community, operation_ref) do
+    CMS.Communities.Effects.enqueue_presentation_changed(community, operation_ref)
   end
 
   @doc "Enqueues cache invalidation for the community-wide list preference."
   @spec enqueue_pagi_mode_changed(Community.t(), Ecto.UUID.t()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_pagi_mode_changed(%Community{} = community, command_id) do
+  def enqueue_pagi_mode_changed(%Community{} = community, operation_ref) do
     %{
-      command_id: command_id,
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id, operation_ref]),
       event: "community.pagi_mode_changed",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
@@ -62,5 +51,16 @@ defmodule GroupherServer.CMS.Dashboard.Effects do
       }
     }
     |> CMS.Outbox.send()
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "community.pagi_mode_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["community", "community_id"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
   end
 end

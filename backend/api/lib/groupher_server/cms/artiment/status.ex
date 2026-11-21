@@ -12,17 +12,14 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
   alias CMS.Model.{
     ArticleBinding,
-    ArticleDraft,
     ArticleLifecycle,
     ArticlePublic,
+    ArticleWorkingCopy,
     Comment,
     CommentBody,
+    ArticleLifecycle,
     CommentLifecycle,
     Community,
-    DocBranch,
-    DocBranchVersion,
-    DocLifecycle,
-    DocPublic,
     TicketState
   }
 
@@ -121,57 +118,31 @@ defmodule GroupherServer.CMS.Artiment.Status do
       query_ids(ordinary_ids, ArticlePublic, :article_id)
       |> Map.new(&{&1.article_id, &1})
 
-    drafts =
-      query_ids(ordinary_ids, ArticleDraft, :article_id)
-      |> Map.new(&{&1.article_id, &1})
+    working_copy_ids = Enum.uniq(ordinary_ids ++ doc_ids)
 
-    doc_publics =
-      if doc_ids == [],
+    working_copies =
+      if working_copy_ids == [],
         do: [],
         else:
           Repo.all(
-            from(public in DocPublic,
-              join: branch in DocBranch,
-              on: branch.id == public.branch_id and branch.type == :main,
-              where: public.article_id in ^doc_ids
+            from(work in ArticleWorkingCopy,
+              where:
+                work.article_id in ^working_copy_ids and work.scope_type == :default and
+                  work.scope_id == work.article_id
             )
           )
 
-    doc_publics = Map.new(doc_publics, &{&1.article_id, &1})
+    working_copies = Map.new(working_copies, &{&1.article_id, &1})
 
-    doc_titles =
-      if doc_ids == [],
-        do: [],
-        else:
-          Repo.all(
-            from(branch in DocBranch,
-              join: version in DocBranchVersion,
-              on: version.branch_id == branch.id,
-              where: version.article_id in ^doc_ids and branch.type == :main,
-              select: {version.article_id, branch.title}
-            )
-          )
-
-    doc_titles = Map.new(doc_titles)
+    doc_publics = query_ids(doc_ids, ArticlePublic, :article_id) |> Map.new(&{&1.article_id, &1})
 
     article_states =
       query_ids(article_ids, ArticleLifecycle, :article_id)
       |> Map.new(&{&1.article_id, &1.state})
 
     doc_states =
-      if doc_ids == [],
-        do: [],
-        else:
-          Repo.all(
-            from(state in DocLifecycle,
-              join: branch in DocBranch,
-              on: branch.id == state.branch_id and branch.type == :main,
-              where: state.article_id in ^doc_ids,
-              select: {state.article_id, state.state}
-            )
-          )
+      query_ids(doc_ids, ArticleLifecycle, :article_id) |> Map.new(&{&1.article_id, &1.state})
 
-    doc_states = Map.new(doc_states)
     comment_ids = Map.keys(comments)
 
     comment_states =
@@ -247,10 +218,12 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
             title =
               if ref.type == :doc,
-                do: (public && public.title) || doc_titles[ref.article_id] || "",
+                do:
+                  (public && public.title) ||
+                    (working_copies[ref.article_id] && working_copies[ref.article_id].title) || "",
                 else:
                   (public && public.title) ||
-                    (drafts[ref.article_id] && drafts[ref.article_id].title) || ""
+                    (working_copies[ref.article_id] && working_copies[ref.article_id].title) || ""
 
             path =
               if binding,
@@ -333,7 +306,7 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
         scope =
           case type do
-            :doc -> DocContext.public_main()
+            :doc -> DocContext.public()
             :ticket -> TicketContext.public(community)
             _ -> ArticleContext.public(type)
           end

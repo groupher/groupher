@@ -41,7 +41,7 @@ export default defineConfig({
   plugins: [
     ...(process.env.E2E_AUTH_STACK === '1'
       ? []
-      : [cloudflare({ viteEnvironment: { name: 'ssr' } })]),
+      : [cloudflare({ viteEnvironment: { name: 'ssr' }, types: { includeRuntime: false } })]),
     tanstackStart({ router: { basepath: '/apply' } }),
     createVgpuWgslVitePlugin(),
     viteReact(),

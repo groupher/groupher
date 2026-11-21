@@ -15,7 +15,7 @@ defmodule GroupherServer.CommandPipeline.Adapter do
 
   @callback validate_contract(map()) :: {:ok, :pass} | {:error, term()}
   @callback validate_command_id(term()) :: {:ok, term()} | {:error, term()}
-  @callback execute_receipt(module(), map(), map(), term(), (-> term())) :: term()
+  @callback execute_receipt(module(), map(), map(), term(), (Ecto.UUID.t() -> term())) :: term()
   @callback normalize_gate_result(term()) :: term()
   @callback normalize_transaction_error(term()) :: term()
   @callback normalize_source(term()) :: term()

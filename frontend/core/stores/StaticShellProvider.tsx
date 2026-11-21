@@ -6,7 +6,7 @@ import { FIELDS } from '~/constant/dsb-fields'
 import { InitialNowProvider } from '~/hooks/useInitialNow'
 import type { TCommunity, TFooterLinks, TLocale } from '~/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
-import DsbConfigProvider from '~/stores/dsbConfig/provider'
+import DsbProvider from '~/stores/dsb/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import { MetricProvider } from '~/stores/metric'
 import StaticWallpaperProvider from '~/stores/staticWallpaper/provider'
@@ -42,17 +42,11 @@ export default function StaticShellProvider({
       footerLayout: footerLinks.layout,
       footerLinks: footerLinks.links,
       footerOnelineLinks: footerLinks.onelineLinks,
-      original: {
-        ...FIELDS,
-        footerLayout: footerLinks.layout,
-        footerLinks: footerLinks.links,
-        footerOnelineLinks: footerLinks.onelineLinks,
-      },
     }),
     [footerLinks],
   )
   return (
-    <DsbConfigProvider initData={dashboard}>
+    <DsbProvider initData={dashboard}>
       <ThemeStoreProvider initData={theme}>
         <InitialNowProvider initialNow={initialNow}>
           <LocaleStoreProvider initData={{ locale, localeData }}>
@@ -68,6 +62,6 @@ export default function StaticShellProvider({
           </LocaleStoreProvider>
         </InitialNowProvider>
       </ThemeStoreProvider>
-    </DsbConfigProvider>
+    </DsbProvider>
   )
 }

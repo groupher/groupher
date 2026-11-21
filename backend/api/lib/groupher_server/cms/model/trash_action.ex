@@ -26,8 +26,8 @@ defmodule GroupherServer.CMS.Model.TrashAction do
   alias CMS.Model.{
     Community,
     TrashedArticle,
-    TrashedDocArticle,
-    TrashedDocTreeNode
+    DocsTrashedArticle,
+    DocsTrashedTreeNode
   }
 
   alias Helper.Constant.DBPrefix
@@ -51,8 +51,8 @@ defmodule GroupherServer.CMS.Model.TrashAction do
     field(:scheduled_permanent_deletion_at, :utc_datetime)
 
     has_many(:trashed_articles, TrashedArticle)
-    has_many(:trashed_doc_articles, TrashedDocArticle)
-    has_many(:trashed_doc_tree_nodes, TrashedDocTreeNode)
+    has_many(:trashed_doc_articles, DocsTrashedArticle)
+    has_many(:trashed_doc_tree_nodes, DocsTrashedTreeNode)
 
     timestamps(type: :utc_datetime)
   end

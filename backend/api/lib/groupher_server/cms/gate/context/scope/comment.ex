@@ -1,7 +1,7 @@
 defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
   @moduledoc """
   Explicit public discussion scope. Doc discussion belongs to the stable Article
-  in its single owner Community, independently of the requested body branch.
+  in its single owner Community.
   `all_public/0` supports both batch queries and one Comment lookup by ID when
   the caller must check public visibility across Communities.
 
@@ -19,8 +19,8 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
     community_id = Keyword.get(opts, :community_id)
     policy_mode = Keyword.get(opts, :policy_mode, :public)
 
-    if Keyword.has_key?(opts, :branch_policy) or Keyword.has_key?(opts, :branch_id) do
-      raise ArgumentError, "Comment scope does not accept body branch selectors"
+    if Keyword.keys(opts) -- [:community_id, :policy_mode] != [] do
+      raise ArgumentError, "Comment scope received unsupported options"
     end
 
     if not is_integer(community_id) do
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
 
     unless policy_mode in [
              :public,
-             :owner_management,
+             :owner,
              :moderator_management,
              :operations
            ] do

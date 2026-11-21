@@ -101,6 +101,20 @@ defmodule GroupherServer.Activity do
   defdelegate list_community_logs(arg1, arg2, arg3, arg4), to: GroupherServer.Activity.Workflow
 
   @doc """
+  Delegates list_community_logs/5 with an explicitly supplied Community Passport scope.
+
+  The field-level GraphQL caller passes the scope that middleware already
+  loaded and checked. This path validates and reuses that scope without loading
+  Passport facts again.
+
+  ## Examples
+
+      Activity.list_community_logs(community, actor, selection, pagi, passport_scope: scope)
+  """
+  defdelegate list_community_logs(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.Activity.Workflow
+
+  @doc """
   Delegates log/2 to the Context workflow owner.
 
   ## Examples
@@ -126,7 +140,7 @@ defmodule GroupherServer.Activity do
       Activity.log_rejection(article, :trashed,
         actor: actor,
         rejection_code: :forbidden,
-        operation_ref: command_id
+        operation_ref: operation_ref
       )
   """
   @spec log_rejection(struct() | map(), atom(), keyword()) :: {:ok, struct()} | {:error, term()}
@@ -159,4 +173,15 @@ defmodule GroupherServer.Activity do
       iex> GroupherServer.Activity.event_ref_derive(...)
   """
   defdelegate event_ref_derive(arg1), to: GroupherServer.Activity.EventRef, as: :derive
+
+  @doc """
+  Returns the stable Activity error for an invalid operation identity.
+
+  ## Examples
+
+      Activity.error_cat_invalid_operation_ref()
+  """
+  defdelegate error_cat_invalid_operation_ref(),
+    to: GroupherServer.Activity.ErrorCat,
+    as: :invalid_operation_ref
 end

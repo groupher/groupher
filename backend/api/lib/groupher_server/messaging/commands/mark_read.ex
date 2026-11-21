@@ -17,7 +17,7 @@ defmodule GroupherServer.Messaging.Commands.MarkRead do
   @pipeline operation: :messaging_mark_read, access: :open, target: :user, params: [:type, :ids]
 
   direct_pipeline run(type, ids, user) do
-    change(fn _user -> Persist.mark_read(type, ids, user) end)
+    change(fn _user, _operation_ref -> Persist.mark_read(type, ids, user) end)
   end
 
   @doc """

@@ -1,5 +1,7 @@
 > 2026-11-05 实施更新：本文件保留 B0 固定输入和设计证据；用户随后已授权业务实现，当前实施/运行证据和未完成项以 [实施记录](comment-reaction-snapshot-counts-implementation.md) 为准。下文 B0 时点的“未实施/不进入 B1”仅描述历史审计阶段，不撤销后续授权。
 
+> **2026-11-14 Docs 目标更新：**本文件的 OWNER-*、单一 binding 和 Doc 不可镜像测试用例属于旧架构设计证据，已被多社区 Doc 决定 supersede。新的 Gate、Binding、Review 和社区销毁验收见 [共享评论计划](comment-reaction-snapshot-counts.md) 与 [Docs 发布队列合同](docs-publish-queue-refactor.md)；本 inventory 不再作为新目标测试清单。
+
 # Comments / Replies / Reaction：B0 静态基线
 
 > 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
