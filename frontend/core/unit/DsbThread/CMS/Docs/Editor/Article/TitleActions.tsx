@@ -4,6 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import CopyPlusSVG from '~/icons/dsb/CopyPlus'
 import ImgUploadSVG from '~/icons/ImgUpload'
 
+import ArticleCoAuthors from '../../../ArticleCoAuthors'
 import { openDocImport, prepareDocImport } from '../Import/events'
 import { openDocCover } from './Cover/events'
 import useSalon from './salon/title_actions'
@@ -12,9 +13,10 @@ type TProps = {
   coverVisible: boolean
   disabled?: boolean
   docId: string
+  title: string
 }
 
-const TitleActions: FC<TProps> = ({ coverVisible, disabled = false, docId }) => {
+const TitleActions: FC<TProps> = ({ coverVisible, disabled = false, docId, title }) => {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -41,6 +43,7 @@ const TitleActions: FC<TProps> = ({ coverVisible, disabled = false, docId }) => 
         <CopyPlusSVG className={s.icon} />
         <span className={s.label}>{t('dsb.doc.action.import_content')}</span>
       </button>
+      <ArticleCoAuthors article={{ id: docId, title }} />
     </div>
   )
 }

@@ -16,7 +16,9 @@ import { toast } from '~/ui/Toaster'
 
 import * as S from '../schema/coAuthors'
 
-type TProps = { article: TArticle }
+type TProps = {
+  article: Pick<TArticle, 'id' | 'title'> & Partial<Pick<TArticle, 'innerId'>>
+}
 type TPermission = keyof typeof GATE_PERMISSION & string
 
 const grantablePermissions = Object.entries(GATE_PERMISSION)
@@ -221,7 +223,7 @@ export default function ArticleCoAuthors({ article }: TProps) {
       <Modal show={show} width='680px' onClose={() => setShow(false)} showCloseBtn>
         <div className='space-y-5 p-6'>
           <header>
-            <p className='text-digest text-xs'>#{article.innerId}</p>
+            {article.innerId ? <p className='text-digest text-xs'>#{article.innerId}</p> : null}
             <h2 className='mt-1 text-xl font-semibold'>{t('dsb.cms.coauthors.title')}</h2>
             <p className='text-digest mt-1 truncate text-sm'>{article.title}</p>
           </header>
