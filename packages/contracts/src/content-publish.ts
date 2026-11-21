@@ -1,4 +1,7 @@
-export { CONTENT_BODY_SCHEMA_VERSION, CONTENT_PUBLISH_ERROR_CODE } from './content-publish.generated'
+export {
+  CONTENT_BODY_SCHEMA_VERSION,
+  CONTENT_PUBLISH_ERROR_CODE,
+} from './content-publish.generated'
 export type { TContentPublishErrorCode } from './content-publish.generated'
 
 export const CONTENT_SOURCE_FORMAT = { PLATE: 'plate', MARKDOWN: 'markdown' } as const
@@ -37,6 +40,8 @@ export type TContentArticleThread =
   (typeof CONTENT_ARTICLE_THREAD)[keyof typeof CONTENT_ARTICLE_THREAD]
 export type TContentPublishScope =
   (typeof CONTENT_PUBLISH_SCOPE)[keyof typeof CONTENT_PUBLISH_SCOPE]
+export type TContentHistoryOriginScope =
+  (typeof CONTENT_HISTORY_ORIGIN_SCOPE)[keyof typeof CONTENT_HISTORY_ORIGIN_SCOPE]
 export type TContentSource =
   | { format: typeof CONTENT_SOURCE_FORMAT.PLATE; value: unknown[] }
   | { format: typeof CONTENT_SOURCE_FORMAT.MARKDOWN; markdown: string }
@@ -138,6 +143,12 @@ export const CONTENT_SCOPE_BY_ACTION = {
   [CONTENT_PUBLISH_ACTION.CREATE_COMMENT]: CONTENT_PUBLISH_SCOPE.COMMENT_WRITE,
   [CONTENT_PUBLISH_ACTION.UPDATE_COMMENT]: CONTENT_PUBLISH_SCOPE.COMMENT_WRITE,
 } as const satisfies Record<TContentPublishAction, TContentPublishScope>
+
+export const CONTENT_HISTORY_ORIGIN_SCOPE_BY_ACTION = {
+  [CONTENT_PUBLISH_ACTION.CREATE_ARTICLE]: CONTENT_HISTORY_ORIGIN_SCOPE.BROWSER,
+  [CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]: CONTENT_HISTORY_ORIGIN_SCOPE.BROWSER,
+  [CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE]: CONTENT_HISTORY_ORIGIN_SCOPE.BROWSER,
+} as const satisfies Partial<Record<TContentPublishAction, TContentHistoryOriginScope>>
 
 export type TContentPublishIssue = { path: string; code: string; message: string }
 type TContentPublishParseFailure = { ok: false; issues: TContentPublishIssue[] }

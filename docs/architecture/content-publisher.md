@@ -441,7 +441,7 @@ Auth 的 service client registry 是唯一 grant 权威。Publisher host 使用�
 面向 Publisher API resource 的短期 token。Phoenix verifier继续验证签名、issuer、audience、token
 类型、有效期和 service subject 基本格式。
 
-候选 capability scopes：
+Publisher 写入 capability scopes：
 
 ```text
 content:doc:write
@@ -449,10 +449,18 @@ content:article:write
 content:comment:write
 ```
 
-scope 表达能力而不是调用方名称。以上字面值必须在 Batch 0 按现有 Auth registry 的 scope taxonomy
-冻结；如果 registry 的既有命名规范要求不同字面值，以 registry 为准，并由 contracts 常量统一导出，
-不能让 Node 与 Phoenix 各自手写。Dash 与 Content Import 可以使用不同 client credential 获得同一
-Doc capability。Phoenix 不再按 subject 维护第二份 service registry。
+文章历史来源 scope：
+
+```text
+content:history:browser
+```
+
+scope 表达可验证的服务能力或历史来源，而不是调用方名称。以上字面值必须在 Batch 0 按现有 Auth
+registry 的 scope taxonomy 冻结；如果 registry 的既有命名规范要求不同字面值，以 registry 为准，
+并由 contracts 常量统一导出，不能让 Node 与 Phoenix 各自手写。Dash 与 Content Import 可以使用不同
+client credential 获得同一 Doc capability。文章创建、WorkingCopy 保存和创建后立即发布等浏览器写操作，
+还需同时申请 `content:history:browser`，以便 Phoenix 为文章历史记录可信来源；评论和 Docs Queue 保存
+不申请此来源 scope。Phoenix 不再按 subject 维护第二份 service registry。
 
 ### 9.2 BodyBagTrust
 

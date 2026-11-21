@@ -4,6 +4,7 @@ import {
   CONTENT_PUBLISH_ERROR_CODE,
   CONTENT_PUBLISH_ACTION,
   CONTENT_PUBLISH_RESOURCE,
+  CONTENT_HISTORY_ORIGIN_SCOPE_BY_ACTION,
   CONTENT_SCOPE_BY_ACTION,
   parseContentPublishCommand,
   type TContentPublishCommand,
@@ -115,9 +116,12 @@ const executeMutation = async ({
   options: TAdapterOptions
   variables: Record<string, unknown>
 }): Promise<Response> => {
+  const historyOriginScope = CONTENT_HISTORY_ORIGIN_SCOPE_BY_ACTION[action]
   const serviceToken = await options.serviceAuthClient.getToken({
     resource: CONTENT_PUBLISH_RESOURCE,
-    scopes: [CONTENT_SCOPE_BY_ACTION[action]],
+    scopes: historyOriginScope
+      ? [CONTENT_SCOPE_BY_ACTION[action], historyOriginScope]
+      : [CONTENT_SCOPE_BY_ACTION[action]],
   })
   const fetcher = options.fetcher
   const response = await fetcher(phoenixEndpoint(options.environment), {
