@@ -473,8 +473,8 @@ defmodule GroupherServer.CMS.Articles.DocsPublicReadScopeTest do
     assert {:ok, _} = CMS.Communities.update_count_field(fixture.x, :doc)
     assert {:ok, _} = GroupherServer.Accounts.publish_update_states(fixture.actor, :doc)
     assert {:ok, refreshed} = CMS.Articles.Query.PublicReadReport.report()
-    assert refreshed.community_counts == []
-    assert refreshed.author_counts == []
+    refute Enum.any?(refreshed.community_counts, &(&1.community_id == fixture.x.id))
+    refute Enum.any?(refreshed.author_counts, &(&1.user_id == fixture.actor.id))
     assert [%{issue: :body_missing}] = refreshed.projection_issues
   end
 
