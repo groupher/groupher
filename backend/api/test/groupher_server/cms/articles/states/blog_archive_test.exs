@@ -19,6 +19,11 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
   end
 
   describe "[cms blog archive]" do
+    test "Docs use the DocTree archive lifecycle" do
+      assert {:error, _reason} =
+               CMS.Articles.Lifecycle.archive_before(:doc, DateTime.utc_now())
+    end
+
     test "rechecks the threshold and returns tagged archive counts", ~m(blog_long_ago)a do
       now = DateTime.utc_now(:second)
       threshold = DateTime.add(now, -86_400, :second)

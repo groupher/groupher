@@ -167,15 +167,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
         finalize_confirmation(receipt, confirmation, value)
 
       {:error, reason} ->
-        case reason do
-          {:pipeline_stage, stage, stage_reason} ->
-            Repo.rollback(
-              {:cms_command_pipeline_rejection, stage, stage_reason, operation_ref}
-            )
-
-          _reason ->
-            Repo.rollback(reason)
-        end
+        Repo.rollback(reason)
 
       other ->
         Repo.rollback({:invalid_command_result, other})

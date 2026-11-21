@@ -54,8 +54,8 @@ defmodule GroupherServer.AlertWall.Commands.Resolve do
     prepare(fn -> prepare(item_id, resolution, expected_version) end)
     gate(fn prepared -> authorize(prepared, actor) end)
 
-    change(fn prepared, _operation_ref ->
-      resolve(prepared, resolution, expected_version, actor, command_id)
+    change(fn prepared, operation_ref ->
+      resolve(prepared, resolution, expected_version, actor, operation_ref)
     end)
 
     confirm(fn confirmation -> {:ok, confirmation} end)
@@ -118,12 +118,12 @@ defmodule GroupherServer.AlertWall.Commands.Resolve do
     end
   end
 
-  defp resolve(%{item: item}, resolution, expected_version, actor, command_id) do
+  defp resolve(%{item: item}, resolution, expected_version, actor, operation_ref) do
     with {:ok, updated} <-
            AlertWall.Persist.resolve_in_transaction(
              item.id,
              resolution,
-             command_id,
+             operation_ref,
              actor,
              expected_version
            ) do

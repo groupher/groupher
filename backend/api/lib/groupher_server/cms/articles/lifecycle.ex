@@ -150,8 +150,10 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
       #=> {:ok, archived_count} | {:error, reason}
   """
   @spec archive_before(atom(), DateTime.t()) :: {:ok, non_neg_integer()} | {:error, term()}
+  def archive_before(:doc, %DateTime{}), do: {:error, CMS.ErrorCat.invalid_thread()}
+
   def archive_before(thread, threshold)
-      when thread in @article_threads and is_struct(threshold, DateTime) do
+      when thread in @article_threads and thread != :doc and is_struct(threshold, DateTime) do
     operation_ref = Ecto.UUID.generate()
 
     Workflow.transaction(fn ->

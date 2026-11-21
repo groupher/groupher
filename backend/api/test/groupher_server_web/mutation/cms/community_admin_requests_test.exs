@@ -1,8 +1,17 @@
 defmodule GroupherServer.Test.Mutation.CMS.CommunityAdminRequestsTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
   alias CMS.Model.{CommunityAdmin, CommunityAdminRequest}
+  alias Accounts.Model.User
+  alias GroupherServerWeb.Resolvers.CMS.CommunityAdmins
+
+  test "unknown Admin request decisions are rejected before the command runs" do
+    actor = struct(User, id: 1)
+
+    assert {:error, :invalid_request_decision} =
+             CommunityAdmins.decide(nil, %{decision: "ACCEPT"}, %{context: %{cur_user: actor}})
+  end
 
   test "Admin GraphQL invite is pending until its subject accepts" do
     {:ok, lord} = db_insert(:user)

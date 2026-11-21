@@ -33,6 +33,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
 
   @max_depth CMS.DocTree.Const.max_depth()
   @max_nodes 6_000
+  @max_target_revision_chars 2_000_000
 
   @doc "Validates SourceTree and returns a read-only TargetTree, counts, conflicts, and revision."
   @spec preview(Community.t(), map(), map()) :: {:ok, map()} | {:error, term()}
@@ -43,15 +44,16 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
       branch_slug = site_namespace(community, info)
       mapping_refs = source_mapping_refs(community, info)
       target_tree = plan_target_tree(source_tree, branch_slug, mapping_refs)
-      {target_revision, conflicts} = target_state(community)
 
-      {:ok,
-       %{
-         conflicts: conflicts,
-         counts: counts(target_tree),
-         target_revision: target_revision,
-         target_tree: target_tree
-       }}
+      with {:ok, {target_revision, conflicts}} <- target_state(community) do
+        {:ok,
+         %{
+           conflicts: conflicts,
+           counts: counts(target_tree),
+           target_revision: target_revision,
+           target_tree: target_tree
+         }}
+      end
     end
   end
 
@@ -63,7 +65,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
          branch_slug <- site_namespace(community, info),
          mapping_refs <- source_mapping_refs(community, info),
          {:ok, _} <- validate_target_tree(target_tree, branch_slug, mapping_refs),
-         {current_revision, conflicts} <- target_state(community),
+         {:ok, {current_revision, conflicts}} <- target_state(community),
          true <- current_revision == target_revision,
          [] <- conflicts do
       {:ok, :pass}
@@ -577,7 +579,12 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
 
     # A structured revision captures D edits as well as navigation changes.
     revision = Jason.encode!([queue.tree_lock_version, queue.queue_revision, copies])
-    {revision, []}
+
+    if String.length(revision) <= @max_target_revision_chars do
+      {:ok, {revision, []}}
+    else
+      {:error, ErrorCat.custom("The Docs target is too large to preview")}
+    end
   end
 
   defp counts(target_tree) do

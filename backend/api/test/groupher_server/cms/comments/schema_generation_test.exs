@@ -31,6 +31,21 @@ defmodule GroupherServer.Test.CMS.Comments.SchemaGenerationTest do
     refute SchemaGeneration.schema_fingerprint!(Repo) == original
   end
 
+  test "REL-01 target fingerprint rejects removal of a stable Comment delivery identity column" do
+    try do
+      Repo.query!("ALTER TABLE messaging.mentions DROP COLUMN comment_id", [])
+
+      assert_raise RuntimeError, ~r/stable Comment delivery schema is incomplete/, fn ->
+        SchemaGeneration.schema_fingerprint!(Repo)
+      end
+    after
+      Repo.query!(
+        "ALTER TABLE messaging.mentions ADD COLUMN comment_id integer",
+        []
+      )
+    end
+  end
+
   test "REL-01 physical account deletion guards must be present and ALWAYS enabled" do
     for trigger <- ["block_users_physical_delete", "block_users_truncate"],
         mode <- ["DISABLE", "ENABLE"] do

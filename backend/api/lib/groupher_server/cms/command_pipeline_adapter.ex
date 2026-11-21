@@ -42,10 +42,19 @@ defmodule GroupherServer.CMS.CommandPipelineAdapter do
     }
 
     Command.execute(command,
-      action: fn context -> callback.(context.operation_ref) end,
+      action: fn context -> normalize_receipt_result(callback.(context.operation_ref), context) end,
       confirmation: contract.confirmation
     )
   end
+
+  defp normalize_receipt_result(
+         {:error, {:pipeline_stage, stage, reason}},
+         %{operation_ref: operation_ref}
+       ) do
+    {:error, {:cms_command_pipeline_rejection, stage, reason, operation_ref}}
+  end
+
+  defp normalize_receipt_result(result, _context), do: result
 
   @impl true
   def normalize_gate_result({:error, %Decision{allowed: false} = decision}) do

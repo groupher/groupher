@@ -73,9 +73,13 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
     test "requesting community destruction archives the community", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir"})
       {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
+      command_id = Ecto.UUID.generate()
 
       {:ok, _} =
-        CMS.Communities.request_destroy(community, user, command_id: Ecto.UUID.generate())
+        CMS.Communities.request_destroy(community, user, command_id: command_id)
+
+      receipt = Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id)
+      assert receipt.confirmation["data"]["operation_ref"] == receipt.operation_ref
 
       assert {:ok, _} = ORM.find(Community, community.id)
 

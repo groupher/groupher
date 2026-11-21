@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Rules do
 
   ## Examples
 
-      Rules.proposal(%{"community.read" => true})
+      Rules.proposal(%{"doc.queue.preview" => true})
   """
   def proposal(permissions), do: Catalog.validate_permissions(:community, permissions)
 

@@ -34,24 +34,24 @@ defmodule GroupherServer.CMS.Communities.Commands.RequestDestroy do
   receipt_pipeline execute_pipeline(community, actor, opts, command_id) do
     gate(fn candidate -> Gate.check_in_transaction(actor, :request_destroy, candidate) end)
 
-    change(fn canonical, _operation_ref ->
+    change(fn canonical, operation_ref ->
       Lifecycle.request_destroy(
         canonical.id,
-        Keyword.put(opts, :operation_ref, command_id)
+        Keyword.put(opts, :operation_ref, operation_ref)
       )
       |> case do
-        {:ok, _blocker} -> {:ok, canonical}
+        {:ok, _blocker} -> {:ok, %{community: canonical, operation_ref: operation_ref}}
         error -> error
       end
     end)
 
-    confirm(fn canonical ->
+    confirm(fn %{community: canonical, operation_ref: operation_ref} ->
       {:ok,
        %RequestDestroyConfirmation{
          data: %{
            "community_id" => to_string(canonical.id),
            "community_slug" => canonical.slug,
-           "operation_ref" => command_id
+           "operation_ref" => operation_ref
          }
        }}
     end)

@@ -6,10 +6,11 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestExpireTest do
 
   alias CMS.Communities.Admins.Requests.{
     Commands.Create,
-    Commands.Expire
+    Commands.Expire,
+    ExpireDue
   }
 
-  alias CMS.Model.CommunityAdmin
+  alias CMS.Model.{CommunityAdmin, CommunityAdminRequest}
   alias CMS.Outbox.Event
   alias Jobs.ExpireCommunityAdminRequests
 
@@ -34,5 +35,59 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestExpireTest do
 
     assert Enum.sort(Enum.map(expired, & &1.data["recipient_id"])) ==
              Enum.sort([owner.id, subject.id])
+  end
+
+  test "scan continues after an expiry error and returns an aggregated failure" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, failed_subject} = db_insert(:user)
+    {:ok, later_subject} = db_insert(:user)
+    {:ok, community} = mock_community(owner)
+
+    assert {:ok, failed_request} =
+             Create.execute(
+               community,
+               failed_subject,
+               :apply,
+               %{},
+               failed_subject,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, later_request} =
+             Create.execute(
+               community,
+               later_subject,
+               :apply,
+               %{},
+               later_subject,
+               Ecto.UUID.generate()
+             )
+
+    now = DateTime.utc_now(:second)
+
+    failed_request
+    |> Ecto.Changeset.change(expires_at: DateTime.add(now, -2, :second))
+    |> Repo.update!()
+
+    later_request
+    |> Ecto.Changeset.change(expires_at: DateTime.add(now, -1, :second))
+    |> Repo.update!()
+
+    expire = fn id, at ->
+      if id == failed_request.id do
+        {:error, :forced_failure}
+      else
+        Expire.execute(id, at)
+      end
+    end
+
+    assert {:error,
+            {:request_expiration_failures,
+             %{count: 1, sample: [{failed_id, :forced_failure}]}}} =
+             ExpireDue.run_with_executor(now, expire)
+
+    assert failed_id == failed_request.id
+    assert Repo.get!(CommunityAdminRequest, failed_request.id).status == :pending
+    assert Repo.get!(CommunityAdminRequest, later_request.id).status == :expired
   end
 end

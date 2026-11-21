@@ -60,6 +60,6 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
       Analysis.ArticleInsights.passport_granted_community_slugs(viewer)
   """
-  @spec passport_granted_community_slugs(term()) :: [String.t()]
+  @spec passport_granted_community_slugs(term()) :: {:ok, [String.t()]} | {:error, term()}
   defdelegate passport_granted_community_slugs(viewer), to: Query
 end

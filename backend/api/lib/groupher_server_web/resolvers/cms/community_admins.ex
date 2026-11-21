@@ -46,9 +46,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
   end
 
   def decide(_root, args, %{context: %{cur_user: %User{} = actor}}) do
-    decision = decision(args.decision)
-
-    with {:ok, permissions} <- decision_permission_input(decision, args) do
+    with {:ok, decision} <- decision(args.decision),
+         {:ok, permissions} <- decision_permission_input(decision, args) do
       CMS.communities_admins_decide(
         args.request_id,
         args.revision,
@@ -104,8 +103,9 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
 
   defp request_type(type) when type in [:invite, "invite"], do: :invite
   defp request_type(_), do: :apply
-  defp decision(value) when value in [:accept, "accept"], do: :accept
-  defp decision(_), do: :reject
+  defp decision(value) when value in [:accept, "accept"], do: {:ok, :accept}
+  defp decision(value) when value in [:reject, "reject"], do: {:ok, :reject}
+  defp decision(_), do: {:error, :invalid_request_decision}
 
   defp permission_map(map) when is_map(map), do: {:ok, map}
   defp permission_map(_), do: {:error, :invalid_permissions}

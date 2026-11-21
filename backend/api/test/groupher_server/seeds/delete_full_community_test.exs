@@ -58,6 +58,21 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
       ordinary_comment_ids = comment_ids_for(ordinary_article_ids)
       doc_comment_ids = comment_ids_for(doc_ids)
 
+      ordinary_comment_replies_before =
+        count(from(c in CommentReply, where: c.comment_id in ^ordinary_comment_ids))
+
+      ordinary_comment_upvotes_before =
+        count(from(c in CommentUpvote, where: c.comment_id in ^ordinary_comment_ids))
+
+      ordinary_comment_emotions_before =
+        count(from(c in CommentUserEmotion, where: c.comment_id in ^ordinary_comment_ids))
+
+      ordinary_article_upvotes_before =
+        count(from(a in ArticleUpvote, where: a.article_id in ^ordinary_article_ids))
+
+      ordinary_article_emotions_before =
+        count(from(a in ArticleUserEmotion, where: a.article_id in ^ordinary_article_ids))
+
       assert post_ids != []
       assert comment_ids != []
 
@@ -128,21 +143,29 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
                length(ordinary_comment_ids)
 
       assert count(from(c in Comment, where: c.id in ^doc_comment_ids)) == 0
-      assert count(from(c in CommentReply, where: c.comment_id in ^ordinary_comment_ids)) > 0
+
+      assert count(from(c in CommentReply, where: c.comment_id in ^ordinary_comment_ids)) ==
+               ordinary_comment_replies_before
+
       assert count(from(c in CommentReply, where: c.comment_id in ^doc_comment_ids)) == 0
-      assert count(from(c in CommentUpvote, where: c.comment_id in ^ordinary_comment_ids)) > 0
+
+      assert count(from(c in CommentUpvote, where: c.comment_id in ^ordinary_comment_ids)) ==
+               ordinary_comment_upvotes_before
+
       assert count(from(c in CommentUpvote, where: c.comment_id in ^doc_comment_ids)) == 0
 
-      assert count(from(c in CommentUserEmotion, where: c.comment_id in ^ordinary_comment_ids)) >
-               0
+      assert count(from(c in CommentUserEmotion, where: c.comment_id in ^ordinary_comment_ids)) ==
+               ordinary_comment_emotions_before
 
       assert count(from(c in CommentUserEmotion, where: c.comment_id in ^doc_comment_ids)) == 0
 
-      assert count(from(a in ArticleUpvote, where: a.article_id in ^ordinary_article_ids)) > 0
+      assert count(from(a in ArticleUpvote, where: a.article_id in ^ordinary_article_ids)) ==
+               ordinary_article_upvotes_before
+
       assert count(from(a in ArticleUpvote, where: a.article_id in ^doc_ids)) == 0
 
-      assert count(from(a in ArticleUserEmotion, where: a.article_id in ^ordinary_article_ids)) >
-               0
+      assert count(from(a in ArticleUserEmotion, where: a.article_id in ^ordinary_article_ids)) ==
+               ordinary_article_emotions_before
 
       assert count(from(a in ArticleUserEmotion, where: a.article_id in ^doc_ids)) == 0
 

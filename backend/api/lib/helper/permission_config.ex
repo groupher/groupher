@@ -13,6 +13,21 @@ defmodule Helper.PermissionConfig do
   alias CMS.Artiment.Config
   alias CMS.Passport.ErrorCat
 
+  @default_moderator_permissions ~w(
+    post.trash post.restore post.pin post.undo_pin post.sink post.undo_sink
+    post.lock_comment post.undo_lock_comment
+    blog.trash blog.restore blog.pin blog.undo_pin blog.sink blog.undo_sink
+    blog.lock_comment blog.undo_lock_comment
+    changelog.trash changelog.restore changelog.pin changelog.undo_pin
+    changelog.sink changelog.undo_sink changelog.lock_comment changelog.undo_lock_comment
+    doc.queue.write doc.trash doc.restore doc.pin doc.undo_pin doc.sink doc.undo_sink
+    doc.lock_comment doc.undo_lock_comment
+    community_tag.create community_tag.update community_tag.reindex
+    community_tag.set community_tag.unset
+    ticket.create ticket.link_source ticket.update ticket.transition ticket.assign
+    ticket.manage_case ticket.manage_visibility ticket.read_internal
+  )
+
   @contexts ["cms"]
   @article_ops [
     "pin",
@@ -334,14 +349,14 @@ defmodule Helper.PermissionConfig do
   def default_passport_for_role("moderator"), do: {:ok, %{"global" => %{}}}
   def default_passport_for_role(_), do: {:error, ErrorCat.unknown_role()}
 
+  def default_passport_for_role("moderator", community_slug) when is_binary(community_slug) do
+    default_moderator_passport(community_slug)
+  end
+
   def default_passport_for_role(role, community_slug) when is_binary(community_slug) do
     with {:ok, rules} <- default_passport_for_role(role) do
       {:ok, put_default_community_rules(rules, role, community_slug)}
     end
-  end
-
-  defp put_default_community_rules(rules, "moderator", community_slug) do
-    Map.put(rules, community_slug, %{"cms" => default_moderator_community_rules()})
   end
 
   defp put_default_community_rules(rules, "root", community_slug) do
@@ -355,23 +370,15 @@ defmodule Helper.PermissionConfig do
     {:ok, put_default_community_rules(%{"global" => %{}}, "root", community_slug)}
   end
 
-  @doc "Runs `default_moderator_passport` through the public `PermissionConfig` boundary."
+  @doc "Builds a canonical, grantable default permission map for a new moderator."
   def default_moderator_passport(community_slug) when is_binary(community_slug) do
-    {:ok, put_default_community_rules(%{"global" => %{}}, "moderator", community_slug)}
-  end
-
-  defp default_moderator_community_rules do
-    "cms"
-    |> grants_for()
-    |> Enum.filter(&thread_scoped?/1)
-    |> Enum.reject(&String.contains?(&1, "delete"))
-    |> Enum.map(&{&1, true})
-    |> Map.new()
-  end
-
-  defp thread_scoped?(grant) do
-    String.starts_with?(grant, "ticket.") or
-      Enum.any?(threads(), &String.starts_with?(grant, "#{&1}."))
+    with {:ok, permissions} <-
+           CMS.Passport.Catalog.validate_permissions(
+             :community,
+             Map.new(@default_moderator_permissions, &{&1, true})
+           ) do
+      {:ok, %{"global" => %{}, community_slug => %{"cms" => permissions}}}
+    end
   end
 
   defp generated_thread_action_requirements do

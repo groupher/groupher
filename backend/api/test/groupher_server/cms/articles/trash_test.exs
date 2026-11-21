@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.{Activity, AlertWall, CMS, PublicCache}
+  alias GroupherServer.{Accounts, Activity, AlertWall, CMS, PublicCache}
   alias AlertWall.Model.{Action, Item, UserReport}
   alias CMS.Outbox.Event
   alias PublicCache.Tags
@@ -21,6 +21,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     TrashedArticle,
     TicketState
   }
+
+  alias Accounts.Model.{CollectFolder, CollectFolderEntry}
 
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Model.Mentions.Endpoint
@@ -211,6 +213,24 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                %{thread: :post},
                %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
              )
+  end
+
+  test "permanent Article deletion maintains collected-folder counters" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    {:ok, folder} = Accounts.CollectFolders.create(%{title: "Reading list"}, user)
+    {:ok, collected_folder} = Accounts.CollectFolders.add(post, folder.id, user)
+
+    assert collected_folder.total_count == 1
+    assert collected_folder.meta.post_count == 1
+
+    assert {:ok, trash_item} = CMS.Articles.trash(post, user)
+    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
+
+    deleted_folder = Repo.get!(CollectFolder, folder.id)
+    assert deleted_folder.total_count == 0
+    assert deleted_folder.meta.post_count == 0
+    refute deleted_folder.meta.has_post
+    refute Repo.get_by(CollectFolderEntry, folder_id: folder.id, article_id: post.id)
   end
 
   test "Post permanent deletion unlinks its TicketSource and keeps the Ticket in Draft" do

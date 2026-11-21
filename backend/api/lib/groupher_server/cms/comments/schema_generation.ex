@@ -184,19 +184,19 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
       raise("shared comment identity guards are missing")
     end
 
-    delivery_guards =
+    delivery_identity_columns =
       repo.query!(
         """
         SELECT table_name,column_name,data_type,is_nullable
         FROM information_schema.columns
         WHERE table_schema='messaging' AND table_name IN ('mentions','notices')
-          AND column_name = 'comment_id'
+          AND column_name IN ('comment_id','branch_id')
         ORDER BY table_name,column_name
         """,
         []
       ).rows
 
-    if Enum.map(delivery_guards, fn [table, column | _] -> {table, column} end) !=
+    if Enum.map(delivery_identity_columns, fn [table, column | _] -> {table, column} end) !=
          [{"mentions", "comment_id"}, {"notices", "comment_id"}] do
       raise "stable Comment delivery schema is incomplete"
     end
@@ -211,7 +211,7 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
         indexes,
         triggers,
         functions,
-        delivery_guards,
+        delivery_identity_columns,
         account_guards
       ])
     )

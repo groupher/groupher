@@ -223,15 +223,28 @@ defmodule GroupherServer.AlertWall.Persist do
   end
 
   defp deleted_target_items(target_type, target_id) do
-    Repo.all(
+    query =
       from(item in Item,
         where:
           item.owner == :cms and item.target_type == ^target_type and
-            item.target_id == ^target_id and item.status == :open,
+            item.status == :open,
         order_by: [asc: item.id],
         lock: "FOR UPDATE"
       )
-    )
+
+    query =
+      if target_type == :article do
+        where(
+          query,
+          [item],
+          item.target_id == ^target_id or
+            fragment("? LIKE ?", item.target_id, ^(target_id <> ":%"))
+        )
+      else
+        where(query, [item], item.target_id == ^target_id)
+      end
+
+    Repo.all(query)
   end
 
   @doc "Resolves the open item for one CMS target and scope, including report-only items."

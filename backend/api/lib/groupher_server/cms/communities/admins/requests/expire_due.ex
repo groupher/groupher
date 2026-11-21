@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
   alias CMS.Model.CommunityAdminRequest
 
   @batch_size 100
+  @failure_sample_size 20
 
   @doc """
   Processes all candidates due at the supplied UTC time using a stable cursor.
@@ -22,10 +23,17 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
 
       GroupherServer.CMS.Communities.Admins.Requests.ExpireDue.run(DateTime.utc_now())
   """
-  def run(%DateTime{} = now), do: scan(now, nil, 0, [])
+  def run(%DateTime{} = now), do: run_with_executor(now, &Expire.execute/2)
   def run(_), do: {:error, :invalid_request_expiration}
 
-  defp scan(now, cursor, count, failures) do
+  @doc false
+  def run_with_executor(%DateTime{} = now, expire_fun) when is_function(expire_fun, 2) do
+    scan(now, nil, 0, 0, [], expire_fun)
+  end
+
+  def run_with_executor(_, _), do: {:error, :invalid_request_expiration}
+
+  defp scan(now, cursor, count, failure_count, failure_sample, expire_fun) do
     query =
       from(r in CommunityAdminRequest,
         where: r.status == :pending and r.expires_at <= ^now,
@@ -45,25 +53,39 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
 
     case Repo.all(query) do
       [] ->
-        case failures do
-          [] -> {:ok, count}
-          _ -> {:error, {:request_expiration_failures, Enum.reverse(failures)}}
+        case failure_count do
+          0 ->
+            {:ok, count}
+
+          _ ->
+            {:error,
+             {:request_expiration_failures,
+              %{count: failure_count, sample: Enum.reverse(failure_sample)}}}
         end
 
       candidates ->
-        {added, batch_failures} = expire_batch(candidates, now)
-        scan(now, List.last(candidates), count + added, batch_failures ++ failures)
+        {added, batch_failure_count, batch_failure_sample} =
+          expire_batch(candidates, now, expire_fun)
+
+        scan(
+          now,
+          List.last(candidates),
+          count + added,
+          failure_count + batch_failure_count,
+          Enum.take(batch_failure_sample ++ failure_sample, @failure_sample_size),
+          expire_fun
+        )
     end
   end
 
-  defp expire_batch(candidates, now) do
-    Enum.reduce(candidates, {0, []}, fn {_time, id}, {count, failures} ->
-      case Expire.execute(id, now) do
+  defp expire_batch(candidates, now, expire_fun) do
+    Enum.reduce(candidates, {0, 0, []}, fn {_time, id}, {count, failure_count, failures} ->
+      case expire_fun.(id, now) do
         {:ok, :unchanged} ->
-          {count, failures}
+          {count, failure_count, failures}
 
         {:ok, %CommunityAdminRequest{}} ->
-          {count + 1, failures}
+          {count + 1, failure_count, failures}
 
         {:error, reason} ->
           Logger.error("failed to expire Community Admin request",
@@ -71,7 +93,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
             reason: inspect(reason)
           )
 
-          {count, [{id, reason} | failures]}
+          {count, failure_count + 1, [{id, reason} | failures]}
       end
     end)
   end

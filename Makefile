@@ -19,6 +19,7 @@ fe.serve.landing:
 # inspire-me
 fe.dev.inspire:
 	pnpm devhub start inspire-me
+	open https://inspire-me.groupher.localhost/canny
 
 fe.dev.inspire.managed:
 	pnpm run dev:inspire-me:managed
@@ -121,6 +122,7 @@ be.import.test:
 	pnpm --filter @groupher/import run test
 
 be.press.start:
+	pnpm --filter @groupher/press run db:migrate
 	pnpm devhub start press
 
 be.press.start.managed:

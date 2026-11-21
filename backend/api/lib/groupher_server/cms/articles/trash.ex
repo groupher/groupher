@@ -307,11 +307,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
              type: canonical.thread,
              article_id: canonical.id
            }),
+         {:ok, _references} <- CMS.Articles.PermanentArticle.prepare_delete(canonical),
          {:ok, _history} <-
            CMS.Articles.RetainedHistory.remove_workspace(canonical, item.community_id),
          {:ok, _versions} <-
            CMS.Articles.PermanentVersions.purge_in_transaction(canonical, item.community_id),
-         {:ok, _references} <- CMS.Articles.PermanentArticle.prepare_delete(canonical),
          {:ok, _deleted_article} <- Repo.delete(canonical),
          {:ok, _} <- delete_empty_action(action_id) do
       _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)

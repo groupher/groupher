@@ -5,9 +5,9 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
       createCommunity(commandId)
         -> CMS.Command receipt claim
         -> caller-owned transaction
-            -> CreationPersist core row
-            -> Lifecycle + root moderator + DocTree setup
-            -> presentation Outbox intent
+        -> CreationPersist core row
+        -> Lifecycle + root moderator
+        -> presentation and analysis Outbox intents
         -> Confirmation / canonical Community recovery
   """
 

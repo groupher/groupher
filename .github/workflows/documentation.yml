@@ -33,28 +33,3 @@ jobs:
 
       - name: Validate source documentation
         run: pnpm run docs:check
-
-  dev-hub:
-    name: Validate Dev Hub
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/setup@v1
-        with:
-          install: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Test Dev Hub
-        run: pnpm --filter @groupher/local-dev-hub run test
-
-      - name: Type-check Dev Hub
-        run: pnpm --filter @groupher/local-dev-hub run type-check

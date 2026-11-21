@@ -14,7 +14,9 @@ defmodule GroupherServer.CMS.Articles.Publishable do
 
   @visible_node_types ~w(image img attachment file embed iframe table video audio)
 
-  @doc "Returns `:pass` only when the saved title and Plate document meet the publish contract."
+  @doc """
+  Returns `{:ok, :pass}` only when the saved title and Plate document meet the publish contract.
+  """
   def validate(%ArticleWorkingCopy{} = work) do
     validate_fields(work.title, CMS.Articles.Body.document(work).json)
   end

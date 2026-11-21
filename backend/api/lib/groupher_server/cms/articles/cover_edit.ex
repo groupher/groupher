@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Articles.CoverEdit do
       light: theme(edit.light),
       dark: theme(edit.dark),
       inserted_at: edit.inserted_at,
-      updated_at: edit.updated_at
+      updated_at: Map.get(edit, :updated_at)
     }
   end
 

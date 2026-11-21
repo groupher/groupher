@@ -4,8 +4,8 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
   import Ecto.Query
 
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.Model.{ArtimentReview, CommunityAdmin, GlobalPassport}
-  alias AlertWall.Model.{Item, UserReport}
+  alias CMS.Model.{ArtimentReview, CommandReceipt, CommunityAdmin, GlobalPassport}
+  alias AlertWall.Model.{Action, Item, UserReport}
 
   test "add is idempotent and a fresh AI source replaces the opinion as one unit" do
     first_ref = Ecto.UUID.generate()
@@ -290,6 +290,10 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
              AlertWall.resolve_item(item.id, "reviewed", item.version, reviewer, command_id)
 
     assert item_id == item.id
+    receipt = Repo.get_by!(CommandReceipt, command_id: command_id)
+
+    assert Repo.get_by!(Action, item_id: item.id, action: :resolve).operation_ref ==
+             receipt.operation_ref
 
     assert {:error, _reason} =
              AlertWall.resolve_item(
@@ -485,6 +489,31 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
                AlertWall.mark_account_target_deleted_in_transaction(
                  :user,
                  "108965",
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert Repo.get!(Item, item.id).status == :superseded
+  end
+
+  test "Article changes supersede migrated Doc Wall identities" do
+    article_id = Ecto.UUID.generate()
+    legacy_doc_target_id = "#{article_id}:42"
+
+    assert {:ok, {:ok, item}} =
+             Repo.transaction(fn ->
+               AlertWall.add_in_transaction(
+                 item_attrs(nil, [], "migrated Doc report")
+                 |> Map.put(:target_id, legacy_doc_target_id),
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert {:ok, {:ok, :pass}} =
+             Repo.transaction(fn ->
+               AlertWall.mark_content_changed_in_transaction(
+                 :article,
+                 article_id,
                  Ecto.UUID.generate()
                )
              end)

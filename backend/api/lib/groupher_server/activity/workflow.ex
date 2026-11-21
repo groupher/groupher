@@ -54,6 +54,12 @@ defmodule GroupherServer.Activity.Workflow do
           | :admin_request_cancelled
           | :admin_request_expired
           | :docs_approval_policy_changed
+          | :admin_joined
+          | :admin_removed
+          | :admin_permissions_changed
+          | :admin_request_created
+          | :admin_request_decided
+          | :activity_exported
 
   @doc """
   Appends one validated business event to its resource-specific Activity stream.
@@ -119,7 +125,7 @@ defmodule GroupherServer.Activity.Workflow do
 
       Activity.list_community_logs(community, viewer, %{page: 1, size: 20})
   """
-  @spec list_community_logs(Community.t(), struct(), map(), pos_integer()) ::
+  @spec list_community_logs(Community.t(), struct(), map(), map() | nil) ::
           {:ok, map()} | {:error, term()}
   def list_community_logs(community, actor, selection, pagi \\ nil) do
     CommunityLog.list(community, actor, selection, pagi)
@@ -132,7 +138,7 @@ defmodule GroupherServer.Activity.Workflow do
 
       Activity.Workflow.list_community_logs(community, actor, selection, pagi, passport_scope: scope)
   """
-  @spec list_community_logs(Community.t(), struct(), map(), pos_integer(), keyword()) ::
+  @spec list_community_logs(Community.t(), struct(), map(), map() | nil, keyword()) ::
           {:ok, map()} | {:error, term()}
   def list_community_logs(community, actor, selection, pagi, opts) do
     CommunityLog.list(community, actor, selection, pagi, opts)

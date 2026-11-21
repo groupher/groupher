@@ -85,7 +85,8 @@ defmodule GroupherServer.CMS.Assets do
   Lists article document refs for one community asset.
 
   This is the paged lookup used by the asset-library detail view. The asset must
-  belong to the given community and must still be active.
+  belong to the given community and must still be active. Results are filtered
+  by the actor's history and draft read scopes.
 
   ## Examples
 
@@ -99,8 +100,8 @@ defmodule GroupherServer.CMS.Assets do
     Query.refs(community, asset_id, pagi, actor)
   end
 
-  @doc "Returns the version-owned asset relations for one Draft or Revision body owner."
-  @spec content_refs(:draft | :revision, Ecto.UUID.t()) :: T.domain_res([struct()])
+  @doc "Returns the version-owned asset relations for one WorkingCopy or Snapshot body owner."
+  @spec content_refs(:working_copy | :snapshot, Ecto.UUID.t()) :: T.domain_res([struct()])
 
   def content_refs(:working_copy, working_copy_id) do
     {:ok, Refs.working_copy_refs(working_copy_id)}
@@ -257,7 +258,12 @@ defmodule GroupherServer.CMS.Assets do
   end
 
   @doc "Replaces one Draft asset use using its persisted workflow-step operation identity."
-  def replace_use_workflow(article, attrs, %User{} = user, workflow_ref, operation_ref) do
+  def replace_use_workflow(_article, _attrs, %User{}, _workflow_ref, nil) do
+    {:error, :operation_ref_required}
+  end
+
+  def replace_use_workflow(article, attrs, %User{} = user, workflow_ref, operation_ref)
+      when is_binary(operation_ref) do
     Commands.ReplaceUse.execute_for_workflow(article, attrs, user, workflow_ref, operation_ref)
   end
 

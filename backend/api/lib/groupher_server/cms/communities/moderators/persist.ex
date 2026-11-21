@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Communities.Moderators.Persist do
   alias Accounts.Model.User
   alias CMS.Communities.{Count, ErrorCat, Passport}
   alias CMS.Model.{Community, CommunityModerator}
-  alias CMS.Passport.Registry
+  alias CMS.Passport.{Catalog, Registry}
   alias Helper.{ORM, PermissionConfig}
 
   @doc "Adds one moderator without opening a transaction or checking admission."
@@ -133,16 +133,18 @@ defmodule GroupherServer.CMS.Communities.Moderators.Persist do
         _ -> {false, %{}}
       end
 
-    count =
-      if is_lord,
-        do: Registry.root_passport_item_count(),
-        else: Enum.count(permissions, &match?({_key, true}, &1))
+    with {:ok, permissions} <- Catalog.validate_permissions(:community, permissions) do
+      count =
+        if is_lord,
+          do: Registry.root_passport_item_count(),
+          else: map_size(permissions)
 
-    ORM.update(moderator, %{
-      is_lord: is_lord,
-      permissions: permissions,
-      passport_item_count: count
-    })
+      ORM.update(moderator, %{
+        is_lord: is_lord,
+        permissions: permissions,
+        passport_item_count: count
+      })
+    end
   end
 
   defp match_passport_community(community_slug, rules) do

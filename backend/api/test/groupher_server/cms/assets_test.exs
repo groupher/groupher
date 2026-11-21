@@ -1045,6 +1045,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
                CMS.Assets.replace_use_workflow(post, params, user, workflow_ref, operation_ref)
 
+      assert {:error, :operation_ref_required} =
+               CMS.Assets.replace_use_workflow(post, params, user, workflow_ref, nil)
+
       assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
 
       assert %ArticleAssetRef{asset_id: ^from_asset_id} =

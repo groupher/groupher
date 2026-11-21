@@ -1,6 +1,7 @@
 defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopyConfirmation do
   @moduledoc """
-  Stores the deleted owner identities so an identical command can replay its confirmation.
+  Stores the Article ID, deleted WorkingCopy ID, and command ID so an identical
+  command can replay its confirmation.
 
       deleteWorkingCopy transaction -> confirmation IDs -> Receipt replay result
   """

@@ -81,6 +81,17 @@ defmodule GroupherServer.Accounts do
     to: GroupherServer.Accounts.CollectFolders,
     as: :remove_result
 
+  @doc "Delegates in-transaction collection-folder removal through the Accounts Context boundary."
+  @spec collect_folders_remove_in_transaction(
+          GroupherServer.Accounts.Model.CollectFolder.t(),
+          atom(),
+          GroupherServer.CMS.Model.ArticleBinding.t(),
+          pos_integer()
+        ) :: {:ok, map()} | {:error, term()}
+  defdelegate collect_folders_remove_in_transaction(folder, thread, binding, user_id),
+    to: GroupherServer.Accounts.CollectFolders,
+    as: :remove_in_transaction
+
   @doc "Delegates GroupherServer.Accounts.CollectFolders.update/2 through the Accounts Context boundary."
   defdelegate collect_folders_update(arg1, arg2),
     to: GroupherServer.Accounts.CollectFolders,

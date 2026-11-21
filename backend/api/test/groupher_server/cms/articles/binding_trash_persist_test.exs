@@ -29,6 +29,11 @@ defmodule GroupherServer.Test.CMS.Articles.BindingTrashPersistTest do
                Persist.restore(article, community, first.id, "2")
              end)
 
+    assert {:ok, {:error, %{reason: :invalid_command_input}}} =
+             Repo.transaction(fn ->
+               Persist.restore(article, community, "not-a-uuid", "1")
+             end)
+
     assert Repo.get!(ArticleBindingTrash, first.id)
 
     assert {:ok, {:ok, _}} =

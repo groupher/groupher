@@ -32,10 +32,21 @@ defmodule GroupherServer.CMS.Communities.Effects do
   @doc "Loads an analytics provisioning target under the existing management lifecycle capability."
   def analysis_target(%{resource_type: "community", resource_id: id, data: data}) do
     with {id, ""} when id > 0 <- Integer.parse(to_string(id)),
-         true <- id == data["community_id"],
-         {:ok, community} <- CMS.FrontDesk.community(id, mode: :internal),
-         {:ok, true} <- CMS.Communities.Lifecycle.can_manage(community) do
-      {:ok, community}
+         true <- id == data["community_id"] do
+      case CMS.FrontDesk.community(id, mode: :internal) do
+        {:ok, community} ->
+          case CMS.Communities.Lifecycle.can_manage(community) do
+            {:ok, true} -> {:ok, community}
+            {:ok, false} -> {:error, CMS.Communities.ErrorCat.invalid_outbox_resource()}
+            {:error, _reason} = error -> error
+          end
+
+        {:error, _reason} = error ->
+          error
+
+        _ ->
+          {:error, CMS.Communities.ErrorCat.invalid_outbox_resource()}
+      end
     else
       _ -> {:error, CMS.Communities.ErrorCat.invalid_outbox_resource()}
     end

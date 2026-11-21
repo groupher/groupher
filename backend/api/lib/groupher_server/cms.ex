@@ -3064,6 +3064,12 @@ defmodule GroupherServer.CMS do
   @doc "Looks up one registered Passport action at the CMS boundary."
   defdelegate passport_catalog_action(action), to: GroupherServer.CMS.Passport.Catalog, as: :get
 
+  @doc "Validates a permission map for one canonical Passport scope."
+  @spec passport_validate_permissions(atom(), map()) :: {:ok, map()} | {:error, term()}
+  defdelegate passport_validate_permissions(scope, permissions),
+    to: GroupherServer.CMS.Passport.Catalog,
+    as: :validate_permissions
+
   @doc "Loads current Global Passport facts for an authenticated actor."
   defdelegate passport_global_scope(actor),
     to: GroupherServer.CMS.Passport,

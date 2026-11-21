@@ -64,4 +64,11 @@ defmodule GroupherServer.Test.CMS.Articles.CoAuthors.EffectsTest do
     assert Repo.aggregate(from(notice in Notice, where: notice.request_id == ^request.id), :count) ==
              1
   end
+
+  test "the recovery worker factory accepts co-author Outbox workers" do
+    event_id = Ecto.UUID.generate()
+
+    assert {:ok, changeset} = Jobs.outbox_new(CMSOutboxArticleCoAuthor, %{event_id: event_id})
+    assert changeset.changes.args == %{event_id: event_id}
+  end
 end

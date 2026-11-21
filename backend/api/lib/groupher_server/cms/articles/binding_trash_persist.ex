@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Articles.BindingTrashPersist do
       {:ok, %{row: row, binding: binding, changed?: true}}
     else
       nil -> {:error, ErrorCat.binding_trash_revision_conflict()}
-      :error -> {:error, ErrorCat.binding_trash_revision_conflict()}
+      :error -> {:error, ErrorCat.invalid_command_input()}
       {:error, _} = error -> error
     end
   end

@@ -284,6 +284,9 @@ defmodule GroupherServer.Jobs.Workflow do
       GroupherServer.Jobs.CMSOutboxArticle ->
         {:ok, GroupherServer.Jobs.CMSOutboxArticle.new(args)}
 
+      GroupherServer.Jobs.CMSOutboxArticleCoAuthor ->
+        {:ok, GroupherServer.Jobs.CMSOutboxArticleCoAuthor.new(args)}
+
       GroupherServer.Jobs.CMSOutboxAsset ->
         {:ok, GroupherServer.Jobs.CMSOutboxAsset.new(args)}
 

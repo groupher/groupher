@@ -138,7 +138,8 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     community_admin =
       Repo.get_by!(CommunityAdmin, user_id: community_admin_user.id, community_id: community.id)
 
-    grants = Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user)
+    assert {:ok, grants} =
+             Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user)
 
     assert {:ok, :pass} =
              CMS.Insights.authorize(article, community_admin_user, :post,
@@ -150,6 +151,9 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
       "UPDATE cms.communities_admins SET permissions = '{\"article.insights.read\":\"true\"}'::jsonb WHERE id = $1",
       [community_admin.id]
     )
+
+    assert {:error, _reason} =
+             Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user)
 
     assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
              CMS.Insights.authorize(article, community_admin_user, :post,
@@ -173,13 +177,13 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     |> CommunityAdmin.changeset(%{permissions: %{}})
     |> Repo.update!()
 
-    assert Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user) == []
+    assert {:ok, []} =
+             Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user)
 
     assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
              CMS.Insights.authorize(article, community_admin_user, :post,
                community: community.slug,
-               passport_granted_community_slugs:
-                 Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user)
+               passport_granted_community_slugs: []
              )
   end
 
