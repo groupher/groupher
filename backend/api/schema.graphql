@@ -16,6 +16,9 @@ type RootQueryType {
   "get cur user"
   me: User
 
+  "The authenticated viewer's Global Passport facts"
+  currentGlobalPassport: GlobalPassport!
+
   "get user by login"
   user(login: String!): User
 
@@ -2172,6 +2175,11 @@ enum PassportAction {
   TICKET_READ_INTERNAL
   TICKET_TRANSITION
   TICKET_UPDATE
+}
+
+type GlobalPassport {
+  isRoot: Boolean!
+  permissions: [PassportAction!]!
 }
 
 enum CommunityArticleTrashThread {
