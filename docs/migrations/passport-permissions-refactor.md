@@ -1,8 +1,8 @@
-# Passport Permission、Admin 与 Messaging 收口
+# Passport Permission 与 Community Admin
 
-> 状态：P1–P3 / P2B 已有本地实现；本轮已实现部分的隔离编译与定向验收见 §8。Admin 浏览器验收后置，P4 全消费方清理及最终迁移验收未完成，尚未发布。
+> 状态：P1 基线、P2 Admin 请求 / 管理接口、P2B 非 Doc 本站 Trash 与 Passport P3 Community Admin 通知接入已有本地实现及定向验收记录，尚未发布。Messaging 通用 M1 / M2 验收单列于 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)；P3 在 M2 切换后按新 schema 复跑定向验收。P4 最终全消费方清理 / 迁移验收尚未开始；P4a 消费者盘点可并行启动，P4c 最终关闭依赖 C3、D1 / D2 消费者切换和 D3 验收。文档边界与跨模块依赖复审记录见 §7.1。
 >
-> 本文拥有权限目录 / Action 一一对应、Admin 命名、Community ref、Passport 并发写入、Community Admin 请求以及 Notices 接入。Article 成员合同见 [Co-Authors](../feature/article/co-authors.md)，内容追溯见 [修改历史 / Diff](../feature/article/edit-history-diff.md)，后续站点修复见 [Docs Mirror Fix](./docs-mirror-fix.md)。
+> 本文拥有权限目录 / Action 一一对应、Admin 命名、Community ref、Passport 并发写入及 Community Admin 请求通知生产者。通用 Notices / Dedup / Inbox 基础设施见 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)。Article 成员合同见 [Co-Authors](../feature/article/co-authors.md)，内容追溯见 [修改历史 / Diff](../feature/article/edit-history-diff.md)，后续站点修复见 [Docs Mirror Fix](./docs-mirror-fix.md)。
 >
 > 直接切换目标名称和协议，不保留旧 alias、双读、双写或兼容字段。不默认建设旧授权数据迁移流程；实际需要保留的数据另做一次性转换，不借切换删除正文、编辑历史或审计。
 
@@ -62,6 +62,8 @@ lord 的设置 / 取消及系统 root 的设置不开放给普通权限编辑 pa
 新增 communities.ref：text NOT NULL UNIQUE，不可修改；服务端使用 CSPRNG 生成 cm_ 前缀加至少 128 位随机量，冲突重试。不是内部递增 ID 的可逆编码。FrontDesk.community 增加明确 ref locator（如 {:ref, ref}）；现有 slug 路由仍明确按 slug 解析，不猜测自由字符串类型。新增管理命令 / 请求输入使用 communityRef，加载后使用内部 id，不额外持久化 ref 副本到成员关系。
 
 存量迁移必须支持非空数据库：先增加可空 ref 列和唯一索引（允许多个 NULL），仅为 ref 为空的社区逐行生成随机值；唯一冲突重新生成并重试，不覆盖已填值。校验零 NULL、零重复后再落 NOT NULL 和不可修改约束；回填与约束脚本同属 P1，重跑保留既有 ref。P1 的隔离数据库测试覆盖非空数据、冲突重试、重复 ref 被约束阻断及重跑稳定性；不要求 P0 先完成克隆演练。
+
+执行 `backend/api/scripts/passport_ref_migration_verify.sh` 可在本地创建、校验并清理独立的 `groupher_passport_ref_migration_*` test database。该验收用两个已有 Community 和确定性随机字节强制触发一次 ref 唯一冲突，验证迁移重试、非空回填、唯一索引拒绝重复值、重复执行回填不改 ref，以及 slug 修改不改变 ref；不连接或清理共享开发数据库。
 
 Community GraphQL 输出新增非空 ref，已获准读取该 Community 的客户端可取得它；同步前端 Community 类型、生成协议与 fixture。管理命令传 communityRef，缓存的资源身份部分采用 ref，路由展示部分仍使用 slug，不全局机械替换所有 cache key。改 slug 测试须证明管理请求仍命中同一资源，不暴露内部 Community.id。
 
@@ -371,104 +373,42 @@ pagedCommunityAdmins 每项返回 memberId、revision、isLord、有效权限摘
 
 两类请求均有 INDEX(expires_at, id) WHERE status = 'pending'。创建和决定时的惰性过期必须在资源锁 / 请求锁内检查；已过期不能接受，也不能留下 pending 占住唯一键。各领域提供 ExpireRequest Command；定时 Job 按索引有界扫描候选（每批最多 100 条，以 expires_at / id 游标推进），只调用领域入口，按正常资源首锁重查。扫描阶段不持有 Request 行锁再反向取得资源锁；不为使用 SKIP LOCKED 破坏既定锁序。多 Job 并发由领域锁和终态幂等保证，失败可重试。重复执行已过期请求返回既有结果，不重复事件或 Notice；到期事件 / Outbox 与状态同事务。系统 actor 明确标注，不伪造决定人。共享过期及状态判断函数，不建设通用工作流引擎。
 
-## 6. Messaging 收口与 Community Admin 请求
+## 6. Community Admin 请求通知（Passport 所有）
 
-```text
-CMS Mention 关系 / 领域请求与决定 / 活动事实
-  -> 同事务 Outbox
-  -> 可靠 worker -> Messaging.notify(notice)
-  -> Notices（type 分类，内部 Dedup）
-  -> Inbox（列表 / 已读 / 未读摘要）
-```
+Passport 拥有 Community Admin 请求事件、通知意图、接收对象与请求详情授权。P2 在授权变更事务内写入请求事件和 Outbox 意图；P3 使用 Messaging 的 Notice / Dedup / Inbox 基础设施投递这些请求通知。Messaging 基础设施的 schema、迁移、通用去重、Inbox 事实和消费者切换由独立文档 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md) 维护。
 
-- Outbox、embed users 聚合、delivery_key claim 和 User.mailbox 未读摘要已存在；本批复用可靠性机制并改正命名 / 归属，不新建平行投递框架。完成本批前已搜索前端运行时代码，没有实际 Inbox 列表 / badge 消费者；因此更新 GraphQL 契约与生成类型，不凭空增加 UI。后续若新增消费者，归入对应消费端批次，不阻塞本通知存储闭环。
-- CMS Mention 是内容关系，保留原权威。“mention 类型通知”是统一 Inbox 的产品分类，首批物理写入仍是 messaging.mentions，不表示还要再写一条 notices。邀请不伪装正文 Mention，不受正文必须公开的投递条件约束。
-- 明确使用 Messaging.Notices / Model.Notice、Messaging.notify、Messaging.Notices.Dedup；现有 Notify.dispatch 空壳由真实命令入口替代。Notifications.Delivery 只改职责准确的内部命名，不扩大成通用投递框架。
-- Inbox 统一公开 list / mark_read / mark_read_all / unread_counts；Accounts 不再拥有另一套收件箱路由。User 的 Inbox 摘要可继续为 Session 提供读取投影，计数事实和重建归 Messaging，Accounts 仅通过自身边界保存 / 失效用户投影。
-- 首批保留独立 mention 与 notice 物理存储。提及按现有内容版本 + recipient 唯一键；普通活动仍用 embed users 合并及稳定身份去重；对同一聚合的并发合并需锁或原子合并，不能读后覆盖。
-- Dedup key 必须稳定到业务事件和 recipient，claim、Notice 写入、未读更新同事务；已读或跨聚合窗口后重试也不得新建第二条。Outbox 执行完但未确认的故障仍靠消息幂等避免重复。
-- 请求类 Notice 在 notices 表新增 request_type（article_co_author / community_admin）、request_id uuid、event_type、subject scope 的公开定位信息；不添加跨两个请求表的伪多态 FK。详情重读领域请求并检查 viewer，不能以 notice payload 决定授权。
-- 请求独立展示，禁止套用点赞聚合。幂等身份 request_type + request_id + revision + event_type + recipient；部分唯一索引只适用于请求通知，原活动聚合唯一索引必须排除此分支。
-- invite / apply 反馈接收规则沿用各领域；决定 / 取消 / 过期发给另一参与方。延迟 pending 提醒若已终态则不显示可操作按钮；可抑制过期提醒，但决定事件本身可靠投递，通知已读不改变请求。
-- GraphQL 从 pagedNotifications / mailbox 状态统一为 pagedNotices / inboxStatus，保留 pagedMentions 作为明确类型筛选入口；markRead 的 type 明确区分原物理流。同步 codegen / Inbox UI / badge / 任务 / 撤销逻辑；无旧字段 alias。
-- Notice 详情不包含草稿正文或超出 viewer 权限的标题 / 私有资源信息。相同原因不同时发一条 Mention 和一条重复 Notice。
+Passport P3 独立验收 lord 发 invite、成员接受或拒绝、成员 apply、lord 决定，以及取消 / 过期事件；检查 recipient、`request_type + request_id + revision + event_type` 幂等、Outbox 重试不重复、社区请求无 thread / Article 定位字段、详情按当前请求状态和 viewer 重新授权。无需 Co-authors 的 Article 请求实现。Article 请求通知由 [Co-authors C1](../feature/article/co-authors.md#6-实施与验收) 使用相同 Messaging 合同另行验收，不作为 Passport P3 前置。
 
-### 6.1 Notice / Dedup 列级迁移
-
-下列 rename 和约束调整用于落实新存储；旧行值转换仅在确有数据需要保留时执行。可以用隔离合成数据验证转换和去重机制，不要求先取得生产副本，也不在运行时保留历史键兼容分支。
-
-- 采用原表 rename：messaging.notifications → messaging.notices，action → type；read、thread、article_id、comment_id、from_users、from_users_count、user_id、原主键及时间保留。不新建平行 type 列，不留下 action / type 双分类。
-- 合法旧 action 按 P0 统计的实际存量值和完整对照表一次性转换为规范 type；例如 upvote → upvote，实际存在的 UPVOTE → upvote。现有写入路径包含大写转换，不能假定历史已全为小写；其余配置内活动逐项列明，未知值阻断，不能盲目 lower。已有普通活动保留聚合成员及已读状态，不重发。该转换仅用于迁移，新运行时移除 normalize_action_attr 的大小写转换。
-- 若存量旧 action 中出现提及类 / 未知行，先确定 producer 和稳定投递身份；不能自动向 messaging.mentions 补写，也不能靠删除行掩盖重复。无法分类则阻断切换，输出逐项处置清单。
-- messaging.notification_deliveries → messaging.notice_dedup，notification_id → notice_id；delivery_key、已有 claim 主键和 claim / attach 幂等语义不变。rename 后 FK 指向 notices，维持现有可空及删除通知时置空的行为；即便 notice_id 为空，已有 key 仍阻止该事件重新投递。索引 / 约束名、Schema、Query / Persist、worker payload 及 fixture 同批更新，无旧字段 alias。
-- rename 与 action 值转换、请求分支列 / CHECK / 部分唯一索引切换在停写窗口和同一迁移单元内完成；P0 列出旧聚合唯一索引、依赖 SQL 和外部消费者。P3 同批直切全部 Messaging 生产者 / 消费者、worker payload、schema / codegen 及 Inbox，验证旧读状态、embed users、claim 和新请求分支后恢复写入；不能等待 H / C / D 或 P4 才恢复 Messaging 写入。P4 只做最终查漏、生成检查及旧层清理。回退使用整套匹配备份，不提供双写。
-
-Notice type 的唯一合同源为 packages/contracts/notice.contract.json；P0 枚举全部现有 producer / 存量值，合同覆盖其合法活动类型及 invite / apply / result，不凭示例裁掉其他活动。新增生成器输出 TS 常量 / union、Elixir Ecto.Enum values 与数据库 text CHECK 所需值；GraphQL 从同源生成或做 parity 检查。Schema 使用 Ecto.Enum，内部调用传明确枚举值，外部解析仅接受规范值，禁止运行时字符串大小写修正及不受控 atom 转换，不引入 PostgreSQL 原生 ENUM。P3 提供 generate:notice / generate:notice:check 与前后端 parity 检查，P4 纳入生成检查及迁移后全量值校验。
-
-### 6.2 唯一写入、查询及未读事实
-
-```text
-一次正文 @用户
-  -> cms.mention_current_edges            内容关系，不含 read 状态
-  -> messaging.mentions                  该次提及唯一收件箱记录
-  -> 不再为同一提及原因写 notices
-
-评论 / 回复等独立活动、invite / apply / result
-  -> messaging.notices                   独立活动收件箱记录
-
-Inbox
-  pagedMentions -> messaging.mentions
-  pagedNotices  -> messaging.notices
-  unreadTotal  = unreadMentions + unreadNotices
-```
-
-| Inbox 接口                   | 唯一读取 / 写入来源                                                                      |
-| ---------------------------- | ---------------------------------------------------------------------------------------- |
-| pagedMentions                | messaging.mentions，仅 viewer 的提及收件箱                                               |
-| pagedNotices                 | messaging.notices，仅 viewer 的活动 / 请求通知                                           |
-| inboxStatus                  | 从两流事实重建的 unreadMentions / unreadNotices / unreadTotal 摘要                       |
-| markRead / markReadAll(type) | type = mention 只改 mentions，type = notice 只改 notices；校验 viewer 归属后重建两流计数 |
-
-markRead(type, ids) 只修改对应物理流中属于 viewer 的行，type = mention / notice；然后在同事务从两类真实行重建各自未读数和总数。User Inbox 摘要不是第三份未读权威。标记 Mention 已读不改 Notice，反之亦然；重复标记不重复扣数。一次 @ 重试保留既有 read 状态，不能再出现第二条提醒。回复和直接提及若是两个真实不同原因，可分别有记录，但不能把同一个提及重复投递两次。
-
-请求通知在 messaging.notices 新增以下字段（旧活动行均为空）：request_type text NULL CHECK IN ('article_co_author', 'community_admin')、request_id uuid NULL、request_revision bigint NULL CHECK > 0、event_type text NULL CHECK (event_type IN ('created', 'decided', 'cancelled', 'expired'))。请求通知要求这四项同时非空，普通活动全部为空；索引 UNIQUE(request_type, request_id, request_revision, event_type, user_id) WHERE request_id IS NOT NULL，INDEX(user_id, request_type, request_id)。type = invite / apply / result 与 request_type 的资源类别分别表达，不拼接组合枚举。旧活动聚合唯一索引排除 request_id 非空行，request 分支永不按 embed users 聚合。
-
-请求事件枚举同源输出 Elixir / TS 值与数据库 CHECK：created 仅允许 Notice.type IN (invite, apply)，资源类别由 request_type 表达；decided / cancelled / expired 仅允许 Notice.type = result。数据库 CHECK 只限制本行的值域、type / event_type 组合及四字段全空 / 全非空，不校验跨请求表的一致性。领域 Effects 从已锁定并确认的请求事件构造通知，校验 invite / apply 与真实请求 type 一致；accept / reject 存于请求 decision，不扩展为互不一致的 event_type。非法拼写、错误 type 组合及半空请求行必须被数据库拒绝。
-
-请求 Notice 的展示和构造合同：
-
-- invite 的 from_users 为实际邀请人，apply 为申请人；人工 result 为实际决定 / 取消操作人，不固定使用原发起人。单个用户 actor 的 from_users_count = 1，仅作展示，不参与活动式聚合或幂等身份。
-- 系统过期等 result 使用明确 system actor 展示；仅 type = result、请求字段齐全且经验证为系统事件的分支允许 from_users 为空、from_users_count = 0，不伪造用户。普通活动和用户发起的请求通知仍要求 from_users 非空；changeset 按类型与事件校验，不全局放宽 required。系统事件身份由可信领域事件给出，不能由客户端任意声明。
-- community_admin 请求的 thread / article_id / comment_id 均为空，定位只依赖 request_type + request_id；thread 不扩充为社区请求枚举。文章请求也不能依赖通知携带的旧状态决定授权。
-- Messaging.notify 增加明确请求分支，处理用户 / 系统 actor、接收方及请求字段；迁移现有只接受 User、排除自己和仅允许活动 action 的入口 / Persist 校验，不能只给表加列就宣称请求可投递。保持普通活动原有校验，请求规则由领域接收方合同约束。验收覆盖邀请、申请、人工结果、系统过期、社区请求无 thread，以及活动行缺 actor 被拒绝。
-
-首批不合并两张收件箱表，不引入额外用户可见流；未来若统一物理存储，需另定迁移与 type 过滤协议，不能在当前实现中一边写两张、一边只统计一张。
+Community Admin 请求 producer 已接入，列入 Messaging M2 的现有 producer 切换清单，由 M2 同批切到新 schema；切换后由 Passport P3 按新 schema 复跑上述定向验收。
 
 ## 7. 实施批次与切换
 
-| 批次 | 内容                                                                                       | 退出条件                                                                                                                                                                                                                                   |
-| ---- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| P0   | 旧权限 / 调用方与目标实现清单                                                              | 用于查漏并直接进入 P1；未定位调用方在改动时补齐，不要求逐键审批                                                                                                                                                                            |
-| P1   | 唯一生成合同 / Catalog / Store、Admin / Global 授权 DDL、root / lord、FrontDesk ref        | 十四项基线及拆分项、全 Global / Community 清单覆盖检查、枚举生成 / parity、权限事实与并发测试通过；ref 回填可重跑，改 slug 不影响授权                                                                                                      |
-| P2   | Admin 关系、请求、Receipt / Gate、事件与接口                                               | 不可委派规则、invite / apply 并发、请求事件与 Outbox 意图同事务验证通过；GraphQL 查询 / 写入及 Dash 管理与用户自助请求入口接通；旧直接 addModerator(s) GraphQL 写入口移除。通知投递及 Inbox 闭环归 P3，不作为 P2 的依赖                    |
-| P2B  | 非 Doc 本站 Binding 下线 / 恢复 / Trash、Scope、GraphQL / Dash、失效效果                   | 已完成本地实现及定向验收，尚未发布。双社区只影响本站，目标社区 Activity 正确、其他社区无新增；并发 hide 只一条事实 / 活动、stale restore 拒绝；普通 Admin 下线 / 恢复保留，不能全局回收 / 销毁；依赖 P1，必须在旧 Trash 社区入口退役前完成 |
-| P3   | Notices / Dedup / Inbox、请求通知和实际存在的前端消费者；Messaging 生产者 / 消费者原子直切 | Notice 枚举生成 / parity、已读后重试、聚合、未读、请求 actor / 空 thread 与处理闭环通过；同批恢复 Messaging 写入，不等 P4。已完成本地实现与定向测试；当前无前端 Inbox 消费者，不据此新增 UI                                                |
-| P4   | 全消费方切换核验、DDL / 数据迁移演练、旧层退役                                             | P2B、C3、D1 / D2 消费者切换及 D3 验收完成；schema / generated / jobs / seeds / 文档无旧运行时入口，正式切换独立记录                                                                                                                        |
+| 批次 | 内容                                                                                | 退出条件                                                                                                                                                                                                                                   |
+| ---- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P0   | 旧权限 / 调用方与目标实现清单                                                       | 用于查漏并直接进入 P1；未定位调用方在改动时补齐，不要求逐键审批                                                                                                                                                                            |
+| P1   | 唯一生成合同 / Catalog / Store、Admin / Global 授权 DDL、root / lord、FrontDesk ref | 十四项基线及拆分项、全 Global / Community 清单覆盖检查、枚举生成 / parity、权限事实与并发测试通过；ref 回填可重跑，改 slug 不影响授权                                                                                                      |
+| P2   | Admin 关系、请求、Receipt / Gate、事件与接口                                        | 不可委派规则、invite / apply 并发、请求事件与 Outbox 意图同事务验证通过；GraphQL 查询 / 写入及 Dash 管理与用户自助请求入口接通；旧直接 addModerator(s) GraphQL 写入口移除。通知投递及 Inbox 闭环归 P3，不作为 P2 的依赖                    |
+| P2B  | 非 Doc 本站 Binding 下线 / 恢复 / Trash、Scope、GraphQL / Dash、失效效果            | 已完成本地实现及定向验收，尚未发布。双社区只影响本站，目标社区 Activity 正确、其他社区无新增；并发 hide 只一条事实 / 活动、stale restore 拒绝；普通 Admin 下线 / 恢复保留，不能全局回收 / 销毁；依赖 P1，必须在旧 Trash 社区入口退役前完成 |
+| P3   | Community Admin 请求通知生产者接入 Messaging                                        | invite / apply / decided / cancelled / expired 的 recipient、请求身份幂等、Outbox 重试和详情授权通过；独立于 Co-authors C1。Messaging 底座的迁移及 Inbox 验收见独立文档                                                                    |
+| P4   | Passport 旧层清理与最终全消费方切换核验                                             | 旧消费者由所属领域在各自批次迁移并验收；仅最终全局残留核查、DDL / 数据迁移演练和正式切换记录等待 P2B、C3、D1 / D2 消费者切换及 D3 验收完成                                                                                                 |
 
-跨文档批次顺序与并行边界统一见 [Docs Mirror Fix §6](./docs-mirror-fix.md#6-实施批次与依赖)。P1 完成后，P2、P2B 与 H2 可并行开发，共用 Gate / Scope 修改须串行合入。P3 在 P2 后完成 Community Admin 通知闭环。Co-Authors 复用 P1 的目录与接口，C1 独立验收 Article 请求和 Outbox 意图，再用 P3 的投递基础设施验收 Article 通知。P4 放在 D3 后，至少不能早于 D2 的旧 doc.trash 消费者和查询入口退役。批次完成不等于可独立发布：P1 删除旧生成协议涉及的消费者尚未迁移时，该开发中间态不可发布，也不引入兼容映射。
+跨文档批次顺序与并行边界统一见 [Docs Mirror Fix §6](./docs-mirror-fix.md#6-实施批次与依赖)。P1 完成后，P2、P2B 与 H2 可并行开发，共用 Gate / Scope 修改须串行合入。Passport P3 在 P2 后独立完成 Community Admin 通知闭环；Messaging 基础设施按 [独立计划](./messaging-notices-refactor.md) 验收。Co-Authors C1 独立验收 Article 请求和 Outbox 意图，再验收 Article 通知生产者接入同一基础设施；C1 不阻塞 Passport P3。
 
-### 7.1 四份文档独立边界复审（2026-11-17）
+P4 是最终全局收口门槛，不是各领域开工或局部交付的前置条件。P4a 消费者盘点可立即并行开始，产出“旧调用方、目标合同、负责人批次、移除方式、定向验收”清单。P4b Passport 自有旧层清理按消费者所属批次逐项完成；各领域在切换自己的调用方时负责移除该领域旧入口并完成局部检查，不需要等待其他领域。P4c 仅负责跨领域无残留核查、最终 DDL / 数据迁移演练及正式切换记录，等待 P2B、C3、D1 / D2 消费者切换和 D3 验收完成；D2 的旧 doc.trash 消费者与查询入口必须在此之前退役。批次完成不等于可独立发布：P1 删除旧生成协议涉及的消费者尚未迁移时，该开发中间态不可发布，也不引入兼容映射。
 
-| 文档 / 批次          | 唯一领域所有权                                                                                                                                   | 本次决定                                                                                                                                                                          |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Passport P1–P3 / P2B | Permission Catalog / Store、Global / Community Admin 身份与请求、Admin Gate、Messaging Notices / Inbox 基础与传递合同、非 Doc 本站 Binding Trash | 保留 P2 / P2B / P3；管理请求 UI 只处理 Admin 请求，不新增通用 Inbox。直接 addModerator(s) 写入口已从 GraphQL schema 移除；其他 Moderator 旧读写入口仍按 P4 清理，不在本批扩大迁移 |
-| History H1–H3        | Article 事件冻结、Diff、受保护历史引用及历史 UI                                                                                                  | 按 History 自身批次验收。C2 验证普通 Article 写入口实际消费的历史能力                                                                                                             |
-| Co-authors C0–C3     | Article 成员 / Article 请求、Article 授权消费与共同作者 UI                                                                                       | C1、C2 以 C0 为基础并行，C2 可用测试成员联调。C3 交付普通 Article 授权给 D1。Passport 提供 Catalog 和授权判断                                                                     |
-| Docs Mirror D0–D3    | DocTree / Mirror / Queue / Binding Trash / 旧 Q 处置与 Doc 写入口                                                                                | 保留 D0 只读盘点及其独立代码；D1 等 C3、H3、P2 和 D0 必要处置，D2 / D3 按 Docs 合同推进。Docs 消费 Passport / History / Co-author 结果，不另造授权事实                            |
+### 7.1 文档独立边界复审（2026-11-17）
 
-P1 提供 C0 所需的权限合同。C1 的 Article 通知实际投递依赖 P3 的 Notices 基础设施，其请求事务和 C2 多人联调各自验收。H1 可按 H0 / P1 合同并行，H2 等 H1 + P1。C3 → D1 → D2 → D3，D1 同时要求 H3、P2 和 D0 的必要处置。P4 负责最后清零及迁移验收。
+| 文档 / 批次          | 唯一领域所有权                                                                                                                         | 本次决定                                                                                                                                                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Passport P1–P3 / P2B | Permission Catalog / Store、Global / Community Admin 身份与请求、Admin Gate、Community Admin 请求通知生产者、非 Doc 本站 Binding Trash | 保留 P2 / P2B / Passport P3；请求 UI 只处理 Admin 请求，不新增通用 Inbox。直接 addModerator(s) 写入口已从 GraphQL schema 移除；其他 Moderator 旧读写入口仍按 P4 清理，不在本批扩大迁移。通用 Notice / Inbox 归独立 Messaging 文档 |
+| History H1–H3        | Article 事件冻结、Diff、受保护历史引用及历史 UI                                                                                        | 按 History 自身批次验收。C2 验证普通 Article 写入口实际消费的历史能力                                                                                                                                                             |
+| Co-authors C0–C3     | Article 成员 / Article 请求、Article 授权消费与共同作者 UI                                                                             | C1、C2 以 C0 为基础并行，C2 可用测试成员联调。C3 交付普通 Article 授权给 D1。Passport 提供 Catalog 和授权判断                                                                                                                     |
+| Docs Mirror D0–D3    | DocTree / Mirror / Queue / Binding Trash / 旧 Q 处置与 Doc 写入口                                                                      | 保留 D0 只读盘点及其独立代码；D1 等 C3、H3、P2 和 D0 必要处置，D2 / D3 按 Docs 合同推进。Docs 消费 Passport / History / Co-author 结果，不另造授权事实                                                                            |
+| Messaging M0–M2      | 通用 Notice / Dedup 合同、schema 与迁移、Inbox 读写和未读事实、现有生产者 / 消费者切换                                                 | 与主链并行；M2 同批切换 Community Admin 请求 producer，Passport P3 在新 schema 上单独复验领域行为；Co-authors C1 独立接入，不阻塞 M2                                                                                              |
 
-共享文件不是各文档独立所有权：Permission 合同与生成物由 Passport 维护；Gate / Scope 的共享入口按 P2 → C → D 串行合入；DocTree 授权入口按 C3 → D1 → D2 串行合入。Article 保存 / 发布、历史保护与资产引用按 History / Co-authors 的锁序合同衔接。经本次对照，没有发现需要回退 H / C / D 独立领域实现的合同冲突；保留这些已有局部代码并分别归回各自批次，调整共享入口时遵守上述串行边界，不把未完成批次标成已验收或可发布。当前根 `docs:check` 只剩 P2B 的 `CommunityArticleTrashContract` 模块文档缺 ASCII 流程；该问题不属于 P2 / P3，独立归回 P2B 修复，不据此回退 Passport / History / Co-authors / Docs Mirror 的领域代码。
+P1 提供 C0 所需的权限合同。Messaging Notices / Inbox 基础设施按独立文档验收，不依赖 C1。C1 的 Article 通知 producer 在该合同上单独做实际投递验收，其请求事务和 C2 多人联调各自验收。H1 可按 H0 / P1 合同并行，H2 等 H1 + P1。C3 → D1 → D2 → D3，D1 同时要求 H3、P2 和 D0 的必要处置。P4 负责最后清零及迁移验收。
+
+共享文件不是各文档独立所有权：Permission 合同与生成物由 Passport 维护；Gate / Scope 的共享入口按 P2 → C → D 串行合入；DocTree 授权入口按 C3 → D1 → D2 串行合入。Article 保存 / 发布、历史保护与资产引用按 History / Co-authors 的锁序合同衔接。经本次对照，没有发现需要回退 H / C / D 独立领域实现的合同冲突；保留这些已有局部代码并分别归回各自批次，调整共享入口时遵守上述串行边界，不把未完成批次标成已验收或可发布。
 
 P0 清单供 P1–P4 实施查漏，不以全量历史数据迁移报告作为开发前置。按新关系行实现 Global / Community 权限与 root / lord，旧 cms.passports / passportString 及别名映射退出运行时。部署若确需保留已有授权，使用一次性转换将旧身份 / 授权写入新行，处理不明确的数据后再切换；不长期保留双读 / 双写，不在普通运行时兼容旧 JSON。
 
@@ -497,6 +437,6 @@ P2B 验收记录（2026-11-17）：`mix compile --warnings-as-errors` 通过；B
 - Admin 浏览器验收按用户决定后置。`currentGlobalPassport` 不是当前 schema 提供的字段；查询该草拟字段的旧测试仍是失败项，不以排除该用例宣称全量通过。
 - 全仓 Core type-check、Elixir style/context 与 docs 聚合门禁仍有其他工作区范围内的失败。本轮钩子的 query-invalidation 检查通过，backend-context 检查失败；保留失败记录后以隔离编译、定向测试、显式差异检查及 commitlint 完成本地提交，未将全仓门禁标为通过。
 
-### P4 单列未完成
+### P4 最终收口待完成
 
-全消费方切换、旧 Registry / Assignment / Moderators 入口及旧 Passport 投影退役、jobs / seeds / generated / 文档无残留核验、最终 DDL / 数据迁移与正式切换验收仍属 P4。其前置条件维持 C3、D1 / D2 和 D3；本轮不把这些项目记为已交付，也不把 Admin 浏览器验收当作 P4 的前置。
+Passport 旧 Registry / Assignment / Moderators 入口和旧投影由 Passport 负责；跨领域消费者由所属批次负责，不将其实现工作整体挂在 P4 下等待。P4a 盘点可立即开始，P4b 随消费者批次逐项清理并验证。仍未完成的是 P4c 最终全消费方无残留核查、jobs / seeds / generated / 文档收尾、最终 DDL / 数据迁移演练及正式切换验收；该最终门槛依赖 P2B、C3、D1 / D2 的消费者切换和 D3 验收。Admin 浏览器验收不是 P4 前置。

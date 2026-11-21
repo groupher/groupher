@@ -40,7 +40,7 @@ defmodule GroupherServer.Repo.Migrations.AddCommunityRef do
     """)
 
     execute("""
-    DO $$
+    CREATE FUNCTION cms.backfill_community_refs() RETURNS void AS $$
     DECLARE row_id bigint; candidate text; extension_schema text; random_bytes bytea;
     BEGIN
       PERFORM pg_advisory_xact_lock(hashtext('cms.community.ref'));
@@ -58,8 +58,11 @@ defmodule GroupherServer.Repo.Migrations.AddCommunityRef do
           END;
         END LOOP;
       END LOOP;
-    END $$
+    END;
+    $$ LANGUAGE plpgsql SET search_path = pg_catalog
     """)
+
+    execute("SELECT cms.backfill_community_refs()")
 
     execute("ALTER TABLE cms.communities ALTER COLUMN ref SET NOT NULL")
   end
@@ -67,6 +70,7 @@ defmodule GroupherServer.Repo.Migrations.AddCommunityRef do
   def down do
     execute("DROP TRIGGER communities_ref_guard ON cms.communities")
     execute("DROP FUNCTION cms.assign_community_ref()")
+    execute("DROP FUNCTION cms.backfill_community_refs()")
     drop(index(:communities, [:ref], prefix: "cms", name: :communities_ref_index))
 
     alter table(:communities, prefix: "cms") do
