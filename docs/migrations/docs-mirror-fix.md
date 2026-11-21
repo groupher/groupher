@@ -185,18 +185,22 @@ Doc 的本站 Trash 不是只有 pending tree deletion：组合视图以 TrashAc
 ## 6. 实施批次与依赖
 
 ```text
-P: Passport / Admin / ref / Notices
+P: Passport / Admin / ref / Community Admin 请求 producer
   -> H: 不可变修改历史 / Diff
   -> C: Co-authors + 普通 Article 授权入口
   -> D0: Q 数据盘点和处置
   -> D1: Doc 正文发布独立 + tree-only plan / approval / Release
   -> D2: Binding / 公网读取 / Trash / 搜索缓存
   -> D3: 全消费面直切 + 旧 Q 退役 + 生产演练及验收
+
+M: Messaging Notice / Dedup / Inbox 通用基础设施（与主链并行、独立验收）
 ```
 
 D0 可只读提前进行。D2 的公共读取子批次是可提前发布的明确例外：按 [专项步骤及退出条件](./docs-public-read-scope-fix.md#5-实施顺序) 完成 R0–R3，保持管理 / insights、现有写入保护及非 Doc 行为后，可独立于 Passport / co-authors / D1 上线。R1 / R2 必须同一可发布变更完成，且 R2 发布前必须确认实际 Doc cursor 消费者收到 GraphQL errors[].extensions.code = 4203（服务端 reason: cursor_query_mismatch）时会清除旧 cursor 并从第 1 页重取，缺失时在同一变更中补齐并验证，不能推迟到 R3。R1 / R2 是原子实施单元，R3 是首次发布前最终专项验收，全部相关退出条件满足后才可放行。无 feature flag、无 DDL；回滚 revert 整个读取变更并记录原缺口恢复风险。本地验收时用户确认无已知外部 Doc cursor 消费者，仓库无运行时 Doc cursor UI；已验证两个 API 的 4203 响应及无 after 首屏重取，没有新增无调用方的 UI 恢复分支。后续接入实际客户端仍须满足恢复合同。该放行不包含 Binding 清理、Trash、多站点互动或搜索缓存架构，不代表 D2 完成。
 
 其余 D1 / D2 可以在隔离开发中拆分；涉及新写入合同、schema 及其对应公共路由的完整直切仍须同批放行，不使用读取子批次的 revert 规则替代 §6.2 数据切换回退方案。不得以局部安全修复宣称整项完成。
+
+本节的 D0 → D1 → D2 → D3 描述 Docs 自身的依赖顺序和放行边界，不是所有任务的统一开工顺序。D0 盘点、D1 / D2 各自不触碰未稳定合同的实现、以及 Passport P4a 消费者清单可以并行推进；D1 正式切换依赖 C3、H3、P2 和 D0 必要处置，D2 对应读写合同按自身子批次验收。只有 D3 的全消费面切换、旧 Q 退役和迁移演练必须等待 D1 / D2 的目标消费者完成。Passport P4 的最终汇总验收可在 D3 后进行，但不阻塞 C3、D1 或 D2 的独立开发和局部交付。
 
 public_binding_ids 虽被 BindingPersist 的最后一个公开 Binding 删除保护使用，但其 unmirror 入口只允许 post / blog / changelog，Doc 返回 unsupported_for_doc。本子批次只收紧 Doc Scope，须验证普通 Article 的删除保护不变，不为不可达的 Doc 分支分离保护查询或新增产品决策门槛。Doc Binding 清理仍归本 D2 的 DocTree 发布 / Trash 引用合同，不能由 BindingPersist 的普通 Article 规则推导。
 
@@ -206,18 +210,19 @@ D1 从命令、Gate、Lifecycle、Snapshot / Public、tree plan、Receipt、Outb
 
 ### 6.1 唯一入口归属与放行
 
-| 入口 / 数据                                                                   | 唯一负责批次                  | 其他批次提供什么                                                                                                                |
-| ----------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| 非 Doc 本站下线 / 恢复 / Trash 及消费者切换                                   | P2B                           | D 不拥有 Posts / Blogs 的实现；P4 退役旧入口前必须验收，不以 Docs Tree 替代                                                     |
-| Permission 合同 / 生成器、Admin / Global 授权、ref、Community 管理 Gate       | P1 / P2                       | C / D 只消费 Passport，不重新定义目录                                                                                           |
-| Notices / Dedup / Inbox 及请求消息                                            | P3 / P4                       | C 写 Article 请求事件，消费同一通知入口                                                                                         |
-| Snapshot 前后固定、article_events、Diff / history 接口及编辑器历史            | H1–H3                         | C 必须等 H3 完整验收后启用多人编辑；D 复用                                                                                      |
-| Article co-author 关系、请求、普通 Article read_draft / update / publish 授权 | C0–C3                         | P 提供公共权限接口；H 提供历史                                                                                                  |
-| Doc 新正文发布入口及旧 Q 正文保存 / 发布 / owner-only Gate 退出               | D1                            | C 提供已验证的 Article 授权判断；H 提供历史记录，C 不提前放开旧 Doc 发布                                                        |
-| tree-only plan / approval / Release、目录贡献者                               | D1                            | 不再由 P / C 各自改一部分发布规则                                                                                               |
-| Gate Scope Doc 公共查询、移除 FrontDesk / Locator / 分页 / Press 重复过滤     | D2 公共读取子批次；可提前发布 | 实施步骤及专项验收唯一见 [公共读取 Scope 收口](./docs-public-read-scope-fix.md)；FrontDesk 保持外部入口，本文只跟踪 D2 整体状态 |
-| Binding 清理、Trash、共享评论 / Mention / reaction 的多站点入口               | D2                            | 事件 / 通知归公共基座，不复制 Article 互动                                                                                      |
-| Q 历史归档与列 / FK / mutation / consumer 退役、目标环境切换                  | D0 / D3                       | P4 只退役权限 / Admin / Messaging 旧层，不声称退役 Docs Q                                                                       |
+| 入口 / 数据                                                                   | 唯一负责批次                  | 其他批次提供什么                                                                                                                    |
+| ----------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 非 Doc 本站下线 / 恢复 / Trash 及消费者切换                                   | P2B                           | D 不拥有 Posts / Blogs 的实现；P4 退役旧入口前必须验收，不以 Docs Tree 替代                                                         |
+| Permission 合同 / 生成器、Admin / Global 授权、ref、Community 管理 Gate       | P1 / P2                       | C / D 只消费 Passport，不重新定义目录                                                                                               |
+| Notices / Dedup / Inbox 通用基础设施                                          | Messaging M1 / M2             | Passport P3 与 Co-authors C1 各自实现并验收领域 producer；边界见 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md) |
+| Community Admin / Article 请求通知 producer                                   | Passport P3 / Co-authors C1   | 复用 Messaging M1 / M2 合同；两领域的事件语义、接收方和资源授权分别归各自文档                                                       |
+| Snapshot 前后固定、article_events、Diff / history 接口及编辑器历史            | H1–H3                         | C 必须等 H3 完整验收后启用多人编辑；D 复用                                                                                          |
+| Article co-author 关系、请求、普通 Article read_draft / update / publish 授权 | C0–C3                         | P 提供公共权限接口；H 提供历史                                                                                                      |
+| Doc 新正文发布入口及旧 Q 正文保存 / 发布 / owner-only Gate 退出               | D1                            | C 提供已验证的 Article 授权判断；H 提供历史记录，C 不提前放开旧 Doc 发布                                                            |
+| tree-only plan / approval / Release、目录贡献者                               | D1                            | 不再由 P / C 各自改一部分发布规则                                                                                                   |
+| Gate Scope Doc 公共查询、移除 FrontDesk / Locator / 分页 / Press 重复过滤     | D2 公共读取子批次；可提前发布 | 实施步骤及专项验收唯一见 [公共读取 Scope 收口](./docs-public-read-scope-fix.md)；FrontDesk 保持外部入口，本文只跟踪 D2 整体状态     |
+| Binding 清理、Trash、共享评论 / Mention / reaction 的多站点入口               | D2                            | 事件 / 通知归公共基座，不复制 Article 互动                                                                                          |
+| Q 历史归档与列 / FK / mutation / consumer 退役、目标环境切换                  | D0 / D3                       | Passport P4 只退役权限 / Admin 旧层；Messaging 清理按独立文档；不声称退役 Docs Q                                                    |
 
 ### 6.2 DDL / 发布顺序与回退点
 
