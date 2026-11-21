@@ -10,7 +10,7 @@
     "preview": "vite preview --config app.config.ts",
     "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) pnpm run build && cf deploy --prebuilt --mode production",
     "deploy:dry-run": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) pnpm run build && cf deploy --prebuilt --dry-run --mode production",
-    "cf-typegen": "cf workers types --mode production",
+    "cf-typegen": "cf workers types --mode production --no-include-runtime",
     "generate:routes": "node ./scripts/generate-route-tree.mjs",
     "type-check": "pnpm run generate:routes && pnpm exec tsc --noEmit --project ./tsconfig.json",
     "lint": "pnpm exec oxlint src --threads=1",

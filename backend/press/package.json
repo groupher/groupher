@@ -12,7 +12,7 @@
     "build": "cf build --mode production",
     "build:node": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js",
     "deploy": "cf deploy --mode production",
-    "types": "cf workers types --mode production",
+    "types": "cf workers types --mode production --no-include-runtime",
     "start": "cross-env NODE_ENV=production node dist/server.js",
     "lint": "pnpm exec oxlint src --threads=1",
     "format": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json src *.ts *.json *.mts",
