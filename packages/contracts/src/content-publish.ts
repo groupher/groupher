@@ -375,6 +375,8 @@ export const parseContentPublishCommand = (input: unknown): TContentPublishParse
       if (failed(digest)) return digest
       const slug = readPatchString(payload, 'slug')
       if (failed(slug)) return slug
+      const articleFields = parseArticleContentFields(payload)
+      if (failed(articleFields)) return articleFields
       if (!Array.isArray(payload.tagIds) || !payload.tagIds.every((id) => typeof id === 'string'))
         return issue('payload.tagIds', 'invalid_type', 'tagIds must be an array of strings.')
       return {
@@ -388,6 +390,7 @@ export const parseContentPublishCommand = (input: unknown): TContentPublishParse
             ...(digest === undefined ? {} : { digest }),
             ...(slug === undefined ? {} : { slug }),
             tagIds: payload.tagIds,
+            ...articleFields,
           },
           commandId,
         },

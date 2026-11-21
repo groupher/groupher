@@ -140,7 +140,7 @@ export default function useAdmins() {
       if (!communityRef) return
       await executeCommand({
         request: (variables) => browserGraphQLRequest(S.updateAdminPermissions, variables),
-        variables: { communityRef, memberId, revision, permissions },
+        variables: { communityRef, memberId, revision, permissions: JSON.stringify(permissions) },
       })
       await invalidate()
     },
@@ -160,7 +160,13 @@ export default function useAdmins() {
     ): Promise<void> => {
       await executeCommand({
         request: (variables) => browserGraphQLRequest(S.decideAdminRequest, variables),
-        variables: { requestId, revision, decision, approvedPermissions },
+        variables: {
+          requestId,
+          revision,
+          decision,
+          approvedPermissions:
+            approvedPermissions === undefined ? undefined : JSON.stringify(approvedPermissions),
+        },
       })
       await invalidate()
     },

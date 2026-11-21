@@ -72,6 +72,36 @@ describe('content publish command parser', () => {
     expect(CONTENT_ARTICLE_THREAD).toEqual({ POST: 'post', BLOG: 'blog', CHANGELOG: 'changelog' })
   })
 
+  it('preserves and validates Article metadata in create-and-publish commands', () => {
+    const command = {
+      action: CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE,
+      target: { community: 'home', thread: 'post' },
+      payload: {
+        content: { format: CONTENT_SOURCE_FORMAT.PLATE, value: [] },
+        title: 'Published Article',
+        tagIds: ['tag-1'],
+        copyRight: 'Copyright owner',
+        linkAddr: 'https://example.test/source',
+        subtitle: 'Subtitle',
+        templateKey: 'guide',
+        coverUrl: 'https://example.test/cover.png',
+        coverUrlDark: 'https://example.test/cover-dark.png',
+      },
+      commandId: 'create-and-publish-1',
+    }
+
+    expect(parseContentPublishCommand(command)).toMatchObject({
+      ok: true,
+      value: { payload: command.payload },
+    })
+    expect(
+      parseContentPublishCommand({
+        ...command,
+        payload: { ...command.payload, coverUrl: 123 },
+      }),
+    ).toMatchObject({ ok: false, issues: [{ path: 'payload.coverUrl', code: 'invalid_string' }] })
+  })
+
   it('maps every action to a content type and capability scope', () => {
     expect(Object.keys(CONTENT_TYPE_BY_ACTION)).toEqual(Object.values(CONTENT_PUBLISH_ACTION))
     expect(CONTENT_TYPE_BY_ACTION[CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]).toBe(

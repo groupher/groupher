@@ -28,13 +28,16 @@ defmodule GroupherServer.CMS.DocTree.HistoryPurge do
   defp purge(id, operation_ref) do
     rows =
       Repo.query!(
-        "SELECT article_id FROM cms.article_history_owners WHERE community_id=$1 ORDER BY article_id FOR UPDATE",
+        "SELECT owner.article_id FROM cms.article_history_owners owner JOIN cms.articles article ON article.id=owner.article_id WHERE owner.community_id=$1 AND article.thread='doc' ORDER BY owner.article_id FOR UPDATE OF owner",
         [id]
       ).rows
 
     ids = Enum.map(rows, &hd/1)
 
-    delete_community("article_history_owners", id)
+    Repo.query!(
+      "DELETE FROM cms.article_history_owners WHERE community_id=$1 AND article_id=ANY($2::uuid[])",
+      [id, ids]
+    )
 
     retained_ids =
       Repo.query!(

@@ -13,6 +13,24 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentReplies do
   end
 
   describe "[basic article comment replies]" do
+    test "pathless Doc comment commands resolve the owning Community from its binding",
+         ~m(community doc user)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, resolved} =
+               CMS.Comments.RequestCommunity.resolve(%{comment | request_community_slug: nil})
+
+      assert resolved.id == community.id
+    end
+
     test "exist comment can be reply", ~m(community doc user user2)a do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(

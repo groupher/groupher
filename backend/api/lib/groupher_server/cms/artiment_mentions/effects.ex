@@ -39,12 +39,27 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects do
       )
       when is_binary(source_endpoint_id) and is_binary(revision_identity) and
              is_integer(community_id) and is_list(recipient_ids) do
-    {:ok, operation_ref} = Ecto.UUID.cast(operation_ref)
+    with {:ok, operation_ref} <- Ecto.UUID.cast(operation_ref) do
+      enqueue(
+        source_endpoint_id,
+        revision_identity,
+        operation_ref,
+        community_id,
+        recipient_ids
+      )
+    else
+      :error -> {:error, :invalid_mention_notification_event}
+    end
+  end
 
+  def enqueue_notifications(_, _, _, _, _), do: {:error, :invalid_mention_notification_event}
+
+  defp enqueue(source_endpoint_id, revision_identity, operation_ref, community_id, recipient_ids) do
     key =
       DedupeKey.encode([
         source_endpoint_id,
         revision_identity,
+        community_id,
         Enum.sort(Enum.uniq(recipient_ids))
       ])
 
@@ -63,8 +78,6 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects do
       }
     })
   end
-
-  def enqueue_notifications(_, _, _, _, _), do: {:error, :invalid_mention_notification_event}
 
   @doc "Projects immutable business fields for duplicate Outbox comparison."
   def payload_projection(event, data) do

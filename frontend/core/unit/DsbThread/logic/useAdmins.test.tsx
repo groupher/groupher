@@ -90,7 +90,7 @@ it('loads typed Admin memberships and sends memberId, revision, permissions and 
     communityRef: 'cm_first',
     memberId: 'member-1',
     revision: 8,
-    permissions: { ARTICLE_UPDATE: true },
+    permissions: '{"ARTICLE_UPDATE":true}',
     commandId: expect.any(String),
   })
 })

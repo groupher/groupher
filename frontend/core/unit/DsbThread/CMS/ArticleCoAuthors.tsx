@@ -114,7 +114,7 @@ export default function ArticleCoAuthors({ article }: TProps) {
           articleId,
           subjectLogin,
           type: 'INVITE',
-          permissions: graphQLPermissions(permissions),
+          permissions: JSON.stringify(graphQLPermissions(permissions)),
         },
       }),
     )
@@ -130,7 +130,15 @@ export default function ArticleCoAuthors({ article }: TProps) {
     run(`request:${requestId}`, () =>
       executeCommand({
         request: (variables) => browserGraphQLRequest(S.decideArticleCoAuthorRequest, variables),
-        variables: { requestId, revision, decision, approvedPermissions },
+        variables: {
+          requestId,
+          revision,
+          decision,
+          approvedPermissions:
+            approvedPermissions === undefined
+              ? undefined
+              : JSON.stringify(graphQLPermissions(approvedPermissions)),
+        },
       }),
     )
 
@@ -159,7 +167,12 @@ export default function ArticleCoAuthors({ article }: TProps) {
       executeCommand({
         request: (variables) =>
           browserGraphQLRequest(S.updateArticleCoAuthorPermissions, variables),
-        variables: { articleId, memberId, revision, permissions: graphQLPermissions(next) },
+        variables: {
+          articleId,
+          memberId,
+          revision,
+          permissions: JSON.stringify(graphQLPermissions(next)),
+        },
       }),
     )
 

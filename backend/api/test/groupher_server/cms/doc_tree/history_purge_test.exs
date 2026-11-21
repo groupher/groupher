@@ -15,6 +15,12 @@ defmodule GroupherServer.Test.CMS.DocTree.HistoryPurgeTest do
     {community, doc, _, user} = mock_article(:doc)
     {_, ordinary, _, _} = mock_article(:post, community, user)
     {_, other, _, _} = mock_article(:post)
+
+    Repo.insert!(%ArticleHistoryOwner{article_id: ordinary.id, community_id: community.id},
+      on_conflict: :nothing
+    )
+
+    assert Repo.get_by(ArticleHistoryOwner, article_id: ordinary.id, community_id: community.id)
     public = Repo.get!(ArticlePublic, doc.id)
     snapshot = Repo.get!(ArticleSnapshot, public.snapshot_id)
 
@@ -61,7 +67,8 @@ defmodule GroupherServer.Test.CMS.DocTree.HistoryPurgeTest do
     refute Repo.get(Article, doc.id)
     refute Repo.get(ArticleSnapshot, snapshot.id)
     refute Repo.get(ArticleBody, snapshot.body_id)
-    refute Repo.get(Article, ordinary.id)
+    assert Repo.get!(Article, ordinary.id)
+    refute Repo.get_by(ArticleHistoryOwner, article_id: ordinary.id, community_id: community.id)
     assert Repo.get!(Article, other.id)
   end
 end

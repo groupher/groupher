@@ -92,7 +92,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       {:ok,
        %{
          content: article,
-         published_revision_identity: "article-snapshot:#{snapshot_id}",
+         published_revision_identity:
+           if(type == :ticket,
+             do: "article-snapshot:#{snapshot_id}:#{public.published_at}",
+             else: "article-snapshot:#{snapshot_id}"
+           ),
          title: public.title,
          article_id: id,
          thread: type,
