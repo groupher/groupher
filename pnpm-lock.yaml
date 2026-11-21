@@ -13017,8 +13017,9 @@ snapshots:
 
   '@groupher/contracts@file:packages/contracts': {}
 
-  '@groupher/frontend-core@file:frontend/core(@babel/core@8.1.2)(@babel/template@8.1.2)(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@vgpu/adapter-node@0.6.0(supports-color@10.2.2))(immer@11.1.18)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(scheduler@0.28.0)(supports-color@10.2.2)(typescript@7.0.2)(use-sync-external-store@1.7.0(react@19.3.1))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
+  '@groupher/frontend-core@file:frontend/core(@babel/core@8.1.2)(@babel/template@8.1.2)(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(@vgpu/adapter-node@0.6.0(supports-color@10.2.2))(date-fns@4.1.0)(immer@11.1.18)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(scheduler@0.28.0)(supports-color@10.2.2)(typescript@7.0.2)(use-sync-external-store@1.7.0(react@19.3.1))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
+      '@base-ui/react': 1.9.0(@types/react@19.3.0)(date-fns@4.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@dnd-kit/core': 6.3.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       '@dnd-kit/utilities': 3.2.2(react@19.3.1)
@@ -13063,7 +13064,6 @@ snapshots:
       react-masonry-css: 1.0.16(react@19.3.1)
       react-resizable-panels: 4.23.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react-select: 5.10.2(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@10.2.2)
-      react-stately: 3.51.0(react@19.3.1)
       react-swipeable: 7.0.2(react@19.3.1)
       react-textarea-autosize: 8.5.9(@types/react@19.3.0)(react@19.3.1)
       react-trend: 1.2.5(react@19.3.1)
@@ -13078,10 +13078,12 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/template'
+      - '@date-fns/tz'
       - '@types/lodash'
       - '@types/react'
       - '@types/react-dom'
       - '@vgpu/adapter-node'
+      - date-fns
       - immer
       - react-native
       - remix
@@ -13094,8 +13096,9 @@ snapshots:
       - vite
       - vue
 
-  '@groupher/frontend-core@file:frontend/core(@babel/core@8.1.2)(@babel/template@8.1.2)(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(immer@11.1.18)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(scheduler@0.28.0)(supports-color@10.2.2)(typescript@7.0.2)(use-sync-external-store@1.7.0(react@19.3.1))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
+  '@groupher/frontend-core@file:frontend/core(@babel/core@8.1.2)(@babel/template@8.1.2)(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(date-fns@4.1.0)(immer@11.1.18)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(scheduler@0.28.0)(supports-color@10.2.2)(typescript@7.0.2)(use-sync-external-store@1.7.0(react@19.3.1))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
+      '@base-ui/react': 1.9.0(@types/react@19.3.0)(date-fns@4.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@dnd-kit/core': 6.3.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
       '@dnd-kit/utilities': 3.2.2(react@19.3.1)
@@ -13140,7 +13143,6 @@ snapshots:
       react-masonry-css: 1.0.16(react@19.3.1)
       react-resizable-panels: 4.23.0(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react-select: 5.10.2(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@10.2.2)
-      react-stately: 3.51.0(react@19.3.1)
       react-swipeable: 7.0.2(react@19.3.1)
       react-textarea-autosize: 8.5.9(@types/react@19.3.0)(react@19.3.1)
       react-trend: 1.2.5(react@19.3.1)
@@ -13155,10 +13157,12 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/template'
+      - '@date-fns/tz'
       - '@types/lodash'
       - '@types/react'
       - '@types/react-dom'
       - '@vgpu/adapter-node'
+      - date-fns
       - immer
       - react-native
       - remix
