@@ -6,6 +6,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
 
       Oban Cron -> ExpireDue -> stable candidate cursor -> locked expiry command
   """
+  require Logger
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
@@ -21,10 +22,10 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
 
       GroupherServer.CMS.Communities.Admins.Requests.ExpireDue.run(DateTime.utc_now())
   """
-  def run(%DateTime{} = now), do: scan(now, nil, 0)
+  def run(%DateTime{} = now), do: scan(now, nil, 0, [])
   def run(_), do: {:error, :invalid_request_expiration}
 
-  defp scan(now, cursor, count) do
+  defp scan(now, cursor, count, failures) do
     query =
       from(r in CommunityAdminRequest,
         where: r.status == :pending and r.expires_at <= ^now,
@@ -44,21 +45,33 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
 
     case Repo.all(query) do
       [] ->
-        {:ok, count}
+        case failures do
+          [] -> {:ok, count}
+          _ -> {:error, {:request_expiration_failures, Enum.reverse(failures)}}
+        end
 
       candidates ->
-        with {:ok, added} <- expire_batch(candidates, now) do
-          scan(now, List.last(candidates), count + added)
-        end
+        {added, batch_failures} = expire_batch(candidates, now)
+        scan(now, List.last(candidates), count + added, batch_failures ++ failures)
     end
   end
 
   defp expire_batch(candidates, now) do
-    Enum.reduce_while(candidates, {:ok, 0}, fn {_time, id}, {:ok, count} ->
+    Enum.reduce(candidates, {0, []}, fn {_time, id}, {count, failures} ->
       case Expire.execute(id, now) do
-        {:ok, :unchanged} -> {:cont, {:ok, count}}
-        {:ok, %CommunityAdminRequest{}} -> {:cont, {:ok, count + 1}}
-        {:error, _} = error -> {:halt, error}
+        {:ok, :unchanged} ->
+          {count, failures}
+
+        {:ok, %CommunityAdminRequest{}} ->
+          {count + 1, failures}
+
+        {:error, reason} ->
+          Logger.error("failed to expire Community Admin request",
+            request_id: id,
+            reason: inspect(reason)
+          )
+
+          {count, [{id, reason} | failures]}
       end
     end)
   end

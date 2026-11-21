@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUseConfirmation do
 
   use GroupherServer.CMS.Command.ConfirmationDefinition,
     operation: :article_replace_asset,
+    schema_version: 2,
     data_keys: [
       "article_id",
       "working_copy_id",

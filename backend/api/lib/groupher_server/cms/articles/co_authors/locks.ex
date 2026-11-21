@@ -16,11 +16,20 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Locks do
 
   def lock(article_id, user_ids, request_ids)
       when is_binary(article_id) and is_list(user_ids) and is_list(request_ids) do
+    if Repo.in_transaction?() do
+      lock_in_transaction(article_id, user_ids, request_ids)
+    else
+      {:error, :transaction_required}
+    end
+  end
+
+  def lock(_, _, _), do: {:error, :invalid_or_missing_lock_target}
+
+  defp lock_in_transaction(article_id, user_ids, request_ids) do
     ids = Enum.sort(Enum.uniq(user_ids))
     request_ids = Enum.sort(Enum.uniq(request_ids))
 
-    with true <- Repo.in_transaction?(),
-         true <- Enum.all?(ids, &(is_integer(&1) and &1 > 0)),
+    with true <- Enum.all?(ids, &(is_integer(&1) and &1 > 0)),
          true <- Enum.all?(request_ids, &is_binary/1),
          %Article{} = article <-
            Repo.one(from(a in Article, where: a.id == ^article_id, lock: "FOR UPDATE")),
@@ -49,8 +58,6 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Locks do
       {:error, _} = error -> error
     end
   end
-
-  def lock(_, _, _), do: {:error, :invalid_or_missing_lock_target}
 
   defp pending_for_users(article_id, user_ids) do
     Repo.all(

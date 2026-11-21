@@ -66,7 +66,9 @@ defmodule GroupherServer.CMS.Communities.Moderators.Query do
               if root,
                 do: GroupherServer.CMS.Passport.Registry.root_passport_item_count(),
                 else:
-                  Enum.count(membership.permissions || %{}, fn {_action, enabled} -> enabled end)
+                  Enum.count(membership.permissions || %{}, fn {_action, enabled} ->
+                    enabled == true
+                  end)
 
             %{membership | is_root: root, passport_item_count: count}
           end)

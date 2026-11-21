@@ -11,7 +11,10 @@ defmodule GroupherServer.CMS.Articles.ActivityTime do
     quote do
       type(
         fragment(
-          "COALESCE(?, ?, ?)",
+          "CASE WHEN ? THEN COALESCE(?, ?) ELSE COALESCE(?, ?, ?) END",
+          unquote(article).is_sunk,
+          unquote(article).active_at,
+          unquote(article).inserted_at,
           unquote(article).active_at,
           unquote(public).published_at,
           unquote(article).inserted_at

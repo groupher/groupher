@@ -27,7 +27,9 @@ defmodule GroupherServer.CMS.Dashboard.Commands.UpdateSection do
   """
   @spec execute(Community.t(), atom(), map() | list() | boolean(), term(), Ecto.UUID.t()) ::
           T.domain_res(CommunityDashboard.t())
-  @pipeline operation: :dashboard_update_section, target: :community
+  @pipeline operation: :dashboard_update_section,
+            operation_ref: :command_id,
+            target: :community
   direct_pipeline execute(community, key, args, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :update, candidate) end)
 

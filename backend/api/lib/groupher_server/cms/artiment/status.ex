@@ -118,14 +118,16 @@ defmodule GroupherServer.CMS.Artiment.Status do
       query_ids(ordinary_ids, ArticlePublic, :article_id)
       |> Map.new(&{&1.article_id, &1})
 
+    working_copy_ids = Enum.uniq(ordinary_ids ++ doc_ids)
+
     working_copies =
-      if ordinary_ids == [],
+      if working_copy_ids == [],
         do: [],
         else:
           Repo.all(
             from(work in ArticleWorkingCopy,
               where:
-                work.article_id in ^ordinary_ids and work.scope_type == :default and
+                work.article_id in ^working_copy_ids and work.scope_type == :default and
                   work.scope_id == work.article_id
             )
           )
@@ -216,7 +218,9 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
             title =
               if ref.type == :doc,
-                do: (public && public.title) || "",
+                do:
+                  (public && public.title) ||
+                    (working_copies[ref.article_id] && working_copies[ref.article_id].title) || "",
                 else:
                   (public && public.title) ||
                     (working_copies[ref.article_id] && working_copies[ref.article_id].title) || ""

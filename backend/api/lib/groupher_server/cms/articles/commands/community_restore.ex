@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityRestore do
     end)
 
     confirm(fn {result, canonical} ->
-      {:ok, CommunityTrashSupport.confirmation(result, canonical, command_id)}
+      {:ok, CommunityTrashSupport.confirmation(result, canonical, command_id, :restore)}
     end)
 
     present(&CommunityTrashSupport.present/1)

@@ -20,6 +20,8 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
     CommunityDashboard,
     CommunityTag,
     ArticlePublic,
+    ArticleBinding,
+    ArticleHistoryOwner,
     AssetReplacementPlan,
     CommunityAsset
   }
@@ -42,7 +44,8 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
       post_ids = article_ids(community.id, :post)
       changelog_ids = article_ids(community.id, :changelog)
       doc_ids = article_ids(community.id, :doc)
-      article_ids = post_ids ++ changelog_ids ++ doc_ids
+      ordinary_article_ids = post_ids ++ changelog_ids
+      article_ids = ordinary_article_ids ++ doc_ids
 
       comment_ids =
         Repo.all(
@@ -51,6 +54,9 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
             select: c.id
           )
         )
+
+      ordinary_comment_ids = comment_ids_for(ordinary_article_ids)
+      doc_comment_ids = comment_ids_for(doc_ids)
 
       assert post_ids != []
       assert comment_ids != []
@@ -102,16 +108,43 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
 
       assert count(from(c in CommunityDashboard, where: c.community_id == ^community.id)) == 0
       assert count(from(c in CommunityTag, where: c.community_id == ^community.id)) == 0
-      assert count(from(c in Article, where: c.id in ^article_ids)) == 0
+      # Community destroy releases ownership, but ordinary Articles and their discussion
+      # history remain after their final Community binding is removed.
+      assert count(from(c in Article, where: c.id in ^(post_ids ++ changelog_ids))) ==
+               length(ordinary_article_ids)
+
+      assert count(from(c in Article, where: c.id in ^doc_ids)) == 0
+      assert count(from(b in ArticleBinding, where: b.community_id == ^community.id)) == 0
+
+      assert count(
+               from(owner in ArticleHistoryOwner,
+                 where: owner.community_id == ^community.id and owner.article_id in ^article_ids
+               )
+             ) == 0
+
       assert count(from(c in ArticlePublic, where: c.article_id in ^doc_ids)) == 0
-      assert count(from(c in Comment, where: c.id in ^comment_ids)) == 0
-      assert count(from(c in CommentReply, where: c.comment_id in ^comment_ids)) == 0
-      assert count(from(c in CommentUpvote, where: c.comment_id in ^comment_ids)) == 0
-      assert count(from(c in CommentUserEmotion, where: c.comment_id in ^comment_ids)) == 0
 
-      assert count(from(a in ArticleUpvote, where: a.article_id in ^article_ids)) == 0
+      assert count(from(c in Comment, where: c.id in ^ordinary_comment_ids)) ==
+               length(ordinary_comment_ids)
 
-      assert count(from(a in ArticleUserEmotion, where: a.article_id in ^article_ids)) == 0
+      assert count(from(c in Comment, where: c.id in ^doc_comment_ids)) == 0
+      assert count(from(c in CommentReply, where: c.comment_id in ^ordinary_comment_ids)) > 0
+      assert count(from(c in CommentReply, where: c.comment_id in ^doc_comment_ids)) == 0
+      assert count(from(c in CommentUpvote, where: c.comment_id in ^ordinary_comment_ids)) > 0
+      assert count(from(c in CommentUpvote, where: c.comment_id in ^doc_comment_ids)) == 0
+
+      assert count(from(c in CommentUserEmotion, where: c.comment_id in ^ordinary_comment_ids)) >
+               0
+
+      assert count(from(c in CommentUserEmotion, where: c.comment_id in ^doc_comment_ids)) == 0
+
+      assert count(from(a in ArticleUpvote, where: a.article_id in ^ordinary_article_ids)) > 0
+      assert count(from(a in ArticleUpvote, where: a.article_id in ^doc_ids)) == 0
+
+      assert count(from(a in ArticleUserEmotion, where: a.article_id in ^ordinary_article_ids)) >
+               0
+
+      assert count(from(a in ArticleUserEmotion, where: a.article_id in ^doc_ids)) == 0
 
       assert count(from(plan in AssetReplacementPlan, where: plan.community_id == ^community.id)) ==
                0
@@ -133,6 +166,12 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
         where: binding.community_id == ^community_id and article.thread == ^thread,
         select: article.id
       )
+    )
+  end
+
+  defp comment_ids_for(article_ids) do
+    Repo.all(
+      from(comment in Comment, where: comment.article_id in ^article_ids, select: comment.id)
     )
   end
 

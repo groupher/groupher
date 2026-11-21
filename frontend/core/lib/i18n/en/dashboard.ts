@@ -716,6 +716,19 @@ export default {
   'dsb.activity.event.activated': '{actor} activated {resource} “{subject}”',
   'dsb.activity.event.config_updated': '{actor} updated settings for {resource} “{subject}”',
   'dsb.activity.event.activity_exported': '{actor} exported Activity for {resource} “{subject}”',
+  'dsb.activity.event.admin_joined': '{actor} added an admin to {resource} “{subject}”',
+  'dsb.activity.event.admin_removed': '{actor} removed an admin from {resource} “{subject}”',
+  'dsb.activity.event.admin_permissions_changed':
+    '{actor} changed an admin’s permissions for {resource} “{subject}”',
+  'dsb.activity.event.admin_request_created':
+    '{actor} created an admin request for {resource} “{subject}”',
+  'dsb.activity.event.admin_request_decided':
+    '{actor} decided an admin request for {resource} “{subject}”',
+  'dsb.activity.event.admin_request_cancelled':
+    '{actor} cancelled an admin request for {resource} “{subject}”',
+  'dsb.activity.event.admin_request_expired': 'An admin request expired for {resource} “{subject}”',
+  'dsb.activity.event.docs_approval_policy_changed':
+    '{actor} changed the Docs approval policy for {resource} “{subject}”',
   'dsb.activity.action.created': 'Created',
   'dsb.activity.action.title_changed': 'Title changed',
   'dsb.activity.action.body_updated': 'Body updated',
@@ -746,6 +759,14 @@ export default {
   'dsb.activity.action.activated': 'Activated',
   'dsb.activity.action.config_updated': 'Settings updated',
   'dsb.activity.action.activity_exported': 'Activity exported',
+  'dsb.activity.action.admin_joined': 'Admin added',
+  'dsb.activity.action.admin_removed': 'Admin removed',
+  'dsb.activity.action.admin_permissions_changed': 'Admin permissions changed',
+  'dsb.activity.action.admin_request_created': 'Admin request created',
+  'dsb.activity.action.admin_request_decided': 'Admin request decided',
+  'dsb.activity.action.admin_request_cancelled': 'Admin request cancelled',
+  'dsb.activity.action.admin_request_expired': 'Admin request expired',
+  'dsb.activity.action.docs_approval_policy_changed': 'Docs approval policy changed',
   'dsb.page.not_found': 'Page not found',
   'dsb.page.proxy_error': 'Proxy configuration error.',
   'dsb.page.landing_proxy_hint': 'The landing page should be served by the landing app.',

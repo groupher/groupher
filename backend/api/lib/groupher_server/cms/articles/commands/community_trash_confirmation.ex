@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashConfirmation do
       "binding_id",
       "thread",
       "hidden_at",
+      "action",
       "command_id"
     ],
     field_types: %{
@@ -23,6 +24,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashConfirmation do
       "binding_id" => :integer,
       "thread" => :string,
       "hidden_at" => :string,
+      "action" => :string,
       "command_id" => :string
     }
 end

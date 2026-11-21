@@ -129,7 +129,15 @@ defmodule GroupherServer.Activity.Event do
     setup_failed: %{message_key: "activity.setup_failed"},
     setup_retried: %{message_key: "activity.setup_retried"},
     activated: %{message_key: "activity.activated"},
-    config_updated: %{message_key: "activity.config_updated"}
+    config_updated: %{message_key: "activity.config_updated"},
+    admin_joined: %{message_key: "activity.admin_joined"},
+    admin_removed: %{message_key: "activity.admin_removed"},
+    admin_permissions_changed: %{message_key: "activity.admin_permissions_changed"},
+    admin_request_created: %{message_key: "activity.admin_request_created"},
+    admin_request_decided: %{message_key: "activity.admin_request_decided"},
+    admin_request_cancelled: %{message_key: "activity.admin_request_cancelled"},
+    admin_request_expired: %{message_key: "activity.admin_request_expired"},
+    docs_approval_policy_changed: %{message_key: "activity.docs_approval_policy_changed"}
   }
 
   @doc """

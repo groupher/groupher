@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Communities.Moderators.Setup do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Communities
-  alias CMS.Model.{Community, CommunityAdmin, CommunityModerator}
+  alias CMS.Model.{Community, CommunityModerator}
   alias Helper.{ORM, T}
 
   @doc "Adds the first root moderator while a community is being created."
@@ -33,18 +33,13 @@ defmodule GroupherServer.CMS.Communities.Moderators.Setup do
     with {:ok, moderator} <-
            ORM.create(CommunityModerator, %{
              user_id: target_user.id,
-             community_id: community.id
+             community_id: community.id,
+             is_lord: true,
+             permissions: %{}
            }),
-         {:ok, admin} <-
-           Repo.get_by!(CommunityAdmin,
-             user_id: target_user.id,
-             community_id: community.id
-           )
-           |> CommunityAdmin.changeset(%{is_lord: true, permissions: %{}})
-           |> Repo.update(),
          {:ok, _community} <-
            Communities.Count.update(community, target_user, :moderators_count, :inc) do
-      {:ok, %{moderator | is_root: admin.is_lord}}
+      {:ok, %{moderator | is_root: moderator.is_lord}}
     end
   end
 end

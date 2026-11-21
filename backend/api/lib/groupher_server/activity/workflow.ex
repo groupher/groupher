@@ -46,6 +46,14 @@ defmodule GroupherServer.Activity.Workflow do
           | :lifecycle_reconciled
           | :config_updated
           | :activity_exported
+          | :admin_joined
+          | :admin_removed
+          | :admin_permissions_changed
+          | :admin_request_created
+          | :admin_request_decided
+          | :admin_request_cancelled
+          | :admin_request_expired
+          | :docs_approval_policy_changed
 
   @doc """
   Appends one validated business event to its resource-specific Activity stream.

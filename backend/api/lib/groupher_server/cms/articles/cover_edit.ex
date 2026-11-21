@@ -48,9 +48,11 @@ defmodule GroupherServer.CMS.Articles.CoverEdit do
       id: edit.id,
       canvas_width: edit.canvas_width,
       canvas_height: edit.canvas_height,
-      version: edit.format_version,
+      format_version: edit.format_version,
       light: theme(edit.light),
-      dark: theme(edit.dark)
+      dark: theme(edit.dark),
+      inserted_at: edit.inserted_at,
+      updated_at: edit.updated_at
     }
   end
 

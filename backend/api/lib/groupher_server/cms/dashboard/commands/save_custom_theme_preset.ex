@@ -26,7 +26,9 @@ defmodule GroupherServer.CMS.Dashboard.Commands.SaveCustomThemePreset do
   """
   @spec execute(Community.t(), map(), term(), Ecto.UUID.t()) ::
           T.domain_res(CommunityDashboard.t())
-  @pipeline operation: :dashboard_save_custom_theme_preset, target: :community
+  @pipeline operation: :dashboard_save_custom_theme_preset,
+            operation_ref: :command_id,
+            target: :community
   direct_pipeline execute(community, args, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :update, candidate) end)
 

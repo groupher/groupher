@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.CMS.Articles.CommunityTrashCommandTest do
     restore = """
     mutation Restore($ref: String!, $article: ID!, $id: ID!, $command: ID!) {
       restoreCommunityArticle(communityRef: $ref, thread: POST, articleId: $article,
-        id: $id, recordRevision: "1", commandId: $command) { id commandId }
+        id: $id, recordRevision: "1", commandId: $command) { id commandId publicVisible }
     }
     """
 
@@ -83,6 +83,8 @@ defmodule GroupherServer.Test.CMS.Articles.CommunityTrashCommandTest do
 
     assert {:ok, %{data: %{"restoreCommunityArticle" => restored}}} =
              Absinthe.run(restore, Schema, variables: restore_args, context: %{cur_user: actor})
+
+    assert restored["publicVisible"]
 
     assert {:ok, %{data: %{"restoreCommunityArticle" => ^restored}}} =
              Absinthe.run(restore, Schema, variables: restore_args, context: %{cur_user: actor})

@@ -39,9 +39,10 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
     end
   end
 
-  def confirmation(%{row: row}, article, command_id) do
+  def confirmation(%{row: row}, article, command_id, action) do
     %Confirmation{
       data: %{
+        "action" => Atom.to_string(action),
         "id" => row.id,
         "article_id" => row.article_id,
         "community_id" => row.community_id,
@@ -55,7 +56,8 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
 
   def present(%Confirmation{data: data}) do
     with {:ok, hidden_at, 0} <- DateTime.from_iso8601(data["hidden_at"]),
-         {:ok, thread} <- thread(data["thread"]) do
+         {:ok, thread} <- thread(data["thread"]),
+         {:ok, action} <- action(data["action"]) do
       {:ok,
        %{
          id: data["id"],
@@ -64,7 +66,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
          binding_id: data["binding_id"],
          thread: thread,
          status: :effective,
-         public_visible: false,
+         public_visible: action == :restore,
          record_revision: "1",
          created_at: hidden_at,
          hidden_at: hidden_at,
@@ -79,4 +81,8 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
   defp thread("blog"), do: {:ok, :blog}
   defp thread("changelog"), do: {:ok, :changelog}
   defp thread(_), do: {:error, :unsupported_thread}
+
+  defp action("hide"), do: {:ok, :hide}
+  defp action("restore"), do: {:ok, :restore}
+  defp action(_), do: {:error, :unsupported_action}
 end

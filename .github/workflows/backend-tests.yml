@@ -61,17 +61,10 @@ jobs:
       - name: Install dependencies
         run: mix deps.get
 
-  test:
-    name: Run tests (partition ${{ matrix.partition }}/8)
+  validate:
+    name: Validate backend
     runs-on: ubuntu-latest
     needs: setup
-    strategy:
-      fail-fast: false
-      matrix:
-        partition: [1, 2, 3, 4, 5, 6, 7, 8]
-    env:
-      MIX_TEST_PARTITION: ${{ matrix.partition }}
-      TEST_DB_NAME: groupher_server_test_${{ matrix.partition }}
     defaults:
       run:
         working-directory: backend/api
@@ -145,6 +138,61 @@ jobs:
 
       - name: Verify migrations from a fresh database
         run: bash scripts/fresh_db_migrations.sh
+
+  test:
+    name: Run tests (partition ${{ matrix.partition }}/8)
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      MIX_TEST_PARTITION: ${{ matrix.partition }}
+      TEST_DB_NAME: groupher_server_test_${{ matrix.partition }}
+    defaults:
+      run:
+        working-directory: backend/api
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: '29.0.6'
+          elixir-version: '1.20.4'
+
+      - name: Restore cached deps
+        uses: actions/cache@v4
+        with:
+          path: backend/api/deps
+          key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          restore-keys: |
+            ${{ runner.OS }}-otp29-elixir20-mix-
+
+      - name: Restore cached build
+        uses: actions/cache@v4
+        with:
+          path: backend/api/_build
+          key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          restore-keys: |
+            ${{ runner.OS }}-otp29-elixir20-build-
+
+      - name: Ensure dependencies are synced
+        run: mix deps.get
+
+      - name: Start PostgreSQL with pg_roaringbitmap
+        working-directory: ${{ github.workspace }}
+        run: |
+          docker build -t groupher-postgres:15-roaringbitmap -f ops/postgres/Dockerfile ops/postgres
+          docker run --detach --name groupher-postgres --publish 5432:5432 \
+            --env POSTGRES_USER=postgres \
+            --env POSTGRES_PASSWORD=postgres \
+            --env POSTGRES_DB=groupher_server_test \
+            groupher-postgres:15-roaringbitmap
+          until docker exec groupher-postgres pg_isready -U postgres -d groupher_server_test; do sleep 1; done
 
       - uses: pnpm/setup@v1
         with:

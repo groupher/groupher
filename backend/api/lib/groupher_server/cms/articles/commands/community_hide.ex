@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityHide do
     end)
 
     confirm(fn {result, canonical} ->
-      {:ok, CommunityTrashSupport.confirmation(result, canonical, command_id)}
+      {:ok, CommunityTrashSupport.confirmation(result, canonical, command_id, :hide)}
     end)
 
     present(&CommunityTrashSupport.present/1)
