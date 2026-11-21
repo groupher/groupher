@@ -13,13 +13,12 @@ defmodule GroupherServer.Messaging.Notices.Query do
 
   alias GroupherServer.Accounts
 
-  alias GroupherServer.{Messaging, Repo}
+  alias GroupherServer.{CMS, Messaging, Pagi, Repo}
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.Author
+  alias CMS.Model.Author
   alias Messaging.Model.Notice
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order}
-  alias GroupherServer.{Pagi}
   alias Pagi.Params
 
   @cut_from_users_count 3

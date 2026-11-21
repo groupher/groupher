@@ -224,8 +224,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.CreateRequest do
          _type,
          _proposal,
          _actor
-       ),
-       do: {:ok, request}
+       ) do
+    {:ok, request}
+  end
 
   defp create_or_existing(locked, nil, subject_id, type, proposal, actor) do
     attrs = %{
@@ -249,8 +250,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.CreateRequest do
          _actor,
          _operation,
          _event_index
-       ),
-       do: {:ok, :pass}
+       ) do
+    {:ok, :pass}
+  end
 
   defp maybe_enqueue_created(request, nil, owner, actor, operation, event_index) do
     recipient = if request.type == :invite, do: request.subject_user_id, else: owner.id

@@ -5,8 +5,8 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Effects do
       request command -> Outbox intent -> Messaging Notice after commit
   """
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Model.{ArticleCoAuthorEvent, ArticleCoAuthorRequest}
   alias CMS.Outbox.DedupeKey
 
@@ -89,8 +89,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Effects do
   defp event_actor(:system), do: {:ok, :system, nil}
   defp event_actor(_), do: {:error, :invalid_article_co_author_actor}
 
-  defp actor_data(%User{id: id}) when is_integer(id) and id > 0,
-    do: {:ok, %{type: :user, user_id: id}}
+  defp actor_data(%User{id: id}) when is_integer(id) and id > 0 do
+    {:ok, %{type: :user, user_id: id}}
+  end
 
   defp actor_data(:system), do: {:ok, %{type: :system}}
   defp actor_data(_), do: {:error, :invalid_article_co_author_actor}

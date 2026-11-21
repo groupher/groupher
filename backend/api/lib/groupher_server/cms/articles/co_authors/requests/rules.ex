@@ -5,8 +5,8 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Requests.Rules do
       locked request -> Rules -> command-owned transition
   """
 
-  alias GroupherServer.CMS.Model.ArticleCoAuthorRequest
-  alias GroupherServer.CMS.Passport.Catalog
+  alias GroupherServer.CMS
+  alias CMS.{Model.ArticleCoAuthorRequest, Passport.Catalog}
 
   @doc "Validates and normalizes grantable Article permissions."
   def proposal(permissions), do: Catalog.validate_permissions(:article, permissions)
@@ -45,16 +45,20 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Requests.Rules do
         revision,
         %DateTime{} = now
       ) do
-    if DateTime.compare(expires_at, now) == :gt,
-      do: {:ok, :pass},
-      else: {:error, :request_expired}
+    if DateTime.compare(expires_at, now) == :gt do
+      {:ok, :pass}
+    else
+      {:error, :request_expired}
+    end
   end
 
-  def pending(%ArticleCoAuthorRequest{status: :pending}, _revision, %DateTime{}),
-    do: {:error, :request_revision_conflict}
+  def pending(%ArticleCoAuthorRequest{status: :pending}, _revision, %DateTime{}) do
+    {:error, :request_revision_conflict}
+  end
 
-  def pending(%ArticleCoAuthorRequest{}, _revision, %DateTime{}),
-    do: {:error, :request_already_decided}
+  def pending(%ArticleCoAuthorRequest{}, _revision, %DateTime{}) do
+    {:error, :request_already_decided}
+  end
 
   def pending(_, _, _), do: {:error, :invalid_request}
 end

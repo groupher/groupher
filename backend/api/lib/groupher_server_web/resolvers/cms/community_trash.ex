@@ -57,8 +57,9 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityTrash do
     end
   end
 
-  def restore(_, _, _),
-    do: {:error, CMS.articles_error_cat_unsupported_community_trash_thread()}
+  def restore(_, _, _) do
+    {:error, CMS.articles_error_cat_unsupported_community_trash_thread()}
+  end
 
   defp match_thread(id, thread) do
     with {:ok, true} <- CommunityTrashQuery.article_thread_matches?(id, thread) do

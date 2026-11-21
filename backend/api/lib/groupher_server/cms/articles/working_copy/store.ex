@@ -368,8 +368,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     end
   end
 
-  defp update_working_body(%ArticleBody{} = body, attrs) when map_size(attrs) == 0,
-    do: {:ok, body}
+  defp update_working_body(%ArticleBody{} = body, attrs) when map_size(attrs) == 0 do
+    {:ok, body}
+  end
 
   defp update_working_body(%ArticleBody{} = body, attrs) do
     body |> ArticleBody.changeset(attrs) |> Repo.update()

@@ -5,8 +5,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleCoAuthors do
       GraphQL -> CMS Context -> Article co-author facts and commands
   """
 
-  alias GroupherServer.CMS
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
 
   def members(_root, %{article_id: article_id} = args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_members(article_id, actor, Map.get(args, :pagi))

@@ -18,8 +18,9 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
     end
   end
 
-  def effects(%{changed?: false}, _article, _community, _actor, _action, _operation_ref),
-    do: {:ok, :pass}
+  def effects(%{changed?: false}, _article, _community, _actor, _action, _operation_ref) do
+    {:ok, :pass}
+  end
 
   def effects(%{binding: binding}, article, community, actor, action, operation_ref) do
     resource = Map.put(article, :community, community)

@@ -95,8 +95,10 @@ defmodule GroupherServer.CMS.Model.ArticleCoAuthorEvent do
     type = get_field(changeset, :type)
     member_id = get_field(changeset, :member_id)
 
-    if type in [:join, :remove, :exit, :grant, :revoke] and is_nil(member_id),
-      do: add_error(changeset, :member_id, "is required for member events"),
-      else: changeset
+    if type in [:join, :remove, :exit, :grant, :revoke] and is_nil(member_id) do
+      add_error(changeset, :member_id, "is required for member events")
+    else
+      changeset
+    end
   end
 end

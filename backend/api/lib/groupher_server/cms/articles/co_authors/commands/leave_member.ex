@@ -6,8 +6,8 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.LeaveMember do
   """
 
   use GroupherServer.CommandPipeline, adapter: GroupherServer.CMS.CommandPipelineAdapter
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Articles.CoAuthors.Commands.RemoveMember
   alias CMS.Model.{Article, ArticleCoAuthor}
 
@@ -97,8 +97,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.LeaveMember do
 
   @doc "Removes the actor's current Article co-author membership."
   def execute(%Article{} = article, revision, %User{} = actor, command_id)
-      when is_integer(revision) and revision > 0 and is_binary(command_id),
-      do: run(article, revision, actor, command_id)
+      when is_integer(revision) and revision > 0 and is_binary(command_id) do
+    run(article, revision, actor, command_id)
+  end
 
   def execute(_, _, _, _), do: {:error, :invalid_article_co_author_exit}
 

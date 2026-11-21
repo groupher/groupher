@@ -5,9 +5,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.ArticleCoAuthorRequest do
       Oban job -> CMS -> ArticleCoAuthorRequest workflow -> Messaging -> mailbox cache
   """
 
-  alias GroupherServer.{Accounts, ErrorCat, Messaging}
-  alias GroupherServer.CMS.ErrorCat, as: CMSErrorCat
-  alias GroupherServer.CMS.Outbox
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Messaging}
+  alias CMS.ErrorCat, as: CMSErrorCat
+  alias CMS.Outbox
 
   @doc "Executes one Article co-author request notice under Outbox delivery fencing."
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do

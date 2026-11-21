@@ -6,8 +6,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.Passport do
       PermissionRegistry -> public Passport rules
   """
 
-  alias GroupherServer.CMS
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
   alias Helper.PermissionRegistry
 
   def current_global(_root, _args, %{context: %{cur_user: %User{} = user}}) do

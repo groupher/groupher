@@ -73,17 +73,20 @@ defmodule GroupherServer.CMS.Articles.Query.Locator do
     {:error, ArticleErrorCat.batch_limit_exceeded(%{limit: @max_paths, actual: length(paths)})}
   end
 
-  def resolve(_paths, _actor, _opts),
-    do: {:error, CMS.ErrorCat.invalid_body("Article paths must be a list")}
+  def resolve(_paths, _actor, _opts) do
+    {:error, CMS.ErrorCat.invalid_body("Article paths must be a list")}
+  end
 
   defp validate_mode(:public, _actor), do: {:ok, :pass}
   defp validate_mode(:admin, actor) when not is_nil(actor), do: {:ok, :pass}
 
-  defp validate_mode(:admin, _actor),
-    do: {:error, CMS.ErrorCat.invalid_body("admin Article batch requires actor")}
+  defp validate_mode(:admin, _actor) do
+    {:error, CMS.ErrorCat.invalid_body("admin Article batch requires actor")}
+  end
 
-  defp validate_mode(_mode, _actor),
-    do: {:error, CMS.ErrorCat.invalid_body("unsupported Article batch mode")}
+  defp validate_mode(_mode, _actor) do
+    {:error, CMS.ErrorCat.invalid_body("unsupported Article batch mode")}
+  end
 
   defp parse_paths(paths) do
     Enum.flat_map(paths, fn path ->
@@ -301,8 +304,9 @@ defmodule GroupherServer.CMS.Articles.Query.Locator do
 
   defp scope_context(:doc, mode), do: DocContext.public(policy_mode: policy_mode(mode))
 
-  defp scope_context(thread, mode),
-    do: ArticleContext.public(thread, policy_mode: policy_mode(mode))
+  defp scope_context(thread, mode) do
+    ArticleContext.public(thread, policy_mode: policy_mode(mode))
+  end
 
   defp policy_mode(:admin), do: :owner
   defp policy_mode(:public), do: :public

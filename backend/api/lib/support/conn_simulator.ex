@@ -237,9 +237,11 @@ defmodule GroupherServer.Test.ConnSimulator do
     Enum.reduce(map, %{}, fn {rule, value}, acc ->
       rule = to_string(rule)
 
-      if global_permission?(rule) and value == true,
-        do: Map.put(acc, rule, true),
-        else: acc
+      if global_permission?(rule) and value == true do
+        Map.put(acc, rule, true)
+      else
+        acc
+      end
     end)
   end
 
@@ -273,6 +275,7 @@ defmodule GroupherServer.Test.ConnSimulator do
     end
   end
 
-  defp stringify_keys(map) when is_map(map),
-    do: Map.new(map, fn {key, value} -> {to_string(key), value} end)
+  defp stringify_keys(map) when is_map(map) do
+    Map.new(map, fn {key, value} -> {to_string(key), value} end)
+  end
 end

@@ -5,9 +5,8 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
       CMS caller -> CoAuthors facade -> Article request, membership, and Passport rules
   """
 
-  alias GroupherServer.Accounts
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
   alias CMS.Articles.CoAuthors.{Query, Requests}
   alias CMS.Articles.CoAuthors.Commands.{
     CancelRequest,
@@ -131,11 +130,13 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
          %ArticleCoAuthorRequest{type: :invite, proposed_permissions: proposed},
          :accept,
          nil
-       ),
-       do: {:ok, proposed}
+       ) do
+    {:ok, proposed}
+  end
 
-  defp approved_permissions(_request, :accept, permissions) when is_map(permissions),
-    do: {:ok, permissions}
+  defp approved_permissions(_request, :accept, permissions) when is_map(permissions) do
+    {:ok, permissions}
+  end
 
   defp approved_permissions(_request, :reject, _permissions), do: {:ok, nil}
   defp approved_permissions(_, _, _), do: {:error, :invalid_request_approval}

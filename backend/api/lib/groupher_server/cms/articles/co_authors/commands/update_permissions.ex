@@ -6,8 +6,8 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.UpdatePermissions do
   """
 
   use GroupherServer.CommandPipeline, adapter: GroupherServer.CMS.CommandPipelineAdapter
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Articles.CoAuthors.{Effects, Locks}
   alias CMS.Model.{Article, ArticleCoAuthor, Author}
   alias CMS.Passport.Scope.ArticleGrant
@@ -62,8 +62,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.UpdatePermissions do
   @doc "Replaces the grantable Article permissions for one current member."
   def execute(%Article{} = article, member_id, revision, permissions, %User{} = actor, command_id)
       when is_binary(member_id) and is_integer(revision) and revision > 0 and
-             is_map(permissions) and is_binary(command_id),
-      do: run(article, member_id, revision, permissions, actor, command_id)
+             is_map(permissions) and is_binary(command_id) do
+    run(article, member_id, revision, permissions, actor, command_id)
+  end
 
   def execute(_, _, _, _, _, _), do: {:error, :invalid_article_co_author_permissions}
 
@@ -98,15 +99,16 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.UpdatePermissions do
 
   defp revoke_if_needed(_subject, _scope, [], _revision), do: {:ok, nil}
 
-  defp revoke_if_needed(subject, scope, removals, revision),
-    do: CMS.Passport.revoke_in_transaction(subject, scope, removals, revision)
+  defp revoke_if_needed(subject, scope, removals, revision) do
+    CMS.Passport.revoke_in_transaction(subject, scope, removals, revision)
+  end
 
   defp grant_if_needed(_subject, _scope, [], nil), do: {:ok, nil}
   defp grant_if_needed(_subject, _scope, [], member), do: {:ok, member}
 
-  defp grant_if_needed(subject, scope, additions, nil),
-    do:
+  defp grant_if_needed(subject, scope, additions, nil) do
       CMS.Passport.grant_in_transaction(subject, scope, Map.new(additions), scope.member.revision)
+  end
 
   defp grant_if_needed(subject, scope, additions, member) do
     updated_scope = %{scope | member: member}
@@ -156,6 +158,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.UpdatePermissions do
 
   defp maybe_event(events, _type, [], _before, _after), do: events
 
-  defp maybe_event(events, type, _changed, before, after_permissions),
-    do: events ++ [{type, before, after_permissions}]
+  defp maybe_event(events, type, _changed, before, after_permissions) do
+    events ++ [{type, before, after_permissions}]
+  end
 end

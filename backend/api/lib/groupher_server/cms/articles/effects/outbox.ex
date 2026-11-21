@@ -27,8 +27,6 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
     DocsRelease
   }
 
-  alias CMS.Model.Embeds.User, as: UserEmbed
-
   alias Accounts.Model.User
 
   @doc "Records the first selected public Snapshot for an admitted Binding."
@@ -234,7 +232,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
             title: snapshot.title || "",
             digest: Map.get(snapshot, :digest) || snapshot.title || "",
             author_id: article.author_id,
-            author: author |> UserEmbed.from_account_user() |> Map.from_struct(),
+            author: author |> CMS.Model.Embeds.User.from_account_user() |> Map.from_struct(),
             published_by_id: actor_id,
             notify_user_ids: recipients
           }

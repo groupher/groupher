@@ -53,8 +53,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.CancelRequest do
   @doc "Cancels a pending request by its initiator, subject, or current Article manager."
   def execute(%Article{} = article, request_id, revision, %User{} = actor, command_id)
       when is_binary(request_id) and is_integer(revision) and revision > 0 and
-             is_binary(command_id),
-      do: run(article, request_id, revision, actor, command_id)
+             is_binary(command_id) do
+    run(article, request_id, revision, actor, command_id)
+  end
 
   def execute(_, _, _, _, _), do: {:error, :invalid_article_co_author_request}
 
@@ -105,9 +106,11 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.CancelRequest do
   end
 
   defp authorize_cancel_locked(request, actor, owner) do
-    if actor.id in [request.subject_user_id, request.created_by_id, owner.id],
-      do: {:ok, :pass},
-      else: {:error, :permission_denied}
+    if actor.id in [request.subject_user_id, request.created_by_id, owner.id] do
+      {:ok, :pass}
+    else
+      {:error, :permission_denied}
+    end
   end
 
   defp cancel_or_expire(request, revision, actor, owner, operation) do

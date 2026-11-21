@@ -5,7 +5,8 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Requests do
       command -> CoAuthors.Requests -> normalized permissions and valid transitions
   """
 
-  alias GroupherServer.CMS.Articles.CoAuthors.Requests.Rules
+  alias GroupherServer.CMS
+  alias CMS.Articles.CoAuthors.Requests.Rules
 
   @doc "Validates and normalizes grantable Article permissions."
   defdelegate proposal(permissions), to: Rules

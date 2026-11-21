@@ -6,8 +6,8 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember do
   """
 
   use GroupherServer.CommandPipeline, adapter: GroupherServer.CMS.CommandPipelineAdapter
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Articles.CoAuthors.{Effects, Locks}
   alias CMS.Model.{Article, ArticleCoAuthor, ArticleCoAuthorRequest, Author}
 
@@ -57,8 +57,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember do
   @doc "Removes one current member when the actor manages the Article."
   def execute(%Article{} = article, member_id, revision, %User{} = actor, command_id)
       when is_binary(member_id) and is_integer(revision) and revision > 0 and
-             is_binary(command_id),
-      do: run(article, member_id, revision, actor, command_id)
+             is_binary(command_id) do
+    run(article, member_id, revision, actor, command_id)
+  end
 
   def execute(_, _, _, _, _), do: {:error, :invalid_article_co_author_removal}
 

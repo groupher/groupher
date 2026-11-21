@@ -131,9 +131,11 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.DecideRequest do
   end
 
   defp authorize_decision(%ArticleCoAuthorRequest{type: :invite} = request, actor, owner) do
-    if actor.id == request.subject_user_id and request.created_by_id == owner.id,
-      do: {:ok, :pass},
-      else: {:error, :permission_denied}
+    if actor.id == request.subject_user_id and request.created_by_id == owner.id do
+      {:ok, :pass}
+    else
+      {:error, :permission_denied}
+    end
   end
 
   defp authorize_decision(%ArticleCoAuthorRequest{type: :apply}, actor, owner) do
@@ -242,8 +244,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.DecideRequest do
   defp approval(request, :accept, approved), do: Rules.approve(request, approved)
   defp approval(_request, :reject, nil), do: {:ok, nil}
 
-  defp apply_approval(locked, request, :reject, nil),
-    do: {:ok, {current_member(locked, request.subject_user_id), nil}}
+  defp apply_approval(locked, request, :reject, nil) do
+    {:ok, {current_member(locked, request.subject_user_id), nil}}
+  end
 
   defp apply_approval(locked, request, :accept, granted) do
     subject = Enum.find(locked.users, &(&1.id == request.subject_user_id))
@@ -310,8 +313,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.DecideRequest do
          _after,
          _request,
          _operation
-       ),
-       do: {:ok, :pass}
+       ) do
+    {:ok, :pass}
+  end
 
   defp record_member_event(
          {member, type, before_permissions},

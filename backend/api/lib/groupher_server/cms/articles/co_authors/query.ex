@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Query do
   import Ecto.Query
 
   alias GroupherServer.{Accounts, CMS, Pagi, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
   alias CMS.Model.{Article, ArticleCoAuthor, ArticleCoAuthorRequest, Author}
   alias Helper.ORM
   alias Helper.ORM.Pagi.Order
@@ -211,8 +211,9 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Query do
     if manager?(article, actor), do: {:ok, :pass}, else: {:error, :permission_denied}
   end
 
-  defp maybe_preload_author(%Article{author: %Ecto.Association.NotLoaded{}} = article),
-    do: Repo.preload(article, author: :user)
+  defp maybe_preload_author(%Article{author: %Ecto.Association.NotLoaded{}} = article) do
+    Repo.preload(article, author: :user)
+  end
 
   defp maybe_preload_author(%Article{} = article), do: article
 

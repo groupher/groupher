@@ -337,17 +337,21 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp category_passport_action(:category_set), do: Const.passport_action(:category_set)
   defp category_passport_action(:category_unset), do: Const.passport_action(:category_unset)
 
-  defp community_tag_passport_action(:community_tag_create),
-    do: CMS.GateAction.community_tag_create()
+  defp community_tag_passport_action(:community_tag_create) do
+    CMS.GateAction.community_tag_create()
+  end
 
-  defp community_tag_passport_action(:community_tag_update),
-    do: CMS.GateAction.community_tag_update()
+  defp community_tag_passport_action(:community_tag_update) do
+    CMS.GateAction.community_tag_update()
+  end
 
-  defp community_tag_passport_action(:community_tag_delete),
-    do: CMS.GateAction.community_tag_delete()
+  defp community_tag_passport_action(:community_tag_delete) do
+    CMS.GateAction.community_tag_delete()
+  end
 
-  defp community_tag_passport_action(:community_tag_reindex),
-    do: CMS.GateAction.community_tag_reindex()
+  defp community_tag_passport_action(:community_tag_reindex) do
+    CMS.GateAction.community_tag_reindex()
+  end
 
   defp docs_passport_action(:docs_queue_preview), do: CMS.GateAction.doc_queue_preview()
   defp docs_passport_action(:docs_queue_write), do: CMS.GateAction.doc_queue_write()

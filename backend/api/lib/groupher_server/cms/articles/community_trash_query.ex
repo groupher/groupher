@@ -36,8 +36,9 @@ defmodule GroupherServer.CMS.Articles.CommunityTrashQuery do
     end
   end
 
-  def page(%Community{}, _actor, thread, _pagi) when thread in [:doc, :ticket],
-    do: {:error, ErrorCat.unsupported_community_trash_thread()}
+  def page(%Community{}, _actor, thread, _pagi) when thread in [:doc, :ticket] do
+    {:error, ErrorCat.unsupported_community_trash_thread()}
+  end
 
   def page(_, _, _, _), do: {:error, ErrorCat.unsupported_community_trash_thread()}
 
@@ -57,8 +58,9 @@ defmodule GroupherServer.CMS.Articles.CommunityTrashQuery do
     end
   end
 
-  def get(%Community{}, _actor, _thread, _id),
-    do: {:error, ErrorCat.unsupported_community_trash_thread()}
+  def get(%Community{}, _actor, _thread, _id) do
+    {:error, ErrorCat.unsupported_community_trash_thread()}
+  end
 
   def get(_, _, _, _), do: {:error, ErrorCat.unsupported_community_trash_thread()}
 
