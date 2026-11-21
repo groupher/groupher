@@ -14,48 +14,41 @@ Content Publisher and the Content Import proxy also require a service credential
 
 ### Local Dash service credentials
 
-Initialize matching development credentials once from the repository root:
+Dev Hub prepares the service credential from the single private state at
+`local/dev-hub/.data/local-environment/state.json`. It registers the matching hash with local Auth
+and injects only Dash's credential when Dash starts. It does not write either
+`backend/auth/.env.local` or `frontend/dash/.env.local`.
+
+Start and restart Auth and Dash through Dev Hub so both processes receive the same identity:
 
 ```bash
-pnpm devhub setup-auth
+pnpm devhub start auth
+pnpm devhub start dash
 ```
 
-This requires an initialized `backend/auth/.env.local`. It generates a random secret into the ignored
-`frontend/dash/.env.local`, registers its hash in Auth's local extra client registry, and adds the two
-resource mappings used by Dash. Existing provider, session, other client, and resource configuration
-is preserved. Both files use private `0600` permissions; the command never prints credential values.
-Repeated setup reuses the same secret. It refuses production mode and conflicts with a user-owned
-Dash registration instead of replacing it.
+The compatibility command `pnpm devhub setup-auth` runs the same idempotent preparation path; it
+is not a separate credential writer. Existing credentials in legacy files must be imported with the
+explicit migration `--check`/`--apply` flow before first initialization. Ordinary starts do not
+rewrite application env files.
 
-The local client has browser Content Publisher capabilities and `docs:import:proxy`. It has no import
-history-origin capability or Auth session administration scope. User sessions and Gate permissions
-remain independent checks.
-
-Dev Hub loads only the client ID and secret from Dash's file. Issuer and network endpoints stay in
-the service definition. The existing precedence is definition > parent env > credential fallback;
-reconcile any parent credential override with Auth instead of disabling verification.
-
-After initial setup, restart Auth and Dash through Hub. If Hub predates its Dash credential fallback,
-normally restart Hub first and restore the previously active services through default start chains.
-Later starts reload the credential file; manual secret entry is not needed. Token issuance verifies
-the service channel, not a completed content publishing or import business flow.
+The Dash service has browser Content Publisher capabilities and `docs:import:proxy`. It has no
+import history-origin capability or Auth session administration scope. User sessions and Gate
+permissions remain independent checks.
 
 ### Browser login enablement
 
-The checked-in `backend/auth/.env.development` enables this for local development. Restart the Auth server after changing the flag:
-
-```dotenv
-AUTH_LOCAL_LOGIN_ENABLED=true
-```
-
-The development config also allowlists the current Dash origin, `http://dash.groupher.localhost:3005`, for the Auth CSRF check. The Node Auth server registers the endpoint only when this flag is exactly `true` and `NODE_ENV` is not `production`. The endpoint accepts requests only on loopback or `*.localhost` Auth hosts. The Cloudflare Worker does not register the local login handler. Keep the example configuration disabled.
+Dev Hub resolves `AUTH_LOCAL_LOGIN_ENABLED=true` for the local Auth service. The Node Auth server
+registers the endpoint only with that flag outside production; the endpoint accepts only loopback or
+`*.localhost` Auth hosts. The Cloudflare Worker does not register the local login handler. Managed
+Auth does not load application dotenv files, so no per-app `.env` edit is needed. Start or restart
+Auth through Dev Hub after changing its resolved local configuration.
 
 ## Sign in from a local browser
 
 Open the Dash page, open its browser developer console, and run:
 
 ```js
-await fetch('http://auth.groupher.localhost:3004/api/auth/test-login', {
+await fetch('https://auth.groupher.localhost/api/auth/test-login', {
   method: 'POST',
   credentials: 'include',
   headers: {
@@ -70,12 +63,12 @@ The successful response is `204`; the browser stores the usual HttpOnly cookies 
 
 ## Local Passport admin acceptance
 
-The ordinary `local-debug` account remains unprivileged. For local P2 browser acceptance, a separate `local-passport-admin` identity is available only when both `AUTH_LOCAL_LOGIN_ENABLED=true` and `AUTH_LOCAL_ADMIN_LOGIN_ENABLED=true` are set in the non-production Node Auth server. This flag is false in the example configuration and must never be enabled in production. Restart Auth after changing it.
+The ordinary `local-debug` account remains unprivileged. For local P2 browser acceptance, a separate `local-passport-admin` identity is available only when the non-production Dev Hub process is launched with `DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED=true`; the Hub resolves `AUTH_LOCAL_ADMIN_LOGIN_ENABLED=true` for Auth, and the Auth endpoint also requires `AUTH_LOCAL_LOGIN_ENABLED=true`. The opt-in is false by default and has no effect on production or the Cloudflare Worker. Restart Hub with the opt-in, then restart Auth through Hub.
 
 From the local Dash origin, use the same request as above with this URL:
 
 ```js
-await fetch('http://auth.groupher.localhost:3004/api/auth/test-admin-login', {
+await fetch('https://auth.groupher.localhost/api/auth/test-admin-login', {
   method: 'POST',
   credentials: 'include',
   headers: {

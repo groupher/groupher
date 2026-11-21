@@ -12,7 +12,10 @@
 import { serve } from '@hono/node-server'
 
 import './env'
-import app from './app'
+import { createApp } from './app'
+import { createLocalDevLoginHandlers } from './local-dev-login'
+
+const app = createApp(createLocalDevLoginHandlers())
 
 const port = Number.parseInt(process.env.PORT || '3004', 10)
 const hostname =
