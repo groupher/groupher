@@ -12,7 +12,7 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
   alias GroupherServer.{Accounts, AlertWall, CMS, FrontDesk}
   alias Accounts.Model.User
   alias AlertWall.Model.UserReport
-  alias CMS.Model.{Article, Comment, Community}
+  alias CMS.Model.{Comment, Community}
 
   @doc "Reads a validated opinion's JSON keys without depending on atom-keyed fixtures."
   def sus_note_field(note, _args, %{definition: %{schema_node: %{identifier: field}}}) do
@@ -170,14 +170,12 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
        when is_map(path) do
     with {:ok, projection} <- FrontDesk.article(path, actor),
          article_id when is_binary(article_id) <- Map.get(projection, :id),
-         {:ok, %Community{} = community} <- FrontDesk.community(path.community, actor, []),
-         {:ok, %Article{} = article} <-
-           FrontDesk.article(article_id, mode: :internal, view: :command_context) do
+         {:ok, %Community{} = community} <- FrontDesk.community(path.community, actor, []) do
       {:ok,
        %{
          owner: :cms,
          target_type: :article,
-         target_id: article.id,
+         target_id: article_id,
          observed_version: Map.get(input, :observed_version),
          community_id: community.id
        }}

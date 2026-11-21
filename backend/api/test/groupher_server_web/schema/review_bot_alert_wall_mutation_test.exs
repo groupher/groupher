@@ -5,6 +5,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   alias GroupherServer
   alias GroupherServer.{AlertWall, Repo}
+  alias GroupherServer.CMS.Model.{Community, CommunityAdmin, GlobalPassport}
   alias AlertWall.Model.Item
   alias GroupherServerWeb.Schema
 
@@ -84,7 +85,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
       )
 
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.decide" => true})
 
     mutation = """
     mutation Recheck($target: ArtimentReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
@@ -311,7 +312,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   test "artimentReviewHistory exposes a failed check for manual recheck" do
     {_community, post, _attrs, reviewer} = mock_article(:post)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.read" => true})
 
     request =
       Repo.one!(
@@ -366,7 +367,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
       )
 
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.read" => true})
 
     query = """
     query History($target: ArtimentReviewTargetInput!) {
@@ -422,14 +423,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
   test "updateReviewBotConfig succeeds through GraphQL" do
     {:ok, community} = db_insert(:community)
     {:ok, user} = db_insert(:user)
-
-    reviewer = %{
-      user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.configure" => true}}
-        }
-    }
+    reviewer = put_community_permission(user, community.slug, "review.configure")
 
     mutation = """
     mutation Update($input: UpdateReviewBotConfigInput!, $commandId: ID!) {
@@ -466,7 +460,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   test "resolveAlertItem succeeds through GraphQL" do
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.decide" => true})
 
     assert {:ok, {:ok, item}} =
              Repo.transaction(fn ->
@@ -515,7 +509,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   test "alertItems closed filter returns earlier items through GraphQL" do
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.read" => true})
 
     assert {:ok, {:ok, item}} =
              Repo.transaction(fn ->
@@ -572,7 +566,32 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
   end
 
   defp put_community_permission(user, slug, permission) do
-    passport = Map.put(user.cur_passport || %{}, slug, %{"cms" => %{permission => true}})
-    %{user | cur_passport: Map.put_new(passport, "global", %{})}
+    community = Repo.get_by!(Community, slug: slug)
+
+    member =
+      Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) ||
+        %CommunityAdmin{}
+
+    member
+    |> CommunityAdmin.changeset(%{
+      user_id: user.id,
+      community_id: community.id,
+      permissions: Map.put(member.permissions || %{}, permission, true)
+    })
+    |> Repo.insert_or_update!()
+
+    user
+  end
+
+  defp grant_global_permissions(user, permissions) do
+    (Repo.get_by(GlobalPassport, user_id: user.id) || %GlobalPassport{})
+    |> GlobalPassport.changeset(%{
+      user_id: user.id,
+      is_root: false,
+      permissions: permissions
+    })
+    |> Repo.insert_or_update!()
+
+    user
   end
 end
