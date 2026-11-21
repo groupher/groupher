@@ -30,7 +30,6 @@ import DashboardSettingsSchema from '../unit/DsbThread/schema/settings'
 import DashboardShellSchema from '../unit/DsbThread/schema/shell'
 import DashboardTagsSchema from '../unit/DsbThread/schema/tags'
 import KanbanSchema from '../unit/KanbanThread/schema'
-import PassportSchema from '../unit/PassportEditor/schema'
 import PostThreadSchema from '../unit/PostThread/schema'
 import RichEditorSchema from '../unit/RichEditor/schema'
 import TagSettingSchema from '../unit/TagSettingEditor/schema'
@@ -120,7 +119,6 @@ const featureDocuments: Record<string, Record<string, SchemaValue>> = {
   docCovers: DocCoversSchema,
   doc: DocSchema,
   kanban: KanbanSchema,
-  passport: PassportSchema,
   postThread: {
     communityTagStats: PostThreadSchema.communityTagStats,
     pagedPosts: PostThreadSchema.getPagedArticlesSchema(THREAD_PATH.POST),

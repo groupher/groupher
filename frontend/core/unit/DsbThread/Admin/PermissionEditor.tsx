@@ -17,7 +17,7 @@ export default function PermissionEditor({ item, onClose }: TProps) {
   const [saving, setSaving] = useState(false)
 
   const save = async () => {
-    if (!item.memberId || !item.revision) return
+    if (!item.memberId || item.revision === undefined) return
     setSaving(true)
     try {
       await updatePermissions(item.memberId, item.revision, expandAdminPermissions(permissions))
@@ -53,7 +53,7 @@ export default function PermissionEditor({ item, onClose }: TProps) {
               ghost
               loading={saving}
               onClick={async () => {
-                if (!item.memberId || !item.revision) return
+                if (!item.memberId || item.revision === undefined) return
                 setSaving(true)
                 try {
                   await removeAdmin(item.memberId, item.revision)

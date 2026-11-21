@@ -4,6 +4,7 @@ export const communityBaseInfo = graphql(`
   "Spec community info"
   query DashboardCommunityBaseInfo($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
+      ref
       dashboard {
         baseInfo {
           title
@@ -33,6 +34,7 @@ export const communitySocialLinks = graphql(`
   "Spec community info"
   query DashboardCommunitySocialLinks($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
+      ref
       dashboard {
         socialLinks {
           type
@@ -47,6 +49,7 @@ export const communityOverview = graphql(`
   "Spec community info"
   query DashboardCommunityOverview($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
+      ref
       views
       subscribersCount
       meta {

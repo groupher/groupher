@@ -171,7 +171,7 @@ export default function Adder() {
       </Combobox.Root>
       <div className='-mt-1.5 ml-4 flex items-center gap-2'>
         <Button ghost onClick={() => setShowPermissionDrawer(true)}>
-          {t('dsb.admin.invite.permissions')} · {permissions.length}
+          配置权限 · {permissions.length}
         </Button>
         <Button disabled={addDisabled} loading={adding} onClick={onAdd}>
           <PlusSVG className={s.plusIcon} />

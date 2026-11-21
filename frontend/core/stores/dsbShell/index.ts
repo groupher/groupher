@@ -126,8 +126,8 @@ export const createDsbShellStore = (initial: TDsbEditableFields): TDsbShellStore
     setDocFaqSaveZone: (zone) => {
       store.docFaqSaveZone = zone
     },
-    setActiveModerator: (user) => {
-      store.activeModerator = user
+    setActiveModerator: (admin) => {
+      store.activeModerator = admin
     },
     resetEditor,
     edit,

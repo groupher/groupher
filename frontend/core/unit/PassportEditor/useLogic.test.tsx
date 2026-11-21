@@ -1,63 +1,63 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { createElement, type ReactNode } from 'react'
 
 import useLogic from './useLogic'
-const state = vi.hoisted(() => ({ login: 'first', request: vi.fn() }))
-vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: state.request }))
-vi.mock('~/query', () => ({ viewerQueryKeys: { all: ['viewer'] } }))
-vi.mock('~/stores/account/hooks', () => ({
-  default: () => ({
-    accountScope: 'owner',
-    user: { login: 'owner', passport: { xx: { root: true } } },
-  }),
+
+const state = vi.hoisted(() => ({
+  activeAdmin: {
+    memberId: 'member-1',
+    revision: 5,
+    isLord: false,
+    permissions: ['audit.read'],
+    user: { login: 'admin' },
+  },
+  canManage: true,
+  updatePermissions: vi.fn(),
+  removeAdmin: vi.fn(),
 }))
-vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'xx' }) }))
+vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
 vi.mock('~/stores/dsbShell/editor', () => ({
-  useAdminEditor: () => ({ activeModerator: { login: state.login } }),
+  useAdminEditor: () => ({ activeModerator: state.activeAdmin }),
+}))
+vi.mock('~/hooks/useGate', () => ({
+  default: () => ({ can: () => state.canManage }),
+}))
+vi.mock('../DsbThread/logic/useAdmins', () => ({
+  default: () => ({
+    activeModerator: state.activeAdmin,
+    updatePermissions: state.updatePermissions,
+    removeAdmin: state.removeAdmin,
+  }),
 }))
 vi.mock('~/signal', () => ({ closeDrawer: vi.fn() }))
 vi.mock('~/ui/Toaster', () => ({ toast: vi.fn() }))
-it('loads only the selected target, resetting the draft and isolating late target responses', async () => {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false, staleTime: Infinity } },
-  })
-  let resolveFirst!: (value: unknown) => void
-  state.request.mockImplementation((_doc, args) => {
-    if (!args)
-      return Promise.resolve({
-        allPassportRulesString: {
-          cms: { general: { god: false }, community: { 'post.edit': false } },
-        },
-      })
-    if (args.login === 'first')
-      return new Promise((resolve) => {
-        resolveFirst = resolve
-      })
-    return Promise.resolve({
-      user: {
-        passportString: JSON.stringify({
-          global: {},
-          xx: { root: false, cms: { 'post.edit': true } },
-        }),
-      },
-    })
-  })
-  const wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client }, children)
-  const { result, rerender } = renderHook(() => useLogic(), { wrapper })
-  state.login = 'second'
-  rerender()
-  await waitFor(() => expect(result.current.selectedRules).toEqual(['post.edit']))
-  await act(async () => {
-    resolveFirst({
-      user: {
-        passportString: JSON.stringify({ global: { god: true }, xx: { root: true, cms: {} } }),
-      },
-    })
-  })
-  expect(result.current.isActiveModeratorRoot).toBe(false)
-  expect(result.current.selectedGlobalRules).toEqual([])
-  expect(state.request).toHaveBeenCalledTimes(3)
-  expect(result.current.isReadonly).toBe(false)
+
+beforeEach(() => {
+  state.canManage = true
+  state.updatePermissions.mockReset()
+  state.removeAdmin.mockReset()
+})
+
+it('edits canonical Community permissions with the selected Admin revision', async () => {
+  const { result } = renderHook(() => useLogic())
+  expect(result.current.selectedPermissions).toEqual(['audit.read'])
+  expect(result.current.grantablePermissions).toContain('community.article.hide')
+  act(() => result.current.toggleCheck('community.article.hide', true))
+  await act(async () => result.current.updatePassport())
+  await waitFor(() =>
+    expect(state.updatePermissions).toHaveBeenCalledWith('member-1', 5, {
+      'audit.read': true,
+      'community.article.hide': true,
+      'community.article.trash.read': true,
+    }),
+  )
+})
+
+it('fails closed for a lord target or when the current Passport cannot manage Admins', () => {
+  state.activeAdmin = { ...state.activeAdmin, isLord: true }
+  const lord = renderHook(() => useLogic())
+  expect(lord.result.current.isReadonly).toBe(true)
+  state.activeAdmin = { ...state.activeAdmin, isLord: false }
+  state.canManage = false
+  const unauthorized = renderHook(() => useLogic())
+  expect(unauthorized.result.current.isReadonly).toBe(true)
 })

@@ -19,6 +19,7 @@ export const community = graphql(`
   "Spec community info"
   query Community($slug: String!, $userHasLogin: Boolean!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
+      ref
       title
       slug
       index

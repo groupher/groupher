@@ -9,6 +9,7 @@ import PassportEditor from '~/unit/PassportEditor'
 
 import Adder from './Adder'
 import List from './List'
+import Requests from './Requests'
 
 type TDrawerPayload = {
   type?: string
@@ -35,6 +36,7 @@ export default function Admin() {
     <>
       <Adder />
       <List />
+      <Requests />
       <Drawer
         show={showPassportEditor}
         type={TYPE.DRAWER.PASSPORT_EDITOR}

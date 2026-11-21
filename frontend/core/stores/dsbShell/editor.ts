@@ -2,7 +2,7 @@
 
 import { useSnapshot } from 'valtio'
 
-import type { TChangeTagMode, TTag, TUser } from '~/spec'
+import type { TChangeTagMode, TModerator, TTag } from '~/spec'
 
 import { useDsbShellStore } from './hooks'
 
@@ -54,7 +54,7 @@ export const useAdminEditor = () => {
   const snapshot = useSnapshot(store)
 
   return {
-    activeModerator: snapshot.activeModerator as TUser | null,
+    activeModerator: snapshot.activeModerator as TModerator | null,
     setActiveModerator: store.setActiveModerator,
     reset: () => store.setActiveModerator(null),
   }

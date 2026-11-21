@@ -8,29 +8,30 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DsbThread/schema/admins'
 
 export default function AdminRequests() {
-  const { slug } = useCommunity()
-  const { accountScope } = useAccount()
+  const { slug, ref: communityRef = '' } = useCommunity()
+  const { accountScope, refreshSession } = useAccount()
   const client = useQueryClient()
   const key = ['community-admin-requests', slug, accountScope]
   const query = useQuery({
     queryKey: key,
     queryFn: async () =>
-      (await browserGraphQLRequest(S.adminRequests, { community: slug }))
-        .pagedCommunityAdminRequests.entries,
-    enabled: !!slug && !!accountScope,
+      (await browserGraphQLRequest(S.adminRequests, { communityRef })).pagedCommunityAdminRequests
+        .entries,
+    enabled: !!communityRef && !!accountScope,
   })
   const membership = useQuery({
     queryKey: ['community-current-admin', slug, accountScope],
     queryFn: async () =>
-      (await browserGraphQLRequest(S.currentAdmin, { community: slug })).currentCommunityAdmin,
-    enabled: !!slug && !!accountScope,
+      (await browserGraphQLRequest(S.currentAdmin, { communityRef })).currentCommunityAdmin,
+    enabled: !!communityRef && !!accountScope,
   })
 
   const refresh = async () => invalidatePrefix(client, key)
   const apply = async () => {
+    if (!communityRef) return
     await executeCommand({
       request: (variables) => browserGraphQLRequest(S.createAdminRequest, variables),
-      variables: { community: slug, type: 'apply', permissions: JSON.stringify({}) },
+      variables: { communityRef, type: 'apply', permissions: {} },
     })
     await refresh()
   }
@@ -46,14 +47,16 @@ export default function AdminRequests() {
         <button
           type='button'
           onClick={async () => {
+            if (!communityRef) return
             const revision = membership.data?.revision
-            if (!revision) return
+            if (revision === undefined || revision === null) return
             await executeCommand({
               request: (variables) => browserGraphQLRequest(S.leaveCommunityAdmins, variables),
-              variables: { community: slug, revision },
+              variables: { communityRef, revision },
             })
             await invalidatePrefix(client, ['community-current-admin', slug, accountScope])
             await refresh()
+            await refreshSession()
           }}
         >
           退出管理员
@@ -78,10 +81,11 @@ export default function AdminRequests() {
                         requestId: request.id,
                         revision: request.revision,
                         decision: 'accept',
-                        approvedPermissions: JSON.stringify(request.proposedPermissions),
+                        approvedPermissions: request.proposedPermissions ?? {},
                       },
                     })
                     await refresh()
+                    await refreshSession()
                   }}
                 >
                   接受

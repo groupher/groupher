@@ -20,7 +20,7 @@ export default function Requests() {
     <section className='my-6 space-y-3' aria-label='管理员请求'>
       <h3 className='text-base font-semibold'>管理员请求</h3>
       {query.isLoading ? <p role='status'>加载中...</p> : null}
-      {entries.map((request: any) => (
+      {entries.map((request) => (
         <article
           className='flex flex-wrap items-center gap-3 rounded-md border p-3'
           key={request.id}
@@ -40,7 +40,7 @@ export default function Requests() {
                       request.id,
                       request.revision,
                       'accept',
-                      request.proposedPermissions,
+                      request.proposedPermissions ?? {},
                     )
                   }
                 >

@@ -6,34 +6,16 @@
 import { type FC, useState } from 'react'
 
 import SIZE from '~/const/size'
-import { SOCIAL_LIST } from '~/const/social'
 import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
-import type { TSocialItem, TSocialType, TUser } from '~/spec'
 import Button from '~/ui/Buttons/Button'
 import ImgFallback from '~/ui/ImgFallback'
-import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 import Modal from '~/ui/Modal'
-import PaginationError from '~/ui/Pagi/PaginationError'
+import PermissionChecklist from '~/unit/DsbThread/Admin/PermissionChecklist'
 import AdminUserItem from '~/unit/DsbThread/Admin/UserItem'
-import SocialList from '~/unit/SocialList'
 
 import useSalon from './salon'
-import Selects from './Selects'
 import useLogic from './useLogic'
-
-const userSocialItems = (user: TUser): TSocialItem[] => {
-  const { social } = user
-  if (!social) return []
-
-  const items: Array<{ type: TSocialType; link?: string }> = [
-    { type: SOCIAL_LIST.GITHUB, link: social.github },
-    { type: SOCIAL_LIST.TWITTER, link: social.twitter },
-    { type: SOCIAL_LIST.ZHIHU, link: social.zhihu },
-  ]
-
-  return items.filter((item): item is TSocialItem => Boolean(item.link))
-}
 
 const PassportEditor: FC = () => {
   const s = useSalon()
@@ -42,66 +24,49 @@ const PassportEditor: FC = () => {
 
   const {
     activeModerator,
-    allRootRules,
-    allModeratorRules,
-    selectedGlobalRules,
-    selectedRules,
+    grantablePermissions,
+    selectedPermissions,
     updatePassport,
     deleteModerator,
     isActiveModeratorRoot,
-    isActiveModeratorGod,
     isReadonly,
-    loading,
-    error,
-    retry,
+    saving,
     toggleCheck,
   } = useLogic()
 
   if (!activeModerator) return null
+  const { user } = activeModerator
 
   return (
     <div className={s.wrapper}>
-      {error && <PaginationError isRetrying={loading} onRetry={retry} />}
       <div className={s.profile}>
         <Img
           className={s.avatar}
-          src={activeModerator.avatar ?? ''}
-          fallback={<ImgFallback user={activeModerator} className={s.avatar} size={SIZE.MEDIUM} />}
+          src={user.avatar ?? ''}
+          fallback={<ImgFallback user={user} className={s.avatar} size={SIZE.MEDIUM} />}
           noLazy
         />
         <div className={s.profileIntro}>
           <div className={s.profileHeader}>
-            <div className={s.nickname}>{activeModerator.nickname}</div>
-            <div className={s.login}>@{activeModerator.login}</div>
-            {isActiveModeratorRoot ? <div className={s.rootSign}>root</div> : null}
+            <div className={s.nickname}>{user.nickname}</div>
+            <div className={s.login}>@{user.login}</div>
+            {isActiveModeratorRoot ? <div className={s.rootSign}>Lord</div> : null}
           </div>
-          {activeModerator.bio ? <p className={s.bio}>{activeModerator.bio}</p> : null}
-          <SocialList selected={userSocialItems(activeModerator)} top={8} left={-10} size='tiny' />
+          {user.bio ? <p className={s.bio}>{user.bio}</p> : null}
         </div>
       </div>
-      {loading ? (
-        <div className={s.loading}>
-          <LavaLampLoading />
-        </div>
-      ) : (
-        <Selects
-          allRootRules={allRootRules}
-          allModeratorRules={allModeratorRules}
-          selectedGlobalRules={selectedGlobalRules}
-          selectedRules={selectedRules}
-          isReadonly={isReadonly}
-          isActiveModeratorRoot={isActiveModeratorRoot}
-          isActiveModeratorGod={isActiveModeratorGod}
-          toggleCheck={toggleCheck}
-        />
-      )}
+      <PermissionChecklist
+        permissions={selectedPermissions}
+        grantablePermissions={grantablePermissions}
+        onChange={toggleCheck}
+      />
 
-      {!loading && !isReadonly && (
+      {!isReadonly && (
         <div className={s.footer}>
-          <Button noBorder onClick={() => updatePassport()}>
+          <Button loading={saving} noBorder onClick={() => updatePassport()}>
             {t('passport.action.update_rules')}
           </Button>
-          <Button red ghost noBorder onClick={() => setShowDeleteConfirm(true)}>
+          <Button red ghost noBorder disabled={saving} onClick={() => setShowDeleteConfirm(true)}>
             {t('passport.action.delete')}
           </Button>
         </div>
@@ -120,9 +85,7 @@ const PassportEditor: FC = () => {
           <div className={s.deleteBox}>
             <AdminUserItem
               item={{
-                user: activeModerator,
-                isRoot: isActiveModeratorRoot,
-                passportItemCount: selectedGlobalRules.length + selectedRules.length,
+                ...activeModerator,
               }}
               readonly
             />
@@ -134,6 +97,7 @@ const PassportEditor: FC = () => {
             </Button>
             <Button
               red
+              loading={saving}
               onClick={() => {
                 setShowDeleteConfirm(false)
                 deleteModerator()
