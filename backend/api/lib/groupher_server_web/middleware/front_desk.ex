@@ -141,7 +141,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp fetch_editor_article(%Community{} = community, thread, article_id) do
-    case FrontDesk.article(article_id, mode: :internal, view: :with_author) do
+    case FrontDesk.article(article_id,
+           mode: :internal,
+           community: community,
+           preload: [author: :user]
+         ) do
       {:ok, %CMS.Model.Article{thread: ^thread} = article} ->
         case GroupherServer.CMS.articles_bindings_get(%{article_id: article.id}, community) do
           {:ok, _context} ->

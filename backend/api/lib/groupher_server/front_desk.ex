@@ -30,7 +30,7 @@ defmodule GroupherServer.FrontDesk do
 
   ## Examples
 
-      FrontDesk.community(community_slug, actor, mode: :management)
+      FrontDesk.community(community_slug, actor, mode: :admin)
   """
   @spec community(term(), term(), keyword()) :: {:ok, struct()} | {:error, term()}
   def community(ref, actor, opts), do: GroupherServer.CMS.front_desk_community(ref, actor, opts)
@@ -98,13 +98,14 @@ defmodule GroupherServer.FrontDesk do
   end
 
   @doc """
-  Reads an Article path or stable ID with explicit mode/view options.
+  Reads an Article path or stable ID with explicit mode and Community context.
 
-  A public path is Gate-scoped; a stable ID requires `mode: :internal`.
+  A public path is Gate-scoped; stable ID reads require a Community unless the
+  caller explicitly requests a trusted internal identity-only read.
 
   ## Examples
 
-      FrontDesk.article(article_id, mode: :internal, view: :command_context)
+      FrontDesk.article(article_id, actor, community: community)
   """
   @spec article(term(), keyword()) :: {:ok, struct()} | {:error, term()}
   def article(article_ref, opts) when is_list(opts) do
@@ -120,11 +121,33 @@ defmodule GroupherServer.FrontDesk do
 
   ## Examples
 
-      FrontDesk.article(article_path, actor, mode: :management)
+      FrontDesk.article(article_path, actor, mode: :admin)
   """
   @spec article(map(), term(), keyword()) :: {:ok, struct()} | {:error, term()}
   def article(article_path, actor, opts) do
     GroupherServer.CMS.front_desk_article(article_path, actor, opts)
+  end
+
+  @doc "Reads an explicitly selected Article Snapshot through the CMS FrontDesk."
+  def article_snapshot(article_id, snapshot_id, community, actor, opts \\ []) do
+    GroupherServer.CMS.front_desk_article_snapshot(
+      article_id,
+      snapshot_id,
+      community,
+      actor,
+      opts
+    )
+  end
+
+  @doc "Reads an explicitly selected Article WorkingCopy through the CMS FrontDesk."
+  def article_working_copy(article_id, working_copy_id, community, actor, opts \\ []) do
+    GroupherServer.CMS.front_desk_article_working_copy(
+      article_id,
+      working_copy_id,
+      community,
+      actor,
+      opts
+    )
   end
 
   @doc "Returns the author of an Article or Comment."

@@ -440,6 +440,7 @@ A2 切换读取生产者之前，必须完成受新 Article/Author 形状影响�
 
 - `mix compile --warnings-as-errors` 通过；修改范围内 `.ex` / `.exs` 的 `mix format --check-formatted` 通过。
 - Article/GraphQL/Gate/Passport middleware 合并回归：15 个定向测试文件 94/94 通过；`Press` passport fixture 单测 1/1 通过。`communityActivity` Passport scope 复用定向测试 1/1 通过。
+- FrontDesk Article focused 回归：在隔离测试库 `groupher_server_review_20261120` 上运行 `paged_docs_test.exs`、`read/post_test.exs`、`locator_test.exs`、`common_article_author_test.exs`、`upvotes_posts_test.exs`，38/38 通过；新增 Doc `activeAt` 回退、禁用 thread 的 public/admin ID 读取、Locator 批量标签/时间/社区投影，以及 `common_article.author` 的 GraphQL upvoted 列表和 Author/User 两种来源断言。
 - 评论回归：初次运行 15 个相关文件为 246/248；review 确认剩余两项是 Command Operation Identity 迁移后仍查询 `Outbox.Event.command_id` 的过期断言，已改为当前字段 `operation_ref`。`post_comment_test.exs` 全文件复验 46/46 通过；其余评论回归未因这两项重跑。
 - `mix lint.style` 仍因工作区其余 38 条 style 违规退出 1，主要分布在 co-author、jobs、analysis 和其他已有文件；本次 review 发现的 `@doc/@spec` 顺序、GraphQL helper alias 及新增 scope 测试 alias 问题已修正。
 - `pnpm docs:check`：documentation tests 11/11、Documentation coverage、CMS Query boundary 及 Context/policy 检查通过；随后 `check:backend-context-v2` 报告 40 条既有工作区 strict 违规（包括 activity、jobs、review_bot、resolvers/cms，以及 `cms/articles/co_authors` 目录边界），命令退出 1，后续串联检查未执行。当前 Article 修改引入的 FrontDesk 反向 Context facade 调用已修复；剩余违规位于本次 Article 统一读取和 Passport scope 试点范围之外。

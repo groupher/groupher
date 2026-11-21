@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   @moduledoc """
   Reads Communities and Community Tags for the CMS FrontDesk facade.
 
-  The facade accepts public, actor-aware management, and trusted internal
+  The facade accepts public, actor-aware admin, and trusted internal
   reads. Internal mode uses the existing Gate operations lifecycle policy
   behind the stable `:internal` API; callers do not pass an operations actor.
 
