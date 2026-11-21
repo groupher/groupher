@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Review.SnapshotVersion do
 
   Business position:
 
-      ArticlePublic.snapshot_id -> SnapshotVersion -> ArticleView / report target
+      ArticlePublic.snapshot_id -> SnapshotVersion -> Article / report target
   """
 
   @max_version 2_147_483_646

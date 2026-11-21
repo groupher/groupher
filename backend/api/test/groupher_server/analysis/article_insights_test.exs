@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
 
   alias GroupherServer.Analysis
   alias GroupherServer.CMS
-  alias CMS.Model.CommunityModerator
+  alias CMS.Model.{CommunityAdmin, GlobalPassport}
   alias Analysis.{Aggregator, ArticleInsights, MetricEvent, Model}
   alias MetricEvent, as: MetricEventAPI
   alias Model.{ArticleHourlyMetric, MetricEvent}
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     assert [%{metrics: %{article_view: %{value: 1}}}] = path_result.items
   end
 
-  test "loaded Article authorization and path resolution share the Insights Gate scope" do
+  test "Article Insights honors CommunityAdmin grants without CommunityModerator mirrors" do
     {community, article, _attrs, author} = mock_article(:post)
     {:ok, unrelated} = db_insert(:user)
     inner_id = article_inner_id(article, community)
@@ -122,30 +122,93 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     community_owner = Repo.get!(GroupherServer.Accounts.Model.User, community.user_id)
     assert {:ok, :pass} = CMS.Insights.authorize(article, community_owner, :post, [])
 
-    {:ok, moderator} = db_insert(:user)
+    {:ok, community_admin_user} = db_insert(:user)
 
-    Repo.insert!(
-      CommunityModerator.changeset(%CommunityModerator{}, %{
-        community_id: community.id,
-        user_id: moderator.id
-      })
+    %CommunityAdmin{}
+    |> CommunityAdmin.changeset(%{
+      community_id: community.id,
+      user_id: community_admin_user.id,
+      permissions: %{"article.insights.read" => true}
+    })
+    |> Repo.insert!(
+      on_conflict: {:replace, [:permissions, :updated_at]},
+      conflict_target: [:user_id, :community_id]
     )
 
-    moderator = %{
-      moderator
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"article.insights.read" => true}}
-        }
-    }
+    community_admin =
+      Repo.get_by!(CommunityAdmin, user_id: community_admin_user.id, community_id: community.id)
 
-    grants = Analysis.ArticleInsights.passport_granted_community_slugs(moderator)
+    grants = Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user)
 
     assert {:ok, :pass} =
-             CMS.Insights.authorize(article, moderator, :post,
+             CMS.Insights.authorize(article, community_admin_user, :post,
                community: community.slug,
                passport_granted_community_slugs: grants
              )
+
+    Repo.query!(
+      "UPDATE cms.communities_admins SET permissions = '{\"article.insights.read\":\"true\"}'::jsonb WHERE id = $1",
+      [community_admin.id]
+    )
+
+    assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
+             CMS.Insights.authorize(article, community_admin_user, :post,
+               community: community.slug,
+               passport_granted_community_slugs: grants
+             )
+
+    Repo.update!(
+      CommunityAdmin.changeset(community_admin, %{
+        permissions: %{"article.insights.read" => true}
+      })
+    )
+
+    assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
+             CMS.Insights.authorize(article, unrelated, :post,
+               community: community.slug,
+               passport_granted_community_slugs: [community.slug]
+             )
+
+    community_admin
+    |> CommunityAdmin.changeset(%{permissions: %{}})
+    |> Repo.update!()
+
+    assert Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user) == []
+
+    assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
+             CMS.Insights.authorize(article, community_admin_user, :post,
+               community: community.slug,
+               passport_granted_community_slugs:
+                 Analysis.ArticleInsights.passport_granted_community_slugs(community_admin_user)
+             )
+  end
+
+  test "Article Insights uses current Global Passport root facts instead of legacy god data" do
+    {community, article, _attrs, author} = mock_article(:post)
+    {:ok, outsider} = db_insert(:user)
+
+    stale_root = %{outsider | cur_passport: %{"global" => %{"god" => true}}}
+
+    assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
+             CMS.Insights.authorize(article, stale_root, :post, community: community.slug)
+
+    passport =
+      %GlobalPassport{}
+      |> GlobalPassport.changeset(%{user_id: outsider.id, is_root: true, permissions: %{}})
+      |> Repo.insert!()
+
+    assert {:ok, :pass} =
+             CMS.Insights.authorize(article, stale_root, :post, community: community.slug)
+
+    passport
+    |> GlobalPassport.changeset(%{is_root: false})
+    |> Repo.update!()
+
+    assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
+             CMS.Insights.authorize(article, stale_root, :post, community: community.slug)
+
+    assert {:ok, :pass} =
+             CMS.Insights.authorize(article, author, :post, community: community.slug)
   end
 
   test "Doc Insights reject missing lifecycle through Gate scope" do

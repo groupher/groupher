@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
 
   test "saving only a cover asset selection synchronizes WorkingCopy refs" do
     {community, public, _attrs, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    article = Repo.get!(CMS.Model.Article, public.article_id)
+    article = Repo.get!(CMS.Model.Article, public.id)
 
     work =
       Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id, scope_type: :default)
@@ -88,9 +88,9 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
                inner_id: Integer.to_string(inner_id)
              })
 
-    assert public_article.meta.is_edited
-    assert public_article.meta.is_sunk
-    assert public_article.meta.last_active_at == last_active_at
+    assert public_article.is_edited
+    assert public_article.is_sunk
+    assert public_article.last_active_at == last_active_at
   end
 
   test "saved WorkingCopy freezes, publishes, clones, and compares by immutable content" do
@@ -754,6 +754,14 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
     assert saved.revision == 2
     assert CMS.Articles.Body.document(saved).json == empty_body_bag().json
 
+    snapshots_before_publish =
+      Repo.aggregate(
+        from(snapshot in CMS.Model.ArticleSnapshot,
+          where: snapshot.article_id == ^article.id
+        ),
+        :count
+      )
+
     assert {:error, :invalid_body} =
              CMS.Articles.publish_article(
                article,
@@ -771,7 +779,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
                where: snapshot.article_id == ^article.id
              ),
              :count
-           ) == 0
+           ) == snapshots_before_publish
   end
 
   defp body_bag(text) do

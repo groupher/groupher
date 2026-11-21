@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
          {:ok, _} <- restore_trashed_targets(community, actor, job.hash_id, ready_items),
          {:ok, written_items} <-
            write_items(community, actor, ready_items, bodies),
-         {:ok, _tree} <- DocTreeImport.apply(community, tree, written_items, actor),
+         {:ok, _tree} <- DocTreeImport.apply(community, tree, written_items, actor, job.hash_id),
          {:ok, _} <- upsert_mappings(job, ready_items, bodies),
          result <- build_result(job, items, tree, ready_items),
          {_count, nil} <- Repo.delete_all(from(body in Body, where: body.job_id == ^job.id)),
@@ -143,7 +143,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
 
   # Reimport restores the complete owning Trash action before writing its D.
   # The new restore path rechecks permissions and Queue dependencies atomically.
-  defp restore_trashed_targets(community, actor, operation_ref, items) do
+  defp restore_trashed_targets(community, actor, _operation_ref, items) do
     ids = Enum.map(items, & &1.target_ref)
 
     actions =
@@ -174,7 +174,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
                nil,
                nil,
                actor,
-               operation_ref
+               id
              ),
            {:ok, _} <-
              GroupherServer.Activity.log(
@@ -182,7 +182,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
                :restored,
                actor: actor,
                source: :worker,
-               operation_ref: operation_ref,
+               operation_ref: id,
                operation_index: operation_index
              ) do
         {:cont, {:ok, :pass}}

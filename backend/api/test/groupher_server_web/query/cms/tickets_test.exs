@@ -2,6 +2,8 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
+  alias GroupherServer.CMS.Model.CommunityAdmin
+
   setup do
     {community, post, _attrs, user} = mock_article(:post)
 
@@ -11,13 +13,11 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
       "ticket.read_internal" => true
     }
 
-    actor = %{
-      user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => grants}
-        }
-    }
+    admin = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: user.id)
+
+    Repo.update!(CommunityAdmin.changeset(admin, %{is_lord: false, permissions: grants}))
+
+    actor = user
 
     {:ok, ticket} =
       CMS.Tickets.create_from_post(

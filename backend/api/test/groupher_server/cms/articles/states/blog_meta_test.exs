@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.CMS.BlogMeta do
           user
         )
 
-      assert not blog.meta.is_comment_locked
+      assert not blog.comments_locked
 
       {:ok, _} = CMS.Articles.lock_comments(blog.id, user, community: community)
       assert Repo.get!(CMS.Model.Article, blog.id).comments_locked

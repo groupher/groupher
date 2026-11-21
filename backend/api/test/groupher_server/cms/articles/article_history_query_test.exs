@@ -266,7 +266,7 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleHistoryQueryTest do
 
   test "publish contributors include source authors but exclude pure fork actors" do
     {community, public, _, actor} = mock_article(:post)
-    article = Repo.get!(CMS.Model.Article, public.article_id)
+    article = Repo.get!(CMS.Model.Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     before_public = Repo.get!(ArticlePublic, article.id).snapshot_id
 
@@ -334,7 +334,7 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleHistoryQueryTest do
 
   test "publish contributors mark an unlinked cross-Article fork as unknown" do
     {community, public, _, actor} = mock_article(:post)
-    article = Repo.get!(CMS.Model.Article, public.article_id)
+    article = Repo.get!(CMS.Model.Article, public.id)
     source_snapshot_id = Repo.get!(ArticlePublic, article.id).snapshot_id
     command_id = Ecto.UUID.generate()
 
@@ -356,7 +356,11 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleHistoryQueryTest do
                    actor,
                    command_id,
                    community.id,
-                   %{source: :browser, service_ref: nil},
+                   %{
+                     source: :browser,
+                     service_ref: nil,
+                     causation_command_id: command_id
+                   },
                    0
                  )
                  |> Map.put(:type, :fork)

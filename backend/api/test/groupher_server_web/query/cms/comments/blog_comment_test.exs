@@ -722,7 +722,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       page_size = 12
       thread = :blog
 
-      author_user = blog.author
+      author_user = blog.author.user
 
       all_comments =
         Enum.reduce(0..total_count, [], fn i, acc ->
@@ -1005,7 +1005,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       page_size = 10
       thread = :blog
 
-      author_user = blog.author
+      author_user = blog.author.user
 
       {:ok, parent_comment} =
         CMS.Comments.create_comment(

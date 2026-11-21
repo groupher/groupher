@@ -2,13 +2,12 @@ defmodule GroupherServer.Test.CMS.Review.RecoveryTest do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS
-  alias CMS.Model.{ArticleLifecycle, ArticlePublic, ArtimentReview, GlobalPassport}
+  alias CMS.Model.{ArticleLifecycle, ArticlePublic, ArtimentReview}
   alias CMS.Outbox.{Event, Retry}
 
   setup do
     start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})
     {community, article, _, actor} = mock_article(:post)
-    Repo.insert!(GlobalPassport.changeset(%GlobalPassport{}, %{user_id: actor.id, is_root: true}))
     %{community: community, article: article, root: actor}
   end
 

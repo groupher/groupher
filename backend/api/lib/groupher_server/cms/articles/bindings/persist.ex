@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
   always come from the resolved ArticleBinding row.
 
   ```text
-  Article / ArticleView + Community
+  Article + Community
                     |
                     v
           get explicit ArticleBinding
@@ -22,9 +22,8 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
   alias GroupherServer.{CMS, ErrorCat, Repo}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
-  alias CMS.Articles.ArticleView
   alias CMS.Model.{Article, ArticleBinding, Community}
-  alias CMS.Articles.{ArticleView, ErrorCat}
+  alias CMS.Articles.ErrorCat
   alias CMS.Model.PinnedArticle
 
   @type t :: %{
@@ -36,10 +35,6 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
 
   @doc "Resolves an ArticleBinding from an explicit Community context."
   @spec get(map(), Community.t()) :: {:ok, t()} | {:error, term()}
-  def get(%ArticleView{article_id: article_id}, %Community{} = community) do
-    binding(article_id, community)
-  end
-
   def get(%Article{id: article_id}, %Community{} = community) do
     binding(article_id, community)
   end
@@ -110,7 +105,7 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
   end
 
   @doc "Lists every ArticleBinding for one stable Article."
-  @spec all(Article.t() | ArticleView.t() | map()) ::
+  @spec all(Article.t() | map()) ::
           {:ok, [ArticleBinding.t()]} | {:error, term()}
   def all(article) when is_map(article) do
     article_id = Map.get(article, :article_id) || Map.get(article, :id)

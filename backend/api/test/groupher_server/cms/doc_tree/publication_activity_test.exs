@@ -32,7 +32,8 @@ defmodule GroupherServer.Test.CMS.DocTree.PublicationActivityTest do
     assert MapSet.new(logs, & &1.metadata["snapshot_id"]) ==
              MapSet.new([first.snapshot_id, second.snapshot_id])
 
-    assert Enum.any?(logs, &(&1.operation_ref == command_id))
+    assert Enum.all?(logs, &is_binary(&1.operation_ref))
+    refute Enum.any?(logs, &(&1.operation_ref == command_id))
     refute Enum.any?(logs, &Map.has_key?(&1.metadata, "revision_id"))
   end
 end

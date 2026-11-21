@@ -9,11 +9,11 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleBindingTrashSchemaTest do
     {:ok, other_community} = mock_community(actor)
 
     binding =
-      Repo.get_by!(ArticleBinding, article_id: public.article_id, community_id: community.id)
+      Repo.get_by!(ArticleBinding, article_id: public.id, community_id: community.id)
 
     attrs = %{
       community_id: community.id,
-      article_id: public.article_id,
+      article_id: public.id,
       binding_id: binding.id,
       actor_id: actor.id,
       hidden_at: DateTime.utc_now(:second)

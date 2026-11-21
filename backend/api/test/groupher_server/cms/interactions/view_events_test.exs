@@ -255,9 +255,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     stale = DateTime.add(DateTime.utc_now(:second), -60, :second)
 
     Repo.insert_all(ViewDedupeState, [
-      dedupe_attrs(post.article_id, stale, "one"),
-      dedupe_attrs(post.article_id, stale, "two"),
-      dedupe_attrs(post.article_id, stale, "three")
+      dedupe_attrs(post.id, stale, "one"),
+      dedupe_attrs(post.id, stale, "two"),
+      dedupe_attrs(post.id, stale, "three")
     ])
 
     assert %{
@@ -286,9 +286,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     stale = DateTime.add(DateTime.utc_now(:second), -60, :second)
 
     Repo.insert_all(ViewDedupeState, [
-      dedupe_attrs(post.article_id, stale, "one"),
-      dedupe_attrs(post.article_id, stale, "two"),
-      dedupe_attrs(post.article_id, stale, "three")
+      dedupe_attrs(post.id, stale, "one"),
+      dedupe_attrs(post.id, stale, "two"),
+      dedupe_attrs(post.id, stale, "three")
     ])
 
     assert %{deleted_rows: 2, budget_exhausted: true, remaining_expired_rows: 1} =
@@ -370,7 +370,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
   test "ArticleStats rebuilds advance the repaired owner revision" do
     {_community, post, _attrs, _user} = mock_article(:post)
-    article = Repo.get!(CMS.Model.Article, post.article_id)
+    article = Repo.get!(CMS.Model.Article, post.id)
 
     from(stats in ArticleStats,
       where: stats.thread == :post and stats.article_id == ^post.id
@@ -390,7 +390,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
   test "ArticleStats snapshot default and every owner update use database clock" do
     {community, post, _attrs, user} = mock_article(:post)
-    article = Repo.get!(CMS.Model.Article, post.article_id)
+    article = Repo.get!(CMS.Model.Article, post.id)
 
     %{rows: [[default_expression]]} =
       Repo.query!("""
@@ -470,10 +470,10 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
   defp delete_physical_article(post) do
     Repo.transaction(fn ->
-      owner = Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: post.article_id)
+      owner = Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: post.id)
       community = Repo.get!(CMS.Model.Community, owner.community_id)
       {:ok, :ok} = CMS.Seeds.FullCommunity.delete(community.slug)
-      {:ok, :pass} = ViewTracker.delete_article_state(:post, post.article_id)
+      {:ok, :pass} = ViewTracker.delete_article_state(:post, post.id)
     end)
   end
 

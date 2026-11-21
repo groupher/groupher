@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.CMS.Comments.QueryList do
                Ecto.UUID.generate()
              )
 
-    stats = Repo.get_by!(ArticleStats, article_id: post.article_id, thread: :post)
+    stats = Repo.get_by!(ArticleStats, article_id: post.id, thread: :post)
 
     assert {:ok, _stats} =
              stats
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.Comments.QueryList do
     assert actor_id == actor.id
 
     assert Repo.get_by!(ArticleStats,
-             article_id: post.article_id,
+             article_id: post.id,
              thread: :post
            ).comments_participants_count == 99
 

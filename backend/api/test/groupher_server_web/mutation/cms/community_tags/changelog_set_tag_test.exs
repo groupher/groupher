@@ -31,8 +31,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "changelog.community_tag.set" => true
+          "community_tag.set" => true
         }
       }
 
@@ -78,8 +77,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "changelog.community_tag.unset" => true
+          "community_tag.unset" => true
         }
       }
 

@@ -140,7 +140,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
             name
           )
 
-        article = Repo.get!(Article, public.article_id)
+        article = Repo.get!(Article, public.id)
         {name, describe(article, communities[slug], public)}
       end)
 

@@ -36,16 +36,18 @@ defmodule GroupherServer.Test.CMS.Articles.PublicBodyTest do
   test "publishing copies all formats atomically, replay keeps one body and history stays immutable",
        ctx do
     assert current_document(ctx.article) == Body.document(ctx.snapshot)
-    {:ok, work} = save(ctx, "R3 new content")
-    # XML/RSS are stored outputs: publish must copy them rather than regenerate them.
-    Repo.update_all(from(b in CMS.Model.ArticleBody, where: b.id == ^work.body_id),
+
+    Repo.update_all(from(b in CMS.Model.ArticleBody, where: b.id == ^ctx.work.body_id),
       set: [xml: "<xml>fixed</xml>", rss: "fixed rss"]
     )
+
+    {:ok, work} = save(ctx, "R3 new content")
 
     command_id = Ecto.UUID.generate()
     assert {:ok, %{public: public}} = publish(ctx, work, command_id)
     assert public.snapshot_id != ctx.snapshot.id
     fresh = Repo.get!(ArticleSnapshot, public.snapshot_id)
+
     assert current_document(ctx.article) == Body.document(fresh)
     assert current_document(ctx.article).xml == "<xml>fixed</xml>"
     assert current_document(ctx.article).rss == "fixed rss"
@@ -277,7 +279,7 @@ defmodule GroupherServer.Test.CMS.Articles.PublicBodyTest do
     migration = GroupherServer.Repo.Migrations.CreateArticlePublicBodies
 
     unless Code.ensure_loaded?(migration) do
-        Code.require_file("priv/repo/migrations/20261112140000_create_article_public_bodies.exs")
+      Code.require_file("priv/repo/migrations/20261112140000_create_article_public_bodies.exs")
     end
 
     assert_raise Postgrex.Error, ~r/requires empty Public/, fn ->

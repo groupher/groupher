@@ -37,7 +37,8 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Delete do
     gate(fn
       %CommunityTag{} = candidate ->
         with {:ok, community} <- TagSupport.community(candidate.community_id),
-             {:ok, _canonical} <- Gate.check_in_transaction(actor, :update, community) do
+             {:ok, _canonical} <-
+               Gate.check_in_transaction(actor, :community_tag_delete, community) do
           {:ok, candidate}
         end
 

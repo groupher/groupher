@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Comments.ConcurrencyTest do
             )
           end)
 
-        stats = Repo.get_by!(ArticleStats, article_id: article.article_id)
+        stats = Repo.get_by!(ArticleStats, article_id: article.id)
         assert stats.comments_count == 4
         assert stats.comments_participants_count == 4
         assert stats.comments_revision == 5
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.Comments.ConcurrencyTest do
         end)
 
         root = Repo.get!(Comment, root.id)
-        stats = Repo.get_by!(ArticleStats, article_id: article.article_id)
+        stats = Repo.get_by!(ArticleStats, article_id: article.id)
         assert root.replies_count == 4
         assert root.reply_entries_count == 4
         assert root.replies_revision == 5
@@ -56,16 +56,16 @@ defmodule GroupherServer.Test.CMS.Comments.ConcurrencyTest do
           CMS.Interactions.upvote(article, actor, Ecto.UUID.generate())
         end)
 
-        assert reaction_info(article.article_id).upvotes_count == 4
+        assert reaction_info(article.id).upvotes_count == 4
 
         simultaneous(users, fn actor ->
           CMS.Interactions.undo_upvote(article, actor, Ecto.UUID.generate())
         end)
 
-        projection = reaction_info(article.article_id)
+        projection = reaction_info(article.id)
         assert projection.upvotes_count == 0
         assert projection.latest_upvoted_users == []
-        assert Repo.get_by!(ArticleStats, article_id: article.article_id).comments_revision == 9
+        assert Repo.get_by!(ArticleStats, article_id: article.id).comments_revision == 9
       after
         assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(community.slug)
       end

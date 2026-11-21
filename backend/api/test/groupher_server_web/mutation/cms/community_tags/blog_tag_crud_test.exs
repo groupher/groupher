@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
       }
 
       passport_rules = %{
-        community.title => %{"community.update" => true, "blog.community_tag.create" => true}
+        community.title => %{"community_tag.create" => true}
       }
 
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
       }
 
       passport_rules = %{
-        community.title => %{"community.update" => true, "blog.community_tag.create" => true}
+        community.title => %{"community_tag.create" => true}
       }
 
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -160,7 +160,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
       }
 
       passport_rules = %{
-        community.title => %{"community.update" => true, "blog.community_tag.update" => true}
+        community.title => %{"community_tag.update" => true}
       }
 
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -196,7 +196,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
       rule_conn =
         simu_conn(:user,
           cms: %{
-            community.title => %{"community.update" => true, "blog.community_tag.delete" => true}
+            community.title => %{"community_tag.delete" => true}
           }
         )
 

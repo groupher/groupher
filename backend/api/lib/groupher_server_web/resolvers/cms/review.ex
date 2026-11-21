@@ -175,7 +175,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   end
 
   defp resolve_target(%{type: :article, article_id: id} = input, _actor) when is_binary(id) do
-    with {:ok, article} <- FrontDesk.article(id, mode: :internal, view: :command_context),
+    with {:ok, article} <- FrontDesk.article(id, mode: :internal),
          {:ok, scope, _permission, _params} <-
            target_scope(%{
              type: :article,

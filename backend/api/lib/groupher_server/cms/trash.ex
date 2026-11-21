@@ -178,7 +178,7 @@ defmodule GroupherServer.CMS.Trash do
   defp permanently_delete_article_action(action, actor, opts) do
     case Repo.get_by(TrashedArticle, trash_action_id: action.id) do
       %TrashedArticle{} = item ->
-        CMS.Articles.Trash.permanently_delete(item, actor, opts)
+        CMS.Articles.Commands.PermanentlyDeleteTrashed.execute_direct(item, actor, opts)
 
       nil ->
         CMS.Articles.Trash.delete_empty_action(action.id)

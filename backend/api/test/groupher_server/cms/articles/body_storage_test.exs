@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.CMS.Articles.BodyStorageTest do
 
   setup do
     {community, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     snapshot = Repo.get!(ArticleSnapshot, Repo.get!(ArticlePublic, article.id).snapshot_id)
     %{community: community, article: article, actor: actor, work: work, snapshot: snapshot}
@@ -95,7 +95,7 @@ defmodule GroupherServer.Test.CMS.Articles.BodyStorageTest do
     assert Body.document(saved).json == bag.json
     assert Body.document(saved).html == bag.html
     assert Body.document(snapshot) == original
-    assert Repo.aggregate(ArticleBody, :count) == count
+    assert Repo.aggregate(ArticleBody, :count) == count + 1
 
     assert {:ok, replayed} =
              CMS.Articles.save_working_copy(

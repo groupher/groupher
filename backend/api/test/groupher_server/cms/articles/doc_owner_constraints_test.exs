@@ -13,20 +13,20 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
     assert {:ok, _binding} =
              Repo.insert(
                ArticleBinding.changeset(%ArticleBinding{}, %{
-                 article_id: ctx.doc.article_id,
+                 article_id: ctx.doc.id,
                  community_id: ctx.other.id
                }),
                mode: :savepoint
              )
 
     assert Repo.get_by!(CMS.Model.ArticleHistoryOwner,
-             article_id: ctx.doc.article_id,
+             article_id: ctx.doc.id,
              community_id: ctx.other.id
            )
   end
 
   test "direct SQL cannot fake a thread, move ownership or delete the owner binding", ctx do
-    id = Ecto.UUID.dump!(ctx.doc.article_id)
+    id = Ecto.UUID.dump!(ctx.doc.id)
     rejected("UPDATE cms.article_bindings SET thread='post' WHERE article_id=$1", [id], "23514")
 
     rejected(
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
   test "retained history ownership cannot move to another Community", ctx do
     rejected(
       "UPDATE cms.article_history_owners SET community_id=$2 WHERE article_id=$1",
-      [Ecto.UUID.dump!(ctx.doc.article_id), ctx.other.id],
+      [Ecto.UUID.dump!(ctx.doc.id), ctx.other.id],
       "23514"
     )
   end
@@ -56,12 +56,12 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
   test "OWNER-06 stable Article history cannot be deleted while its Community is active", ctx do
     rejected(
       "DELETE FROM cms.articles WHERE id=$1",
-      [Ecto.UUID.dump!(ctx.doc.article_id)],
+      [Ecto.UUID.dump!(ctx.doc.id)],
       "23503"
     )
 
-    assert Repo.get!(CMS.Model.Article, ctx.doc.article_id)
-    assert Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: ctx.doc.article_id)
+    assert Repo.get!(CMS.Model.Article, ctx.doc.id)
+    assert Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: ctx.doc.id)
   end
 
   test "OWNER-03 raw SQL cannot scope a Doc Comment review block to another Community", ctx do

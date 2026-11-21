@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.Articles.CommentSummaryInitializationTest do
   test "PUB-01 first and repeated publication preserve the one Comments owner" do
     for thread <- [:post, :blog, :changelog] do
       {community, view, _, user} = mock_article(thread)
-      article = Repo.get!(Article, view.article_id)
+      article = Repo.get!(Article, view.id)
       initial = Repo.get_by!(ArticleStats, article_id: article.id)
       assert initial.comments_count == 0
       assert initial.comments_revision == 1

@@ -53,7 +53,8 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.UpdateTagGroup do
                    ) do
     gate(fn
       %CommunityTagGroup{} = candidate ->
-        with {:ok, canonical} <- Gate.check_in_transaction(actor, :update, community) do
+        with {:ok, canonical} <-
+               Gate.check_in_transaction(actor, :community_tag_update, community) do
           {:ok, {canonical, candidate}}
         end
 

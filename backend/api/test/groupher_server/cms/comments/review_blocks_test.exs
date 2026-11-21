@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
   test "creating a shared Comment invalidates every current Article binding" do
     {community, article_view, _attrs, author} = mock_article(:post)
     {:ok, destination} = mock_community(author)
-    article = Repo.get!(CMS.Model.Article, article_view.article_id)
+    article = Repo.get!(CMS.Model.Article, article_view.id)
 
     assert {:ok, _binding} =
              Repo.transact_result(fn ->

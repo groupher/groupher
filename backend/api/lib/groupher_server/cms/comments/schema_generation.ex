@@ -189,7 +189,7 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
         """
         SELECT table_name,column_name,data_type,is_nullable
         FROM information_schema.columns
-        WHERE table_schema='messaging' AND table_name IN ('mentions','notifications')
+        WHERE table_schema='messaging' AND table_name IN ('mentions','notices')
           AND column_name = 'comment_id'
         ORDER BY table_name,column_name
         """,
@@ -197,7 +197,7 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
       ).rows
 
     if Enum.map(delivery_guards, fn [table, column | _] -> {table, column} end) !=
-         [{"mentions", "comment_id"}, {"notifications", "comment_id"}] do
+         [{"mentions", "comment_id"}, {"notices", "comment_id"}] do
       raise "stable Comment delivery schema is incomplete"
     end
 

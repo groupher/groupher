@@ -64,7 +64,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
   test "read modes expose one shared Community state matrix" do
     matrix = %{
       public: [:active, :read_only],
-      owner_management: [
+      owner: [
         :setting_up,
         :setup_failed,
         :active,

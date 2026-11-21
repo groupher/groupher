@@ -101,6 +101,7 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
 
   test "Node artifact seeds six node types and retries without duplicates", %{database: db} do
     {:ok, _} = ProductionSeed.bootstrap("content", db)
+    set_seed_system_root!("content", "author")
     path = seed_artifact("content")
     assert {:ok, manifest} = ProductionSeed.Content.apply("content", db, path)
     assert Map.has_key?(manifest["resources"], "CM")
@@ -212,35 +213,29 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
              ProductionSeed.Cleanup.apply("first", db, "retain", plan.report_digest)
   end
 
-  test "purge goes through domain deletion and keeps pending effects visible", %{database: db} do
+  test "purge refuses to delete shared Article history", %{database: db} do
     {:ok, _} = ProductionSeed.bootstrap("purge", db)
+    set_seed_system_root!("purge", "author")
+    set_seed_system_root!("purge", "adminDev")
     path = seed_artifact("purge")
     {:ok, manifest} = ProductionSeed.Content.apply("purge", db, path)
     {:ok, plan} = ProductionSeed.Cleanup.report("purge", db, "purge")
     assert plan.blockers == []
-    assert {:ok, _} = ProductionSeed.Cleanup.apply("purge", db, "purge", plan.report_digest)
-    {:ok, again} = ProductionSeed.Cleanup.report("purge", db, "purge")
-    assert {:ok, _} = ProductionSeed.Cleanup.apply("purge", db, "purge", again.report_digest)
+    assert {:error,
+            {:seed_cleanup_domain_failed, "permanent-post",
+             %GroupherServer.ErrorCat.Error{
+               reason: :article_history_protected
+             }}} =
+             ProductionSeed.Cleanup.apply("purge", db, "purge", plan.report_digest)
 
-    for resource <- Map.values(manifest["resources"]) do
-      case get_in(resource, ["locator", "thread"]) || resource["thread"] do
-        "doc" ->
-          assert Repo.get(CMS.Model.Article, resource["articleId"])
-          assert Repo.get_by(CMS.Model.ArticleHistoryOwner, article_id: resource["articleId"])
-          refute Repo.get(CMS.Model.ArticlePublic, resource["articleId"])
-          assert Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: resource["articleId"])
-
-        "ticket" ->
-          assert Repo.get(CMS.Model.Article, resource["articleId"])
-
-          assert Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: resource["articleId"]).state ==
-                   :draft
-
-        _ ->
-          assert Repo.get(CMS.Model.Article, resource["articleId"])
-          refute Repo.get(CMS.Model.ArticlePublic, resource["articleId"])
-      end
-    end
+    shared_id = manifest["resources"]["shared"]["articleId"]
+    assert Repo.get(CMS.Model.Article, shared_id)
+    assert Repo.get(CMS.Model.ArticlePublic, shared_id)
+    assert Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: shared_id).state == :published
+    assert Repo.aggregate(
+             from(b in CMS.Model.ArticleBinding, where: b.article_id == ^shared_id),
+             :count
+           ) == 2
 
     assert {:error, %{reason: :seed_cleanup_incomplete}} =
              ProductionSeed.Cleanup.verify("purge", db, "purge")
@@ -276,8 +271,9 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
   end
 
   test "public create and both rename paths reject protected slugs", %{database: db} do
-    {:ok, actor} = db_insert(:user)
-    actor = %{actor | cur_passport: %{"global" => %{"god" => true}}}
+    {:ok, manifest} = ProductionSeed.bootstrap("reserved", db)
+    set_seed_system_root!("reserved", "adminDev")
+    actor = Repo.get!(User, manifest["users"]["adminDev"])
 
     for slug <- ~w(dev mock tmp) do
       assert {:error, %{reason: :reserved_slug}} =
@@ -309,7 +305,6 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
                )
     end
 
-    {:ok, manifest} = ProductionSeed.bootstrap("reserved", db)
     dev = Repo.get!(CMS.Model.Community, manifest["communities"]["dev"])
 
     assert {:error, %{reason: :reserved_slug}} =
@@ -322,6 +317,15 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
                actor,
                Ecto.UUID.generate()
              )
+  end
+
+  defp set_seed_system_root!(run_id, alias_name) do
+    run = Repo.get_by!(Run, run_id: run_id)
+    user_id = get_in(run.manifest, ["users", alias_name])
+
+    (Repo.get_by(CMS.Model.GlobalPassport, user_id: user_id) || %CMS.Model.GlobalPassport{})
+    |> CMS.Model.GlobalPassport.changeset(%{user_id: user_id, is_root: true})
+    |> Repo.insert_or_update!()
   end
 
   defp seed_artifact(run_id) do

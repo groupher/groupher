@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
 
   alias CMS.Model.{
     Article,
+    ArticleBody,
     ArticleSnapshot,
     ArticleWorkingCopy,
     ArticleWorkingCopyBlog,
@@ -351,15 +352,30 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
   defp update_work(work, attrs, body_attrs, cover_id, actor) do
     metadata = take(attrs, @work_fields)
     changes = Map.put(metadata, :cover_edit_working_copy_id, cover_id)
-    changes = if map_size(body_attrs) == 0, do: changes, else: Map.put(changes, :body, body_attrs)
 
-    work
-    |> Repo.preload(:body, force: true)
-    |> ArticleWorkingCopy.changeset(
-      Map.merge(changes, %{revision: work.revision + 1, updated_by_id: actor.id})
-    )
-    |> Repo.update()
+    with %ArticleWorkingCopy{} = loaded <- Repo.preload(work, :body, force: true),
+         {:ok, body} <- update_working_body(loaded.body, body_attrs),
+         {:ok, updated} <-
+           loaded
+           |> ArticleWorkingCopy.changeset(
+             Map.merge(changes, %{revision: work.revision + 1, updated_by_id: actor.id})
+           )
+           |> Repo.update() do
+      {:ok, %{updated | body: body}}
+    else
+      nil -> {:error, :working_copy_body_not_found}
+      {:error, _reason} = error -> error
+    end
   end
+
+  defp update_working_body(%ArticleBody{} = body, attrs) when map_size(attrs) == 0,
+    do: {:ok, body}
+
+  defp update_working_body(%ArticleBody{} = body, attrs) do
+    body |> ArticleBody.changeset(attrs) |> Repo.update()
+  end
+
+  defp update_working_body(_, _), do: {:error, :working_copy_body_not_found}
 
   defp insert_typed_work(work, thread, attrs) do
     case typed_extension(thread) do
@@ -475,17 +491,10 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     end
   end
 
-  defp body_document_attrs(%{markdown_toc: _} = saved) do
-    Map.take(
-      saved,
-      ~w(json schema_version markdown html markdown_toc plain_text thumbnail xml rss)a
-    )
-  end
-
   defp body_document_attrs(%BodyBag{} = body) do
     generated = BodyBag.to_document_attrs(body)
 
-    %{
+    generated = %{
       json: generated.json,
       schema_version: generated.schema_version,
       markdown: generated.markdown,
@@ -496,6 +505,15 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
       xml: nil,
       rss: nil
     }
+
+    Map.reject(generated, fn {key, value} -> key in [:xml, :rss] and is_nil(value) end)
+  end
+
+  defp body_document_attrs(%{markdown_toc: _} = saved) do
+    Map.take(
+      saved,
+      ~w(json schema_version markdown html markdown_toc plain_text thumbnail xml rss)a
+    )
   end
 
   defp maybe_sync_asset_refs(

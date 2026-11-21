@@ -21,14 +21,14 @@ defmodule GroupherServer.Test.Activity.ArtimentEventTest do
     assert {:ok, descriptor} =
              Activity.Doc.describe(comment, :comment_created, community_id: community.id)
 
-    assert descriptor.article_id == doc.article_id
+    assert descriptor.article_id == doc.id
     assert descriptor.subject_type == "comment"
     refute Map.has_key?(descriptor, :branch_id)
     assert {:ok, body} = Activity.Doc.describe(doc, :published, [])
-    assert body.article_id == doc.article_id
+    assert body.article_id == doc.id
     assert {:ok, _} = Notify.handle(:comment, comment, actor)
     notification = Repo.get_by!(Notice, comment_id: comment.id, user_id: author.id)
-    assert notification.article_id == doc.article_id
+    assert notification.article_id == doc.id
     refute Map.has_key?(notification, :branch_id)
   end
 end

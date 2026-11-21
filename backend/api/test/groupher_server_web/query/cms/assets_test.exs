@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
       work =
         Repo.get_by!(CMS.Model.ArticleWorkingCopy,
-          article_id: post.article_id,
+          article_id: post.id,
           scope_type: :default
         )
 

@@ -229,7 +229,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
 
     events =
       Repo.all(
-        from(log in PostLog, where: log.article_id == ^post.article_id and log.action == :trashed)
+        from(log in PostLog, where: log.article_id == ^post.id and log.action == :trashed)
       )
 
     assert length(events) == 3
@@ -246,7 +246,7 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
     event =
       Repo.one!(
         from(log in PostLog,
-          where: log.article_id == ^post.article_id and log.action == :trashed,
+          where: log.article_id == ^post.id and log.action == :trashed,
           order_by: [desc: log.record_sequence]
         )
       )

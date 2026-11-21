@@ -19,9 +19,9 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "destroying one community releases only its binding and retains shared Article history" do
     {community, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
+    clear_events(public.id)
     {:ok, other} = mock_community(actor)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     snapshot_id = Repo.get!(ArticlePublic, article.id).snapshot_id
 
     assert {:ok, _} =
@@ -128,8 +128,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "fork and publish commands record source and replay without duplicate events" do
     {community, public, _, actor} = mock_article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     before = Repo.get!(ArticlePublic, article.id).snapshot_id
     fork_command = Ecto.UUID.generate()
     scope_id = Ecto.UUID.generate()
@@ -201,8 +201,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "ordinary save records changes once across Receipt replay and no-op revisions" do
     {community, public, _, actor} = mock_article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     command_id = Ecto.UUID.generate()
     attrs = %{title: "First edit"}
@@ -271,8 +271,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "unchanged Public selection does not append a publish event" do
     {_, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     snapshot = Repo.get!(ArticlePublic, article.id).snapshot_id
     command_id = Ecto.UUID.generate()
 
@@ -282,6 +282,7 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
       source: :browser,
       occurred_at: DateTime.utc_now() |> DateTime.truncate(:second),
       operation_ref: command_id,
+      causation_command_id: command_id,
       operation_index: 0
     }
 
@@ -321,8 +322,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "restore saves a new revision and retains the selected source Snapshot" do
     {community, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     source = Repo.get!(ArticlePublic, article.id).snapshot_id
     command_id = Ecto.UUID.generate()
@@ -333,6 +334,7 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
       source: :browser,
       occurred_at: DateTime.utc_now() |> DateTime.truncate(:second),
       operation_ref: command_id,
+      causation_command_id: command_id,
       operation_index: 0,
       type: :restore,
       source_snapshot_id: source
@@ -359,8 +361,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "a trusted system snapshot has no invented user and the database enforces actor shape" do
     {community, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    work = Repo.get_by!(ArticleWorkingCopy, article_id: public.article_id)
+    clear_events(public.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: public.id)
     command_id = Ecto.UUID.generate()
 
     assert {:ok, {snapshot, event}} =
@@ -379,7 +381,7 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
                {:ok, event} =
                  History.record_initial_in_transaction(
-                   Repo.get!(Article, public.article_id),
+                   Repo.get!(Article, public.id),
                    saved,
                    :system,
                    command_id,
@@ -389,6 +391,7 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
                      source: :system,
                      occurred_at: DateTime.utc_now() |> DateTime.truncate(:second),
                      operation_ref: command_id,
+                     causation_command_id: command_id,
                      operation_index: 0,
                      type: :create
                    }
@@ -430,8 +433,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "created and forked working copies retain their initial snapshot and source" do
     {_, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     source_id = Repo.get!(ArticlePublic, article.id).snapshot_id
     command_id = Ecto.UUID.generate()
@@ -442,6 +445,7 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
       source: :browser,
       occurred_at: DateTime.utc_now() |> DateTime.truncate(:second),
       operation_ref: command_id,
+      causation_command_id: command_id,
       operation_index: 0,
       type: :create
     }
@@ -470,7 +474,12 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
                    fork,
                    actor,
                    fork_command,
-                   %{attrs | type: :fork, operation_ref: fork_command}
+                   %{
+                     attrs
+                     | type: :fork,
+                       operation_ref: fork_command,
+                       causation_command_id: fork_command
+                   }
                    |> Map.put(:source_snapshot_id, source_id)
                  )
 
@@ -485,8 +494,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "saving rejects attribution or operation identity that differs from the caller" do
     {_, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     attrs = %{actor_type: :user, actor_id: actor.id, operation_ref: Ecto.UUID.generate()}
 
@@ -507,9 +516,9 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "missing typed data fails comparison instead of reporting a no-op" do
     {_, public, _, _} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    work = Repo.get_by!(ArticleWorkingCopy, article_id: public.article_id)
-    snapshot = Repo.get!(ArticlePublic, public.article_id).snapshot_id
+    clear_events(public.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: public.id)
+    snapshot = Repo.get!(ArticlePublic, public.id).snapshot_id
     typed = Repo.get!(GroupherServer.CMS.Model.ArticleWorkingCopyPost, work.id)
     assert {:ok, _} = Repo.delete(typed)
     assert {:error, :missing_typed_content} = Diff.compare(snapshot, work.id)
@@ -517,10 +526,11 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "rollback after a saved edit removes both snapshots and the event" do
     {community, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     snapshot_count = Repo.aggregate(ArticleSnapshot, :count)
+    command_id = Ecto.UUID.generate()
 
     attrs = %{
       actor_type: :user,
@@ -528,7 +538,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
       actor_snapshot: %{login: actor.login},
       source: :browser,
       occurred_at: DateTime.utc_now() |> DateTime.truncate(:second),
-      operation_ref: Ecto.UUID.generate(),
+      operation_ref: command_id,
+      causation_command_id: command_id,
       operation_index: 0
     }
 
@@ -566,8 +577,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "the transaction owner rolls back a failed event insert and the save" do
     {community, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     count = Repo.aggregate(ArticleSnapshot, :count)
     command_id = Ecto.UUID.generate()
@@ -578,6 +589,7 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
       actor_snapshot: %{login: actor.login},
       occurred_at: DateTime.utc_now() |> DateTime.truncate(:second),
       operation_ref: command_id,
+      causation_command_id: command_id,
       operation_index: 0
     }
 
@@ -615,9 +627,10 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "a saved edit freezes both versions and a no-op does not create an event" do
     {community, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
+    command_id = Ecto.UUID.generate()
 
     attrs = %{
       actor_type: :user,
@@ -625,7 +638,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
       actor_snapshot: %{login: actor.login},
       source: :browser,
       occurred_at: DateTime.utc_now() |> DateTime.truncate(:second),
-      operation_ref: Ecto.UUID.generate(),
+      operation_ref: command_id,
+      causation_command_id: command_id,
       operation_index: 0
     }
 
@@ -684,8 +698,8 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "event sequence follows the locked Article and publish does not interrupt the content chain" do
     {_, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
-    article = Repo.get!(Article, public.article_id)
+    clear_events(public.id)
+    article = Repo.get!(Article, public.id)
     snapshot_id = Repo.get!(ArticlePublic, article.id).snapshot_id
     work_id = Ecto.UUID.generate()
     operation_ref = Ecto.UUID.generate()
@@ -751,14 +765,14 @@ defmodule GroupherServer.Test.CMS.Articles.ArticleEventConstraintsTest do
 
   test "event identities, actor shape and snapshot ownership are enforced by the database" do
     {_, public, _, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(public.article_id)
+    clear_events(public.id)
     {_, other_public, _, _} = GroupherServer.Test.ArticleContentFixture.article(:post)
-    clear_events(other_public.article_id)
-    snapshot_id = Repo.get!(ArticlePublic, public.article_id).snapshot_id
-    other_snapshot_id = Repo.get!(ArticlePublic, other_public.article_id).snapshot_id
+    clear_events(other_public.id)
+    snapshot_id = Repo.get!(ArticlePublic, public.id).snapshot_id
+    other_snapshot_id = Repo.get!(ArticlePublic, other_public.id).snapshot_id
 
     attrs = %{
-      article_id: public.article_id,
+      article_id: public.id,
       sequence: 1,
       actor_type: :user,
       actor_id: actor.id,

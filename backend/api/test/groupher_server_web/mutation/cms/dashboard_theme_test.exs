@@ -20,7 +20,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
   describe "[mutation cms dashboard theme]" do
     @save_custom_theme_preset_query S.Dsb.m(:save_custom_theme_preset)
     test "save custom theme preset stores fork base and overwrite", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -140,7 +146,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     end
 
     test "save custom theme preset rejects non-custom preset saves", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -153,7 +165,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     end
 
     test "save custom theme preset rejects custom as fork base", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -167,7 +185,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
     test "save custom theme preset merges sparse overwrite into existing custom",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       first_variables = %{
         community: community.slug,
@@ -201,7 +225,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
     test "save custom theme preset prunes overwrite values equal to base preset",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -230,7 +260,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
     test "save custom theme preset rejects unknown overwrite keys and wrong value types",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       unknown_key_variables = %{
         community: community.slug,
@@ -267,7 +303,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     end
 
     test "save custom theme preset resets custom base with empty overwrite", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       custom_variables = %{
         community: community.slug,
@@ -304,7 +346,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
     test "save custom theme preset clears overwrite when reset keeps the same base",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       custom_variables = %{
         community: community.slug,
@@ -332,7 +380,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
     test "save custom theme preset treats null overwrite as empty overwrite",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       custom_variables = %{
         community: community.slug,
@@ -361,7 +415,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     @select_theme_preset_query S.Dsb.m(:select_theme_preset)
     test "select theme preset stores a read-only preset without custom overwrite",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       updated =
         rule_conn
@@ -391,7 +451,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     end
 
     test "select theme preset preserves saved custom preset overwrite", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       custom_variables = %{
         community: community.slug,
@@ -441,7 +507,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     end
 
     test "select custom preset after readonly selection reuses saved overwrite", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          cms: %{
+            "global" => %{"community.update" => true},
+            community.slug => %{"dashboard.theme.update" => true}
+          }
+        )
 
       custom_variables = %{
         community: community.slug,

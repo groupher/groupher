@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.CMS.Command.OperationIdentityTest do
     event =
       Repo.one!(
         from(log in PostLog,
-          where: log.article_id == ^post.article_id and log.action == :trashed
+          where: log.article_id == ^post.id and log.action == :trashed
         )
       )
 
@@ -138,7 +138,7 @@ defmodule GroupherServer.Test.CMS.Command.OperationIdentityTest do
 
     refute Repo.exists?(
              from(log in PostLog,
-               where: log.article_id == ^post.article_id and log.action == :trashed
+               where: log.article_id == ^post.id and log.action == :trashed
              )
            )
   end

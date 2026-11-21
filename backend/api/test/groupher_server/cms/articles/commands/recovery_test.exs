@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
           {:changelog, :changelog_published_editing}
         ] do
       {community, public, _attrs, user} = mock_article(thread)
-      article = Repo.get!(Article, public.article_id)
+      article = Repo.get!(Article, public.id)
       work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
 
       assert {:ok, _} =
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "published Article WorkingCopy writes are author-only even with a Passport grant" do
     {community, public, _attrs, author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     {:ok, other_user} = db_insert(:user)
 
@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "a missing required Dashboard fails published editing closed" do
     {community, public, _attrs, author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     Repo.delete!(Repo.get_by!(CommunityDashboard, community_id: community.id))
 
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "a nonauthor gets permission denied before a missing Dashboard invariant error" do
     {community, public, _attrs, _author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     Repo.delete!(Repo.get_by!(CommunityDashboard, community_id: community.id))
     {:ok, other_user} = db_insert(:user)
@@ -142,7 +142,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     end)
 
     {community, public, _attrs, user} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
 
     assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
@@ -234,7 +234,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     assert {:ok, _} =
              CMS.Articles.mirror(
                destination,
-               public.article_id,
+               public.id,
                [],
                actor,
                community,
@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
                Ecto.UUID.generate()
              )
 
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
 
     assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
@@ -278,7 +278,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "published editing policy denies new writes but permits a confirmed receipt replay" do
     {community, public, _attrs, user} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     command_id = Ecto.UUID.generate()
     attrs = %{title: "Before policy change"}
@@ -466,7 +466,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "forkSnapshot replay maps a newly denied result to command_result_unavailable" do
     {community, public, _attrs, author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     snapshot_id = Repo.get!(ArticlePublic, article.id).snapshot_id
     command_id = Ecto.UUID.generate()
     scope_id = Ecto.UUID.generate()
@@ -538,7 +538,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "saveWorkingCopy retries preserve the confirmed revision" do
     {community, public, _attrs, user} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     command_id = Ecto.UUID.generate()
 
@@ -571,7 +571,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "author can save a published Article loaded without its author association" do
     {community, public, _attrs, author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     command_id = Ecto.UUID.generate()
 
@@ -614,7 +614,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "independent Article admission ignores a forged caller-side author" do
     {community, public, _attrs, _author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     {:ok, other} = db_insert(:user)
     forged = %{article | author: %CMS.Model.Author{user_id: other.id}}
 
@@ -624,7 +624,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "independent Article admission rejects a caller-side thread mismatch" do
     {community, public, _attrs, author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     forged = %{article | thread: :blog}
 
     assert {:error,
@@ -634,7 +634,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "Article admission uses the canonical Community rather than a forged slug" do
     {community, public, _attrs, _author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     {:ok, other} = db_insert(:user)
     forged_slug = "forged-#{Ecto.UUID.generate()}"
 
@@ -652,7 +652,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "a Passport editor cannot save a published Article WorkingCopy" do
     {community, public, _attrs, _author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     {:ok, editor} = db_insert(:user)
     command_id = Ecto.UUID.generate()
@@ -698,7 +698,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "a Passport editor cannot fork a Snapshot into a WorkingCopy" do
     {community, public, _attrs, _author} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     snapshot_id = Repo.get!(ArticlePublic, article.id).snapshot_id
     {:ok, editor} = db_insert(:user)
     command_id = Ecto.UUID.generate()
@@ -745,7 +745,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   test "publishArticle retries return the selected Snapshot" do
     {community, public, _attrs, user} = mock_article(:post)
-    article = Repo.get!(Article, public.article_id)
+    article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     current = Repo.get!(ArticlePublic, article.id)
     command_id = Ecto.UUID.generate()

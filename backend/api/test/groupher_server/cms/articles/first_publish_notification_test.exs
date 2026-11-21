@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.FirstPublishNotificationTest do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Messaging}
-  alias CMS.Model.{Article, GlobalPassport}
+  alias CMS.Model.Article
   alias CMS.Outbox.Event
   alias GroupherServer.Jobs.CMSOutboxArticle
   alias GroupherServer.Messaging.Model.Notice
@@ -13,7 +13,6 @@ defmodule GroupherServer.Test.CMS.Articles.FirstPublishNotificationTest do
   setup do
     start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})
     {community, view, _, actor} = mock_article(:post)
-    Repo.insert!(GlobalPassport.changeset(%GlobalPassport{}, %{user_id: actor.id, is_root: true}))
 
     article = Repo.get!(Article, view.id)
 

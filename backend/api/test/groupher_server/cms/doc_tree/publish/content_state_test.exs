@@ -421,7 +421,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.ContentStateTest do
                edited
              end)
 
-    assert is_nil(CMS.Articles.Body.document(edited).xml)
+    assert CMS.Articles.Body.document(edited).xml == "<xml>saved</xml>"
 
     assert {:ok, restored} =
              Repo.transaction(fn ->

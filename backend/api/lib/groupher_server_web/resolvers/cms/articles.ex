@@ -89,12 +89,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
         %{article_id: article_id, snapshot_id: snapshot_id, community: %Community{} = community},
         %{context: %{cur_user: user}}
       ) do
-    with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
-         {:ok, canonical} <-
-           CMS.articles_working_copy_access_check(user, :edit, article, community),
-         {:ok, snapshot} <- CMS.articles_snapshot(canonical, community, snapshot_id) do
-      {:ok, snapshot}
-    end
+    CMS.front_desk_article_snapshot(article_id, snapshot_id, community, user)
   end
 
   def paged_article_events(_root, %{article_id: article_id} = args, %{

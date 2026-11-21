@@ -46,8 +46,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "changelog.community_tag.create" => true
+          "community_tag.create" => true
         }
       }
 
@@ -88,8 +87,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "changelog.community_tag.create" => true
+          "community_tag.create" => true
         }
       }
 
@@ -167,8 +165,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "changelog.community_tag.update" => true
+          "community_tag.update" => true
         }
       }
 
@@ -206,8 +203,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
         simu_conn(:user,
           cms: %{
             community.title => %{
-              "community.update" => true,
-              "changelog.community_tag.delete" => true
+              "community_tag.delete" => true
             }
           }
         )

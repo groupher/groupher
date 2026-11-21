@@ -12,8 +12,7 @@ defmodule GroupherServer.Test.CMS.Articles.EffectRecoveryTest do
     ArticleWorkingCopy,
     DocsRelease,
     DocsReleaseArticle,
-    DocsReleaseTreeSnapshot,
-    GlobalPassport
+    DocsReleaseTreeSnapshot
   }
 
   alias CMS.Outbox.{Event, Retry}
@@ -21,7 +20,6 @@ defmodule GroupherServer.Test.CMS.Articles.EffectRecoveryTest do
   setup do
     start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})
     {community, view, _, actor} = mock_article(:post)
-    Repo.insert!(GlobalPassport.changeset(%GlobalPassport{}, %{user_id: actor.id, is_root: true}))
     %{community: community, article: Repo.get!(Article, view.id), root: actor}
   end
 

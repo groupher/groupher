@@ -12,6 +12,7 @@ defmodule GroupherServer.Test.ConnSimulator do
         -> endpoint / fixture / Repo
   """
   import GroupherServer.Support.Factory
+  import Ecto.Query, only: [from: 2]
   import Phoenix.ConnTest, only: [build_conn: 0]
   import Plug.Conn, only: [put_req_header: 3]
 
@@ -20,8 +21,8 @@ defmodule GroupherServer.Test.ConnSimulator do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.GlobalPassport
-  alias Helper.{Guardian, ORM, PermissionRegistry}
+  alias CMS.Model.{Community, CommunityAdmin, GlobalPassport}
+  alias Helper.{Guardian, ORM}
 
   @spec simu_conn(:guest | :invalid_token | :user) :: Plug.Conn.t()
   @doc "Builds a guest, generated-user, or invalid-token test connection."
@@ -64,13 +65,7 @@ defmodule GroupherServer.Test.ConnSimulator do
 
     token = gen_jwt_token(id: user.id)
 
-    normalized_rules = normalize_passport_rules(passport_rules)
-
-    {:ok, _passport} =
-      normalized_rules
-      |> CMS.Communities.stamp_passport(%User{id: user.id})
-
-    maybe_stamp_test_system_root!(user, passport_rules)
+    stamp_test_passport!(user, passport_rules)
 
     build_conn() |> put_req_header("authorization", token)
   end
@@ -79,13 +74,7 @@ defmodule GroupherServer.Test.ConnSimulator do
   def simu_conn(:user, %User{} = user, cms: passport_rules) do
     token = gen_jwt_token(id: user.id)
 
-    normalized_rules = normalize_passport_rules(passport_rules)
-
-    {:ok, _passport} =
-      normalized_rules
-      |> CMS.Communities.stamp_passport(%User{id: user.id})
-
-    maybe_stamp_test_system_root!(user, passport_rules)
+    stamp_test_passport!(user, passport_rules)
 
     build_conn() |> put_req_header("authorization", token)
   end
@@ -98,112 +87,188 @@ defmodule GroupherServer.Test.ConnSimulator do
     end
   end
 
-  defp normalize_passport_rules(%{"global" => _global, "cms" => _cms} = rules) do
-    rules |> migrate_legacy_passport_rules() |> sanitize_passport_rules()
+  defp stamp_test_passport!(%User{id: user_id} = user, rules) when is_map(rules) do
+    {global, scoped, unscoped} = test_passport_rules(rules)
+    is_root = test_system_root?(rules)
+    current = Repo.get_by(GlobalPassport, user_id: user_id) || %GlobalPassport{}
+
+    current
+    |> GlobalPassport.changeset(%{
+      user_id: user_id,
+      is_root: is_root,
+      permissions: global
+    })
+    |> Repo.insert_or_update!()
+
+    stamp_community_passports!(user, scoped, unscoped)
   end
 
-  defp normalize_passport_rules(%{"global" => _global} = rules) do
-    sanitize_passport_rules(rules)
-  end
+  defp test_passport_rules(rules) do
+    rules = stringify_keys(rules)
+    global_source = Map.get(rules, "global", %{})
+    base_rules = Map.drop(rules, ["global", "god", "cms"])
 
-  defp normalize_passport_rules(rules) when is_map(rules) do
-    if Enum.all?(rules, fn {_k, v} -> is_map(v) end) do
-      rules
-      |> Enum.reduce(%{"global" => %{}}, fn {community, community_rules}, acc ->
-        Map.put(acc, to_string(community), %{"cms" => community_rules})
+    scoped_candidates =
+      base_rules
+      |> Enum.reject(fn {key, value} ->
+        value == true and
+          (global_permission?(key) or community_permission?(key))
       end)
-      |> sanitize_passport_rules()
-    else
-      %{"global" => rules}
-      |> sanitize_passport_rules()
-    end
-  end
+      |> Enum.filter(fn {_key, value} -> is_map(value) end)
 
-  defp normalize_passport_rules(_), do: %{"global" => %{}}
+    {global, flat_context} =
+      base_rules
+      |> Enum.reduce({filter_global_rule_map(global_source), %{}}, fn {key, value},
+                                                                      {global, cms} ->
+        cond do
+          value != true -> {global, cms}
+          global_permission?(key) -> {Map.put(global, key, true), cms}
+          community_permission?(key) -> {global, Map.put(cms, key, true)}
+          true -> {global, cms}
+        end
+      end)
 
-  defp maybe_stamp_test_system_root!(%User{id: user_id}, passport_rules) do
-    if test_system_root?(passport_rules) do
-      passport = Repo.get_by(GlobalPassport, user_id: user_id) || %GlobalPassport{}
+    legacy_cms = Map.get(rules, "cms", %{})
 
-      passport
-      |> GlobalPassport.changeset(%{
-        user_id: user_id,
-        is_root: true,
-        permissions: passport.permissions
-      })
-      |> Repo.insert_or_update!()
-    end
-  end
-
-  defp test_system_root?(%{"god" => true}), do: true
-  defp test_system_root?(%{"global" => %{"god" => true}}), do: true
-  defp test_system_root?(_), do: false
-
-  defp sanitize_passport_rules(%{"global" => global} = rules) do
-    rules
-    |> Map.drop(["global"])
-    |> Enum.reduce(%{"global" => filter_global_rule_map(global)}, fn {community, community_rules},
-                                                                     acc ->
-      cleaned_rules = filter_community_rule_map(community_rules)
-
-      if cleaned_rules == %{} do
-        acc
-      else
-        Map.put(acc, to_string(community), cleaned_rules)
-      end
-    end)
-  end
-
-  defp sanitize_passport_rules(_), do: %{"global" => %{}}
-
-  defp migrate_legacy_passport_rules(%{"global" => global, "cms" => cms}) do
-    cms
-    |> Enum.reduce(%{"global" => global}, fn {community, rules}, acc ->
-      Map.put(acc, to_string(community), %{"cms" => rules})
-    end)
-  end
-
-  defp filter_community_rule_map(map) when is_map(map) do
-    map
-    |> Enum.reduce(%{}, fn {key, value}, acc ->
-      key = to_string(key)
-
+    {scoped_source, unscoped_source} =
       cond do
-        key == "root" and value == true ->
-          Map.put(acc, key, true)
+        is_map(legacy_cms) and map_size(legacy_cms) > 0 and
+            Enum.all?(legacy_cms, fn {_key, value} -> is_map(value) end) ->
+          {legacy_cms, %{}}
 
-        key == "cms" and is_map(value) ->
-          Map.put(acc, key, filter_cms_rule_map(value))
+        is_map(legacy_cms) and map_size(legacy_cms) > 0 ->
+          {%{}, Map.merge(flat_context, filter_community_rule_map(legacy_cms))}
 
         true ->
-          acc
+          {scoped_candidates, flat_context}
+      end
+
+    scoped =
+      Enum.reduce(scoped_source, %{}, fn {slug, value}, acc ->
+        value = stringify_keys(value)
+        cms = Map.get(value, "cms", value)
+        permissions = filter_community_rule_map(cms)
+        is_lord = if Map.has_key?(value, "root"), do: Map.get(value, "root") == true
+        Map.put(acc, to_string(slug), %{permissions: permissions, is_lord: is_lord})
+      end)
+
+    {global, scoped, filter_community_rule_map(unscoped_source)}
+  end
+
+  defp stamp_community_passports!(%User{id: user_id}, scoped, unscoped) do
+    if map_size(unscoped) > 0 do
+      Repo.all(Community)
+      |> Enum.each(&upsert_test_membership!(user_id, &1, unscoped, false))
+    end
+
+    existing_members = Repo.all(from(member in CommunityAdmin, where: member.user_id == ^user_id))
+
+    Enum.each(existing_members, fn member ->
+      slug = community_slug(member.community_id)
+      grant = Map.get(scoped, slug)
+      has_grant = map_size(unscoped) > 0 or not is_nil(grant)
+
+      permissions =
+        member.permissions
+        |> Map.merge(unscoped)
+        |> Map.merge(if(grant, do: grant.permissions, else: %{}))
+
+      is_lord = if grant && not is_nil(grant.is_lord), do: grant.is_lord, else: member.is_lord
+
+      if has_grant do
+        member
+        |> CommunityAdmin.changeset(%{
+          permissions: permissions,
+          is_lord: is_lord
+        })
+        |> Repo.update!()
+      end
+    end)
+
+    Enum.each(scoped, fn {slug, grant} ->
+      case find_test_community(slug) do
+        nil ->
+          :ok
+
+        community ->
+          upsert_test_membership!(user_id, community, grant.permissions, grant.is_lord)
       end
     end)
   end
 
-  defp filter_community_rule_map(_), do: %{}
+  defp upsert_test_membership!(user_id, community, permissions, is_lord) do
+    case Repo.get_by(CommunityAdmin, user_id: user_id, community_id: community.id) do
+      nil when permissions == %{} and is_lord != true ->
+        :ok
+
+      member ->
+        member = member || %CommunityAdmin{}
+        next_is_lord = if is_nil(is_lord), do: member.is_lord || false, else: is_lord
+
+        member
+        |> CommunityAdmin.changeset(%{
+          user_id: user_id,
+          community_id: community.id,
+          permissions: Map.merge(member.permissions || %{}, permissions),
+          is_lord: next_is_lord
+        })
+        |> Repo.insert_or_update!()
+    end
+  end
+
+  defp community_slug(community_id) do
+    Repo.get!(Community, community_id).slug
+  end
+
+  defp find_test_community(ref) do
+    Repo.get_by(Community, slug: ref) || Repo.get_by(Community, title: ref)
+  end
+
+  defp test_system_root?(rules) do
+    rules = stringify_keys(rules)
+    Map.get(rules, "god") == true or Map.get(Map.get(rules, "global", %{}), "god") == true
+  end
 
   defp filter_global_rule_map(map) when is_map(map) do
-    map
-    |> Enum.reduce(%{}, fn {rule, value}, acc ->
-      if PermissionRegistry.valid_global_permission?(to_string(rule)) and value == true do
-        Map.put(acc, to_string(rule), true)
-      else
-        acc
-      end
+    Enum.reduce(map, %{}, fn {rule, value}, acc ->
+      rule = to_string(rule)
+
+      if global_permission?(rule) and value == true,
+        do: Map.put(acc, rule, true),
+        else: acc
     end)
   end
 
   defp filter_global_rule_map(_), do: %{}
 
-  defp filter_cms_rule_map(map) when is_map(map) do
-    map
-    |> Enum.reduce(%{}, fn {rule, value}, acc ->
-      if PermissionRegistry.valid_context_permission?("cms", to_string(rule)) and value == true do
-        Map.put(acc, to_string(rule), true)
-      else
-        acc
-      end
+  defp filter_community_rule_map(map) when is_map(map) do
+    Enum.reduce(map, %{}, fn {rule, value}, acc ->
+      rule = to_string(rule)
+
+      valid? =
+        community_permission?(rule) or
+          CMS.Passport.Registry.valid_context_permission?(:cms, rule)
+
+      if valid? and value == true, do: Map.put(acc, rule, true), else: acc
     end)
   end
+
+  defp filter_community_rule_map(_), do: %{}
+
+  defp community_permission?(rule) do
+    case CMS.Passport.Catalog.get(rule) do
+      {:ok, %{scope: :community, grantable: true}} -> true
+      _ -> false
+    end
+  end
+
+  defp global_permission?(rule) do
+    case CMS.Passport.Catalog.get(rule) do
+      {:ok, %{scope: :global, grantable: true}} -> true
+      _ -> false
+    end
+  end
+
+  defp stringify_keys(map) when is_map(map),
+    do: Map.new(map, fn {key, value} -> {to_string(key), value} end)
 end

@@ -842,7 +842,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
     test "includes Doc WorkingCopy asset refs in the batch usage query" do
       {doc_community, doc, _attrs, doc_user} = mock_article(:doc)
-      public = Repo.get!(ArticlePublic, doc.article_id)
+      public = Repo.get!(ArticlePublic, doc.id)
       actor = doc_user
       {:ok, doc_lord} = db_insert(:user)
 
@@ -857,7 +857,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, _} =
                CMS.DocTree.Commands.BeginEdit.execute(
                  doc_community,
-                 doc.article_id,
+                 doc.id,
                  public.snapshot_id,
                  actor,
                  Ecto.UUID.generate()
@@ -905,7 +905,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       assert Enum.all?(items, &((&1[:decision] || &1["decision"]) == "unsupported"))
 
-      assert {:ok, _} = CMS.Seeds.Docs.delete(doc_community, doc.article_id, doc_lord)
+      assert {:ok, _} = CMS.Seeds.Docs.delete(doc_community, doc.id, doc_lord)
       assert {:ok, []} = CMS.Assets.usages(doc_community, asset.id, doc_user)
     end
 
@@ -2795,7 +2795,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
   defp open_draft(article_view, user) do
     _user = user
-    article = Repo.get!(Article, article_view.article_id)
+    article = Repo.get!(Article, article_view.id)
 
     case Repo.get_by(ArticleWorkingCopy,
            article_id: article.id,

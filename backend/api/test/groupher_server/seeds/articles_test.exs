@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
       {:ok, public_stats} = CMS.ArticleStats.fetch(:post, first.id)
 
       comments_count =
-        from(c in Comment, where: c.article_id == ^first.article_id)
+        from(c in Comment, where: c.article_id == ^first.id)
         |> count()
 
       assert comments_count >= 2

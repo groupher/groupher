@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
           user
         )
 
-      assert not changelog.meta.is_comment_locked
+      assert not changelog.comments_locked
 
       {:ok, _} = CMS.Articles.lock_comments(changelog.id, user, community: community)
       assert Repo.get!(CMS.Model.Article, changelog.id).comments_locked

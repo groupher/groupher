@@ -11,6 +11,11 @@ defmodule GroupherServer.Test.CMS.OutboxScheduleCheckTest do
   alias Jobs.CMSOutboxArticle
 
   setup do
+    Repo.update_all(
+      from(event in Event, where: event.status in [:waiting, :retrying, :running]),
+      set: [status: :done, locked_at: nil, locked_by: nil]
+    )
+
     start_supervised!({Oban, repo: Repo, testing: :manual, queues: false, plugins: false})
     :ok
   end

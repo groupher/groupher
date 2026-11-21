@@ -91,9 +91,9 @@ defmodule GroupherServer.CMS.Communities do
   defp read_mode(opts) do
     case Keyword.get(opts, :policy_mode, :public) do
       :public -> {:ok, :public}
-      :management -> {:ok, :management}
-      :owner_management -> {:ok, :management}
-      :moderator_management -> {:ok, :management}
+      :admin -> {:ok, :admin}
+      :owner -> {:ok, :owner}
+      :moderator_management -> {:ok, :admin}
       :operations -> {:ok, :internal}
       _ -> {:error, CMS.Gate.ErrorCat.unknown_policy_mode()}
     end

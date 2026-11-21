@@ -318,7 +318,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
       assert result["innerId"] == to_string(article_inner_id(doc, community))
 
-      state = Repo.get!(CMS.Model.Article, doc.article_id)
+      state = Repo.get!(CMS.Model.Article, doc.id)
 
       assert state.comments_locked
     end
@@ -346,7 +346,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
         CMS.Articles.lock_comments(doc.id, user, community: community)
 
       {:ok, doc} = read_article(community, :doc, article_inner_id(doc, community))
-      assert doc.meta.is_comment_locked
+      assert doc.comments_locked
 
       variables = %{
         command_id: Ecto.UUID.generate(),
@@ -365,7 +365,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       assert result["innerId"] == to_string(article_inner_id(doc, community))
 
       {:ok, doc} = read_article(community, :doc, article_inner_id(doc, community))
-      assert not doc.meta.is_comment_locked
+      assert not doc.comments_locked
     end
 
     test "unauth user undo fails", ~m(guest_conn community doc)a do

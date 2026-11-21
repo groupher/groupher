@@ -6,20 +6,20 @@ defmodule GroupherServer.Test.CMS.Docs.PlatformReviewTest do
 
   test "Doc release queues platform review for the published Snapshot" do
     {_community, doc, _attrs, _user} = mock_article(:doc)
-    public = Repo.get!(ArticlePublic, doc.article_id)
+    public = Repo.get!(ArticlePublic, doc.id)
 
     request =
       Repo.one!(
         from(request in ArtimentReview,
           where:
-            request.target_type == :article and request.article_id == ^doc.article_id and
+            request.target_type == :article and request.article_id == ^doc.id and
               is_nil(request.community_id)
         )
       )
 
     assert request.state == :queued
     assert request.policy_snapshot["scope"] == "system"
-    assert Repo.get!(CMS.Model.ArticleSnapshot, public.snapshot_id).article_id == doc.article_id
+    assert Repo.get!(CMS.Model.ArticleSnapshot, public.snapshot_id).article_id == doc.id
     assert is_binary(request.payload["text"]["body"])
 
     assert {:ok, _} =

@@ -212,7 +212,24 @@ defmodule GroupherServer.Test.CMS.Press do
     }
     """
 
-    connection = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+    {:ok, editor} = db_insert(:user)
+
+    Repo.insert!(
+      CMS.Model.CommunityAdmin.changeset(%CMS.Model.CommunityAdmin{}, %{
+        user_id: editor.id,
+        community_id: community.id,
+        permissions: %{"dashboard.rss.update" => true}
+      })
+    )
+
+    Repo.insert!(
+      CMS.Model.GlobalPassport.changeset(%CMS.Model.GlobalPassport{}, %{
+        user_id: editor.id,
+        permissions: %{"community.update" => true}
+      })
+    )
+
+    connection = simu_conn(:user, editor)
 
     updated =
       gq_mutation(connection, mutation, %{

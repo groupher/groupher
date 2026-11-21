@@ -6,7 +6,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.ArticleCoAuthorRequest do
   """
 
   alias GroupherServer.{Accounts, ErrorCat, Messaging}
-  alias CMS.Outbox
+  alias GroupherServer.CMS.ErrorCat, as: CMSErrorCat
+  alias GroupherServer.CMS.Outbox
 
   @doc "Executes one Article co-author request notice under Outbox delivery fencing."
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
@@ -34,5 +35,5 @@ defmodule GroupherServer.CMS.Outbox.Workflow.ArticleCoAuthorRequest do
     end
   end
 
-  def perform(_), do: {:error, ErrorCat.invalid_body("invalid Article co-author outbox event")}
+  def perform(_), do: {:error, CMSErrorCat.invalid_body("invalid Article co-author outbox event")}
 end

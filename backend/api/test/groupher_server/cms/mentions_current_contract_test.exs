@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
     now = DateTime.utc_now(:second)
 
     assert {:ok, %{edge_count: 1}} =
-             capture(source, community, mention_ast(:blog, target.article_id, 2), now)
+             capture(source, community, mention_ast(:blog, target.id, 2), now)
 
     edge = Repo.one!(from(edge in Edge, where: edge.target_type == :blog))
     assert edge.occurrences_count == 2
@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
     first_at = DateTime.utc_now(:second)
     second_at = DateTime.add(first_at, 60, :second)
     third_at = DateTime.add(first_at, 120, :second)
-    ast = mention_ast(:blog, target.article_id, 1)
+    ast = mention_ast(:blog, target.id, 1)
 
     assert {:ok, _} = capture(source, community, ast, first_at)
     first = edge_for(source)
@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
     {_, target, _, _} = mock_article(:blog, community, author)
 
     Repo.update_all(
-      from(state in ArticleLifecycle, where: state.article_id == ^target.article_id),
+      from(state in ArticleLifecycle, where: state.article_id == ^target.id),
       set: [state: :draft]
     )
 
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
              capture(
                source,
                community,
-               mention_ast(:blog, target.article_id, 1),
+               mention_ast(:blog, target.id, 1),
                DateTime.utc_now(:second)
              )
 
@@ -84,12 +84,12 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
     {_, target, _, _} = mock_article(:blog, community, author)
 
     Repo.update_all(
-      from(binding in ArticleBinding, where: binding.article_id == ^target.article_id),
+      from(binding in ArticleBinding, where: binding.article_id == ^target.id),
       set: [inner_id: nil]
     )
 
     Repo.update_all(
-      from(state in ArticleLifecycle, where: state.article_id == ^target.article_id),
+      from(state in ArticleLifecycle, where: state.article_id == ^target.id),
       set: [state: :draft]
     )
 
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
              capture(
                source,
                community,
-               mention_ast(:blog, target.article_id, 1),
+               mention_ast(:blog, target.id, 1),
                DateTime.utc_now(:second)
              )
 
@@ -108,8 +108,8 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
 
     target_node = Enum.find(page.nodes, &(&1.type == :blog))
     assert target_node.status == :unavailable
-    assert target_node.url == "/#{community.slug}/blog/#{target.article_id}"
-    assert target_node.locator == %{type: :blog, article_id: target.article_id}
+    assert target_node.url == "/#{community.slug}/blog/#{target.id}"
+    assert target_node.locator == %{type: :blog, article_id: target.id}
 
     assert {:ok, target_page} =
              CMS.mentions_graph_page(
@@ -133,25 +133,23 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
     graphql_page =
       gq_query(simu_conn(:guest), query, %{
         community: community.slug,
-        focus: %{type: "BLOG", article_id: target.article_id}
+        focus: %{type: "BLOG", article_id: target.id}
       })
 
     assert length(graphql_page["edges"]) == 1
 
     assert Enum.any?(graphql_page["nodes"], fn node ->
-             node["type"] == "BLOG" and node["locator"]["articleId"] == target.article_id and
-               node["url"] == "/#{community.slug}/blog/#{target.article_id}"
+             node["type"] == "BLOG" and node["locator"]["articleId"] == target.id and
+               node["url"] == "/#{community.slug}/blog/#{target.id}"
            end)
 
-    Repo.delete_all(
-      from(binding in ArticleBinding, where: binding.article_id == ^target.article_id)
-    )
+    Repo.delete_all(from(binding in ArticleBinding, where: binding.article_id == ^target.id))
 
     assert {:ok, without_binding} =
              CMS.mentions_graph_page(community.slug, source_focus, nil, 20)
 
     assert Enum.any?(without_binding.nodes, fn node ->
-             node.type == :blog and node.url == "/#{community.slug}/blog/#{target.article_id}"
+             node.type == :blog and node.url == "/#{community.slug}/blog/#{target.id}"
            end)
 
     assert {:ok, direct_without_binding} =
@@ -167,7 +165,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
     graphql_without_binding =
       gq_query(simu_conn(:guest), query, %{
         community: community.slug,
-        focus: %{type: "BLOG", article_id: target.article_id}
+        focus: %{type: "BLOG", article_id: target.id}
       })
 
     assert length(graphql_without_binding["edges"]) == 1
@@ -181,13 +179,11 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
              capture(
                source,
                community,
-               mention_ast(:blog, target.article_id, 1),
+               mention_ast(:blog, target.id, 1),
                DateTime.utc_now(:second)
              )
 
-    Repo.delete_all(
-      from(binding in ArticleBinding, where: binding.article_id == ^source.article_id)
-    )
+    Repo.delete_all(from(binding in ArticleBinding, where: binding.article_id == ^source.id))
 
     target_focus = %{type: :blog, article_inner_id: target.inner_id}
 
@@ -195,8 +191,8 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
              CMS.mentions_graph_page(community.slug, target_focus, nil, 20)
 
     source_node = Enum.find(page.nodes, &(&1.type == :post))
-    assert source_node.url == "/#{community.slug}/post/#{source.article_id}"
-    assert source_node.locator == %{type: :post, article_id: source.article_id}
+    assert source_node.url == "/#{community.slug}/post/#{source.id}"
+    assert source_node.locator == %{type: :post, article_id: source.id}
 
     assert {:ok, direct} =
              CMS.mentions_graph_page(
@@ -217,15 +213,15 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
              capture(
                source,
                community,
-               mention_ast(:blog, target.article_id, 1),
+               mention_ast(:blog, target.id, 1),
                DateTime.utc_now(:second)
              )
 
-    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.article_id)
+    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.id)
 
     assert {:ok, {:ok, :pass}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.hide_source(%{type: :post, article_id: source.article_id})
+               CMS.ArtimentMentions.hide_source(%{type: :post, article_id: source.id})
              end)
 
     assert Repo.exists?(from(edge in Edge, where: edge.source_endpoint_id == ^endpoint.id))
@@ -239,7 +235,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
              capture(
                source,
                community,
-               mention_ast(:blog, target.article_id, 1),
+               mention_ast(:blog, target.id, 1),
                DateTime.utc_now(:second)
              )
 
@@ -247,15 +243,15 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
              capture(
                target,
                community,
-               mention_ast(:post, source.article_id, 1),
+               mention_ast(:post, source.id, 1),
                DateTime.utc_now(:second)
              )
 
-    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.article_id)
+    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.id)
 
     assert {:ok, {:ok, :pass}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.mark_deleted(%{type: :post, article_id: source.article_id})
+               CMS.ArtimentMentions.mark_deleted(%{type: :post, article_id: source.id})
              end)
 
     refute Repo.exists?(
@@ -270,19 +266,19 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
   test "transaction rollback does not leave current edges" do
     {community, source, _, author} = mock_article(:post)
     {_, target, _, _} = mock_article(:blog, community, author)
-    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.article_id)
+    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.id)
 
     assert {:error, :deliberate_rollback} =
              Repo.transaction(fn ->
                assert {:ok, _} =
                         Capture.execute(
-                          %{type: :post, article_id: source.article_id},
+                          %{type: :post, article_id: source.id},
                           selected(
                             community,
-                            mention_ast(:blog, target.article_id, 1),
+                            mention_ast(:blog, target.id, 1),
                             DateTime.utc_now(:second)
                           ),
-                          {:command, Ecto.UUID.generate()}
+                          Ecto.UUID.generate()
                         )
 
                Repo.rollback(:deliberate_rollback)
@@ -292,13 +288,13 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
   end
 
   defp capture(source, community, ast, now) do
-    identity = %{type: source.thread, article_id: source.article_id}
+    identity = %{type: source.thread, article_id: source.id}
 
     case Repo.transaction(fn ->
            Capture.execute(
              identity,
              selected(community, ast, now),
-             {:command, Ecto.UUID.generate()}
+             Ecto.UUID.generate()
            )
          end) do
       {:ok, result} -> result
@@ -316,7 +312,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
   end
 
   defp edge_for(source) do
-    endpoint = Repo.get_by!(Endpoint, type: source.thread, article_id: source.article_id)
+    endpoint = Repo.get_by!(Endpoint, type: source.thread, article_id: source.id)
     Repo.one!(from(edge in Edge, where: edge.source_endpoint_id == ^endpoint.id))
   end
 

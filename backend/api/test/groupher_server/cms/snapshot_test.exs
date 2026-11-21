@@ -234,14 +234,14 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       snapshot = %{
         id: comment.id,
         body_digest: "old digest",
-        article_id: post.article_id,
+        article_id: post.id,
         thread: :post
       }
 
       assert [%{body_digest: "old digest"}] = Snapshot.comments(:post, [snapshot])
       assert [fresh] = Snapshot.comments(:post, [snapshot], mode: :blocking)
       assert fresh.body_digest == "fresh"
-      assert fresh.article_id == post.article_id
+      assert fresh.article_id == post.id
     end
 
     test "comments use character length when building digest" do

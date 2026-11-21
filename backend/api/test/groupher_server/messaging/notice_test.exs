@@ -51,10 +51,10 @@ defmodule GroupherServer.Test.Messaging.Notice do
         user_id: user.id
       }
 
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -73,11 +73,11 @@ defmodule GroupherServer.Test.Messaging.Notice do
         user_id: user.id
       }
 
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -97,34 +97,34 @@ defmodule GroupherServer.Test.Messaging.Notice do
       attrs = Map.put(notify_attrs, :delivery_key, "outbox:event-1:notice")
 
       assert {:ok, %Notice{} = notification} =
-               Messaging.notify(attrs, user2)
+               Messaging.send_notice(attrs, user2)
 
       assert {:ok, _} =
                notification
                |> Ecto.Changeset.change(read: true)
                |> Repo.update()
 
-      assert {:ok, :already_delivered} = Messaging.notify(attrs, user2)
+      assert {:ok, :already_delivered} = Messaging.send_notice(attrs, user2)
       assert Repo.aggregate(Notice, :count) == 1
     end
   end
 
   describe "notification" do
     test "can get unread notification count of a user", ~m(user user2 user3 notify_attrs)a do
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
-      {:ok, count} = Messaging.unread_count(:notice, user.id)
+      {:ok, count} = Messaging.unread_count(:notification, user.id)
 
       assert count == 1
     end
 
     test "similar notify should be merged", ~m(user user2 user3 notify_attrs)a do
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -140,12 +140,12 @@ defmodule GroupherServer.Test.Messaging.Notice do
 
     @tag :skip_ci
     test "different notify should not be merged", ~m(user user2 user3 notify_attrs)a do
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
       notify_attrs = notify_attrs |> Map.put(:type, :collect)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -162,12 +162,12 @@ defmodule GroupherServer.Test.Messaging.Notice do
     @tag :skip_ci
     test "notify not in @notify_group_interval_hour should not be merged",
          ~m(user user2 user3 notify_attrs)a do
-      {:ok, notify} = Messaging.notify(notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notice(notify_attrs, user2)
       move_insert_at_long_ago(notify)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -184,13 +184,13 @@ defmodule GroupherServer.Test.Messaging.Notice do
     test "notify's from_users_count should work", ~m(user user2 user3 user4 notify_attrs)a do
       {:ok, user5} = db_insert(:user)
 
-      {:ok, _notify} = Messaging.notify(notify_attrs, user2)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
-      {:ok, _} = Messaging.notify(notify_attrs, user4)
-      {:ok, _} = Messaging.notify(notify_attrs, user5)
+      {:ok, _notify} = Messaging.send_notice(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user4)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user5)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -208,17 +208,17 @@ defmodule GroupherServer.Test.Messaging.Notice do
     end
 
     test "notify myself got ignored", ~m(user notify_attrs)a do
-      assert {:error, error} = Messaging.notify(notify_attrs, user)
+      assert {:error, error} = Messaging.send_notice(notify_attrs, user)
       assert ErrorCat.reason(error) == :invalid_notice_args
     end
   end
 
   describe "revoke case" do
     test "can revoke a notification", ~m(user user2  notify_attrs)a do
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -228,7 +228,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
       Messaging.revoke_notice(notify_attrs, user2)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -237,11 +237,11 @@ defmodule GroupherServer.Test.Messaging.Notice do
     end
 
     test "can revoke a multi-user joined notification", ~m(user user2 user3 notify_attrs)a do
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -254,7 +254,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
       Messaging.revoke_notice(notify_attrs, user2)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -267,14 +267,14 @@ defmodule GroupherServer.Test.Messaging.Notice do
 
     test "can revoke a multi-user joined notification, long peroid",
          ~m(user user2 user3 notify_attrs)a do
-      {:ok, notify} = Messaging.notify(notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notice(notify_attrs, user2)
 
       move_insert_at_long_ago(notify)
 
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -284,7 +284,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
       Messaging.revoke_notice(notify_attrs, user2)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -296,15 +296,15 @@ defmodule GroupherServer.Test.Messaging.Notice do
 
     test "can revoke a multi-user joined notification, long peroid, edge case",
          ~m(user user2 user3 user4 notify_attrs)a do
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
-      {:ok, notify} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notice(notify_attrs, user3)
 
       move_insert_at_long_ago(notify)
 
-      {:ok, _} = Messaging.notify(notify_attrs, user4)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user4)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -314,7 +314,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
       Messaging.revoke_notice(notify_attrs, user2)
 
       {:ok, paged_notifies} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -339,7 +339,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
         user_id: user.id
       })
 
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
 
       notify_attrs
       |> Map.merge(%{
@@ -351,7 +351,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
         user_id: user.id
       })
 
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
 
       invalid_notify_attrs =
         notify_attrs
@@ -363,7 +363,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
           user_id: user.id
         })
 
-      {:error, _} = Messaging.notify(invalid_notify_attrs, user2)
+      {:error, _} = Messaging.send_notice(invalid_notify_attrs, user2)
     end
 
     test "support collect", ~m(post user user2 notify_attrs)a do
@@ -376,7 +376,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
         user_id: user.id
       })
 
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
 
       invalid_notify_attrs =
         notify_attrs
@@ -387,7 +387,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
           user_id: user.id
         })
 
-      {:error, _} = Messaging.notify(invalid_notify_attrs, user2)
+      {:error, _} = Messaging.send_notice(invalid_notify_attrs, user2)
     end
 
     test "support comment and reply", ~m(post user user2 notify_attrs)a do
@@ -401,7 +401,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
         user_id: user.id
       })
 
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
 
       notify_attrs
       |> Map.merge(%{
@@ -413,7 +413,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
         user_id: user.id
       })
 
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
 
       invalid_notify_attrs =
         notify_attrs
@@ -425,7 +425,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
           user_id: user.id
         })
 
-      {:error, _} = Messaging.notify(invalid_notify_attrs, user2)
+      {:error, _} = Messaging.send_notice(invalid_notify_attrs, user2)
 
       invalid_notify_attrs =
         notify_attrs
@@ -437,7 +437,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
           user_id: user.id
         })
 
-      {:error, _} = Messaging.notify(invalid_notify_attrs, user2)
+      {:error, _} = Messaging.send_notice(invalid_notify_attrs, user2)
     end
 
     test "support follow", ~m(user user2)a do
@@ -446,18 +446,18 @@ defmodule GroupherServer.Test.Messaging.Notice do
         user_id: user.id
       }
 
-      {:ok, _} = Messaging.notify(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
     end
   end
 
   describe "mark read" do
     test "can mark multi notification as read", ~m(user user2 user3 notify_attrs)a do
-      {:ok, notify} = Messaging.notify(notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notice(notify_attrs, user2)
       move_insert_at_long_ago(notify)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
       {:ok, result} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -467,10 +467,10 @@ defmodule GroupherServer.Test.Messaging.Notice do
 
       assert result.total_count == 2
 
-      {:ok, _} = Messaging.mark_read(:notice, [notify1.id, notify2.id], user)
+      {:ok, _} = Messaging.mark_read(:notification, [notify1.id, notify2.id], user)
 
       {:ok, result} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -479,7 +479,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
 
       {:ok, result} =
         Messaging.paged_messages(
-          :notice,
+          :notification,
           user,
           %{read: true},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 10}
@@ -489,22 +489,22 @@ defmodule GroupherServer.Test.Messaging.Notice do
     end
 
     test "can mark all notification as read", ~m(user user2 user3 notify_attrs)a do
-      {:ok, notify} = Messaging.notify(notify_attrs, user2)
+      {:ok, notify} = Messaging.send_notice(notify_attrs, user2)
       move_insert_at_long_ago(notify)
-      {:ok, _} = Messaging.notify(notify_attrs, user3)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user3)
 
       {:ok, result} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
 
       assert result.total_count == 2
 
-      {:ok, _} = Messaging.mark_read_all(:notice, user)
+      {:ok, _} = Messaging.mark_read_all(:notification, user)
 
       {:ok, result} =
-        Messaging.paged_messages(:notice, user, %{}, %GroupherServer.Pagi.Params.Offset{
+        Messaging.paged_messages(:notification, user, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
@@ -513,7 +513,7 @@ defmodule GroupherServer.Test.Messaging.Notice do
 
       {:ok, result} =
         Messaging.paged_messages(
-          :notice,
+          :notification,
           user,
           %{read: true},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 10}

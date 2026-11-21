@@ -46,13 +46,13 @@ defmodule GroupherServer.CMS.DocTree.Import do
   alias CMS.Model.{Community, DocsTreeNode}
 
   @doc "Projects confirmed source navigation into the workspace without changing Queue membership or navigation."
-  def apply(%Community{} = community, tree, items_by_target, actor)
-      when is_map(tree) and is_map(items_by_target) do
+  def apply(%Community{} = community, tree, items_by_target, actor, operation_ref)
+      when is_map(tree) and is_map(items_by_target) and is_binary(operation_ref) do
     with namespace when is_binary(namespace) and namespace != "" <- Map.get(tree, "namespace"),
          {:ok, attrs} <-
            flatten_tabs(community, namespace, Map.get(tree, "tabs", []), items_by_target),
          attrs <- reuse_existing_node_ids(attrs),
-         {:ok, result} <- WorkspaceUpdate.import_nodes(community, attrs, actor) do
+         {:ok, result} <- WorkspaceUpdate.import_nodes(community, attrs, actor, operation_ref) do
       {:ok, result}
     else
       namespace when namespace in [nil, ""] ->
@@ -62,6 +62,8 @@ defmodule GroupherServer.CMS.DocTree.Import do
         error
     end
   end
+
+  def apply(_, _, _, _, _), do: {:error, :invalid_import_tree}
 
   defp flatten_tabs(community, namespace, tabs, items_by_target) when is_list(tabs) do
     tabs

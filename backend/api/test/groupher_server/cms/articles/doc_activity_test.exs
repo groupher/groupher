@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
     t1 = ~U[2026-11-01 00:00:00Z]
     t3 = ~U[2026-11-03 00:00:00Z]
     t5 = ~U[2026-11-05 00:00:00Z]
-    ids = [first.article_id, second.article_id]
+    ids = [first.id, second.id]
     Repo.update_all(from(a in Article, where: a.id in ^ids), set: [active_at: t3])
 
     config = %Config{
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
 
     Repo.update_all(
       from(s in Article,
-        where: s.id == ^first.article_id
+        where: s.id == ^first.id
       ),
       set: [active_at: t5]
     )
@@ -59,12 +59,12 @@ defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
         config: config
       )
 
-    assert updated.id == first.article_id
+    assert updated.id == first.id
     assert updated.active_at == t5
 
     Repo.update_all(
       from(s in Article,
-        where: s.id == ^first.article_id
+        where: s.id == ^first.id
       ),
       set: [is_sunk: true, active_at: t1]
     )
@@ -74,18 +74,18 @@ defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
         config: %{config | default_size: 10}
       )
 
-    assert Enum.find(sunk_entries, &(&1.id == first.article_id)).active_at == t1
+    assert Enum.find(sunk_entries, &(&1.id == first.id)).active_at == t1
   end
 
   test "ACT-04 the retained Article Flop adapter orders by the same effective expression" do
     {community, first, _, author} = mock_article(:doc)
     {_, second, _, _} = mock_article(:doc, community, author)
 
-    Repo.update_all(from(a in Article, where: a.id == ^first.article_id),
+    Repo.update_all(from(a in Article, where: a.id == ^first.id),
       set: [active_at: ~U[2026-11-05 00:00:00Z]]
     )
 
-    Repo.update_all(from(a in Article, where: a.id == ^second.article_id),
+    Repo.update_all(from(a in Article, where: a.id == ^second.id),
       set: [active_at: ~U[2026-11-02 00:00:00Z]]
     )
 
@@ -114,6 +114,6 @@ defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
         repo: Repo
       )
 
-    assert Enum.map(entries, & &1.id) == [first.article_id, second.article_id]
+    assert Enum.map(entries, & &1.id) == [first.id, second.id]
   end
 end

@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
         {:ok, %{comment: comment}} =
           CMS.Comments.Commands.Create.create(
             :doc,
-            %{id: ctx.doc.article_id, community: ctx.community},
+            %{id: ctx.doc.id, community: ctx.community},
             bag(ctx),
             ctx.author,
             Ecto.UUID.generate()
@@ -51,14 +51,14 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
         {comment, endpoint}
       end
 
-    parent = Repo.get_by!(Endpoint, type: :doc, article_id: ctx.doc.article_id)
+    parent = Repo.get_by!(Endpoint, type: :doc, article_id: ctx.doc.id)
 
     assert Enum.all?(comments, fn {_comment, endpoint} ->
              endpoint.parent_endpoint_id == parent.id
            end)
 
     assert Repo.aggregate(
-             from(e in Endpoint, where: e.type == :doc and e.article_id == ^ctx.doc.article_id),
+             from(e in Endpoint, where: e.type == :doc and e.article_id == ^ctx.doc.id),
              :count
            ) == 1
 
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
 
     Repo.update_all(
       from(state in ArticleLifecycle,
-        where: state.article_id == ^ctx.doc.article_id
+        where: state.article_id == ^ctx.doc.id
       ),
       set: [state: :deleted]
     )
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
 
     Repo.update_all(
       from(state in ArticleLifecycle,
-        where: state.article_id == ^ctx.doc.article_id
+        where: state.article_id == ^ctx.doc.id
       ),
       set: [state: :published]
     )
@@ -253,7 +253,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
 
     Repo.update_all(
       from(state in ArticleLifecycle,
-        where: state.article_id == ^ctx.doc.article_id
+        where: state.article_id == ^ctx.doc.id
       ),
       set: [state: :deleted]
     )
@@ -331,7 +331,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
           %{"text" => "Hello "},
           %{
             "type" => "mention",
-            "key" => "blog:#{ctx.target.article_id}",
+            "key" => "blog:#{ctx.target.id}",
             "value" => "Target",
             "children" => [%{"text" => ""}]
           },

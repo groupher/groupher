@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.MutationLock do
 
   test "observed hold telemetry closes after the surrounding command transaction" do
     {community, post, _attrs, _user} = mock_article(:post)
-    article = Repo.get!(CMS.Model.Article, post.article_id)
+    article = Repo.get!(CMS.Model.Article, post.id)
     handler_id = {__MODULE__, make_ref()}
     event = [:groupher, :cms, :articles, :mutation_lock, :hold]
     test_pid = self()

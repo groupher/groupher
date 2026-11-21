@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.ReindexTagsInGroup do
 
   @pipeline operation: :tags_reindex_in_group, target: :community
   direct_pipeline execute_pipeline(community, thread, group_id, tags, actor, command_id) do
-    gate(fn candidate -> Gate.check_in_transaction(actor, :update, candidate) end)
+    gate(fn candidate -> Gate.check_in_transaction(actor, :community_tag_reindex, candidate) end)
 
     change(fn canonical, operation_ref ->
       Mutation.reindex_in_group(canonical, thread, group_id, tags, operation_ref: operation_ref)

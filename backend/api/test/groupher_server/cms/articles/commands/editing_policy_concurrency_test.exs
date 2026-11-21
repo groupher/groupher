@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.EditingPolicyConcurrency do
   test "policy update serializes with an overlapping save on the required Dashboard row" do
     Sandbox.unboxed_run(Repo, fn ->
       {community, public, _attrs, actor} = mock_article(:post)
-      article = Repo.get!(Article, public.article_id)
+      article = Repo.get!(Article, public.id)
       work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
       assert %CommunityDashboard{} = Repo.get_by(CommunityDashboard, community_id: community.id)
       parent = self()
@@ -80,9 +80,10 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.EditingPolicyConcurrency do
     Sandbox.unboxed_run(Repo, fn ->
       {community, public, _attrs, author} = mock_article(:post)
       {:ok, destination} = mock_community(author)
-      article = Repo.get!(Article, public.article_id)
+      article = Repo.get!(Article, public.id)
       work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
       parent = self()
+      command_id = Ecto.UUID.generate()
 
       actor =
         Map.put(author, :cur_passport, %{
@@ -140,7 +141,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.EditingPolicyConcurrency do
                 %{title: "Blocked by mirror"},
                 work.revision,
                 author,
-                Ecto.UUID.generate()
+                command_id
               )
             end)
           end)
@@ -150,8 +151,19 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.EditingPolicyConcurrency do
         send(mirror_pid, :commit)
         assert {:ok, :committed} = Task.await(mirror, 15_000)
 
-        assert {:error, %{reason: :published_article_editing_disabled}} =
+        assert {:error, %{reason: :community_admission_changed, retryable: true}} =
                  Task.await(saver, 15_000)
+
+        assert {:error, %{reason: :published_article_editing_disabled}} =
+                 CMS.Articles.save_working_copy(
+                   article,
+                   community,
+                   work.id,
+                   %{title: "Blocked by mirror"},
+                   work.revision,
+                   author,
+                   command_id
+                 )
 
         assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
       after

@@ -147,6 +147,12 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
           T.domain_res(map())
   def create(thread, %Article{} = article, body, %User{} = user, command_id) do
     with {:ok, info} <- CMS.Artiment.Matcher.match_interaction(article) do
+      community =
+        case Map.get(article, :community) do
+          %Community{} = community -> community
+          _ -> nil
+        end
+
       do_create(
         thread,
         article,
@@ -154,7 +160,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         user,
         info,
         command_id,
-        nil
+        community
       )
     end
   end
@@ -349,24 +355,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
 
   defp replay_article(article, _community), do: replay_article(article)
 
-  defp replay_article(
-         %CMS.Articles.ArticleView{
-           article_id: _article_id,
-           community: %Community{} = community,
-           thread: thread
-         } = result
-       ) do
-    with {:ok, %{inner_id: inner_id}} <- CMS.Articles.Bindings.get(result, community),
-         {:ok, _article} = result <-
-           FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id}) do
-      result
-    else
-      {:error, _reason} = error -> error
-    end
-  end
-
   defp replay_article(%Article{id: article_id}) do
-    FrontDesk.article(article_id, mode: :internal, view: :with_author)
+    FrontDesk.article(article_id, mode: :internal, preload: [author: :user])
   end
 
   defp replay_article(%{id: article_id}) when is_binary(article_id) do

@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.Accounts.Events.Notify do
       assert notifications.total_count == 1
 
       notify = notifications.entries |> List.first()
-      assert notify.action == "FOLLOW"
+      assert notify.type == :follow
       assert notify.user_id == user.id
       assert user_exist_in?(user2, notify.from_users)
     end

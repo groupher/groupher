@@ -511,7 +511,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
     test "can undo lock a post's comment", ~m(community post user)a do
       {:ok, _} = CMS.Articles.lock_comments(post.id, user, community: community)
       {:ok, post} = read_article(community, :post, article_inner_id(post, community))
-      assert post.meta.is_comment_locked
+      assert post.comments_locked
 
       variables = %{
         command_id: Ecto.UUID.generate(),
@@ -530,7 +530,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["innerId"] == to_string(article_inner_id(post, community))
 
       {:ok, post} = read_article(community, :post, article_inner_id(post, community))
-      assert not post.meta.is_comment_locked
+      assert not post.comments_locked
     end
 
     test "unauth user undo fails", ~m(guest_conn community post)a do

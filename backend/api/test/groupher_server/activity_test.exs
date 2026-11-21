@@ -23,8 +23,8 @@ defmodule GroupherServer.Test.ActivityTest do
     {_community, post, _attrs, user} = mock_article(:post)
     {_blog_community, blog, _attrs, _blog_user} = mock_article(:blog)
 
-    assert Repo.get_by!(PostLog, article_id: post.article_id, action: :created)
-    assert Repo.get_by!(BlogLog, article_id: blog.article_id, action: :created)
+    assert Repo.get_by!(PostLog, article_id: post.id, action: :created)
+    assert Repo.get_by!(BlogLog, article_id: blog.id, action: :created)
 
     assert {:error, _} = Activity.log(post, :released, actor: user)
 
@@ -144,7 +144,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {:ok, stranger} = db_insert(:user)
     command_id = Ecto.UUID.generate()
 
-    article = Repo.get!(CMS.Model.Article, post.article_id)
+    article = Repo.get!(CMS.Model.Article, post.id)
     lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: article.id)
 
     assert {:ok, _lifecycle} =
@@ -156,17 +156,16 @@ defmodule GroupherServer.Test.ActivityTest do
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CMS.Articles.trash_receipt(post, stranger, command_id: command_id)
 
-    denied = Repo.get_by!(PostLog, article_id: post.article_id, action: :trashed)
-    assert denied.outcome == :denied
-    assert denied.rejection_code == "permission_denied"
-    assert denied.operation_ref == command_id
-    assert denied.actor_type == :user
-    assert denied.actor_ref == stranger.login
+    denied =
+      Repo.all(from(log in PostLog, where: log.article_id == ^post.id and log.action == :trashed))
 
-    assert 1 ==
-             PostLog
-             |> Repo.all()
-             |> Enum.count(&(&1.article_id == post.article_id && &1.action == :trashed))
+    assert length(denied) == 2
+    assert Enum.all?(denied, &(&1.outcome == :denied))
+    assert Enum.all?(denied, &(&1.rejection_code == "permission_denied"))
+    assert Enum.all?(denied, fn log -> match?({:ok, _}, Ecto.UUID.cast(log.operation_ref)) end)
+    assert Enum.all?(denied, &(&1.operation_ref != command_id))
+    assert Enum.all?(denied, &(&1.actor_type == :user and &1.actor_ref == stranger.login))
+    assert length(Enum.uniq_by(denied, & &1.operation_ref)) == 2
   end
 
   test "log_rejection owns the denied outcome" do
@@ -200,7 +199,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     refute Repo.exists?(
              from(log in PostLog,
-               where: log.article_id == ^post.article_id and log.action == :trashed
+               where: log.article_id == ^post.id and log.action == :trashed
              )
            )
   end
@@ -245,14 +244,14 @@ defmodule GroupherServer.Test.ActivityTest do
 
     comment = %Comment{
       thread: :post,
-      article_id: post.article_id,
+      article_id: post.id,
       inner_id: 42
     }
 
     assert {:ok, log} =
              Activity.log(comment, :comment_pinned, actor: user, community_id: community.id)
 
-    assert log.article_id == post.article_id
+    assert log.article_id == post.id
     assert log.subject_type == "comment"
     assert log.subject_ref == "42"
 
@@ -299,7 +298,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert created.subject == %{
              type: :post,
-             ref: post.article_id,
+             ref: post.id,
              title: post.title,
              inner_id: article_inner_id(post, community)
            }
@@ -341,17 +340,17 @@ defmodule GroupherServer.Test.ActivityTest do
     assert Enum.take(restored_ids, 2) == [newer.event_ref, older.event_ref]
     refute Enum.any?(entries, &(&1.action in [:trashed, :permanently_deleted]))
 
-    stable_article = Repo.get!(CMS.Model.Article, post.article_id)
+    stable_article = Repo.get!(CMS.Model.Article, post.id)
     assert {:ok, _} = Activity.list_article_logs(stable_article, nil)
 
     {doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
-    public = Repo.get!(CMS.Model.ArticlePublic, doc.article_id)
-    actor = %{doc_user | cur_passport: %{"global" => %{"god" => true}}}
+    public = Repo.get!(CMS.Model.ArticlePublic, doc.id)
+    actor = doc_user
 
     assert {:ok, edit} =
              CMS.docs_begin_edit(
                doc_community,
-               doc.article_id,
+               doc.id,
                public.snapshot_id,
                actor,
                Ecto.UUID.generate()
@@ -414,7 +413,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
   test "database CHECK constraints reject invalid Activity action and source" do
     {_community, post, _attrs, _user} = mock_article(:post)
-    log = Repo.get_by!(PostLog, article_id: post.article_id, action: :created)
+    log = Repo.get_by!(PostLog, article_id: post.id, action: :created)
 
     declared_constraints =
       %PostLog{}
@@ -469,6 +468,11 @@ defmodule GroupherServer.Test.ActivityTest do
       expected_actions = Ecto.Enum.values(schema, :action) |> Enum.map(&to_string/1)
       assert Enum.sort(check_values(table, :action)) == Enum.sort(expected_actions)
     end
+
+    community_actions = Ecto.Enum.values(CommunityLog, :action)
+    assert :admin_joined in community_actions
+    assert :admin_removed in community_actions
+    assert :admin_permissions_changed in community_actions
 
     for handler <- Activity.CommunityLog.handlers(),
         {action, contract} <- handler.contracts(),
@@ -582,7 +586,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert Enum.any?(
              result.entries,
-             &(&1.action == :created and &1.resource.ref == post.article_id)
+             &(&1.action == :created and &1.resource.ref == post.id)
            )
 
     assert result.entries |> Enum.take(8) |> Enum.map(& &1.resource.type) == [

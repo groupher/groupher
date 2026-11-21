@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.HistoryConcurrencyTest do
   test "two independent same-revision saves produce one edit and one conflict" do
     Sandbox.unboxed_run(Repo, fn ->
       {community, public, _, actor} = mock_article(:post)
-      article = Repo.get!(Article, public.article_id)
+      article = Repo.get!(Article, public.id)
       work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
       parent = self()
 

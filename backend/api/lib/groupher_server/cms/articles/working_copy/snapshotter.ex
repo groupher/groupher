@@ -71,13 +71,15 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
 
   defp freeze_new_snapshot(article, work, actor, command_id) do
     captured_at = DateTime.utc_now() |> DateTime.truncate(:microsecond)
+    work = Repo.preload(work, :body, force: true)
+    document = Body.document(work)
 
     with {:ok, cover_snapshot_id} <- freeze_cover(work.cover_edit_working_copy_id, captured_at),
          params =
            work
            |> Map.take(@snapshot_fields)
            |> Map.merge(%{
-             body: Map.merge(Body.document(work), %{article_id: article.id, type: :snapshot}),
+             body: Map.merge(document, %{article_id: article.id, type: :snapshot}),
              article_id: article.id,
              source_working_copy_id: work.id,
              source_revision: work.revision,

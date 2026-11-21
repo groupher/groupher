@@ -22,7 +22,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
   describe "[mirror/unmirror/move blog to/from community]" do
     test "auth user can mirror a blog to other community",
          ~m(community community2 blog)a do
-      passport_rules = %{"blog.community.mirror" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
@@ -78,7 +85,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
 
     test "auth user can mirror multi blog to other communities",
          ~m(community community2 community3 blog)a do
-      passport_rules = %{"blog.community.mirror" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
@@ -112,7 +126,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
 
     test "auth user can unmirror blog to a community",
          ~m(community community2 community3 blog)a do
-      passport_rules = %{"blog.community.mirror" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
@@ -143,7 +164,8 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
       assert community.id in assoc_communities
       assert community2.id in assoc_communities
 
-      passport_rules = %{"blog.community.unmirror" => true}
+      passport_rules = %{"article.unmirror" => true}
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(S.Article.m(:unmirror_article), variables)
@@ -154,7 +176,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
     end
 
     test "auth user can move blog to other community", ~m(community community2 blog user)a do
-      passport_rules = %{"blog.community.mirror" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
@@ -172,7 +201,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
       assoc_communities = binding_communities(found) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
 
-      passport_rules = %{"blog.community.move" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       pre_community_id = community.id

@@ -5,12 +5,12 @@ defmodule GroupherServer.Test.CMS.DocArchive do
 
   test "archive retains Public and Snapshot and rejects further editing" do
     {community, doc, _, user} = mock_article(:doc)
-    public = Repo.get!(ArticlePublic, doc.article_id)
+    public = Repo.get!(ArticlePublic, doc.id)
     public |> Ecto.Changeset.change(inserted_at: @last_year) |> Repo.update!()
     assert {:ok, count} = CMS.Articles.Maintenance.archive(:doc)
     assert count >= 1
-    assert Repo.get_by!(ArticleLifecycle, article_id: doc.article_id).state == :archived
-    assert Repo.get!(ArticlePublic, doc.article_id).snapshot_id == public.snapshot_id
+    assert Repo.get_by!(ArticleLifecycle, article_id: doc.id).state == :archived
+    assert Repo.get!(ArticlePublic, doc.id).snapshot_id == public.snapshot_id
 
     assert {:ok, _} =
              CMS.FrontDesk.article(%{
@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
     assert {:error, _} =
              CMS.DocTree.Commands.BeginEdit.execute(
                community,
-               doc.article_id,
+               doc.id,
                public.snapshot_id,
                actor,
                Ecto.UUID.generate()

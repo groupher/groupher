@@ -270,8 +270,8 @@ defmodule GroupherServer.CMS.Articles.DocsPublicReadScopeTest do
              CMS.FrontDesk.article(y_path)
 
     assert {:ok, [one, duplicate]} = CMS.FrontDesk.article([x_path, y_path, x_path])
-    assert one.article.id == doc.id
-    assert duplicate.article.id == doc.id
+    assert one.id == doc.id
+    assert duplicate.id == doc.id
     {result, queries} = capture_queries(fn -> CMS.Press.article(x_path) end)
     assert {:ok, %{article_id: id}} = result
     assert id == doc.id
@@ -292,7 +292,7 @@ defmodule GroupherServer.CMS.Articles.DocsPublicReadScopeTest do
     assert String.downcase(sql) =~ "exists"
 
     for {actor, action, context} <- [
-          {fixture.actor, :read, DocContext.public(policy_mode: :owner_management)},
+          {fixture.actor, :read, DocContext.public(policy_mode: :owner)},
           {fixture.actor, :read_insights, DocContext.insights()}
         ] do
       query = CMS.Gate.scope(Article, actor, action, context)
@@ -310,7 +310,7 @@ defmodule GroupherServer.CMS.Articles.DocsPublicReadScopeTest do
 
     [binding | _] = fixture.y_bindings
     path = %{community: fixture.y.slug, thread: :doc, inner_id: binding.inner_id}
-    assert {:ok, _} = CMS.FrontDesk.article(path, fixture.actor, mode: :management)
+    assert {:ok, _} = CMS.FrontDesk.article(path, fixture.actor, mode: :admin)
   end
 
   test "missing Body is excluded without hiding it from management Scope", fixture do
@@ -328,7 +328,7 @@ defmodule GroupherServer.CMS.Articles.DocsPublicReadScopeTest do
         Article,
         fixture.actor,
         :read,
-        DocContext.public(policy_mode: :owner_management)
+        DocContext.public(policy_mode: :owner)
       )
 
     assert Repo.exists?(where(query, [article], article.id == ^doc.id))
@@ -447,7 +447,8 @@ defmodule GroupherServer.CMS.Articles.DocsPublicReadScopeTest do
       )
 
     {sql, _} = Ecto.Adapters.SQL.to_sql(:all, Repo, query)
-    refute sql =~ "doc_tree_nodes"
+    assert sql =~ "doc_tree_nodes"
+    assert String.downcase(sql) =~ "exists"
   end
 
   test "report diagnoses excluded damage and lists count refresh candidates without repairing",
@@ -541,7 +542,7 @@ defmodule GroupherServer.CMS.Articles.DocsPublicReadScopeTest do
     assert x_id == x_doc.id
     assert y_id == fixture.local_y_doc.id
     assert {:ok, [y, x, y_again]} = CMS.FrontDesk.article([y_path, x_path, y_path])
-    assert [y.article.id, x.article.id, y_again.article.id] == [y_id, x_id, y_id]
+    assert [y.id, x.id, y_again.id] == [y_id, x_id, y_id]
     params = %Params.Offset{page: 1, size: 20, config_revision: 0}
 
     assert {:ok, %{entries: y_entries, page_info: %{total_count: 1}}} =

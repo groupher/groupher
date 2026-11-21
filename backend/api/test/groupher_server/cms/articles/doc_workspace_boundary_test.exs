@@ -3,11 +3,11 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.WorkingCopy.{Snapshotter, Store}
-  alias CMS.Model.{Article, ArticleWorkingCopy}
+  alias CMS.Model.{Article, ArticleWorkingCopy, CommunityAdmin}
 
   test "generic Article reads and commands cannot expose or mutate Doc workspace copies" do
     {community, doc, _attrs, actor} = mock_article(:doc)
-    article = Repo.get!(Article, doc.article_id)
+    article = Repo.get!(Article, doc.id)
 
     assert {:ok, {default, workspace, snapshot}} =
              Repo.transaction(fn ->
@@ -126,11 +126,14 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
 
     {:ok, editor} = db_insert(:user)
 
-    assert {:ok, _passport} =
-             CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"doc.edit" => true}}},
-               editor
-             )
+    community_admin =
+      Repo.insert!(
+        CommunityAdmin.changeset(%CommunityAdmin{}, %{
+          user_id: editor.id,
+          community_id: community.id,
+          permissions: %{"doc.queue.write" => true}
+        })
+      )
 
     conn = simu_conn(:user, editor)
 
@@ -206,11 +209,9 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
     assert %{"data" => %{"saveWorkingCopy" => nil}, "errors" => [_ | _]} = workspace_attempt
     assert Repo.get!(ArticleWorkingCopy, workspace.id).title == "Private"
 
-    assert {:ok, _} =
-             CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"doc.edit" => false}}},
-               editor
-             )
+    community_admin
+    |> CommunityAdmin.changeset(%{permissions: %{}})
+    |> Repo.update!()
 
     replay =
       simu_conn(:user, editor)

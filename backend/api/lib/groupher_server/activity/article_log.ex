@@ -195,7 +195,7 @@ defmodule GroupherServer.Activity.ArticleLog do
   end
 
   defp scope_context(%{stage: :draft}, :doc) do
-    {:ok, :read_draft, GroupherServer.CMS.gate_context_scope_doc_draft(:owner_management)}
+    {:ok, :read_draft, GroupherServer.CMS.gate_context_scope_doc_draft(:owner)}
   end
 
   defp scope_context(%{stage: :public}, :doc) do

@@ -24,9 +24,6 @@ defmodule GroupherServer.CMS.Press.Query do
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
 
   alias CMS.Model.{
-    ArticlePublic,
-    ArticlePublicBody,
-    ArticleBodyDocument,
     Community,
     PressConfig
   }
@@ -243,73 +240,23 @@ defmodule GroupherServer.CMS.Press.Query do
     path_entries
     |> Enum.chunk_every(@pagination_page_size)
     |> Enum.reduce_while({:ok, []}, fn chunk, {:ok, collected} ->
-      with {:ok, admitted} <- CMS.FrontDesk.article(Enum.map(chunk, & &1.path)),
-           paths = MapSet.new(admitted, &path_key(&1.path)),
-           visible = Enum.filter(chunk, &MapSet.member?(paths, path_key(&1.path))),
-           {:ok, publications} <- publications(Enum.map(visible, & &1.entry)) do
-        {:cont, {:ok, collected ++ publications}}
+      with {:ok, articles} <- CMS.FrontDesk.article(Enum.map(chunk, & &1.path)),
+           by_path <- Map.new(articles, &{path_key(article_path_key(&1)), &1}),
+           visible <-
+             Enum.map(chunk, &Map.get(by_path, path_key(&1.path))) |> Enum.reject(&is_nil/1) do
+        {:cont, {:ok, collected ++ visible}}
       else
         {:error, _} = error -> {:halt, error}
       end
     end)
   end
 
-  # Fetch public metadata and its matching independent body together.
-  defp publications(entries) do
-    article_ids = Enum.map(entries, & &1.id)
-
-    publications =
-      from(public in ArticlePublic,
-        join: body in ArticlePublicBody,
-        on: body.snapshot_id == public.snapshot_id and body.article_id == public.article_id,
-        where: public.article_id in ^article_ids,
-        select: {public.article_id, public, body}
-      )
-      |> Repo.all()
-      |> Map.new(fn {id, public, body} ->
-        {id, {public, Map.put(ArticleBodyDocument.document(body), :digest, public.digest)}}
-      end)
-
-    Enum.reduce_while(entries, {:ok, []}, fn entry, {:ok, collected} ->
-      publication = Map.get(publications, entry.id)
-
-      case publication do
-        {public, body} ->
-          item =
-            public
-            |> Map.take([
-              :title,
-              :digest,
-              :subtitle,
-              :slug,
-              :snapshot_id,
-              :published_at,
-              :updated_at
-            ])
-            |> Map.merge(%{
-              article_id: entry.id,
-              inner_id: entry.inner_id,
-              thread: entry.thread,
-              body: body,
-              author: entry.author,
-              community_tags: entry.community_tags,
-              inserted_at: entry.inserted_at
-            })
-
-          {:cont, {:ok, [item | collected]}}
-
-        nil ->
-          {:halt, {:error, ErrorCat.invalid_body("Article body projection is missing")}}
-      end
-    end)
-    |> case do
-      {:ok, items} -> {:ok, Enum.reverse(items)}
-      error -> error
-    end
-  end
-
   defp path_key(%{community: community, thread: thread, inner_id: inner_id}) do
     {community, thread, inner_id}
+  end
+
+  defp article_path_key(%{community: community, thread: thread, inner_id: inner_id}) do
+    %{community: community.slug, thread: thread, inner_id: inner_id}
   end
 
   defp press_pagination_config do

@@ -15,6 +15,9 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   @foreign_key_type Ecto.UUID
   @schema_prefix DBPrefix.cms()
+
+  @type t :: %__MODULE__{}
+
   @required_fields ~w(article_id source_working_copy_id source_revision title digest capture_actor_type captured_at
                       causation_command_id)a
   @optional_fields ~w(slug cover_edit_snapshot_id captured_by_id)a

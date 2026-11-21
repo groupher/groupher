@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              )
 
     assert Repo.get!(CMS.Model.Mentions.Endpoint, edge.target_endpoint_id).article_id ==
-             target.article_id
+             target.id
 
     event_count = Repo.aggregate(CMS.Outbox.Event, :count)
 
@@ -824,22 +824,18 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = db_insert(:community)
 
-    assert {:ok, _passport} =
-             CMS.Passport.stamp_passport(
-               %{
-                 "global" => %{},
-                 community.slug => %{
-                   "cms" => %{
-                     "doc.import" => true,
-                     "doc.queue.write" => true,
-                     "doc.queue.publish" => true,
-                     "doc.restore" => true,
-                     "doc.trash" => true
-                   }
-                 }
-               },
-               actor
-             )
+    _conn =
+      simu_conn(:user, actor,
+        cms: %{
+          community.slug => %{
+            "doc.import" => true,
+            "doc.queue.write" => true,
+            "doc.queue.publish" => true,
+            "doc.restore" => true,
+            "doc.trash" => true
+          }
+        }
+      )
 
     source_info = source_info()
     source_tree = source_tree(documents)

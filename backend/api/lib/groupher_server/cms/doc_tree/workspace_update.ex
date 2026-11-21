@@ -109,7 +109,8 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
   def move(_, _, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
   @doc "Applies confirmed import navigation without publishing content or overwriting Q bodies."
-  def import_nodes(%Community{} = community, imported, %User{} = actor) when is_list(imported) do
+  def import_nodes(%Community{} = community, imported, %User{} = actor, operation_ref)
+      when is_list(imported) and is_binary(operation_ref) do
     with {:ok, queue} <- Queue.lock_or_create(community),
          rows <- WorkspacePersist.lock_nodes(community),
          draft <- Enum.map(rows, &Map.take(&1, @fields)),
@@ -135,7 +136,8 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
              public,
              current,
              current,
-             actor
+             actor,
+             operation_ref
            ) do
       {:ok, result}
     else
@@ -143,6 +145,8 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
       {:error, _} = error -> error
     end
   end
+
+  def import_nodes(_, _, _, _), do: {:error, :invalid_tree_input}
 
   defp import_lane(%{type: :tab}), do: {:tab, nil}
   defp import_lane(%{type: :pin, parent_node_id: parent}), do: {:pin, parent}

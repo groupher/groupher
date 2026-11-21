@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     test "shared Comment notification uses the event's explicit request binding",
          ~m(user2 community post comment)a do
       {:ok, destination} = mock_community(user2)
-      article = Repo.get!(Article, post.article_id)
+      article = Repo.get!(Article, post.id)
 
       assert {:ok, {:ok, _}} =
                Repo.transaction(fn ->
@@ -76,10 +76,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       assert notifications.total_count == 1
 
       notify = notifications.entries |> List.first()
-      assert notify.action == "UPVOTE"
+      assert notify.type == :upvote
       assert notify.article_id == post.id
       assert notify.thread == :post
-      assert notify.user_id == post.author.id
+      assert notify.user_id == post.author.user.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       assert notifications.total_count == 1
 
       notify = notifications.entries |> List.first()
-      assert notify.action == "UPVOTE"
+      assert notify.type == :upvote
       assert notify.article_id == post.id
       assert notify.thread == :post
       assert notify.user_id == comment.author.id
@@ -176,10 +176,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       assert notifications.total_count == 1
 
       notify = notifications.entries |> List.first()
-      assert notify.action == "COLLECT"
+      assert notify.type == :collect
       assert notify.article_id == post.id
       assert notify.thread == :post
-      assert notify.user_id == post.author.id
+      assert notify.user_id == post.author.user.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -238,10 +238,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       assert notifications.total_count == 1
 
       notify = notifications.entries |> List.first()
-      assert notify.action == "COMMENT"
+      assert notify.type == :comment
       assert notify.thread == :post
       assert notify.article_id == post.id
-      assert notify.user_id == post.author.id
+      assert notify.user_id == post.author.user.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -284,7 +284,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
 
       notify = notifications.entries |> List.first()
 
-      assert notify.action == "REPLY"
+      assert notify.type == :reply
       assert notify.thread == :post
       assert notify.article_id == post.id
       assert notify.comment_id == replied_comment.id

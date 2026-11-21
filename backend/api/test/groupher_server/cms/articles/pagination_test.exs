@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
   end
 
   test "offset returns Article structs and a distinct binding count" do
-    {community, article, _attrs, _user} = mock_article(:post)
+    {community, article, _attrs, user} = mock_article(:post)
 
     assert {:ok,
             %{
@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
     assert %GroupherServer.Accounts.Model.User{} = entry.author
     assert entry.inner_id == 1
     assert entry.community.id == community.id
-    assert entry.author.id == article.author.id
+    assert entry.author.id == user.id
     assert entry.inserted_at == entry.published_at
     assert entry.updated_at == entry.published_at
     assert is_nil(entry.body)
@@ -127,7 +127,7 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
                }
              )
 
-    assert entry.author.id == article.author.id
+    assert entry.author.id == user.id
     assert Enum.map(entry.community_tags, & &1.id) == [first_tag.id, second_tag.id]
     assert Enum.all?(entry.community_tags, &(is_binary(&1.group) and &1.group != ""))
     assert Enum.all?(entry.community_tags, &(&1.community.id == community.id))

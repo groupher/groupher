@@ -666,15 +666,20 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
   end
 
   defp reviewer(user) do
-    Map.put(user, :cur_passport, %{
-      "global" => %{
-        "community.application.review" => true,
-        "community.application.approve" => true,
-        "community.application.reject" => true,
-        "community.application.retry_creation" => true,
-        "community.application.retry_setup" => true
-      }
-    })
+    _conn =
+      simu_conn(:user, user,
+        cms: %{
+          "global" => %{
+            "community.application.review" => true,
+            "community.application.approve" => true,
+            "community.application.reject" => true,
+            "community.application.retry_creation" => true,
+            "community.application.retry_setup" => true
+          }
+        }
+      )
+
+    user
   end
 
   defp application_job(worker, application_ref) do

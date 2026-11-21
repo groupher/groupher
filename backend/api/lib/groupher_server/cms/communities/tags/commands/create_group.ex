@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.CreateTagGroup do
             params: [:thread, :attrs]
 
   receipt_pipeline execute_pipeline(community, thread, attrs, actor, command_id) do
-    gate(fn candidate -> Gate.check_in_transaction(actor, :update, candidate) end)
+    gate(fn candidate -> Gate.check_in_transaction(actor, :community_tag_create, candidate) end)
 
     change(fn canonical, operation_ref ->
       Mutation.create_group(canonical, thread, attrs, operation_ref: operation_ref)

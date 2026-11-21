@@ -94,6 +94,14 @@ defmodule GroupherServerWeb.ErrorResponse do
     }
   end
 
+  defp domain_extensions(%Error{namespace: {:cms, :gate}} = error) do
+    %{
+      code: error.code,
+      retryable: error.retryable,
+      actions: Enum.map(error.actions, &(&1 |> Atom.to_string() |> String.upcase()))
+    }
+  end
+
   defp domain_extensions(
          %Error{namespace: {:pagi}, reason: :config_mismatch, details: %{mismatch: mismatch}} =
            error

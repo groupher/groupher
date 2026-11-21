@@ -3,6 +3,75 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
 
   use GroupherServer.TestMate
 
+  test "GraphQL articleSnapshot reads the selected version through FrontDesk" do
+    {:ok, actor} = db_insert(:user)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
+
+    conn =
+      :user
+      |> simu_conn(actor)
+      |> Plug.Conn.put_req_header("x-groupher-test-service-auth", "enabled")
+
+    created =
+      gq_mutation(
+        conn,
+        """
+        mutation CreateAndPublishArticle(
+          $community: String!,
+          $thread: Thread!,
+          $title: String!,
+          $bodyBag: ArtimentBodyBagInput!,
+          $commandId: ID!
+        ) {
+          createAndPublishArticle(
+            community: $community,
+            thread: $thread,
+            title: $title,
+            bodyBag: $bodyBag,
+            commandId: $commandId
+          ) {
+            articleId
+            snapshotId
+          }
+        }
+        """,
+        %{
+          community: community.slug,
+          thread: "POST",
+          title: "Selected Snapshot",
+          bodyBag:
+            mock_body_bag(mock_rich_text("Snapshot body"))
+            |> Map.update!(:thumbnail, &Jason.encode!/1),
+          commandId: Ecto.UUID.generate()
+        }
+      )
+
+    result =
+      gq_query(
+        conn,
+        """
+        query ArticleSnapshot($articleId: ID!, $snapshotId: ID!, $community: String!) {
+          articleSnapshot(articleId: $articleId, snapshotId: $snapshotId, community: $community) {
+            id
+            articleId
+            title
+            bodyMarkdown
+          }
+        }
+        """,
+        %{
+          articleId: created["articleId"],
+          snapshotId: created["snapshotId"],
+          community: community.slug
+        }
+      )
+
+    assert result["id"] == created["snapshotId"]
+    assert result["articleId"] == created["articleId"]
+    assert result["title"] == "Selected Snapshot"
+    assert result["bodyMarkdown"] =~ "Snapshot body"
+  end
+
   test "GraphQL forkSnapshot returns its WorkingCopy in the workingCopy field" do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)

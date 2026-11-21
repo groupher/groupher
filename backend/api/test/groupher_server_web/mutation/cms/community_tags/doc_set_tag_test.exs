@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
         )
 
       passport_rules = %{
-        community.title => %{"community.update" => true, "doc.community_tag.set" => true}
+        community.title => %{"community_tag.set" => true}
       }
 
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -74,7 +74,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
       {:ok, _} = CMS.Communities.set_tag(doc, community_tag2.id, user, Ecto.UUID.generate())
 
       passport_rules = %{
-        community.title => %{"community.update" => true, "doc.community_tag.unset" => true}
+        community.title => %{"community_tag.unset" => true}
       }
 
       rule_conn = simu_conn(:user, cms: passport_rules)

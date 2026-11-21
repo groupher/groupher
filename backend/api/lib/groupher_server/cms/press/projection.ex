@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Press.Projection do
 
     %{
       community_ref: community.slug,
-      article_id: article.article_id,
+      article_id: article.id,
       content_version: content_version(article),
       thread: thread,
       canonical_path: path,
@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Press.Projection do
       html: article.body.html,
       digest: article.digest || article.body.digest,
       published_at: Map.get(article, :published_at, article.inserted_at),
-      updated_at: Map.get(article, :updated_at, article.updated_at),
+      updated_at: Map.get(article, :public_updated_at, article.updated_at),
       author: author(article.author),
       tags: Enum.map(article.community_tags, &tag/1),
       visibility: "public"
@@ -54,7 +54,7 @@ defmodule GroupherServer.CMS.Press.Projection do
       :author,
       :tags
     ])
-    |> Map.put(:item_id, article.article_id)
+    |> Map.put(:item_id, article.id)
     |> Map.delete(:article_id)
   end
 

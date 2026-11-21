@@ -15,6 +15,7 @@ defmodule GroupherServer.Messaging.Notices.Query do
 
   alias GroupherServer.{Messaging, Repo}
   alias Accounts.Model.User
+  alias GroupherServer.CMS.Model.Author
   alias Messaging.Model.Notice
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order}
@@ -30,13 +31,21 @@ defmodule GroupherServer.Messaging.Notices.Query do
 
       Messaging.Notices.Query.paged(user, %{read: false}, %GroupherServer.Pagi.Params.Offset{page: 1, size: 20})
   """
-  @spec paged(User.t(), map(), Params.t() | nil) :: term()
-  def paged(%User{} = user, filter, pagi) do
+  @spec paged(User.t() | Author.t(), map(), Params.t() | nil) :: term()
+  def paged(%User{id: user_id}, filter, pagi) do
+    page_for_user_id(user_id, filter, pagi)
+  end
+
+  def paged(%Author{user_id: user_id}, filter, pagi) do
+    page_for_user_id(user_id, filter, pagi)
+  end
+
+  defp page_for_user_id(user_id, filter, pagi) do
     read = Map.get(filter, :read, false)
 
     query =
       Notice
-      |> where([n], n.user_id == ^user.id and n.read == ^read)
+      |> where([n], n.user_id == ^user_id and n.read == ^read)
 
     with {:ok, page} <-
            ORM.pagi(
@@ -45,7 +54,7 @@ defmodule GroupherServer.Messaging.Notices.Query do
              for: Notice,
              surface: "mailbox.notices",
              query_fingerprint:
-               :crypto.hash(:sha256, :erlang.term_to_binary({user.id, read})) |> Base.encode16(),
+               :crypto.hash(:sha256, :erlang.term_to_binary({user_id, read})) |> Base.encode16(),
              order: %Order{
                fields: [:inserted_at, :id],
                directions: [:desc, :desc],

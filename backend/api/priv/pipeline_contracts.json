@@ -9,13 +9,7 @@
       "name": "execute_pipeline",
       "operation": "alert_wall_resolve_item",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "item_id"
     },
@@ -27,13 +21,7 @@
       "name": "execute_pipeline",
       "operation": "alert_wall_submit_report",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "target"
     },
@@ -45,15 +33,81 @@
       "name": "execute_pipeline",
       "operation": "alert_wall_withdraw_report",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "report_id"
+    },
+    {
+      "access": "user",
+      "arity": 5,
+      "confirmation": "GroupherServer.CMS.Articles.CoAuthors.Commands.CancelRequest.Confirmation",
+      "module": "GroupherServer.CMS.Articles.CoAuthors.Commands.CancelRequest",
+      "name": "run",
+      "operation": "article_co_author_request_cancel",
+      "pipeline": "receipt_pipeline",
+      "stages": ["gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "article"
+    },
+    {
+      "access": "user",
+      "arity": 6,
+      "confirmation": "GroupherServer.CMS.Articles.CoAuthors.Commands.CreateRequest.Confirmation",
+      "module": "GroupherServer.CMS.Articles.CoAuthors.Commands.CreateRequest",
+      "name": "run",
+      "operation": "article_co_author_request_create",
+      "pipeline": "receipt_pipeline",
+      "stages": ["gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "article"
+    },
+    {
+      "access": "user",
+      "arity": 7,
+      "confirmation": "GroupherServer.CMS.Articles.CoAuthors.Commands.DecideRequest.Confirmation",
+      "module": "GroupherServer.CMS.Articles.CoAuthors.Commands.DecideRequest",
+      "name": "run",
+      "operation": "article_co_author_request_decide",
+      "pipeline": "receipt_pipeline",
+      "stages": ["gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "article"
+    },
+    {
+      "access": "user",
+      "arity": 4,
+      "confirmation": "GroupherServer.CMS.Articles.CoAuthors.Commands.LeaveMember.Confirmation",
+      "module": "GroupherServer.CMS.Articles.CoAuthors.Commands.LeaveMember",
+      "name": "run",
+      "operation": "article_co_author_member_leave",
+      "pipeline": "receipt_pipeline",
+      "stages": ["gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "article"
+    },
+    {
+      "access": "user",
+      "arity": 5,
+      "confirmation": "GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember.Confirmation",
+      "module": "GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember",
+      "name": "run",
+      "operation": "article_co_author_member_remove",
+      "pipeline": "receipt_pipeline",
+      "stages": ["gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "article"
+    },
+    {
+      "access": "user",
+      "arity": 6,
+      "confirmation": "GroupherServer.CMS.Articles.CoAuthors.Commands.UpdatePermissions.Confirmation",
+      "module": "GroupherServer.CMS.Articles.CoAuthors.Commands.UpdatePermissions",
+      "name": "run",
+      "operation": "article_co_author_permissions_update",
+      "pipeline": "receipt_pipeline",
+      "stages": ["gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "article"
     },
     {
       "access": "internal",
@@ -62,9 +116,7 @@
       "name": "execute",
       "operation": "article_archive",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "change"
-      ],
+      "stages": ["change"],
       "steps": [],
       "target": "thread"
     },
@@ -75,10 +127,7 @@
       "name": "lock_comments",
       "operation": "article_lock_comments",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "article_id"
     },
@@ -89,12 +138,33 @@
       "name": "unlock_comments",
       "operation": "article_unlock_comments",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "article_id"
+    },
+    {
+      "access": "user",
+      "arity": 5,
+      "confirmation": "GroupherServer.CMS.Articles.Commands.CommunityTrashConfirmation",
+      "module": "GroupherServer.CMS.Articles.Commands.CommunityHide",
+      "name": "run",
+      "operation": "community_article_hide",
+      "pipeline": "receipt_pipeline",
+      "stages": ["gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "article"
+    },
+    {
+      "access": "user",
+      "arity": 7,
+      "confirmation": "GroupherServer.CMS.Articles.Commands.CommunityTrashConfirmation",
+      "module": "GroupherServer.CMS.Articles.Commands.CommunityRestore",
+      "name": "run",
+      "operation": "community_article_restore",
+      "pipeline": "receipt_pipeline",
+      "stages": ["gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "article"
     },
     {
       "access": "user",
@@ -104,12 +174,7 @@
       "name": "run_receipt",
       "operation": "article_create_and_publish_article",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "command_target"
     },
@@ -121,12 +186,7 @@
       "name": "run_receipt",
       "operation": "article_create_article",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "command_target"
     },
@@ -138,12 +198,7 @@
       "name": "run_receipt",
       "operation": "article_delete_working_copy",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -155,12 +210,7 @@
       "name": "run_receipt",
       "operation": "article_fork_snapshot",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -172,12 +222,7 @@
       "name": "execute_pipeline",
       "operation": "article_mirror",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -189,12 +234,7 @@
       "name": "execute_pipeline",
       "operation": "article_move",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -205,10 +245,7 @@
       "name": "run_direct",
       "operation": "article_permanently_delete_write",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "item_or_id"
     },
@@ -220,12 +257,7 @@
       "name": "run_receipt",
       "operation": "article_permanently_delete",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "command_target"
     },
@@ -237,12 +269,7 @@
       "name": "execute_pipeline",
       "operation": "article_pin",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -254,12 +281,7 @@
       "name": "run_receipt",
       "operation": "article_publish_article",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -270,10 +292,7 @@
       "name": "run_direct",
       "operation": "article_restore_write",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "item_or_id"
     },
@@ -285,12 +304,7 @@
       "name": "run_receipt",
       "operation": "article_restore",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "command_target"
     },
@@ -302,12 +316,7 @@
       "name": "run_receipt",
       "operation": "article_save_working_copy",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -318,10 +327,7 @@
       "name": "set_category",
       "operation": "article_set_category",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "article_id"
     },
@@ -332,10 +338,7 @@
       "name": "sink_pipeline",
       "operation": "article_sink",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "article_id"
     },
@@ -346,10 +349,7 @@
       "name": "undo_sink_pipeline",
       "operation": "article_undo_sink",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "article_id"
     },
@@ -365,12 +365,7 @@
         "function": "build_rejection",
         "module": "GroupherServer.CMS.Articles.Commands.Trash"
       },
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "on_rejection"
-      ],
+      "stages": ["prepare", "gate", "change", "on_rejection"],
       "steps": [],
       "target": "article"
     },
@@ -387,14 +382,7 @@
         "function": "build_rejection",
         "module": "GroupherServer.CMS.Articles.Commands.Trash"
       },
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present",
-        "on_rejection"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present", "on_rejection"],
       "steps": [],
       "target": "article"
     },
@@ -410,12 +398,7 @@
         "function": "build_rejection",
         "module": "GroupherServer.CMS.Articles.Commands.Trash"
       },
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "on_rejection"
-      ],
+      "stages": ["prepare", "gate", "change", "on_rejection"],
       "steps": [],
       "target": "article"
     },
@@ -427,12 +410,7 @@
       "name": "execute_pipeline",
       "operation": "article_unmirror",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -444,12 +422,7 @@
       "name": "execute_pipeline",
       "operation": "article_unpin",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -461,12 +434,7 @@
       "name": "execute_pipeline",
       "operation": "asset_archive",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "asset"
     },
@@ -478,12 +446,7 @@
       "name": "execute_pipeline",
       "operation": "asset_delete",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "asset"
     },
@@ -495,12 +458,7 @@
       "name": "execute_pipeline",
       "operation": "asset_register",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -512,12 +470,7 @@
       "name": "execute_receipt",
       "operation": "article_replace_asset",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
     },
@@ -528,10 +481,7 @@
       "name": "execute_workflow",
       "operation": "article_replace_asset_workflow",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "article"
     },
@@ -543,12 +493,7 @@
       "name": "execute_pipeline",
       "operation": "asset_restore",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "asset"
     },
@@ -560,12 +505,7 @@
       "name": "run_create",
       "operation": "comment_create",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "command_target"
     },
@@ -577,12 +517,7 @@
       "name": "run_reply",
       "operation": "comment_reply",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "target_comment"
     },
@@ -594,12 +529,7 @@
       "name": "execute_pipeline",
       "operation": "comment_delete",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "comment"
     },
@@ -611,12 +541,7 @@
       "name": "accept_pipeline",
       "operation": "comment_accept_solution",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "comment"
     },
@@ -628,12 +553,7 @@
       "name": "revoke_pipeline",
       "operation": "comment_revoke_solution",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "comment"
     },
@@ -644,10 +564,7 @@
       "name": "fold_pipeline",
       "operation": "comment_fold",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "comment"
     },
@@ -659,12 +576,7 @@
       "name": "pin_pipeline",
       "operation": "comment_pin",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "comment"
     },
@@ -675,10 +587,7 @@
       "name": "unfold_pipeline",
       "operation": "comment_unfold",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "comment"
     },
@@ -690,12 +599,7 @@
       "name": "unpin_pipeline",
       "operation": "comment_unpin",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "comment"
     },
@@ -707,12 +611,7 @@
       "name": "execute_pipeline",
       "operation": "comment_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "comment"
     },
@@ -724,12 +623,7 @@
       "name": "run",
       "operation": "community_admin_remove",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -741,12 +635,7 @@
       "name": "run",
       "operation": "community_admin_permissions_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -758,12 +647,7 @@
       "name": "run",
       "operation": "community_admin_request_cancel",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -775,12 +659,7 @@
       "name": "run",
       "operation": "community_admin_request_create",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -792,12 +671,7 @@
       "name": "run",
       "operation": "community_admin_request_decide",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -809,12 +683,7 @@
       "name": "execute_pipeline",
       "operation": "category_create",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -826,12 +695,7 @@
       "name": "execute_pipeline",
       "operation": "category_delete",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "category_target"
     },
@@ -843,12 +707,7 @@
       "name": "execute_pipeline",
       "operation": "category_set",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -860,12 +719,7 @@
       "name": "execute_pipeline",
       "operation": "category_unset",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -877,12 +731,7 @@
       "name": "execute_pipeline",
       "operation": "category_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "category_target"
     },
@@ -894,12 +743,7 @@
       "name": "execute_pipeline",
       "operation": "community_create",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "create_target"
     },
@@ -911,12 +755,7 @@
       "name": "execute_pipeline",
       "operation": "community_request_destroy",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -928,12 +767,7 @@
       "name": "execute_pipeline",
       "operation": "community_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -944,10 +778,7 @@
       "name": "execute_workflow",
       "operation": "community_update_workflow",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -959,12 +790,7 @@
       "name": "execute_pipeline",
       "operation": "moderator_add",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -976,12 +802,7 @@
       "name": "execute_pipeline",
       "operation": "moderator_add_many",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -993,12 +814,7 @@
       "name": "execute_pipeline",
       "operation": "moderator_remove",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1010,12 +826,7 @@
       "name": "execute_pipeline",
       "operation": "moderator_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1027,12 +838,7 @@
       "name": "execute_pipeline",
       "operation": "community_subscribe",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1044,12 +850,7 @@
       "name": "execute_pipeline",
       "operation": "community_unsubscribe",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1061,12 +862,7 @@
       "name": "execute_pipeline",
       "operation": "tag_create",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1078,12 +874,7 @@
       "name": "execute_pipeline",
       "operation": "tag_group_create",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1095,12 +886,7 @@
       "name": "execute_pipeline",
       "operation": "tag_delete",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "tag"
     },
@@ -1112,12 +898,7 @@
       "name": "execute_pipeline",
       "operation": "tag_group_delete",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "group"
     },
@@ -1128,10 +909,7 @@
       "name": "execute_pipeline",
       "operation": "tag_groups_reindex",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -1142,10 +920,7 @@
       "name": "execute_pipeline",
       "operation": "tags_reindex_across_groups",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -1156,10 +931,7 @@
       "name": "execute_pipeline",
       "operation": "tags_reindex_in_group",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -1170,10 +942,7 @@
       "name": "execute_pipeline",
       "operation": "article_tag_set",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "article"
     },
@@ -1184,10 +953,7 @@
       "name": "execute_pipeline",
       "operation": "article_tag_unset",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "article"
     },
@@ -1199,12 +965,7 @@
       "name": "execute_pipeline",
       "operation": "tag_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "tag"
     },
@@ -1216,12 +977,7 @@
       "name": "execute_pipeline",
       "operation": "tag_group_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "group"
     },
@@ -1233,12 +989,7 @@
       "name": "execute_pipeline",
       "operation": "community_application_cancel",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "application"
     },
@@ -1250,12 +1001,7 @@
       "name": "execute_pipeline",
       "operation": "community_application_retry_setup",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "application"
     },
@@ -1267,12 +1013,7 @@
       "name": "approve_pipeline",
       "operation": "community_application_approve",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "application"
     },
@@ -1284,12 +1025,7 @@
       "name": "reject_pipeline",
       "operation": "community_application_reject",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "application"
     },
@@ -1301,12 +1037,7 @@
       "name": "retry_creation_pipeline",
       "operation": "community_application_retry_creation",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "application"
     },
@@ -1318,12 +1049,7 @@
       "name": "start_pipeline",
       "operation": "community_application_review",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "application"
     },
@@ -1335,12 +1061,7 @@
       "name": "execute_pipeline",
       "operation": "community_application_submit",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "actor"
     },
@@ -1351,10 +1072,7 @@
       "name": "execute",
       "operation": "dashboard_save_custom_theme_preset",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -1365,10 +1083,7 @@
       "name": "execute",
       "operation": "dashboard_select_theme_preset",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -1379,10 +1094,7 @@
       "name": "execute",
       "operation": "dashboard_update_section",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -1394,12 +1106,7 @@
       "name": "execute",
       "operation": "doc_cover_add_card",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1411,12 +1118,7 @@
       "name": "execute",
       "operation": "doc_cover_pin_doc",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1428,12 +1130,7 @@
       "name": "execute",
       "operation": "doc_cover_remove_card",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1445,12 +1142,7 @@
       "name": "execute",
       "operation": "doc_cover_reorder_cards",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1462,12 +1154,7 @@
       "name": "execute",
       "operation": "doc_cover_reorder_pinned_docs",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1479,12 +1166,7 @@
       "name": "execute",
       "operation": "doc_cover_unpin_doc",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1495,10 +1177,7 @@
       "name": "execute",
       "operation": "doc_cover_update_card_appearance",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -1509,10 +1188,7 @@
       "name": "execute",
       "operation": "doc_cover_update_pinned_doc_appearance",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "community"
     },
@@ -1524,12 +1200,7 @@
       "name": "run_receipt",
       "operation": "docs_approve_queue",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1541,12 +1212,7 @@
       "name": "run_receipt",
       "operation": "docs_begin_edit",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1558,12 +1224,7 @@
       "name": "run_receipt",
       "operation": "docs_configure_queue",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1575,12 +1236,7 @@
       "name": "run_receipt",
       "operation": "docs_create_workspace_node",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1592,12 +1248,7 @@
       "name": "run_receipt",
       "operation": "docs_delete_workspace_node",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1609,12 +1260,7 @@
       "name": "run_receipt",
       "operation": "docs_dequeue",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1626,12 +1272,7 @@
       "name": "run_receipt",
       "operation": "docs_duplicate_workspace_node",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1643,12 +1284,7 @@
       "name": "run_receipt",
       "operation": "doc_enqueue_queue",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1660,12 +1296,7 @@
       "name": "run_receipt",
       "operation": "docs_merge_queue",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1677,12 +1308,7 @@
       "name": "run_receipt",
       "operation": "docs_move_workspace_node",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1693,10 +1319,7 @@
       "name": "run_due",
       "operation": "docs_purge_workspace_trash_due",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "action"
     },
@@ -1708,12 +1331,7 @@
       "name": "run_receipt",
       "operation": "docs_purge_workspace_trash",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1725,12 +1343,7 @@
       "name": "run_receipt",
       "operation": "doc_release_queue",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1742,12 +1355,7 @@
       "name": "run_receipt",
       "operation": "docs_resolve_post_publish",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1759,12 +1367,7 @@
       "name": "run_receipt",
       "operation": "docs_restore_snapshot",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1776,12 +1379,7 @@
       "name": "run_receipt",
       "operation": "docs_restore_workspace_node",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1793,12 +1391,7 @@
       "name": "run_receipt",
       "operation": "docs_save_queue",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1810,12 +1403,7 @@
       "name": "run_receipt",
       "operation": "docs_update_workspace_node",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1827,13 +1415,7 @@
       "name": "execute_add",
       "operation": "reaction_collect_add",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "input"
     },
@@ -1845,13 +1427,7 @@
       "name": "execute_remove",
       "operation": "reaction_collect_remove",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "input"
     },
@@ -1863,13 +1439,7 @@
       "name": "execute_add",
       "operation": "emotion_add",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "input"
     },
@@ -1881,13 +1451,7 @@
       "name": "execute_remove",
       "operation": "emotion_remove",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "input"
     },
@@ -1899,13 +1463,7 @@
       "name": "execute_add",
       "operation": "upvote_add",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "input"
     },
@@ -1917,13 +1475,7 @@
       "name": "execute_remove",
       "operation": "upvote_remove",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "input"
     },
@@ -1934,10 +1486,7 @@
       "name": "run_direct",
       "operation": "cms_outbox_manual_retry",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "gate",
-        "change"
-      ],
+      "stages": ["gate", "change"],
       "steps": [],
       "target": "event_id"
     },
@@ -1949,12 +1498,7 @@
       "name": "execute_pipeline",
       "operation": "press_config_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -1965,9 +1509,7 @@
       "name": "run_internal",
       "operation": "cms_review_apply_result",
       "pipeline": "direct_pipeline",
-      "stages": [
-        "change"
-      ],
+      "stages": ["change"],
       "steps": [],
       "target": "request_id"
     },
@@ -1979,13 +1521,7 @@
       "name": "execute_pipeline",
       "operation": "cms_review_decision",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "target_key"
     },
@@ -1997,13 +1533,7 @@
       "name": "execute_pipeline",
       "operation": "cms_review_recheck",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "target_key"
     },
@@ -2015,12 +1545,7 @@
       "name": "run",
       "operation": "ticket_add_case_member",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2032,12 +1557,7 @@
       "name": "run",
       "operation": "ticket_add_case_worker",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2049,12 +1569,7 @@
       "name": "run",
       "operation": "ticket_add_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2066,12 +1581,7 @@
       "name": "run",
       "operation": "ticket_create_case",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2083,12 +1593,7 @@
       "name": "run",
       "operation": "ticket_create_from_post",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2100,12 +1605,7 @@
       "name": "run",
       "operation": "ticket_create_worker",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2117,12 +1617,7 @@
       "name": "run",
       "operation": "ticket_ensure_draft",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2134,12 +1629,7 @@
       "name": "run",
       "operation": "ticket_link_source",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2151,12 +1641,7 @@
       "name": "run",
       "operation": "ticket_move",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2168,12 +1653,7 @@
       "name": "run",
       "operation": "ticket_move_to_draft",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2185,12 +1665,7 @@
       "name": "run",
       "operation": "ticket_publish",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2202,12 +1677,7 @@
       "name": "run",
       "operation": "ticket_remove_case_member",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2219,12 +1689,7 @@
       "name": "run",
       "operation": "ticket_save_draft",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2236,12 +1701,7 @@
       "name": "run",
       "operation": "ticket_set_assignees",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2253,12 +1713,7 @@
       "name": "run",
       "operation": "ticket_set_facets",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2270,12 +1725,7 @@
       "name": "run",
       "operation": "ticket_set_tags",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2287,12 +1737,7 @@
       "name": "run",
       "operation": "ticket_transition",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2304,12 +1749,7 @@
       "name": "run",
       "operation": "ticket_unlink_source",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2321,12 +1761,7 @@
       "name": "run",
       "operation": "ticket_update",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2338,14 +1773,7 @@
       "name": "run_receipt",
       "operation": "wallpaper_publish",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present",
-        "cleanup"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present", "cleanup"],
       "steps": [],
       "target": "community"
     },
@@ -2357,12 +1785,7 @@
       "name": "run_receipt",
       "operation": "wallpaper_restore_snapshot",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
     },
@@ -2374,13 +1797,7 @@
       "name": "execute_pipeline",
       "operation": "review_bot_update_config",
       "pipeline": "receipt_pipeline",
-      "stages": [
-        "prepare",
-        "gate",
-        "change",
-        "confirm",
-        "present"
-      ],
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
       "steps": [],
       "target": "scope"
     }

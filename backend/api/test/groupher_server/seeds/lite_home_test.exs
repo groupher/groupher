@@ -11,6 +11,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
     ArticleBinding,
     ArticleBindingTag,
     ArticleLifecycle,
+    GlobalPassport,
     TicketState
   }
 
@@ -28,16 +29,19 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
         wallpaper_opts: [asset_hub: TransactionProbe]
       ]
 
+      reset_seed_bot_throttle()
       assert {:error, :asset_hub_unavailable} = LiteHome.seed(opts)
       assert_received {:wallpaper_seed_in_transaction, false}
       assert %Community{} = Repo.get_by(Community, slug: "home")
 
+      reset_seed_bot_throttle()
       assert {:error, :asset_hub_unavailable} = LiteHome.seed(opts)
       assert_received {:wallpaper_seed_in_transaction, false}
     end
 
     test "resets home with minimal main and dashboard data" do
       seed_opts = [wallpaper: false, command_id_factory: &Ecto.UUID.generate/0]
+      reset_seed_bot_throttle()
       {:ok, seeded_community} = LiteHome.reset_and_seed(seed_opts)
       {:ok, community} = ORM.find(Community, seeded_community.id, preload: :dashboard)
 
@@ -62,6 +66,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
       assert ticket_count(community.id) == 0
 
+      reset_seed_bot_throttle()
       {:ok, community} = LiteHome.seed(seed_opts)
 
       assert count(:post, community.id) == 4
@@ -78,6 +83,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
       assert count(:post, community.id) == 3
 
+      reset_seed_bot_throttle()
       {:ok, community} = LiteHome.seed(seed_opts)
 
       assert count(:post, community.id) == 4
@@ -100,6 +106,14 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
       ticket.type == :user and binding.community_id == ^community_id
     )
     |> Repo.aggregate(:count, :article_id)
+  end
+
+  defp reset_seed_bot_throttle do
+    {:ok, bot} = CMS.Seeds.Helper.seed_bot()
+
+    (Repo.get_by(GlobalPassport, user_id: bot.id) || %GlobalPassport{})
+    |> GlobalPassport.changeset(%{user_id: bot.id, is_root: true})
+    |> Repo.insert_or_update!()
   end
 
   defp count(thread, community_id) do

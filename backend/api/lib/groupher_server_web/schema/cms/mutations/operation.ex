@@ -135,7 +135,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:article, non_null(:article_path_input))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "article.trash")
       middleware(M.FrontDesk, :article)
       resolve(&R.CMS.Articles.trash_article/3)
     end
@@ -148,7 +147,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread, non_null(:thread))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "article.restore")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Articles.restore_trashed_article/3)
     end
@@ -161,7 +159,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread, non_null(:thread))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "article.permanent_delete")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Articles.permanently_delete_trashed_article/3)
     end
@@ -174,7 +171,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:thread, non_null(:thread))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "article.permanent_delete")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Articles.permanently_delete_trash_action/3)
     end

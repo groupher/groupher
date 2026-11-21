@@ -245,7 +245,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       assert {:ok, _mirrored} =
                CMS.Articles.mirror(
                  destination,
-                 post.article_id,
+                 post.id,
                  [],
                  user,
                  source,
@@ -258,7 +258,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
       destination_binding =
         Repo.get_by!(ArticleBinding,
-          article_id: post.article_id,
+          article_id: post.id,
           community_id: destination.id
         )
 
@@ -268,7 +268,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
                %CollectFolderEntry{}
                |> CollectFolderEntry.changeset(%{
                  folder_id: folder.id,
-                 article_id: post.article_id,
+                 article_id: post.id,
                  article_binding_id: destination_binding.id
                })
                |> Repo.insert()
@@ -295,7 +295,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
              )
 
       assert {:ok, collect} =
-               ORM.find_by(ArticleCollect, user_id: user.id, article_id: post.article_id)
+               ORM.find_by(ArticleCollect, user_id: user.id, article_id: post.id)
 
       assert Enum.map(collect.collect_folders, & &1.id) == [folder.id]
       assert Repo.get!(Accounts.Model.CollectFolder, folder.id).total_count == 1

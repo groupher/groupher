@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
                Ecto.UUID.generate()
              )
 
-    assert doc.article_id == comment.article_id
+    assert doc.id == comment.article_id
   end
 
   defp restriction_target(:article) do
@@ -212,7 +212,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
       CMS.Comments.create_comment(
         community,
         :post,
-        article_inner_id(article, community),
+        binding_inner_id(article, community),
         mock_comment("Shared review candidate"),
         author,
         Ecto.UUID.generate()
@@ -228,13 +228,18 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
       CMS.Comments.create_comment(
         community,
         :doc,
-        article_inner_id(doc, community),
+        binding_inner_id(doc, community),
         mock_comment("Doc review candidate"),
         author,
         Ecto.UUID.generate()
       )
 
     {community, doc, author, comment}
+  end
+
+  defp binding_inner_id(article, community) do
+    assert {:ok, %{inner_id: inner_id}} = CMS.Articles.Bindings.get(article, community)
+    inner_id
   end
 
   defp reviewer(community) do

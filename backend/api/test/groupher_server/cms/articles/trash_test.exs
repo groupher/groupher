@@ -56,7 +56,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert trash_ref == item.hash_id
     action = Repo.get!(TrashAction, item.trash_action_id)
-    log = Repo.get_by!(PostLog, action: :trashed, article_id: post.article_id)
+    log = Repo.get_by!(PostLog, action: :trashed, article_id: post.id)
     refute log.operation_ref == action.hash_id
     assert {:ok, _operation_ref} = Ecto.UUID.cast(log.operation_ref)
 
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     comment_endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
     parent_endpoint = Repo.get!(Endpoint, comment_endpoint.parent_endpoint_id)
-    assert parent_endpoint.article_id == post.article_id
+    assert parent_endpoint.article_id == post.id
 
     {:ok, before_trash} = Revision.current()
     assert {:ok, trash_item} = CMS.Articles.trash(post, user)
@@ -187,24 +187,22 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, item} = CMS.Articles.trash(post, user)
 
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
-    refute Repo.get(CMS.Model.Article, post.article_id)
-    refute Repo.get_by(CMS.Model.ArticleHistoryOwner, article_id: post.article_id)
+    refute Repo.get(CMS.Model.Article, post.id)
+    refute Repo.get_by(CMS.Model.ArticleHistoryOwner, article_id: post.id)
 
-    refute Repo.exists?(
-             from(s in CMS.Model.ArticleSnapshot, where: s.article_id == ^post.article_id)
-           )
+    refute Repo.exists?(from(s in CMS.Model.ArticleSnapshot, where: s.article_id == ^post.id))
 
-    refute Repo.get(CMS.Model.ArticlePublic, post.article_id)
+    refute Repo.get(CMS.Model.ArticlePublic, post.id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
     refute Repo.get_by(ArticleLifecycle,
              thread: :post,
-             article_id: post.article_id
+             article_id: post.id
            )
 
     assert Repo.get_by(PostLog,
              action: :permanently_deleted,
-             article_id: post.article_id
+             article_id: post.id
            )
 
     assert {:ok, %{entries: []}} =
@@ -316,7 +314,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
       reporter_id: user.id,
       owner: :cms,
       target_type: :article,
-      target_id: to_string(post.article_id),
+      target_id: to_string(post.id),
       observed_version: 1,
       community_id: nil,
       report_type: "SPAM",
@@ -344,12 +342,12 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
     deleted_item = Repo.get!(Item, item.id)
-    assert deleted_item.target_id == to_string(post.article_id)
+    assert deleted_item.target_id == to_string(post.id)
     assert deleted_item.target_deleted_at
     assert deleted_item.status == :superseded
 
     deleted_report = Repo.get!(UserReport, report.id)
-    assert deleted_report.target_id == to_string(post.article_id)
+    assert deleted_report.target_id == to_string(post.id)
     assert deleted_report.item_id == item.id
     assert deleted_report.outdated_at
   end
@@ -363,7 +361,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{done: true, command_id: ^command_id} = first} =
              CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
 
-    refute Repo.get(CMS.Model.Article, post.article_id)
+    refute Repo.get(CMS.Model.Article, post.id)
 
     assert {:ok, replayed} =
              CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
@@ -374,7 +372,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   test "permanent-delete receipt activity uses the command operation_ref" do
     {community, post, _attrs, user} = mock_article(:post)
     comment = create_trash_comment(community, post, user)
-    article_report = create_wall_report(:article, post.article_id, user)
+    article_report = create_wall_report(:article, post.id, user)
     comment_report = create_wall_report(:comment, comment.id, user)
     assert {:ok, item} = CMS.Articles.trash(post, user)
     action = Repo.get!(TrashAction, item.trash_action_id)
@@ -385,7 +383,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
 
     receipt = Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id)
-    log = Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.article_id)
+    log = Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.id)
     assert log.operation_ref == receipt.operation_ref
     refute log.operation_ref == action.hash_id
 
@@ -402,7 +400,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id).operation_ref ==
              receipt.operation_ref
 
-    assert Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.article_id) == log
+    assert Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.id) == log
 
     assert_wall_delete_actions(
       [article_report.item_id, comment_report.item_id],
@@ -413,7 +411,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   test "direct permanent-delete activity uses the runner operation_ref" do
     {community, post, _attrs, user} = mock_article(:post)
     comment = create_trash_comment(community, post, user)
-    article_report = create_wall_report(:article, post.article_id, user)
+    article_report = create_wall_report(:article, post.id, user)
     comment_report = create_wall_report(:comment, comment.id, user)
     assert {:ok, item} = CMS.Articles.trash(post, user)
     action = Repo.get!(TrashAction, item.trash_action_id)
@@ -424,7 +422,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                command_id: client_command_id
              )
 
-    log = Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.article_id)
+    log = Repo.get_by!(PostLog, action: :permanently_deleted, article_id: post.id)
     assert {:ok, _operation_ref} = Ecto.UUID.cast(log.operation_ref)
     refute log.operation_ref == action.hash_id
     refute log.operation_ref == client_command_id
@@ -447,9 +445,9 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    refute Repo.get(CMS.Model.Article, post.article_id)
-    refute Repo.get_by(ArticleStats, thread: :post, article_id: post.article_id)
-    refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.article_id)
+    refute Repo.get(CMS.Model.Article, post.id)
+    refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
+    refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
   end
 
   test "permanent parent delete removes Comment identity and clears projections" do
@@ -510,7 +508,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
             %{"text" => "See "},
             %{
               "type" => "mention",
-              "key" => "post:#{target.article_id}",
+              "key" => "post:#{target.id}",
               "value" => "target mention",
               "children" => [%{"text" => ""}]
             }
@@ -518,12 +516,13 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
         }
       ])
 
-    assert {:ok, mentioner} = save_and_publish_mentioner(mentioner, community, user, body)
+    assert {:ok, %{article_id: mentioner_article_id}} =
+             save_and_publish_mentioner(mentioner, community, user, body)
 
     source_endpoint =
-      Repo.get_by!(Endpoint, type: :blog, article_id: mentioner.article_id)
+      Repo.get_by!(Endpoint, type: :blog, article_id: mentioner_article_id)
 
-    target_endpoint = Repo.get_by!(Endpoint, type: :post, article_id: target.article_id)
+    target_endpoint = Repo.get_by!(Endpoint, type: :post, article_id: target.id)
 
     edge =
       Repo.get_by!(Edge,
@@ -573,13 +572,13 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{deleted: 1, failed: []}} =
              CMS.Trash.purge_due(now: DateTime.utc_now(:second), size: 10)
 
-    refute Repo.get(CMS.Model.Article, post.article_id)
+    refute Repo.get(CMS.Model.Article, post.id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
     log =
       Repo.get_by!(PostLog,
         action: :permanently_deleted,
-        article_id: post.article_id,
+        article_id: post.id,
         source: :scheduler
       )
 
@@ -717,7 +716,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   end
 
   defp save_and_publish_mentioner(mentioner_view, community, user, body_json) do
-    article = Repo.get!(Article, mentioner_view.article_id)
+    article = Repo.get!(Article, mentioner_view.id)
     working_copy = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_type: :default)
     public = Repo.get!(ArticlePublic, article.id)
 

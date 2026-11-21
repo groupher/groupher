@@ -75,7 +75,8 @@ defmodule GroupherServer.TestMate do
       @last_year Datetime.shift(@now, years: -1)
                  |> DateTime.truncate(:second)
 
-      def article_inner_id(%{inner_id: inner_id}, _community), do: inner_id
+      def article_inner_id(%{inner_id: inner_id}, _community) when not is_nil(inner_id),
+        do: inner_id
 
       def article_inner_id(article, %Community{id: community_id}) when is_map(article) do
         article_id = Map.get(article, :article_id) || Map.get(article, :id)
