@@ -1,4 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
+import { CONTENT_HISTORY_ORIGIN_SCOPE } from '@groupher/contracts/content-publish'
 
 export type TServiceTokenRequest = {
   resource: string
@@ -37,6 +38,7 @@ export const serviceTokenErrorStatus = (error: unknown): 401 | 403 =>
 type TTokenResponse = {
   access_token?: unknown
   expires_in?: unknown
+  scope?: unknown
   token_type?: unknown
 }
 
