@@ -62,9 +62,16 @@ jobs:
         run: mix deps.get
 
   test:
-    name: Run tests
+    name: Run tests (partition ${{ matrix.partition }}/4)
     runs-on: ubuntu-latest
     needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [1, 2, 3, 4]
+    env:
+      MIX_TEST_PARTITION: ${{ matrix.partition }}
+      TEST_DB_NAME: groupher_server_test_${{ matrix.partition }}
     defaults:
       run:
         working-directory: backend/api
@@ -153,4 +160,4 @@ jobs:
         run: pnpm install --frozen-lockfile --filter @groupher/backend-auth... --filter @groupher/content-publisher...
 
       - name: Run tests
-        run: mix test --exclude skip_ci --max-cases 8 --max-failures 1
+        run: mix test --partitions 4 --exclude skip_ci --max-cases 8 --max-failures 1
