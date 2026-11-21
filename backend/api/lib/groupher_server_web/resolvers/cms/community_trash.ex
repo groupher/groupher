@@ -4,7 +4,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityTrash do
 
       Community ref -> readable Community -> Passport / Command -> local Trash
   """
-  alias GroupherServer.{CMS, Pagi, Repo}
+  alias GroupherServer.{CMS, Pagi}
   alias CMS.Articles.{Commands.CommunityHide, Commands.CommunityRestore, CommunityTrashQuery}
 
   @ordinary [:post, :blog, :changelog]
@@ -61,8 +61,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityTrash do
     do: {:error, CMS.articles_error_cat_unsupported_community_trash_thread()}
 
   defp match_thread(id, thread) do
-    with {:ok, id} <- Ecto.UUID.cast(id),
-         %CMS.Model.Article{} <- Repo.get_by(CMS.Model.Article, id: id, thread: thread) do
+    with {:ok, true} <- CommunityTrashQuery.article_thread_matches?(id, thread) do
       {:ok, :pass}
     else
       _ -> {:error, CMS.gate_error_cat_resource_not_found()}

@@ -74,6 +74,21 @@ defmodule GroupherServer.CMS.Articles.CommunityTrashQuery do
 
   def authorize(_, _, _), do: {:error, ErrorCat.unsupported_community_trash_thread()}
 
+  def article_thread_matches?(id, thread) when thread in @ordinary and is_binary(id) do
+    case Ecto.UUID.cast(id) do
+      {:ok, id} ->
+        {:ok,
+         Repo.exists?(
+           from(article in Article, where: article.id == ^id and article.thread == ^thread)
+         )}
+
+      :error ->
+        {:ok, false}
+    end
+  end
+
+  def article_thread_matches?(_, _), do: {:ok, false}
+
   defp query(community, thread) do
     from(trash in ArticleBindingTrash,
       join: article in Article,
