@@ -41,6 +41,9 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
+      - name: Run Worker tests
+        run: pnpm --filter @groupher/assets-hub run test:worker
+
       - name: Run type-check
         run: pnpm --filter @groupher/assets-hub run type-check
 

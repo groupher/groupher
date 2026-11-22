@@ -1,0 +1,11 @@
+diff --git a/dist/esm/common/segmentit/index.mjs b/dist/esm/common/segmentit/index.mjs
+index 1f1c4e9..579ec2c 100644
+--- a/dist/esm/common/segmentit/index.mjs
++++ b/dist/esm/common/segmentit/index.mjs
+@@ -213,6 +213,4 @@ function scheduleAcBuild() {
+         // Some runtimes forbid scheduling asynchronous work during module initialization.
+     }
+ }
+-scheduleAcBuild();
+-
+ export { AC, TokenizationAlgorithm, acTree, ensureAcBuilt, scheduleAcBuild };

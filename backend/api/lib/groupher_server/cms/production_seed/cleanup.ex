@@ -240,7 +240,17 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
       remaining =
         Repo.aggregate(
           from(a in Article,
-            where: a.id in ^plan.article_ids and a.id not in ^plan.retained_ticket_ids
+            where:
+              a.id in ^plan.article_ids and a.id not in ^plan.retained_ticket_ids and
+                ((a.thread != :doc and
+                    fragment(
+                      "EXISTS (SELECT 1 FROM cms.article_lifecycles l WHERE l.article_id=? AND l.state<>'destroy')",
+                      a.id
+                    )) or
+                   fragment(
+                     "EXISTS (SELECT 1 FROM cms.article_lifecycles l WHERE l.article_id=?)",
+                     a.id
+                   ))
           ),
           :count
         )
@@ -324,7 +334,29 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
           from(c in GroupherServer.ReviewBot.Model.ReviewBotConfig, where: c.community_id == ^id)
         )
 
-        Repo.delete!(community)
+        with {:ok, _} <-
+               CMS.Communities.Lifecycle.request_destroy(id,
+                 recover_until: DateTime.add(DateTime.utc_now(:second), -1, :second),
+                 operation_ref: Ecto.UUID.generate()
+               ),
+             {:ok, _} <-
+               CMS.Communities.Lifecycle.schedule_destroy(id,
+                 operation_ref: Ecto.UUID.generate()
+               ),
+             {:ok, _} <-
+               CMS.Communities.Lifecycle.destroy(id,
+                 operation_ref: Ecto.UUID.generate()
+               ) do
+          Repo.delete_all(
+            from(blocker in CMS.Model.CommunityLifecycleBlocker,
+              where: blocker.community_id == ^id and not is_nil(blocker.ended_at)
+            )
+          )
+
+          Repo.delete!(community)
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
 
         resources =
           Map.new(run.manifest["resources"] || %{}, fn {name, resource} ->
@@ -452,27 +484,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
   end
 
   defp purge_article!(%Article{thread: :doc} = article, community, actor, _commands) do
-    branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
-
-    action =
-      command!(
-        CMS.Docs.Trash.create_action(community, actor, %{
-          root_type: :article,
-          root_ref: article.id
-        })
-      )
-
-    item =
-      command!(CMS.Docs.Trash.attach(action, community, branch, article.id, actor), "doc-attach")
-
-    command!(
-      CMS.Docs.Trash.permanently_delete(item, community, branch, actor,
-        purge_stable_article: true
-      ),
-      "doc-permanent"
-    )
-
-    command!(CMS.Articles.Trash.delete_empty_action(action.id))
+    command!(CMS.Seeds.Docs.delete(community, article.id, actor), "doc-permanent")
   end
 
   defp purge_article!(article, community, actor, _commands) do
@@ -517,7 +529,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
     :crypto.hash(:sha256, :erlang.term_to_binary(plan)) |> Base.encode16(case: :lower)
   end
 
-  defp command!(result, stage \\ "domain")
+  defp command!(result, stage)
   defp command!({:ok, value}, _stage), do: value
 
   defp command!({:error, reason}, stage) do

@@ -24,6 +24,7 @@ import { cacheArticleViewedState } from './viewer'
 
 /** Public GraphQL command returning the committed stats and ViewTracker-owned private state. */
 export const trackArticleViewMutation = graphql(`
+  "Records one visible public Article read through ViewTracker"
   mutation TrackArticleView($article: ArticlePathInput!) {
     trackArticleView(article: $article) {
       tracked

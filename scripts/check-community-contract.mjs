@@ -97,9 +97,9 @@ const boundary = readFileSync(
   'utf8',
 )
 for (const query of [
-  'Q.community.config(community)',
-  'Q.dsb.config(community)',
-  'Q.wallpaper.config(community)',
+  'Q.community.slug(community)',
+  'Q.dsb.slug(community)',
+  'Q.wallpaper.slug(community)',
 ]) {
   if (!boundary.includes(`useSuspenseQuery(${query})`)) {
     throw new Error(`CommunityBoundary must read ${query} from its canonical Query key`)

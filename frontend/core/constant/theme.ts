@@ -1,8 +1,13 @@
-export enum THEME_MODE {
-  LIGHT = 'light',
-  DARK = 'dark',
-  SYSTEM = 'system',
-}
+import { lowerEnumValue, valueKeyedEnum } from '~/lib/enumValues'
+import { WallpaperTheme } from '~/lib/graphql/generated/enums'
+
+const themeValues = valueKeyedEnum(WallpaperTheme)
+
+export const THEME_MODE = {
+  LIGHT: lowerEnumValue(themeValues.LIGHT),
+  DARK: lowerEnumValue(themeValues.DARK),
+  SYSTEM: 'system',
+} as const
 
 const THEME = {
   LIGHT: THEME_MODE.LIGHT,

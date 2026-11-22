@@ -4,17 +4,16 @@ import { type FC, useEffect, useState } from 'react'
 
 // import { mockTags } from '~/mock'
 import { THREAD } from '~/const/thread'
+import { browserGraphQLRequest } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { Q } from '~/query'
 import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'
-import { updateViewingArticle } from '~/signal'
 import type { TColorName, TID, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import Checker from '~/ui/Checker'
 import TagNode from '~/ui/TagNode'
 import { toast } from '~/ui/Toaster'
 
-import { getArticlePath } from '../helper'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
@@ -31,52 +30,62 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const { touched, setTouched, resetTouched } = useTouched()
 
   const { slug: community } = useCommunity()
-  const { article } = useViewingArticle()
+  const { article, articlePath } = useViewingArticle()
 
   const result = useQuery(Q.article.tagGroups(community, THREAD.POST))
-  const [updatePostRes, updatePost] = useArticleSettingMutation(S.updatePost)
+  const workingCopiesQuery = useQuery({
+    queryKey: ['article-working-copies', article.id, community],
+    enabled: Boolean(article.id && community),
+    queryFn: () => {
+      if (!article.id || !community) throw new Error('Article identity is unavailable.')
+      return browserGraphQLRequest(S.articleWorkingCopies, {
+        articleId: article.id,
+        community,
+      })
+    },
+  })
+  const workingCopy = workingCopiesQuery.data?.articleWorkingCopies?.find(
+    (candidate) => candidate.scopeType === 'default',
+  )
+  const [saveResult, saveWorkingCopy] = useArticleSettingMutation(S.saveWorkingCopy)
 
   const tags = (result.data?.flatMap((group) => group.tags) || []) as unknown as TTag[]
 
   useEffect(() => {
-    const originTags = article.communityTags || []
-    setChecked(originTags.flatMap((item) => (item.id === undefined ? [] : [item.id])))
-  }, [article.communityTags])
+    setChecked((workingCopy?.tagIds || []) as TID[])
+  }, [workingCopy?.tagIds])
 
   const handleCheck = (id: TID, toggle: boolean): void => {
     const checkedIds = checked || []
     const updated = toggle ? [...checkedIds, id] : reject((_id) => _id === id, checkedIds)
 
-    const originTags = article.communityTags || []
-
     setChecked(uniq(updated))
-    setTouched(!equals(updated.sort(), originTags.map((item) => item.id).sort()))
+    setTouched(!equals([...updated].sort(), ([...(workingCopy?.tagIds || [])] as TID[]).sort()))
   }
 
-  const handleUpdate = () => {
-    const articlePath = getArticlePath(article)
-    if (!articlePath || article.version === undefined) {
+  const handleUpdate = async () => {
+    if (!article.id || !community || !workingCopy || !articlePath) {
       toast('文章信息不完整', 'error')
       return
     }
 
-    const params = {
-      article: articlePath,
-      expectedVersion: article.version,
-      communityTags: checked,
+    const result = await saveWorkingCopy({
+      _articlePath: articlePath,
+      articleId: article.id,
+      community,
+      revision: workingCopy.revision,
+      tagIds: checked,
+      workingCopyId: workingCopy.id,
+    })
+
+    if (result.error || !result.data?.saveWorkingCopy) {
+      toast('编辑副本标签保存失败，请重新加载后重试', 'error')
+      return
     }
 
-    updatePost(params).then((res) => {
-      if (res.error) {
-        toast('修改失败', 'error')
-      } else if (res.data?.updatePost) {
-        toast('修改完成')
-        const newTags = res.data.updatePost.communityTags as unknown as TTag[]
-        setChecked(newTags.flatMap((item) => (item.id === undefined ? [] : [item.id])))
-        if (article.id) updateViewingArticle({ id: article.id, communityTags: newTags })
-        resetTouched()
-      }
-    })
+    toast('标签已保存到默认编辑副本；公开版本未变')
+    await workingCopiesQuery.refetch()
+    resetTouched()
   }
 
   return (
@@ -103,10 +112,10 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
 
       <Footer
         onBack={onBack}
-        disabled={!touched}
+        disabled={!touched || !workingCopy}
         onConfirm={handleUpdate}
         top={10}
-        loading={updatePostRes.fetching}
+        loading={saveResult.fetching || workingCopiesQuery.isLoading}
       />
     </div>
   )

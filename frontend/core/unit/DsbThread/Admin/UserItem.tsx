@@ -1,7 +1,7 @@
 import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
-import type { TModerator, TSimpleUser } from '~/spec'
+import type { TModerator } from '~/spec'
 import Button from '~/ui/Buttons/Button'
 import AdminAvatar from '~/unit/AdminAvatar'
 
@@ -11,20 +11,20 @@ type TProps = {
   item: TModerator
   active?: boolean
   readonly?: boolean
-  onOpen?: (user: TSimpleUser) => void
+  onOpen?: () => void
 }
 
 const UserItem = ({ item, active = false, readonly = false, onOpen }: TProps) => {
   const s = useSalon()
   const { t } = useTrans()
-  const { user, passportItemCount, isRoot } = item
+  const { user, permissions, isLord } = item
   if (!user?.login) return null
 
-  const permissionsLabel = isRoot ? (
+  const permissionsLabel = isLord ? (
     <>{t('dsb.admin.list.all_permissions')}</>
   ) : (
     <>
-      {passportItemCount} {t('dsb.admin.list.permissions_unit')}
+      {permissions.length} {t('dsb.admin.list.permissions_unit')}
     </>
   )
 
@@ -35,13 +35,12 @@ const UserItem = ({ item, active = false, readonly = false, onOpen }: TProps) =>
         <div className={s.header}>
           <div className={s.name}>{user.nickname}</div>
           <div className={s.login}>@{user.login}</div>
-          {isRoot && <div className={s.rootSign}>root</div>}
-          {item.pending && <div className={s.pendingSign}>{t('dsb.admin.badge.pending')}</div>}
+          {isLord && <div className={s.rootSign}>Lord</div>}
           <div className='grow' />
           {readonly ? (
             <div className={s.readonlyPermission}>{permissionsLabel}</div>
           ) : (
-            <Button top={1} onClick={() => onOpen?.(user)} ghost noBorder size='small'>
+            <Button top={1} onClick={onOpen} ghost noBorder size='small'>
               {permissionsLabel}
               <ArrowSVG className={s.arrowIcon} />
             </Button>

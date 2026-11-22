@@ -37,10 +37,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.CreateWorker do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_create, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.create_worker(canonical, parent_id, attrs, expected_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

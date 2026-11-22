@@ -70,14 +70,10 @@ export async function fetchServiceConfig(
 export async function fetchServiceConfigContent(
   id: string,
   fileId: string,
-  reveal: boolean,
   signal?: AbortSignal,
 ): Promise<TServiceConfigContent> {
-  const params = new URLSearchParams()
-  if (reveal) params.set('reveal', 'true')
-  const query = params.size > 0 ? `?${params.toString()}` : ''
   const response = await fetch(
-    `/api/services/${encodeURIComponent(id)}/config/${encodeURIComponent(fileId)}${query}`,
+    `/api/services/${encodeURIComponent(id)}/config/${encodeURIComponent(fileId)}`,
     { signal },
   )
   if (!response.ok)

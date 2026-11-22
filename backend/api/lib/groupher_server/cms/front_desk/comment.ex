@@ -160,7 +160,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   @spec read(map(), term(), keyword()) :: T.domain_res(Comment.t())
   def read(%{article: _} = comment_path, actor, opts) when is_list(opts) do
     case Keyword.get(opts, :mode, :public) do
-      mode when mode in [:public, :management] ->
+      mode when mode in [:public, :admin] ->
         with {:ok, article_path, inner_id} <- parse_comment_path(comment_path) do
           read(article_path, inner_id, actor, opts)
         end

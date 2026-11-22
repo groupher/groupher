@@ -6,16 +6,19 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
   alias GroupherServer.{AlertWall, CMS, Repo, ReviewBot}
 
   alias CMS.Model.{
-    ArticleLifecycle,
+    ArticleCoAuthor,
+    ArticlePublic,
+    ArticleWorkingCopy,
+    Author,
     ArticleReviewBlock,
     ArtimentReview,
     CommentReviewBlock,
-    DocReviewBlock
+    CommunityAdmin,
+    GlobalPassport
   }
 
   alias AlertWall.Model.{Item, UserReport}
   alias ReviewBot.Model.ReviewBotConfig
-  import ExUnit.CaptureIO
 
   test "report threshold is read from validated runtime policy" do
     previous = Application.get_env(:groupher_server, :cms_review_report_threshold)
@@ -37,13 +40,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     {community, article, _attrs, _author} = mock_article(:post)
     {:ok, reviewer} = db_insert(:user)
 
-    reviewer = %{
-      reviewer
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.decide" => true}}
-        }
-    }
+    reviewer = grant_community_permissions(community, reviewer, %{"review.decide" => true})
 
     target_key = "article:#{article.id}"
     scope_key = "community:#{community.id}"
@@ -131,18 +128,94 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     assert released_revision > denied_revision
   end
 
+  test "current Article co-author cannot decide a review for that Article" do
+    {community, public, _, _owner} = mock_article(:post)
+    article = Repo.get!(CMS.Model.Article, public.id)
+    {:ok, reviewer} = db_insert(:user)
+    author = Repo.insert!(%Author{user_id: reviewer.id})
+
+    Repo.insert!(
+      ArticleCoAuthor.changeset(%ArticleCoAuthor{}, %{
+        article_id: article.id,
+        author_id: author.id,
+        permissions: %{"article.read_draft" => true, "article.update" => true},
+        joined_at: DateTime.utc_now(:second)
+      })
+    )
+
+    assert {:ok, {:error, %ErrorCat.Error{reason: :permission_denied}}} =
+             Repo.transaction(fn ->
+               CMS.Review.Decisions.apply_in_transaction(
+                 "article:#{article.id}",
+                 "community:#{community.id}",
+                 :approve,
+                 reviewer,
+                 Ecto.UUID.generate()
+               )
+             end)
+  end
+
+  test "a removed co-author who edited the reviewed Snapshot cannot decide its review" do
+    {community, public, _, owner} = mock_article(:post)
+    article = Repo.get!(CMS.Model.Article, public.id)
+    {:ok, contributor} = db_insert(:user)
+    author = Repo.insert!(%Author{user_id: contributor.id})
+
+    member =
+      Repo.insert!(
+        ArticleCoAuthor.changeset(%ArticleCoAuthor{}, %{
+          article_id: article.id,
+          author_id: author.id,
+          permissions: %{"article.read_draft" => true, "article.update" => true},
+          joined_at: DateTime.utc_now(:second)
+        })
+      )
+
+    working_copy = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
+
+    assert {:ok, saved} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               working_copy.id,
+               %{title: "Co-author contribution"},
+               working_copy.revision,
+               contributor,
+               Ecto.UUID.generate()
+             )
+
+    Repo.delete!(member)
+
+    current_public = Repo.get!(ArticlePublic, article.id)
+
+    assert {:ok, _published} =
+             CMS.Articles.publish_article(
+               article,
+               community,
+               %{working_copy_id: working_copy.id, revision: saved.revision},
+               current_public.snapshot_id,
+               owner,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, {:error, %ErrorCat.Error{reason: :permission_denied}}} =
+             Repo.transaction(fn ->
+               CMS.Review.Decisions.apply_in_transaction(
+                 "article:#{article.id}",
+                 "community:#{community.id}",
+                 :approve,
+                 contributor,
+                 Ecto.UUID.generate()
+               )
+             end)
+  end
+
   test "a CMS decision resolves a report-only Wall item in its own scope" do
     {community, article, _attrs, _author} = mock_article(:post)
     {:ok, reporter} = db_insert(:user)
     {:ok, reviewer} = db_insert(:user)
 
-    reviewer = %{
-      reviewer
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.decide" => true}}
-        }
-    }
+    reviewer = grant_community_permissions(community, reviewer, %{"review.decide" => true})
 
     assert {:ok, {:ok, report}} =
              Repo.transaction(fn ->
@@ -196,7 +269,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                      target_type: :article,
                      target_id: article.id,
                      community_id: community.id,
-                     observed_version: 1
+                     observed_version: public_version(article)
                    },
                    :spam,
                    "Please review",
@@ -245,7 +318,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                  target_type: :article,
                  target_id: article.id,
                  community_id: community.id,
-                 observed_version: 1
+                 observed_version: public_version(article)
                },
                :spam,
                "Further report",
@@ -259,13 +332,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     wall_item = Repo.get!(Item, item_id)
     {:ok, moderator} = db_insert(:user)
 
-    moderator = %{
-      moderator
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.decide" => true}}
-        }
-    }
+    moderator = grant_community_permissions(community, moderator, %{"review.decide" => true})
 
     assert {:ok, %{item_id: ^item_id}} =
              AlertWall.resolve_item(
@@ -306,7 +373,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                      target_type: :article,
                      target_id: article.id,
                      community_id: community.id,
-                     observed_version: 1
+                     observed_version: public_version(article)
                    },
                    :spam,
                    "threshold review",
@@ -320,13 +387,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     item_id = List.last(reports).item_id
     {:ok, moderator} = db_insert(:user)
 
-    moderator = %{
-      moderator
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.decide" => true}}
-        }
-    }
+    moderator = grant_community_permissions(community, moderator, %{"review.decide" => true})
 
     Repo.update_all(
       from(request in ArtimentReview,
@@ -383,7 +444,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                   target_type: :article,
                   target_id: article.id,
                   community_id: community.id,
-                  observed_version: 1
+                  observed_version: public_version(article)
                 },
                 :spam,
                 "concurrent threshold",
@@ -433,7 +494,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                    target_type: :article,
                    target_id: article.id,
                    community_id: community.id,
-                   observed_version: 1
+                   observed_version: public_version(article)
                  },
                  :spam,
                  "before threshold",
@@ -468,7 +529,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                  target_type: :article,
                  target_id: article.id,
                  community_id: community.id,
-                 observed_version: 1
+                 observed_version: public_version(article)
                },
                :spam,
                "crossing threshold",
@@ -506,7 +567,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                      target_type: :article,
                      target_id: article.id,
                      community_id: community.id,
-                     observed_version: 1
+                     observed_version: public_version(article)
                    },
                    :spam,
                    "threshold review",
@@ -519,10 +580,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
 
     {:ok, moderator} = db_insert(:user)
 
-    moderator = %{
-      moderator
-      | cur_passport: %{"global" => %{}, community.slug => %{"cms" => %{"review.decide" => true}}}
-    }
+    moderator = grant_community_permissions(community, moderator, %{"review.decide" => true})
 
     assert {:ok, _} =
              CMS.decide_review_target(
@@ -660,9 +718,11 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     assert community_id == community.id
   end
 
-  test "the report threshold for a Doc uses platform scope" do
-    {_community, doc, _attrs, _author} = mock_article(:doc)
-    target_id = "#{doc.id}:#{doc.branch_id}"
+  test "the report threshold for a Doc uses its request community scope" do
+    {community, doc, _attrs, _author} = mock_article(:doc)
+    target_id = doc.id
+    public = Repo.get!(CMS.Model.ArticlePublic, doc.id)
+    version = CMS.Review.SnapshotVersion.from_id(public.snapshot_id)
 
     reports =
       Enum.map(1..3, fn _ ->
@@ -672,10 +732,10 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                  GroupherServer.AlertWall.Commands.SubmitReport.execute(
                    %{
                      owner: :cms,
-                     target_type: :doc,
+                     target_type: :article,
                      target_id: target_id,
-                     community_id: nil,
-                     observed_version: 1
+                     community_id: community.id,
+                     observed_version: version
                    },
                    :spam,
                    "Please review this doc",
@@ -688,12 +748,12 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
 
     source_ref = "report_threshold:item:#{List.last(reports).item_id}"
 
-    assert %DocReviewBlock{
+    assert %ArticleReviewBlock{
              type: :report_threshold_hold,
              source: :domain,
              source_ref: ^source_ref,
              resolved_at: nil
-           } = Repo.get_by!(DocReviewBlock, article_id: doc.id, branch_id: doc.branch_id)
+           } = Repo.get_by!(ArticleReviewBlock, article_id: doc.id)
   end
 
   test "an account report does not apply a CMS content restriction" do
@@ -729,8 +789,8 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     source_definitions =
       Enum.filter(definitions, fn [name, _] -> name == "cms_review_restriction_source_check" end)
 
-    assert length(type_definitions) == 3
-    assert length(source_definitions) == 3
+    assert length(type_definitions) == 2
+    assert length(source_definitions) == 2
 
     assert Enum.all?(type_definitions, fn [_name, definition] ->
              sql_values(definition) ==
@@ -772,70 +832,11 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     end
   end
 
-  test "V2 cutover preflight counts current holds, requests and open Wall items" do
-    {community, article, _attrs, _author} = mock_article(:post)
-
-    assert Repo.exists?(
-             from(request in ArtimentReview,
-               where:
-                 request.article_id == ^article.id and request.state in [:queued, :running] and
-                   is_nil(request.replaced_at) and is_nil(request.outdated_at)
-             )
-           )
-
-    {:ok, reporter} = db_insert(:user)
-
-    assert {:ok, _report} =
-             GroupherServer.AlertWall.Commands.SubmitReport.execute(
-               %{
-                 owner: :cms,
-                 target_type: :article,
-                 target_id: article.id,
-                 community_id: community.id,
-                 observed_version: 1
-               },
-               :spam,
-               "preflight",
-               reporter,
-               Ecto.UUID.generate()
-             )
-
-    lifecycle = Repo.get_by!(ArticleLifecycle, article_id: article.id)
-
-    assert {:ok, {:ok, _block}} =
-             Repo.transaction(fn ->
-               CMS.ReviewBlocks.apply(lifecycle, %{
-                 scope_key: "platform",
-                 type: :manual_hold,
-                 source: :human,
-                 source_ref: "preflight:#{Ecto.UUID.generate()}",
-                 operation_ref: Ecto.UUID.generate(),
-                 applied_at: DateTime.utc_now(:second)
-               })
-             end)
-
-    output =
-      capture_io(fn ->
-        assert_raise Mix.Error, fn -> Mix.Tasks.ReviewBot.V2.Preflight.run([]) end
-      end)
-
-    assert output =~ "\"article_review_blocks\": 1"
-    assert output =~ "\"active_restriction_count\": 1"
-    assert %{"pending_target_count" => count} = Jason.decode!(output)
-    assert count >= 2
-  end
-
   test "recheck registers a new current request through the CMS Receipt command" do
     {community, article, _attrs, _author} = mock_article(:post)
     {:ok, reviewer} = db_insert(:user)
 
-    reviewer = %{
-      reviewer
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.decide" => true}}
-        }
-    }
+    reviewer = grant_community_permissions(community, reviewer, %{"review.decide" => true})
 
     before_ids =
       Repo.all(
@@ -883,7 +884,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
       )
 
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.decide" => true})
 
     before_ids =
       Repo.all(
@@ -934,7 +935,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     )
 
     {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+    reviewer = grant_global_permissions(reviewer, %{"review.platform.decide" => true})
 
     assert {:ok, result} =
              CMS.recheck_review_target(
@@ -945,6 +946,35 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
              )
 
     assert result.request_count == 1
+  end
+
+  defp public_version(article) do
+    Repo.get!(CMS.Model.ArticlePublic, article.id).snapshot_id
+    |> CMS.Review.SnapshotVersion.from_id()
+  end
+
+  defp grant_global_permissions(user, permissions) do
+    %GlobalPassport{}
+    |> GlobalPassport.changeset(%{user_id: user.id, permissions: permissions})
+    |> Repo.insert!()
+
+    user
+  end
+
+  defp grant_community_permissions(community, user, permissions) do
+    member =
+      Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) ||
+        %CommunityAdmin{}
+
+    member
+    |> CommunityAdmin.changeset(%{
+      user_id: user.id,
+      community_id: community.id,
+      permissions: Map.merge(member.permissions || %{}, permissions)
+    })
+    |> Repo.insert_or_update!()
+
+    user
   end
 
   defp sql_values(definition) do

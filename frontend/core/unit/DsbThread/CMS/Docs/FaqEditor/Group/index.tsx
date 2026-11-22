@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import EditSVG from '~/icons/EditPen'
 import GrabDotsSVG from '~/icons/GrabDots'
-import useDocFaqActions from '~/stores/dsbEdit/docFaq/actions'
+import useDocFaqActions from '~/stores/dsbShell/docFaq/actions'
 
 import { FAQ_EDITOR_COPY, FAQ_GROUP_MENU_ACTION, FAQ_SAVE_ZONE } from '../constant'
 import SortableFaqColumn from '../Dnd/SortableFaqColumn'

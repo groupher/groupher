@@ -2,18 +2,17 @@ import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ARTICLE_STAGE } from '~/const/article'
-import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import { browserGraphQLRequest } from '~/graphql/client'
 import usePagiPosition from '~/hooks/usePagiPosition'
 import useTrans from '~/hooks/useTrans'
-import { send } from '~/lib/signal'
 import { graphqlQueryOptions } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
 
-import { reloadDocPublishChecklist } from '../helper'
+import { reloadDocsPublishQueue } from '../helper'
+import useDocsEditor from '../store/hooks'
 import {
   DEFAULT_LINK_MARKER,
   DOC_TREE_NODE_TYPE_WIRE,
@@ -47,7 +46,6 @@ import {
   moveGroupToGroupLaneEnd,
   patchChildInGroups,
   patchGroupInGroups,
-  patchNode,
   removeChildFromGroup,
   removeLocalTarget,
   removeGroupFromGroups,
@@ -57,12 +55,11 @@ import {
   toggleGroupExpandedInGroups,
   updateChildMarkerInGroup,
   updateChildTitleInGroup,
+  workspaceTabs,
 } from './helper'
 import type {
   TDocTreeInitialData,
   TDocTreeEvent,
-  TDocTreeMutationData,
-  TDocTreeMutationPayload,
   TDocTreeNodeDTO,
   TDocTreeNodePublishState,
   TDocTreeState,
@@ -76,9 +73,10 @@ import type {
   TSideTreeNodeMenuAction,
   TSideTreePin,
   TSideTreeTab,
+  TWorkspaceNode,
 } from './spec'
 import useDocEditorUrl from './useDocEditorUrl'
-import useSideTreePersistence, { type TSideTreeMutationSchema } from './usePersistence'
+import useSideTreePersistence from './usePersistence'
 
 type TLocalCreateState = {
   deleteRequested: boolean
@@ -111,17 +109,24 @@ const findTabByDocId = (tabs: readonly TSideTreeTab[], docId: string | null): TS
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeController {
   const { t } = useTrans()
+  const { saveStatus } = useDocsEditor()
+  const saveStatusRef = useRef(saveStatus)
+  saveStatusRef.current = saveStatus
   const { currentDocId, syncDocIdToUrl } = useDocEditorUrl()
   const { slug: community } = useCommunity()
   const { data, refetch: reload } = useQuery(
     graphqlQueryOptions<{
-      docTree?: {
-        revision: number
-        treeState?: TDocTreeState | null
-        stagedEvents?: TDocTreeEvent[] | null
-        tabs: TDocTreeNodeDTO[]
+      docsWorkspaceTree?: {
+        treeRevision: number
+        queueRevision: number
+        nodes: TWorkspaceNode[]
       }
-    }>(S.docTree, { community }),
+    }>(S.docsWorkspaceTree, { community }),
+  )
+  const { data: queueData } = useQuery(
+    graphqlQueryOptions<{
+      docsPublishQueue?: { revision: number; articles: { articleId: string }[] } | null
+    }>(S.docsPublishQueue, { community }),
   )
   const trashPosition = usePagiPosition(`${community}:doc-trash`)
   const {
@@ -150,6 +155,9 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   const groupsRef = useRef<TSideTreeGroup[]>(initialGroups)
   const currentDocIdRef = useRef<string | null>(currentDocId)
   const revisionRef = useRef<number | null>(initialData?.revision ?? null)
+  const queueRevisionRef = useRef<number | null>(null)
+  const deletingRef = useRef(false)
+  const creatingDefaultTabRef = useRef(false)
   // Tracks only frontend-local ids while their backend draft create mutation is pending.
   // Backend draft nodes already have real ids, never enter this map, and remain Trash-restorable.
   const localCreateStateRef = useRef(new Map<string, TLocalCreateState>())
@@ -161,20 +169,104 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   )
   const [editingTarget, setEditingTarget] = useState<TEditingTarget>(null)
   const [coverWarning, setCoverWarning] = useState<string | null>(null)
-  const { persist, persistCoverAction } = useSideTreePersistence({
-    revisionRef,
-    setTreeState,
-    setCoverWarning,
-    reload,
-  })
+  const [deleteConfirmation, setDeleteConfirmation] = useState<string | null>(null)
+  const deleteConfirmationResolver = useRef<((confirmed: boolean) => void) | null>(null)
+  const finishDeleteConfirmation = useCallback((confirmed: boolean) => {
+    deleteConfirmationResolver.current?.(confirmed)
+    deleteConfirmationResolver.current = null
+    setDeleteConfirmation(null)
+  }, [])
+  useEffect(
+    () => () => {
+      deleteConfirmationResolver.current?.(false)
+      deleteConfirmationResolver.current = null
+    },
+    [],
+  )
+  const { persistCoverAction, persistWorkspaceUpdate, persistWorkspaceMove } =
+    useSideTreePersistence({
+      revisionRef,
+      setTreeState,
+      setCoverWarning,
+      reload,
+    })
 
-  function persistDelete(nodeId: string): void {
-    persist(S.deleteDocTreeNode, { id: nodeId }, (data) => data?.deleteDocTreeNode).then(
-      (payload) => {
-        if (!payload || payload.conflict) return
-        void reloadTrash()
-      },
-    )
+  async function persistDelete(nodeId: string): Promise<void> {
+    if (deletingRef.current || revisionRef.current === null || queueRevisionRef.current === null)
+      return
+    if (['dirty', 'saving', 'error'].includes(saveStatusRef.current)) {
+      toast(t('dsb.doc.queue.delete_wait_save'), 'error')
+      return
+    }
+    deletingRef.current = true
+    const treeRevision = revisionRef.current
+    const queueRevision = queueRevisionRef.current
+    try {
+      const data = await browserGraphQLRequest<{
+        docsWorkspaceDeletePreview?: {
+          publicCount: number
+          draftCount: number
+          requiresConfirmation: boolean
+          confirmation?: { formatVersion: number; hash: string } | null
+        } | null
+      }>(S.docsWorkspaceDeletePreview, { community, treeRevision, queueRevision, nodeId })
+      const preview = data?.docsWorkspaceDeletePreview
+      if (!preview || (preview.requiresConfirmation && !preview.confirmation))
+        throw new Error('Unable to check deletion')
+      const message = [
+        t('dsb.doc.queue.delete_confirm'),
+        `${t('dsb.doc.queue.delete_public_count')}: ${preview.publicCount}`,
+        `${t('dsb.doc.queue.delete_draft_count')}: ${preview.draftCount}`,
+        preview.requiresConfirmation ? t('dsb.doc.queue.discard_warning') : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+      const confirmed = await new Promise<boolean>((resolve) => {
+        deleteConfirmationResolver.current = resolve
+        setDeleteConfirmation(message)
+      })
+      if (!confirmed) return
+      if (['dirty', 'saving', 'error'].includes(saveStatusRef.current)) {
+        toast(t('dsb.doc.queue.delete_wait_save'), 'error')
+        return
+      }
+      const result = await executeCommand({
+        request: (variables) =>
+          browserGraphQLRequest<{
+            deleteDocsWorkspaceNode?: { treeRevision: number; queueRevision: number } | null
+          }>(S.deleteDocsWorkspaceNode, variables),
+        variables: {
+          community,
+          treeRevision,
+          queueRevision,
+          nodeId,
+          confirmation: preview.confirmation ?? undefined,
+        },
+      })
+      if (!result?.deleteDocsWorkspaceNode) throw new Error('Unable to delete item')
+      revisionRef.current = result.deleteDocsWorkspaceNode.treeRevision
+      queueRevisionRef.current = result.deleteDocsWorkspaceNode.queueRevision
+      reloadDocsPublishQueue()
+      void reloadTrash()
+      if (['dirty', 'saving', 'error'].includes(saveStatusRef.current)) {
+        toast(t('dsb.doc.queue.delete_unsaved_preserved'), 'error')
+        return
+      }
+      const refreshed = await reload()
+      const freshNodes = refreshed?.data?.docsWorkspaceTree?.nodes
+      if (freshNodes && currentDocIdRef.current) {
+        const freshTabs = workspaceTabs(freshNodes, new Set())
+        if (!findTabByDocId(freshTabs, currentDocIdRef.current)) {
+          syncDocIdToUrl(getDocIdFromPage(findFirstPage(freshTabs[0]?.groups ?? [])))
+        }
+      }
+    } catch (err) {
+      toast(formatMutationError(err), 'error')
+      reloadDocsPublishQueue()
+      void reload()
+    } finally {
+      deletingRef.current = false
+    }
   }
 
   const syncActiveIdFromUrl = useCallback((sourceGroups: readonly TSideTreeGroup[]): void => {
@@ -251,16 +343,24 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }, [currentDocId])
 
   useEffect(() => {
-    if (!data?.docTree) return
-    if (revisionRef.current !== null && data.docTree.revision < revisionRef.current) return
+    if (!data?.docsWorkspaceTree) return
+    if (revisionRef.current !== null && data.docsWorkspaceTree.treeRevision < revisionRef.current)
+      return
 
-    revisionRef.current = data.docTree.revision
-    setTreeState(data.docTree.treeState ?? null)
-    setStagedEvents(data.docTree.stagedEvents ?? [])
+    revisionRef.current = data.docsWorkspaceTree.treeRevision
+    queueRevisionRef.current = Math.max(
+      queueRevisionRef.current ?? 0,
+      data.docsWorkspaceTree.queueRevision,
+    )
+    setTreeState(null)
+    setStagedEvents([])
 
     if (hasLocalNode(groupsRef.current, pinsRef.current)) return
 
-    const nextTabs = data.docTree.tabs.map(mapTab)
+    const queuedIds = new Set(
+      queueData?.docsPublishQueue?.articles.map((article) => article.articleId) ?? [],
+    )
+    const nextTabs = workspaceTabs(data.docsWorkspaceTree.nodes, queuedIds)
     const nextActiveTab =
       findTabByDocId(nextTabs, currentDocIdRef.current) ??
       nextTabs.find((tab) => tab.id === activeTabId) ??
@@ -274,39 +374,25 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     setPins(nextPins)
     commitGroups(nextGroups)
     syncActiveIdFromUrl(nextGroups)
-  }, [commitGroups, data, syncActiveIdFromUrl])
+  }, [commitGroups, data, queueData, syncActiveIdFromUrl])
+
+  useEffect(() => {
+    if (queueData?.docsPublishQueue) {
+      queueRevisionRef.current = Math.max(
+        queueRevisionRef.current ?? 0,
+        queueData.docsPublishQueue.revision,
+      )
+    }
+  }, [queueData])
 
   useEffect(() => {
     syncActiveIdFromUrl(groupsRef.current)
   }, [currentDocId, syncActiveIdFromUrl])
 
-  function persistTitleMutation(
-    title: string,
-    schema: TSideTreeMutationSchema,
-    variables: () => Record<string, unknown>,
-    pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
-    onSuccess: (node: TDocTreeNodeDTO) => void,
-    errorLabel: string,
-    onSettled?: () => void,
-  ): void {
-    Promise.resolve(persist(schema, variables(), pickPayload))
-      .then((payload) => {
-        if (!payload?.node || payload.conflict) return
-        onSuccess(payload.node)
-      })
-      .catch((err) => {
-        console.error(`## doc tree ${errorLabel} error: `, err)
-        void reload()
-      })
-      .finally(onSettled)
-  }
-
   function persistLocalNode(
     localId: string,
     title: string,
-    schema: TSideTreeMutationSchema,
     variables: () => Record<string, unknown>,
-    pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
     onCreated: (node: TDocTreeNodeDTO) => void,
     errorLabel: string,
   ): void {
@@ -315,22 +401,61 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     const createState: TLocalCreateState = { deleteRequested: false }
     localCreateStateRef.current.set(localId, createState)
 
-    persistTitleMutation(
-      title,
-      schema,
-      variables,
-      pickPayload,
-      (node) => {
+    const attrs = variables()
+    const input = attrs.input as TDocTreeNodeDTO
+    if (revisionRef.current === null) {
+      localCreateStateRef.current.delete(localId)
+      void reload()
+      return
+    }
+
+    executeCommand({
+      request: (args) =>
+        browserGraphQLRequest<{
+          createDocsWorkspaceNode?: {
+            nodeId: string
+            articleId?: string | null
+            workingCopyId?: string | null
+            treeRevision: number
+          } | null
+        }>(S.createDocsWorkspaceNode, args),
+      variables: { community, treeRevision: revisionRef.current, ...attrs },
+    })
+      .then(async (data) => {
+        const created = data?.createDocsWorkspaceNode
+        if (!created) throw new Error(errorLabel)
+        revisionRef.current = created.treeRevision
+        const node: TDocTreeNodeDTO = {
+          ...input,
+          id: created.nodeId,
+          parentNodeId: (attrs.parentNodeId as string | undefined) ?? null,
+          title,
+          docId: created.articleId,
+          workingCopyId: created.workingCopyId,
+          workingCopyRevision: created.workingCopyId ? 1 : null,
+          publishState: created.articleId
+            ? { published: false, hasDraft: true, status: ARTICLE_STAGE.DRAFT }
+            : undefined,
+        }
         if (createState.deleteRequested) {
-          persistDelete(node.id)
+          const latest = await browserGraphQLRequest<{
+            docsWorkspaceTree?: { treeRevision: number; queueRevision: number } | null
+          }>(S.docsWorkspaceTree, { community })
+          if (!latest?.docsWorkspaceTree) throw new Error('Unable to load directory state')
+          revisionRef.current = latest.docsWorkspaceTree.treeRevision
+          queueRevisionRef.current = latest.docsWorkspaceTree.queueRevision
+          await persistDelete(created.nodeId)
+          void reload()
           return
         }
 
         onCreated(node)
-      },
-      errorLabel,
-      () => localCreateStateRef.current.delete(localId),
-    )
+      })
+      .catch((err) => {
+        toast(formatMutationError(err), 'error')
+        void reload()
+      })
+      .finally(() => localCreateStateRef.current.delete(localId))
   }
 
   function requestLocalDelete(localId: string): void {
@@ -349,17 +474,9 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       if (!moved) return
       if (isLocalId(activeNodeId) || (moved.parentNodeId && isLocalId(moved.parentNodeId))) return
 
-      persist(
-        S.moveDocTreeNode,
-        {
-          id: activeNodeId,
-          targetParentNodeId: moved.parentNodeId,
-          targetIndex: moved.index,
-        },
-        (data) => data?.moveDocTreeNode,
-      )
+      void persistWorkspaceMove(activeNodeId, moved.parentNodeId ?? null, moved.index)
     },
-    [commitGroups, persist],
+    [commitGroups, persistWorkspaceMove],
   )
 
   /**
@@ -393,11 +510,34 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
    * addGroup()
    */
   function addGroup(): void {
-    if (!activeTabId) return
-    const group = createSideTreeGroup(t(UNTITLED_TITLE_I18N_KEY))
-    group.parentNodeId = activeTabId
-    updateGroups((currentGroups) => [group, ...currentGroups])
-    setEditingTarget({ type: SIDE_TREE_NODE_TYPE.GROUP, groupId: group.id })
+    const addToTab = (tabId: string): void => {
+      const group = createSideTreeGroup(t(UNTITLED_TITLE_I18N_KEY))
+      group.parentNodeId = tabId
+      const nextGroups = [group, ...groupsRef.current]
+      groupsRef.current = nextGroups
+      setGroups(nextGroups)
+      setTabs((currentTabs) =>
+        currentTabs.map((tab) => (tab.id === tabId ? { ...tab, groups: nextGroups } : tab)),
+      )
+      setEditingTarget({ type: SIDE_TREE_NODE_TYPE.GROUP, groupId: group.id })
+    }
+
+    if (activeTabId) {
+      addToTab(activeTabId)
+      return
+    }
+
+    if (creatingDefaultTabRef.current) return
+    creatingDefaultTabRef.current = true
+    createTab(
+      (tab) => {
+        addToTab(tab.id)
+        creatingDefaultTabRef.current = false
+      },
+      () => {
+        creatingDefaultTabRef.current = false
+      },
+    )
   }
 
   function addNestedGroup(parentGroupId: string): void {
@@ -427,6 +567,10 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
    * deleteGroup('group-getting-started')
    */
   function deleteGroup(groupId: string): void {
+    if (!isLocalId(groupId)) {
+      void persistDelete(groupId)
+      return
+    }
     const currentGroups = readGroups()
     const group = findGroup(currentGroups, groupId)
     const activeInGroup = group?.pages.some((child) => child.id === activeId) ?? false
@@ -443,8 +587,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       requestLocalDelete(groupId)
       return
     }
-
-    persistDelete(groupId)
   }
 
   /**
@@ -479,7 +621,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persistLocalNode(
       groupId,
       title,
-      S.createDocTreeNode,
       () => ({
         parentNodeId: group.parentNodeId,
         input: {
@@ -488,7 +629,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           index,
         },
       }),
-      (data) => data?.createDocTreeNode,
       (node) => {
         updateGroups((currentGroups) => replaceGroupId(currentGroups, groupId, mapGroup(node)))
       },
@@ -496,30 +636,12 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     )
   }
 
-  function updateRemoteTitle(nodeId: string, title: string, errorLabel: string): void {
-    persistTitleMutation(
-      title,
-      S.updateDocTreeNode,
-      () => ({ id: nodeId, patch: { title } }),
-      (data) => data?.updateDocTreeNode,
-      (node) => {
-        updateGroups((currentGroups) => patchNode(currentGroups, node))
-      },
-      errorLabel,
-    )
+  function updateRemoteTitle(nodeId: string, title: string): void {
+    void persistWorkspaceUpdate(nodeId, { title })
   }
 
   function updateRemoteLink(nodeId: string, input: TSideTreeLinkInput): void {
-    persistTitleMutation(
-      input.title,
-      S.updateDocTreeNode,
-      () => ({ id: nodeId, patch: { href: input.href, title: input.title } }),
-      (data) => data?.updateDocTreeNode,
-      (node) => {
-        updateGroups((currentGroups) => patchNode(currentGroups, node))
-      },
-      'rename link',
-    )
+    void persistWorkspaceUpdate(nodeId, { href: input.href, title: input.title })
   }
 
   function persistLocalPin(pinId: string, input: TSideTreeLinkInput): void {
@@ -530,7 +652,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persistLocalNode(
       pinId,
       input.title,
-      S.createDocTreeNode,
       () => ({
         parentNodeId: activeTabId,
         input: {
@@ -541,7 +662,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           marker: pin.marker,
         },
       }),
-      (data) => data?.createDocTreeNode,
       (node) => {
         updatePins((currentPins) =>
           currentPins.map((item) => (item.id === pinId ? mapPin(node) : item)),
@@ -552,18 +672,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   function updateRemotePin(pinId: string, input: TSideTreeLinkInput): void {
-    persistTitleMutation(
-      input.title,
-      S.updateDocTreeNode,
-      () => ({ id: pinId, patch: { href: input.href, title: input.title } }),
-      (data) => data?.updateDocTreeNode,
-      (node) => {
-        updatePins((currentPins) =>
-          currentPins.map((item) => (item.id === pinId ? mapPin(node) : item)),
-        )
-      },
-      'update pin',
-    )
+    void persistWorkspaceUpdate(pinId, { href: input.href, title: input.title })
   }
 
   function savePin(pinId: string, input: TSideTreeLinkInput): void {
@@ -588,6 +697,10 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   function deletePin(pinId: string): void {
+    if (!isLocalId(pinId)) {
+      void persistDelete(pinId)
+      return
+    }
     updatePins((currentPins) => currentPins.filter((pin) => pin.id !== pinId))
     if (editingTarget?.type === SIDE_TREE_NODE_TYPE.PIN && editingTarget.pinId === pinId) {
       setEditingTarget(null)
@@ -597,8 +710,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       requestLocalDelete(pinId)
       return
     }
-
-    persistDelete(pinId)
   }
 
   function updatePinStyle(pinId: string, marker: TSideTreePin['marker']): void {
@@ -608,11 +719,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     if (isLocalId(pinId)) return
 
-    persist(
-      S.updateDocTreeNode,
-      { id: pinId, patch: { marker } },
-      (data) => data?.updateDocTreeNode,
-    )
+    void persistWorkspaceUpdate(pinId, { marker })
   }
 
   function persistLocalChild(groupId: string, childId: string, title: string): void {
@@ -625,7 +732,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persistLocalNode(
       childId,
       title,
-      S.createDocTreeNode,
       () => ({
         parentNodeId: groupId,
         input: {
@@ -639,7 +745,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           marker: child.marker,
         },
       }),
-      (data) => data?.createDocTreeNode,
       (node) => {
         const remote = mapNode(node)
         updateGroups((currentGroups) => replaceChildId(currentGroups, groupId, childId, remote))
@@ -667,7 +772,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
 
     updateGroup(groupId, { title })
-    updateRemoteTitle(groupId, title, 'rename group')
+    updateRemoteTitle(groupId, title)
   }
 
   /**
@@ -713,7 +818,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       return
     }
 
-    updateRemoteTitle(childId, title, 'rename child')
+    updateRemoteTitle(childId, title)
   }
 
   function renameLink(groupId: string, childId: string, input: TSideTreeLinkInput): void {
@@ -790,11 +895,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     if (isLocalId(childId)) return
 
-    persist(
-      S.updateDocTreeNode,
-      { id: childId, patch: { marker } },
-      (data) => data?.updateDocTreeNode,
-    )
+    void persistWorkspaceUpdate(childId, { marker })
   }
 
   function patchChild(childId: string, patch: Partial<TSideTreeChild>): void {
@@ -809,6 +910,10 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   function deleteChild(groupId: string, childId: string): void {
+    if (!isLocalId(childId)) {
+      void persistDelete(childId)
+      return
+    }
     const nextGroups = updateGroups((currentGroups) =>
       removeChildFromGroup(currentGroups, groupId, childId),
     )
@@ -829,34 +934,30 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       requestLocalDelete(childId)
       return
     }
-
-    persistDelete(childId)
   }
 
   function duplicateChild(groupId: string, childId: string): void {
-    const { groups: nextGroups, duplicatedId } = duplicateChildInGroup(
-      readGroups(),
-      groupId,
-      childId,
-      t(UNTITLED_TITLE_I18N_KEY),
-    )
-
-    if (!duplicatedId) return
-
-    commitGroups(nextGroups)
-
-    if (isLocalId(childId)) return
-
-    persist(S.duplicateDocTreeNode, { id: childId }, (data) => data?.duplicateDocTreeNode)
-      .then((payload) => {
-        if (!payload?.node || payload.conflict || !duplicatedId) return
-        const remote = mapNode(payload.node)
-        updateGroups((currentGroups) =>
-          replaceChildId(currentGroups, groupId, duplicatedId, remote),
-        )
+    if (isLocalId(childId)) {
+      const { groups: nextGroups, duplicatedId } = duplicateChildInGroup(
+        readGroups(),
+        groupId,
+        childId,
+        t(UNTITLED_TITLE_I18N_KEY),
+      )
+      if (duplicatedId) commitGroups(nextGroups)
+      return
+    }
+    if (revisionRef.current === null) return
+    executeCommand({
+      request: (variables) => browserGraphQLRequest(S.duplicateDocsWorkspaceNode, variables),
+      variables: { community, treeRevision: revisionRef.current, nodeId: childId },
+    })
+      .then(() => {
+        reloadDocsPublishQueue()
+        void reload()
       })
       .catch((err) => {
-        console.error('## doc tree duplicate child error: ', err)
+        toast(formatMutationError(err), 'error')
         void reload()
       })
   }
@@ -885,41 +986,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     if (action === SIDE_TREE_NODE_MENU_ACTION.DUPLICATE) {
       duplicateChild(groupId, childId)
-      return
-    }
-
-    if (action === SIDE_TREE_NODE_MENU_ACTION.MOVE_TO_DRAFT) {
-      executeCommand({
-        request: (variables) => browserGraphQLRequest(S.moveDocToDraft, variables),
-        variables: {
-          community,
-          id: childId,
-        },
-      })
-        .then((data) => {
-          const payload = data?.moveDocToDraft
-          const current = findChild(readGroups(), childId)
-          const publishState = {
-            ...(current?.publishState ?? {}),
-            ...(payload?.publishState ?? {}),
-            status: ARTICLE_STAGE.DRAFT,
-            published: true,
-            publishedBefore: true,
-            hasDraft: true,
-          } satisfies TDocTreeNodePublishState
-
-          patchChild(childId, { publishState })
-          reloadDocPublishChecklist()
-          send(DSB_DOC_EVENT.DRAFT_PATCH, {
-            docId:
-              payload?.docId ?? (current?.type === SIDE_TREE_NODE_TYPE.PAGE ? current.docId : null),
-            stage: payload?.stage ?? ARTICLE_STAGE.DRAFT,
-          })
-          toast(t('dsb.cms.docs.side_tree.publish.draft_moved'))
-        })
-        .catch((err) => {
-          toast(formatMutationError(err), 'error')
-        })
       return
     }
 
@@ -986,28 +1052,14 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       current.map((tab) => (tab.id === tabId ? { ...tab, title: nextTitle } : tab)),
     )
 
-    persistTitleMutation(
-      nextTitle,
-      S.updateDocTreeNode,
-      () => ({ id: tabId, patch: { title: nextTitle } }),
-      (data) => data?.updateDocTreeNode,
-      (node) => {
-        setTabs((current) =>
-          current.map((tab) =>
-            tab.id === tabId
-              ? {
-                  ...tab,
-                  title: node.title || nextTitle,
-                }
-              : tab,
-          ),
-        )
-      },
-      'rename tab',
-    )
+    void persistWorkspaceUpdate(tabId, { title: nextTitle })
   }
 
   function deleteTab(tabId: string): void {
+    if (!isLocalId(tabId)) {
+      void persistDelete(tabId)
+      return
+    }
     const removedIndex = tabs.findIndex((tab) => tab.id === tabId)
     if (removedIndex === -1) return
 
@@ -1024,8 +1076,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       setEditingTarget(null)
       selectPage(findFirstPage(nextActiveTab?.groups ?? []))
     }
-
-    persistDelete(tabId)
   }
 
   function reorderTabs(nextTabs: readonly TSideTreeTab[], movedTabId: string): void {
@@ -1034,44 +1084,49 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) return
 
     setTabs([...nextTabs])
-    persist(S.moveDocTreeNode, { id: movedTabId, targetIndex }, (data) => data?.moveDocTreeNode)
+    void persistWorkspaceMove(movedTabId, null, targetIndex)
   }
 
   function addTab(): void {
-    const title = t(UNTITLED_TITLE_I18N_KEY)
+    createTab()
+  }
 
-    persist(
-      S.createDocTreeNode,
-      {
+  function createTab(onCreated?: (tab: TSideTreeTab) => void, onError?: () => void): void {
+    const title = t(UNTITLED_TITLE_I18N_KEY)
+    if (revisionRef.current === null) {
+      void reload()
+      onError?.()
+      return
+    }
+
+    executeCommand({
+      request: (args) =>
+        browserGraphQLRequest<{
+          createDocsWorkspaceNode?: { nodeId: string; treeRevision: number } | null
+        }>(S.createDocsWorkspaceNode, args),
+      variables: {
+        community,
+        treeRevision: revisionRef.current,
         input: { type: DOC_TREE_NODE_TYPE_WIRE.TAB, title, index: tabs.length },
       },
-      (data) => data?.createDocTreeNode,
-    )
-      .then((payload) => {
-        if (!payload?.node || payload.conflict) return
-        const affectedNodes = payload.affectedNodes || []
-        const createdTabs = affectedNodes
-          .filter((node) => String(node.type).toLowerCase() === 'tab')
-          .map((node) => mapTab({ ...node, groups: [], pins: [] }))
-        const tab = mapTab({
-          ...payload.node,
-          groups: affectedNodes.filter((node) => String(node.type).toLowerCase() === 'group'),
-          pins: [],
-        })
-        setTabs((current) => [
-          ...current,
-          ...createdTabs.filter((created) => !current.some((item) => item.id === created.id)),
-          tab,
-        ])
+    })
+      .then((data) => {
+        const created = data?.createDocsWorkspaceNode
+        if (!created) throw new Error('create tab')
+        revisionRef.current = created.treeRevision
+        const tab: TSideTreeTab = { id: created.nodeId, title, groups: [], pins: [] }
+        setTabs((current) => [...current, tab])
         setActiveTabId(tab.id)
         pinsRef.current = tab.pins
         setPins(tab.pins)
         groupsRef.current = tab.groups
         setGroups(tab.groups)
         selectPage(null)
+        onCreated?.(tab)
       })
       .catch((err) => {
         console.error('## doc tree create tab error: ', err)
+        onError?.()
         void reload()
       })
   }
@@ -1082,6 +1137,10 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     pins,
     groups,
     treeState,
+    workspaceRevision: data?.docsWorkspaceTree?.treeRevision ?? initialData?.revision ?? null,
+    queueRevision: data?.docsWorkspaceTree
+      ? Math.max(data.docsWorkspaceTree.queueRevision, queueData?.docsPublishQueue?.revision ?? 0)
+      : (queueData?.docsPublishQueue?.revision ?? null),
     stagedEvents,
     trashItems,
     trashPageInfo: trashData?.docTreeTrashItems?.pageInfo,
@@ -1091,6 +1150,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     activeId,
     editingTarget,
     coverWarning,
+    deleteConfirmation,
+    finishDeleteConfirmation,
     activate,
     activateTab,
     addPin,

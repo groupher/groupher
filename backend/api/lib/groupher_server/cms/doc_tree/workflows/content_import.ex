@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
       DB transaction -> lock Job/items/bodies -> revalidate target intent
                                                 |
                                                 v
-      global DocTree lock -> restore mapped trash -> write drafts + tree
+      site lock -> restore mapped trash -> write D + workspace tree
                                                 |
                                                 v
                          upsert mappings -> delete staging -> complete Job
@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Articles.Draft.Store
+  alias CMS.Articles.WorkingCopy.Store
 
   alias CMS.ContentImport.{
     DocValidator,
@@ -35,33 +35,22 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
 
   alias CMS.ContentImport.{Model.Job, Model.Job.Item, Transaction}
   alias CMS.ContentImport.Model.Job.Body
-  alias CMS.Docs.Branch
   alias CMS.ErrorCat
   alias CMS.DocTree.Import, as: DocTreeImport
-  alias CMS.DocTree.Trash
-  alias CMS.DocTree.State, as: DocTreeState
+  alias CMS.DocTree.{DefaultCopy, WorkspaceRestore}
+  alias CMS.DocTree.Publish.{Queue, SiteLock}
 
-  alias CMS.Model.{
-    Article,
-    ArticleBinding,
-    Community,
-    DocDraft,
-    DocPublic,
-    TrashAction,
-    TrashedDocArticle
-  }
-
-  alias Helper.Transaction, as: LockTransaction
-
-  @doc "Restores an imported target through the ContentImport workflow path."
-  def restore_trash_item(%Community{} = community, action_ref, args) when is_map(args) do
-    Trash.restore_for_content_import(community, action_ref, args)
-  end
+  alias CMS.Model.{Article, Community, DocsTrashedArticle, TrashAction}
 
   @doc "Atomically applies all ready items for one community Job."
   @spec apply(Community.t(), Ecto.UUID.t()) :: {:ok, map()} | {:error, term()}
   def apply(%Community{} = community, job_ref) do
     Transaction.run(fn ->
+      case SiteLock.acquire(community) do
+        {:ok, :acquired} -> {:ok, :pass}
+        {:error, reason} -> Repo.rollback(reason)
+      end
+
       case Jobs.lock_job(community.id, job_ref) do
         {:ok, job} ->
           if job.status == :completed do
@@ -80,17 +69,12 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
     with %User{} = actor <- Repo.get(User, job.actor_id),
          {:ok, _community} <-
            CMS.Gate.check_community_workflow_in_transaction(actor, :import_docs, community),
-         {:ok, branch} <- Branch.resolve(community, Branch.main_slug()) do
-      case LockTransaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
-             apply_to_main_draft(community, branch, actor, job)
-           end) do
-        {:ok, result} -> result
-        {:error, reason} -> Repo.rollback(reason)
-      end
+         {:ok, _queue} <- Queue.lock_or_create(community),
+         {:ok, result} <- apply_to_workspace(community, actor, job) do
+      result
     else
       nil -> Repo.rollback(ErrorCat.content_import_actor_not_found())
       {:error, reason} -> Repo.rollback(reason)
-      reason -> Repo.rollback(reason)
     end
   end
 
@@ -98,7 +82,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
     Repo.rollback(ErrorCat.content_import_job_not_ready(job.status))
   end
 
-  defp apply_to_main_draft(community, branch, actor, job) do
+  defp apply_to_workspace(community, actor, job) do
     with {:ok, _} <-
            DocValidator.validate_intent(
              community,
@@ -113,11 +97,10 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
          {:ok, bodies} <- load_bodies(job.id, ready_items),
          ready_refs <- MapSet.new(ready_items, & &1.external_ref),
          tree <- DocValidator.filter_target_tree(job.target_tree, ready_refs),
-         {:ok, _} <- restore_trashed_targets(community, branch, actor, ready_items),
-         {:ok, target_states} <- load_target_states(community, branch, ready_items),
+         {:ok, _} <- restore_trashed_targets(community, actor, job.hash_id, ready_items),
          {:ok, written_items} <-
-           write_items(community, branch, actor, ready_items, bodies, target_states),
-         {:ok, _tree} <- DocTreeImport.apply(community, branch, tree, written_items),
+           write_items(community, actor, ready_items, bodies),
+         {:ok, _tree} <- DocTreeImport.apply(community, tree, written_items, actor, job.hash_id),
          {:ok, _} <- upsert_mappings(job, ready_items, bodies),
          result <- build_result(job, items, tree, ready_items),
          {_count, nil} <- Repo.delete_all(from(body in Body, where: body.job_id == ^job.id)),
@@ -158,143 +141,103 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
     if missing, do: {:error, ErrorCat.content_import_staged_body_missing()}, else: {:ok, bodies}
   end
 
-  # Source mappings are the stable identity of an imported Doc. A Docs Tree
-  # delete keeps the physical Article rows but hides them behind one grouped
-  # Trash action, so active Draft reads cannot distinguish that state from a
-  # genuinely missing Doc. Restore the owning action before source-wins writes
-  # Reuse the mapped stable Article id.
-  defp restore_trashed_targets(community, branch, actor, ready_items) do
-    ready_items
-    |> Enum.map(& &1.target_ref)
-    |> trashed_action_refs(community, branch)
-    |> Enum.reduce_while({:ok, :pass}, fn action_ref, {:ok, _} ->
-      with {:ok, state} <- DocTreeState.ensure_draft_state(community, branch_id: branch.id),
-           {:ok, %{conflict: false}} <-
-             restore_trash_item(community, action_ref, %{
-               actor_id: actor.id,
-               base_revision: state.tree_lock_version,
-               branch_id: branch.id
-             }) do
+  # Reimport restores the complete owning Trash action before writing its D.
+  # The new restore path rechecks permissions and Queue dependencies atomically.
+  defp restore_trashed_targets(community, actor, _operation_ref, items) do
+    ids = Enum.map(items, & &1.target_ref)
+
+    actions =
+      Repo.all(
+        from(d in DocsTrashedArticle,
+          join: a in TrashAction,
+          on: a.id == d.trash_action_id,
+          where:
+            d.community_id == ^community.id and d.article_id in ^ids and
+              a.community_id == ^community.id,
+          order_by: a.id,
+          select: a.hash_id
+        )
+      )
+      |> Enum.uniq()
+
+    actions
+    |> Enum.with_index()
+    |> Enum.reduce_while({:ok, :pass}, fn {id, operation_index}, _ ->
+      with {:ok, queue} <- Queue.lock_or_create(community),
+           {:ok, restored} <-
+             WorkspaceRestore.run(
+               community,
+               queue,
+               queue.tree_lock_version,
+               queue.queue_revision,
+               id,
+               nil,
+               nil,
+               actor,
+               id
+             ),
+           {:ok, _} <-
+             GroupherServer.Activity.log(
+               %{activity_type: :doc_tree, community_id: community.id, ref: restored.node_id},
+               :restored,
+               actor: actor,
+               source: :worker,
+               operation_ref: id,
+               operation_index: operation_index
+             ) do
         {:cont, {:ok, :pass}}
       else
-        {:ok, %{conflict: true}} ->
-          {:halt, {:error, ErrorCat.custom("The Docs Trash changed during import")}}
-
-        {:error, reason} ->
-          {:halt, {:error, reason}}
+        {:error, _} = error -> {:halt, error}
       end
     end)
   end
 
-  defp trashed_action_refs(target_refs, community, branch) do
-    TrashedDocArticle
-    |> join(:inner, [item], action in TrashAction, on: action.id == item.trash_action_id)
-    |> where(
-      [item, action],
-      item.community_id == ^community.id and
-        item.branch_id == ^branch.id and
-        item.article_id in ^target_refs and action.community_id == ^community.id
-    )
-    |> order_by([_item, action], asc: action.id)
-    |> select([_item, action], action.hash_id)
-    |> Repo.all()
-    |> Enum.uniq()
-  end
-
-  defp load_target_states(community, branch, items) do
-    target_refs = items |> Enum.map(& &1.target_ref) |> Enum.uniq()
-
-    draft_refs = target_refs_by_stage(DocDraft, community, branch, target_refs) |> MapSet.new()
-    public_refs = target_refs_by_stage(DocPublic, community, branch, target_refs) |> MapSet.new()
-
-    states =
-      Map.new(target_refs, fn target_ref ->
-        state =
-          cond do
-            MapSet.member?(draft_refs, target_ref) -> :draft
-            MapSet.member?(public_refs, target_ref) -> :public
-            true -> :missing
-          end
-
-        {target_ref, state}
-      end)
-
-    {:ok, states}
-  end
-
-  defp target_refs_by_stage(model, community, branch, target_refs) do
-    model
-    |> join(:inner, [version], article in Article, on: article.id == version.article_id)
-    |> where([version, article], article.id in ^target_refs)
-    |> join(:inner, [version, _article], binding in ArticleBinding,
-      on: binding.article_id == version.article_id
-    )
-    |> where([_version, _article, binding], binding.community_id == ^community.id)
-    |> where([version, _article], version.branch_id == ^branch.id)
-    |> select([version, _article], version.article_id)
-    |> Repo.all()
-  end
-
-  defp write_items(community, branch, actor, items, bodies, target_states) do
-    Enum.reduce_while(items, {:ok, %{}}, fn item, {:ok, written} ->
+  defp write_items(community, actor, items, bodies) do
+    items
+    |> Enum.sort_by(& &1.target_ref)
+    |> Enum.reduce_while({:ok, %{}}, fn item, {:ok, written} ->
       body = Map.fetch!(bodies, item.external_ref)
 
       attrs = %{
         article_id: item.target_ref,
         body_bag: body.body_bag,
-        branch_id: branch.id,
         slug: item.slug,
         title: item.title
       }
 
-      case write_item(
-             community,
-             item.target_ref,
-             attrs,
-             actor,
-             branch,
-             Map.fetch!(target_states, item.target_ref)
-           ) do
-        {:ok, _draft} -> {:cont, {:ok, Map.put(written, item.target_ref, item)}}
-        {:error, reason} -> {:halt, {:error, reason}}
+      case write_item(community, item.target_ref, attrs, actor) do
+        {:ok, _} -> {:cont, {:ok, Map.put(written, item.target_ref, item)}}
+        {:error, _} = error -> {:halt, error}
       end
     end)
   end
 
-  defp write_item(community, target_ref, attrs, actor, branch, state) do
-    do_write_item(community, target_ref, attrs, actor, branch, state)
-  end
+  defp write_item(community, id, attrs, actor) do
+    case Repo.get(Article, id) do
+      nil ->
+        CMS.Docs.Content.create_workspace(community, attrs, actor)
 
-  defp do_write_item(_community, target_ref, attrs, actor, branch, :draft) do
-    with %Article{} = article <- Repo.get(Article, target_ref),
-         {:ok, draft} <- Store.get(article, branch_id: branch.id) do
-      CMS.Docs.update_draft(
-        target_ref,
-        branch.id,
-        Map.put(attrs, :expected_version, draft.version),
-        actor
-      )
+      %Article{thread: :doc} ->
+        with {:ok, :pass} <- CMS.DocTree.Commands.QueueAccess.authorize(community, id, actor),
+             {:ok, state} <- DefaultCopy.load(community, id),
+             true <- state.lifecycle.state in [:draft, :published],
+             {:ok, copy} <- editable_copy(community, state, actor),
+             {:ok, saved} <- Store.save_loaded(copy, attrs, actor, copy.revision, community.id) do
+          {:ok, saved}
+        else
+          false -> {:error, :invalid_doc_lifecycle}
+          {:error, _} = error -> error
+        end
+
+      _ ->
+        {:error, :invalid_doc_identity}
     end
   end
 
-  defp do_write_item(community, target_ref, attrs, actor, branch, :public) do
-    with {:ok, editor} <-
-           CMS.Docs.read_editor_head(community, target_ref, branch_id: branch.id) do
-      CMS.Docs.update_draft(
-        target_ref,
-        branch.id,
-        Map.put(attrs, :expected_version, editor.version),
-        actor
-      )
-    end
-  end
+  defp editable_copy(_community, %{work: %{} = copy}, _actor), do: {:ok, copy}
 
-  defp do_write_item(community, _target_ref, attrs, actor, branch, :missing) do
-    with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
-         {:ok, %{draft: draft}} <-
-           Store.create(community, :doc, attrs, author, branch_id: branch.id) do
-      {:ok, draft}
-    end
+  defp editable_copy(community, %{article: article, public: public}, actor) do
+    DefaultCopy.ensure(community, article.id, public.snapshot_id, actor)
   end
 
   defp upsert_mappings(job, items, bodies) do
@@ -336,7 +279,6 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
         "tabs" => length(tabs)
       },
       "firstImportedDocId" => first_item && first_item.target_ref,
-      "targetBranch" => Branch.main_slug(),
       "failedItems" =>
         items
         |> Enum.filter(&(&1.content_status == :failed))

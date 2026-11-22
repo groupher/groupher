@@ -3,14 +3,14 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   Builds and applies immutable global asset replacement plans.
 
   Plan creation is read-only with respect to Articles. Apply revalidates each
-  observed locator/version through `Commands.ReplaceUse`; conflicts are recorded per
+  observed locator/revision through `Commands.ReplaceUse`; conflicts are recorded per
   item and never turn into a false global success.
 
   Business position:
 
       editor or community manager
         -> ReplacementPlan create/apply
-        -> per-item revalidation -> Article Draft replacement command
+        -> per-item revalidation -> Article WorkingCopy replacement command
   """
 
   import Ecto.Query, only: [from: 2]
@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
           -> ArticleContext
           -> ReplaceUse command
     """
-    @enforce_keys [:item, :article_id, :body_bag, :version]
+    @enforce_keys [:item, :article_id, :body_bag, :revision]
     defstruct @enforce_keys
   end
 
@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
           -> StepContext
           -> replacement step completion
     """
-    @enforce_keys [:locator, :step_ref, :claimed_step]
+    @enforce_keys [:locator, :step_ref, :claimed_step, :operation_ref]
     defstruct @enforce_keys
   end
 
@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     end
   end
 
-  @doc "Applies selected plan items as independent Article Draft commands."
+  @doc "Applies selected plan items as independent Article WorkingCopy commands."
   def apply(%AssetReplacementPlan{} = plan, %User{} = user, opts \\ []) do
     plan = Repo.get!(AssetReplacementPlan, plan.id)
     selected = Keyword.get(opts, :article_ids)
@@ -158,8 +158,9 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     Enum.map_reduce(plan.items, {0, 0, 0}, fn item,
                                               {applied_count, skipped_count, conflict_count} ->
       article_id = item_value(item, :article_id)
+      non_actionable = non_actionable_decision?(item_value(item, :decision))
 
-      if selected && article_id not in selected do
+      if selected && article_id not in selected && not non_actionable do
         {item, {applied_count, skipped_count, conflict_count}}
       else
         case apply_item(plan, item, user, body_bags, apply_run_ref, steps, owner) do
@@ -179,6 +180,19 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     |> then(fn {items, {applied_count, skipped_count, conflict_count}} ->
       {items, applied_count, skipped_count, conflict_count}
     end)
+  end
+
+  defp non_actionable_decision?(decision) do
+    decision in [
+      :historical_only,
+      "historical_only",
+      :live_snapshot_only,
+      "live_snapshot_only",
+      :permission_denied,
+      "permission_denied",
+      :unsupported,
+      "unsupported"
+    ]
   end
 
   defp ensure_apply_run(%AssetReplacementPlan{} = plan, run_ref) do
@@ -226,13 +240,15 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
 
   defp apply_item(plan, item, user, body_bags, apply_run_ref, steps, owner) do
     article_id = item_value(item, :article_id)
-    body_bag = Map.get(body_bags, article_id) || Map.get(body_bags, to_string(article_id))
+    body_bag = Map.get(body_bags, item_value(item, :working_copy_id))
 
     case item_value(item, :decision) do
       decision
       when decision in [
              :historical_only,
              "historical_only",
+             :live_snapshot_only,
+             "live_snapshot_only",
              :permission_denied,
              "permission_denied",
              :unsupported,
@@ -244,8 +260,12 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
         end
 
       _decision ->
-        with {:ok, _} <- live_revision_matches?(item, article_id) do
+        with working_copy_id when is_binary(working_copy_id) <- item_value(item, :working_copy_id),
+             {:ok, _} <- live_snapshot_matches?(item, article_id) do
           apply_locators(plan, item, article_id, body_bag, user, apply_run_ref, steps, owner)
+        else
+          {:error, _reason} = error -> error
+          _ -> {:error, :working_copy_required}
         end
     end
   end
@@ -276,8 +296,9 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   end
 
   defp apply_locators(plan, item, article_id, body_bag, user, apply_run_ref, steps, owner) do
-    draft_version =
-      item_value(item, :current_draft_version) || item_value(item, :observed_draft_version)
+    revision =
+      item_value(item, :current_working_copy_revision) ||
+        item_value(item, :observed_working_copy_revision)
 
     community = Repo.get!(Community, plan.community_id)
 
@@ -290,8 +311,8 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     }
 
     (item_value(item, :usage_locators) || [])
-    |> Enum.reduce_while({:ok, item, nil, draft_version}, fn locator,
-                                                             {:ok, current_item, _last, version} ->
+    |> Enum.reduce_while({:ok, item, nil, revision}, fn locator,
+                                                        {:ok, current_item, _last, revision} ->
       step_ref = item_value(locator, :step_ref) || replacement_step_ref(locator)
       workflow_step = Enum.find(steps, &(step_key(article_id, step_ref) == &1.step_ref))
 
@@ -303,9 +324,14 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
               item: current_item,
               article_id: article_id,
               body_bag: body_bag,
-              version: version
+              revision: revision
             },
-            %StepContext{locator: locator, step_ref: step_ref, claimed_step: nil}
+            %StepContext{
+              locator: locator,
+              step_ref: step_ref,
+              claimed_step: nil,
+              operation_ref: workflow_step.operation_ref
+            }
           )
 
         {:busy, seconds} ->
@@ -318,9 +344,14 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
               item: current_item,
               article_id: article_id,
               body_bag: body_bag,
-              version: version
+              revision: revision
             },
-            %StepContext{locator: locator, step_ref: step_ref, claimed_step: claimed_step}
+            %StepContext{
+              locator: locator,
+              step_ref: step_ref,
+              claimed_step: claimed_step,
+              operation_ref: claimed_step.operation_ref
+            }
           )
       end
     end)
@@ -361,7 +392,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
         _ =
           mark_locator_failed(
             plan_context.plan.id,
-            article_context.article_id,
+            item_key(article_context.item),
             step_context.step_ref,
             reason
           )
@@ -379,7 +410,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
       locked_plan = lock_plan(plan_context.plan.id)
 
       persisted_item =
-        plan_item(locked_plan.items, article_context.article_id) || article_context.item
+        plan_item(locked_plan.items, item_key(article_context.item)) || article_context.item
 
       persisted_locator =
         plan_locator(persisted_item, step_context.step_ref) || step_context.locator
@@ -389,7 +420,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
           result = item_value(persisted_locator, :result)
 
           next_version =
-            item_value(persisted_item, :current_draft_version) || article_context.version
+            item_value(persisted_item, :current_working_copy_revision) || article_context.revision
 
           {:ok, persisted_item, result, next_version}
 
@@ -399,7 +430,8 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
 
           attrs =
             %{
-              expected_draft_version: article_context.version,
+              revision: article_context.revision,
+              working_copy_id: item_value(persisted_item, :working_copy_id),
               usage: item_value(persisted_locator, :usage),
               block_id: item_value(persisted_locator, :block_id),
               position: item_value(persisted_locator, :position),
@@ -417,9 +449,10 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
                    },
                    attrs,
                    plan_context.actor,
-                   workflow_ref
+                   workflow_ref,
+                   step_context.operation_ref
                  ),
-               next_version <- Map.get(result, :draft_version, article_context.version),
+               next_version <- Map.get(result, :revision, article_context.revision),
                updated_item <-
                  persist_locator_success(
                    locked_plan,
@@ -461,11 +494,11 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
 
     updated_item =
       item
-      |> put_value(:current_draft_version, next_version)
+      |> put_value(:current_working_copy_revision, next_version)
       |> put_value(:apply_run_ref, apply_run_ref)
       |> replace_locator(step_ref, updated_locator)
 
-    items = replace_plan_item(plan.items, item_value(updated_item, :article_id), updated_item)
+    items = replace_plan_item(plan.items, updated_item)
 
     case plan
          |> AssetReplacementPlan.changeset(%{items: items, apply_run_ref: apply_run_ref})
@@ -490,7 +523,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     end
   end
 
-  defp persist_failed_locator(plan, item, article_id, step_ref, reason) do
+  defp persist_failed_locator(plan, item, _article_id, step_ref, reason) do
     case plan_locator(item, step_ref) do
       nil ->
         :pass
@@ -502,7 +535,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
           |> put_value(:result, %{"reason" => inspect(reason)})
 
         updated_item = replace_locator(item, step_ref, updated_locator)
-        items = replace_plan_item(plan.items, article_id, updated_item)
+        items = replace_plan_item(plan.items, updated_item)
 
         case plan |> AssetReplacementPlan.changeset(%{items: items}) |> Repo.update() do
           {:ok, _} -> :pass
@@ -524,19 +557,21 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     |> Repo.one!()
   end
 
-  defp plan_item(items, article_id) do
-    Enum.find(items, &(item_value(&1, :article_id) == article_id))
+  defp plan_item(items, key) do
+    Enum.find(items, &(item_key(&1) == key))
   end
 
   defp plan_locator(item, step_ref) do
     Enum.find(item_value(item, :usage_locators) || [], &(item_value(&1, :step_ref) == step_ref))
   end
 
-  defp replace_plan_item(items, article_id, updated_item) do
+  defp replace_plan_item(items, updated_item) do
     Enum.map(items, fn item ->
-      if item_value(item, :article_id) == article_id, do: updated_item, else: item
+      if item_key(item) == item_key(updated_item), do: updated_item, else: item
     end)
   end
+
+  defp item_key(item), do: {item_value(item, :article_id), item_value(item, :working_copy_id)}
 
   defp replace_locator(item, step_ref, updated_locator) do
     locators =
@@ -553,7 +588,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   defp step_key(article_id, step_ref), do: "article:#{article_id}:#{step_ref}"
 
   defp conflict_status(reason)
-       when reason in [:live_revision_conflict, :draft_version_conflict] do
+       when reason in [:live_snapshot_conflict, :revision_conflict] do
     :conflict
   end
 
@@ -602,14 +637,15 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
 
   defp build_items(usages, from_asset, to_asset) do
     usages
-    |> Enum.group_by(& &1.article_id)
-    |> Enum.map(fn {article_id, refs} ->
+    |> Enum.group_by(&{&1.article_id, &1.observed_working_copy_id})
+    |> Enum.map(fn {{article_id, working_copy_id}, refs} ->
       snapshot = hd(refs)
 
       %{
         article_id: article_id,
-        observed_live_revision_id: snapshot.observed_live_revision_id,
-        observed_draft_version: snapshot.observed_draft_version,
+        working_copy_id: working_copy_id,
+        observed_live_snapshot_id: snapshot.observed_live_snapshot_id,
+        observed_working_copy_revision: snapshot.observed_working_copy_revision,
         usage_locators: Enum.map(refs, &locator/1),
         from_asset_ref: from_asset.public_ref,
         to_asset_ref: to_asset.public_ref,
@@ -623,8 +659,10 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
 
   defp decision(snapshot, refs) do
     cond do
-      is_nil(snapshot.observed_draft_version) and
-          Enum.all?(refs, &(&1.lifecycle in [:historical, :trashed])) ->
+      is_nil(snapshot.observed_working_copy_id) and Enum.any?(refs, &(&1.lifecycle == :live)) ->
+        "live_snapshot_only"
+
+      is_nil(snapshot.observed_working_copy_id) ->
         "historical_only"
 
       editable_snapshot?(snapshot) ->
@@ -645,7 +683,18 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   end
 
   defp locator(ref) do
-    locator = Map.take(ref, [:usage, :block_id, :position, :block_type, :title, :alt, :source])
+    locator =
+      Map.take(ref, [
+        :usage,
+        :block_id,
+        :position,
+        :block_type,
+        :title,
+        :alt,
+        :source,
+        :working_copy_id,
+        :snapshot_id
+      ])
 
     locator
     |> Map.put(:step_ref, replacement_step_ref(locator))
@@ -654,19 +703,20 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   defp replacement_step_ref(locator) do
     locator
     |> :erlang.term_to_binary()
+    |> then(&:crypto.hash(:sha256, &1))
     |> Base.url_encode64(padding: false)
   end
 
-  defp live_revision_matches?(item, article_id) do
-    observed = item_value(item, :observed_live_revision_id)
+  defp live_snapshot_matches?(item, article_id) do
+    observed = item_value(item, :observed_live_snapshot_id)
 
     current =
       case Repo.get_by(ArticlePublic, article_id: article_id) do
-        %ArticlePublic{revision_id: revision_id} -> revision_id
+        %ArticlePublic{snapshot_id: snapshot_id} -> snapshot_id
         nil -> nil
       end
 
-    if observed == current, do: {:ok, :pass}, else: {:error, :live_revision_conflict}
+    if observed == current, do: {:ok, :pass}, else: {:error, :live_snapshot_conflict}
   end
 
   defp put_item_result(item, status, result) do

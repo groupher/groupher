@@ -6,7 +6,7 @@
  *                                            `-> recovery UI
  */
 
-export const LOCAL_DRAFT_SCHEMA_VERSION = 1
+export const LOCAL_DRAFT_SCHEMA_VERSION = 2
 
 export type TLocalDraftThread = 'post' | 'blog' | 'changelog' | 'doc'
 
@@ -15,7 +15,6 @@ export type TLocalDraftWorkspaceIdentity = {
   communityId: string
   thread: TLocalDraftThread
   articleId: string
-  branchId: string | null
 }
 
 export type TLocalDraftPayload = {
@@ -31,13 +30,17 @@ export type TLocalDraftPayload = {
   } | null
 }
 
+export type TLocalDraftServerBase = {
+  workingCopyId: string | null
+  revision: number
+  snapshotId: string | null
+}
+
 export type TLocalDraftRecordBase = TLocalDraftWorkspaceIdentity & {
   schemaVersion: number
   workspaceKey: string
   accountId: string
-  baseRevisionId: string | null
-  baseServerDraftVersion: number
-  baseServerContentHash: string
+  base: TLocalDraftServerBase
   localPayloadHash: string
   byteSize: number
   payload: TLocalDraftPayload
@@ -65,9 +68,7 @@ export type TLocalDraftUsage = {
 }
 
 export type TLocalDraftWriteInput = TLocalDraftWorkspaceIdentity & {
-  baseRevisionId?: string | null
-  baseServerDraftVersion: number
-  baseServerContentHash: string
+  base: TLocalDraftServerBase
   payload: TLocalDraftPayload
   writerSessionId: string
 }

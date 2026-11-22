@@ -357,7 +357,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       {:ok, changelog} =
         read_article(community, :changelog, article_inner_id(changelog, community))
 
-      assert changelog.meta.is_comment_locked
+      assert changelog.comments_locked
 
       variables = %{
         command_id: Ecto.UUID.generate(),
@@ -378,7 +378,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       {:ok, changelog} =
         read_article(community, :changelog, article_inner_id(changelog, community))
 
-      assert not changelog.meta.is_comment_locked
+      assert not changelog.comments_locked
     end
 
     test "unauth user undo fails", ~m(guest_conn community changelog)a do

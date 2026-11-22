@@ -168,7 +168,7 @@ defmodule GroupherServer.AlertWall.Persist do
   @spec mark_content_changed_in_transaction(atom(), String.t(), Ecto.UUID.t()) ::
           {:ok, :pass} | {:error, term()}
   def mark_content_changed_in_transaction(target_type, target_id, operation_ref)
-      when target_type in [:article, :comment, :doc] and is_binary(target_id) and
+      when target_type in [:article, :comment] and is_binary(target_id) and
              is_binary(operation_ref) do
     with {:ok, :pass} <- require_transaction(),
          items <- deleted_target_items(target_type, target_id),
@@ -183,7 +183,7 @@ defmodule GroupherServer.AlertWall.Persist do
 
   @doc "Supersedes open items for a target being permanently deleted."
   def mark_target_deleted_in_transaction(target_type, target_id, operation_ref)
-      when target_type in [:article, :comment, :doc] and is_binary(target_id) and
+      when target_type in [:article, :comment] and is_binary(target_id) and
              is_binary(operation_ref) do
     with {:ok, :pass} <- require_transaction(),
          items <- deleted_target_items(target_type, target_id),
@@ -222,31 +222,29 @@ defmodule GroupherServer.AlertWall.Persist do
     )
   end
 
-  defp deleted_target_items(:doc, target_id) do
-    query =
-      from(item in Item,
-        where: item.owner == :cms and item.target_type == :doc and item.status == :open,
-        order_by: [asc: item.id],
-        lock: "FOR UPDATE"
-      )
-
-    if String.contains?(target_id, ":") do
-      Repo.all(where(query, [item], item.target_id == ^target_id))
-    else
-      Repo.all(where(query, [item], like(item.target_id, ^"#{target_id}:%")))
-    end
-  end
-
   defp deleted_target_items(target_type, target_id) do
-    Repo.all(
+    query =
       from(item in Item,
         where:
           item.owner == :cms and item.target_type == ^target_type and
-            item.target_id == ^target_id and item.status == :open,
+            item.status == :open,
         order_by: [asc: item.id],
         lock: "FOR UPDATE"
       )
-    )
+
+    query =
+      if target_type == :article do
+        where(
+          query,
+          [item],
+          item.target_id == ^target_id or
+            fragment("? LIKE ?", item.target_id, ^(target_id <> ":%"))
+        )
+      else
+        where(query, [item], item.target_id == ^target_id)
+      end
+
+    Repo.all(query)
   end
 
   @doc "Resolves the open item for one CMS target and scope, including report-only items."
@@ -460,12 +458,11 @@ defmodule GroupherServer.AlertWall.Persist do
         {:error, AlertWall.ErrorCat.invalid_item()}
 
       attrs.owner not in [:cms, :accounts] or
-          attrs.target_type not in [:article, :comment, :doc, :user] ->
+          attrs.target_type not in [:article, :comment, :user] ->
         {:error, AlertWall.ErrorCat.invalid_item()}
 
       (attrs.owner == :cms and attrs.target_type == :user) or
-        (attrs.owner == :accounts and attrs.target_type != :user) or
-          (attrs.target_type == :doc and not is_nil(Map.get(attrs, :community_id))) ->
+          (attrs.owner == :accounts and attrs.target_type != :user) ->
         {:error, AlertWall.ErrorCat.invalid_item()}
 
       not is_binary(attrs.target_id) or attrs.target_id == "" ->
@@ -522,13 +519,12 @@ defmodule GroupherServer.AlertWall.Persist do
         {:error, AlertWall.ErrorCat.invalid_report()}
 
       attrs.owner not in [:cms, :accounts] or
-        attrs.target_type not in [:article, :comment, :doc, :user] or
+        attrs.target_type not in [:article, :comment, :user] or
           attrs.report_type not in @report_types ->
         {:error, AlertWall.ErrorCat.invalid_report()}
 
       (attrs.owner == :cms and attrs.target_type == :user) or
-        (attrs.owner == :accounts and attrs.target_type != :user) or
-          (attrs.target_type == :doc and not is_nil(Map.get(attrs, :community_id))) ->
+          (attrs.owner == :accounts and attrs.target_type != :user) ->
         {:error, AlertWall.ErrorCat.invalid_report()}
 
       not is_integer(attrs.reporter_id) or not is_binary(attrs.target_id) or

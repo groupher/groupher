@@ -6,7 +6,7 @@ import { graphqlQueryOptions } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDocCoverLayout } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import { DOC_COVER_VIEW } from '~/unit/DocCovers/constant'
 import S from '~/unit/DocCovers/schema'
 import type {
@@ -17,7 +17,8 @@ import type {
 
 import DashboardSchema from '../../../schema/docs'
 import { SIDE_TREE_NODE_TYPE } from '../Editor/SideTree/constant'
-import type { TSideTreeGroup, TSideTreePage, TSideTreeTab } from '../Editor/SideTree/spec'
+import { workspaceTabs } from '../Editor/SideTree/helper/workspace'
+import type { TSideTreeGroup, TSideTreePage, TWorkspaceNode } from '../Editor/SideTree/spec'
 
 const EMPTY_DOC_COVERS: TDocCovers = {
   cards: [],
@@ -41,7 +42,7 @@ export type TCoverDocOption = {
   path: string
   pinned: boolean
   disabled: boolean
-  reason?: 'Not published' | 'Unpublished changes'
+  reason?: 'Not published'
 }
 
 const collectPages = (
@@ -65,7 +66,7 @@ const collectPages = (
  */
 export default function useLogic(): TRet {
   const { slug: community } = useCommunity()
-  const dashboard = useDsbEdit()
+  const dashboard = useDsbShell()
   const { data, refetch: reloadCover } = useQuery(
     graphqlQueryOptions<{ docCover?: TDocCovers }>(S.docCover, {
       community,
@@ -73,33 +74,31 @@ export default function useLogic(): TRet {
     }),
   )
   const { data: treeData, refetch: reloadTree } = useQuery(
-    graphqlQueryOptions<{ docTree?: { tabs?: TSideTreeTab[] } }>(DashboardSchema.docTree, {
-      community,
-    }),
+    graphqlQueryOptions<{ docsWorkspaceTree?: { nodes?: TWorkspaceNode[] } }>(
+      DashboardSchema.docsWorkspaceTree,
+      {
+        community,
+      },
+    ),
   )
   const coverData = data?.docCover ?? EMPTY_DOC_COVERS
   const docs = useMemo<TCoverDocOption[]>(
     () =>
-      (treeData?.docTree?.tabs ?? []).flatMap((tab) =>
+      workspaceTabs(treeData?.docsWorkspaceTree?.nodes ?? []).flatMap((tab) =>
         collectPages(tab.groups, [tab.title]).map(({ page: doc, path }) => {
           const published = doc.publishState?.published === true
-          const changed = doc.publishState?.hasUnpublishedChanges === true
 
           return {
             nodeId: doc.id,
             title: doc.title || 'Untitled',
             path,
-            pinned: doc.publishState?.pinnedToCover === true,
-            disabled: !published || changed,
-            reason: !published
-              ? ('Not published' as const)
-              : changed
-                ? ('Unpublished changes' as const)
-                : undefined,
+            pinned: coverData.pinnedDocs.some((pin) => pin.nodeId === doc.id),
+            disabled: !published,
+            reason: !published ? ('Not published' as const) : undefined,
           }
         }),
       ),
-    [treeData],
+    [treeData, coverData.pinnedDocs],
   )
 
   const reload = (): void => {

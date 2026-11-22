@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Communities.Moderators.Commands.AddMany do
                      command_id
                    ) do
     gate(fn candidate -> Support.check_in_transaction(actor, candidate) end)
-    change(fn canonical -> Persist.add_many(canonical, targets) end)
+    change(fn canonical, _operation_ref -> Persist.add_many(canonical, targets) end)
 
     confirm(fn result ->
       Support.confirmation(community, command_id, result, %{target_user_ids: target_user_ids})

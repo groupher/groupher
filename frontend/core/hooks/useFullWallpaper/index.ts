@@ -10,7 +10,7 @@ import {
 } from '~/lib/bg'
 import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 import type { TGradientPalette, TWallpaper, TWallpaperData } from '~/spec'
-import useDsbConfig from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import useStaticWallpaper from '~/stores/staticWallpaper/hooks'
 import createWallpaperStore from '~/stores/wallpaper'
 import { INITIAL_WALLPAPER_THEME_STATE } from '~/stores/wallpaper/constant'
@@ -44,7 +44,7 @@ export default function useFullWallpaper(): TRet {
   const store = use(StoreContext)
   const snapshot = useSnapshot(store ?? EMPTY_WALLPAPER_STORE) as unknown as TStore
   const { isDarkTheme } = useTheme()
-  const dashboard = useDsbConfig()
+  const dashboard = useDsb()
   const staticWallpaper = useStaticWallpaper()
   const editorStore = store
 

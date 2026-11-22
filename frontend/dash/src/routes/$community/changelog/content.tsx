@@ -4,7 +4,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { toEffectivePagiConfig } from '~/lib/pagination/params'
 import { dsbKeys } from '~/query'
-import type { TParseDashboard } from '~/spec'
+import type { TDsb } from '~/spec'
 import Changelogs from '~/unit/DsbThread/CMS/Changelogs'
 
 export const Route = createFileRoute('/$community/changelog/content')({
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/$community/changelog/content')({
       dashQueries.changelogs(
         params.community,
         toEffectivePagiConfig(
-          context.queryClient.getQueryData<TParseDashboard>(dsbKeys.config(params.community)),
+          context.queryClient.getQueryData<TDsb>(dsbKeys.slug(params.community)),
         ),
       ),
     ),

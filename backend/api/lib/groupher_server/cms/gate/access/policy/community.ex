@@ -34,9 +34,17 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   alias CMS.Gate.{Const, ErrorCat}
   alias CMS.Gate.Context.Access.Community, as: CommunityContext
   alias CMS.Model.{Community, CommunityLifecycle}
-  alias CMS.Passport.Registry
+  alias CMS.Passport
 
   @read_actions [:read, :list]
+  @docs_read_actions [:docs_queue_preview, :docs_history_read, :docs_trash_read]
+  @docs_write_actions [
+    :docs_queue_write,
+    :docs_queue_approve,
+    :docs_queue_publish,
+    :docs_queue_configure,
+    :docs_trash_purge
+  ]
   @command_actions [
     :update,
     :category_create,
@@ -56,7 +64,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     :ticket_transition,
     :ticket_assign,
     :ticket_manage_case,
-    :ticket_manage_visibility
+    :ticket_manage_visibility,
+    :community_tag_create,
+    :community_tag_update,
+    :community_tag_delete,
+    :community_tag_reindex
   ]
 
   @doc """
@@ -77,8 +89,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   def check_access(user, action, community) do
     check_access(user, action, community, %CommunityContext{
       community: community,
-      community_lifecycle: Map.get(community, :lifecycle),
-      passport_rules: embedded_passport_rules(user)
+      community_lifecycle: Map.get(community, :lifecycle)
     })
   end
 
@@ -119,6 +130,92 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  def check_access(user, :admin_invite, %Community{} = community, %CommunityContext{} = context) do
+    with {:ok, true} <- lifecycle_allowed(community, :command, context) do
+      relation_allowed(
+        passport_allowed?(user, community, CMS.GateAction.admin_invite(), context, nil)
+      )
+    end
+  end
+
+  def check_access(%User{}, :admin_apply, %Community{} = community, %CommunityContext{} = context) do
+    with {:ok, :pass} <- read_allowed?(community, context),
+         {:ok, true} <- lifecycle_capability(context, :write) do
+      {:ok, :pass}
+    else
+      {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def check_access(%User{}, :admin_request_decide, %Community{}, %CommunityContext{} = context) do
+    admit_admin_operation(context, CMS.GateAction.admin_request_decide())
+  end
+
+  def check_access(
+        %User{},
+        :admin_permissions_update,
+        %Community{},
+        %CommunityContext{} = context
+      ) do
+    admit_admin_operation(context, CMS.GateAction.admin_permissions_update())
+  end
+
+  def check_access(%User{}, :admin_remove, %Community{}, %CommunityContext{} = context) do
+    admit_admin_operation(context, CMS.GateAction.admin_remove())
+  end
+
+  def check_access(_actor, action, %Community{}, %CommunityContext{})
+      when action in [
+             :admin_invite,
+             :admin_apply,
+             :admin_request_decide,
+             :admin_permissions_update,
+             :admin_remove
+           ] do
+    {:error, ErrorCat.permission_denied()}
+  end
+
+  def check_access(
+        %User{} = user,
+        action,
+        %Community{} = community,
+        %CommunityContext{} = context
+      )
+      when action in @docs_read_actions do
+    with {:ok, :pass} <- read_allowed?(community, context) do
+      relation_allowed(
+        passport_allowed?(user, community, docs_passport_action(action), context, :doc)
+      )
+    end
+  end
+
+  def check_access(
+        %User{} = user,
+        action,
+        %Community{} = community,
+        %CommunityContext{} = context
+      )
+      when action in @docs_write_actions do
+    case lifecycle_capability(context, :write) do
+      {:ok, true} ->
+        relation_allowed(
+          passport_allowed?(user, community, docs_passport_action(action), context, :doc)
+        )
+
+      {:ok, false} ->
+        {:error, ErrorCat.ancestor_community_not_writable()}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def check_access(_actor, action, %Community{}, %CommunityContext{})
+      when action in @docs_read_actions or action in @docs_write_actions do
+    {:error, ErrorCat.permission_denied()}
   end
 
   def check_access(
@@ -181,14 +278,20 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   defp command_binding_allowed?(user, community, :request_destroy, context) do
     base_command_binding_allowed?(user, community, context) or
-      passport_allowed?(community, Const.passport_action(:community_request_destroy), context)
+      passport_allowed?(
+        user,
+        community,
+        Const.passport_action(:community_request_destroy),
+        context,
+        nil
+      )
   end
 
-  defp command_binding_allowed?(_user, community, :import_docs, context) do
-    passport_allowed?(community, CMS.GateAction.doc_import(), context)
+  defp command_binding_allowed?(user, community, :import_docs, context) do
+    passport_allowed?(user, community, CMS.GateAction.doc_import(), context, nil)
   end
 
-  defp command_binding_allowed?(_user, community, action, context)
+  defp command_binding_allowed?(user, community, action, context)
        when action in [
               :ticket_create,
               :ticket_link_source,
@@ -198,7 +301,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
               :ticket_manage_case,
               :ticket_manage_visibility
             ] do
-    passport_allowed?(community, ticket_passport_action(action), context)
+    passport_allowed?(user, community, ticket_passport_action(action), context, nil)
   end
 
   defp command_binding_allowed?(user, community, action, context)
@@ -210,12 +313,22 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
               :category_unset
             ] do
     base_command_binding_allowed?(user, community, context) or
-      passport_allowed?(community, category_passport_action(action), context)
+      passport_allowed?(user, community, category_passport_action(action), context, nil)
+  end
+
+  defp command_binding_allowed?(user, community, action, context)
+       when action in [
+              :community_tag_create,
+              :community_tag_update,
+              :community_tag_delete,
+              :community_tag_reindex
+            ] do
+    passport_allowed?(user, community, community_tag_passport_action(action), context, nil)
   end
 
   defp command_binding_allowed?(user, community, _action, context) do
     base_command_binding_allowed?(user, community, context) or
-      passport_allowed?(community, Const.passport_action(:community_update), context)
+      passport_allowed?(user, community, Const.passport_action(:community_update), context, nil)
   end
 
   defp category_passport_action(:category_create), do: Const.passport_action(:category_create)
@@ -223,6 +336,31 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp category_passport_action(:category_delete), do: Const.passport_action(:category_delete)
   defp category_passport_action(:category_set), do: Const.passport_action(:category_set)
   defp category_passport_action(:category_unset), do: Const.passport_action(:category_unset)
+
+  defp community_tag_passport_action(:community_tag_create) do
+    CMS.GateAction.community_tag_create()
+  end
+
+  defp community_tag_passport_action(:community_tag_update) do
+    CMS.GateAction.community_tag_update()
+  end
+
+  defp community_tag_passport_action(:community_tag_delete) do
+    CMS.GateAction.community_tag_delete()
+  end
+
+  defp community_tag_passport_action(:community_tag_reindex) do
+    CMS.GateAction.community_tag_reindex()
+  end
+
+  defp docs_passport_action(:docs_queue_preview), do: CMS.GateAction.doc_queue_preview()
+  defp docs_passport_action(:docs_queue_write), do: CMS.GateAction.doc_queue_write()
+  defp docs_passport_action(:docs_queue_approve), do: CMS.GateAction.doc_queue_approve()
+  defp docs_passport_action(:docs_queue_configure), do: CMS.GateAction.doc_queue_configure()
+  defp docs_passport_action(:docs_queue_publish), do: CMS.GateAction.doc_queue_publish()
+  defp docs_passport_action(:docs_history_read), do: CMS.GateAction.doc_history_read()
+  defp docs_passport_action(:docs_trash_read), do: "doc.trash"
+  defp docs_passport_action(:docs_trash_purge), do: "doc.permanent_delete"
 
   defp ticket_passport_action(:ticket_create), do: CMS.GateAction.ticket_create()
   defp ticket_passport_action(:ticket_link_source), do: CMS.GateAction.ticket_link_source()
@@ -285,59 +423,64 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   defp moderator?(_, _), do: false
 
-  defp root?(%Community{slug: slug}, context), do: passport_root?(slug, context)
+  defp root?(_community, %CommunityContext{
+         community_passport_scope: %Passport.Scope.Community{community: %{is_lord: true}}
+       }) do
+    true
+  end
+
   defp root?(_, _), do: false
 
-  defp god?(%CommunityContext{passport_rules: passport_rules}) do
-    get_in(Registry.normalize_rules(passport_rules), ["global", "god"]) == true
-  rescue
-    _ -> false
+  defp god?(%CommunityContext{
+         passport_global_scope: %Passport.Scope.Global{global: %{is_root: true}}
+       }) do
+    true
   end
 
-  defp passport_root?(slug, %CommunityContext{passport_rules: passport_rules})
-       when is_binary(slug) do
-    get_in(Registry.normalize_rules(passport_rules), [slug, "root"]) == true
-  rescue
-    _ -> false
-  end
+  defp god?(_), do: false
 
-  defp passport_allowed?(%Community{slug: slug}, action, %CommunityContext{
-         passport_rules: passport
-       })
-       when is_binary(slug) do
-    case Registry.allowed?(passport, slug, action) do
-      {:ok, true} ->
-        true
+  defp passport_allowed?(actor, community, action, context, thread)
+
+  defp passport_allowed?(
+         %User{} = actor,
+         %Community{} = community,
+         action,
+         %CommunityContext{} = context,
+         thread
+       ) do
+    case CMS.Passport.Catalog.get(action) do
+      {:ok, %{scope: :community}} ->
+        case context.community_passport_scope do
+          %Passport.Scope.Community{community_id: community_id} = scope
+          when community_id == community.id ->
+            Passport.allowed?(actor, scope, action, thread) == {:ok, true}
+
+          _ ->
+            false
+        end
+
+      {:ok, %{scope: :global}} ->
+        case context.passport_global_scope do
+          %Passport.Scope.Global{} = scope ->
+            Passport.allowed?(actor, scope, action, thread) == {:ok, true}
+
+          _ ->
+            false
+        end
 
       _ ->
-        passport
-        |> Registry.normalize_rules()
-        |> get_in([slug, "cms", action])
-        |> Kernel.==(true)
+        false
     end
-  rescue
-    _ -> false
   end
 
-  defp embedded_passport_rules(%User{} = user) do
-    embedded = Map.get(user, :cur_passport)
-    association = Map.get(user, :cms_passport)
-
-    cond do
-      is_map(embedded) and map_size(embedded) > 0 ->
-        embedded
-        |> Map.get(:rules, Map.get(embedded, "rules", embedded))
-        |> Registry.normalize_rules()
-
-      match?(%{rules: _rules}, association) ->
-        association.rules |> Registry.normalize_rules()
-
-      true ->
-        Registry.empty_rules()
+  defp admit_admin_operation(context, action) do
+    with {:ok, %{scope: :community, grantable: false}} <- Passport.Catalog.get(action),
+         {:ok, true} <- lifecycle_capability(context, :write) do
+      {:ok, :pass}
+    else
+      {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
+      {:ok, _metadata} -> {:error, ErrorCat.unknown_action()}
+      {:error, reason} -> {:error, reason}
     end
-  rescue
-    _ -> Registry.empty_rules()
   end
-
-  defp embedded_passport_rules(_actor), do: Registry.empty_rules()
 end

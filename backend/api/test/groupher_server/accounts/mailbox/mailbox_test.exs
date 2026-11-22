@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
   use GroupherServer.TestMate, async: false
   alias GroupherServer.{Accounts, FrontDesk, Messaging}
   alias Accounts.FrontDesk.Cache, as: FrontDeskCache
-  alias Messaging.Model.{Mention, Notification}
+  alias Messaging.Model.{Mention, Notice}
 
   @default_mailbox_status Accounts.Model.Embeds.UserMailbox.default_status()
 
@@ -28,11 +28,11 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
         thread: :post,
         article_id: post.id,
         title: post.title,
-        action: :upvote,
+        type: :upvote,
         user_id: user.id
       }
 
-      {:ok, _} = Messaging.send_notification(notify_attrs, user2)
+      {:ok, _} = Messaging.send_notice(notify_attrs, user2)
       {:ok, user} = Accounts.Mailbox.update_status(user.id)
 
       assert user.mailbox.is_empty == false
@@ -182,16 +182,16 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
     now = Datetime.now(:second)
 
     {1, nil} =
-      Repo.insert_all(Notification, [
+      Repo.insert_all(Notice, [
         %{
           thread: :post,
           title: post.title,
           article_id: post.id,
           comment_id: nil,
-          action: "UPVOTE",
+          type: :upvote,
           read: false,
-          from_users: [],
-          from_users_count: 0,
+          from_users: [GroupherServer.CMS.Model.Embeds.User.from_account_user(user)],
+          from_users_count: 1,
           user_id: user.id,
           inserted_at: now,
           updated_at: now

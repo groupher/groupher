@@ -296,7 +296,7 @@ export const createApp = (dependencies: Dependencies = {}) => {
       (article) => ({
         body: article.markdown,
         contentType: 'text/markdown; charset=utf-8',
-        revision: article.articleRevision,
+        revision: article.contentVersion,
         updatedAt: article.updatedAt,
         canonicalUrl: article.canonicalUrl,
         contentRef: article.articleRef,

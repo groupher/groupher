@@ -1,5 +1,6 @@
-import type { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { WALLPAPER_PATTERN_TONE } from '~/const/wallpaper'
 import type { TBgEffect, TBgPattern, TBgTexture } from '~/lib/bg'
+import type { WallpaperType } from '~/lib/graphql/generated/enums'
 import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 
 export type TWallpaperFmt = {
@@ -50,7 +51,7 @@ export type TCustomWallpaper =
   | ({ type: 'picture' } & TWallpaperPic)
   | null
 
-export type TWallpaperType = WALLPAPER_TYPE
+export type TWallpaperType = Lowercase<WallpaperType>
 
 export type TWallpaperPatternTone = WALLPAPER_PATTERN_TONE
 

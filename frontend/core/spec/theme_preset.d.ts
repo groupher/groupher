@@ -1,6 +1,6 @@
-import type { THEME_PRESET } from '~/const/theme_preset'
+import type { DsbThemePreset } from '~/lib/graphql/generated/enums'
 
-export type TThemePreset = THEME_PRESET
+export type TThemePreset = DsbThemePreset
 
 // Resolved theme tokens returned by the backend theme_tokens resolver.
 // Theme-aware data follows the `{ meta?, shared?, light, dark }` modeling rule:

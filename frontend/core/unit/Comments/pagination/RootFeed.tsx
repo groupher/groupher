@@ -10,14 +10,14 @@ import { resolveCommentPosition } from '~/query/commentPage'
 import useCommentReceiptReconcile from '~/query/useCommentReceiptReconcile'
 import { StoreContext } from '~/stores/comments/context'
 import type { TStore } from '~/stores/comments/spec'
-import useDsbConfig from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 import RootCollection from './RootCollection'
 
 export default function RootFeed({ children }: PropsWithChildren) {
   const store = useContext(StoreContext) as TStore
   const comments = useSnapshot(store)
-  const dashboard = useDsbConfig()
+  const dashboard = useDsb()
   const search = useURLSearchParams()
   const { article, articlePath } = useViewingArticle()
   useCommentReceiptReconcile(article)

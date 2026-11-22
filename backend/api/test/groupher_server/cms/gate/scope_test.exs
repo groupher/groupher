@@ -33,12 +33,12 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
       CommentContext.for_thread(:doc)
     end
 
-    assert_raise ArgumentError, ~r/does not accept body branch/, fn ->
-      CommentContext.for_thread(:doc, branch_policy: :preview)
+    assert_raise ArgumentError, ~r/unsupported options/, fn ->
+      CommentContext.for_thread(:doc, unknown_option: :preview)
     end
 
-    assert_raise ArgumentError, ~r/does not accept body branch/, fn ->
-      CommentContext.for_thread(:post, branch_policy: :main)
+    assert_raise ArgumentError, ~r/unsupported options/, fn ->
+      CommentContext.for_thread(:post, unknown_option: :main)
     end
 
     assert_raise ArgumentError, ~r/invalid Comment scope policy mode/, fn ->
@@ -81,12 +81,12 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
       |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:doc, community_id: 123))
 
     {doc_sql, _doc_params} = to_sql(doc)
-    assert doc_sql =~ ~s(JOIN "cms"."doc_branches")
-    assert doc_sql =~ ~s("type" = 'main')
+    assert doc_sql =~ ~s(JOIN "cms"."article_lifecycles")
+    refute doc_sql =~ "doc_branches"
 
     {all_sql, _all_params} = to_sql(contextless)
-    assert all_sql =~ ~s(JOIN "cms"."doc_branches")
-    assert all_sql =~ ~s("type" = 'main')
+    assert all_sql =~ ~s(JOIN "cms"."article_lifecycles")
+    refute all_sql =~ "doc_branches"
   end
 
   test "Comment rejects an unknown thread and Document requires a thread" do
@@ -106,7 +106,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     for thread <- [:post, :blog, :changelog, :doc] do
       context =
         case thread do
-          :doc -> DocContext.public_main()
+          :doc -> DocContext.public()
           _ -> ArticleContext.public(thread)
         end
 
@@ -131,8 +131,8 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
              CMS.Gate.scope(comment_query, nil, :read, CommentContext.all_public())
   end
 
-  test "Comment scope rejects caller-owned Doc branch bindings" do
-    query = from(comment in Comment, as: :gate_doc_branch)
+  test "Comment scope rejects caller-owned lifecycle bindings" do
+    query = from(comment in Comment, as: :gate_community_lifecycle)
 
     assert {:error, %ErrorCat.Error{reason: :scope_binding_conflict}} =
              CMS.Gate.scope(query, nil, :read, CommentContext.all_public())
@@ -154,6 +154,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   end
 
   test "scope construction never executes Repo" do
+    {:ok, actor} = db_insert(:user)
     handler_id = "gate-scope-query-#{System.unique_integer([:positive])}"
     event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
     parent = self()
@@ -168,11 +169,11 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     on_exit(fn -> :telemetry.detach(handler_id) end)
 
-    assert %Ecto.Query{} = CMS.Gate.scope(Article, nil, :read, ArticleContext.public(:post))
-    assert %Ecto.Query{} = CMS.Gate.scope(Comment, nil, :list, CommentContext.all_public())
+    assert %Ecto.Query{} = CMS.Gate.scope(Article, actor, :read, ArticleContext.public(:post))
+    assert %Ecto.Query{} = CMS.Gate.scope(Comment, actor, :list, CommentContext.all_public())
 
     assert %Ecto.Query{} =
-             CMS.Gate.scope(Article, nil, :read, DocContext.public_main())
+             CMS.Gate.scope(Article, actor, :read, DocContext.public())
 
     refute_receive :scope_query
   end

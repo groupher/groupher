@@ -43,13 +43,14 @@ Confirmation payload 硬上限为 64 KiB。超限或合同不匹配统一成为 
 当前运行时 schema 只包含：
 
 ```text
-initiator_type, initiator_key, command_id, command
+initiator_type, initiator_key, command_id, command, operation_ref
 resource_type, resource_id, intent_params, confirmation
 expires_at, identity_expires_at, inserted_at, updated_at
 ```
 
 唯一约束是 `initiator_type + initiator_key + command_id`。claim 查询依赖该组合键；retention 清理依赖
-`expires_at` 与 `identity_expires_at` 索引。
+`expires_at` 与 `identity_expires_at` 索引。Receipt claim 时生成并读回服务端 `operation_ref`；
+它在首次执行中传给 action，恢复时只 decode 已保存的 Confirmation，不重新执行 action。
 
 `payload_fingerprint/intent_fingerprint/outcome/result_key/result_payload` 已从目标 schema 删除。历史
 migration 文件不可删除或改写。contract migration 清空旧 Receipt 后删除旧列；旧数据不参与新协议恢复，

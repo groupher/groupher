@@ -10,10 +10,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
         -> complete / retry / snooze / terminal failure
   """
 
-  alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
-  alias Accounts.Model.User
+  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias CMS.Model.{Article, Comment, Community}
-  alias CMS.Interactions.ErrorCat, as: InteractionErrorCat
+  alias CMS.Interactions.Effects
   alias CMS.SearchArtiments.Indexer
   alias CMS.Events
 
@@ -52,39 +51,13 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
   defp cleanup(event) do
     data = Map.put_new(event.data, "delivery_key", "outbox:#{event.id}:notification")
 
-    with {:ok, target} <- load_target(event.resource_type, event.resource_id),
-         {:ok, actor} <- load_actor(data["actor_id"]),
+    with {:ok, %{target: target, actor: actor}} <- Effects.delivery_context(event),
          {:ok, _} <- emit_event(event.event, target, actor, data),
          {:ok, _} <- maybe_sync_search(target),
          {:ok, _} <- purge_ticket_cache(target) do
       {:ok, :delivered}
     end
   end
-
-  defp load_target("article", id) do
-    case Repo.get(Article, id) do
-      %Article{} = article -> {:ok, article}
-      nil -> {:error, InteractionErrorCat.interaction_target_not_found()}
-    end
-  end
-
-  defp load_target("comment", id) do
-    case Repo.get(Comment, id) do
-      %Comment{} = comment -> {:ok, comment}
-      nil -> {:error, InteractionErrorCat.interaction_target_not_found()}
-    end
-  end
-
-  defp load_target(_, _), do: {:error, InteractionErrorCat.interaction_target_invalid()}
-
-  defp load_actor(id) when is_integer(id) or is_binary(id) do
-    case Repo.get(User, id) do
-      %User{} = actor -> {:ok, actor}
-      nil -> {:error, InteractionErrorCat.interaction_actor_not_found()}
-    end
-  end
-
-  defp load_actor(_), do: {:error, InteractionErrorCat.interaction_actor_invalid()}
 
   defp emit_event("interaction.upvote_changed", target, actor, data) do
     with {:ok, _} <-
@@ -126,6 +99,12 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
   end
 
   defp subscribe_community(%Comment{}, _actor, _data), do: {:ok, :request_context_not_recorded}
+
+  defp subscribe_community(%{community: %Community{} = community}, actor, _data) do
+    Events.emit(:subscribe_community, %{target: community, user: actor})
+  end
+
+  defp subscribe_community(%Article{}, _actor, _data), do: {:ok, :request_context_not_recorded}
 
   defp subscribe_community(target, actor, _data) do
     Events.emit(:subscribe_community, %{target: target, user: actor})

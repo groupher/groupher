@@ -8,8 +8,8 @@ import { executeCommand } from '~/query/mutation/optimistic/execute'
 import { closeDrawer, send } from '~/signal'
 import type { TChangeMode, TColorName, TEditValue, TSelectOption, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
-import { useTagEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useTagsEditor } from '~/stores/dsbShell/editor'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import { slugify } from '~/utils/slug'
 import { nilOrEmpty, validateSlug } from '~/validator'
 
@@ -39,8 +39,8 @@ type TRet = {
 
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRet {
-  const dsb$ = useDsbEdit()
-  const { settingTag } = useTagEditorUi()
+  const dsb$ = useDsbShell()
+  const { settingTag } = useTagsEditor()
   const { tagGroups, activeTagThread } = dsb$
 
   const community$ = useCommunity()

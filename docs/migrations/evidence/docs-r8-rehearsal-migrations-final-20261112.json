@@ -1,0 +1,7 @@
+{
+  "host": "ep-empty-boat-a1au0cbs.ap-southeast-1.aws.neon.tech",
+  "database": "groupher_mentions_graph_20261106",
+  "schema_sha256": "bfc0fd859501b83f09d75331cd970a97d383cd8630c95d52c11cba879e37856e",
+  "migrations_applied": [20261112233000],
+  "remaining_articles": 0
+}

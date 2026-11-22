@@ -57,8 +57,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
     prepare(fn -> Matcher.match_interaction(input) end)
     gate(fn info -> gate_target(input, info, actor) end)
 
-    change(fn {canonical, _info} ->
-      CollectChange.apply(canonical, actor, operation, command_id)
+    change(fn {canonical, _info}, operation_ref ->
+      CollectChange.apply(canonical, actor, operation, operation_ref)
     end)
 
     confirm(fn {canonical, change} -> confirmation(canonical, operation, change) end)
@@ -74,8 +74,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
     prepare(fn -> Matcher.match_interaction(input) end)
     gate(fn info -> gate_target(input, info, actor) end)
 
-    change(fn {canonical, _info} ->
-      CollectChange.apply(canonical, actor, operation, command_id)
+    change(fn {canonical, _info}, operation_ref ->
+      CollectChange.apply(canonical, actor, operation, operation_ref)
     end)
 
     confirm(fn {canonical, change} -> confirmation(canonical, operation, change) end)

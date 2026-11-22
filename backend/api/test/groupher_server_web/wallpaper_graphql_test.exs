@@ -46,7 +46,10 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
       })
 
     assert get_in(initial, ["dashboard", "wallpaper", "version"]) == 0
-    assert get_in(initial, ["dashboard", "wallpaper", "light"]) == nil
+
+    assert get_in(initial, ["dashboard", "wallpaper", "light", "wide", "url"]) ==
+             "/wallpaper/default-v1/light-wide.webp"
+
     assert get_in(initial, ["dashboard", "wallpaperSettings", "light", "type"]) == "GRADIENT"
 
     settings = %{
@@ -250,6 +253,10 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
 
     assert get_in(after_none, ["dashboard", "wallpaper", "version"]) == 2
     assert get_in(after_none, ["dashboard", "wallpaper", "light"]) == nil
+
+    assert get_in(after_none, ["dashboard", "wallpaper", "dark", "wide", "url"]) ==
+             "/wallpaper/default-v1/dark-wide.webp"
+
     assert get_in(after_none, ["dashboard", "wallpaperSettings", "light", "type"]) == "NONE"
 
     restored =

@@ -51,11 +51,6 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
       assert community_config.community_id == community.id
       assert is_nil(system.review_mode)
       assert community_config.review_mode == :immediate
-
-      assert {:ok, %{system: platform_doc_config, community: nil}} =
-               GroupherServer.ReviewBot.configs_for_target(community.id, :doc)
-
-      assert platform_doc_config.community_id == nil
     end
 
     test "create community replays the canonical row for the same command id", ~m(user)a do
@@ -78,9 +73,13 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
     test "requesting community destruction archives the community", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "elixir"})
       {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
+      command_id = Ecto.UUID.generate()
 
       {:ok, _} =
-        CMS.Communities.request_destroy(community, user, command_id: Ecto.UUID.generate())
+        CMS.Communities.request_destroy(community, user, command_id: command_id)
+
+      receipt = Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id)
+      assert receipt.confirmation["data"]["operation_ref"] == receipt.operation_ref
 
       assert {:ok, _} = ORM.find(Community, community.id)
 
@@ -93,14 +92,42 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
       {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, post2} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
+
+      {:ok, post2} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+
+      {:ok, blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_attrs,
+          user
+        )
 
       assert Repo.get!(CMS.Model.Article, post.id)
       assert Repo.get!(CMS.Model.Article, post2.id)
@@ -126,7 +153,14 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
       user = grant_binding_actions(user, [community, community2])
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, _} =
         CMS.Articles.mirror(community2, post.id, [], user, community, Ecto.UUID.generate())
@@ -148,7 +182,14 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
       user = grant_binding_actions(user, [community, community2])
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, _} =
         CMS.Articles.mirror(community2, post.id, [], user, community, Ecto.UUID.generate())

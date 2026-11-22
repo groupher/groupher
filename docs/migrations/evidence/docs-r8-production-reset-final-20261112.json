@@ -1,0 +1,451 @@
+{
+  "cutover_id": "docs-r8-20261112",
+  "host": "ep-withered-dream-a1rzku0i.ap-southeast-1.aws.neon.tech",
+  "applied": true,
+  "evidence": [
+    {
+      "tables": [
+        {
+          "name": "account.collect_folder_entries",
+          "count": 0
+        },
+        {
+          "name": "activity.blog_logs",
+          "count": 2
+        },
+        {
+          "name": "activity.changelog_logs",
+          "count": 2
+        },
+        {
+          "name": "activity.doc_logs",
+          "count": 3
+        },
+        {
+          "name": "activity.doc_tree_logs",
+          "count": 0
+        },
+        {
+          "name": "activity.post_logs",
+          "count": 32
+        },
+        {
+          "name": "activity.ticket_logs",
+          "count": 3
+        },
+        {
+          "name": "cms.analysis_metric_events",
+          "count": 4
+        },
+        {
+          "name": "cms.article_asset_refs",
+          "count": 0
+        },
+        {
+          "name": "cms.article_binding_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.article_bindings",
+          "count": 35
+        },
+        {
+          "name": "cms.article_body_drafts",
+          "count": 0
+        },
+        {
+          "name": "cms.article_body_snapshots",
+          "count": 7
+        },
+        {
+          "name": "cms.article_collects",
+          "count": 0
+        },
+        {
+          "name": "cms.article_drafts",
+          "count": 0
+        },
+        {
+          "name": "cms.article_emotion_counts",
+          "count": 0
+        },
+        {
+          "name": "cms.article_hourly_metrics",
+          "count": 4
+        },
+        {
+          "name": "cms.article_lifecycles",
+          "count": 32
+        },
+        {
+          "name": "cms.article_publics",
+          "count": 32
+        },
+        {
+          "name": "cms.article_review_blocks",
+          "count": 4
+        },
+        {
+          "name": "cms.article_revisions",
+          "count": 39
+        },
+        {
+          "name": "cms.article_stats",
+          "count": 32
+        },
+        {
+          "name": "cms.article_upvotes",
+          "count": 0
+        },
+        {
+          "name": "cms.article_view_dedupe_states",
+          "count": 0
+        },
+        {
+          "name": "cms.article_viewer_states",
+          "count": 0
+        },
+        {
+          "name": "cms.articles",
+          "count": 33
+        },
+        {
+          "name": "cms.articles_users_emotions",
+          "count": 0
+        },
+        {
+          "name": "cms.artiment_reviews",
+          "count": 84
+        },
+        {
+          "name": "cms.blog_draft_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.blog_drafts",
+          "count": 0
+        },
+        {
+          "name": "cms.blog_emotion_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.blog_reaction_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.blog_revision_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.blog_revisions",
+          "count": 2
+        },
+        {
+          "name": "cms.changelog_draft_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.changelog_drafts",
+          "count": 0
+        },
+        {
+          "name": "cms.changelog_emotion_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.changelog_reaction_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.changelog_revision_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.changelog_revisions",
+          "count": 2
+        },
+        {
+          "name": "cms.comment_bodies",
+          "count": 4
+        },
+        {
+          "name": "cms.comment_emotion_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.comment_lifecycles",
+          "count": 4
+        },
+        {
+          "name": "cms.comment_reaction_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.comment_review_blocks",
+          "count": 0
+        },
+        {
+          "name": "cms.comments",
+          "count": 4
+        },
+        {
+          "name": "cms.comments_replies",
+          "count": 0
+        },
+        {
+          "name": "cms.comments_upvotes",
+          "count": 0
+        },
+        {
+          "name": "cms.comments_users_emotions",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_branch_states",
+          "count": 1
+        },
+        {
+          "name": "cms.doc_branch_version_counters",
+          "count": 1
+        },
+        {
+          "name": "cms.doc_branch_versions",
+          "count": 2
+        },
+        {
+          "name": "cms.doc_branches",
+          "count": 3
+        },
+        {
+          "name": "cms.doc_cover_cards",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_cover_items",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_cover_pinned_docs",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_draft_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_drafts",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_emotion_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_lifecycles",
+          "count": 1
+        },
+        {
+          "name": "cms.doc_publics",
+          "count": 1
+        },
+        {
+          "name": "cms.doc_publish_release_articles",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_publish_release_tree_events",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_publish_releases",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_reaction_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_review_blocks",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_revision_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_revisions",
+          "count": 2
+        },
+        {
+          "name": "cms.doc_tree_events",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_tree_nodes",
+          "count": 0
+        },
+        {
+          "name": "cms.doc_tree_snapshots",
+          "count": 0
+        },
+        {
+          "name": "cms.docs_site_states",
+          "count": 3
+        },
+        {
+          "name": "cms.draft_cover_edits",
+          "count": 0
+        },
+        {
+          "name": "cms.mention_current_edges",
+          "count": 27
+        },
+        {
+          "name": "cms.mention_endpoints",
+          "count": 37
+        },
+        {
+          "name": "cms.mention_occurrences",
+          "count": 27
+        },
+        {
+          "name": "cms.mention_sets",
+          "count": 43
+        },
+        {
+          "name": "cms.mention_sync_states",
+          "count": 37
+        },
+        {
+          "name": "cms.pinned_articles",
+          "count": 0
+        },
+        {
+          "name": "cms.pinned_comments",
+          "count": 0
+        },
+        {
+          "name": "cms.post_draft_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.post_drafts",
+          "count": 0
+        },
+        {
+          "name": "cms.post_emotion_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.post_reaction_infos",
+          "count": 0
+        },
+        {
+          "name": "cms.post_revision_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.post_revisions",
+          "count": 31
+        },
+        {
+          "name": "cms.post_solutions",
+          "count": 0
+        },
+        {
+          "name": "cms.post_states",
+          "count": 29
+        },
+        {
+          "name": "cms.revision_cover_edits",
+          "count": 0
+        },
+        {
+          "name": "cms.revision_covers",
+          "count": 0
+        },
+        {
+          "name": "cms.ticket_assignees",
+          "count": 0
+        },
+        {
+          "name": "cms.ticket_case_members",
+          "count": 0
+        },
+        {
+          "name": "cms.ticket_case_workers",
+          "count": 0
+        },
+        {
+          "name": "cms.ticket_facets",
+          "count": 0
+        },
+        {
+          "name": "cms.ticket_sources",
+          "count": 1
+        },
+        {
+          "name": "cms.ticket_states",
+          "count": 1
+        },
+        {
+          "name": "cms.ticket_tags",
+          "count": 0
+        },
+        {
+          "name": "cms.ticket_updates",
+          "count": 0
+        },
+        {
+          "name": "cms.ticket_workers",
+          "count": 0
+        },
+        {
+          "name": "cms.trashed_articles",
+          "count": 0
+        },
+        {
+          "name": "cms.trashed_doc_articles",
+          "count": 0
+        },
+        {
+          "name": "cms.trashed_doc_tree_nodes",
+          "count": 0
+        },
+        {
+          "name": "messaging.mentions",
+          "count": 0
+        },
+        {
+          "name": "messaging.notification_deliveries",
+          "count": 2
+        },
+        {
+          "name": "messaging.notifications",
+          "count": 1
+        },
+        {
+          "name": "public.production_seed_logins",
+          "count": 0
+        },
+        {
+          "name": "public.production_seed_runs",
+          "count": 1
+        },
+        {
+          "name": "statistics.publish_throttles",
+          "count": 1
+        }
+      ],
+      "database": "groupher_mentions_graph_20261106"
+    },
+    {
+      "unchanged": true,
+      "protected_tables": 64
+    },
+    {
+      "remaining_articles": 0
+    }
+  ]
+}

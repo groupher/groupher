@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 
 import { isValidFooterLinks } from '~/lib/footerLinks'
 import type { TLinkItem } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import { FIELD } from '~/unit/DsbThread/constant'
 
 import { makeDashboardLinkId } from '../../LinkEditor/model'
@@ -23,7 +23,7 @@ export default function useFooterEditorActions(
   sourceLinks: readonly TLinkItem[],
   onEditLinks?: (links: readonly TLinkItem[]) => void,
 ): TFooterEditorActions {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const links = useMemo(() => validLinks(sourceLinks), [sourceLinks])
 
   const editLinks = useCallback(

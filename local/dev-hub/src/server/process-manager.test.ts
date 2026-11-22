@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
+import { localWorkerEnvironmentPaths } from './local-environment.ts'
 import { ServiceManager, ServiceManagerError } from './process-manager.ts'
 import type { TServiceDefinition } from './services.ts'
 
@@ -156,49 +157,52 @@ const OPTIONAL_TARGET_SERVICE: TServiceDefinition = {
   },
 }
 
-test('managed env fallbacks cannot clobber parent or orchestrator values', async (t) => {
+test('managed spawn filters parent values and resolves authoritative local environment last', async (t) => {
   const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'groupher-managed-env-'))
-  const envFile = path.join(fixtureRoot, '.env.local')
   const parentKey = 'GROUPHER_TEST_PARENT_WINS'
   const previousParentValue = process.env[parentKey]
+  const previousLoginValue = process.env.AUTH_LOCAL_LOGIN_ENABLED
+  const previousSecretValue = process.env.SERVICE_AUTH_CLIENT_SECRET
   process.env[parentKey] = 'parent'
-
-  await writeFile(
-    envFile,
-    [
-      `${parentKey}=file`,
-      'GROUPHER_TEST_ORCHESTRATOR_WINS=file',
-      'GROUPHER_TEST_FALLBACK_ONLY=file',
-      'GROUPHER_TEST_UNLISTED=file',
-    ].join('\n'),
-  )
+  process.env.AUTH_LOCAL_LOGIN_ENABLED = 'false'
+  process.env.SERVICE_AUTH_CLIENT_SECRET = 'parent-secret'
 
   const definition: TServiceDefinition = {
     ...FIXTURE_SERVICE,
     id: 'managed-env-fixture',
     args: [
       '-e',
-      'console.log(JSON.stringify({ parent: process.env.GROUPHER_TEST_PARENT_WINS, orchestrator: process.env.GROUPHER_TEST_ORCHESTRATOR_WINS, fallback: process.env.GROUPHER_TEST_FALLBACK_ONLY, unlisted: process.env.GROUPHER_TEST_UNLISTED ?? null }))',
+      'console.log(JSON.stringify({ parent: process.env.GROUPHER_TEST_PARENT_WINS, orchestrator: process.env.GROUPHER_TEST_ORCHESTRATOR_WINS, login: process.env.AUTH_LOCAL_LOGIN_ENABLED, clientSecret: process.env.SERVICE_AUTH_CLIENT_SECRET ?? null }))',
     ],
     env: {
       GROUPHER_TEST_ORCHESTRATOR_WINS: 'orchestrator',
     },
-    envFallback: {
-      file: envFile,
-      keys: [parentKey, 'GROUPHER_TEST_ORCHESTRATOR_WINS', 'GROUPHER_TEST_FALLBACK_ONLY'],
+    localEnvironment: {
+      env: { AUTH_LOCAL_LOGIN_ENABLED: 'true' },
     },
   }
-  const manager = new ServiceManager([definition])
+  const manager = new ServiceManager(
+    [definition],
+    null,
+    undefined,
+    undefined,
+    undefined,
+    async () => ({ formatVersion: 1, repoRoot: fixtureRoot, secrets: {}, serviceCredentials: {} }),
+  )
 
   t.after(async () => {
     await manager.shutdown()
     await rm(fixtureRoot, { force: true, recursive: true })
     if (previousParentValue === undefined) delete process.env[parentKey]
     else process.env[parentKey] = previousParentValue
+    if (previousLoginValue === undefined) delete process.env.AUTH_LOCAL_LOGIN_ENABLED
+    else process.env.AUTH_LOCAL_LOGIN_ENABLED = previousLoginValue
+    if (previousSecretValue === undefined) delete process.env.SERVICE_AUTH_CLIENT_SECRET
+    else process.env.SERVICE_AUTH_CLIENT_SECRET = previousSecretValue
   })
 
   await manager.start(definition.id)
-  await waitForLog(manager, definition.id, '"fallback":"file"')
+  await waitForLog(manager, definition.id, '"login":"true"')
 
   const output = manager
     .getLogs(definition.id)
@@ -207,8 +211,41 @@ test('managed env fallbacks cannot clobber parent or orchestrator values', async
     .join('')
   assert.match(
     output,
-    /"parent":"parent","orchestrator":"orchestrator","fallback":"file","unlisted":null/,
+    /"parent":"parent","orchestrator":"orchestrator","login":"true","clientSecret":null/,
   )
+})
+
+test('managed Worker receives its private persistent state directory', async (t) => {
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'groupher-worker-state-'))
+  const definition: TServiceDefinition = {
+    ...FIXTURE_SERVICE,
+    id: 'worker-state-fixture',
+    args: ['-e', 'console.log(process.env.DEV_HUB_WORKER_STATE_DIR)'],
+    workerStateDir: true,
+  }
+  const manager = new ServiceManager(
+    [definition],
+    null,
+    undefined,
+    undefined,
+    undefined,
+    async () => ({ formatVersion: 1, repoRoot: fixtureRoot, secrets: {}, serviceCredentials: {} }),
+  )
+
+  t.after(async () => {
+    await manager.shutdown()
+    await rm(fixtureRoot, { force: true, recursive: true })
+  })
+
+  await manager.start(definition.id)
+  await waitForLog(manager, definition.id, 'worker-state-fixture')
+
+  const output = manager
+    .getLogs(definition.id)
+    .filter((log) => log.stream === 'stdout')
+    .map((log) => log.chunk)
+    .join('')
+  assert.equal(output.trim(), localWorkerEnvironmentPaths(definition.id, fixtureRoot).directory)
 })
 
 test(

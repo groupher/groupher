@@ -16,8 +16,8 @@ defmodule GroupherServer.Test.CMS.Gate.Decision do
 
     refute decision.allowed
     assert decision.context == %{request_id: "req"}
-    assert decision.primary.reason == :ancestor_article_archived
-    assert decision.primary.err_code == 4606
+    assert decision.primary.reason == :permission_denied
+    assert decision.primary.err_code == 4616
 
     assert Enum.map(decision.violations, & &1.reason) == [
              :permission_denied,

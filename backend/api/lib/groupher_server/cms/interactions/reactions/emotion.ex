@@ -64,8 +64,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     prepare(fn -> prepare_emotion(input, emotion) end)
     gate(fn info -> gate_target(input, info, actor) end)
 
-    change(fn {canonical, info} ->
-      change_emotion(canonical, info, emotion, actor, operation, command_id)
+    change(fn {canonical, info}, operation_ref ->
+      change_emotion(canonical, info, emotion, actor, operation, operation_ref)
     end)
 
     confirm(fn {canonical, change} -> confirmation(canonical, emotion, operation, change) end)
@@ -81,8 +81,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     prepare(fn -> prepare_emotion(input, emotion) end)
     gate(fn info -> gate_target(input, info, actor) end)
 
-    change(fn {canonical, info} ->
-      change_emotion(canonical, info, emotion, actor, operation, command_id)
+    change(fn {canonical, info}, operation_ref ->
+      change_emotion(canonical, info, emotion, actor, operation, operation_ref)
     end)
 
     confirm(fn {canonical, change} -> confirmation(canonical, emotion, operation, change) end)
@@ -103,12 +103,12 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp change_emotion(canonical, info, emotion, actor, operation, command_id) do
+  defp change_emotion(canonical, info, emotion, actor, operation, operation_ref) do
     with {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
          {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
          {:ok, _} <- sync_state(canonical, emotion, actor, operation, change),
-         {:ok, _} <- record_metric(canonical, operation, change, command_id),
-         {:ok, _} <- enqueue_effect(canonical, actor, operation, emotion, command_id, change) do
+         {:ok, _} <- record_metric(canonical, operation, change, operation_ref),
+         {:ok, _} <- enqueue_effect(canonical, actor, operation, emotion, operation_ref, change) do
       {:ok, {canonical, change}}
     end
   end
@@ -126,25 +126,12 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
      }}
   end
 
-  defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged) do
+  defp enqueue_effect(_canonical, _actor, _operation, _emotion, _operation_ref, :unchanged) do
     {:ok, :pass}
   end
 
-  defp enqueue_effect(canonical, actor, operation, emotion, command_id, :changed) do
-    with {:ok, data} <-
-           Effects.reaction_data(canonical, %{
-             actor_id: actor.id,
-             operation: operation,
-             emotion: emotion
-           }) do
-      Effects.enqueue_reaction_changed(
-        "interaction.emotion_changed",
-        interaction_resource_type(canonical),
-        canonical.id,
-        command_id,
-        data
-      )
-    end
+  defp enqueue_effect(canonical, actor, operation, emotion, operation_ref, :changed) do
+    Effects.emotion_changed(canonical, actor, operation, emotion, operation_ref)
   end
 
   defp interaction_resource_type(%Comment{}), do: "comment"
@@ -290,8 +277,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   defp author_user_id(%{author_id: author_id}), do: Repo.get!(Author, author_id).user_id
 
   defp emotion_conflict_target(:article_id) do
-    {:unsafe_fragment,
-     "(user_id, article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+    {:unsafe_fragment, "(user_id, article_id, emotion) WHERE article_id IS NOT NULL"}
   end
 
   defp emotion_conflict_target(foreign_key) do

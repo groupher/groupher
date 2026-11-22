@@ -24,24 +24,41 @@ export const ticketQueryKeys = {
     visibility: 'public' | 'internal',
     size: number,
     filter: TTicketFilter = {},
-  ) => ['ticket', 'kanban', visibility, community, size, filter] as const,
+  ) => [...ticketQueryKeys.all, 'kanban', visibility, community, size, filter] as const,
   page: (
     community: string,
     status: TTicketStatus,
     pagi: TPagiGraphQLInput,
     visibility: 'public' | 'internal',
     filter: TTicketFilter,
-  ) => ['ticket', 'page', visibility, community, status, pagi, filter] as const,
+  ) => [...ticketQueryKeys.all, 'page', visibility, community, status, pagi, filter] as const,
+  internalPage: (community: string, filter: TTicketFilter, pagi: TPagiGraphQLInput) =>
+    [...ticketQueryKeys.all, 'internal-page', community, filter, pagi] as const,
   detail: (community: string, innerId: string | number) =>
-    ['ticket', 'detail', community, String(innerId)] as const,
+    [...ticketQueryKeys.all, 'detail', community, String(innerId)] as const,
   internalDetail: (community: string, id: string) =>
-    ['ticket', 'internal-detail', community, id] as const,
+    [...ticketQueryKeys.all, 'internal-detail', community, id] as const,
   postLinksInternal: (community: string, postId: string) =>
-    ['ticket', 'post-links-internal', community, postId] as const,
+    [...ticketQueryKeys.all, 'post-links-internal', community, postId] as const,
   postProgress: (community: string, postInnerIds: readonly number[]) =>
-    ['ticket', 'post-progress', community, [...postInnerIds].sort((a, b) => a - b)] as const,
-  search: (community: string, query: string, type: string) =>
-    ['ticket', 'search', community, type, query.trim().toLowerCase()] as const,
+    [
+      ...ticketQueryKeys.all,
+      'post-progress',
+      community,
+      [...postInnerIds].sort((a, b) => a - b),
+    ] as const,
+  searchInternal: (community: string, query: string, type: string) =>
+    [
+      ...ticketQueryKeys.all,
+      'search',
+      'internal',
+      community,
+      type,
+      query.trim().toLowerCase(),
+    ] as const,
+  assigneeCandidates: (community: string) =>
+    [...ticketQueryKeys.all, 'assignee-candidates', community] as const,
+  tagGroups: (community: string) => [...ticketQueryKeys.all, 'tag-groups', community] as const,
 }
 
 const kanban = (
@@ -136,7 +153,7 @@ const postLinksInternal = (community: string, postId: string) =>
 
 const internalPage = (community: string, filter: TTicketFilter, pagi: TPagiGraphQLInput) =>
   queryOptions({
-    queryKey: ['ticket', 'internal-page', community, filter, pagi] as const,
+    queryKey: ticketQueryKeys.internalPage(community, filter, pagi),
     queryFn: async () => {
       const data = await browserGraphQLRequest(ticketPageInternal, { community, filter, pagi })
       return data.ticketPageInternal
@@ -168,7 +185,7 @@ const searchInternal = (
   type: 'USER' | 'WORKER' | 'CASE' = 'USER',
 ) =>
   queryOptions({
-    queryKey: ticketQueryKeys.search(community, query, type),
+    queryKey: ticketQueryKeys.searchInternal(community, query, type),
     queryFn: async () => {
       const data = await browserGraphQLRequest(ticketSearch, { community, query, type })
       return data.ticketSearch
@@ -178,7 +195,7 @@ const searchInternal = (
 
 const assigneeCandidates = (community: string) =>
   queryOptions({
-    queryKey: ['ticket', 'assignee-candidates', community] as const,
+    queryKey: ticketQueryKeys.assigneeCandidates(community),
     queryFn: async () => {
       const data = await browserGraphQLRequest(ticketAssigneeCandidates, {
         community,
@@ -196,7 +213,7 @@ const assigneeCandidates = (community: string) =>
 
 const tagGroups = (community: string) =>
   queryOptions({
-    queryKey: ['ticket', 'tag-groups', community] as const,
+    queryKey: ticketQueryKeys.tagGroups(community),
     queryFn: async () => {
       const data = await browserGraphQLRequest(ticketTagGroups, { community, thread: 'POST' })
       return data.communityTagGroups || []

@@ -11,7 +11,7 @@ defmodule GroupherServer.ReviewBot.Config do
   alias ReviewBot.Model.ReviewBotConfig
 
   @doc "Returns the platform policy and, for Article/Comment, the community policy."
-  @spec configs_for_target(pos_integer() | nil, :article | :comment | :doc) ::
+  @spec configs_for_target(pos_integer() | nil, :article | :comment) ::
           {:ok, %{system: ReviewBotConfig.t(), community: ReviewBotConfig.t() | nil}}
           | {:error, term()}
   def configs_for_target(community_id, subject_type)
@@ -20,13 +20,6 @@ defmodule GroupherServer.ReviewBot.Config do
     with {:ok, system} <- get_config(nil, subject_type),
          {:ok, community} <- get_optional_config(community_id, subject_type) do
       {:ok, %{system: system, community: community}}
-    end
-  end
-
-  def configs_for_target(community_id, :doc)
-      when is_integer(community_id) or is_nil(community_id) do
-    with {:ok, system} <- get_config(nil, :doc) do
-      {:ok, %{system: system, community: nil}}
     end
   end
 

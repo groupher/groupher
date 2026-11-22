@@ -1,5 +1,7 @@
 # AlertBoard / ReviewBot 实施批次与验收
 
+> **2026-11-14 Docs 目标更新：**本文关于 DocPublic、DocLifecycle、branch 和 Doc 专属审核 / 可见性路径的交付内容仅是当时实现证据。当前 Doc 与 Article 共用 Review target、ArticleLifecycle 和 Public 投影，站点归属按 ArticleBinding 校验；目标以 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 与 [AlertWall V2](./v2.md) 为准。
+
 > 版本说明：本文只记录 V1 的 D/N 批次；[V2：ReviewBot / AlertWall](./v2.md) 使用独立 R0–R7 批次；当前实现状态和验证结果以 V2 文档为准。
 
 > 状态：运行时代码与自动化验证记录见本轮 PR；2026-10-23 移除了普通 Article 的 Binding/Public 可见性投影列。真实浏览器验收、生产部署、目标环境维护切换和真实 provider/数据验收仍未完成，当前不能视为已上线。
@@ -79,8 +81,8 @@ D5 后旧举报 GraphQL、facade、query/report 模块、阈值 fold 调用点�
 - 删除 `schema/helper/mutations.ex` 与 `schema/cms/mutations/{post,blog,changelog,doc}.ex` 中旧 report mutations；
   删除 `resolvers/cms/interactions.ex`、`resolvers/cms/comments.ex` 的旧 resolver 分支。
 - 旧 GraphQL 查询入口和 resolver 分开清理：删除 `backend/api/lib/groupher_server_web/schema/cms/cms_queries.ex` 的 `paged_abuse_reports` field；删除 `backend/api/lib/groupher_server_web/resolvers/cms/reporting.ex` 的 `Reporting` resolver。
-- 旧 GraphQL contract 按定义位置清理，避免只删 query 而留下孤儿类型：删除 `backend/api/lib/groupher_server_web/schema/cms/cms_metrics.ex:280` 的 `report_filter`；删除 `backend/api/lib/groupher_server_web/schema/cms/cms_types.ex:1889` 的 `abuse_report_case`、`:1895` 的 `abuse_report`、`:2008` 的 `report_page`。其中 `abuse_report_case` 也是旧类型，不能因名称与新的 ReviewCase 相似而保留。
-- 旧账号举报投影按存储与 GraphQL 两层清理：删除 `backend/api/lib/groupher_server/accounts/model/embeds/user_meta.ex:83-84` 的 `reported_count` / `reported_user_ids`；删除 `backend/api/lib/groupher_server/accounts/model/embeds/user_contribute.ex` 中 `@optional_fields` 的 `reported_count`；删除 `backend/api/lib/groupher_server_web/schema/account/account_types.ex:51` 暴露的旧 `reported_count` 字段。
+- 旧 GraphQL contract 按定义位置清理，避免只删 query 而留下孤儿类型：删除 `backend/api/lib/groupher_server_web/schema/cms/cms_metrics.ex:280` 的 `report_filter`；删除 `backend/api/lib/groupher_server_web/schema/cms/spec.ex:1889` 的 `abuse_report_case`、`:1895` 的 `abuse_report`、`:2008` 的 `report_page`。其中 `abuse_report_case` 也是旧类型，不能因名称与新的 ReviewCase 相似而保留。
+- 旧账号举报投影按存储与 GraphQL 两层清理：删除 `backend/api/lib/groupher_server/accounts/model/embeds/user_meta.ex:83-84` 的 `reported_count` / `reported_user_ids`；删除 `backend/api/lib/groupher_server/accounts/model/embeds/user_contribute.ex` 中 `@optional_fields` 的 `reported_count`；删除 `backend/api/lib/groupher_server_web/schema/account/spec.ex:51` 暴露的旧 `reported_count` 字段。
   D5 不迁移旧计数。若新账号视图仍需 `reported_count`，N5 必须从 `AlertBoard.Reports` 事实聚合派生，并由新 resolver 显式暴露；不得继续读取或回写 `UserMeta` / `UserContribute`，也不得把旧 GraphQL 字段当成新字段的实现。
 - 删除 `maybe_fold_comment -> fold_for_report` 的阈值自动折叠调用；独立手动 fold 能力保留。
 - 删除旧 AbuseReport 对 viewer_has_reported 的事实写入调用点；保留通用 `CMS.Interactions.Projection.add_report/remove_report` mechanics，N4 仅接入新举报事实。

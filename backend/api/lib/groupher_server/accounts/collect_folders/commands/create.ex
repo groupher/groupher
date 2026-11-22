@@ -17,7 +17,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Commands.Create do
             params: [:attrs]
 
   direct_pipeline execute_pipeline(attrs, user) do
-    change(fn _user -> Persist.create(attrs, user) end)
+    change(fn _user, _operation_ref -> Persist.create(attrs, user) end)
   end
 
   @doc """

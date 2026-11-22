@@ -19,9 +19,9 @@ export default function CommunityBoundary({
   initialNow: number
   theme: TThemeSeed
 }) {
-  const { data: communityConfig } = useSuspenseQuery(Q.community.config(community))
-  const { data: dashboard } = useSuspenseQuery(Q.dsb.config(community))
-  const { data: wallpaper } = useSuspenseQuery(Q.wallpaper.config(community))
+  const { data: communityConfig } = useSuspenseQuery(Q.community.slug(community))
+  const { data: dashboard } = useSuspenseQuery(Q.dsb.slug(community))
+  const { data: wallpaper } = useSuspenseQuery(Q.wallpaper.slug(community))
 
   return (
     <CommunityShellProvider

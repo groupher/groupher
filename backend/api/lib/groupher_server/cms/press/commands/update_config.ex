@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Press.Commands.UpdateConfig do
   receipt_pipeline execute_pipeline(community, attrs, actor, command_id) do
     gate(fn candidate -> Gate.check_in_transaction(actor, :update, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, current} <- Query.config(canonical),
            changeset = Persist.changeset(canonical, current, attrs),
            {:ok, config} <- Persist.insert_or_update(changeset),
@@ -59,14 +59,14 @@ defmodule GroupherServer.CMS.Press.Commands.UpdateConfig do
              Activity.log(config, :config_updated,
                actor: actor,
                source: :admin,
-               operation_ref: command_id,
+               operation_ref: operation_ref,
                stream_ref: canonical.slug,
                occurred_at: config.updated_at,
                payload: changed_payload,
                changed_fields: Map.keys(changed_payload),
                metadata: %{revision: config.revision}
              ),
-           {:ok, _effect} <- Effects.enqueue_invalidation(canonical, command_id) do
+           {:ok, _effect} <- Effects.enqueue_invalidation(canonical, operation_ref) do
         {:ok, config}
       end
     end)

@@ -33,7 +33,9 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.Cancel do
       Gate.check_application_in_transaction(actor, :application_cancel, candidate)
     end)
 
-    change(fn canonical -> cancel_application(canonical, actor, expected_version) end)
+    change(fn canonical, _operation_ref ->
+      cancel_application(canonical, actor, expected_version)
+    end)
 
     confirm(fn canonical ->
       {:ok, Support.confirmation(Confirmation, canonical.id, command_id)}

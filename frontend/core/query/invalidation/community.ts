@@ -7,10 +7,10 @@ import type { TQueryInvalidationPlan, TQueryInvalidationTarget } from './types'
 const exact = (key: readonly unknown[]) => (queryKey: readonly unknown[]) =>
   key.length === queryKey.length && key.every((part, index) => queryKey[index] === part)
 
-/** Invalidates the public community configuration query. */
-export const config = (community: string): TQueryInvalidationTarget => ({
+/** Invalidates the public community query for a community. */
+export const slug = (community: string): TQueryInvalidationTarget => ({
   domain: 'community',
-  target: 'config',
+  target: 'slug',
   community,
 })
 
@@ -35,27 +35,18 @@ export const wallpaperEditor = (community: string): TQueryInvalidationTarget => 
   community,
 })
 
-/** Invalidates the press configuration query for a community. */
-export const pressConfig = (community: string): TQueryInvalidationTarget => ({
-  domain: 'community',
-  target: 'press-config',
-  community,
-})
-
 /** Resolves a community invalidation target into query-key matchers. */
 export const resolve = (target: TQueryInvalidationTarget): TQueryInvalidationPlan => {
   if (target.domain !== 'community') return { matches: [], refetch: 'active' }
 
   const key =
-    target.target === 'config'
-      ? communityKeys.config(target.community)
+    target.target === 'slug'
+      ? communityKeys.slug(target.community)
       : target.target === 'dashboard'
-        ? dsbKeys.config(target.community)
+        ? dsbKeys.slug(target.community)
         : target.target === 'wallpaper'
-          ? wallpaperKeys.config(target.community)
-          : target.target === 'wallpaper-editor'
-            ? wallpaperEditorKeys.config(target.community)
-            : communityKeys.pressConfig(target.community)
+          ? wallpaperKeys.slug(target.community)
+          : wallpaperEditorKeys.slug(target.community)
 
   return {
     matches: [{ domain: target.domain, target: target.target, matches: exact(key) }],

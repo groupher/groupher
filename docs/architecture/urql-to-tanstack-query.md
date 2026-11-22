@@ -9,7 +9,7 @@
 > Valtio server-state 双读均已收口。
 >
 > 2026-08-29 后续重组：公共 SSR no-user-spec、`Q.viewer` canonical batch、theme first-paint、
-> `Q.dsb.config`、`DsbEditStore`、TanStack save mutations、按领域 response normalizer、Dsb editor UI
+> `Q.dsb.slug`、`DsbEditStore`、TanStack save mutations、按领域 response normalizer、Dsb editor UI
 > owner、confirmed reconcile 与 server-owned cache-tag revalidation 已在本地实现。执行顺序与唯一外部发布门见
 > [`workflow_query_store_reorg.md`](../dash/query-store-workflow.md)，
 > 具体缓存与 Dsb 合同见 [`tanstack_rewrite/query_sync_cache.md`](../migrations/tanstack/query-sync-cache.md)
@@ -149,7 +149,7 @@ SSR 初始值还是 Valtio 中后续写入的数据。
   镜像写入 Valtio。
 - Valtio 继续管理 UI state，例如弹窗、编辑器草稿、折叠状态、选中项和临时交互
   状态。本阶段只完成职责分层，不因 UI state 数量较少而额外引入 TanStack Store。
-- Dsb 已确认配置由 `Q.dsb.config` 持有；可编辑 Dash 的未保存字段、`original` 和 touched
+- Dsb 已确认配置由 `Q.dsb.slug` 持有；可编辑 Dash 的未保存字段、`original` 和 touched
   由专用 `DsbEditStore` 持有。只读页面不再创建通用 Dsb Valtio store。
 - 可导航、可分享、刷新后需要恢复的页面状态由路由或 URL 管理。例如
   `isArticleLayout` 不应存入 Valtio：`/[community]/doc` 是 Doc cover，
@@ -1031,7 +1031,7 @@ TanStack Store。
 ### 其他 Valtio server state
 
 - ArticleStore 的 article detail 已完全剥离，目前 Provider 只承担 Doc 页面本地 UI state；
-- Dashboard store 不再持有 overview、CMS article/community list 等只读 Query 结果；`Q.dsb.config`
+- Dashboard store 不再持有 overview、CMS article/community list 等只读 Query 结果；`Q.dsb.slug`
   持有已确认配置，只有可编辑 Dash route 创建 `DsbEditStore`，直接持有当前编辑字段、`original/touched`
   和拖拽结果；不存在额外 `.draft` 或通用只读 `DsbStore`。具体 reconcile 与保存边界见
   [`dashboard_store_reorg.md`](../dash/store-reorganization.md)；

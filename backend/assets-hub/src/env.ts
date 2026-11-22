@@ -27,6 +27,8 @@ export const loadAssetsHubEnvironment = (
   environment: Record<string, string | undefined> = process.env,
   root = packageRoot,
 ): void => {
+  if (environment.DEV_HUB_MANAGED_ENVIRONMENT === 'true') return
+
   const fileEnvironment: Record<string, string> = {}
 
   dotenv.config({

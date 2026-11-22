@@ -1,6 +1,8 @@
 # Gate 读取与操作准入收口
 
-> 状态：Gate Scope 是唯一读取准入实现。2026-10-23 普通 Article 不再在 ArticleBinding/ArticlePublic 保存可见性投影，Gate 直接依据 Lifecycle 与 active ReviewRestriction 过滤；Doc 保留 branch-scoped DocPublic 投影。下列历史验收快照中的普通 Article visible-field 检查已由 Lifecycle/ReviewRestriction 场景替代。不得添加 FrontDesk/list 的可见性绕行判断。细项见 [基础模块执行记录](./backend-foundation-cleanup-and-codedoc.md#6-2026-10-22-实施与验证记录)。本文沿用现有 Gate 合同，不代表另建框架。
+> **2026-11-14 Docs 目标更新：**本文 2026-10 的 Doc branch / DocPublic Gate 规则和测试记录是旧运行态证据，不是新合同。Doc 与普通 Article 共用 ArticleLifecycle / ArticlePublic；站点成员资格按请求 Community 的 ArticleBinding 校验，当前公开正文取 ArticlePublic。新目标以 [Docs 发布队列合同](./docs-publish-queue-refactor.md) 为准。
+
+> 状态：Gate Scope 是唯一读取准入实现。2026-10-23 普通 Article 不再在 ArticleBinding/ArticlePublic 保存可见性投影，Gate 直接依据 Lifecycle 与 active ReviewRestriction 过滤；下列历史验收快照中的普通 Article visible-field 检查已由 Lifecycle/ReviewRestriction 场景替代。不得添加 FrontDesk/list 的可见性绕行判断。细项见 [基础模块执行记录](./backend-foundation-cleanup-and-codedoc.md#6-2026-10-22-实施与验证记录)。本文保留当时的 Gate 合同和证据，不代表新 Docs 目标。
 
 当前合同仍是 [Gate](../feature/gate/README.md)、其 typed context 细则及各资源 Lifecycle 合同。
 本文定义调用覆盖、重复规则清理和可执行验收；不设计 Sentinel 或新 Moderation 模型。

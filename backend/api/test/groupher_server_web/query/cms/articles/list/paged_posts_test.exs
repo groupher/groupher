@@ -57,7 +57,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{order: "PUBLISH"}}
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
@@ -124,7 +131,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{order: "VIEWS"}}
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       track_view(post, user)
       track_view(post, user2)
@@ -187,7 +201,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     test "should get valid article document", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       Process.sleep(2000)
-      {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       variables = %{pagi: %{offset: %{page: 1, size: 10}}, filter: %{}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -199,7 +220,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
     test "support article_tag filter", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       article_tag_attrs = mock_attrs(:community_tag)
 
@@ -236,9 +264,24 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
     test "support community filter", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
+
       post_attrs2 = mock_attrs(:post, %{community_id: community.id})
-      {:ok, _} = CMS.Articles.create(community, :post, post_attrs2, user)
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs2,
+          user
+        )
 
       variables = %{
         pagi: %{offset: %{page: 1, size: 10, config_revision: 0}},
@@ -320,7 +363,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   describe "[query paged_posts filter sort]" do
     test "filter community should get posts which belongs to that community",
          ~m(guest_conn community user)a do
-      {:ok, post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -332,7 +381,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     end
 
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
-      {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -397,9 +452,29 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     test "public content never exposes viewer-private fields", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
-      {:ok, post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
-      {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
-      {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)

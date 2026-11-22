@@ -10,7 +10,7 @@ export default function PageControls({ page }: { page: TKanbanPage }) {
         重试
       </button>
     )
-  if (page.pageInfo?.__typename === 'OffsetPageInfo' && page.mode === 'page')
+  if (page.pageInfo?.__typename === 'OffsetPageInfo' && page.mode === 'PAGE')
     return <Pagi pageInfo={page.pageInfo} onChange={page.setPage} />
   return (
     <CursorPagination

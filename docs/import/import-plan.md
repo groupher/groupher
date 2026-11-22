@@ -73,13 +73,12 @@ Platform Source
   "target": {
     "communityRef": "community_01",
     "thread": "doc",
-    "branch": "main",
     "targetRevision": "tree_rev_18"
   },
   "operations": [
     {
       "operationRef": "op_1",
-      "kind": "upsert_document",
+      "type": "upsert_document",
       "externalRef": "docs/start.md",
       "sourceHash": "sha256:aaa",
       "targetRef": "doc_101",
@@ -89,7 +88,7 @@ Platform Source
     },
     {
       "operationRef": "op_2",
-      "kind": "create_document",
+      "type": "create_document",
       "externalRef": "docs/config.md",
       "sourceHash": "sha256:bbb",
       "route": "/guide/config",
@@ -97,7 +96,7 @@ Platform Source
     },
     {
       "operationRef": "op_3",
-      "kind": "replace_tree",
+      "type": "replace_tree",
       "treeRef": "artifact://dataset_01/tree"
     }
   ],
@@ -182,7 +181,7 @@ previewRef
 datasetRef + dataset digest
 source revision
 analyzer/version
-community/thread/branch
+community/thread
 targetRevision
 operations digest
 expiresAt

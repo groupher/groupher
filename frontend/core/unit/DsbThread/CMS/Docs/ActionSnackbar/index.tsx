@@ -4,21 +4,23 @@ import { m } from 'motion/react'
 import type { FC } from 'react'
 
 import useOverlayDark from '~/hooks/useOverlayDark'
+import useTrans from '~/hooks/useTrans'
 
 import useDocsEditor from '../Editor/store/hooks'
 import ArticleActions from './ArticleActions'
 import { ACTION_SNACKBAR_LAYOUT_TRANSITION } from './constant'
-import Publish from './Publish'
-import usePublishChecklist from './Publish/usePublishChecklist'
+import PostPublishConflict from './PostPublishConflict'
+import QueueActions from './Publish/QueueActions'
+import usePublishQueue from './Publish/usePublishQueue'
 import useSalon from './salon'
 import SyncDraft from './SyncDraft'
-import TreeChangeStatus from './TreeChangeStatus'
 
 const ActionSnackbar: FC = () => {
   const s = useSalon()
   const overlayDark = useOverlayDark()
+  const { t } = useTrans()
   const { publishView } = useDocsEditor()
-  const publishChecklist = usePublishChecklist()
+  const queue = usePublishQueue()
   const treeOnly = publishView.surfaceMode === 'tree'
 
   if (publishView.surfaceMode === 'hidden') return null
@@ -31,10 +33,13 @@ const ActionSnackbar: FC = () => {
       data-theme={overlayDark ? 'dark' : undefined}
     >
       {treeOnly ? (
-        <TreeChangeStatus publishChecklist={publishChecklist.publishChecklist} />
+        <span>
+          {t('dsb.doc.queue.review')}: {queue.count}
+        </span>
       ) : (
         <div className={s.actionGroup}>
           <ArticleActions />
+          <PostPublishConflict />
         </div>
       )}
 
@@ -42,7 +47,7 @@ const ActionSnackbar: FC = () => {
 
       <div className={s.commitGroup}>
         {!treeOnly && <SyncDraft />}
-        <Publish variant={treeOnly ? 'tree' : 'article'} checklist={publishChecklist} />
+        <QueueActions queue={queue} />
       </div>
     </m.div>
   )

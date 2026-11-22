@@ -182,12 +182,12 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
   const saveContent = async (ensureWorkspace = false) => {
     const contentChanged =
       title.trim() !== ticket.title || (digest.trim() || '') !== (ticket.digest || '')
-    let draftVersion = ticket.draftVersion
+    let workingCopyRevision = ticket.workingCopyRevision
     const lifecycleVersion = ticket.lifecycleVersion
 
     if (
       (contentChanged || ensureWorkspace) &&
-      draftVersion === null &&
+      workingCopyRevision === null &&
       ticket.publicationState === 'PUBLISHED'
     ) {
       if (lifecycleVersion === null) throw new Error(t('ticket.management.failed'))
@@ -199,11 +199,11 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
           expectedLifecycleVersion: lifecycleVersion,
         },
       })
-      draftVersion = result.ensureTicketDraft?.draftVersion ?? null
+      workingCopyRevision = result.ensureTicketDraft?.workingCopyRevision ?? null
     }
 
     if (contentChanged) {
-      if (draftVersion === null || lifecycleVersion === null) {
+      if (workingCopyRevision === null || lifecycleVersion === null) {
         throw new Error(t('ticket.management.failed'))
       }
 
@@ -216,7 +216,7 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
             title: title.trim(),
             digest: digest.trim() || '',
           },
-          expectedDraftVersion: draftVersion,
+          revision: workingCopyRevision,
           expectedLifecycleVersion: lifecycleVersion,
         },
       })
@@ -510,7 +510,7 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
       !previewTicket ||
       !previewTicket.publicationPreview ||
       !visibilityReason.trim() ||
-      previewTicket?.draftVersion === null ||
+      previewTicket?.workingCopyRevision === null ||
       previewTicket?.lifecycleVersion === null
     ) {
       return
@@ -524,7 +524,7 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
             community: slug,
             id: ticket.id,
             reason: visibilityReason.trim(),
-            expectedDraftVersion: previewTicket?.draftVersion,
+            revision: previewTicket?.workingCopyRevision,
             expectedLifecycleVersion: previewTicket?.lifecycleVersion,
             expectedWorkflowVersion: previewTicket.workflowVersion ?? 0,
             expectedPreview: previewTicket.publicationPreview,

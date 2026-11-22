@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
       community_ref: "groupher",
       thread: :doc,
       article_id: article_id,
-      indexed_revision_id: revision_id,
+      indexed_snapshot_id: revision_id,
       title: "Search architecture",
       plain_text: "Platform-neutral search content",
       locator: %{community: "groupher", thread: :doc, inner_id: "12"},
@@ -49,12 +49,14 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
       comments_count: 2,
       inserted_at: now,
       updated_at: now,
-      content_hash: "content-hash",
       schema_version: 1
     }
 
     assert {:ok, decoded} = artiment |> Artiment.to_platform_map() |> Artiment.from_platform_map()
     assert decoded == artiment
+    assert Map.has_key?(Artiment.to_platform_map(artiment), "indexedSnapshotId")
+    refute Map.has_key?(Artiment.to_platform_map(artiment), "indexedRevisionId")
+    refute Map.has_key?(Artiment.to_platform_map(artiment), "contentHash")
   end
 
   test "normalizes search scope and keeps pagination separate" do
@@ -111,7 +113,7 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
       community_ref: "home",
       thread: :post,
       article_id: article_id,
-      indexed_revision_id: Ecto.UUID.generate(),
+      indexed_snapshot_id: Ecto.UUID.generate(),
       title: "Stable title",
       plain_text: "Stable body",
       locator: %{community: "home", thread: :post, inner_id: "1"},
@@ -119,7 +121,7 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
       comments_count: 2,
       inserted_at: now,
       updated_at: now,
-      content_hash: "stable-hash",
+      content_hash: nil,
       schema_version: 1
     }
 
@@ -136,6 +138,6 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
     assert updated.comments_count == 9
     assert updated.updated_at == updated_at
     assert updated.plain_text == "Stable body"
-    assert updated.content_hash == "stable-hash"
+    assert updated.indexed_snapshot_id == artiment.indexed_snapshot_id
   end
 end

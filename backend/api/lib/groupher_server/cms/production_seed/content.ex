@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.ProductionSeed
   alias Accounts.Model.User
-  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, DocPublic, DocBranchVersion, Community}
+  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Community}
 
   @fixtures [
               {"PX", :post, "dev"},
@@ -70,6 +70,36 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
 
   defp valid_input?(_), do: false
 
+  defp create_public_article(community, :doc, attrs, actor, command_id) do
+    CMS.Seeds.Docs.create(community, attrs, seed_publisher(actor), command_id)
+  end
+
+  defp create_public_article(community, thread, attrs, actor, command_id)
+       when thread in [:post, :blog, :changelog] do
+    with {:ok, %{article: article}} <-
+           CMS.Articles.create_and_publish_article(
+             community,
+             thread,
+             attrs,
+             seed_publisher(actor),
+             command_id: command_id
+           ),
+         {:ok, %{inner_id: inner_id}} <-
+           CMS.Articles.Bindings.fetch_binding(article.id, community.id),
+         {:ok, public} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: inner_id
+           }) do
+      {:ok, public}
+    end
+  end
+
+  # Only the admitted, fixed acceptance artifact uses this process-local authority.
+  # No passport or role is persisted; browser permission checks still use real accounts.
+  defp seed_publisher(actor), do: %{actor | cur_passport: %{"global" => %{"god" => true}}}
+
   defp seed!(run, input, checksum) do
     commands = input["commands"] || Repo.rollback(:seed_missing_command_ids)
     unless is_map(commands), do: Repo.rollback(:seed_invalid_command_ids)
@@ -95,7 +125,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
       |> Map.new(fn {{name, thread, slug}, attrs} ->
         public =
           command!(
-            CMS.Articles.create(
+            create_public_article(
               communities[slug],
               thread,
               %{
@@ -105,12 +135,12 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
                 body_bag: attrs["bodyBag"]
               },
               actor,
-              command_id: commands["article-#{name}"]
+              commands["article-#{name}"]
             ),
             name
           )
 
-        article = public.article
+        article = Repo.get!(Article, public.id)
         {name, describe(article, communities[slug], public)}
       end)
 
@@ -142,7 +172,8 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
           input["commentBodyBag"],
           actor,
           commands["comment-CM"]
-        )
+        ),
+        "comment-CM"
       )
 
     shared_comment =
@@ -154,7 +185,8 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
           input["commentBodyBag"],
           actor,
           commands["comment-sharedComment"]
-        )
+        ),
+        "comment-sharedComment"
       )
 
     probe = resources["deleteProbe"]
@@ -168,7 +200,8 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
           input["commentBodyBag"],
           actor,
           commands["comment-deleteProbeComment"]
-        )
+        ),
+        "comment-deleteProbeComment"
       )
 
     dx = resources["DX"]
@@ -182,7 +215,8 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
           input["commentBodyBag"],
           actor,
           commands["comment-docComment"]
-        )
+        ),
+        "comment-docComment"
       )
 
     ticket =
@@ -193,23 +227,29 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
           %{title: "Acceptance TX", digest: "Production acceptance User Ticket"},
           admin,
           commands["ticket-create"]
-        )
+        ),
+        "ticket-create"
       )
 
-    internal = command!(CMS.Tickets.get_internal(communities["dev"], ticket.id, admin))
+    internal =
+      command!(
+        CMS.Tickets.get_internal(communities["dev"], ticket.id, admin),
+        "ticket-get-internal"
+      )
 
     command!(
       CMS.Tickets.publish(
         communities["dev"],
         ticket.id,
         "Acceptance publication",
-        internal.draft_version,
+        internal.working_copy_revision,
         internal.lifecycle_version,
         internal.workflow_version,
         admin,
         commands["ticket-publish"],
         CMS.Tickets.Publication.preview_anchor(communities["dev"].id, ticket.id)
-      )
+      ),
+      "ticket-publish"
     )
 
     ticket_article = Repo.get!(Article, ticket.id)
@@ -248,13 +288,13 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
   defp describe(article, community, public) do
     binding = Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id)
 
-    %{
+    identity = %{"snapshotId" => Map.get(public, :snapshot_id)}
+
+    Map.merge(identity, %{
       "articleId" => article.id,
-      "branchId" => Map.get(public, :branch_id),
       "thread" => to_string(article.thread),
       "community" => community.slug,
       "innerId" => binding.inner_id,
-      "revisionId" => Map.get(public, :revision_id),
       "disposable" => community.slug == "tmp",
       "url" =>
         CMS.FrontDesk.article_url(%{
@@ -268,7 +308,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
         "thread" => to_string(article.thread),
         "innerId" => binding.inner_id
       }
-    }
+    })
   end
 
   defp describe_comment(comment, article) do
@@ -311,25 +351,10 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
             Repo.rollback(:seed_content_changed)
           end
 
-        resource["revisionId"] ->
-          public =
-            if resource["thread"] == "doc" do
-              Repo.get_by(DocPublic,
-                article_id: resource["articleId"],
-                branch_id: resource["branchId"]
-              )
-            else
-              Repo.get_by(ArticlePublic, article_id: resource["articleId"])
-            end
+        resource["snapshotId"] ->
+          public = Repo.get_by(ArticlePublic, article_id: resource["articleId"])
 
-          revision_id =
-            if resource["thread"] == "doc" and public do
-              Repo.get!(DocBranchVersion, public.branch_version_id).revision_id
-            else
-              public && public.revision_id
-            end
-
-          unless revision_id == resource["revisionId"] do
+          unless public && public.snapshot_id == resource["snapshotId"] do
             Repo.rollback(:seed_content_changed)
           end
 
@@ -343,7 +368,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
     manifest
   end
 
-  defp command!(result, label \\ "domain")
+  defp command!(result, label)
   defp command!({:ok, result}, _label), do: result
   defp command!({:error, reason}, label), do: Repo.rollback({:seed_command_failed, label, reason})
 end

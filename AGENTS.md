@@ -1,5 +1,25 @@
 # Repository Guidelines
 
+## Working in This Repository
+
+- Follow the user's authorization and preserve unrelated work in the current worktree. For frontend changes, discuss the approach first unless the user authorizes implementation.
+- Follow the relevant project workflow documentation, such as [validation](docs/infra/tooling/validation.md), [Dev Hub local environment](docs/architecture/dev-hub-local-environment.md), and [Gate V5](docs/feature/gate/v5.md).
+- Follow [docs/rules/naming.md](docs/rules/naming.md) for cross-project naming, including GraphQL operation and frontend Query names.
+- Select checks based on the changed behavior and its consumers. Start with [the validation matrix](docs/infra/tooling/validation.md); report checks that failed, were blocked, or were not run.
+- Local Git hooks are focused checks, not a substitute for relevant tests or CI. Inspect the staged diff before committing, especially after hooks that modify files.
+
+## Backend Test Failure Triage
+
+- When a broad backend suite reports failures, first rerun each failure as a focused test against a fresh, isolated test database. Separate a production regression from stale rows, test ordering, and shared-database contamination before changing production code.
+- Tests that inspect a whole-database report or aggregate must assert only on rows owned by their fixtures. Do not require global reports to be empty when other tests can leave valid rows behind.
+- Do not choose the "latest" event by timestamp alone when multiple events can share a timestamp. Select by a stable identity or assert against the exact event created by the operation under test.
+- For a timeout, use the stack trace and query path to find the slow operation, then reproduce it with a focused test on a fresh database. Fix the measured hot path; raise the timeout only when the longer runtime is intentional and supported by evidence.
+- During failure-driven work, rerun focused tests for each fix. Run the expensive full backend suite once after the final code and test changes on a clean database; repeat it only when subsequent changes or new evidence require it. Tell the user why a repeat is needed and report elapsed time and the exact result.
+
+## Local Application Runtime
+
+- When starting, stopping, restarting, diagnosing, or browser-checking local applications, follow [the Dev Hub local environment guide](docs/architecture/dev-hub-local-environment.md) and use `pnpm devhub` or the public Make entrypoints. Do not launch Vite, Phoenix, Workers, or another application server directly, choose an alternate port, or background an unmanaged process. `.managed` commands are for Dev Hub; documented test runners may own isolated listeners for their tests.
+
 ## Backend Time Fields
 
 - Treat application time as UTC. Use `DateTime.utc_now()` directly or `Helper.Datetime` helpers for current datetimes, dates, shifts, and date-window boundaries.

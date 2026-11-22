@@ -66,8 +66,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.update" => true
+          "community_tag.reindex" => true
         }
       }
 
@@ -171,8 +170,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "post.community_tag.update" => true
+          "community_tag.reindex" => true
         }
       }
 

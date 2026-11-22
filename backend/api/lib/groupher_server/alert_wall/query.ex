@@ -64,8 +64,8 @@ defmodule GroupherServer.AlertWall.Query do
         with {:ok, :pass} <- authorize(actor, "review.platform.read"), do: {:ok, item}
 
       %Item{community_id: community_id} = item ->
-        with {:ok, %Community{slug: slug}} <- community(community_id),
-             {:ok, :pass} <- authorize(actor, "review.read", %{community: slug}) do
+        with {:ok, %Community{} = community} <- community(community_id),
+             {:ok, :pass} <- authorize(actor, "review.read", %{community: community}) do
           {:ok, item}
         end
 
@@ -246,14 +246,25 @@ defmodule GroupherServer.AlertWall.Query do
 
   defp normalize_scope(%{type: :platform}), do: {:ok, nil, "review.platform.read"}
 
-  defp normalize_scope(%{type: :community, community: %Community{id: id, slug: slug}}) do
-    {:ok, id, {"review.read", %{community: slug}}}
+  defp normalize_scope(%{type: :community, community: %Community{} = community}) do
+    {:ok, community.id, {"review.read", %{community: community}}}
   end
 
   defp normalize_scope(_scope), do: {:error, CMS.passport_error_cat_permission_denied()}
 
   defp authorize(actor, {permission, params}), do: authorize(actor, permission, params)
   defp authorize(actor, permission), do: authorize(actor, permission, %{})
+
+  defp authorize(actor, permission, %{community: %Community{} = community}) do
+    with {:ok, scope} <- CMS.passport_community_scope(actor, community),
+         {:ok, true} <- CMS.passport_allowed?(actor, scope, permission) do
+      {:ok, :pass}
+    else
+      {:ok, false} -> {:error, CMS.passport_error_cat_permission_denied()}
+      {:error, _reason} = error -> error
+      _ -> {:error, CMS.passport_error_cat_permission_denied()}
+    end
+  end
 
   defp authorize(actor, permission, params) do
     case CMS.passport_authorization_check(actor, permission, params) do

@@ -11,22 +11,22 @@ import useSalon from './salon'
 
 const FEED_THREADS = [
   {
-    id: 'post',
+    id: 'POST',
     title: 'dsb.press.thread.post.title',
     desc: 'dsb.press.thread.post.desc',
   },
   {
-    id: 'blog',
+    id: 'BLOG',
     title: 'dsb.press.thread.blog.title',
     desc: 'dsb.press.thread.blog.desc',
   },
   {
-    id: 'changelog',
+    id: 'CHANGELOG',
     title: 'dsb.press.thread.changelog.title',
     desc: 'dsb.press.thread.changelog.desc',
   },
   {
-    id: 'doc',
+    id: 'DOC',
     title: 'dsb.press.thread.doc.title',
     desc: 'dsb.press.thread.doc.desc',
   },
@@ -37,7 +37,7 @@ export default function RSS() {
   const { t } = useTrans()
 
   const rss = useRSS()
-  const { rssFeedType, rssFeedCount, isTouched, edit, rssOnSave, rssOnCancel } = rss
+  const { feedType, feedCount, isTouched, setFeedType, setFeedCount, rssOnSave, rssOnCancel } = rss
 
   return (
     <div className={s.wrapper}>
@@ -104,15 +104,15 @@ export default function RSS() {
             items={[
               {
                 value: t('dsb.rss.feed_full'),
-                key: 'full',
+                key: 'FULL',
               },
               {
                 value: t('dsb.rss.feed_digest'),
-                key: 'digest',
+                key: 'DIGEST',
               },
             ]}
-            activeKey={rssFeedType}
-            onChange={(item) => edit(item.key, 'rssFeedType')}
+            activeKey={feedType}
+            onChange={(item) => setFeedType(item.key as 'FULL' | 'DIGEST')}
           />
         </div>
 
@@ -121,10 +121,10 @@ export default function RSS() {
           <RangeSlider
             width='w-48'
             bottom={12}
-            value={rssFeedCount}
+            value={feedCount}
             min={5}
             max={50}
-            onChange={(v) => edit(v, 'rssFeedCount')}
+            onChange={setFeedCount}
             unit={t('dsb.rss.unit')}
           />
         </div>

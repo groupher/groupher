@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Mirror do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.{BindingPersist, Publish.Target, Bindings.Tags}
+  alias CMS.Articles.{BindingPersist, BindingReview, Bindings.Tags}
   alias CMS.Articles.Commands.{BindingConfirmation, BindingSupport}
 
   @doc "Executes or replays one authorized mirror command."
@@ -47,12 +47,18 @@ defmodule GroupherServer.CMS.Articles.Commands.Mirror do
                    ) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :mirror, candidate, source) end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, binding} <- BindingPersist.mirror(canonical, destination),
            {:ok, binding} <- Tags.replace(binding, tag_ids),
-           {:ok, :pass} <- Target.register_binding_review(canonical, destination, command_id),
+           {:ok, :pass} <-
+             BindingReview.register_binding_review(canonical, destination, operation_ref),
            {:ok, _} <-
-             BindingSupport.invalidate_scope(destination, binding, canonical.thread, command_id),
+             BindingSupport.invalidate_scope(
+               destination,
+               binding,
+               canonical.thread,
+               operation_ref
+             ),
            {:ok, _destination} <-
              CMS.Communities.update_count_field(destination, canonical.thread) do
         {:ok, canonical}

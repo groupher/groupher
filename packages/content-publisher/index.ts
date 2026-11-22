@@ -1,4 +1,4 @@
-import type { TContentSource } from '@groupher/contracts/content-publish'
+import { CONTENT_BODY_SCHEMA_VERSION, type TContentSource } from '@groupher/contracts/content-publish'
 /**
  * Shared Node publisher for every Article and Content Import consumer.
  *
@@ -30,11 +30,19 @@ import { createBodyHash } from './hash'
 import { normalizeContentSource } from './normalize'
 import { sanitizeArtimentHtml } from './sanitize'
 import { createDigest, serializePlateJson } from './serialize'
+import { createArticleThumbnail } from './thumbnail'
 import type { TArtimentBodyBag } from './types'
 import { assertValidArtimentValue } from './validate'
 
+const assertBodySchemaVersion = (): void => {
+  if (RICH_EDITOR_SCHEMA_VERSION !== CONTENT_BODY_SCHEMA_VERSION) {
+    throw new Error('Rich editor and content body schema versions differ')
+  }
+}
+
 /** Validates one Plate value and derives the complete canonical persistence BodyBag. */
 export const publishArtiment = async (value: unknown): Promise<TArtimentBodyBag> => {
+  assertBodySchemaVersion()
   assertValidArtimentValue(value)
 
   const htmlPromise = serializeHtmlUnsafe(value)
@@ -54,6 +62,7 @@ export const publishArtiment = async (value: unknown): Promise<TArtimentBodyBag>
     digest: createDigest(plainText),
     bodyHash: createBodyHash(canonicalJson),
     schemaVersion: RICH_EDITOR_SCHEMA_VERSION,
+    thumbnail: createArticleThumbnail(value),
   }
 }
 
@@ -87,5 +96,6 @@ export {
   assertValidArtimentValue,
 } from './validate'
 export { normalizeContentSource } from './normalize'
+export { createArticleThumbnail } from './thumbnail'
 export * from './constants'
 export type { TContentSource } from '@groupher/contracts/content-publish'

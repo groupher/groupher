@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   alias CMS.Model.{Article, ArticleLifecycle}
   alias CMS.ReviewBlocks
 
-  @article_threads CMS.Artiment.Threads.identity_values_list() -- [:doc]
+  @article_threads CMS.Artiment.Threads.identity_values_list()
 
   @states [:draft, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -107,15 +107,14 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @doc "Locks and returns the Lifecycle row belonging to a stable Article."
   @spec lock(Article.t()) :: {:ok, ArticleLifecycle.t()} | {:error, ErrorCat.error()}
   def lock(%Article{id: article_id}) do
-    {:ok, :pass} = CMS.Articles.MutationLock.lock_community_admission(article_id)
-
-    ArticleLifecycle
-    |> where([lifecycle], lifecycle.article_id == ^article_id)
-    |> lock("FOR UPDATE")
-    |> Repo.one()
-    |> case do
-      %ArticleLifecycle{} = lifecycle -> {:ok, lifecycle}
-      nil -> {:error, ErrorCat.lifecycle_not_found()}
+    with {:ok, :pass} <- CMS.Articles.MutationLock.lock_community_admission(article_id) do
+      case ArticleLifecycle
+           |> where([lifecycle], lifecycle.article_id == ^article_id)
+           |> lock("FOR UPDATE")
+           |> Repo.one() do
+        %ArticleLifecycle{} = lifecycle -> {:ok, lifecycle}
+        nil -> {:error, ErrorCat.lifecycle_not_found()}
+      end
     end
   end
 
@@ -151,8 +150,10 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
       #=> {:ok, archived_count} | {:error, reason}
   """
   @spec archive_before(atom(), DateTime.t()) :: {:ok, non_neg_integer()} | {:error, term()}
+  def archive_before(:doc, %DateTime{}), do: {:error, CMS.ErrorCat.invalid_thread()}
+
   def archive_before(thread, threshold)
-      when thread in @article_threads and is_struct(threshold, DateTime) do
+      when thread in @article_threads and thread != :doc and is_struct(threshold, DateTime) do
     operation_ref = Ecto.UUID.generate()
 
     Workflow.transaction(fn ->

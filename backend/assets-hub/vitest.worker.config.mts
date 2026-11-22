@@ -12,9 +12,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [
     cloudflareTest({
-      experimental: {
-        newConfig: { configPath: './cloudflare.test.config.ts' },
-      },
+      config: './cloudflare.test.config.ts',
       // The Vitest plugin reads the binding from newConfig, but it does not yet
       // instantiate the referenced Durable Object service for the test runtime.
       miniflare: {

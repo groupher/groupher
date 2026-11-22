@@ -9,5 +9,5 @@ type TProps = ComponentProps<typeof LoadMore> & { mode: TPaginationMode }
 
 /** Selects the configured cursor interaction while sharing loading and explicit retry UI. */
 export default function CursorPagination({ mode, ...props }: TProps) {
-  return mode === 'infinite_scroll' ? <InfiniteScroll {...props} /> : <LoadMore {...props} />
+  return mode === 'INFINITE_SCROLL' ? <InfiniteScroll {...props} /> : <LoadMore {...props} />
 }

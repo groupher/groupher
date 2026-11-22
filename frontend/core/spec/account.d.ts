@@ -70,6 +70,11 @@ export type TUser = TSimpleUser & {
   }
 }
 
+/** Shared public identity projection returned by user search and picker queries. */
+export type TUserSearchResult = Required<
+  Pick<TUser, 'login' | 'nickname' | 'avatar' | 'bio' | 'shortbio'>
+>
+
 /** A validated signed-in user always has a Groupher login. */
 export type TAuthenticatedUser = TUser & { login: string }
 

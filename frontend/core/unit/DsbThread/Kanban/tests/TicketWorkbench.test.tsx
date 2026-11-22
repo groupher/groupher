@@ -100,7 +100,7 @@ const draftTicket: TTicket = {
   priority: 1,
   lifecycleVersion: 2,
   workflowVersion: 3,
-  draftVersion: 1,
+  workingCopyRevision: 1,
   publicationPreview: 'review-anchor',
   draftContent: {
     title: 'Saved public title',
@@ -148,7 +148,7 @@ const publicTicket: TTicket = {
   publicationState: 'PUBLISHED',
   canPublishPublicUpdates: true,
   lifecycleVersion: 4,
-  draftVersion: null,
+  workingCopyRevision: null,
   draftContent: null,
   publishedContent: {
     title: 'Saved public title',
@@ -223,7 +223,7 @@ describe('<TicketWorkbench />', () => {
     await waitFor(() => expect(mocks.executeCommand).toHaveBeenCalledTimes(1))
     expect(mocks.executeCommand.mock.calls[0][0].variables).toMatchObject({
       reason: 'Review completed',
-      expectedDraftVersion: 1,
+      revision: 1,
       expectedLifecycleVersion: 2,
       expectedWorkflowVersion: 3,
     })
@@ -277,7 +277,7 @@ describe('<TicketWorkbench />', () => {
     const current = {
       ...draftTicket,
       title: 'New title',
-      draftVersion: 2,
+      workingCopyRevision: 2,
       plainText: 'Full publication body',
       sources: [
         { id: 'source', type: 'POST', innerId: 71, title: 'Visible source', isPublic: true },
@@ -306,16 +306,16 @@ describe('<TicketWorkbench />', () => {
     fireEvent.click(preview.getByRole('button', { name: 'ticket.workbench.confirm_publish' }))
     await waitFor(() => expect(mocks.executeCommand).toHaveBeenCalledTimes(2))
     expect(mocks.executeCommand.mock.calls[1][0].variables).toMatchObject({
-      expectedDraftVersion: 2,
+      revision: 2,
       expectedPreview: 'review-anchor',
     })
   })
 
   it('offers content republishing while the Ticket stays Published', async () => {
-    mocks.executeCommand.mockResolvedValue({ ensureTicketDraft: { draftVersion: 1 } })
+    mocks.executeCommand.mockResolvedValue({ ensureTicketDraft: { workingCopyRevision: 1 } })
     mocks.queryClient.fetchQuery.mockResolvedValue({
       ...publicTicket,
-      draftVersion: 1,
+      workingCopyRevision: 1,
       publicationPreview: 'review-anchor',
     })
     render(<TicketWorkbench ticket={publicTicket} />)

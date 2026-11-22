@@ -44,12 +44,13 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
              CMS.Interactions,
              CMS.Press,
              CMS.Snapshot,
+             CMS.Outbox,
              CMS.Wallpaper,
              GroupherServer.AlertWall,
              GroupherServer.ReviewBot
            ])
 
-  @internal_entry_modules MapSet.new([CMS.Articles.Maintenance])
+  @internal_entry_modules MapSet.new([CMS.Articles.Maintenance, Helper.Scheduler])
 
   @doc "Builds a deterministic call graph report from the supplied Elixir source files."
   def build_report(files, contracts \\ %{}) when is_list(files) and is_map(contracts) do
@@ -567,6 +568,11 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
       end)
       |> MapSet.new(&function_key/1)
 
+    receipt_pipelines =
+      graph.functions
+      |> Enum.filter(&(&1.kind == :receipt_pipeline))
+      |> MapSet.new(&function_key/1)
+
     stage_scopes
     |> Enum.flat_map(fn %{pipeline: pipeline, stage: stage, edges: stage_edges} ->
       roots =
@@ -579,7 +585,11 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
 
       gate_targets
       |> MapSet.intersection(reachable)
-      |> Enum.reject(fn _target -> stage == :gate end)
+      |> Enum.reject(fn {_module, function, _arity} ->
+        stage == :gate or
+          (stage == :present and function == :access_check and
+             MapSet.member?(receipt_pipelines, pipeline))
+      end)
       |> Enum.map(fn target ->
         %{
           "pipeline" => function_manifest_by_key(pipeline),

@@ -1,7 +1,7 @@
 import { pick } from 'ramda'
 
 import type { TBroadcastConf, TBroadcastLayout, TEditFunc } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -19,7 +19,7 @@ type TRet = TBroadcastConf & {
 
 /** Exposes broadcast state and actions through the shared React hook boundary. */
 export default function useBroadcast(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { edit, isChanged, onSave, isPending } = useHelper()
 
   const isTouched = isChanged(FIELD.BROADCAST_LAYOUT) || isChanged(FIELD.BROADCAST_BG)

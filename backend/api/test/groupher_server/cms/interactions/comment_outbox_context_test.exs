@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{ArticleBinding, CommunitySubscriber}
+  alias CMS.Model.{ArticleBinding, CommandReceipt, CommunitySubscriber}
   alias CMS.Outbox.Event
   alias CMS.Outbox.Workflow.Interaction
 
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
       ~m(source mirror actor comment)a = context
       command_id = Ecto.UUID.generate()
       assert {:ok, _} = react(@reaction, comment, actor, command_id)
-      event = Repo.get_by!(Event, command_id: command_id)
+      event = Repo.get_by!(Event, operation_ref: receipt_operation(actor, command_id))
       assert event.data["community_id"] == mirror.id
       job = %Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 8}
       assert {:ok, :pass} = Interaction.perform(job)
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
     ~m(source mirror actor comment)a = context
     command_id = Ecto.UUID.generate()
     assert {:ok, _} = react(:emotion, comment, actor, command_id)
-    event = Repo.get_by!(Event, command_id: command_id)
+    event = Repo.get_by!(Event, operation_ref: receipt_operation(actor, command_id))
 
     Repo.delete_all(
       from(c in GroupherServer.ReviewBot.Model.ReviewBotConfig,
@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
       )
     )
 
-    Repo.delete!(mirror)
+    assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(mirror.slug)
 
     assert {:ok, :pass} =
              Interaction.perform(%Oban.Job{
@@ -81,17 +81,18 @@ defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
     refute Repo.get_by(CommunitySubscriber, community_id: source.id, user_id: actor.id)
   end
 
-  test "incomplete old intents deliver without guessing a subscription Community", context do
+  test "interaction intents carry their subscription Community", context do
     ~m(source mirror actor comment)a = context
 
     {:ok, event} =
-      CMS.Outbox.send(%{
+      enqueue_outbox(%{
         event: "interaction.upvote_changed",
         worker: GroupherServer.Jobs.CMSOutboxInteraction,
         resource_type: "comment",
         resource_id: comment.id,
-        command_id: Ecto.UUID.generate(),
-        data: %{actor_id: actor.id, operation: "add"}
+        operation_ref: Ecto.UUID.generate(),
+        dedupe_key: CMS.Outbox.DedupeKey.encode([comment.id, actor.id, "legacy-test"]),
+        data: %{actor_id: actor.id, operation: "add", community_id: mirror.id}
       })
 
     job = %Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 8}
@@ -99,14 +100,24 @@ defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
     assert {:ok, :pass} = Interaction.perform(job)
     assert Repo.get!(Event, event.id).status == :done
 
-    for community <- [source, mirror],
-        do:
-          refute(Repo.get_by(CommunitySubscriber, community_id: community.id, user_id: actor.id))
+    assert Repo.get_by(CommunitySubscriber, community_id: mirror.id, user_id: actor.id)
+    refute Repo.get_by(CommunitySubscriber, community_id: source.id, user_id: actor.id)
+  end
+
+  defp enqueue_outbox(attrs) do
+    case Repo.transaction(fn -> CMS.Outbox.send(attrs) end) do
+      {:ok, result} -> result
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp react(:upvote, comment, actor, id), do: CMS.Interactions.upvote(comment, actor, id)
 
   defp react(:emotion, comment, actor, id) do
     CMS.Interactions.emotion(comment, :heart, actor, id)
+  end
+
+  defp receipt_operation(actor, command_id) do
+    Repo.get_by!(CommandReceipt, initiator_key: to_string(actor.id), command_id: command_id).operation_ref
   end
 end

@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useFooterLinks from '~/hooks/useFooterLinks'
-import useDsb from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 describe('useFooterLinks', () => {
   it('returns footer links projection', () => {

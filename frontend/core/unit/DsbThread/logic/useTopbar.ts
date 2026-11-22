@@ -1,5 +1,5 @@
 import type { TColorName, TEditFunc } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -15,7 +15,7 @@ type TRet = {
 
 /** Exposes topbar state and actions through the shared React hook boundary. */
 export default function useTopbar(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { isChanged, edit, isPending } = useHelper()
 
   const { topbarEnabled, topbarBg } = dsb$

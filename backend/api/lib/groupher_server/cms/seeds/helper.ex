@@ -54,9 +54,9 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
     Tags.get(community, thread, type)
     |> Enum.with_index()
-    |> Enum.each(fn {attrs, index} ->
-      workflow_ref = "seed-helper-tags:#{community.id}:#{thread}:#{index}"
-      Maintenance.create(community, thread, attrs, bot, workflow_ref)
+    |> Enum.each(fn {attrs, _index} ->
+      operation_ref = Ecto.UUID.generate()
+      Maintenance.create(community, thread, attrs, bot, operation_ref)
     end)
   end
 

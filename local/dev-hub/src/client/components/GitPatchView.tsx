@@ -10,7 +10,10 @@ type TProps = {
 export function GitPatchView({ patch, revision }: TProps) {
   const files = useMemo(() => {
     const occurrences = new Map<string, number>()
-    return parsePatchFiles(patch, `dev-hub-${revision}`, true)
+    return parsePatchFiles(patch, {
+      cacheKeyPrefix: `dev-hub-${revision}`,
+      throwOnError: true,
+    })
       .flatMap((item) => item.files)
       .map((file) => {
         const identity = `${file.prevName || ''}-${file.name}`

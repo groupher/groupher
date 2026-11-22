@@ -15,7 +15,11 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Article do
     :article_lifecycle,
     :community,
     :community_lifecycle,
-    :passport_rules,
+    :passport_global_scope,
+    :community_passport_scope,
+    :article_passport_scope,
+    :published_article_editable?,
+    :published_article_editing_error,
     review_scope_keys: [],
     review_restricted?: false
   ]
@@ -25,7 +29,11 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Article do
           article_lifecycle: struct(),
           community: struct(),
           community_lifecycle: struct(),
-          passport_rules: map() | nil,
+          passport_global_scope: struct() | nil,
+          community_passport_scope: struct() | nil,
+          article_passport_scope: struct() | nil,
+          published_article_editable?: boolean() | nil,
+          published_article_editing_error: term() | nil,
           review_scope_keys: [String.t()],
           review_restricted?: boolean()
         }

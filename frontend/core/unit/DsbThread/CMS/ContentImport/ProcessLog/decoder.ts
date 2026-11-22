@@ -10,21 +10,21 @@ import type {
   TImportProcessUnit,
 } from './spec'
 
-const PROCESS_STATES = new Set<TImportProcessState>(['queued', 'running', 'completed', 'failed'])
+const PROCESS_STATES = new Set<TImportProcessState>(['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED'])
 const PROCESS_STAGES = new Set<TImportProcessStage>([
-  'analyzing',
-  'building_preview',
-  'preparing',
-  'applying',
+  'ANALYZING',
+  'BUILDING_PREVIEW',
+  'PREPARING',
+  'APPLYING',
 ])
 const PROCESS_UNITS = new Set<TImportProcessUnit>([
-  'document',
-  'release',
-  'discussion',
-  'post',
-  'comment',
+  'DOCUMENT',
+  'RELEASE',
+  'DISCUSSION',
+  'POST',
+  'COMMENT',
 ])
-const ITEM_STATES = new Set<TImportProcessItem['state']>(['completed', 'failed', 'skipped'])
+const ITEM_STATES = new Set<TImportProcessItem['state']>(['COMPLETED', 'FAILED', 'SKIPPED'])
 
 const record = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value)
@@ -32,7 +32,7 @@ const record = (value: unknown): Record<string, unknown> =>
     : {}
 
 const enumValue = <T extends string>(value: unknown, values: Set<T>, fallback: T): T => {
-  const normalized = typeof value === 'string' ? value.toLowerCase() : ''
+  const normalized = typeof value === 'string' ? value.toUpperCase() : ''
   return values.has(normalized as T) ? (normalized as T) : fallback
 }
 
@@ -47,7 +47,7 @@ export const decodeImportProcess = (value: unknown): TImportProcess => {
       ? {
           completed: typeof progressInput.completed === 'number' ? progressInput.completed : 0,
           total: typeof progressInput.total === 'number' ? progressInput.total : undefined,
-          unit: enumValue(progressInput.unit, PROCESS_UNITS, 'document'),
+          unit: enumValue(progressInput.unit, PROCESS_UNITS, 'DOCUMENT'),
         }
       : undefined,
     recentBatch: recentBatch.slice(0, 5).map((item) => {
@@ -55,11 +55,11 @@ export const decodeImportProcess = (value: unknown): TImportProcess => {
       return {
         label: typeof recent.label === 'string' ? recent.label : '',
         ref: typeof recent.ref === 'string' ? recent.ref : '',
-        state: enumValue(recent.state, ITEM_STATES, 'completed'),
+        state: enumValue(recent.state, ITEM_STATES, 'COMPLETED'),
       }
     }),
-    stage: enumValue(input.stage, PROCESS_STAGES, 'analyzing'),
-    state: enumValue(input.state, PROCESS_STATES, 'running'),
+    stage: enumValue(input.stage, PROCESS_STAGES, 'ANALYZING'),
+    state: enumValue(input.state, PROCESS_STATES, 'RUNNING'),
     updatedAt: typeof input.updatedAt === 'string' ? input.updatedAt : new Date(0).toISOString(),
   }
 }

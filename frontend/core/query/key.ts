@@ -94,7 +94,7 @@ export const isCanonicalDefaultArticleFilter = (filter: TPagedArticlesParams): b
 
 /** Constructors for public Article content, stats, tag, and list query identities. */
 export const articleQueryKeys = {
-  all: ['article-shared-comments-v1'] as const,
+  all: ['article'] as const,
   pagiPosts: (
     filter: TPagedArticlesParams,
     config: TEffectivePagiConfig = DEFAULT_EFFECTIVE_PAGI_CONFIG,
@@ -137,7 +137,7 @@ export const articleQueryKeys = {
 
 /** Constructors for Comment list and reconcile query identities. */
 export const commentKeys = {
-  all: ['comment-shared-v1'] as const,
+  all: ['comment'] as const,
   articlePrefix: (community: string, thread: TThread, innerId: string | number) =>
     [...commentKeys.all, 'list', community, thread, String(innerId)] as const,
   list: (
@@ -207,17 +207,12 @@ export const viewerQueryKeys = {
       [...commentInnerIds].sort(),
     ] as const,
   commentSummary: (accountScope: string, articleKey: string) =>
-    [
-      ...viewerQueryKeys.all,
-      accountScope || 'anonymous',
-      'comment-summary-shared-v1',
-      articleKey,
-    ] as const,
+    [...viewerQueryKeys.all, accountScope || 'anonymous', 'comment-summary', articleKey] as const,
   myReportsPrefix: (accountScope: string) =>
     [...viewerQueryKeys.all, accountScope || 'anonymous', 'my-reports'] as const,
   myReports: (accountScope: string, page: number) =>
     [...viewerQueryKeys.myReportsPrefix(accountScope), page] as const,
-  contentReview: (accountScope: string, target: unknown) =>
+  artimentReview: (accountScope: string, target: unknown) =>
     [...viewerQueryKeys.all, accountScope || 'anonymous', 'content-review', target] as const,
 }
 

@@ -9,6 +9,14 @@ pre-commit:
       files: node scripts/lefthook-files.mjs backend/api
       run: cd backend/api && mix lint.context
 
+    - name: check resolver boundary
+      files: node scripts/lefthook-files.mjs backend/api/lib/groupher_server_web/resolvers
+      run: pnpm check:resolver-boundary
+
+    - name: check business return shape
+      files: node scripts/lefthook-files.mjs backend/api/lib
+      run: pnpm check:business-return-shape
+
     - name: format json and markdown
       files: node scripts/lefthook-files.mjs . json md
       run: pnpm exec oxfmt -c frontend/core/config/oxfmt.json {files}

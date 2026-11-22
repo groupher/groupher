@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
-import type { CmsReviewTargetInput, ReviewAction } from '~/graphql/generated/graphql'
+import type { ArtimentReviewTargetInput, ReviewAction } from '~/graphql/generated/graphql'
 import useTrans from '~/hooks/useTrans'
 import { invalidatePrefix } from '~/query/invalidation'
 
@@ -10,14 +10,11 @@ import History from './History'
 import {
   approveArticleReview,
   approveCommentReview,
-  approveDocReview,
   rejectArticleReview,
   rejectCommentReview,
-  rejectDocReview,
-  pendingContentReviews,
+  pendingArtimentReviews,
   recheckArticleReview,
   recheckCommentReview,
-  recheckDocReview,
 } from './schema'
 
 const DECISION_ACTIONS = [
@@ -39,26 +36,26 @@ export default function PendingQueue({ community }: { community?: string }) {
     queryKey,
     queryFn: async () =>
       (
-        await browserGraphQLRequest(pendingContentReviews, {
+        await browserGraphQLRequest(pendingArtimentReviews, {
           scope,
           limit: 50,
           offset: (page - 1) * 50,
         })
-      ).pendingContentReviews,
+      ).pendingArtimentReviews,
   })
   const decide = useMutation({
     mutationFn: async ({
       target,
       action,
     }: {
-      target: CmsReviewTargetInput
+      target: ArtimentReviewTargetInput
       action: Extract<ReviewAction, 'APPROVE' | 'REJECT'>
     }) => {
       const type = target.type
-      if (type !== 'ARTICLE' && type !== 'COMMENT' && type !== 'DOC') {
+      if (type !== 'ARTICLE' && type !== 'COMMENT') {
         throw new Error('Unsupported review target.')
       }
-      const key = `${type}:${target.articleId || target.commentId}:${target.branchId || ''}:${action}`
+      const key = `${type}:${target.articleId || target.commentId}:${action}`
       const commandId = commandIds.current.get(key) || crypto.randomUUID()
       commandIds.current.set(key, commandId)
       if (type === 'ARTICLE') {
@@ -67,15 +64,6 @@ export default function PendingQueue({ community }: { community?: string }) {
             return browserGraphQLRequest(approveArticleReview, { target, commandId })
           case 'REJECT':
             return browserGraphQLRequest(rejectArticleReview, { target, commandId })
-        }
-      }
-
-      if (type === 'DOC') {
-        switch (action) {
-          case 'APPROVE':
-            return browserGraphQLRequest(approveDocReview, { target, commandId })
-          case 'REJECT':
-            return browserGraphQLRequest(rejectDocReview, { target, commandId })
         }
       }
 
@@ -89,13 +77,13 @@ export default function PendingQueue({ community }: { community?: string }) {
     onSuccess: async (_result, variables) => {
       const target = variables.target
       commandIds.current.delete(
-        `${target.type}:${target.articleId || target.commentId}:${target.branchId || ''}:${variables.action}`,
+        `${target.type}:${target.articleId || target.commentId}:${variables.action}`,
       )
       await invalidatePrefix(client, queryKey)
     },
   })
   const recheck = useMutation({
-    mutationFn: async ({ target, key }: { target: CmsReviewTargetInput; key: string }) => {
+    mutationFn: async ({ target, key }: { target: ArtimentReviewTargetInput; key: string }) => {
       const commandId = commandIds.current.get(key) || crypto.randomUUID()
       commandIds.current.set(key, commandId)
       if (target.type === 'ARTICLE') {
@@ -107,13 +95,6 @@ export default function PendingQueue({ community }: { community?: string }) {
       }
       if (target.type === 'COMMENT') {
         return browserGraphQLRequest(recheckCommentReview, {
-          target,
-          scope,
-          commandId,
-        })
-      }
-      if (target.type === 'DOC') {
-        return browserGraphQLRequest(recheckDocReview, {
           target,
           scope,
           commandId,
@@ -144,21 +125,18 @@ export default function PendingQueue({ community }: { community?: string }) {
         <ul className='divide-divider border-divider divide-y rounded-lg border'>
           {pending.data.map((request) => {
             const type = request.targetType
-            const target: CmsReviewTargetInput | null =
+            const target: ArtimentReviewTargetInput | null =
               type === 'ARTICLE' && request.articleId
                 ? { type, articleId: request.articleId, communityId: request.communityId }
                 : type === 'COMMENT' && request.commentId
                   ? { type, commentId: request.commentId, communityId: request.communityId }
-                  : type === 'DOC' && request.articleId && request.branchId
-                    ? { type, articleId: request.articleId, branchId: request.branchId }
-                    : null
+                  : null
 
             return (
               <li key={request.artimentReviewId} className='grid gap-3 p-4'>
                 <div>
                   <p className='font-medium'>
-                    {type.toLowerCase()} ·{' '}
-                    {request.articleId || request.commentId || request.branchId}
+                    {type.toLowerCase()} · {request.articleId || request.commentId}
                   </p>
                   <p className='text-digest mt-1 text-sm'>
                     {request.state.toLowerCase()} · {request.reviewMode || '—'}
@@ -200,7 +178,7 @@ export default function PendingQueue({ community }: { community?: string }) {
                       onClick={() =>
                         recheck.mutate({
                           target,
-                          key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}:${target.branchId ?? 'main'}`,
+                          key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}`,
                         })
                       }
                     >

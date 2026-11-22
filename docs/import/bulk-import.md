@@ -101,19 +101,19 @@ Bulk v1 的 Review 只检查结构、目标映射、数量和 warning，不在�
 
 ### 3.2 首版不做
 
-| 能力                     | 首版处理                                                              |
-| ------------------------ | --------------------------------------------------------------------- |
-| ZIP 上传                 | 延后，在 GitHub 流程稳定后复用同一检查与导入页面                      |
-| 线上文档 URL 全站抓取    | 延后，单独研究站点树发现、抓取边界和正文提取                          |
-| 私有 GitHub 仓库         | 延后，需要授权、凭据和权限生命周期设计                                |
-| 手动选择 branch/path     | 延后，首版只使用默认分支和完整仓库                                    |
-| 部分文档勾选             | 延后，首版全量导入                                                    |
-| Review 单篇正文预览      | 延后，与部分 Page 选择和 Preview cache 一起设计                       |
-| 对已导入仓库增量 re-sync | 延后；同仓库再次全量导入会复用 Mapping 并覆盖，尚不提供逐篇 diff/sync |
-| 导入到多个已有 Tab       | 延后，首版避免复杂的逐项目标映射                                      |
-| 覆盖、合并已有 Page      | 只允许显式确认后覆盖同来源 mapped Pages；未映射碰撞仍阻断             |
-| 完整冲突解决 UI          | 延后；首版检测到冲突即阻断                                            |
-| 自动发布                 | 不做，只进入主 Draft                                                  |
+| 能力                     | 首版处理                                                                  |
+| ------------------------ | ------------------------------------------------------------------------- |
+| ZIP 上传                 | 延后，在 GitHub 流程稳定后复用同一检查与导入页面                          |
+| 线上文档 URL 全站抓取    | 延后，单独研究站点树发现、抓取边界和正文提取                              |
+| 私有 GitHub 仓库         | 延后，需要授权、凭据和权限生命周期设计                                    |
+| 手动选择 branch/path     | 延后，首版只使用默认分支和完整仓库                                        |
+| 部分文档勾选             | 延后，首版全量导入                                                        |
+| Review 单篇正文预览      | 延后，与部分 Page 选择和 Preview cache 一起设计                           |
+| 对已导入仓库增量 re-sync | 延后；同仓库再次全量导入会复用 Mapping 并覆盖，尚不提供逐篇 diff/sync     |
+| 导入到多个已有 Tab       | 延后，首版避免复杂的逐项目标映射                                          |
+| 覆盖、合并已有 Page      | 后端会复用同来源 mapped Pages 并 source-wins 覆盖；服务端显式确认尚未实现 |
+| 完整冲突解决 UI          | 延后；冲突检测尚未实现，当前 Validator 返回空 conflicts                   |
+| 自动发布                 | 不做，只进入主 Draft                                                      |
 
 ### 3.3 产品首版与重构工作量不是同一个范围
 
@@ -398,7 +398,9 @@ Guides                         Guides
 
 ## 10. 冲突处理原则
 
-长期原则是：冲突必须由用户确认，不静默覆盖，不静默合并，也不在用户不可见的情况下自动改名。
+目标原则是：冲突必须由用户确认，不静默覆盖，不静默合并，也不在用户不可见的情况下自动改名。
+
+当前实现还没有达到这个目标：StartDocContentImport GraphQL/Phoenix intent 没有覆盖 acknowledgement 字段，因此服务端不能验证用户是否确认过 mapped Page 覆盖；Phoenix Docs Validator 目前也固定返回空 `conflicts`，未映射目标碰撞不会被检测或阻断。以下内容定义目标行为，不代表这些保护已上线。
 
 需要区分“同一已映射来源再次导入”和“未映射目标碰撞”：
 
@@ -433,7 +435,7 @@ Guides                         Guides
 
 ## 11. Review 操作区
 
-新来源首版不增加独立确认页或二次弹窗。第二步 Review 在操作按钮上方展示不可跳过的摘要；用户点击一次带实际 Page 数量的按钮后直接触发 apply。若 Target Preview 表明同一 Repo/branch 已存在 Mapping，则例外弹出一次风险说明；这不是冲突阻断，用户选择继续后必须执行 source-wins 覆盖：
+目标交互是不增加独立确认页或二次弹窗：第二步 Review 在操作按钮上方展示不可跳过的摘要；用户点击一次带实际 Page 数量的按钮后直接触发 apply。若 Target Preview 表明同一 Repo/branch 已存在 Mapping，则例外弹出一次风险说明；这不是冲突阻断，用户选择继续后执行 source-wins 覆盖。当前实现尚未提供该风险确认，也没有服务端 acknowledgement 校验；具体缺项见 §18.1：
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -466,7 +468,7 @@ Guides                         Guides
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-按钮必须使用实际 Page 数量，避免用户误以为只是在创建结构。未映射目标冲突存在时按钮保持禁用；已映射来源覆盖只显示风险，不禁用继续操作。用户点击“继续并覆盖”后，Apply intent 携带 acknowledgement，Phoenix 重新校验来源身份、Mapping 和 `targetRevision`，校验通过即执行覆盖。按钮 disabled 仍不能替代服务端幂等和 targetRevision 校验。
+目标交互中的按钮必须使用实际 Page 数量，避免用户误以为只是在创建结构。当前 Phoenix Validator 尚未实现未映射目标冲突检测，`conflicts` 暂时始终为空；界面不能声称已按此类冲突禁用按钮。冲突检测是未完成项，完成后未映射目标冲突必须阻止 Apply；已映射来源覆盖只显示风险。当前 StartDocContentImport intent 不含 acknowledgement，服务端无法验证用户确认；该合同与 UI 都是未完成项。按钮 disabled 仍不能替代服务端幂等和 targetRevision 校验。
 
 ## 12. 第三步：导入进度
 
@@ -648,7 +650,7 @@ Browser ── POST /previews/:previewRef/apply ──► Dashboard Next.js API
 - Cloudflare R2 是对象存储，不是数据库。首版为 Dashboard 项目创建一个 private store，按 `content-import/previews/{previewRef}/...` 隔离 Preview；不为每个社区或仓库单独创建 store。
 - Node/TS Publisher 在用户确认后把 Markdown/MDX 逐 Page 转换为 Groupher BodyBag，并以 count/bytes 双上限批次同步给 Phoenix；这里的“逐 Page”是 Bulk Job 的 item 粒度，不是编辑器单篇导入产品。
 - Phoenix 是社区权限的唯一事实来源。Import Worker 在创建 Preview 前调用 Phoenix `checkPassport` 做提前反馈；用户确认并创建正式 Job 的 mutation 再次执行 `doc.import` Passport middleware。Job 创建后的内部 stage/apply 是 Server Trust 对已授权 Job 的后台延续，不增加第三套用户权限判断，也不在 Node 复制权限规则。
-- Phoenix 在用户确认前只接收 bounded `sourceInfo + SourceTree`，以只读方式查询当前 Docs 状态、生成 TargetTree、检查冲突并返回 `targetRevision`；不创建 Job，不保存来源正文。
+- Phoenix 在用户确认前只接收 bounded `sourceInfo + SourceTree`，以只读方式查询当前 Docs 状态、生成 TargetTree 并返回 `targetRevision`；当前 `conflicts` 字段始终为空，未映射目标冲突检测尚未实现。不创建 Job，不保存来源正文。
 - Phoenix 负责创建正式 ContentImport Job、重新检查目标状态、持久化导入事实、BodyBag staging、幂等和原子 apply；Bulk v1 不进入 AssetStager lifecycle。
 - 用户确认前，archive 只存在于 `analyzeSource` Step 的流和临时工作区；筛选后的候选正文与 Preview 结果写入 Private Blob，不发送给 Phoenix。SourceTree 是允许跨 Step/服务边界的结构化小对象。
 - 首版不引入 URL crawler，也不需要为 GitHub Bulk Import 新增 Python 抓取流程。
@@ -733,9 +735,9 @@ query PreviewDocContentImportTarget(
 ```
 
 - 该 query 校验 SourceTree schema/version/规模，只读取当前社区 Docs 状态，不创建 Connection、Snapshot、Plan 或 Job。
-- `targetRevision` 标识规划时主 Docs Draft/Tree 的状态。首版语义固定为 main branch identity 与 `DocsSiteState.tree_lock_version` 的版本化组合；API 可以返回 opaque string，但不能改成与 Tree revision 无关的随机 token。main branch 或 state 尚未惰性初始化时与 revision `0` 等价。
+- `targetRevision` 是有长度上限的 opaque JSON 编码，包含站点 Queue 的 `tree_lock_version`、`queue_revision`，以及每个 Doc 的 lifecycle version、working-copy id/revision 和 public snapshot id。它因此同时覆盖目录导航变化和单篇 Doc 编辑；不能缩窄成单独的 `tree_lock_version` 或无关的随机 token。
 - Node 将 TargetTree、conflicts 和 targetRevision 合并进 Preview DTO；原始正文仍保存在当前 `previewRef` 的 Private Blob 前缀下。
-- Apply mutation 必须在包含整个写入过程的同一个 Phoenix `Repo` transaction 中解析 main branch，再获取普通 Doc Tree 写入共用的 PostgreSQL transaction advisory lock：`doc_tree:<community_id>:<branch_id>`，然后读取当前 `tree_lock_version` 并比较 targetRevision。
+- Apply mutation 必须在包含整个写入过程的同一个 Phoenix `Repo` transaction 中取得 Docs 站点锁 `docs_site:<community_id>`（`DocTree.Publish.SiteLock`），然后重新读取上述完整目标状态并比较 targetRevision；不得再解析或锁定 Docs branch。
 - targetRevision 已变化时必须回滚并返回 `target_revision_conflict`，要求用户重新 Review。创建 Job 或 apply 不能静默重新规划并接受一套用户没有确认过的新映射。
 - targetRevision 未变化时继续持有同一把锁，直到 BodyBag/Draft 写入、Tree upsert、revision bump、ImportSourceMapping 更新和 Job completion 一起提交。不能在事务外做 `read → compare → write`，也不能只依赖所有写入方未共同参与的孤立 CAS。
 
@@ -820,7 +822,7 @@ Dashboard 只接收可展示的安全 DTO：
 4. Files SDK 后的 `PreviewStore` 保存不可变 `PreviewRecord + DocsDataset + Review artifact`，使用固定 `attemptRef`、write-once run association 和 attempt-local ready receipt。
 5. Import Worker 复用 document-importer/content-publisher，把 Markdown 转换为 BodyBag；固定容量为 2 MiB Plate input、每批最多 4 篇、完整 GraphQL request JSON 最多 6 MiB。
 6. Phoenix 只保留 ImportJob、JobItem、PostgreSQL BodyBag staging、Docs Validator/Writer 和 ImportSourceMapping。单篇 canonical BodyBag 最多 5 MiB，由 Phoenix 编码并记录权威 `body_size_bytes`。
-7. Writer 在一个数据库事务和 main Doc Tree advisory lock 内验证 `targetRevision`、过滤 skipped Page、写 Draft/Tree/Mapping、完成 Job 并删除 staging。same-hash stage、completed stage/apply 重放均幂等。
+7. Writer 在一个数据库事务和 Docs 站点锁内验证 `targetRevision`、过滤 skipped Page、写 Draft/Tree/Mapping、完成 Job 并删除 staging。same-hash stage、completed stage/apply 重放均幂等。
 8. 旧 Snapshot/Preparation/Plan/Checkpoints/PayloadStore、Phoenix GitHub/archive/framework 路径、Changelog/AssetStager 半成品和相关旧表已直接移除，不保留兼容读写或数据迁移。
 
 ### 17.2 已验收与后续
@@ -860,7 +862,7 @@ Cloudflare R2 是类似 S3 的对象存储，不是关系型数据库，也不�
 - [x] 无源 Tab 固定进入 `Introduction`；单/多源 Tab 保留源名称；Review 中不显示伪目标选择器。
 - [x] Review 只检查 SourceTree、TargetTree、标题、slug、数量和 warning；首版不在确认前转换或预览单篇正文。
 - [x] Review 操作区内联展示全量导入摘要，并通过一次带实际 Page 数量的按钮直接 apply，不增加独立确认页或二次弹窗。
-- [ ] 同一 Repo/branch 命中既有 Mapping 时，Review 返回 mapped Page 数量并显示覆盖风险；用户点击“继续并覆盖”后 Phoenix 校验 acknowledgement 并执行覆盖，不能再以重复/冲突为由禁止导入。
+- [ ] 同一 Repo/branch 命中既有 Mapping 时，Review 返回 mapped Page 数量并显示覆盖风险；为 StartDocContentImport intent 增加并校验 acknowledgement，确保用户确认后才执行 source-wins 覆盖。当前 GraphQL/Phoenix 合同没有该字段，服务端不会验证确认。
 - [ ] 冲突页只提供真实可执行的“返回仓库”和“重新检查目标状态”，不出现不存在的 branch/path/逐 Tab 映射操作。
 - [ ] 转换结果显示失败/跳过 Page、来源路径、阶段、错误码和原因；普通转换失败不能跳过，只有稳定的 `content_too_large` 可排除该 Page 后继续。
 - [x] 全部有效 Page 转换成功后才 atomic apply；过滤后的 TargetTree 必须与有效 items 一致；零可导入项不 apply，任一失败都不留下用户可见的残缺树或正文。
@@ -871,7 +873,8 @@ Cloudflare R2 是类似 S3 的对象存储，不是关系型数据库，也不�
 - [x] 创建 Preview 前调用 Phoenix `checkPassport(community, "doc.import")`；正式 Job create/start mutation 使用同一 action 的 Passport middleware 再次强制校验，后续 stage/apply 仅接受 `service:content-import` 的 operation-scoped continuation。
 - [x] Import Worker 流式下载固定 commit 的 archive，不把完整压缩包或解压结果放入进程内存。
 - [x] 用户确认前，Phoenix 不创建正式 ContentImport Job，不接收 archive、解压文件或正文集合。
-- [x] Node 只把 versioned SourceTree/sourceInfo 发送给 Phoenix；Phoenix 只读返回 TargetTree、conflicts 和 targetRevision。
+- [x] Node 只把 versioned SourceTree/sourceInfo 发送给 Phoenix；Phoenix 只读返回 TargetTree、conflicts 字段和 targetRevision。当前 `conflicts` 始终为空，冲突检测仍未实现。
+- [ ] Phoenix 检测未映射 TargetTree 与现存 Docs 项之间的冲突，返回稳定 conflict 列表，并在 Apply 前阻止未确认的冲突。
 - [ ] 七类 Node adapter 已通过 basic golden parity；继续补齐变体，并完成固定公开仓库 Preview 验收。
 - [x] 保持生产请求不按 framework 回退 Elixir analyzer；新 Files SDK/staging 链路验收后删除 Phoenix 旧 analyzer，未来 ZIP 也复用同一 Node Source Analyzer。
 - [x] Apply 时 Phoenix 验证 Review intent 和 targetRevision；变化后失败并要求重新 Review，不能静默规划新目标或覆盖并发修改。

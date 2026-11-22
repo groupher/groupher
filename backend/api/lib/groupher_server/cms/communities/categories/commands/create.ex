@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Create do
   receipt_pipeline execute_pipeline(community, attrs, actor, command_id) do
     gate(fn candidate -> Gate.check_in_transaction(actor, :category_create, candidate) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
            attrs <-
              attrs

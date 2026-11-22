@@ -1,25 +1,13 @@
-export const ARTICLE_THREAD = {
-  POST: 'POST',
-  BLOG: 'BLOG',
-  CHANGELOG: 'CHANGELOG',
-  DOC: 'DOC',
-  KANBAN: 'KANBAN',
-} as const
+import { valueKeyedEnum } from '~/lib/enumValues'
+import { ArticleThread, KanbanBoard, Thread } from '~/lib/graphql/generated/enums'
 
-export const KANBAN_BOARD = {
-  TODO: 'TODO',
-  WIP: 'WIP',
-  DONE: 'DONE',
-} as const
+export const ARTICLE_THREAD = valueKeyedEnum(ArticleThread)
 
-export const THREAD = {
-  ...ARTICLE_THREAD,
-  ACCOUNT: 'ACCOUNT',
-  // for groupher
+export const KANBAN_BOARD = valueKeyedEnum(KanbanBoard)
 
-  ABOUT: 'ABOUT',
-  DASHBOARD: 'DASHBOARD',
-} as const
+const { USER: _user, ...THREAD_VALUES } = valueKeyedEnum(Thread)
+
+export const THREAD = THREAD_VALUES
 
 const ARTICLE_THREAD_PATH = {
   POST: 'post',

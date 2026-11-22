@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   alias CMS.Gate.Context.Access.Article, as: ArticleContext
   alias CMS.Gate.Context.Access.Doc, as: DocContext
   alias CMS.Gate.{Decision, Config, ErrorCat}
-  alias CMS.Model.{Article, Comment, Community, DocBranch}
+  alias CMS.Model.{Article, Comment, Community}
 
   @article_threads Config.article_threads()
 
@@ -53,6 +53,57 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   end
 
   def community(_actor, _action, _resource), do: unsupported_resource()
+
+  @doc "Checks Community preview admission inside a read-only repeatable-read transaction."
+  def community_snapshot(actor, action, %Community{} = community)
+      when action in [:docs_queue_preview, :docs_history_read, :docs_queue_configure] do
+    with {:ok, :pass} <- snapshot_transaction(),
+         {:ok, context} <- Load.community_snapshot(actor, community),
+         %Decision{allowed: true} <-
+           Decision.from_result(
+             Policy.community(actor, action, context.community, context),
+             context
+           ) do
+      {:ok, context.community}
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+      {:error, _} = error -> error
+    end
+  end
+
+  def community_snapshot(_, _, _), do: unsupported_resource()
+
+  @doc "Checks a Doc's read or edit policy using facts from the caller's read-only snapshot."
+  def doc_snapshot(actor, action, %Community{} = community, %Article{thread: :doc} = article)
+      when action in [:read, :edit] do
+    with {:ok, :pass} <- snapshot_transaction(),
+         {:ok, context} <- Load.doc_site_snapshot(actor, community, article),
+         %Decision{allowed: true} = decision <-
+           Decision.from_result(Policy.article(actor, action, context), context) do
+      {:ok, canonical_resource(context_resource(decision.context), decision.context.community)}
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+      {:error, _} = error -> error
+    end
+  end
+
+  def doc_snapshot(_, _, _, _), do: unsupported_resource()
+
+  defp snapshot_transaction do
+    if Repo.in_transaction?() do
+      case Repo.query(
+             "SELECT current_setting('transaction_read_only'), current_setting('transaction_isolation')"
+           ) do
+        {:ok, %{rows: [["on", "repeatable read"]]}} -> {:ok, :pass}
+        {:ok, _} -> {:error, ErrorCat.gate_transaction_required()}
+        {:error, _} = error -> error
+      end
+    else
+      {:error, ErrorCat.gate_transaction_required()}
+    end
+  end
 
   @doc "Authorizes a Community and invokes a callback inside its existing row lock."
   @spec with_authorized_community(term(), atom(), Community.t(), (Community.t() -> term())) ::
@@ -87,11 +138,11 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
          {:ok, article} <- parent_article(comment),
          {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment),
          {:ok, result} <-
-           with_parent_lock(community, article, nil, fn ->
+           with_parent_lock(community, article, fn ->
              with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
                   %Decision{allowed: true} <-
                     Decision.from_result(
-                      Policy.comment(actor, action, comment, context),
+                      Policy.comment(actor, action, context),
                       context
                     ) do
                {:ok,
@@ -124,6 +175,17 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       Check.article(actor, :edit, post)
       #=> {:ok, canonical_post} | {:error, %Gate.Decision{}}
   """
+  def article(actor, :manage_coauthors, %Article{} = resource) do
+    with {:ok, context} <- Load.article_author_management(actor, resource),
+         %Decision{allowed: true} = decision <-
+           Decision.from_result(Policy.article(actor, :manage_coauthors, context), context) do
+      {:ok, decision.context.article}
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+    end
+  end
+
   def article(actor, action, %model{} = resource) when model in @article_models do
     _ = {actor, action, resource}
     {:error, Decision.deny(ErrorCat.resource_not_found())}
@@ -140,9 +202,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, thread} <- article_thread(resource) do
       Articles.MutationLock.with_article(community, resource, fn ->
         with {:ok, context} <- Load.article(actor, community, thread, resource),
+             {:ok, context} <- Articles.EditingPolicy.load(context, action),
              %Decision{allowed: true} <-
                Decision.from_result(
-                 Policy.article(actor, action, resource, context),
+                 Policy.article(actor, action, context),
                  context
                ) do
           {:ok, canonical_resource(context_resource(context), context.community)}
@@ -156,17 +219,6 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       end)
     end
   end
-
-  @doc "Checks access to one stable Doc Article in an explicit branch."
-  @spec doc(term(), atom(), Article.t(), pos_integer()) ::
-          {:ok, Article.t()} | {:error, Decision.t()}
-  def doc(actor, action, %Article{thread: :doc} = resource, branch_id)
-      when is_integer(branch_id) do
-    _ = {actor, action, resource, branch_id}
-    {:error, Decision.deny(ErrorCat.resource_not_found())}
-  end
-
-  def doc(_actor, _action, _resource, _branch_id), do: unsupported_resource()
 
   @doc """
   Loads, authorizes and invokes a callback after the caller has acquired the
@@ -189,7 +241,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.comment(actor, action, context.comment, context),
+             Policy.comment(actor, action, context),
              context
            ) do
       decision.context.comment
@@ -215,7 +267,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.comment(actor, action, context.comment, context),
+             Policy.comment(actor, action, context),
              context
            ) do
       parent = canonical_resource(decision.context.article, decision.context.community)
@@ -232,9 +284,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       when is_function(callback, 1) do
     with {:ok, thread} <- article_thread(article),
          {:ok, context} <- Load.article(actor, community, thread, article),
+         {:ok, context} <- Articles.EditingPolicy.load(context, action),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.article(actor, action, context_resource(context), context),
+             Policy.article(actor, action, context),
              context
            ) do
       decision.context
@@ -255,36 +308,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       when is_function(callback, 1) do
     with {:ok, thread} <- article_thread(article),
          {:ok, context} <- Load.article_in_community(actor, community, thread, article),
+         {:ok, context} <- Articles.EditingPolicy.load(context, action),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.article(actor, action, context_resource(context), context),
-             context
-           ) do
-      decision.context
-      |> context_resource()
-      |> canonical_resource(decision.context.community)
-      |> callback.()
-      |> normalize_callback_result()
-    else
-      %Decision{} = decision -> {:error, decision}
-      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
-    end
-  end
-
-  @doc "Authorizes one stable Doc Article in an explicit branch inside an existing lock."
-  @spec with_authorized_doc(term(), atom(), tuple(), (Article.t() -> term())) ::
-          {:ok, term()} | {:error, term()}
-  def with_authorized_doc(
-        actor,
-        action,
-        {community, %Article{thread: :doc} = article, branch_id},
-        callback
-      )
-      when is_integer(branch_id) and is_function(callback, 1) do
-    with {:ok, context} <- Load.doc(actor, community, article, branch_id),
-         %Decision{allowed: true} = decision <-
-           Decision.from_result(
-             Policy.article(actor, action, context_resource(context), context),
+             Policy.article(actor, action, context),
              context
            ) do
       decision.context
@@ -340,17 +367,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
 
   defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
 
-  defp with_parent_lock(%Community{} = community, %Article{thread: :doc} = article, _, fun) do
-    case Repo.get_by(DocBranch, community_id: community.id, type: :main) do
-      %DocBranch{id: branch_id} ->
-        Articles.MutationLock.with_article(community, :doc, branch_id, article.id, fun)
-
-      nil ->
-        {:error, ErrorCat.doc_branch_required()}
-    end
-  end
-
-  defp with_parent_lock(community, article, _branch_id, fun) do
+  defp with_parent_lock(community, article, fun) do
     Articles.MutationLock.with_article(community, article, fun)
   end
 end

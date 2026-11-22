@@ -42,7 +42,9 @@ defmodule GroupherServer.CMS.Assets.Commands.Restore do
       end
     end)
 
-    change(fn {canonical, candidate} -> Persist.restore(canonical, candidate.id) end)
+    change(fn {canonical, candidate}, _operation_ref ->
+      Persist.restore(canonical, candidate.id)
+    end)
 
     confirm(fn restored ->
       {:ok, %Confirmation{data: %{"asset_id" => restored.id, "command_id" => command_id}}}

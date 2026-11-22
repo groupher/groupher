@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 const deleteCommunityTag = graphql(`
+  "Delete a tag by thread"
   mutation DeleteCommunityTag($commandId: ID!, $id: ID!, $community: String!, $thread: Thread) {
     deleteCommunityTag(commandId: $commandId, id: $id, community: $community, thread: $thread) {
       id
@@ -8,6 +9,7 @@ const deleteCommunityTag = graphql(`
   }
 `)
 const createCommunityTag = graphql(`
+  "Create a tag"
   mutation CreateCommunityTag(
     $commandId: ID!
     $thread: Thread!
@@ -35,6 +37,7 @@ const createCommunityTag = graphql(`
   }
 `)
 const updateCommunityTag = graphql(`
+  "Update a tag"
   mutation UpdateCommunityTag(
     $commandId: ID!
     $id: ID!

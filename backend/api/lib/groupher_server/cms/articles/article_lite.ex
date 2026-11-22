@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         doc_active_at: [
           field_dynamic: {GroupherServer.CMS.Articles.ActivityTime, :effective_doc, []},
           ecto_type: :utc_datetime,
-          bindings: [:stable_doc_state, :stable_public]
+          bindings: [:stable_public]
         ],
         views: [
           field_dynamic: {__MODULE__, :stats_field, [field: :views]},
@@ -214,7 +214,6 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         article_community: community,
         article_author_user: user,
         article_tag_rows: tag_rows,
-        stable_doc_state: state,
         stable_public: public
       ],
       %{
@@ -226,9 +225,11 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         binding_id: binding.id,
         title: public.title,
         digest: public.digest,
-        active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, state, public),
+        snapshot_id: public.snapshot_id,
+        active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, public),
         published_at: public.published_at,
-        doc_active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, state, public),
+        public_updated_at: public.updated_at,
+        doc_active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, public),
         inserted_at: article.inserted_at
       }
     )
@@ -254,8 +255,10 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         binding_id: binding.id,
         title: public.title,
         digest: public.digest,
+        snapshot_id: public.snapshot_id,
         active_at: article.active_at,
         published_at: public.published_at,
+        public_updated_at: public.updated_at,
         doc_active_at: nil,
         inserted_at: article.inserted_at
       }

@@ -174,6 +174,21 @@ defmodule GroupherServer.CMS.Assets.Workflow do
     end
   end
 
+  @doc "Releases a claimed step back to pending without recording success or failure."
+  def release_step(%AssetWorkflowStep{id: id}, owner) do
+    now = DateTime.utc_now(:second)
+
+    case Repo.update_all(
+           from(step in AssetWorkflowStep,
+             where: step.id == ^id and step.status == :claimed and step.locked_by == ^owner
+           ),
+           set: [status: :pending, locked_by: nil, lease_expires_at: nil, updated_at: now]
+         ) do
+      {1, _} -> {:ok, :pass}
+      _ -> {:error, :workflow_step_stale_lease}
+    end
+  end
+
   @doc "Marks a claimed step failed or conflicted while releasing its lease."
   def fail_step(%AssetWorkflowStep{id: id}, owner, reason, status \\ :failed) do
     now = DateTime.utc_now(:second)

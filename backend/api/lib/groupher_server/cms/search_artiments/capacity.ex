@@ -18,8 +18,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
 
   alias CMS.Model.{
     Article,
-    ArticleBodySnapshot,
-    ArticleRevision,
+    ArticlePublic,
+    ArticlePublicBody,
     Comment,
     CommentLifecycle,
     CommentReviewBlock
@@ -32,14 +32,14 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   @doc """
   Measures the source volume used for search platform cost estimates.
 
-  Returns per-thread public article counts, immutable body plain text byte
+  Returns per-thread public article counts, current public body plain text byte
   stats, and comment counts with body byte percentiles.
   """
   @spec measure() :: map()
   def measure do
     %{
       articles: article_counts(),
-      article_documents: article_body_bytes(),
+      article_documents: article_documents(),
       comments: comment_counts()
     }
   end
@@ -55,28 +55,36 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
     end)
   end
 
-  defp article_body_bytes do
-    ArticleRevision
-    |> join(:inner, [revision], article in Article, on: article.id == revision.article_id)
-    |> join(:inner, [revision, _article], body in ArticleBodySnapshot,
-      on: body.id == revision.body_snapshot_id
-    )
-    |> group_by([_revision, article, _body], article.thread)
-    |> select([_revision, article, body], {
-      article.thread,
-      count(body.id),
-      avg(fragment("octet_length(?)", body.plain_text)),
-      max(fragment("octet_length(?)", body.plain_text))
-    })
-    |> Repo.all()
-    |> Map.new(fn {thread, count, average, maximum} ->
+  @doc "Measures Article-only public body bytes after Gate admission, independently of Comment storage."
+  def article_documents do
+    @article_threads
+    |> Enum.map(fn thread ->
+      visible_ids =
+        Article
+        |> CMS.Gate.scope(nil, :list, scope_context(thread))
+        |> select([article, ...], article.id)
+        |> distinct(true)
+
+      {count, average, maximum} =
+        from(public in ArticlePublic,
+          join: body in ArticlePublicBody,
+          on: body.article_id == public.article_id and body.snapshot_id == public.snapshot_id,
+          where: public.article_id in subquery(visible_ids),
+          select:
+            {count(body.article_id), avg(fragment("octet_length(?)", body.plain_text)),
+             max(fragment("octet_length(?)", body.plain_text))}
+        )
+        |> Repo.one()
+
       {thread,
        %{
          count: count,
          average_plain_text_bytes: decimal_to_number(average),
-         maximum_plain_text_bytes: maximum || 0
+         maximum_plain_text_bytes: default_zero(maximum)
        }}
     end)
+    |> Enum.reject(fn {_, stats} -> stats.count == 0 end)
+    |> Map.new()
   end
 
   defp comment_counts do
@@ -139,7 +147,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   defp decimal_to_number(%Decimal{} = value), do: Decimal.to_float(value)
   defp decimal_to_number(value), do: value
 
-  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(:doc), do: DocContext.public()
   defp scope_context(thread), do: ArticleContext.public(thread)
 
   defp default_zero(nil), do: 0

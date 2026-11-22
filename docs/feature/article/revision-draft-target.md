@@ -1,5 +1,8 @@
 # Article Revision / Draft 目标架构
 
+> 历史实现与迁移盘点材料：本文仅用于核对旧 Draft / ArticleRevision / Public 实现及迁移范围，不是新基座目标合同。新 Article 内容模型、命令、字段和验收以 [WorkingCopy / Snapshot](./working-copy-snapshot-target.md) 为准；遇到冲突时不得按本文实施新链路。
+> Docs 的 D/Q、无 Branch 目录、审批与 Release 目标及当前进展见 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md)。下文的 Doc 分支、Draft / Revision 和历史状态仅作为旧机制盘点证据，不表示新链路继续保留这些模型；其他 thread 的状态不在本次 Docs 文档整理中重新判定。
+
 > Ticket V2 的 Lifecycle 与内容接入已落地：[Ticket V2](../tickets/v2.md)统一 `draft`、由数据库 trigger 保证只写一次的 `first_published_at`，并通过 Ticket Content 适配层使用 Article Draft/Revision/Public。Ticket 首次编辑由 EnsureDraft 建立工作区；Ticket 不进入普通 Article typed extension。相关本地测试见 [V2 实施追踪 R02–R04/R08](../tickets/inventory.md#v2-实施追踪)。旧 Article/Ticket 数据清理只在指定环境切换时执行，尚未运行。
 
 > 2026-10-22 审核合同更新：本文旧内容 legal/illegal/audit_failed 与 Sentinel/计划 Moderation

@@ -26,9 +26,6 @@ defmodule GroupherServer.PressPreview.Fixtures do
     ArticleBinding,
     ArticleLifecycle,
     Community,
-    DocLifecycle,
-    DocPublic,
-    DocTreeNode
   }
 
   @slug "press-preview"
@@ -50,38 +47,9 @@ defmodule GroupherServer.PressPreview.Fixtures do
                 })
 
               for thread <- [:post, :blog, :changelog, :doc] do
-                {_, article, _, _} = Factory.mock_article(thread, community, user)
+                {_, _article, _, _} = Factory.mock_article(thread, community, user)
 
-                if thread == :doc do
-                  for attrs <- [
-                        %{node_id: "press-tab", type: :tab, title: "Docs", index: 0},
-                        %{
-                          node_id: "press-group",
-                          parent_node_id: "press-tab",
-                          type: :group,
-                          title: "Guide",
-                          index: 0
-                        },
-                        %{
-                          node_id: "press-page",
-                          parent_node_id: "press-group",
-                          doc_id: article.id,
-                          type: :page,
-                          title: article.title,
-                          index: 0
-                        }
-                      ] do
-                    %DocTreeNode{}
-                    |> DocTreeNode.changeset(
-                      Map.merge(attrs, %{
-                        community_id: community.id,
-                        branch_id: article.branch_id,
-                        stage: :public
-                      })
-                    )
-                    |> Repo.insert!()
-                  end
-                end
+
               end
 
               {:ok, _config} =
@@ -128,12 +96,14 @@ defmodule GroupherServer.PressPreview.Fixtures do
         Repo.transaction(fn ->
           lifecycle = locked_lifecycle(thread)
           source_ref = "press-preview-#{Ecto.UUID.generate()}"
+          operation_ref = Ecto.UUID.generate()
 
           {:ok, restriction} =
             CMS.ReviewBlocks.apply(lifecycle, %{
               scope_key: "platform",
               type: :manual_hold,
               source_ref: source_ref,
+              operation_ref: operation_ref,
               source: :human,
               applied_at: DateTime.utc_now(:second)
             })
@@ -141,7 +111,7 @@ defmodule GroupherServer.PressPreview.Fixtures do
           %{
             thread: thread,
             restriction_id: restriction.id,
-            operation_ref: source_ref,
+            operation_ref: operation_ref,
             transitions: 1
           }
         end)
@@ -387,9 +357,8 @@ defmodule GroupherServer.PressPreview.Fixtures do
     events =
       Repo.all(
         from(event in CMS.Outbox.Event,
-          where:
-            event.event == "article.visibility_changed" and
-              like(event.effect_key, ^("%" <> result.operation_ref <> "%"))
+          where: event.event == "article.visibility_changed" and
+                   event.operation_ref == ^result.operation_ref
         )
       )
 
@@ -405,6 +374,8 @@ defmodule GroupherServer.PressPreview.Fixtures do
   end
 
   defp deliver(id, deadline) do
+    event = Repo.get!(CMS.Outbox.Event, id)
+
     _result =
       CMS.Outbox.Workflow.Article.perform(%Oban.Job{
         args: %{"event_id" => id},
@@ -415,7 +386,9 @@ defmodule GroupherServer.PressPreview.Fixtures do
     children =
       Repo.all(
         from(e in CMS.Outbox.Event,
-          where: e.command_id == ^id and e.identity_type == :workflow
+          where:
+            e.operation_ref == ^event.operation_ref and
+              e.event in ["press.cache_invalidation", "article.search_sync", "article.cdn_purge"]
         )
       )
 
@@ -467,22 +440,11 @@ defmodule GroupherServer.PressPreview.Fixtures do
     %{articles: articles} = snapshot()
     article = Enum.find(articles, &(&1.thread == thread))
 
-    if thread == :doc do
-      public = Repo.get_by!(DocPublic, article_id: article.id)
-
-      Repo.one!(
-        from(lifecycle in DocLifecycle,
-          where: lifecycle.article_id == ^article.id and lifecycle.branch_id == ^public.branch_id,
-          lock: "FOR UPDATE"
-        )
+    Repo.one!(
+      from(lifecycle in ArticleLifecycle,
+        where: lifecycle.article_id == ^article.id and lifecycle.thread == ^thread,
+        lock: "FOR UPDATE"
       )
-    else
-      Repo.one!(
-        from(lifecycle in ArticleLifecycle,
-          where: lifecycle.article_id == ^article.id,
-          lock: "FOR UPDATE"
-        )
-      )
-    end
+    )
   end
 end

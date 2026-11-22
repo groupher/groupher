@@ -16,9 +16,8 @@ defmodule GroupherServer.CMS.Communities.Count do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Articles.Trash
   alias CMS.Communities.ErrorCat
-  alias CMS.Model.{Article, ArticleBinding, Community, CommunityTag}
+  alias CMS.Model.{Article, Community, CommunityTag}
   alias Helper.{ORM, T, Transaction}
 
   @threads CMS.Communities.Config.threads()
@@ -87,15 +86,24 @@ defmodule GroupherServer.CMS.Communities.Count do
   @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, thread) do
     if thread in @threads do
-      active_articles = Trash.not_trashed_scope(Article, thread)
-      public_binding_ids = CMS.Articles.Pagination.public_binding_ids(thread)
+      context =
+        if thread == :doc do
+          CMS.Gate.Context.Scope.Doc.public()
+        else
+          CMS.Gate.Context.Scope.Article.public(thread)
+        end
 
+      # Doc report-only expectations mirror this Scope + Trash + Binding count in
+      # CMS.Articles.Query.PublicReadReport.community_counts; keep both aligned.
       query =
-        from(article in active_articles,
-          join: binding in ArticleBinding,
-          on: binding.article_id == article.id and binding.community_id == ^community.id,
-          where: article.thread == ^thread and binding.id in subquery(public_binding_ids)
-        )
+        Article
+        |> CMS.Articles.Trash.not_trashed_scope(thread)
+        |> CMS.Gate.scope(nil, :list, context)
+        |> then(fn scoped ->
+          from([gate_community: scoped_community] in scoped,
+            where: scoped_community.id == ^community.id
+          )
+        end)
 
       thread_article_count = Repo.aggregate(query, :count, :id)
 

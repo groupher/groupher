@@ -39,10 +39,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.Move do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_transition, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.move(canonical, ticket_id, status, rank, expected_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

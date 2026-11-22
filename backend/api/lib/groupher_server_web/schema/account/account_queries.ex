@@ -45,6 +45,12 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       resolve(&R.Accounts.Profiles.me/3)
     end
 
+    @desc "The authenticated viewer's Global Passport facts"
+    field :current_global_passport, non_null(:global_passport) do
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.Passport.current_global/3)
+    end
+
     @desc "get user by login"
     field :user, :user do
       arg(:login, non_null(:string))
@@ -157,7 +163,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
     end
 
     @desc "search user by name"
-    field :search_users, non_null(list_of(non_null(:user))) do
+    field :search_users, non_null(list_of(non_null(:common_user))) do
       arg(:name, non_null(:string))
 
       resolve(&R.Accounts.Profiles.search_users/3)

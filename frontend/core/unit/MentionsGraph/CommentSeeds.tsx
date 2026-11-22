@@ -2,7 +2,11 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import { mentionsGraphQueries, type MentionsGraphFocus } from '~/query/mentionsGraph'
+import {
+  mentionsGraphKeys,
+  mentionsGraphQueries,
+  type MentionsGraphFocus,
+} from '~/query/mentionsGraph'
 
 type Props = {
   community: string
@@ -14,10 +18,7 @@ type Props = {
 export default function CommentSeeds({ community, focus, revision, onSelect }: Props) {
   const { t } = useTrans()
   const client = useQueryClient()
-  const key = useMemo(
-    () => mentionsGraphQueries.articleCommentsKey(community, focus),
-    [community, focus],
-  )
+  const key = useMemo(() => mentionsGraphKeys.articleComments(community, focus), [community, focus])
   const query = useInfiniteQuery({
     ...mentionsGraphQueries.articleComments(community, focus),
     enabled: !!revision,

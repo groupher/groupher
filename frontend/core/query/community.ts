@@ -2,43 +2,43 @@ import { type QueryClient, queryOptions } from '@tanstack/react-query'
 
 import type { TCommunity } from '~/spec'
 
-import { fetchCommunitySnapshot } from './communitySource'
+import { fetchCommunity } from './communitySource'
 
 export const communityKeys = {
-  all: ['community-config'] as const,
-  config: (community: string) => [...communityKeys.all, community] as const,
-  pressConfig: (community: string) => [...communityKeys.all, 'press-config', community] as const,
+  all: ['community'] as const,
+  slug: (community: string) => [...communityKeys.all, community] as const,
 }
 
 /** Removes dashboard and viewer fields before Community becomes canonical Query data. */
-export const projectCommunityConfig = (source: TCommunity): TCommunity => {
+export const pickCommunityFields = (source: TCommunity): TCommunity => {
   const { dashboard: _dashboard, viewerHasSubscribed: _viewerHasSubscribed, ...community } = source
   return community
 }
 
-type TCommunityConfigSeed = () => TCommunity | Promise<TCommunity>
+type TCommunitySeed = () => TCommunity | Promise<TCommunity>
 
-const config = (community: string, seed?: TCommunityConfigSeed) =>
+const slug = (community: string, seed?: TCommunitySeed) =>
   queryOptions({
-    queryKey: communityKeys.config(community),
+    queryKey: communityKeys.slug(community),
     queryFn: async (): Promise<TCommunity> => {
-      if (seed) return projectCommunityConfig(await seed())
+      if (seed) return pickCommunityFields(await seed())
 
-      return projectCommunityConfig(await fetchCommunitySnapshot(community))
+      return pickCommunityFields(await fetchCommunity(community))
     },
     enabled: !!community,
+    meta: { hydration: 'public' },
     staleTime: 60_000,
   })
 
 /** Applies a typed mutation result to the canonical Community Query owner. */
-export const patchCommunityConfig = (
+export const patchCommunity = (
   queryClient: QueryClient,
   community: string,
   patch: Partial<TCommunity>,
 ): void => {
-  queryClient.setQueryData<TCommunity>(communityKeys.config(community), (previous) =>
-    previous ? projectCommunityConfig({ ...previous, ...patch }) : previous,
+  queryClient.setQueryData<TCommunity>(communityKeys.slug(community), (previous) =>
+    previous ? pickCommunityFields({ ...previous, ...patch }) : previous,
   )
 }
 
-export const communityQueries = { config }
+export const communityQueries = { slug }

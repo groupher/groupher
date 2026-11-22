@@ -38,9 +38,19 @@ test('frontend and Phoenix stacks match their runtime boundaries', () => {
 
   const phoenix = SERVICE_DEFINITIONS.find((definition) => definition.id === 'phoenix')
   assert.deepEqual(phoenix?.technologies, ['phoenix', 'elixir', 'absinthe', 'postgresql'])
-  assert.equal(phoenix?.env?.ASSETS_HUB_BATCH_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.assetsHubRead)
-  assert.equal(phoenix?.env?.ASSETS_HUB_DELETE_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.assetsHubRead)
-  assert.equal(phoenix?.env?.ASSETS_PUBLIC_ENDPOINT, 'https://assets.groupher.localhost')
+  assert.equal(
+    phoenix?.localEnvironment?.env?.ASSETS_HUB_BATCH_ENDPOINT,
+    LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
+  )
+  assert.equal(
+    phoenix?.localEnvironment?.env?.ASSETS_HUB_DELETE_ENDPOINT,
+    LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
+  )
+  assert.equal(
+    phoenix?.localEnvironment?.env?.ASSETS_PUBLIC_ENDPOINT,
+    'https://assets.groupher.localhost',
+  )
+  assert.equal(phoenix?.env, undefined)
 })
 
 test('frontend services keep the intended list order', () => {
@@ -48,7 +58,7 @@ test('frontend services keep the intended list order', () => {
     SERVICE_DEFINITIONS.filter((definition) => definition.group === 'frontend').map(
       (definition) => definition.id,
     ),
-    ['landing', 'community', 'dash', 'apply', 'inspire-me'],
+    ['landing', 'community', 'dash', 'apply', 'inspire-me', 'widget-sandbox', 'core-vgpu-poc'],
   )
 })
 
@@ -57,7 +67,19 @@ test('backend services keep the intended list order', () => {
     SERVICE_DEFINITIONS.filter((definition) => definition.group === 'backend').map(
       (definition) => definition.id,
     ),
-    ['dev-gateway', 'auth', 'phoenix', 'import', 'press', 'assets-hub', 'converter'],
+    [
+      'dev-gateway',
+      'auth',
+      'phoenix',
+      'import',
+      'press',
+      'assets-hub',
+      'converter',
+      'assets-read-worker',
+      'status',
+      'review-ai-worker',
+      'mock-server',
+    ],
   )
 })
 
@@ -68,12 +90,19 @@ test('assets hub starts after auth and Phoenix and exposes the local provider re
     requiredDependencies: ['auth', 'phoenix'],
     optionalDependencies: [],
   })
-  assert.equal(
-    assetsHub?.endpoints?.find((endpoint) => endpoint.id === 'local-provider')?.url,
-    'http://127.0.0.1:8002/health/ready',
+  const readWorker = SERVICE_DEFINITIONS.find(
+    (definition) => definition.id === 'assets-read-worker',
   )
-  assert.equal(assetsHub?.env?.PHOENIX_GRAPHQL_ENDPOINT, LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix)
-  assert.equal(assetsHub?.env?.ASSETS_HUB_BATCH_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.assetsHubRead)
+  assert.equal(readWorker?.url, 'http://127.0.0.1:8787/health/ready')
+  assert.equal(readWorker?.portlessUrl, 'https://assets-worker.groupher.localhost/health/ready')
+  assert.equal(
+    assetsHub?.localEnvironment?.env?.PHOENIX_GRAPHQL_ENDPOINT,
+    LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
+  )
+  assert.equal(
+    assetsHub?.localEnvironment?.env?.ASSETS_HUB_BATCH_ENDPOINT,
+    LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
+  )
 })
 
 test('service relations only reference declared services', () => {
@@ -140,9 +169,9 @@ test('the managed gateway routes to local frontend ports', () => {
 
   assert.deepEqual(
     {
-      LANDING_SITE: gateway?.env?.LANDING_SITE,
-      DASH_SITE: gateway?.env?.DASH_SITE,
-      AUTH_SITE: gateway?.env?.AUTH_SITE,
+      LANDING_SITE: gateway?.localEnvironment?.env?.LANDING_SITE,
+      DASH_SITE: gateway?.localEnvironment?.env?.DASH_SITE,
+      AUTH_SITE: gateway?.localEnvironment?.env?.AUTH_SITE,
     },
     {
       LANDING_SITE: LOCAL_SERVICE_ENDPOINTS.landing,
@@ -180,52 +209,57 @@ test('gateway and auth start through backend Makefile entrypoints', () => {
   const gateway = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dev-gateway')
   const auth = SERVICE_DEFINITIONS.find((definition) => definition.id === 'auth')
 
-  assert.deepEqual(gateway?.args, ['be.dev-gateway.start'])
-  assert.deepEqual(auth?.args, ['be.auth.start'])
+  assert.deepEqual(gateway?.args, ['be.dev-gateway.start.managed'])
+  assert.deepEqual(auth?.args, ['be.auth.start.managed'])
 })
 
 test('managed Phoenix startup allow-lists only local credential fallbacks', () => {
   const phoenix = SERVICE_DEFINITIONS.find((definition) => definition.id === 'phoenix')
 
   assert.deepEqual(phoenix?.args, ['be.start.managed'])
-  assert.match(phoenix?.envFallback?.file || '', /backend\/api\/\.env\.local$/)
-  assert.deepEqual(phoenix?.envFallback?.keys, [
-    'SERVICE_AUTH_CLIENT_ID',
-    'SERVICE_AUTH_CLIENT_SECRET',
-  ])
+  assert.equal(phoenix?.env, undefined)
 
   const makefile = readFileSync(new URL('../../../../Makefile', import.meta.url), 'utf8')
   const managedRecipe = makefile.match(/be\.start\.managed:\n((?:\t.*\n)+)/)?.[1] || ''
   assert.doesNotMatch(managedRecipe, /\.env\.local|\bsource\b|(?:^|\s)\.\s+/)
 })
 
-test('managed Assets Hub startup reads only its own service identity fallback', () => {
+test('Assets Hub local runtime uses shared identity and an explicit R2 credential allowlist', () => {
   const assetsHub = SERVICE_DEFINITIONS.find((definition) => definition.id === 'assets-hub')
 
-  assert.match(assetsHub?.envFallback?.file || '', /backend\/assets-hub\/\.env$/)
-  assert.deepEqual(assetsHub?.envFallback?.keys, [
-    'SERVICE_AUTH_CLIENT_ID',
-    'SERVICE_AUTH_CLIENT_SECRET',
+  assert.equal(assetsHub?.env, undefined)
+  assert.deepEqual(assetsHub?.localEnvironment?.externalEnvKeys, [
+    'ASSETS_R2_BUCKET',
+    'ASSETS_R2_REGION',
+    'ASSETS_R2_ENDPOINT',
+    'ASSETS_R2_ACCESS_KEY_ID',
+    'ASSETS_R2_SECRET_ACCESS_KEY',
   ])
+  assert.equal(assetsHub?.localEnvironment?.serviceAuth?.clientId, 'assets-hub-development')
+  assert.equal(assetsHub?.localEnvironment?.env?.ASSETS_HUB_RUNTIME, 'local')
 })
 
 test('service identity uses one stable issuer separate from local network endpoints', () => {
   assert.equal(LOCAL_SERVICE_AUTH_ISSUER, 'https://auth.groupher.localhost')
 
   const serviceAuthDefinitions = SERVICE_DEFINITIONS.filter(
-    (definition) => definition.env?.SERVICE_AUTH_ISSUER,
+    (definition) => definition.localEnvironment?.env?.SERVICE_AUTH_ISSUER,
   )
   assert.ok(serviceAuthDefinitions.length > 0)
 
   for (const definition of serviceAuthDefinitions) {
-    assert.equal(definition.env?.SERVICE_AUTH_ISSUER, LOCAL_SERVICE_AUTH_ISSUER, definition.id)
     assert.equal(
-      definition.env?.SERVICE_AUTH_TOKEN_ENDPOINT,
+      definition.localEnvironment?.env?.SERVICE_AUTH_ISSUER,
+      LOCAL_SERVICE_AUTH_ISSUER,
+      definition.id,
+    )
+    assert.equal(
+      definition.localEnvironment?.env?.SERVICE_AUTH_TOKEN_ENDPOINT,
       `${LOCAL_SERVICE_ENDPOINTS.auth}/oauth2/token`,
       definition.id,
     )
     assert.equal(
-      definition.env?.SERVICE_AUTH_JWKS_URL,
+      definition.localEnvironment?.env?.SERVICE_AUTH_JWKS_URL,
       `${LOCAL_SERVICE_ENDPOINTS.auth}/.well-known/jwks.json`,
       definition.id,
     )
@@ -237,7 +271,10 @@ test('Auth-backed app chains enforce the live Service Identity startup contract'
     SERVICE_DEFINITIONS.map((definition) => [definition.id, definition]),
   )
 
-  assert.equal(definitions.auth?.env?.DEV_HUB_SERVICE_AUTH_PROBE, 'true')
+  assert.equal(definitions.auth?.localEnvironment?.env?.DEV_HUB_SERVICE_AUTH_PROBE, 'true')
+  assert.equal(definitions.auth?.env, undefined)
+  assert.equal(definitions.dash?.env, undefined)
+  assert.equal(definitions.phoenix?.env, undefined)
   for (const id of ['dash', 'apply']) {
     assert.deepEqual(definitions[id]?.startupChecks, [
       {
@@ -255,7 +292,7 @@ test('document converter starts through the repository Makefile entrypoint', () 
 
   assert.equal(converter?.name, 'Converter')
   assert.equal(converter?.cwd, REPO_ROOT)
-  assert.deepEqual(converter?.args, ['be.converter.start'])
+  assert.deepEqual(converter?.args, ['be.converter.start.managed'])
 })
 
 test('import runs in the Cloudflare local runtime', () => {
@@ -264,7 +301,7 @@ test('import runs in the Cloudflare local runtime', () => {
   assert.equal(contentImport?.cwd, REPO_ROOT)
   assert.equal(contentImport?.port, 8001)
   assert.deepEqual(contentImport?.technologies, ['hono', 'cloudflare', 'typescript', 'graphql'])
-  assert.deepEqual(contentImport?.args, ['be.import.start'])
+  assert.deepEqual(contentImport?.args, ['be.import.start.managed'])
 })
 
 test('converter and import use matching local and Cloudflare project identities', () => {
@@ -274,7 +311,7 @@ test('converter and import use matching local and Cloudflare project identities'
   ] as const) {
     const service = SERVICE_DEFINITIONS.find((definition) => definition.id === id)
     assert.equal(service?.command, 'make')
-    assert.deepEqual(service?.args, [`be.${id}.start`])
+    assert.deepEqual(service?.args, [`be.${id}.start.managed`])
     assert.equal(service?.port, port)
     assert.equal(service?.portlessName, id)
     assert.equal(service?.unavailableReason, undefined)
@@ -286,7 +323,7 @@ test('converter and import use matching local and Cloudflare project identities'
     const manifest = JSON.parse(readFileSync(`${REPO_ROOT}/backend/${id}/package.json`, 'utf8'))
     assert.equal(manifest.name, `@groupher/${id}`)
     assert.equal(
-      manifest.scripts.dev,
+      manifest.scripts['dev:managed'],
       id === 'converter' ? 'cf dev --mode development' : `cf dev --mode development --port ${port}`,
     )
     assert.equal(manifest.scripts['dev:node'], undefined)
@@ -311,15 +348,24 @@ test('dash bulk import routes through the standalone content import service', ()
   const dash = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dash')
   const contentImport = SERVICE_DEFINITIONS.find((definition) => definition.id === 'import')
 
-  assert.equal(dash?.env?.NEXT_PUBLIC_ASSETS_HUB_ENDPOINT, 'https://assets-hub.groupher.localhost')
-  assert.equal(dash?.env?.NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT, 'https://assets.groupher.localhost')
-  assert.equal(dash?.env?.CONTENT_IMPORT_APP_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.import)
   assert.equal(
-    contentImport?.env?.PHOENIX_GRAPHQL_ENDPOINT,
+    dash?.localEnvironment?.env?.NEXT_PUBLIC_ASSETS_HUB_ENDPOINT,
+    'https://assets-hub.groupher.localhost',
+  )
+  assert.equal(
+    dash?.localEnvironment?.env?.NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT,
+    'https://assets.groupher.localhost',
+  )
+  assert.equal(
+    dash?.localEnvironment?.env?.CONTENT_IMPORT_APP_ENDPOINT,
+    LOCAL_SERVICE_ENDPOINTS.import,
+  )
+  assert.equal(
+    contentImport?.localEnvironment?.env?.PHOENIX_GRAPHQL_ENDPOINT,
     LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
   )
   assert.equal(
-    contentImport?.env?.DOCUMENT_CONVERTER_APP_ENDPOINT,
+    contentImport?.localEnvironment?.env?.DOCUMENT_CONVERTER_APP_ENDPOINT,
     LOCAL_SERVICE_ENDPOINTS.converter,
   )
 })
@@ -337,6 +383,11 @@ test('managed services expose stable Portless names and keep the API under the c
   assert.equal(dash?.appUrl, 'http://127.0.0.1:3005/home/overview')
   assert.equal(dash?.portlessAppUrl, 'https://dash.groupher.localhost/home/overview')
 
+  const readWorker = SERVICE_DEFINITIONS.find(
+    (definition) => definition.id === 'assets-read-worker',
+  )
+  assert.equal(readWorker?.port, 8787)
+  assert.equal(readWorker?.portlessUrl, 'https://assets-worker.groupher.localhost/health/ready')
   const assetsHub = SERVICE_DEFINITIONS.find((definition) => definition.id === 'assets-hub')
   assert.deepEqual(
     assetsHub?.endpoints?.map((endpoint) => ({
@@ -344,13 +395,7 @@ test('managed services expose stable Portless names and keep the API under the c
       port: endpoint.port,
       portlessUrl: endpoint.portlessUrl,
     })),
-    [
-      {
-        id: 'local-provider',
-        port: 8002,
-        portlessUrl: 'https://assets.groupher.localhost/health',
-      },
-    ],
+    [{ id: 'local-provider', port: 8002, portlessUrl: 'https://assets.groupher.localhost/health' }],
   )
 
   for (const id of ['auth', 'landing', 'dash', 'inspire-me', 'import', 'converter']) {
@@ -365,4 +410,143 @@ test('managed services expose stable Portless names and keep the API under the c
   const phoenix = SERVICE_DEFINITIONS.find((definition) => definition.id === 'phoenix')
   assert.equal(phoenix?.portlessName, 'api')
   assert.equal(phoenix?.portlessUrl, 'https://api.groupher.localhost/health')
+})
+
+test('public development entrypoints route through Dev Hub and service commands stay internal', () => {
+  const packageJson = JSON.parse(readFileSync(`${REPO_ROOT}/package.json`, 'utf8')) as {
+    scripts: Record<string, string>
+  }
+  const scripts = packageJson.scripts
+  const makefile = readFileSync(`${REPO_ROOT}/Makefile`, 'utf8')
+  const makeTarget = (target: string) => {
+    const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return makefile.match(new RegExp(`^${escaped}:\\n((?:\\t.*\\n)+)`, 'm'))?.[1] || ''
+  }
+  const publicScripts: Record<string, string> = {
+    'dev:apply': 'apply',
+    'dev:assets-hub': 'assets-hub',
+    'dev:assets-read-worker': 'assets-read-worker',
+    'dev:auth': 'auth',
+    'dev:community': 'community',
+    'dev:converter': 'converter',
+    'dev:dash': 'dash',
+    'dev:dev-gateway': 'dev-gateway',
+    'dev:edge-router': 'edge-router',
+    'dev:import': 'import',
+    'dev:inspire-me': 'inspire-me',
+    'dev:landing': 'landing',
+    'dev:press': 'press',
+    'dev:review-ai-worker': 'review-ai-worker',
+    'dev:status': 'status',
+    'dev:vgpu-poc': 'core-vgpu-poc',
+    'dev:widget': 'widget-sandbox',
+    'mock:server': 'mock-server',
+  }
+  const publicTargets: Record<string, string> = {
+    'be.assets-hub.start': 'assets-hub',
+    'be.assets-read-worker.start': 'assets-read-worker',
+    'be.auth.start': 'auth',
+    'be.converter.start': 'converter',
+    'be.dev-gateway.start': 'dev-gateway',
+    'be.edge-router.start': 'edge-router',
+    'be.import.start': 'import',
+    'be.mock-server.start': 'mock-server',
+    'be.press.start': 'press',
+    'be.review-ai-worker.start': 'review-ai-worker',
+    'be.status.start': 'status',
+    'be.start': 'phoenix',
+    'fe.dev.apply': 'apply',
+    'fe.dev.community': 'community',
+    'fe.dev.dash': 'dash',
+    'fe.dev.inspire': 'inspire-me',
+    'fe.dev.landing': 'landing',
+    'fe.dev.widget': 'widget-sandbox',
+    'fe.dev.vgpu-poc': 'core-vgpu-poc',
+  }
+
+  assert.match(scripts.devhub || '', /^pnpm --filter @groupher\/local-dev-hub exec tsx /)
+  for (const [script, serviceId] of Object.entries(publicScripts)) {
+    assert.equal(scripts[script], `pnpm devhub start ${serviceId}`, script)
+  }
+  const packageEntries: Array<{ file: string; scripts: string[]; serviceId: string }> = [
+    { file: 'backend/auth/package.json', scripts: ['dev'], serviceId: 'auth' },
+    {
+      file: 'backend/assets-hub/package.json',
+      scripts: ['dev', 'dev:local', 'dev:upload-api'],
+      serviceId: 'assets-hub',
+    },
+    { file: 'backend/converter/package.json', scripts: ['dev'], serviceId: 'converter' },
+    { file: 'backend/import/package.json', scripts: ['dev'], serviceId: 'import' },
+    { file: 'backend/press/package.json', scripts: ['dev'], serviceId: 'press' },
+    { file: 'ops/status/package.json', scripts: ['dev'], serviceId: 'status' },
+    {
+      file: 'backend/review-ai-worker/package.json',
+      scripts: ['dev'],
+      serviceId: 'review-ai-worker',
+    },
+    {
+      file: 'infra/edge-router/package.json',
+      scripts: ['dev', 'dev:local'],
+      serviceId: 'edge-router',
+    },
+    { file: 'frontend/apply/package.json', scripts: ['dev'], serviceId: 'apply' },
+    { file: 'frontend/community/package.json', scripts: ['dev'], serviceId: 'community' },
+    { file: 'frontend/dash/package.json', scripts: ['dev'], serviceId: 'dash' },
+    { file: 'frontend/inspire-me/package.json', scripts: ['dev'], serviceId: 'inspire-me' },
+    { file: 'frontend/landing/package.json', scripts: ['dev'], serviceId: 'landing' },
+    { file: 'frontend/mock-server/package.json', scripts: ['dev'], serviceId: 'mock-server' },
+    { file: 'frontend/widget/package.json', scripts: ['dev'], serviceId: 'widget-sandbox' },
+    { file: 'frontend/core/package.json', scripts: ['poc:vgpu:dev'], serviceId: 'core-vgpu-poc' },
+    { file: 'infra/dev-gateway/package.json', scripts: ['dev'], serviceId: 'dev-gateway' },
+  ]
+  for (const { file, scripts: publicNames, serviceId } of packageEntries) {
+    const manifest = JSON.parse(readFileSync(`${REPO_ROOT}/${file}`, 'utf8')) as {
+      scripts: Record<string, string>
+    }
+    for (const name of publicNames) {
+      assert.equal(
+        manifest.scripts[name],
+        `pnpm --dir ../.. devhub start ${serviceId}`,
+        `${file} ${name}`,
+      )
+    }
+    assert.ok(
+      Object.keys(manifest.scripts).some((name) => name.endsWith(':managed')),
+      `${file} has managed entry`,
+    )
+  }
+  const assetsWorker = JSON.parse(
+    readFileSync(`${REPO_ROOT}/backend/assets-hub/package.json`, 'utf8'),
+  ) as { scripts: Record<string, string> }
+  for (const name of ['dev:cloudflare', 'dev:read-worker', 'dev:worker']) {
+    assert.equal(
+      assetsWorker.scripts[name],
+      'pnpm --dir ../.. devhub start assets-read-worker',
+      `backend/assets-hub/package.json ${name}`,
+    )
+  }
+  for (const [target, serviceId] of Object.entries(publicTargets)) {
+    const commands = makeTarget(target)
+      .trim()
+      .split('\n')
+      .map((command) => command.trim())
+    const devHubCommand = `pnpm devhub start ${serviceId}`
+    assert.deepEqual(
+      commands,
+      target === 'be.press.start'
+        ? ['pnpm --filter @groupher/press run db:migrate', devHubCommand]
+        : [devHubCommand],
+      `${target} commands`,
+    )
+  }
+  assert.equal(scripts['dev:content-import'], undefined)
+  assert.equal(scripts['dev:document-converter'], undefined)
+
+  for (const service of SERVICE_DEFINITIONS.filter((definition) => definition.command)) {
+    const managedTarget = service.args?.[0]
+    if (!managedTarget) throw new Error(`${service.id} must have a managed Make target`)
+    assert.ok(managedTarget.endsWith('.managed'), `${service.id} must use an internal target`)
+    assert.notEqual(makeTarget(managedTarget).trim(), '', `${service.id} internal target exists`)
+    assert.doesNotMatch(makeTarget(managedTarget), /pnpm devhub/, `${service.id} cannot recurse`)
+  }
 })

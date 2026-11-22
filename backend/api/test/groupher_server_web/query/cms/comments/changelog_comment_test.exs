@@ -722,7 +722,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       page_size = 12
       thread = :changelog
 
-      author_user = changelog.author
+      author_user = changelog.author.user
 
       all_comments =
         Enum.reduce(0..total_count, [], fn i, acc ->
@@ -1005,7 +1005,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       page_size = 10
       thread = :changelog
 
-      author_user = changelog.author
+      author_user = changelog.author.user
 
       {:ok, parent_comment} =
         CMS.Comments.create_comment(

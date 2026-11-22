@@ -37,10 +37,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.SetAssignees do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_assign, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.set_assignees(canonical, ticket_id, user_ids, expected_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

@@ -21,7 +21,15 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
 
   describe "[mirror/unmirror/move post to/from community]" do
     test "auth user can mirror a post to other community", ~m(community post)a do
-      passport_rules = %{"post.community.mirror" => true}
+      passport_rules = %{
+        "global" => %{"article.mirror" => true},
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       {:ok, community2} = mock_community()
@@ -53,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
         targetCommunity: community2.slug
       }
 
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+      rule_conn = simu_conn(:user, cms: %{"global" => %{"what.ever" => true}})
 
       assert user_conn
              |> mutation_error?(
@@ -79,7 +87,15 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
 
     test "auth user can mirror multi post to other communities",
          ~m(community community2 community3 post)a do
-      passport_rules = %{"post.community.mirror" => true}
+      passport_rules = %{
+        "global" => %{"article.mirror" => true},
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
@@ -112,7 +128,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
     end
 
     test "auth user can unmirror post to a community", ~m(post community)a do
-      passport_rules = %{"post.community.mirror" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       {:ok, user} = db_insert(:user)
@@ -149,7 +172,8 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       assert community2.id in assoc_communities
       assert community3.id in assoc_communities
 
-      passport_rules = %{"post.community.unmirror" => true}
+      passport_rules = %{"article.unmirror" => true}
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(S.Article.m(:unmirror_article), variables)
@@ -160,7 +184,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
     end
 
     test "auth user can move post to other community", ~m(community community2 post user)a do
-      passport_rules = %{"post.community.mirror" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
@@ -177,7 +208,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       assoc_communities = binding_communities(found) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
 
-      passport_rules = %{"post.community.move" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       pre_community_id = community.id
@@ -222,7 +260,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
 
     test "mirror article with invalid thread is rejected without crash",
          ~m(community community2 post)a do
-      passport_rules = %{"post.community.mirror" => true}
+      passport_rules = %{
+        community.slug => %{
+          "article.mirror" => true,
+          "article.unmirror" => true,
+          "article.move" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{

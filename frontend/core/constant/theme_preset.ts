@@ -1,10 +1,7 @@
-export enum THEME_PRESET {
-  DEFAULT = 'DEFAULT',
-  CLAUDE = 'CLAUDE',
-  SOLARIZED = 'SOLARIZED',
-  HN = 'HN',
-  CUSTOM = 'CUSTOM',
-}
+import { valueKeyedEnum } from '~/lib/enumValues'
+import { DsbThemePreset } from '~/lib/graphql/generated/enums'
+
+export const THEME_PRESET = valueKeyedEnum(DsbThemePreset)
 
 export const DEFAULT_THEME_PRESET = THEME_PRESET.DEFAULT
 

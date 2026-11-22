@@ -8,7 +8,7 @@ import Sections from '../Sections'
 
 const emptyTickets: TKanbanPage = {
   entries: [],
-  mode: 'load_more',
+  mode: 'LOAD_MORE',
   setPage: vi.fn(),
   next: vi.fn(),
   retry: vi.fn(),

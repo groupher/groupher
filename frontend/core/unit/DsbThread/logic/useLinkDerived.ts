@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { publicThreads } from '~/helper'
 import type { TCommunityThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -19,7 +19,7 @@ export type TRet = {
 
 /** Exposes link derived state and actions through the shared React hook boundary. */
 export default function useLinkDerived(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { isChanged } = useHelper()
   const community$ = useCommunity()
 

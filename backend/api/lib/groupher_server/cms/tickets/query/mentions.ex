@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
           Repo.all(
             from(binding in ArticleBinding,
               where: binding.article_id in ^ids,
-              select: {binding.article_id, binding.community_id, nil}
+              select: {binding.article_id, binding.community_id}
             )
           )
       end
@@ -70,7 +70,6 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
             select: %{
               id: article.id,
               article_id: article.id,
-              branch_id: nil,
               thread: :ticket,
               inner_id: binding.inner_id,
               title: public.title
@@ -120,7 +119,6 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
             select: %{
               id: article.id,
               article_id: article.id,
-              branch_id: nil,
               thread: article.thread,
               inner_id: binding.inner_id,
               slug: nil,
@@ -133,7 +131,7 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
           resolved,
           Map.new(rows, fn row ->
             row = Map.merge(row, %{community_id: community.id, community_slug: community.slug})
-            {{row.article_id, community.id, nil}, row}
+            {{row.article_id, community.id}, row}
           end)
         )
       else

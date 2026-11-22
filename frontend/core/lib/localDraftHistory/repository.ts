@@ -59,10 +59,7 @@ const baseRecord = (input: TLocalDraftWriteInput): Omit<TLocalDraftRecordBase, '
     communityId: input.communityId,
     thread: input.thread,
     articleId: input.articleId,
-    branchId: input.branchId,
-    baseRevisionId: input.baseRevisionId || null,
-    baseServerDraftVersion: input.baseServerDraftVersion,
-    baseServerContentHash: input.baseServerContentHash,
+    base: input.base,
     localPayloadHash: hashLocalDraftPayload(input.payload),
     payload: input.payload,
   }
@@ -343,12 +340,14 @@ export const createLocalDraftRepository = (options: TLocalDraftRepositoryOptions
   /** Classifies a local working copy against the freshly loaded server Draft without overwriting it. */
   const inspectWorkingCopy = async (
     identity: TLocalDraftWorkspaceIdentity,
-    serverContentHash: string,
+    base: TLocalDraftWriteInput['base'],
   ): Promise<TLocalDraftInspection> => {
     const workingCopy = await getWorkingCopy(identity)
     if (!workingCopy) return { status: 'none' }
     if (!workingCopy.dirty) return { status: 'synced', workingCopy }
-    return workingCopy.baseServerContentHash === serverContentHash
+    return workingCopy.base.workingCopyId === base.workingCopyId &&
+      workingCopy.base.revision === base.revision &&
+      workingCopy.base.snapshotId === base.snapshotId
       ? { status: 'local-only', workingCopy }
       : { status: 'divergent', workingCopy }
   }

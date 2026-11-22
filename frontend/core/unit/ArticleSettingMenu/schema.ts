@@ -1,30 +1,73 @@
 import { graphql } from '~/graphql/authoring'
 
-const updatePost = graphql(`
-  mutation UpdatePostFromMenu(
-    $article: ArticlePathInput!
+const saveWorkingCopy = graphql(`
+  "Save one Article WorkingCopy patch at its current revision"
+  mutation SaveWorkingCopyFieldsFromMenu(
+    $articleId: ID!
+    $workingCopyId: ID!
+    $community: String!
     $commandId: ID!
-    $expectedVersion: Int!
+    $revision: Int!
     $title: String
-    $communityTags: [ID]
+    $tagIds: [ID]
   ) {
-    updatePost(
-      article: $article
+    saveWorkingCopy(
+      articleId: $articleId
+      workingCopyId: $workingCopyId
+      community: $community
       commandId: $commandId
-      expectedVersion: $expectedVersion
+      revision: $revision
       title: $title
-      communityTags: $communityTags
+      tagIds: $tagIds
     ) {
-      innerId
+      id
+      articleId
+      scopeType
+      revision
       title
-      communityTags {
-        ...ArticleMenuTagFields
-      }
+      tagIds
     }
   }
 `)
 
+const articleWorkingCopies = graphql(`
+  "Editable WorkingCopies for one Article"
+  query ArticleWorkingCopiesForMenu($articleId: ID!, $community: String!) {
+    articleWorkingCopies(articleId: $articleId, community: $community) {
+      id
+      articleId
+      scopeType
+      revision
+      title
+      tagIds
+    }
+  }
+`)
+
+const articleHistoryEvents = graphql(`
+  query ArticleHistoryEventsFromMenu($articleId: ID!, $pagi: Json, $actorId: ID) {
+    pagedArticleEvents(articleId: $articleId, pagi: $pagi, actorId: $actorId)
+  }
+`)
+
+const articleHistoryEvent = graphql(`
+  query ArticleHistoryEventFromMenu($articleId: ID!, $eventId: ID!, $pagi: Json) {
+    articleEvent(articleId: $articleId, eventId: $eventId, pagi: $pagi)
+  }
+`)
+
+const articleHistoryDiff = graphql(`
+  query ArticleHistoryDiffFromMenu(
+    $articleId: ID!
+    $before: ArticleVersionRefInput!
+    $after: ArticleVersionRefInput!
+  ) {
+    articleDiff(articleId: $articleId, before: $before, after: $after)
+  }
+`)
+
 const setPostCat = graphql(`
+  "Set cat for a post"
   mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {
     setPostCat(article: $article, cat: $cat, commandId: $commandId) {
       innerId
@@ -34,6 +77,7 @@ const setPostCat = graphql(`
 `)
 
 const pinPost = graphql(`
+  "Pin to post"
   mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {
     pinPost(article: $article, commandId: $commandId) {
       innerId
@@ -42,6 +86,7 @@ const pinPost = graphql(`
 `)
 
 const undoPinPost = graphql(`
+  "Undo pin to post"
   mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {
     undoPinPost(article: $article, commandId: $commandId) {
       innerId
@@ -51,6 +96,7 @@ const undoPinPost = graphql(`
 `)
 
 const communityTagGroups = graphql(`
+  "Get community tag groups"
   query CommunityTagGroupsForMenu($community: String!, $thread: Thread) {
     communityTagGroups(community: $community, thread: $thread) {
       id
@@ -64,7 +110,11 @@ const communityTagGroups = graphql(`
 `)
 
 export default {
-  updatePost,
+  saveWorkingCopy,
+  articleWorkingCopies,
+  articleHistoryEvents,
+  articleHistoryEvent,
+  articleHistoryDiff,
   setPostCat,
   pinPost,
   undoPinPost,

@@ -261,4 +261,61 @@ defmodule GroupherServer.Jobs.Workflow do
       Workflow.snapshot_refresh_new(%{type: "article"}, [queue: :snapshot])
   """
   defdelegate snapshot_refresh_new(arg1, arg2), to: GroupherServer.Jobs.SnapshotRefresh, as: :new
+
+  @doc """
+  Builds a wakeup only for a supported Outbox recovery worker.
+
+  ## Examples
+
+      Jobs.outbox_new(GroupherServer.Jobs.CMSOutboxArticle, %{event_id: Ecto.UUID.generate()})
+      #=> {:ok, %Ecto.Changeset{}}
+  """
+  def outbox_new(worker, args) do
+    case worker do
+      GroupherServer.Jobs.CMSArtimentReview ->
+        {:ok, GroupherServer.Jobs.CMSArtimentReview.new(args)}
+
+      GroupherServer.Jobs.CMSMentionNotifier ->
+        {:ok, GroupherServer.Jobs.CMSMentionNotifier.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxAdminRequest ->
+        {:ok, GroupherServer.Jobs.CMSOutboxAdminRequest.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxArticle ->
+        {:ok, GroupherServer.Jobs.CMSOutboxArticle.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxArticleCoAuthor ->
+        {:ok, GroupherServer.Jobs.CMSOutboxArticleCoAuthor.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxAsset ->
+        {:ok, GroupherServer.Jobs.CMSOutboxAsset.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxCDN ->
+        {:ok, GroupherServer.Jobs.CMSOutboxCDN.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxComment ->
+        {:ok, GroupherServer.Jobs.CMSOutboxComment.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxCommunity ->
+        {:ok, GroupherServer.Jobs.CMSOutboxCommunity.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxDocs ->
+        {:ok, GroupherServer.Jobs.CMSOutboxDocs.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxInteraction ->
+        {:ok, GroupherServer.Jobs.CMSOutboxInteraction.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxPress ->
+        {:ok, GroupherServer.Jobs.CMSOutboxPress.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxSearch ->
+        {:ok, GroupherServer.Jobs.CMSOutboxSearch.new(args)}
+
+      GroupherServer.Jobs.CMSOutboxTicket ->
+        {:ok, GroupherServer.Jobs.CMSOutboxTicket.new(args)}
+
+      _ ->
+        {:error, :outbox_worker_invalid}
+    end
+  end
 end

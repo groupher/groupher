@@ -3,6 +3,8 @@
 > 状态：本批修复已落地，分页聚焦回归已通过；后端全量仍受当前 dirty 分支既有的 36 个生命周期/Sandbox 失败影响
 > 日期：2026-10-20
 
+> **2026-11-14 Docs 目标更新：**本文中 Press / Search 的 DocPublic 版本、时间或路径描述是当时运行态证据。新 Docs 目标的当前正文与公开元数据来自 ArticlePublic / ArticlePublicBody；以 [Docs 发布队列合同 §1.1.6](./docs-publish-queue-refactor.md) 为准。
+
 本文记录分页 N+1 strict gate 之外的 Press、Assets、AbuseReports 和
 SearchArtiments 问题，以及本批修复后的验收合同。scanner-clean 只说明静态
 规则未发现直接模式，不等价于所有请求路径都已由 query-count 测试证明。

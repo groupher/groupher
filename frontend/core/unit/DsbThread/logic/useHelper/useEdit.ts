@@ -3,8 +3,9 @@ import { useCallback } from 'react'
 
 import useDsbFieldSave from '~/query/mutation/useDsbFieldSave'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
-import { useAliasEditorUi, useTagEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useAliasEditor } from '~/stores/dsbShell/editor'
+import { useTagsEditor } from '~/stores/dsbShell/editor'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import { isObject } from '~/validator'
 
 import { BASEINFO_KEYS, FAQ_STORE_FIELDS, FIELD, SEO_KEYS, TAG_STORE_FIELDS } from '../../constant'
@@ -23,9 +24,9 @@ export type TRet = {
 
 /** Exposes edit state and actions through the shared React hook boundary. */
 export default function useEdit(): TRet {
-  const dsb$ = useDsbEdit()
-  const aliasUi$ = useAliasEditorUi()
-  const tagUi$ = useTagEditorUi()
+  const dsb$ = useDsbShell()
+  const aliasEditor = useAliasEditor()
+  const tagsEditor = useTagsEditor()
   const { mutation, isPending, error } = useDsbFieldSave()
 
   const edit = useCallback(
@@ -42,7 +43,7 @@ export default function useEdit(): TRet {
 
   const _findAliasIdx = (): number => {
     const { nameAlias } = dsb$
-    const { editingAlias } = aliasUi$
+    const { editingAlias } = aliasEditor
     if (!editingAlias) return -1
     const targetIdx = findIndex((item: TNameAlias) => item.slug === editingAlias.slug, nameAlias)
 
@@ -61,7 +62,7 @@ export default function useEdit(): TRet {
     }
 
     if (field === FIELD.TAG) {
-      tagUi$.patch({ editingTag: null })
+      tagsEditor.setEditingTag(null)
       return
     }
 
@@ -81,7 +82,7 @@ export default function useEdit(): TRet {
 
       const updatedNameAlias = update(targetIdx, dsb$.original.nameAlias[targetIdx], dsb$.nameAlias)
       dsb$.edit(NAME_ALIAS_FIELD, updatedNameAlias)
-      aliasUi$.patch({ editingAlias: null })
+      aliasEditor.setEditingAlias(null)
       return
     }
 
@@ -95,7 +96,7 @@ export default function useEdit(): TRet {
 
       // self.nameAlias[targetIdx].name = self.nameAlias[targetIdx].original
       // self.editingAlias = null
-      aliasUi$.patch({ editingAlias: null })
+      aliasEditor.setEditingAlias(null)
     }
 
     // _saveToLocal()

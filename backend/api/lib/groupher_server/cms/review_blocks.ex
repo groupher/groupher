@@ -22,20 +22,25 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     Comment,
     CommentLifecycle,
     CommentReviewBlock,
-    Community,
-    DocBranch,
-    DocLifecycle,
-    DocReviewBlock
+    Community
   }
 
-  @public_states [:published, :archived]
-
   @doc "Adds a restriction and its effective Comment summary delta in one transaction."
-  def apply(lifecycle, attrs) do
-    CMS.Comments.Summary.for_lifecycle(lifecycle, fn -> apply_fact(lifecycle, attrs) end)
+  def apply(lifecycle, %{operation_ref: operation_ref} = attrs) when is_binary(operation_ref) do
+    case Ecto.UUID.cast(operation_ref) do
+      {:ok, operation_ref} ->
+        CMS.Comments.Summary.for_lifecycle(lifecycle, operation_ref, fn ->
+          apply_fact(lifecycle, attrs, operation_ref)
+        end)
+
+      :error ->
+        {:error, CMS.ErrorCat.invalid_review_block()}
+    end
   end
 
-  defp apply_fact(lifecycle, attrs) when is_map(attrs) do
+  def apply(_lifecycle, _attrs), do: {:error, CMS.ErrorCat.invalid_review_block()}
+
+  defp apply_fact(lifecycle, attrs, operation_ref) when is_map(attrs) do
     with {:ok, :pass} <- require_transaction(),
          {:ok, schema, target_attrs} <- restriction_target(lifecycle, attrs),
          {:ok, :pass} <- validate_scope(lifecycle, target_attrs),
@@ -47,29 +52,39 @@ defmodule GroupherServer.CMS.ReviewBlocks do
            |> Map.delete(:operation_ref)
            |> Map.merge(target_attrs),
          {:ok, restriction, inserted?} <- insert_or_get(schema, attrs),
-         {:ok, :pass} <- apply_visibility_change(inserted?, lifecycle, target_attrs, attrs) do
+         {:ok, :pass} <-
+           apply_visibility_change(inserted?, lifecycle, target_attrs, attrs, operation_ref) do
       {:ok, restriction}
     end
   end
 
-  defp apply_fact(_lifecycle, _attrs), do: {:error, CMS.ErrorCat.invalid_review_block()}
+  defp apply_visibility_change(false, _lifecycle, _target_attrs, _attrs, _operation_ref) do
+    {:ok, :pass}
+  end
 
-  defp apply_visibility_change(false, _lifecycle, _target_attrs, _attrs), do: {:ok, :pass}
-
-  defp apply_visibility_change(true, lifecycle, target_attrs, attrs) do
+  defp apply_visibility_change(true, lifecycle, target_attrs, _attrs, operation_ref) do
     with {:ok, :pass} <- recompute(lifecycle),
-         {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, attrs.source_ref),
+         {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, operation_ref),
          {:ok, :pass} <- bump_graph(lifecycle) do
       {:ok, :pass}
     end
   end
 
   @doc "Resolves restrictions and their effective Comment summary delta in one transaction."
-  def end_blocks(lifecycle, scope_key, ids, operation_ref, resolution) do
-    CMS.Comments.Summary.for_lifecycle(lifecycle, fn ->
-      end_block_facts(lifecycle, scope_key, ids, operation_ref, resolution)
-    end)
+  def end_blocks(lifecycle, scope_key, ids, operation_ref, resolution)
+      when is_binary(operation_ref) do
+    case Ecto.UUID.cast(operation_ref) do
+      {:ok, operation_ref} ->
+        CMS.Comments.Summary.for_lifecycle(lifecycle, operation_ref, fn ->
+          end_block_facts(lifecycle, scope_key, ids, operation_ref, resolution)
+        end)
+
+      :error ->
+        {:error, CMS.ErrorCat.invalid_review_block()}
+    end
   end
+
+  def end_blocks(_, _, _, _, _), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp end_block_facts(lifecycle, scope_key, ids, operation_ref, resolution)
        when is_binary(scope_key) and is_list(ids) and is_binary(operation_ref) and
@@ -90,10 +105,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   end
 
   defp bump_graph(%ArticleLifecycle{}) do
-    Revision.bump()
-  end
-
-  defp bump_graph(%DocLifecycle{}) do
     Revision.bump()
   end
 
@@ -152,18 +163,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
           set: [item_id: item_id]
         )
 
-      {doc_updated, _} =
-        Repo.update_all(
-          from(restriction in DocReviewBlock,
-            where:
-              restriction.artiment_review_id == ^artiment_review_id and
-                restriction.type == :ai_suspect_hold and
-                is_nil(restriction.item_id)
-          ),
-          set: [item_id: item_id]
-        )
-
-      if updated + comment_updated + doc_updated > 0 do
+      if updated + comment_updated > 0 do
         {:ok, :pass}
       else
         {:error, CMS.ErrorCat.review_block_not_found()}
@@ -196,19 +196,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     end
   end
 
-  def recompute(%DocLifecycle{} = lifecycle) do
-    with {:ok, :pass} <- require_transaction(),
-         attrs <- %{article_id: lifecycle.article_id, branch_id: lifecycle.branch_id},
-         visible? <- lifecycle.state in @public_states and not active_doc?(attrs),
-         {:ok, _result} <-
-           Repo.query(
-             "UPDATE cms.doc_publics SET visible = $1 WHERE article_id = $2 AND branch_id = $3",
-             [visible?, Ecto.UUID.dump!(lifecycle.article_id), lifecycle.branch_id]
-           ) do
-      {:ok, :pass}
-    end
-  end
-
   def recompute(_lifecycle), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp defaults(attrs) do
@@ -228,12 +215,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     with {:ok, community_id} <- scope_community_id(attrs) do
       {:ok, CommentReviewBlock, %{comment_id: id, community_id: community_id}}
     end
-  end
-
-  defp restriction_target(%DocLifecycle{article_id: article_id, branch_id: branch_id}, %{
-         scope_key: "platform"
-       }) do
-    {:ok, DocReviewBlock, %{article_id: article_id, branch_id: branch_id}}
   end
 
   defp restriction_target(_lifecycle, _attrs) do
@@ -297,7 +278,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     end
   end
 
-  defp validate_scope(%DocLifecycle{}, _attrs), do: {:ok, :pass}
   defp validate_scope(_lifecycle, _attrs), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp insert_or_get(ArticleReviewBlock, attrs) do
@@ -316,14 +296,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     )
   end
 
-  defp insert_or_get(DocReviewBlock, attrs) do
-    insert_or_get_row(
-      DocReviewBlock.changeset(%DocReviewBlock{}, attrs),
-      DocReviewBlock,
-      attrs
-    )
-  end
-
   defp insert_or_get_row(changeset, schema, attrs) do
     case Repo.insert(changeset, mode: :savepoint) do
       {:ok, row} ->
@@ -333,7 +305,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
         case Repo.one(
                where_target(
                  schema,
-                 Map.take(attrs, [:article_id, :comment_id, :branch_id, :community_id])
+                 Map.take(attrs, [:article_id, :comment_id, :community_id])
                )
                |> where(
                  [restriction],
@@ -403,10 +375,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     row |> CommentReviewBlock.changeset(attrs) |> Repo.update()
   end
 
-  defp update_restriction(%DocReviewBlock{} = row, attrs) do
-    row |> DocReviewBlock.changeset(attrs) |> Repo.update()
-  end
-
   defp where_target(schema, attrs) do
     Enum.reduce(attrs, schema, fn
       {key, nil}, query -> where(query, [restriction], is_nil(field(restriction, ^key)))
@@ -414,72 +382,30 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     end)
   end
 
-  defp active_doc?(%{article_id: article_id, branch_id: branch_id}) do
-    Repo.exists?(
-      from(restriction in DocReviewBlock,
-        where:
-          restriction.article_id == ^article_id and restriction.branch_id == ^branch_id and
-            is_nil(restriction.resolved_at)
-      )
-    )
-  end
-
-  defp enqueue_visibility_change(
-         %DocLifecycle{article_id: article_id, branch_id: branch_id},
-         _target,
-         key
-       ) do
-    with %Article{} <- Repo.get(Article, article_id),
-         %DocBranch{community_id: community_id} <- Repo.get(DocBranch, branch_id),
-         %Community{} = community <- Repo.get(CMS.Model.Community, community_id),
-         %ArticleBinding{inner_id: inner_id} <-
-           Repo.get_by(ArticleBinding, article_id: article_id, community_id: community_id),
-         {:ok, event} <-
-           CMS.Articles.Effects.enqueue(
-             "article.visibility_changed",
-             "article",
-             article_id,
-             {:workflow, "review:doc:#{article_id}:#{branch_id}"},
-             %{
-               "community" => community.slug,
-               "community_id" => community.id,
-               "thread" => "doc",
-               "inner_id" => inner_id,
-               "branch_id" => branch_id
-             },
-             effect_key: "review:#{key}"
-           ) do
-      {:ok, event}
-    else
-      nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}
-      {:error, _reason} = error -> error
-    end
-  end
-
   defp enqueue_visibility_change(
          %ArticleLifecycle{article_id: article_id},
          %{community_id: community_id},
-         key
+         operation_ref
        ) do
-    enqueue_article_visibility(article_id, community_id, key)
+    enqueue_article_visibility(article_id, community_id, operation_ref)
   end
 
   defp enqueue_visibility_change(
          %CommentLifecycle{comment_id: comment_id},
          %{community_id: community_id},
-         key
+         operation_ref
        ) do
     with %Comment{article_id: article_id} <- Repo.get(Comment, comment_id) do
-      enqueue_article_visibility(article_id, community_id, key)
+      enqueue_article_visibility(article_id, community_id, operation_ref)
     else
       nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}
     end
   end
 
-  defp enqueue_visibility_change(%_lifecycle{}, _target, _key), do: {:ok, :pass}
+  defp enqueue_visibility_change(%_lifecycle{}, _target, _operation_ref), do: {:ok, :pass}
 
-  defp enqueue_article_visibility(article_id, community_id, key) do
-    with %Article{thread: thread} <- Repo.get(Article, article_id) do
+  defp enqueue_article_visibility(article_id, community_id, operation_ref) do
+    with %Article{} <- Repo.get(Article, article_id) do
       query = from(binding in ArticleBinding, where: binding.article_id == ^article_id)
 
       query =
@@ -496,19 +422,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
 
         case community do
           %Community{} = community ->
-            case CMS.Articles.Effects.enqueue(
-                   "article.visibility_changed",
-                   "article",
-                   article_id,
-                   {:workflow, "review:#{article_id}:#{community.id}"},
-                   %{
-                     "community" => community.slug,
-                     "community_id" => community.id,
-                     "thread" => Atom.to_string(thread),
-                     "inner_id" => binding.inner_id
-                   },
-                   effect_key: "review:#{key}:#{community.id}"
-                 ) do
+            case CMS.Articles.Effects.visibility_changed(binding, community, operation_ref) do
               {:ok, _event} -> {:cont, {:ok, :pass}}
               {:error, reason} -> {:halt, {:error, reason}}
             end

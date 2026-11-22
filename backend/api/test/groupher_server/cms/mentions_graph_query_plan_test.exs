@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryPlanTest do
 
   test "source edge window uses its pagination index" do
     {_community, article, _attrs, _user} = mock_article(:post)
-    source = Repo.get_by!(Endpoint, type: :post, article_id: article.article_id)
+    source = Repo.get_by!(Endpoint, type: :post, article_id: article.id)
 
     plan =
       Repo.transaction(fn ->

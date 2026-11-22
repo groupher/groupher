@@ -49,17 +49,17 @@ const errorMessage = (cause: unknown): string =>
 const ACTIVE_POLL_INTERVAL_MS = 1_200
 const HIDDEN_POLL_INTERVAL_MS = 5_000
 const PROCESS_STAGE_ORDER: TImportProcessStage[] = [
-  'analyzing',
-  'building_preview',
-  'preparing',
-  'applying',
+  'ANALYZING',
+  'BUILDING_PREVIEW',
+  'PREPARING',
+  'APPLYING',
 ]
 
 const initialProcess = (stage: TImportProcessStage, total?: number): TImportProcess => ({
-  progress: total === undefined ? undefined : { completed: 0, total, unit: 'document' as const },
+  progress: total === undefined ? undefined : { completed: 0, total, unit: 'DOCUMENT' as const },
   recentBatch: [],
   stage,
-  state: 'queued',
+  state: 'QUEUED',
   updatedAt: new Date().toISOString(),
 })
 
@@ -93,9 +93,9 @@ export default function useLogic(): TRet {
   const [job, setJob] = useState<TContentImportJob | null>(null)
   const [process, setProcess] = useState<TImportProcess | null>(() =>
     initialJobRef
-      ? initialProcess('preparing')
+      ? initialProcess('PREPARING')
       : initialPreviewRef
-        ? initialProcess('analyzing')
+        ? initialProcess('ANALYZING')
         : null,
   )
   const [pollingDisconnected, setPollingDisconnected] = useState(false)
@@ -128,7 +128,7 @@ export default function useLogic(): TRet {
   const analyze = useCallback(async (): Promise<void> => {
     setError('')
     setPollingDisconnected(false)
-    setProcess(initialProcess('analyzing'))
+    setProcess(initialProcess('ANALYZING'))
     setPhase(PHASE.ANALYZING)
     try {
       const response = await fetch(DOCS_IMPORT_ROUTE.PREVIEWS, {
@@ -261,7 +261,7 @@ export default function useLogic(): TRet {
         setError('')
         setJob(null)
         setPollingDisconnected(false)
-        setProcess(initialProcess('preparing', selectedSourceIds.length))
+        setProcess(initialProcess('PREPARING', selectedSourceIds.length))
         setPhase(PHASE.IMPORTING)
         try {
           const response = await fetch(DOCS_IMPORT_ROUTE.apply(preview.previewRef), {

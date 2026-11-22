@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const blog = graphql(`
+  "Get blog by id"
   query Blog($article: ArticlePathInput!) {
     blog(article: $article) {
       innerId
@@ -11,22 +12,22 @@ export const blog = graphql(`
       activeAt
       updatedAt
       author {
-        ...PageAuthorFields
+        ...AuthorFields
       }
       community {
-        ...PageCommunityFields
+        ...CommunityFields
       }
       communities {
-        ...PageCommunityFields
+        ...CommunityFields
       }
       communityTags {
-        ...PageTagFields
+        ...TagFields
       }
       meta {
         thread
         isEdited
         latestUpvotedUsers {
-          ...PageCommonUserFields
+          ...CommonUserFields
         }
       }
       body {

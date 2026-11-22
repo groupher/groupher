@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node ./src/index.js",
+    "dev": "pnpm --dir ../.. devhub start mock-server",
+    "dev:managed": "node ./src/index.js",
     "start": "node ./src/index.js"
   },
   "dependencies": {
-    "@graphql-tools/mock": "^9.1.17",
-    "@graphql-tools/schema": "^10.1.4",
+    "@graphql-tools/mock": "^10.1.4",
+    "@graphql-tools/schema": "^11.0.9",
     "@groupher/contracts": "workspace:*",
-    "graphql": "^17.0.2",
+    "graphql": "^17.1.0",
     "graphql-http": "^1.23.1"
   }
 }

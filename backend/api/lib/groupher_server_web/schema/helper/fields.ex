@@ -12,7 +12,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   import Helper.Utils, only: [plural: 1]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Author, Community}
 
   @emotions CMS.artiment_config_emotions()
   @comment_emotions CMS.artiment_config_comment_emotions()
@@ -22,6 +24,12 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   @doc "general article fields for GraphQL resolve fields"
   defmacro general_article_fields do
     quote do
+      field(:id, non_null(:id),
+        resolve: fn source, _, _ ->
+          {:ok, Map.get(source, :article_id) || Map.get(source, :id)}
+        end
+      )
+
       field(:inner_id, :id)
       field(:version, non_null(:integer))
       field(:title, :string)
@@ -72,6 +80,17 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         end
       )
 
+      field(:article_tags, list_of(:community_tag),
+        resolve: fn source, args, resolution ->
+          GroupherServerWeb.Schema.Helper.Fields.article_relation(
+            source,
+            args,
+            resolution,
+            :article_tags
+          )
+        end
+      )
+
       field(:author, :user,
         resolve: fn source, args, resolution ->
           GroupherServerWeb.Schema.Helper.Fields.article_relation(
@@ -105,7 +124,23 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         end
       )
 
-      field(:meta, :article_meta)
+      field(:meta, :article_meta,
+        resolve: fn source, _, _ ->
+          case Map.fetch(source, :meta) do
+            {:ok, meta} when is_map(meta) ->
+              {:ok, meta}
+
+            _ ->
+              {:ok,
+               %{
+                 thread: Map.get(source, :thread),
+                 is_edited: Map.get(source, :is_edited),
+                 is_comment_locked: Map.get(source, :comments_locked),
+                 last_active_at: Map.get(source, :last_active_at)
+               }}
+          end
+        end
+      )
 
       field(:command_id, :id,
         resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3
@@ -129,6 +164,23 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   @doc "Returns an already assembled Article DTO relation or delegates legacy structs to Dataloader."
   @spec article_relation(map(), map(), Absinthe.Resolution.t(), atom()) :: term()
+  def article_relation(%{author: %Author{user: %User{} = user}}, _args, _resolution, :author) do
+    {:ok, user}
+  end
+
+  def article_relation(
+        %{author: %Author{user: %Ecto.Association.NotLoaded{}}} = source,
+        args,
+        resolution,
+        :author
+      ) do
+    load_relation(source, args, resolution, :author)
+  end
+
+  def article_relation(%{community: %Community{} = community}, _args, _resolution, :communities) do
+    {:ok, [community]}
+  end
+
   def article_relation(source, args, resolution, relation) do
     case Map.fetch(source, relation) do
       {:ok, %Ecto.Association.NotLoaded{}} -> load_relation(source, args, resolution, relation)
@@ -620,6 +672,31 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     else
       raise ArgumentError,
             "enum_values/1 expects a compile-time list, got: #{Macro.to_string(expanded)}"
+    end
+  end
+
+  @doc "Generates the GraphQL PassportAction values from the canonical Gate contract."
+  defmacro passport_action_values do
+    CMS.passport_actions()
+    |> Enum.map(fn action ->
+      enum_name = action |> String.replace(".", "_") |> String.to_existing_atom()
+
+      quote do
+        value(unquote(enum_name), as: unquote(action))
+      end
+    end)
+  end
+
+  @doc false
+  defmacro community_article_trash_fields do
+    quote do
+      field(:id, non_null(:id))
+      field(:community_id, non_null(:id))
+      field(:thread, non_null(:community_article_trash_thread))
+      field(:status, non_null(:community_article_trash_status))
+      field(:public_visible, non_null(:boolean))
+      field(:record_revision, non_null(:string))
+      field(:created_at, non_null(:datetime))
     end
   end
 end

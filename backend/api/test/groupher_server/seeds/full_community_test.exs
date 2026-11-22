@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
     ArticlePublic,
     Comment,
     Community,
-    DocPublic,
+    ArticlePublic,
     PostState
   }
 
@@ -27,7 +27,8 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       allowed_cats = [nil | Const.cat_values()]
       slug = "seed-full-#{System.unique_integer([:positive, :monotonic])}"
 
-      {:ok, community} = CMS.Seeds.full_community(slug)
+      {:ok, community} =
+        CMS.Seeds.full_community(slug, command_id_factory: &Ecto.UUID.generate/0)
 
       {:ok, community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -40,7 +41,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
         from(article in Article,
           join: binding in CMS.Model.ArticleBinding,
           on: binding.article_id == article.id,
-          join: public in DocPublic,
+          join: public in ArticlePublic,
           on: public.article_id == article.id,
           where: binding.community_id == ^community.id and article.thread == :doc
         )

@@ -2,9 +2,9 @@ defmodule GroupherServer.Test.Activity.ArtimentEventTest do
   use GroupherServer.TestMate, async: false
   alias GroupherServer.{Activity, CMS, Messaging}
   alias CMS.Events.Notify
-  alias Messaging.Model.Notification
+  alias Messaging.Model.Notice
 
-  test "MSG-02 Doc body events retain their branch while shared Comment events do not" do
+  test "MSG-02 Doc body and Comment events share the stable Article identity" do
     {community, doc, _, author} = mock_article(:doc)
     {:ok, actor} = db_insert(:user)
 
@@ -21,14 +21,14 @@ defmodule GroupherServer.Test.Activity.ArtimentEventTest do
     assert {:ok, descriptor} =
              Activity.Doc.describe(comment, :comment_created, community_id: community.id)
 
-    assert descriptor.article_id == doc.article_id
+    assert descriptor.article_id == doc.id
     assert descriptor.subject_type == "comment"
     refute Map.has_key?(descriptor, :branch_id)
     assert {:ok, body} = Activity.Doc.describe(doc, :published, [])
-    assert body.branch_id == doc.branch_id
+    assert body.article_id == doc.id
     assert {:ok, _} = Notify.handle(:comment, comment, actor)
-    notification = Repo.get_by!(Notification, comment_id: comment.id, user_id: author.id)
-    assert notification.article_id == doc.article_id
-    assert notification.branch_id == nil
+    notification = Repo.get_by!(Notice, comment_id: comment.id, user_id: author.id)
+    assert notification.article_id == doc.id
+    refute Map.has_key?(notification, :branch_id)
   end
 end

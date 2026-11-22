@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Commands.RetrySetup do
       Gate.check_application_in_transaction(actor, :application_retry_setup, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with {:ok, _result} <-
              Setup.retry(canonical.public_ref, actor, expected_version, command_id) do
         {:ok, canonical}

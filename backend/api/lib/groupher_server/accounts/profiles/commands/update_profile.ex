@@ -14,7 +14,7 @@ defmodule GroupherServer.Accounts.Profiles.Commands.UpdateProfile do
   @pipeline operation: :accounts_profile_update, access: :open, target: :user, params: [:attrs]
 
   direct_pipeline execute_pipeline(user, attrs) do
-    change(fn _user -> Persist.update_profile(user, attrs) end)
+    change(fn _user, _operation_ref -> Persist.update_profile(user, attrs) end)
 
     present(fn user ->
       _ = Effects.revalidate_user(user)

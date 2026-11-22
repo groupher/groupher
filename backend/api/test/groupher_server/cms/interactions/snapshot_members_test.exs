@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.CMS.Interactions.SnapshotMembersTest do
     fixed =
       Repo.one!(
         from(i in PostReactionInfo,
-          where: i.article_id == ^article.article_id,
+          where: i.article_id == ^article.id,
           select: %{
             count: i.upvotes_count,
             collects: i.collects_count,
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.Interactions.SnapshotMembersTest do
     emotion =
       Repo.one!(
         from(i in PostEmotionInfo,
-          where: i.article_id == ^article.article_id and i.emotion == "beer",
+          where: i.article_id == ^article.id and i.emotion == "beer",
           select: %{count: i.users_count, users: i.latest_users}
         )
       )
@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.CMS.Interactions.SnapshotMembersTest do
     {_community, article, _, actor} = mock_article(:post)
     {:ok, _} = CMS.Interactions.upvote(article, actor, Ecto.UUID.generate())
 
-    Repo.update_all(from(i in PostReactionInfo, where: i.article_id == ^article.article_id),
+    Repo.update_all(from(i in PostReactionInfo, where: i.article_id == ^article.id),
       set: [upvotes_count: 0]
     )
 
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.CMS.Interactions.SnapshotMembersTest do
 
     assert Repo.exists?(
              from(f in ArticleUpvote,
-               where: f.article_id == ^article.article_id and f.user_id == ^actor.id
+               where: f.article_id == ^article.id and f.user_id == ^actor.id
              )
            )
   end

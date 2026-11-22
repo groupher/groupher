@@ -10,8 +10,11 @@ defmodule GroupherServer.Analysis.ArticleInsights.Query do
 
   import Ecto.Query
 
-  alias GroupherServer.{Analysis, CMS, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
+  alias Accounts.Model.User
   alias Analysis.{Const, Model.ArticleHourlyMetric}
+  alias CMS.Model.{Community, CommunityAdmin}
+  alias CMS.Passport.Scope.Community, as: CommunityScope
 
   @default_hours 48
   @max_buckets 720
@@ -93,18 +96,20 @@ defmodule GroupherServer.Analysis.ArticleInsights.Query do
   @spec trend_by_public_filter(map(), term(), map()) ::
           {:ok, map()} | {:error, term()}
   def trend_by_public_filter(article_path, viewer, filter) when is_map(filter) do
-    opts =
-      [
-        from: Map.get(filter, :from),
-        to: Map.get(filter, :to),
-        metrics: Map.get(filter, :metrics),
-        actor_types: Map.get(filter, :actor_types),
-        is_authenticated: Map.get(filter, :is_authenticated),
-        passport_granted_community_slugs: passport_granted_community_slugs(viewer)
-      ]
-      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+    with {:ok, granted_slugs} <- passport_granted_community_slugs(viewer) do
+      opts =
+        [
+          from: Map.get(filter, :from),
+          to: Map.get(filter, :to),
+          metrics: Map.get(filter, :metrics),
+          actor_types: Map.get(filter, :actor_types),
+          is_authenticated: Map.get(filter, :is_authenticated),
+          passport_granted_community_slugs: granted_slugs
+        ]
+        |> Enum.reject(fn {_key, value} -> is_nil(value) end)
 
-    trend_by_path(article_path, viewer, opts)
+      trend_by_path(article_path, viewer, opts)
+    end
   end
 
   @doc """
@@ -117,37 +122,55 @@ defmodule GroupherServer.Analysis.ArticleInsights.Query do
   def metrics, do: Const.metrics()
 
   @doc """
-  Extracts community-scoped insight grants at the trusted API boundary.
+  Extracts current community-scoped insight grants from Passport Store.
 
   ## Examples
 
       Analysis.ArticleInsights.passport_granted_community_slugs(viewer)
   """
-  @spec passport_granted_community_slugs(term()) :: [String.t()]
-  def passport_granted_community_slugs(viewer) do
-    viewer
-    |> then(&Map.get(&1, :cur_passport))
-    |> Helper.PermissionRegistry.normalize_rules()
-    |> Enum.reduce([], fn
-      {"global", _rules}, acc ->
-        acc
+  @spec passport_granted_community_slugs(term()) :: {:ok, [String.t()]} | {:error, term()}
+  def passport_granted_community_slugs(%{id: user_id}) when is_integer(user_id) do
+    viewer = %User{id: user_id}
 
-      {slug, rules}, acc when is_map(rules) ->
-        cms = Map.get(rules, "cms", %{})
+    with {:ok, global_scope} <- CMS.passport_global_scope(viewer) do
+      admins =
+        Repo.all(
+          from(admin in CommunityAdmin,
+            join: community in Community,
+            on: community.id == admin.community_id,
+            where: admin.user_id == ^user_id,
+            select: {community, admin}
+          )
+        )
 
-        if Map.get(rules, "root") == true or Map.get(cms, "article.insights.read") == true do
-          [slug | acc]
+      Enum.reduce_while(admins, {:ok, []}, fn {community, admin}, {:ok, slugs} ->
+        with {:ok, permissions} <-
+               CMS.passport_validate_permissions(:community, admin.permissions),
+             scope <- %CommunityScope{
+               actor_id: user_id,
+               community_id: community.id,
+               global: global_scope.global,
+               community: %{is_lord: admin.is_lord, permissions: permissions}
+             },
+             {:ok, allowed} <-
+               CMS.passport_allowed?(viewer, scope, CMS.gate_action_article_insights_read()) do
+          if allowed do
+            {:cont, {:ok, [community.slug | slugs]}}
+          else
+            {:cont, {:ok, slugs}}
+          end
         else
-          acc
+          {:error, _reason} = error -> {:halt, error}
         end
-
-      _, acc ->
-        acc
-    end)
-    |> Enum.uniq()
-  rescue
-    _ -> []
+      end)
+      |> case do
+        {:ok, slugs} -> {:ok, Enum.uniq(slugs)}
+        {:error, _reason} = error -> error
+      end
+    end
   end
+
+  def passport_granted_community_slugs(_viewer), do: {:ok, []}
 
   defp authorize_if_needed(article, viewer, article_type, opts) do
     if Keyword.get(opts, :skip_authorize, false) do

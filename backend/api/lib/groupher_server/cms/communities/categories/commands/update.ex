@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Update do
       end
     end)
 
-    change(fn {canonical, category} ->
+    change(fn {canonical, category}, _operation_ref ->
       with true <- Persist.category_in_community?(canonical, category),
            {:ok, updated} <- Persist.update_category(category, attrs) do
         {:ok, updated}

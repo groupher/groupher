@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cf dev --mode development",
+    "dev": "pnpm --dir ../.. devhub start converter",
+    "dev:managed": "cf dev --mode development",
     "deploy": "cf deploy --mode production",
     "deploy:dry-run": "cf deploy --dry-run --mode production",
     "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.json",
@@ -16,14 +17,14 @@
     "@mjackson/multipart-parser": "0.10.1"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
-    "@cloudflare/vitest-plugin": "^1.4.0",
-    "@cloudflare/workers-types": "^5.20261013.1",
-    "@types/node": "^26.6.5",
-    "cf": "1.0.0-beta.13",
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.16",
+    "@cloudflare/vitest-plugin": "^1.8.2",
+    "@cloudflare/workers-types": "^5.20261115.1",
+    "@types/node": "^26.6.6",
+    "cf": "1.0.0-beta.31",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.4"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
   }
 }

@@ -75,7 +75,8 @@ defmodule GroupherServer.TestMate do
       @last_year Datetime.shift(@now, years: -1)
                  |> DateTime.truncate(:second)
 
-      def article_inner_id(%{inner_id: inner_id}, _community), do: inner_id
+      def article_inner_id(%{inner_id: inner_id}, _community) when not is_nil(inner_id),
+        do: inner_id
 
       def article_inner_id(article, %Community{id: community_id}) when is_map(article) do
         article_id = Map.get(article, :article_id) || Map.get(article, :id)
@@ -244,19 +245,16 @@ defmodule GroupherServer.TestMate do
       Creates a community plus one explicit root Tab for Docs Tree tests.
 
       The fixture is inserted directly so it does not consume a Tree revision.
-      `DocTreeNode.id` remains the physical row id, while `node_id` is the stable
+      `DocsTreeNode.id` remains the physical row id, while `node_id` is the stable
       logical identity used by GraphQL and `parent_node_id`.
       """
       def create_empty_docs_community(user) do
         attrs = mock_attrs(:community) |> Map.put(:user, user)
 
         with {:ok, community} <- CMS.Communities.create(attrs, user, Ecto.UUID.generate()),
-             {:ok, state} <-
-               ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id),
              {:ok, _tab} <-
-               ORM.create(CMS.Model.DocTreeNode, %{
+               ORM.create(CMS.Model.DocsTreeNode, %{
                  community_id: community.id,
-                 branch_id: state.branch_id,
                  stage: :draft,
                  node_id: Ecto.UUID.generate(),
                  type: :tab,
@@ -273,7 +271,7 @@ defmodule GroupherServer.TestMate do
       Child Tree rows store this value in `parent_node_id`.
       """
       def root_doc_tab_node_id(%Community{} = community) do
-        CMS.Model.DocTreeNode
+        CMS.Model.DocsTreeNode
         |> where([node], node.community_id == ^community.id)
         |> where([node], node.stage == :draft and node.type == :tab)
         |> order_by([node], asc: node.index, asc: node.id)

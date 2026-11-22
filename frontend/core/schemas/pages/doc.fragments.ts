@@ -1,7 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
-export const PageDocPublicTreeNodeFields = graphql(`
-  fragment PageDocPublicTreeNodeFields on DocPublicTreeNode {
+export const DocPublicTreeNodeFields = graphql(`
+  fragment DocPublicTreeNodeFields on DocPublicTreeNode {
     id
     parentNodeId
     docId
@@ -30,20 +30,20 @@ export const PageDocPublicTreeNodeFields = graphql(`
   }
 `)
 
-export const PageDocPublicTreeChildFields = graphql(`
-  fragment PageDocPublicTreeChildFields on DocPublicTreeNode {
-    ...PageDocPublicTreeNodeFields
+export const DocPublicTreeChildFields = graphql(`
+  fragment DocPublicTreeChildFields on DocPublicTreeNode {
+    ...DocPublicTreeNodeFields
     pages {
-      ...PageDocPublicTreeNodeFields
+      ...DocPublicTreeNodeFields
     }
   }
 `)
 
-export const PageDocPublicTreeGroupFields = graphql(`
-  fragment PageDocPublicTreeGroupFields on DocPublicTreeNode {
-    ...PageDocPublicTreeNodeFields
+export const DocPublicTreeGroupFields = graphql(`
+  fragment DocPublicTreeGroupFields on DocPublicTreeNode {
+    ...DocPublicTreeNodeFields
     pages {
-      ...PageDocPublicTreeChildFields
+      ...DocPublicTreeChildFields
     }
   }
 `)

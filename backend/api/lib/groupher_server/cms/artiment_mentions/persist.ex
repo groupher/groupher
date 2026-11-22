@@ -398,7 +398,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Persist do
 
   defp endpoint_identity(%{type: type, article_id: article_id} = attrs)
        when type in [:post, :blog, :changelog, :doc, :ticket] and is_binary(article_id) do
-    if Map.get(attrs, :branch_id) || Map.get(attrs, :comment_id) ||
+    if Map.get(attrs, :comment_id) ||
          Map.get(attrs, :parent_endpoint_id) do
       {:error, :invalid_mention_endpoint}
     else
@@ -410,7 +410,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Persist do
          %{type: :comment, comment_id: comment_id, parent_endpoint_id: parent_id} = attrs
        )
        when is_integer(comment_id) and is_binary(parent_id) do
-    if Map.get(attrs, :article_id) || Map.get(attrs, :branch_id) do
+    if Map.get(attrs, :article_id) do
       {:error, :invalid_mention_endpoint}
     else
       {:ok, Map.take(attrs, [:type, :comment_id, :parent_endpoint_id])}

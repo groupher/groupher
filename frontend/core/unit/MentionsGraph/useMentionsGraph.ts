@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { MENTIONS_GRAPH_CONTENT_CHANGE } from '~/graphql/client'
-import type { MentionsGraphPageQuery } from '~/lib/graphql/generated/graphql'
+import type { PagedMentionsGraphQuery } from '~/lib/graphql/generated/graphql'
 import {
   mentionsGraphLocatorKey,
   mentionsGraphQueries,
@@ -10,8 +10,8 @@ import {
 } from '~/query/mentionsGraph'
 import { isMentionsGraphRestartError } from '~/query/mentionsGraphRecovery'
 
-type Node = MentionsGraphPageQuery['mentionsGraph']['nodes'][number]
-type Edge = MentionsGraphPageQuery['mentionsGraph']['edges'][number]
+type Node = PagedMentionsGraphQuery['mentionsGraph']['nodes'][number]
+type Edge = PagedMentionsGraphQuery['mentionsGraph']['edges'][number]
 
 /** Loads only the focus resource’s direct relationship pages and checks the global revision while the tab is mounted. */
 export default function useMentionsGraph(community: string, focus: MentionsGraphFocus) {

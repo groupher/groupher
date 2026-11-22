@@ -11,9 +11,9 @@ import {
   articleQueryKeys,
   communityQueries as coreCommunityQueries,
   dsbKeys,
-  projectCommunityConfig,
+  pickCommunityFields,
 } from '~/query'
-import type { TParseDashboard } from '~/spec'
+import type { TDsb } from '~/spec'
 
 import { refreshCommunity } from '../server/community'
 import { communityQueries } from './queries'
@@ -40,10 +40,10 @@ export const refreshArticleBootstrap = async (client: QueryClient, community: st
   const shell = await refreshCommunity({ data: { community } })
   if (!shell) throw new Error('Community bootstrap is unavailable')
   client.setQueryData(
-    coreCommunityQueries.config(community).queryKey,
-    projectCommunityConfig(shell.community),
+    coreCommunityQueries.slug(community).queryKey,
+    pickCommunityFields(shell.community),
   )
-  client.setQueryData(dsbKeys.config(community), shell.dashboard)
+  client.setQueryData(dsbKeys.slug(community), shell.dashboard)
 }
 
 /** Drops only this community/surface's page family before restarting at the collection head. */
@@ -65,7 +65,7 @@ const prefetchSurface = async (
 ) => {
   const mobile = readPagiMobileLayout()
   const bootstrapConfig = toEffectivePagiConfig(
-    client.getQueryData<TParseDashboard>(dsbKeys.config(community)),
+    client.getQueryData<TDsb>(dsbKeys.slug(community)),
     mobile === true,
   )
   const { config } = resolvePagiPosition(bootstrapConfig, new URLSearchParams(search))

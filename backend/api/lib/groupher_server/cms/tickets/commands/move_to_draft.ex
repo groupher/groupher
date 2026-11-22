@@ -49,13 +49,13 @@ defmodule GroupherServer.CMS.Tickets.Commands.MoveToDraft do
       )
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.move_to_draft(
         canonical,
         ticket_id,
         reason,
         expected_lifecycle_version,
-        %{actor: actor, command_id: command_id}
+        %{actor: actor, command_id: command_id, operation_ref: operation_ref}
       )
     end)
 

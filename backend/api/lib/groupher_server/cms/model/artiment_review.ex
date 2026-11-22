@@ -15,8 +15,7 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
   alias CMS.Model.{
     Article,
     Comment,
-    Community,
-    DocBranch
+    Community
   }
 
   alias Helper.Constant.DBPrefix
@@ -30,10 +29,10 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
   @primary_key {:id, Ecto.UUID, autogenerate: true}
 
   schema "artiment_reviews" do
+    field(:operation_ref, Ecto.UUID)
     field(:target_type, Ecto.Enum, values: @target_types)
     belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:comment, Comment)
-    belongs_to(:branch, DocBranch)
     belongs_to(:community, Community)
     field(:policy_snapshot, :map)
     field(:payload, :map)
@@ -53,9 +52,9 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
     request
     |> cast(attrs, [
       :target_type,
+      :operation_ref,
       :article_id,
       :comment_id,
-      :branch_id,
       :community_id,
       :policy_snapshot,
       :payload,
@@ -69,6 +68,7 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
     ])
     |> validate_required([
       :target_type,
+      :operation_ref,
       :policy_snapshot,
       :state,
       :payload_expires_at
@@ -77,23 +77,21 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
     |> validate_doc_scope()
     |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:comment_id)
-    |> foreign_key_constraint(:branch_id)
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:updated_by_id)
   end
 
   defp validate_target(changeset) do
-    values = Enum.map([:article_id, :comment_id, :branch_id], &get_field(changeset, &1))
-    [article_id, comment_id, branch_id] = values
+    [article_id, comment_id] = Enum.map([:article_id, :comment_id], &get_field(changeset, &1))
 
     case get_field(changeset, :target_type) do
-      :article when not is_nil(article_id) and is_nil(comment_id) and is_nil(branch_id) ->
+      :article when not is_nil(article_id) and is_nil(comment_id) ->
         changeset
 
-      :comment when is_nil(article_id) and not is_nil(comment_id) and is_nil(branch_id) ->
+      :comment when is_nil(article_id) and not is_nil(comment_id) ->
         changeset
 
-      :doc when not is_nil(article_id) and is_nil(comment_id) and not is_nil(branch_id) ->
+      :doc when not is_nil(article_id) and is_nil(comment_id) ->
         changeset
 
       _ ->

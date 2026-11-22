@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Outbox.Workflow do
 
   alias __MODULE__.{
     Article,
+    ArticleCoAuthorRequest,
     Asset,
     Comment,
     Community,
@@ -23,6 +24,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow do
 
   @doc "Dispatches one claimed CMS outbox job to its domain delivery workflow."
   @spec perform(atom(), Oban.Job.t()) :: Oban.Worker.result()
+  def perform(:admin_request, job), do: __MODULE__.AdminRequest.perform(job)
+  def perform(:article_co_author_request, job), do: ArticleCoAuthorRequest.perform(job)
+  def perform(:docs, job), do: __MODULE__.Docs.perform(job)
   def perform(:article, job), do: Article.perform(job)
   def perform(:asset, job), do: Asset.perform(job)
   def perform(:comment, job), do: Comment.perform(job)

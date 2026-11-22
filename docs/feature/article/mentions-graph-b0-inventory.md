@@ -4,6 +4,8 @@
 
 > **历史证据（2026-11-04 至 2026-11-06）：**本文的 set／occurrence／初始化／重建、请求级 SQL 预算及按资源状态裁剪图标题、URL 或边的条款均不适用于 2026-11-07 当前关系实现。现行代码合同见[当前关系合同](./mentions-graph-sync-contract.md)，新目标只用全新空库，不迁 B4 内容。下文原始测量与当时的执行事实保留供追溯，不能作为本轮发布指引。
 
+> **2026-11-14 Docs 目标更新：**本文涉及 Doc 唯一 owner 的扫描、定位和验收数字均属旧实现证据。新目标允许多个 Community Binding；运行时须使用显式目标 Community 与对应 Binding，不得按唯一 owner 解析。本文不作为新目标实施清单。
+
 > 2026-11-06 后续决策：目标输入合同改为只识别结构化 Plate `a/link` 和 `mention` 节点；text 节点 raw HTML anchor、裸 URL 不再作为目标能力。工作区已按此修改；下文 B0/B1 的 text 输入记录仍是历史实现与验收快照，不能作为新合同的通过证据。当前实现见[同步实现合同](mentions-graph-sync-contract.md)和[设计评审 §11](mentions-graph-design-review.md#11-本轮落地后的边界复核2026-11-06)。
 
 > 状态：B0 原盘点及稳定 Doc 身份补充基线通过；B1 隔离环境出口通过（来源/状态、通知、重建与删除恢复见 §9.35，目标 Auth 实签见 §9.36，Doc Comment 联合见 §9.39）；B2 功能与请求 SQL 预算已验收，PG17 本地扫描/延迟/锁诊断通过，但代表性目标容量和首次成功率性能出口仍为 `PARTIAL`；B3 隔离环境接口/产品及 Community 生产构建通过。2026-11-06 决定记录 B2 缺口并推进 B4 准备与隔离演练；生产切换仍 BLOCKED，未部署/初始化/切换；外部候选搜索继续暂缓。最新证据见 §9.42 与 [B2 性能记录](mentions-graph-b2-performance-acceptance.md)。
@@ -15,6 +17,8 @@
 > §9.1–§9.35 为当时执行记录，保留原模块名、路径和命令；当前命名与 Auth 状态以 §9.36 为准。
 
 ## 1. 本轮固定的三条边界
+
+> **历史实现章节：**本节第 2 条及后续 DocPublic、main branch、Doc owner 规则描述 B0 时的 MentionsGraph 运行态。它们仅作为扫描与测试依据，不能用来定位当前 Doc 或作为多社区验收合同；目标行为见 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md)。
 
 1. 初始化 A→Comment C 时，即使父 Article 没有 public selection、不在来源 S，仍按 canonical article_id/thread 创建稳定父 auxiliary endpoint，再创建 C endpoint。同一事务、唯一身份幂等；辅助身份进入 manifest，不计入 S，不生成虚构 set/水位。
 2. Article UUID / Comment ID 是全局稳定身份；mirror 到多个 Community 不造成歧义。只有 Community-local locator/URL 在指定 Community 内不能唯一定位才报歧义。Doc 验证唯一 owner 和正文当前 main 选版，branch 不参与 endpoint 身份。
@@ -113,7 +117,7 @@ B1 当前测试归属为 `backend/api/test/groupher_server/cms/mention_version_f
 - target 可以不在 S。Comment target 先由 canonical Comment 确定父身份，再创建 auxiliary parent endpoint。不能用父有没有 public selection 决定是否能创建 endpoint。
 - Article 多 mirror 不扩大 S，不产生多个 endpoint。Doc source 则按 Article+branch 区分。
 
-新增 [report-only 脚本](../../../backend/api/scripts/mentions_graph_b0_report.exs) 仅用 Ecto SELECT 汇总当前来源、缺正文、旧关系/水位及候选 worker/event 数；不读取私有正文、不初始化、不清队列。候选 worker 数含无关事件，不是可直接删除数量。
+新增 历史 report-only 脚本（R7 已随旧模型退场删除） 仅用 Ecto SELECT 汇总当前来源、缺正文、旧关系/水位及候选 worker/event 数；不读取私有正文、不初始化、不清队列。候选 worker 数含无关事件，不是可直接删除数量。
 
 本地 `groupher_server_test` 报告：Article/Doc/Comment 来源均 0，缺正文 0，旧关系/水位 0，候选任务和提及事件为空。仅说明 sandbox 测试结束后的本地环境，**不代表生产没有内容**。生产 manifest/counts 在 B4 暂停写入后生成。
 
@@ -325,7 +329,7 @@ Post Activity 涉及 Ticket 的部分仅包含“这个 Post 何时创建或关�
 cd backend/api
 mix test test/groupher_server_web/query/cms/artiment_mentions_test.exs --seed 0
 mix test test/groupher_server/cms/mentions_graph_b0_test.exs --include later --seed 0
-MIX_ENV=test mix run scripts/mentions_graph_b0_report.exs
+# 历史命令已退场：旧 B0 报告依赖被删除的 Draft / Revision / Branch 模型。
 ```
 
 实测：旧 GraphQL 基线 18 passed；B0 3/3 失败，均执行到业务断言：

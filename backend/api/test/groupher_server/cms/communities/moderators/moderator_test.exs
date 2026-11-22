@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
   alias GroupherServer.CMS
   alias CMS.Communities.{ErrorCat, Passport}
   alias CMS.Communities.Moderators.Setup, as: ModeratorSetup
-  alias CMS.Model.CommunityModerator
+  alias CMS.Model.{CommunityAdmin, CommunityModerator}
   alias Helper.PermissionRegistry
 
   setup do
@@ -17,6 +17,17 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
   end
 
   describe "[cms community moderators]" do
+    test "community creation stores the owner as a canonical root member",
+         ~m(user community)a do
+      admin = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: user.id)
+
+      assert admin.is_lord
+      assert admin.permissions == %{}
+
+      assert {:ok, true} =
+               CMS.Passport.Authorization.check(user, "review.decide", %{community: community})
+    end
+
     test "setup add_root requires a caller-owned transaction", ~m(user community)a do
       assert {:error, :community_moderator_transaction_required} =
                ModeratorSetup.add_root(community, user)
@@ -46,7 +57,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
       assert moderator.passport_item_count == PermissionRegistry.root_passport_item_count()
     end
 
-    test "should have passport count of community after add moderator",
+    test "tracks community permission count after moderator permission updates",
          ~m(user user2 community)a do
       cur_user = user
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, command_id())
@@ -60,7 +71,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
         "global" => %{},
         "#{community.slug}" => %{
           "cms" => %{
-            "post.edit" => true,
+            "post.restore" => true,
             "post.pin" => true,
             "post.trash" => true
           }
@@ -85,7 +96,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
         "global" => %{},
         "#{community.slug}" => %{
           "cms" => %{
-            "post.edit" => true,
+            "post.restore" => true,
             "post.pin" => false,
             "post.trash" => true
           }
@@ -107,6 +118,23 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
       assert moderator.passport_item_count == 2
     end
 
+    test "new moderators keep the default Docs permissions", ~m(user user2 community)a do
+      assert {:ok, _} = CMS.Communities.add_moderator(community, user2, user, command_id())
+
+      moderator = Repo.get_by!(CommunityModerator, community_id: community.id, user_id: user2.id)
+
+      for permission <- [
+            "doc.queue.approve",
+            "doc.queue.publish",
+            "doc.queue.preview",
+            "doc.queue.configure",
+            "doc.history.read",
+            "doc.import"
+          ] do
+        assert moderator.permissions[permission] == true
+      end
+    end
+
     test "can update passport of community moderator", ~m(user user2 community)a do
       cur_user = user
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, command_id())
@@ -116,7 +144,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
         "#{community.slug}" => %{
           "cms" => %{
             "post.trash" => false,
-            "post.edit" => true
+            "post.pin" => true
           }
         }
       }
@@ -130,9 +158,34 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
           command_id()
         )
 
-      {:ok, passport} = Passport.get_passport(user2)
+      moderator = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: user2.id)
 
-      assert get_in(passport, ["#{community.slug}", "cms", "post.edit"]) == true
+      assert moderator.permissions["post.pin"] == true
+      refute Map.has_key?(moderator.permissions, "post.trash")
+    end
+
+    test "rejects unknown permissions before writing canonical moderator facts",
+         ~m(user user2 community)a do
+      assert {:ok, _} =
+               CMS.Communities.add_moderator(community, user2, user, command_id())
+
+      before = Repo.get_by!(CommunityModerator, community_id: community.id, user_id: user2.id)
+
+      assert {:error, :unknown_action} =
+               CMS.Communities.update_moderator_passport(
+                 community,
+                 %{
+                   "global" => %{},
+                   community.slug => %{"cms" => %{"unknown.action" => true}}
+                 },
+                 user2,
+                 user,
+                 command_id()
+               )
+
+      member = Repo.get_by!(CommunityModerator, community_id: community.id, user_id: user2.id)
+      assert member.permissions == before.permissions
+      assert member.passport_item_count == before.passport_item_count
     end
 
     test "can not update passport of other community moderator", ~m(user user2 community)a do
@@ -246,14 +299,14 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
          ~m(user2 community)a do
       {:ok, user3} = db_insert(:user)
 
-      {:ok, _} =
-        Passport.stamp_passport(
-          %{
-            "global" => %{},
-            community.slug => %{"root" => true}
-          },
-          user2
-        )
+      Repo.insert!(
+        CommunityAdmin.changeset(%CommunityAdmin{}, %{
+          user_id: user2.id,
+          community_id: community.id,
+          is_lord: true,
+          permissions: %{}
+        })
+      )
 
       {:ok, updated_community} =
         CMS.Communities.add_moderator(community, user3, user2, command_id())
@@ -264,27 +317,32 @@ defmodule GroupherServer.Test.CMS.Communities.Moderators do
                CommunityModerator |> ORM.find_by(user_id: user3.id, community_id: community.id)
     end
 
-    test "can add moderator to a community, moderator has default passport",
+    test "adds a moderator with canonical default permissions",
          ~m(user user2 community)a do
       cur_user = user
 
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, command_id())
 
-      {:ok, moderator} = CommunityModerator |> ORM.find_by(user_id: user2.id)
-      {:ok, user_passport} = Passport.get_passport(user2)
-      default_rules = get_in(user_passport, [community.slug, "cms"])
+      moderator = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: user2.id)
+      default_rules = moderator.permissions
 
       assert moderator.user_id == user2.id
       assert moderator.community_id == community.id
-      assert user_passport["global"] == %{}
       assert is_map(default_rules)
       assert default_rules != %{}
-      assert moderator.passport_item_count == map_size(default_rules)
+
+      assert map_size(default_rules) ==
+               Enum.count(default_rules, fn {_action, enabled} -> enabled == true end)
+
       assert Enum.all?(Map.keys(default_rules), &String.contains?(&1, "."))
       assert Enum.all?(Map.keys(default_rules), &(not String.contains?(&1, "delete")))
+      assert default_rules["post.pin"]
+      assert default_rules["doc.queue.write"]
+      assert default_rules["community_tag.set"]
       refute Map.has_key?(default_rules, "thread.create")
       refute Map.has_key?(default_rules, "moderator.set")
       refute Map.has_key?(default_rules, "community.update")
+      refute Map.has_key?(default_rules, "post.edit")
     end
 
     test "user can get paged-moderators of a community", ~m(user community)a do

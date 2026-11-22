@@ -12,7 +12,7 @@ export const Route = createFileRoute('/$community/appearance/wallpaper')({
   loader: async ({ context, params }) => {
     const editorData = await loadWallpaperEditor({ data: { community: params.community } })
     await context.queryClient.ensureQueryData(
-      wallpaperEditorQueries.config(params.community, () => editorData),
+      wallpaperEditorQueries.slug(params.community, () => editorData),
     )
   },
   component: AppearanceWallpaperPage,
@@ -29,6 +29,7 @@ function AppearanceWallpaperPage() {
     enableBeforeUnload: isTouched,
     shouldBlockFn: () => {
       if (!isTouched || typeof window === 'undefined') return false
+      // oxlint-disable-next-line no-alert -- Existing unsaved-wallpaper navigation guard.
       return !window.confirm(t('dsb.appearance.wallpaper.unsaved_confirm'))
     },
   })

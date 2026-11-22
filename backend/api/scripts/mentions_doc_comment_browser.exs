@@ -110,7 +110,7 @@ state = Repo.get!(CurrentSet, comment_endpoint.id)
 true = not is_nil(state.set_id)
 
 doc_public =
-  Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id, branch_id: doc.branch_id)
+  Repo.get!(CMS.Model.ArticlePublic, doc.id)
 
 fixture = %{
   database: Repo.config()[:database],

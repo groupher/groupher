@@ -87,7 +87,7 @@ defmodule GroupherServer.CMS.Comments.Query.Mentions do
           |> Enum.flat_map(fn {comment_id, community_id} ->
             case comments_by_id[comment_id] do
               %Comment{thread: ^thread, article_id: article_id} ->
-                [{article_id, community_id, nil}]
+                [{article_id, community_id}]
 
               _ ->
                 []
@@ -112,7 +112,7 @@ defmodule GroupherServer.CMS.Comments.Query.Mentions do
              article when not is_nil(article) <-
                Map.get(
                  articles,
-                 {article_id, community_id, nil}
+                 {article_id, community_id}
                ) do
           value = %{
             comment: comment,

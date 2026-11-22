@@ -1,22 +1,24 @@
 import { graphql } from '~/graphql/authoring'
 
 export const post = graphql(`
+  "Get post by id"
   query Post($article: ArticlePathInput!) {
     post(article: $article) {
-      ...PagePostFields
-      ...PagePostDetailFields
+      ...PostFields
+      ...PostDetailFields
     }
   }
 `)
 
 export const pagedPublishedPosts = graphql(`
+  "Paged published posts"
   query PagedPublishedPosts($login: String!, $filter: ArticlePageFilter, $pagi: PagiInput) {
     pagedPublishedPosts(login: $login, filter: $filter, pagi: $pagi) {
       pinnedEntries {
-        ...PagePostLiteFields
+        ...PostLiteFields
       }
       entries {
-        ...PagePostLiteFields
+        ...PostLiteFields
       }
       pageInfo {
         __typename
@@ -38,13 +40,14 @@ export const pagedPublishedPosts = graphql(`
 `)
 
 export const postPage = graphql(`
-  query PostPage($pagi: PagiInput, $filter: PostFilter, $thread: PostThread = POST) {
+  "Article Lite page using the shared offset/cursor pagination contract"
+  query PagedPosts($pagi: PagiInput, $filter: PostFilter, $thread: PostThread = POST) {
     postPage(pagi: $pagi, filter: $filter, thread: $thread) {
       pinnedEntries {
-        ...PagePostLiteFields
+        ...PostLiteFields
       }
       entries {
-        ...PagePostLiteFields
+        ...PostLiteFields
       }
       pageInfo {
         __typename

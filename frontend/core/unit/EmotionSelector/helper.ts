@@ -5,7 +5,7 @@ import type { TEmotion, TEmotionType } from '~/spec'
 
 /** Returns emotion name for the frontend shared workflow. */
 export const getEmotionName = (item: TEmotion): TEmotionType => {
-  return (item.type || '').toLowerCase() as TEmotionType
+  return (item.type || '') as TEmotionType
 }
 
 /** Runs the visible emotions operation at the frontend shared boundary. */
@@ -26,7 +26,7 @@ export const ensureEmotion = (emotions: TEmotion[] = []): TEmotion[] => {
   const missing = values(EMOTION)
     .filter((emotion) => !known.has(emotion))
     .map((emotion) => ({
-      type: emotion.toUpperCase() as TEmotion['type'],
+      type: emotion,
       count: 0,
       viewerHasReacted: false,
       latestUsers: [],

@@ -14,6 +14,7 @@ const ticket = {
   priority: 1,
   lifecycleVersion: 2,
   workflowVersion: 3,
+  workingCopyRevision: null,
   draftVersion: null,
   publicationPreview: 'e2e-preview-anchor',
   draftContent: null,
@@ -96,6 +97,7 @@ export const ticketQueries = {
           innerId: null,
           title: 'Implement E2E fix',
           publicationState: 'DRAFT',
+          workingCopyRevision: 1,
           draftVersion: 1,
           workers: [],
           sources: [],
@@ -107,14 +109,16 @@ export const ticketQueries = {
 /** Implements enough versioned Ticket writes to exercise the real browser workflow. */
 export const ticketMutations = {
   ensureTicketDraft: () => {
-    ticket.draftVersion ??= 1
+    ticket.workingCopyRevision ??= 1
+    ticket.draftVersion = ticket.workingCopyRevision
     ticket.draftContent ??= { ...ticket.publishedContent }
     return ticket
   },
   saveTicketDraft: (_parent, args) => {
-    if (args.expectedDraftVersion !== ticket.draftVersion)
+    if (args.revision !== ticket.workingCopyRevision)
       throw new GraphQLError('Draft version conflict')
     Object.assign(ticket, args.content)
+    ticket.workingCopyRevision += 1
     ticket.draftVersion += 1
     ticket.draftContent = { title: ticket.title, digest: ticket.digest, body: ticket.body }
     ticket.hasUnpublishedChanges = true
@@ -127,13 +131,14 @@ export const ticketMutations = {
   publishTicket: (_parent, args) => {
     if (
       args.expectedPreview !== ticket.publicationPreview ||
-      args.expectedDraftVersion !== ticket.draftVersion ||
+      args.revision !== ticket.workingCopyRevision ||
       args.expectedLifecycleVersion !== ticket.lifecycleVersion ||
       args.expectedWorkflowVersion !== ticket.workflowVersion
     )
       throw new GraphQLError('Stale publication preview')
     ticket.publishedContent = ticket.draftContent
     ticket.draftContent = null
+    ticket.workingCopyRevision = null
     ticket.draftVersion = null
     ticket.hasUnpublishedChanges = false
     ticket.lifecycleVersion += 1

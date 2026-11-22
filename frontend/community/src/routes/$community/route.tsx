@@ -13,21 +13,19 @@ export const Route = createFileRoute('/$community')({
     if (params.community === '.well-known') throw notFound()
   },
   loader: async ({ params, context, location }) => {
-    const [loadedShell, locale, requestContext] = await Promise.all([
+    const [data, locale, requestContext] = await Promise.all([
       loadCommunity({ data: { community: params.community } }),
       loadLocale({ data: {} }),
       loadCommunityRequestContext(),
     ])
-    if (!loadedShell) throw notFound()
+    if (!data) throw notFound()
     await Promise.all([
       context.queryClient.ensureQueryData(
-        communityQueries.config(params.community, () => loadedShell.community),
+        communityQueries.slug(params.community, () => data.community),
       ),
+      context.queryClient.ensureQueryData(dsbQueries.slug(params.community, () => data.dashboard)),
       context.queryClient.ensureQueryData(
-        dsbQueries.config(params.community, () => loadedShell.dashboard),
-      ),
-      context.queryClient.ensureQueryData(
-        wallpaperQueries.config(params.community, () => loadedShell.wallpaper),
+        wallpaperQueries.slug(params.community, () => data.wallpaper),
       ),
     ])
     if (
@@ -39,8 +37,8 @@ export const Route = createFileRoute('/$community')({
         replace: true,
       })
     }
-    if (!loadedShell.community.slug) throw notFound()
-    return { head: projectCommunityHead(loadedShell), locale, requestContext }
+    if (!data.community.slug) throw notFound()
+    return { head: projectCommunityHead(data), locale, requestContext }
   },
   head: ({ loaderData, matches }) => ({
     meta: [

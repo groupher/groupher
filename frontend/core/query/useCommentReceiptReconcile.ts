@@ -32,7 +32,7 @@ const mergeViewerState = (
       if (!states) return states
       const emotionFlags = Object.fromEntries(
         (comment.emotions || []).map((emotion) => [
-          String(emotion.type).toUpperCase(),
+          String(emotion.type),
           Boolean(emotion.viewerHasReacted),
         ]),
       )

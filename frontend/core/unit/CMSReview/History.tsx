@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
-import type { CmsReviewTargetInput } from '~/graphql/generated/graphql'
+import type { ArtimentReviewTargetInput } from '~/graphql/generated/graphql'
 import useTrans from '~/hooks/useTrans'
 
-import { contentReviewHistory } from './schema'
+import { artimentReviewHistory } from './schema'
 
-type TProps = { target: CmsReviewTargetInput }
+type TProps = { target: ArtimentReviewTargetInput }
 
 /** Keeps earlier check results visible beside the current moderator task. */
 export default function History({ target }: TProps) {
@@ -18,12 +18,12 @@ export default function History({ target }: TProps) {
     queryKey: ['content-review-history', target, page],
     queryFn: async () =>
       (
-        await browserGraphQLRequest(contentReviewHistory, {
+        await browserGraphQLRequest(artimentReviewHistory, {
           target,
           limit: 20,
           offset: (page - 1) * 20,
         })
-      ).contentReviewHistory,
+      ).artimentReviewHistory,
     enabled: open,
   })
 

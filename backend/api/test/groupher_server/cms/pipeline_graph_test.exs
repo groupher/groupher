@@ -5,11 +5,40 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
   alias Mix.Tasks.Cms.Command.Pipeline, as: Graph
   alias CommandPipeline.GraphAnalyzer
 
+  test "manual Outbox recovery is reachable through its authenticated capability facade" do
+    modules = [
+      GroupherServer.CMS.Outbox,
+      GroupherServer.CMS.Outbox.ManualRetry,
+      GroupherServer.CMS.Outbox.Diagnostics
+    ]
+
+    files =
+      Enum.map(modules, fn module ->
+        module.module_info(:compile) |> Keyword.fetch!(:source) |> to_string()
+      end)
+
+    contracts = %{
+      GroupherServer.CMS.Outbox.ManualRetry =>
+        GroupherServer.CMS.Outbox.ManualRetry.__pipeline_contracts__()
+    }
+
+    report = Graph.build_report(files, contracts)
+    assert report["summary"]["pipelines_reached"] == 1
+    assert report["internal_pipeline_violations"] == []
+    assert report["unpipelined_command_writes"] == []
+    assert [%{access: :user}] = contracts[GroupherServer.CMS.Outbox.ManualRetry]
+  end
+
   test "traces a facade to migrated pipelines and rejects internal reachability" do
     files =
       [
         "lib/groupher_server/cms/articles.ex",
-        "lib/groupher_server/cms/articles/commands/publish.ex",
+        "lib/groupher_server/cms/articles/commands/create_article.ex",
+        "lib/groupher_server/cms/articles/commands/create_and_publish_article.ex",
+        "lib/groupher_server/cms/articles/commands/save_working_copy.ex",
+        "lib/groupher_server/cms/articles/commands/fork_snapshot.ex",
+        "lib/groupher_server/cms/articles/commands/publish_article.ex",
+        "lib/groupher_server/cms/articles/commands/delete_working_copy.ex",
         "lib/groupher_server/cms/articles/commands/trash.ex",
         "lib/groupher_server_web/resolvers/cms/articles.ex"
       ]
@@ -17,14 +46,19 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
 
     contracts =
       [
-        GroupherServer.CMS.Articles.Commands.Publish,
+        GroupherServer.CMS.Articles.Commands.CreateArticle,
+        GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle,
+        GroupherServer.CMS.Articles.Commands.SaveWorkingCopy,
+        GroupherServer.CMS.Articles.Commands.ForkSnapshot,
+        GroupherServer.CMS.Articles.Commands.PublishArticle,
+        GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy,
         GroupherServer.CMS.Articles.Commands.Trash
       ]
       |> Map.new(fn module -> {module, module.__pipeline_contracts__()} end)
 
     report = Graph.build_report(files, contracts)
 
-    assert report["summary"]["pipelines_reached"] == 4
+    assert report["summary"]["pipelines_reached"] >= 6
     assert report["summary"]["legacy_commands_reached"] == 0
 
     assert report["internal_pipeline_violations"] == []
@@ -63,16 +97,16 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
            } = Enum.find(contracts, &(&1.name == :run_internal))
   end
 
-  test "traces default-argument internal entries through their generated super trampoline" do
+  test "traces current Docs workspace commands through the product facade" do
     modules = [
-      GroupherServer.CMS.DocTree.Commands.DeleteNode,
-      GroupherServer.CMS.DocTree.Commands.DuplicateNode,
-      GroupherServer.CMS.DocTree.Commands.MoveNode,
-      GroupherServer.CMS.DocTree.Commands.UpdateNode
+      GroupherServer.CMS.DocTree.Commands.DeleteWorkspaceNode,
+      GroupherServer.CMS.DocTree.Commands.DuplicateWorkspaceNode,
+      GroupherServer.CMS.DocTree.Commands.MoveWorkspaceNode,
+      GroupherServer.CMS.DocTree.Commands.UpdateWorkspaceNode
     ]
 
     files =
-      [GroupherServer.CMS.DocTree | modules]
+      [GroupherServer.CMS, GroupherServerWeb.Resolvers.CMS.Docs | modules]
       |> Enum.map(fn module ->
         module.module_info(:compile)
         |> Keyword.fetch!(:source)
@@ -89,7 +123,9 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
       |> MapSet.new(&{&1["module"], &1["function"], &1["arity"]})
 
     Enum.each(modules, fn module ->
-      assert MapSet.member?(reached, {inspect(module), "run_tree_internal", 4})
+      entry = Enum.find(module.__pipeline_contracts__(), &(&1.name == :run_receipt))
+      assert entry
+      assert MapSet.member?(reached, {inspect(module), "run_receipt", entry.arity})
     end)
   end
 
@@ -352,6 +388,41 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
     assert [violation] = Graph.gate_stage_violations(graph, scopes)
     assert violation["stage"] == "present"
     assert violation["gate"]["function"] == "access_check"
+  end
+
+  test "allows read-only Gate reauthorization in a Receipt presenter only" do
+    fixture = GroupherServer.Test.PipelineGraphFixtures.GateInPresent
+    graph = GraphAnalyzer.build_modules([fixture, GroupherServer.CMS.Gate])
+    scopes = GraphAnalyzer.pipeline_stage_calls(graph, fixture.__pipeline_contracts__())
+
+    functions =
+      Enum.map(graph.functions, fn function ->
+        if function.module == fixture and function.name == :execute do
+          %{function | kind: :receipt_pipeline}
+        else
+          function
+        end
+      end)
+
+    assert [] == Graph.gate_stage_violations(%{graph | functions: functions}, scopes)
+
+    fixture = GroupherServer.Test.PipelineGraphFixtures.GateInChange
+    graph = GraphAnalyzer.build_modules([fixture, GroupherServer.CMS.Gate])
+    scopes = GraphAnalyzer.pipeline_stage_calls(graph, fixture.__pipeline_contracts__())
+
+    functions =
+      Enum.map(graph.functions, fn function ->
+        if function.module == fixture and function.name == :execute do
+          %{function | kind: :receipt_pipeline}
+        else
+          function
+        end
+      end)
+
+    present_scopes = Enum.map(scopes, &Map.put(&1, :stage, :present))
+
+    assert [%{"gate" => %{"function" => "check_in_transaction"}}] =
+             Graph.gate_stage_violations(%{graph | functions: functions}, present_scopes)
   end
 
   test "fails closed when compiled pipeline stages cannot be attributed" do

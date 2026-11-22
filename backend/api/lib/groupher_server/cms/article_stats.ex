@@ -526,7 +526,7 @@ defmodule GroupherServer.CMS.ArticleStats do
   end
 
   defp interaction_projection_conflict_target(:article_id) do
-    {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+    {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL"}
   end
 
   defp interaction_projection_conflict_target(foreign_key), do: [foreign_key]

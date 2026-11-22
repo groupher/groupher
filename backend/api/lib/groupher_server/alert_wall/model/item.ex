@@ -15,7 +15,7 @@ defmodule GroupherServer.AlertWall.Model.Item do
 
   @schema_prefix DBPrefix.alert_wall()
   @owners [:cms, :accounts]
-  @target_types [:article, :comment, :doc, :user]
+  @target_types [:article, :comment, :user]
   @statuses [:open, :resolved, :superseded]
   @primary_key {:id, :id, autogenerate: true}
 
@@ -75,7 +75,6 @@ defmodule GroupherServer.AlertWall.Model.Item do
   defp validate_owner_target(changeset) do
     owner = get_field(changeset, :owner)
     target_type = get_field(changeset, :target_type)
-    community_id = get_field(changeset, :community_id)
 
     cond do
       owner == :cms and target_type == :user ->
@@ -83,9 +82,6 @@ defmodule GroupherServer.AlertWall.Model.Item do
 
       owner == :accounts and target_type != :user ->
         add_error(changeset, :target_type, "is not owned by Accounts")
-
-      target_type == :doc and not is_nil(community_id) ->
-        add_error(changeset, :community_id, "Doc items use the platform scope")
 
       true ->
         changeset

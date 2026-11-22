@@ -97,7 +97,7 @@ describe('usePagedChangelogs', () => {
 
       const config = {
         api: 'cursor' as const,
-        mode: mobile ? ('infinite_scroll' as const) : ('load_more' as const),
+        mode: mobile ? ('INFINITE_SCROLL' as const) : ('LOAD_MORE' as const),
         schemaVersion: 1,
         revision: 4,
         defaultSize: 20,
@@ -133,8 +133,8 @@ describe('usePagedChangelogs', () => {
       const StoreWrapper = makeStoreWrapper({
         community: { slug: 'acme' },
         dashboard: {
-          pagiMode: mobile ? 'page' : config.mode,
-          pagiMobileMode: 'infinite_scroll',
+          pagiMode: mobile ? 'PAGE' : config.mode,
+          pagiMobileMode: 'INFINITE_SCROLL',
           pagiRevision: config.revision,
         },
         queryClient,

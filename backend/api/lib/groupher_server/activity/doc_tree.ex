@@ -8,12 +8,11 @@ defmodule GroupherServer.Activity.DocTree do
   alias GroupherServer.{Activity, CMS}
   alias Activity.Event
   alias Activity.Model.DocTreeLog
-  alias CMS.Model.DocTreeNode
+  alias CMS.Model.DocsTreeNode
 
   @contracts %{
     trashed: Event.contract([], [:node_count, :doc_count], [:community_log]),
-    restored:
-      Event.contract([], [:node_count, :doc_count, :legacy_publish_restore], [:community_log]),
+    restored: Event.contract([], [:node_count, :doc_count], [:community_log]),
     permanently_deleted: Event.contract([], [:doc_count], [:community_log])
   }
 
@@ -87,23 +86,22 @@ defmodule GroupherServer.Activity.DocTree do
 
       Activity.DocTree.describe(node, :trashed, [])
   """
-  def describe(%DocTreeNode{} = node, _action, _opts) do
-    {:ok, descriptor(node.community_id, node.node_id, node.branch_id, node)}
+  def describe(%DocsTreeNode{} = node, _action, _opts) do
+    {:ok, descriptor(node.community_id, node.node_id, node)}
   end
 
   def describe(%{activity_type: :doc_tree, community_id: id, ref: ref} = resource, _action, _opts) do
-    {:ok, descriptor(id, ref, Map.get(resource, :branch_ref), resource)}
+    {:ok, descriptor(id, ref, resource)}
   end
 
   def describe(_, _, _), do: {:error, Event.error("invalid Activity DocTree resource")}
 
-  defp descriptor(id, ref, branch_ref, resource) do
+  defp descriptor(id, ref, resource) do
     snapshot = Event.snapshot(resource, [:title, :type, :node_id])
 
     %{
       community_id: id,
       doc_tree_ref: Event.stringify(ref),
-      branch_ref: Event.stringify(branch_ref),
       stream_snapshot: snapshot,
       subject_type: "doc_tree_node",
       subject_ref: Event.stringify(ref),

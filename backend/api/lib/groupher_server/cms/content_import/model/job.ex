@@ -76,7 +76,7 @@ defmodule GroupherServer.CMS.ContentImport.Model.Job do
     |> validate_inclusion(:status, @statuses)
     |> validate_length(:preview_ref, min: 1, max: 128)
     |> validate_length(:dataset_ref, min: 1, max: 128)
-    |> validate_length(:target_revision, min: 1, max: 512)
+    |> validate_length(:target_revision, min: 1, max: 2_000_000)
     |> validate_length(:error_code, max: 120)
     |> validate_length(:error_message, max: 2_000)
     |> foreign_key_constraint(:community_id)

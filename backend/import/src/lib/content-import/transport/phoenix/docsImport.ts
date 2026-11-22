@@ -113,7 +113,6 @@ export type TDocImportApplyResult = {
   counts: Record<string, number>
   firstImportedDocId?: string | null
   jobRef: string
-  targetBranch: string
   failedItems: TDocImportIssue[]
   skipped: TDocImportIssue[]
   status: string
@@ -194,7 +193,6 @@ const APPLY_DOC_IMPORT = `
       jobRef
       status
       firstImportedDocId
-      targetBranch
       counts
       failedItems
       skipped

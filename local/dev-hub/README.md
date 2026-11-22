@@ -16,6 +16,25 @@ Groupher 不是单进程项目。日常开发可能同时涉及 Community、Dash
 - 前端路由、GraphQL API 和其他服务之间的依赖关系不直观。
 - Git 改动、服务配置和 CPU / 内存状态需要在多个工具之间来回查看。
 
+## 启动服务的入口
+
+调试项目服务时，使用 Hub CLI 或对应的 Make/package 公共 alias：
+
+```bash
+pnpm devhub status
+pnpm devhub start dash
+pnpm devhub logs dash
+pnpm devhub url dash
+```
+
+根 `pnpm dev:*`、各应用的公开 `dev` 脚本和 Make public target 都转交 Dev Hub；Hub
+内部通过 `:managed`/`.managed` 启动具体工具。不要绕过 Hub 直接运行 Vite、Phoenix、
+`cf dev`、Wrangler 或临时端口命令。需要新增开发 listener 时，先在
+`local/dev-hub/src/server/services.ts` 登记固定端口、依赖和 Portless alias，再添加公共
+入口与静态清单测试。命名 E2E/parity runner 仅可保留其明确登记的隔离 listener。
+
+这是一项仓库级入口约束，不能阻止同一台机器上的用户手工执行任意底层二进制。
+
 Dev Hub 把这些知识固化为服务定义，并提供一个只监听 `127.0.0.1` 的统一入口。它不是生产运维面板，也不会替代各服务自己的开发命令；它解决的是本地多服务开发的编排和可观测性。
 
 生产 [Status Worker](../../ops/status/README.md) 独立运行在 Cloudflare，负责前端入口可用性监控，不由 Dev Hub 启动、停止或管理。Dev Hub 中的 service status 反映本地服务进程和 readiness，不表示生产可用性。

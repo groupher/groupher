@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import type { TCommunityThread, TNameAlias, TTag, TTagGroup } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../../constant'
 import useTouch from '../useHelper/useTouch'
@@ -20,7 +20,7 @@ export type TRet = {
 
 /** Exposes derived state and actions through the shared React hook boundary. */
 export default function useDerived(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const community$ = useCommunity()
   const { isChanged } = useTouch()
 

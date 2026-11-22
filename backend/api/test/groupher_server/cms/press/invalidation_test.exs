@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS
+  alias CMS.Model.{ArticlePublic, CommandReceipt}
   alias CMS.Outbox.Event
   alias CMS.Press.Invalidation
 
@@ -120,7 +121,8 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
                command_id
              )
 
-    event = Repo.get_by!(Event, command_id: command_id, event: "press.cache_invalidation")
+    operation_ref = receipt_operation(user, command_id)
+    event = Repo.get_by!(Event, operation_ref: operation_ref, event: "press.cache_invalidation")
 
     System.put_env("PRESS_INTERNAL_URL", "https://press.invalid")
     System.put_env("PRESS_INTERNAL_RESOURCE", "https://press.invalid/#{System.unique_integer()}")
@@ -139,13 +141,16 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
   test "Press failure retries only its child" do
     {community, article_view, _attrs, _user} = mock_article(:post)
 
+    operation_ref = Ecto.UUID.generate()
+
     {:ok, event} =
-      CMS.Outbox.send(%{
+      enqueue_outbox(%{
         event: "article.visibility_changed",
         worker: GroupherServer.Jobs.CMSOutboxArticle,
         resource_type: "article",
         resource_id: article_view.id,
-        command_id: Ecto.UUID.generate(),
+        operation_ref: operation_ref,
+        dedupe_key: CMS.Outbox.DedupeKey.encode([article_view.id, "visibility"]),
         data: %{
           "community" => community.slug,
           "community_id" => community.id,
@@ -179,12 +184,13 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     {community, article, _attrs, _user} = mock_article(:post)
 
     {:ok, event} =
-      CMS.Outbox.send(%{
+      enqueue_outbox(%{
         event: "article.visibility_changed",
         worker: GroupherServer.Jobs.CMSOutboxArticle,
         resource_type: "article",
         resource_id: article.id,
-        command_id: Ecto.UUID.generate(),
+        operation_ref: Ecto.UUID.generate(),
+        dedupe_key: CMS.Outbox.DedupeKey.encode([article.id, "visibility", Ecto.UUID.generate()]),
         data: %{
           "community" => community.slug,
           "community_id" => community.id,
@@ -224,7 +230,11 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     assert child(event, "press.cache_invalidation").id == press.id
     assert Repo.get!(Event, press.id).status == :done
     assert Repo.aggregate(Oban.Job, :count) == jobs_before
-    assert Repo.aggregate(from(e in Event, where: e.command_id == ^event.id), :count) == 3
+
+    assert Repo.aggregate(
+             from(e in Event, where: e.operation_ref == ^event.operation_ref),
+             :count
+           ) == 4
 
     for {worker, leaf, queue} <- [
           {GroupherServer.Jobs.CMSOutboxPress, press, "press"},
@@ -243,6 +253,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
 
   test "publication and review facts each create three independent intents" do
     {community, article, _attrs, _user} = mock_article(:post)
+    snapshot_id = Repo.get_by!(ArticlePublic, article_id: article.id).snapshot_id
 
     for kind <- [
           "article.published",
@@ -251,17 +262,20 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
           "article.review_changed"
         ] do
       {:ok, event} =
-        CMS.Outbox.send(%{
+        enqueue_outbox(%{
           event: kind,
           worker: GroupherServer.Jobs.CMSOutboxArticle,
           resource_type: "article",
           resource_id: article.id,
-          command_id: Ecto.UUID.generate(),
+          operation_ref: Ecto.UUID.generate(),
+          dedupe_key: CMS.Outbox.DedupeKey.encode([article.id, kind]),
           data: %{
+            article_id: article.id,
             community: community.slug,
             community_id: community.id,
             thread: "post",
-            inner_id: article_inner_id(article, community)
+            inner_id: article_inner_id(article, community),
+            snapshot_id: snapshot_id
           }
         })
 
@@ -272,6 +286,13 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     end
   end
 
+  defp enqueue_outbox(attrs) do
+    case GroupherServer.Repo.transaction(fn -> CMS.Outbox.send(attrs) end) do
+      {:ok, result} -> result
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   test "fanout rolls back all siblings if a later intent cannot be persisted" do
     {community, _article, _attrs, _user} = mock_article(:post)
     identity = Ecto.UUID.generate()
@@ -279,6 +300,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     malformed = %{
       id: identity,
       event: "article.updated",
+      operation_ref: Ecto.UUID.generate(),
       resource_type: nil,
       resource_id: "invalid",
       data: %{"community_id" => community.id}
@@ -286,7 +308,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
 
     jobs_before = Repo.aggregate(Oban.Job, :count)
     assert {:error, _} = with_jobs(fn -> CMS.Articles.Effects.dispatch(malformed) end)
-    refute Repo.exists?(from(e in Event, where: e.command_id == ^identity))
+    refute Repo.exists?(from(e in Event, where: e.id == ^identity))
     assert Repo.aggregate(Oban.Job, :count) == jobs_before
   end
 
@@ -306,7 +328,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
   end
 
   defp child(parent, kind) do
-    Repo.get_by!(Event, command_id: parent.id, identity_type: :workflow, event: kind)
+    Repo.get_by!(Event, operation_ref: parent.operation_ref, event: kind)
   end
 
   defp deliver(worker, event) do
@@ -325,7 +347,11 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
                command_id
              )
 
-    event = Repo.get_by!(Event, command_id: command_id, event: "press.cache_invalidation")
+    event =
+      Repo.get_by!(Event,
+        operation_ref: receipt_operation(user, command_id),
+        event: "press.cache_invalidation"
+      )
 
     Repo.delete_all(
       from(job in Oban.Job, where: fragment("?->>'event_id' = ?", job.args, ^event.id))
@@ -341,8 +367,14 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
                command_id
              )
 
-    assert %Event{} =
-             Repo.get_by(Event, command_id: command_id, event: "press.cache_invalidation")
+    refute Repo.get_by(Event,
+             operation_ref: receipt_operation(user, command_id),
+             event: "press.cache_invalidation"
+           )
+  end
+
+  defp receipt_operation(user, command_id) do
+    Repo.get_by!(CommandReceipt, initiator_key: to_string(user.id), command_id: command_id).operation_ref
   end
 
   defp start_endpoint(status) do

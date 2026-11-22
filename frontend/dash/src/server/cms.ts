@@ -123,6 +123,7 @@ export const loadTagGroups = createServerFn({ method: 'GET', strict: false })
 
 export type TTrashInput = {
   community: string
+  thread?: 'POST' | 'BLOG' | 'CHANGELOG'
   page?: number
 }
 
@@ -134,7 +135,11 @@ export const loadTrash = createServerFn({ method: 'GET', strict: false })
 
     const result = await fetchGraphQL(
       DashboardContentSchema.trashedPosts,
-      { community: data.community, pagi: { offset: { page: data.page || 1, size: 20 } } },
+      {
+        community: data.community,
+        thread: data.thread ?? THREAD.POST,
+        pagi: { offset: { page: data.page || 1, size: 20 } },
+      },
       token,
     )
 

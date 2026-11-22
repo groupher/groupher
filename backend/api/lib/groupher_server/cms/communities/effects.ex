@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Communities.Effects do
 
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Model.{Community, CommunityLifecycle}
+  alias CMS.Outbox.DedupeKey
 
   @doc "Records one Community activity in the caller-owned transaction."
   def activity(resource, event, opts), do: Activity.log(resource, event, opts)
@@ -16,17 +17,42 @@ defmodule GroupherServer.CMS.Communities.Effects do
   @doc "Records durable analytics provisioning for a newly created Community."
   @spec enqueue_analysis_provision(Community.t(), Ecto.UUID.t()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_analysis_provision(%Community{} = community, command_id) do
+  def enqueue_analysis_provision(%Community{} = community, operation_ref) do
     CMS.Outbox.send(%{
       event: "community.analysis_provision",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
       resource_id: community.id,
-      identity: {:command, command_id},
-      effect_key: "analysis_provision",
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id]),
       data: %{community_id: community.id}
     })
   end
+
+  @doc "Loads an analytics provisioning target under the existing management lifecycle capability."
+  def analysis_target(%{resource_type: "community", resource_id: id, data: data}) do
+    with {id, ""} when id > 0 <- Integer.parse(to_string(id)),
+         true <- id == data["community_id"] do
+      case CMS.FrontDesk.community(id, mode: :internal) do
+        {:ok, community} ->
+          case CMS.Communities.Lifecycle.can_manage(community) do
+            {:ok, true} -> {:ok, community}
+            {:ok, false} -> {:error, CMS.Communities.ErrorCat.invalid_outbox_resource()}
+            {:error, _reason} = error -> error
+          end
+
+        {:error, _reason} = error ->
+          error
+
+        _ ->
+          {:error, CMS.Communities.ErrorCat.invalid_outbox_resource()}
+      end
+    else
+      _ -> {:error, CMS.Communities.ErrorCat.invalid_outbox_resource()}
+    end
+  end
+
+  def analysis_target(_event), do: {:error, CMS.Communities.ErrorCat.invalid_outbox_resource()}
 
   @doc "Reconciles source-linked Tickets and public cache after Community readability changes."
   def lifecycle_changed(
@@ -48,7 +74,7 @@ defmodule GroupherServer.CMS.Communities.Effects do
                nil,
                operation_ref
              ),
-           {:ok, _event} <- enqueue_public_cache_invalidation(community, operation_ref) do
+           {:ok, _event} <- enqueue_presentation_changed(community, operation_ref) do
         {:ok, :pass}
       end
     end
@@ -56,15 +82,16 @@ defmodule GroupherServer.CMS.Communities.Effects do
 
   def lifecycle_changed(_before, _after, _operation_ref), do: {:ok, :pass}
 
-  defp enqueue_public_cache_invalidation(%Community{} = community, operation_ref) do
+  @doc "Records presentation invalidation once per admitted change."
+  def enqueue_presentation_changed(%Community{} = community, operation_ref) do
     CMS.Outbox.send(%{
       event: "community.presentation_changed",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
       resource_id: community.id,
-      identity: {:workflow, "community_lifecycle:#{community.id}:#{operation_ref}"},
-      effect_key: "public_visibility_changed",
-      data: %{community: community.slug}
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id, operation_ref]),
+      data: %{community: community.slug, community_id: community.id}
     })
   end
 
@@ -72,6 +99,20 @@ defmodule GroupherServer.CMS.Communities.Effects do
     case Repo.get(Community, community_id) do
       %Community{} = community -> {:ok, community}
       nil -> {:error, CMS.Communities.ErrorCat.lifecycle_not_found()}
+    end
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "community.analysis_provision" ->
+        CMS.Outbox.Event.project_fields(data, ["community_id"])
+
+      "community.presentation_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["community", "community_id"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
     end
   end
 end

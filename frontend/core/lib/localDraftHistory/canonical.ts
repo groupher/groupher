@@ -25,13 +25,7 @@ export const serializeLocalDraftPayload = (payload: TLocalDraftPayload): string 
 
 /** Builds the account-isolated workspace key used by every LocalDraftHistory store. */
 export const localDraftWorkspaceKey = (identity: TLocalDraftWorkspaceIdentity): string =>
-  [
-    identity.accountId,
-    identity.communityId,
-    identity.thread,
-    identity.articleId,
-    identity.branchId || '',
-  ]
+  [identity.accountId, identity.communityId, identity.thread, identity.articleId]
     .map(encodeURIComponent)
     .join(':')
 

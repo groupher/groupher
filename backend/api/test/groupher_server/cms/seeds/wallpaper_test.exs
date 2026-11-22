@@ -152,7 +152,11 @@ defmodule GroupherServer.Test.CMS.Seeds.WallpaperTest do
       |> Enum.filter(&(&1.wallpaper_snapshot_ref in snapshot_refs))
 
     assert length(images) == 8
-    assert Repo.aggregate(CommunityAsset, :count, :id) == 8
+    assert Repo.aggregate(
+             from(asset in CommunityAsset, where: asset.community_id == ^community.id),
+             :count,
+             :id
+           ) == 8
 
     assert {:ok, :pass} = WallpaperSeed.seed(community, opts)
     assert Wallpaper.wallpaper(community.id).version == 2

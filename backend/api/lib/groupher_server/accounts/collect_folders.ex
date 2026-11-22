@@ -12,10 +12,11 @@ defmodule GroupherServer.Accounts.CollectFolders do
            -> CMS.Interactions Command / Persist
   """
 
-  alias __MODULE__.{Articles, CommandResult, Commands, List}
-  alias GroupherServer.Accounts
+  alias __MODULE__.{Articles, CommandResult, Commands, List, Persist}
+  alias GroupherServer.{Accounts, CMS}
 
-  alias Accounts.Model.User
+  alias Accounts.Model.{CollectFolder, User}
+  alias CMS.Model.ArticleBinding
   alias Helper.T
 
   @doc """
@@ -150,4 +151,9 @@ defmodule GroupherServer.Accounts.CollectFolders do
     |> remove_payload(folder_id, user, command_id)
     |> CommandResult.build(article, user)
   end
+
+  @doc false
+  @spec remove_in_transaction(CollectFolder.t(), atom(), ArticleBinding.t(), T.id()) ::
+          T.domain_res(map())
+  defdelegate remove_in_transaction(folder, thread, binding, user_id), to: Persist
 end

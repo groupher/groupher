@@ -82,7 +82,7 @@ describe('query keys', () => {
       { community: 'home' },
       {
         api: 'cursor',
-        mode: 'infinite_scroll',
+        mode: 'INFINITE_SCROLL',
         schemaVersion: 1,
         revision: 3,
         defaultSize: 20,
@@ -94,7 +94,7 @@ describe('query keys', () => {
       { community: 'home' },
       {
         api: 'cursor',
-        mode: 'infinite_scroll',
+        mode: 'INFINITE_SCROLL',
         schemaVersion: 1,
         revision: 3,
         defaultSize: 20,
@@ -120,14 +120,14 @@ describe('query keys', () => {
 
   it('scopes detail, comments and viewer state without secrets', () => {
     expect(articleQueryKeys.detail('home', THREAD.POST, 42)).toEqual([
-      'article-shared-comments-v1',
+      'article',
       'detail',
       'home',
       THREAD.POST,
       '42',
     ])
     expect(commentKeys.list('home', THREAD.POST, 42)).toEqual([
-      'comment-shared-v1',
+      'comment',
       'list',
       'home',
       THREAD.POST,
@@ -143,8 +143,8 @@ describe('query keys', () => {
     expect(viewerQueryKeys.myReports('account-a', 2)).not.toEqual(
       viewerQueryKeys.myReports('account-b', 2),
     )
-    expect(viewerQueryKeys.contentReview('account-a', { kind: 'ARTICLE' })).not.toEqual(
-      viewerQueryKeys.contentReview('account-b', { kind: 'ARTICLE' }),
+    expect(viewerQueryKeys.artimentReview('account-a', { kind: 'ARTICLE' })).not.toEqual(
+      viewerQueryKeys.artimentReview('account-b', { kind: 'ARTICLE' }),
     )
   })
 
@@ -160,7 +160,7 @@ describe('query keys', () => {
 it('isolates a shared cursor link from an infinite collection that starts at the head', () => {
   const config = {
     api: 'cursor' as const,
-    mode: 'load_more' as const,
+    mode: 'LOAD_MORE' as const,
     schemaVersion: 1,
     revision: 9,
     defaultSize: 20,

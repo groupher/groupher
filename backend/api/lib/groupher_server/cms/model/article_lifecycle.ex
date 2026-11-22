@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Model.ArticleLifecycle do
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @article_threads CMS.Artiment.Threads.identity_values_list() -- [:doc]
+  @article_threads CMS.Artiment.Threads.identity_values_list()
   @states [:draft, :published, :archived, :deleted, :destroy]
   @required_fields ~w(article_id thread state version changed_at)a
   @optional_fields ~w(archived_at deleted_at destroyed_at)a

@@ -89,5 +89,23 @@ defmodule GroupherServer.Test.CMS.Communities.Query do
 
       assert not community.viewer_is_moderator
     end
+
+    test "owner policy mode does not widen to moderator admin access",
+         ~m(community user user2)a do
+      {:ok, _community} =
+        CMS.Communities.add_moderator(community, user2, user, Ecto.UUID.generate())
+
+      assert {:error, %ErrorCat.Error{reason: :not_exist}} =
+               CMS.Communities.fetch(community.slug, user2,
+                 policy_mode: :owner,
+                 inc_views: false
+               )
+
+      assert {:ok, _community} =
+               CMS.Communities.fetch(community.slug, user2,
+                 policy_mode: :admin,
+                 inc_views: false
+               )
+    end
   end
 end

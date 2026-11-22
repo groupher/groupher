@@ -5,6 +5,7 @@ import type { MentionsGraphFocus } from '~/query/mentionsGraph'
 import { fetchGraphQL, setPrivateCacheHeader } from './graphql'
 
 const artimentStatusQuery = `
+  "Reads Artiment title, URL and body status by stable resource identity"
   query ArtimentStatus($community: String!, $locator: ArtimentStatusInput!) {
     artimentStatus(community: $community, locator: $locator) {
       type status title url

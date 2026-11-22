@@ -11,9 +11,8 @@ defmodule GroupherServer.CMS.Tickets.Cache do
   alias GroupherServer.CMS
   alias CMS.Tickets.Effects
 
-  defdelegate enqueue(community, ticket_id, inner_id, post_inner_ids, command_id, effect_key),
-    to: Effects,
-    as: :enqueue_cache
+  defdelegate projection_changed(community, state, binding, post_inner_ids, operation_ref),
+    to: Effects
 
   defdelegate purge_post(post_id), to: Effects, as: :purge_post_cache
 end

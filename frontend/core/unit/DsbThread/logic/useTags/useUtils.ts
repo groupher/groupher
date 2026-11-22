@@ -5,13 +5,13 @@ import { useState } from 'react'
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
-import { Q } from '~/query'
+import { dsbMutationKeys, Q } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
-import { useTagEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useTagsEditor } from '~/stores/dsbShell/editor'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import S from '~/unit/DsbThread/schema/tags'
 import { slugify } from '~/utils/slug'
 
@@ -30,8 +30,8 @@ type TRet = {
 
 /** Exposes utils state and actions through the shared React hook boundary. */
 export default function useUtils(): TRet {
-  const dsb$ = useDsbEdit()
-  const tagUi$ = useTagEditorUi()
+  const dsb$ = useDsbShell()
+  const tagsEditor = useTagsEditor()
   const community$ = useCommunity()
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
@@ -44,7 +44,7 @@ export default function useUtils(): TRet {
     dsb$.reconcile({ fields: ['tagGroups'], submitted: confirmed, confirmed })
   }
   const createGroupMutation = useMutation({
-    mutationKey: ['dsb', 'tag-group-create', community$.slug],
+    mutationKey: dsbMutationKeys.tagGroupCreate(community$.slug),
     mutationFn: ({ title, thread }: { title: string; thread: TThread }) =>
       executeCommand({
         request: (variables) => browserGraphQLRequest(S.createCommunityTagGroup, variables),
@@ -55,7 +55,7 @@ export default function useUtils(): TRet {
     },
   })
   const createTagMutation = useMutation({
-    mutationKey: ['dsb', 'tag-create', community$.slug],
+    mutationKey: dsbMutationKeys.tagCreate(community$.slug),
     mutationFn: (input: {
       thread: TThread
       title: string
@@ -73,7 +73,7 @@ export default function useUtils(): TRet {
     },
   })
   const updateTagMutation = useMutation({
-    mutationKey: ['dsb', 'tag-update', community$.slug],
+    mutationKey: dsbMutationKeys.tagUpdate(community$.slug),
     mutationFn: async ({ tag, thread }: { tag: TTag; thread: TThread }) => {
       const title = (tag.title ?? '').trim()
       const slug = await slugify(title)
@@ -95,11 +95,11 @@ export default function useUtils(): TRet {
         tags: group.tags.map((item) => (item.id === nextTag.id ? nextTag : item)),
       }))
       confirmTagGroups(updatedTagGroups)
-      tagUi$.patch({ editingTag: null })
+      tagsEditor.setEditingTag(null)
     },
   })
   const renameGroupMutation = useMutation({
-    mutationKey: ['dsb', 'tag-group-update', community$.slug],
+    mutationKey: dsbMutationKeys.tagGroupUpdate(community$.slug),
     mutationFn: ({ groupId, title, thread }: { groupId: string; title: string; thread: TThread }) =>
       executeCommand({
         request: (variables) => browserGraphQLRequest(S.updateCommunityTagGroup, variables),

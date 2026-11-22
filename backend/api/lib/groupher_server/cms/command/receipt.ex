@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Command.Receipt do
           String.t(),
           String.t() | pos_integer(),
           term(),
-          (-> Command.action_result(term())),
+          (Ecto.UUID.t() -> Command.action_result(term())),
           module()
         ) :: T.result(term(), term())
   defdelegate execute(

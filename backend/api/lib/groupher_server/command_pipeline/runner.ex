@@ -52,8 +52,11 @@ defmodule GroupherServer.CommandPipeline.Runner do
           {:ok, confirmation} ->
             run_present(confirmation, input, stages)
 
+          {:error, {:cms_command_pipeline_rejection, stage, reason, operation_ref}} ->
+            rejection_result(stage, reason, input, contract, stages, operation_ref)
+
           {:error, {:pipeline_stage, stage, reason}} ->
-            rejection_result(stage, reason, input, contract, stages, command_id)
+            rejection_result(stage, reason, input, contract, stages, nil)
 
           {:error, _reason} = error ->
             error
@@ -68,7 +71,18 @@ defmodule GroupherServer.CommandPipeline.Runner do
 
   @doc "Executes a direct pipeline with a fresh per-attempt operation reference."
   def run_direct(module, contract, input, stages) do
-    operation_ref = input.operation_ref || Ecto.UUID.generate()
+    operation_ref =
+      case input.operation_ref do
+        nil -> Ecto.UUID.generate()
+        value -> value
+      end
+
+    with {:ok, operation_ref} <- validate_operation_ref(operation_ref) do
+      run_direct_with_operation_ref(module, contract, input, stages, operation_ref)
+    end
+  end
+
+  defp run_direct_with_operation_ref(module, contract, input, stages, operation_ref) do
     input = Map.put(input, :operation_ref, operation_ref)
 
     with {:ok, input} <- run_prepare(input, stages) do
@@ -98,13 +112,13 @@ defmodule GroupherServer.CommandPipeline.Runner do
   end
 
   defp run_receipt_command(module, contract, input, command_id, stages) do
-    adapter_for(contract).execute_receipt(module, contract, input, command_id, fn ->
-      set_active(module, contract, command_id, :top_level)
+    adapter_for(contract).execute_receipt(module, contract, input, command_id, fn operation_ref ->
+      set_active(module, contract, operation_ref, :top_level)
 
       try do
         with {:ok, current} <- initial_value(input, stages),
              {:ok, result} <-
-               run_stages(current, stages, [
+               run_stages(current, stages, operation_ref, [
                  :prepare,
                  :present,
                  :on_rejection,
@@ -151,13 +165,17 @@ defmodule GroupherServer.CommandPipeline.Runner do
     {:ok, Map.get(input, :prepared, input.target)}
   end
 
-  defp run_stages(current, stages, skip) do
+  defp run_stages(current, stages, operation_ref, skip) do
     stages
     |> Enum.reject(fn {stage, _callback} -> stage in skip end)
     |> Enum.reduce_while({:ok, current}, fn {stage, callback}, {:ok, value} ->
       result =
         StageContext.run(stage, fn ->
-          if stage in [:load, :prepare], do: callback.(), else: callback.(value)
+          cond do
+            stage in [:load, :prepare] -> callback.()
+            stage == :change -> callback.(value, operation_ref)
+            true -> callback.(value)
+          end
         end)
 
       case result do
@@ -217,7 +235,7 @@ defmodule GroupherServer.CommandPipeline.Runner do
   defp rejection_result(stage, reason, input, contract, stages, operation_ref) do
     public_error = {:error, Rejected.unwrap(reason)}
 
-    if should_run_rejection?(reason) do
+    if should_run_rejection?(reason) and is_binary(operation_ref) do
       run_rejection(stage, reason, input, contract, stages, operation_ref)
     else
       public_error
@@ -383,7 +401,7 @@ defmodule GroupherServer.CommandPipeline.Runner do
              try do
                with {:ok, current} <- initial_value(input, stages),
                     {:ok, result} <-
-                      run_stages(current, stages, [
+                      run_stages(current, stages, operation_ref, [
                         :prepare,
                         :present,
                         :on_rejection,
@@ -421,6 +439,13 @@ defmodule GroupherServer.CommandPipeline.Runner do
   end
 
   defp stage_error(stage, reason), do: {:error, {:pipeline_stage, stage, reason}}
+
+  defp validate_operation_ref(operation_ref) do
+    case Ecto.UUID.cast(operation_ref) do
+      {:ok, canonical} -> {:ok, canonical}
+      :error -> {:error, :invalid_operation_ref}
+    end
+  end
 
   defp rejection_code(%Rejected{code: code}), do: code
 

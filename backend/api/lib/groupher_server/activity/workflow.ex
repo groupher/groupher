@@ -13,7 +13,7 @@ defmodule GroupherServer.Activity.Workflow do
 
   alias GroupherServer.{Activity, CMS}
   alias Activity.{Artiment, CommunityLog, ArticleLog, ErrorCat}
-  alias CMS.Model.{Community, DocTreeNode, PressConfig}
+  alias CMS.Model.{Community, DocsTreeNode, PressConfig}
 
   @type action ::
           :created
@@ -33,9 +33,7 @@ defmodule GroupherServer.Activity.Workflow do
           | :released
           | :release_rescheduled
           | :release_withdrawn
-          | :draft_updated
           | :published
-          | :publish_restored
           | :blocker_created
           | :blocker_released
           | :blocker_terminated
@@ -47,6 +45,20 @@ defmodule GroupherServer.Activity.Workflow do
           | :destroyed
           | :lifecycle_reconciled
           | :config_updated
+          | :activity_exported
+          | :admin_joined
+          | :admin_removed
+          | :admin_permissions_changed
+          | :admin_request_created
+          | :admin_request_decided
+          | :admin_request_cancelled
+          | :admin_request_expired
+          | :docs_approval_policy_changed
+          | :admin_joined
+          | :admin_removed
+          | :admin_permissions_changed
+          | :admin_request_created
+          | :admin_request_decided
           | :activity_exported
 
   @doc """
@@ -68,7 +80,7 @@ defmodule GroupherServer.Activity.Workflow do
     Activity.Community.log(resource, action, opts)
   end
 
-  def log(%DocTreeNode{} = resource, action, opts) do
+  def log(%DocsTreeNode{} = resource, action, opts) do
     Activity.DocTree.log(resource, action, opts)
   end
 
@@ -113,10 +125,23 @@ defmodule GroupherServer.Activity.Workflow do
 
       Activity.list_community_logs(community, viewer, %{page: 1, size: 20})
   """
-  @spec list_community_logs(Community.t(), struct(), map(), pos_integer()) ::
+  @spec list_community_logs(Community.t(), struct(), map(), map() | nil) ::
           {:ok, map()} | {:error, term()}
   def list_community_logs(community, actor, selection, pagi \\ nil) do
     CommunityLog.list(community, actor, selection, pagi)
+  end
+
+  @doc """
+  Lists CommunityLogs using the explicitly supplied, already checked Passport scope.
+
+  ## Examples
+
+      Activity.Workflow.list_community_logs(community, actor, selection, pagi, passport_scope: scope)
+  """
+  @spec list_community_logs(Community.t(), struct(), map(), map() | nil, keyword()) ::
+          {:ok, map()} | {:error, term()}
+  def list_community_logs(community, actor, selection, pagi, opts) do
+    CommunityLog.list(community, actor, selection, pagi, opts)
   end
 
   @doc """

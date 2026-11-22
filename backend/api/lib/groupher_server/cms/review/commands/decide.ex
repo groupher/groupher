@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Review.Commands.Decide do
   receipt_pipeline execute_pipeline(target_key, scope_key, action, actor, command_id) do
     prepare(fn -> prepare(target_key, scope_key, action) end)
     gate(fn prepared -> authorize(prepared, actor) end)
-    change(fn prepared -> apply_decision(prepared, actor, command_id) end)
+    change(fn prepared, operation_ref -> apply_decision(prepared, actor, operation_ref) end)
     confirm(fn confirmation -> {:ok, confirmation} end)
     present(&present_result/1)
   end

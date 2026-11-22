@@ -5,6 +5,8 @@
 >
 > 本文是 Article 与 Community 关系的唯一产品合同。Revision、Draft、Lifecycle、
 > Moderation、Kanban 等文档只能引用本文，不能重新定义一套 `home` / `mirror` 关系角色。
+>
+> 2026-11-14 架构决定：Doc 同普通 Article 一样允许多个 ArticleBinding；Article 正文、Public 与 Lifecycle 全局共享，Docs 树、Queue 和 Release 按 Community 独立。本文此前把 Doc 排除在 mirror 规则之外的段落已由该决定取代；当前运行态切换见 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md)。
 
 > Ticket V2 的来源关系与 binding 保护已落地：[Ticket V2](../tickets/v2.md)用 TicketSource / cms.ticket_sources 完整替换 TicketPost，字段统一使用 type，首批仅 POST。Post 存在任意持久化 TicketSource(type=post) 时，所有 Community binding 的 move/unmirror 均拒绝，包含非关联 Community、Draft Ticket 和隐藏来源；命令与数据库 trigger 共守该约束。实现和负向测试见 [R05/R09](../tickets/inventory.md#v2-实施追踪)。
 
@@ -30,7 +32,7 @@ Article
 
 普通 Article 的正文引用（Mention）同样是 Article 级事实：同一公开正文只解析、同步和保存一次。`mirror`/`move`/`unmirror` 不复制、重建或清除该 Article 的引用事实，也不重新发送 Mention 通知。引用的目标按正文中的明确公开 locator 解析为稳定资源身份；不能以当前展示 Community 重新解释同一链接。
 
-Community 的引用 Map 是读取投影：在请求的 Community 中用当前 binding、Lifecycle 和 public Gate 判断引用两端是否可见，再生成该 Community 的路径。binding 增减只改变投影可见性与缓存版本；Article 级正文或引用事实不随之改变。Comment 是挂在 Article 下的独立资源；其创建 Community 只记录操作发生的位置，不因父 Article 被 mirror 而复制 Comment 或 Comment Mention。Article MiniMap 可分页发现本篇可读 Comment 的显式引用及待同步状态，但父子归属不产生引用边；Comment 提及父 Article 是 Comment→Article，Article 自引用则过滤。Doc 的公开 main branch、Ticket 的单 Community 身份分别按其 owner 选版，不套用普通 Article 的 mirror 规则。目标合同见 [Reference Map](./reference-map.md)。
+Community 的引用 Map 是读取投影：在请求的 Community 中用当前 binding、Lifecycle 和 public Gate 判断引用两端是否可见，再生成该 Community 的路径。binding 增减只改变投影可见性与缓存版本；Article 级正文或引用事实不随之改变。Comment 是挂在 Article 下的独立资源；其创建 Community 只记录操作发生的位置，不因父 Article 被 mirror 而复制 Comment 或 Comment Mention。Article MiniMap 可分页发现本篇可读 Comment 的显式引用及待同步状态，但父子归属不产生引用边；Comment 提及父 Article 是 Comment→Article，Article 自引用则过滤。Doc 与普通 Article 一样可以在多个 Community 有 binding；正文和 Review 目标按 Article 共享，Docs 目录位置与 Queue / Release 仍按各站点独立。Ticket 仍只有单 Community 身份。目标合同见 [Reference Map](./reference-map.md)。
 
 `ArticleBinding` 的最小合同是：
 
@@ -49,13 +51,13 @@ UNIQUE(article_id, community_id)
 
 ### 1.1 Comment 随 Article 共享，不随 binding 复制
 
-在 Community X 创建的普通 Article Comment，父 Article 若也绑定到 Y，同一 Comment 在 X/Y 的公开页面使用相同 Comment ID、正文、回复、upvote、emotion 和 Article 内分配的 `commentInnerId`。请求路径提供当前 Community；读取同时检查该 Community 的父 Article binding、父 Article public Gate、Comment Lifecycle 与**全局** Comment ReviewBlock。Comment 的创建 Community 不能作为只允许 X 读取的 Gate 条件。Doc/Doc Comment 的 branch 选版仍按 Doc owner，不套用普通 Article 的 mirror 规则。
+在 Community X 创建的普通 Article Comment，父 Article 若也绑定到 Y，同一 Comment 在 X/Y 的公开页面使用相同 Comment ID、正文、回复、upvote、emotion 和 Article 内分配的 `commentInnerId`。请求路径提供当前 Community；读取同时检查该 Community 的父 Article binding、父 Article public Gate、Comment Lifecycle 与**全局** Comment ReviewBlock。Comment 的创建 Community 不能作为只允许 X 读取的 Gate 条件。Doc 采用同一多 binding 规则；Doc Comment 仍以稳定 Doc Article 为父身份，每个入口按请求 Community 的 Binding 与共享 Article Gate 读取，不按站点复制讨论。
 
-普通 Article Comment 的最终 ReviewBlock 只允许 `community_id = NULL` 的全局作用域，一次隐藏在所有可读 mirror 中生效。平台审核员可以执行全局审核决定；社区 policy/request 仍可用于本社区 AI 队列，但社区管理员决定或 AI 结果不能生成、解除普通 Comment 的全局 ReviewBlock。达到举报阈值时现有 `report_threshold_hold` 流程可以暂时隐藏；单次举报本身不隐藏。用户举报发生地记录在 UserReport，处理 Item 使用全局队列。Doc Comment 继续遵守 Doc owner 的 branch/Community 审核规则。
+普通 Article Comment 的最终 ReviewBlock 只允许 `community_id = NULL` 的全局作用域，一次隐藏在所有可读 mirror 中生效。平台审核员可以执行全局审核决定；社区 policy/request 仍可用于本社区 AI 队列，但社区管理员决定或 AI 结果不能生成、解除普通 Comment 的全局 ReviewBlock。达到举报阈值时现有 `report_threshold_hold` 流程可以暂时隐藏；单次举报本身不隐藏。用户举报发生地记录在 UserReport，处理 Item 使用全局队列。Doc Comment 的审核目标与权限按共享 Article/Comment Review 合同处理；社区 scope 必须匹配本次请求的 Doc Binding，不再依赖唯一 owner 或正文 branch。
 
 Article 的评论数和参与人数按全局 Comment 集合统计，在所有 mirror 页面展示同一 Article 级值；Comment 创建、回复和作者/被回复者通知只产生一次。Community 活动计数记录各次操作明确请求的 Community。共享 Comment 变化使父 Article 所有当前 binding 的评论缓存、搜索投影与 Map 版本失效。
 
-Comment 只持久保存稳定身份、父 `article_id` 和正文等自身数据，不保存创建 Community。公开读写必须从本次 Article/Comment 路径解析 Community 并检查有效 binding；内部任务使用稳定 ID，若要产生 Community 链接必须携带明确上下文或从当前有效 binding 中按稳定规则选择。Doc Comment 的 branch 仍由 DocBranch 校验。创建 Community 删除后，只要 Article 仍绑定在 Y，同一 Article、Comment、互动与引用事实便继续从 Y 读取；当前请求和举报发生地也不会被误当作 Comment 的永久归属。
+Comment 只持久保存稳定身份、父 `article_id` 和正文等自身数据，不保存创建 Community。公开读写必须从本次 Article/Comment 路径解析 Community 并检查有效 binding；内部任务使用稳定 ID，若要产生 Community 链接必须携带明确上下文或从当前有效 binding 中按稳定规则选择。Doc Comment 同样按请求 Community 校验父 Doc Binding。创建 Community 删除后，只要 Article 仍绑定在 Y，同一 Article、Comment、互动与引用事实便继续从 Y 读取；当前请求和举报发生地也不会被误当作 Comment 的永久归属。
 
 `FrontDesk.Relation.article_of/1` 没有请求 Community 参数，无法为共享 Comment 推断当前公开路径，现已废弃并在无上下文时 fail closed。公开调用方使用已有 Article/Comment path；内部父资源调用使用 `FrontDesk.article(article_id, mode: :internal, view: :command_context)`，Comment 的父 Article 摘要使用 `FrontDesk.Comment.read(comment_id, mode: :internal, view: :article_context)`。`article_of/1` 的兼容入口暂时保留以便迁移旧调用方，不允许它任选 binding 伪造请求上下文。
 
@@ -113,7 +115,7 @@ unmirror(article, community)
 
 删除 ArticleBinding 关系不删除 Article、Revision、Comment、Interaction、Mention 或其他共享事实；只使该 Community 的对应引用 Map 投影失效。
 
-如果 Article 已发布，至少必须保留一条 ArticleBinding 关系；最后一条关系不能被删除。
+普通已发布 Article 的常规 unmirror 仍至少保留一条 ArticleBinding；最后一条关系不能被删除。Docs 站点移除是明确的站点级例外：按 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 允许解除最后一个 Binding；此时没有可读站点入口，但 Article、ArticlePublic、ArticleHistoryOwner 和 Release / Snapshot 历史继续保留，不得因解绑转移全局 ArticleLifecycle。全局 `deleted` 仍只在所有 Binding 与 ArticleHistoryOwner 释放后进入。
 
 ### 3.3 Move
 
@@ -155,7 +157,7 @@ ArticleBinding exists
 
 ## 5. 公共路径与编号
 
-公开 `inner_id` 归属每条 ArticleBinding，同一 Article 在不同 Community 可以有不同 `inner_id`。当前 Community 的公开路径由该 binding 和 thread 组成；移除 binding 后该 Community 的路径不再可读。Article UUID 是共享内容身份，`inner_id` 只是该 Community 的公开定位符，不能进入普通 Article 的互动或 Mention 事实键。mirror 页面仍使用当前 Community 路径，引用 Map 的节点 URL 在读取时按当前 Community binding 生成。Doc、Ticket 的路径遵守各自资源合同。
+公开 `inner_id` 归属每条 ArticleBinding，同一 Article 在不同 Community 可以有不同 `inner_id`。当前 Community 的公开路径由该 binding 和 thread 组成；移除 binding 后该 Community 的路径不再可读。Article UUID 是共享内容身份，`inner_id` 只是该 Community 的公开定位符，不能进入 Article 的互动或 Mention 事实键。mirror 页面仍使用当前 Community 路径，引用 Map 的节点 URL 在读取时按当前 Community binding 生成。Doc 也遵循此规则；Ticket 继续使用单 Community 路径。
 
 ## 6. Ticket 与 Community 的关系
 

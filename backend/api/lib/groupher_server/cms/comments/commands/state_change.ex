@@ -37,8 +37,12 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
       CMS.Gate.check_comment_in_transaction(actor, :edit, candidate, community)
     end)
 
-    change(fn {canonical, _article} ->
-      States.fold(Map.put(canonical, :request_community_slug, community.slug), actor)
+    change(fn {canonical, _article}, operation_ref ->
+      States.fold(
+        Map.put(canonical, :request_community_slug, community.slug),
+        actor,
+        operation_ref
+      )
     end)
   end
 
@@ -48,8 +52,12 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
       CMS.Gate.check_comment_in_transaction(actor, :edit, candidate, community)
     end)
 
-    change(fn {canonical, _article} ->
-      States.unfold(Map.put(canonical, :request_community_slug, community.slug), actor)
+    change(fn {canonical, _article}, operation_ref ->
+      States.unfold(
+        Map.put(canonical, :request_community_slug, community.slug),
+        actor,
+        operation_ref
+      )
     end)
   end
 
@@ -83,11 +91,11 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
       CMS.Gate.check_comment_in_transaction(actor, :pin, candidate, community)
     end)
 
-    change(fn {canonical, article} ->
+    change(fn {canonical, article}, operation_ref ->
       canonical = Map.put(canonical, :request_community_slug, community.slug)
 
       with {:ok, changed} <-
-             States.apply_in_transaction(:pin, canonical, article, actor, command_id) do
+             States.apply_in_transaction(:pin, canonical, article, actor, operation_ref) do
         {:ok, {changed, article}}
       end
     end)
@@ -108,11 +116,11 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
       CMS.Gate.check_comment_in_transaction(actor, :undo_pin, candidate, community)
     end)
 
-    change(fn {canonical, article} ->
+    change(fn {canonical, article}, operation_ref ->
       canonical = Map.put(canonical, :request_community_slug, community.slug)
 
       with {:ok, changed} <-
-             States.apply_in_transaction(:undo_pin, canonical, article, actor, command_id) do
+             States.apply_in_transaction(:undo_pin, canonical, article, actor, operation_ref) do
         {:ok, {changed, article}}
       end
     end)

@@ -9,6 +9,7 @@ import {
   markStale,
   markStalePrefix,
 } from './executor'
+import * as press from './press'
 import * as viewer from './viewer'
 
 export {
@@ -25,5 +26,6 @@ export const QueryInvalidation = {
   article,
   comment,
   community,
+  press,
   viewer,
 } as const

@@ -52,6 +52,15 @@ defmodule GroupherServer.CMS.Dashboard.Persist do
   """
   @spec replace_section(CommunityDashboard.t(), atom(), map() | list() | boolean()) ::
           T.domain_res(CommunityDashboard.t())
+  def replace_section(%CommunityDashboard{id: id}, :enable, args) do
+    dashboard =
+      from(d in CommunityDashboard, where: d.id == ^id, lock: "FOR UPDATE") |> Repo.one!()
+
+    with {:ok, payload} <- SectionPayload.prepare(dashboard, :enable, args) do
+      ORM.replace_dsb_section(dashboard, :enable, payload)
+    end
+  end
+
   def replace_section(%CommunityDashboard{} = dashboard, key, args) do
     with {:ok, payload} <- SectionPayload.prepare(dashboard, key, args) do
       ORM.replace_dsb_section(dashboard, key, payload)

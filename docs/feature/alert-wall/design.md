@@ -2,6 +2,8 @@
 
 > 版本说明：本文保留 V1 设计与实现基线；最新重构目标见 [V2：ReviewBot / AlertWall](./v2.md)。V2 已在本地实现；本文只保留 V1 基线，不再定义当前边界。
 
+> **2026-11-14 Docs 目标更新：**本文涉及 DocPublic、DocLifecycle、DocReviewRestriction 和单站归属的段落属于旧 Docs 运行态合同。Doc 现按普通 Article 的 ArticleLifecycle、ArticlePublic、Review 与多社区 Binding 处理；Docs 站点发布历史仍由各自 Release 表达。当前目标以 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 为准。
+
 > 状态：本地实现与自动化回归通过，2026-10-22；D1–D5 旧链清理及 N1–N7 运行时代码已落地。真实浏览器验收与目标环境维护切换仍未完成，不能据此启用生产审核。
 > 数据模型、状态、权限、事务和接口以 [实施合同](./implementation.md) 为准；施工顺序与最新实现片段见 [批次验收](./delivery.md)。
 > 本文替代旧 Sentinel 草案与计划中的 CMS.Moderation 方案；不以旧合法/非法协议作为兼容层。

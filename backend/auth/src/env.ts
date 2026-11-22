@@ -16,7 +16,7 @@ import { config } from 'dotenv'
 
 // Wrangler can erase `import.meta.url` while bundling this shared module for a Worker.
 // Worker bindings already provide the runtime environment, so dotenv is only needed by Node.
-if (import.meta.url) {
+if (import.meta.url && process.env.DEV_HUB_MANAGED_ENVIRONMENT !== 'true') {
   const authRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
   config({

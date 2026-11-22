@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
 
       Ticket read request
         -> Ticket Gate scope
-        -> Article revision and Ticket relation projections
+        -> Article Snapshot and Ticket relation projections
         -> public or authorized internal result
   """
 
@@ -22,12 +22,12 @@ defmodule GroupherServer.CMS.Tickets.Query do
   alias CMS.Model.{
     Article,
     ArticleBinding,
-    ArticleBodyDraft,
-    ArticleBodySnapshot,
-    ArticleDraft,
+    ArticleWorkingCopy,
     ArticleLifecycle,
     ArticlePublic,
-    ArticleRevision,
+    ArticlePublicBody,
+    ArticleBodyDocument,
+    ArticleSnapshot,
     ArticleReviewBlock,
     CommunityTag,
     TicketCaseMember,
@@ -60,11 +60,11 @@ defmodule GroupherServer.CMS.Tickets.Query do
            )
            |> Repo.one(),
          %ArticlePublic{} = public <- Repo.get(ArticlePublic, post.id),
-         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public.revision_id),
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, public.snapshot_id),
          {:ok, %ArticleBinding{} = binding} <-
            CMS.Articles.Bindings.fetch_binding(post.id, community.id),
          true <- post.thread == :post do
-      {:ok, post, public, revision, binding}
+      {:ok, post, public, snapshot, binding}
     else
       _ -> {:error, ErrorCat.post_not_public()}
     end
@@ -282,9 +282,9 @@ defmodule GroupherServer.CMS.Tickets.Query do
                  on: public.article_id == binding.article_id,
                  as: :post_public
                )
-               |> join(:inner, [ticket_public: public], revision in ArticleRevision,
-                 on: revision.id == public.revision_id,
-                 as: :ticket_revision
+               |> join(:inner, [ticket_public: public], snapshot in ArticleSnapshot,
+                 on: snapshot.id == public.snapshot_id,
+                 as: :ticket_snapshot
                )
                |> where([post_binding: binding], binding.inner_id in ^ids)
                |> where([ticket_post_link: link], link.post_id in subquery(public_post_ids))
@@ -292,7 +292,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
                  post_inner_id: as(:post_binding).inner_id,
                  ticket_id: state.article_id,
                  status: state.status,
-                 title: as(:ticket_revision).title,
+                 title: as(:ticket_snapshot).title,
                  inner_id: as(:ticket_binding).inner_id
                })
                |> Repo.all() do
@@ -423,7 +423,14 @@ defmodule GroupherServer.CMS.Tickets.Query do
       |> Map.new(&{&1.id, &1})
 
     publics =
-      Repo.all(from(public in ArticlePublic, where: public.article_id in ^ids))
+      Repo.all(
+        from(public in ArticlePublic,
+          left_join: body in ArticlePublicBody,
+          on: body.article_id == public.article_id and body.snapshot_id == public.snapshot_id,
+          where: public.article_id in ^ids,
+          select: %{public | body: body}
+        )
+      )
       |> Map.new(&{&1.article_id, &1})
 
     lifecycles =
@@ -448,26 +455,14 @@ defmodule GroupherServer.CMS.Tickets.Query do
       if public? do
         %{}
       else
-        Repo.all(from(draft in ArticleDraft, where: draft.article_id in ^ids))
+        Repo.all(from(draft in ArticleWorkingCopy, where: draft.article_id in ^ids))
         |> Map.new(&{&1.article_id, &1})
       end
 
-    revision_ids = publics |> Map.values() |> Enum.map(& &1.revision_id)
+    snapshot_ids = publics |> Map.values() |> Enum.map(& &1.snapshot_id)
 
-    revisions =
-      Repo.all(from(revision in ArticleRevision, where: revision.id in ^revision_ids))
-      |> Map.new(&{&1.id, &1})
-
-    body_snapshot_ids = Enum.map(Map.values(revisions), & &1.body_snapshot_id)
-
-    public_bodies =
-      Repo.all(from(body in ArticleBodySnapshot, where: body.id in ^body_snapshot_ids))
-      |> Map.new(&{&1.id, &1})
-
-    draft_body_ids = drafts |> Map.values() |> Enum.map(& &1.body_draft_id)
-
-    draft_bodies =
-      Repo.all(from(body in ArticleBodyDraft, where: body.id in ^draft_body_ids))
+    snapshots =
+      Repo.all(from(snapshot in ArticleSnapshot, where: snapshot.id in ^snapshot_ids))
       |> Map.new(&{&1.id, &1})
 
     post_refs = post_refs_by_ticket(ids, community.id, public?)
@@ -481,11 +476,11 @@ defmodule GroupherServer.CMS.Tickets.Query do
       article = Map.fetch!(articles, state.article_id)
       binding = Map.fetch!(bindings, state.article_binding_id)
       public = Map.get(publics, state.article_id)
-      revision = public && Map.get(revisions, public.revision_id)
+      snapshot = public && Map.get(snapshots, public.snapshot_id)
       draft = Map.get(drafts, state.article_id)
-      draft_body = draft && Map.get(draft_bodies, draft.body_draft_id)
-      public_body = revision && Map.get(public_bodies, revision.body_snapshot_id)
-      body = if draft, do: draft_body, else: public_body
+      draft_body = draft
+      public_body = public && public.body
+      body = if draft, do: draft, else: public_body
 
       lifecycle = Map.get(lifecycles, state.article_id)
 
@@ -497,7 +492,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
           community,
           lifecycle,
           draft,
-          revision,
+          snapshot,
           body,
           draft_body,
           public_body
@@ -516,7 +511,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
           |> Map.put(:public_query, true)
           |> Map.put(:lifecycle_version, nil)
           |> Map.put(:workflow_version, nil)
-          |> Map.put(:draft_version, nil)
+          |> Map.put(:working_copy_revision, nil)
           |> Map.put(:draft_content, nil)
           |> Map.put(:has_unpublished_changes, nil)
         else
@@ -571,19 +566,19 @@ defmodule GroupherServer.CMS.Tickets.Query do
           on: state.article_id == relation.worker_ticket_id,
           join: binding in ArticleBinding,
           on: binding.id == state.article_binding_id,
-          left_join: draft in ArticleDraft,
+          left_join: draft in ArticleWorkingCopy,
           on: draft.article_id == state.article_id,
           left_join: public in ArticlePublic,
           on: public.article_id == state.article_id,
-          left_join: revision in ArticleRevision,
-          on: revision.id == public.revision_id,
+          left_join: snapshot in ArticleSnapshot,
+          on: snapshot.id == public.snapshot_id,
           where: relation.parent_ticket_id in ^ticket_ids,
           order_by: [asc: state.rank, asc: state.article_id],
-          select: {relation.parent_ticket_id, state, draft, revision, binding}
+          select: {relation.parent_ticket_id, state, draft, snapshot, binding}
         )
         |> Repo.all()
-        |> Enum.map(fn {parent_id, state, draft, revision, binding} ->
-          {parent_id, ticket_ref(state, draft, revision, binding)}
+        |> Enum.map(fn {parent_id, state, draft, snapshot, binding} ->
+          {parent_id, ticket_ref(state, draft, snapshot, binding)}
         end)
         |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
 
@@ -636,19 +631,19 @@ defmodule GroupherServer.CMS.Tickets.Query do
           on: state.article_id == relation.user_ticket_id,
           join: binding in ArticleBinding,
           on: binding.id == state.article_binding_id,
-          left_join: draft in ArticleDraft,
+          left_join: draft in ArticleWorkingCopy,
           on: draft.article_id == state.article_id,
           left_join: public in ArticlePublic,
           on: public.article_id == state.article_id,
-          left_join: revision in ArticleRevision,
-          on: revision.id == public.revision_id,
+          left_join: snapshot in ArticleSnapshot,
+          on: snapshot.id == public.snapshot_id,
           where: relation.case_ticket_id in ^ticket_ids,
           order_by: [asc: state.rank, asc: state.article_id],
-          select: {relation.case_ticket_id, state, draft, revision, binding}
+          select: {relation.case_ticket_id, state, draft, snapshot, binding}
         )
         |> Repo.all()
-        |> Enum.map(fn {case_id, state, draft, revision, binding} ->
-          {case_id, ticket_ref(state, draft, revision, binding)}
+        |> Enum.map(fn {case_id, state, draft, snapshot, binding} ->
+          {case_id, ticket_ref(state, draft, snapshot, binding)}
         end)
         |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
 
@@ -658,19 +653,19 @@ defmodule GroupherServer.CMS.Tickets.Query do
           on: state.article_id == relation.case_ticket_id,
           join: binding in ArticleBinding,
           on: binding.id == state.article_binding_id,
-          left_join: draft in ArticleDraft,
+          left_join: draft in ArticleWorkingCopy,
           on: draft.article_id == state.article_id,
           left_join: public in ArticlePublic,
           on: public.article_id == state.article_id,
-          left_join: revision in ArticleRevision,
-          on: revision.id == public.revision_id,
+          left_join: snapshot in ArticleSnapshot,
+          on: snapshot.id == public.snapshot_id,
           where: relation.user_ticket_id in ^ticket_ids,
           order_by: [asc: state.rank, asc: state.article_id],
-          select: {relation.user_ticket_id, state, draft, revision, binding}
+          select: {relation.user_ticket_id, state, draft, snapshot, binding}
         )
         |> Repo.all()
-        |> Enum.map(fn {user_id, state, draft, revision, binding} ->
-          {user_id, ticket_ref(state, draft, revision, binding)}
+        |> Enum.map(fn {user_id, state, draft, snapshot, binding} ->
+          {user_id, ticket_ref(state, draft, snapshot, binding)}
         end)
         |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
 
@@ -680,19 +675,19 @@ defmodule GroupherServer.CMS.Tickets.Query do
           on: state.article_id == relation.worker_ticket_id,
           join: binding in ArticleBinding,
           on: binding.id == state.article_binding_id,
-          left_join: draft in ArticleDraft,
+          left_join: draft in ArticleWorkingCopy,
           on: draft.article_id == state.article_id,
           left_join: public in ArticlePublic,
           on: public.article_id == state.article_id,
-          left_join: revision in ArticleRevision,
-          on: revision.id == public.revision_id,
+          left_join: snapshot in ArticleSnapshot,
+          on: snapshot.id == public.snapshot_id,
           where: relation.case_ticket_id in ^ticket_ids,
           order_by: [asc: state.rank, asc: state.article_id],
-          select: {relation.case_ticket_id, state, draft, revision, binding}
+          select: {relation.case_ticket_id, state, draft, snapshot, binding}
         )
         |> Repo.all()
-        |> Enum.map(fn {case_id, state, draft, revision, binding} ->
-          {case_id, ticket_ref(state, draft, revision, binding)}
+        |> Enum.map(fn {case_id, state, draft, snapshot, binding} ->
+          {case_id, ticket_ref(state, draft, snapshot, binding)}
         end)
         |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
 
@@ -702,18 +697,18 @@ defmodule GroupherServer.CMS.Tickets.Query do
           on: state.article_id == relation.parent_ticket_id,
           join: binding in ArticleBinding,
           on: binding.id == state.article_binding_id,
-          left_join: draft in ArticleDraft,
+          left_join: draft in ArticleWorkingCopy,
           on: draft.article_id == state.article_id,
           left_join: public in ArticlePublic,
           on: public.article_id == state.article_id,
-          left_join: revision in ArticleRevision,
-          on: revision.id == public.revision_id,
+          left_join: snapshot in ArticleSnapshot,
+          on: snapshot.id == public.snapshot_id,
           where: relation.worker_ticket_id in ^ticket_ids,
-          select: {relation.worker_ticket_id, state, draft, revision, binding}
+          select: {relation.worker_ticket_id, state, draft, snapshot, binding}
         )
         |> Repo.all()
-        |> Map.new(fn {worker_id, state, draft, revision, binding} ->
-          {worker_id, ticket_ref(state, draft, revision, binding)}
+        |> Map.new(fn {worker_id, state, draft, snapshot, binding} ->
+          {worker_id, ticket_ref(state, draft, snapshot, binding)}
         end)
 
       Map.new(ticket_ids, fn id ->
@@ -749,8 +744,8 @@ defmodule GroupherServer.CMS.Tickets.Query do
     }
   end
 
-  defp ticket_ref(state, draft, revision, binding) do
-    current_content = draft || revision
+  defp ticket_ref(state, draft, snapshot, binding) do
+    current_content = draft || snapshot
 
     %{
       id: state.article_id,
@@ -774,13 +769,13 @@ defmodule GroupherServer.CMS.Tickets.Query do
          community,
          lifecycle,
          draft,
-         revision,
+         snapshot,
          body,
          draft_body,
          public_body
        ) do
     draft_content = content_projection(draft, draft_body)
-    published_content = content_projection(revision, public_body)
+    published_content = content_projection(snapshot, public_body)
     current_content = if draft, do: draft_content, else: published_content
 
     %{
@@ -788,19 +783,19 @@ defmodule GroupherServer.CMS.Tickets.Query do
       article: article,
       binding: binding,
       community: community,
-      revision: revision,
-      body: body,
+      snapshot: snapshot,
+      body: body_document(body),
       title: current_content && current_content.title,
       digest: current_content && current_content.digest,
       publication_state: lifecycle && lifecycle.state,
       lifecycle_version: lifecycle && lifecycle.version,
       workflow_version: state.workflow_version,
-      draft_version: draft && draft.version,
+      working_copy_revision: draft && draft.revision,
       draft_content: draft_content,
       published_content: published_content,
       has_unpublished_changes:
         if state.type == :user do
-          if(draft && revision, do: draft.content_hash != revision.content_hash, else: !!draft)
+          if(draft && snapshot, do: working_copy_changed?(draft, snapshot), else: !!draft)
         else
           nil
         end,
@@ -824,10 +819,36 @@ defmodule GroupherServer.CMS.Tickets.Query do
 
   defp content_projection(content, body) do
     %{
-      body: body,
+      body: body_document(body),
       digest: content.digest || "",
       title: content.title
     }
+  end
+
+  defp body_document(nil), do: nil
+
+  defp body_document(%ArticlePublicBody{} = body), do: ArticleBodyDocument.document(body)
+
+  defp body_document(content) do
+    stored_body = CMS.Articles.Body.document(content)
+
+    %{
+      json: stored_body.json,
+      markdown: stored_body.markdown,
+      html: stored_body.html,
+      markdown_toc: stored_body.markdown_toc,
+      plain_text: stored_body.plain_text,
+      thumbnail: stored_body.thumbnail,
+      schema_version: stored_body.schema_version
+    }
+  end
+
+  defp working_copy_changed?(working_copy, snapshot) do
+    CMS.Articles.Body.document(working_copy) != CMS.Articles.Body.document(snapshot) or
+      Enum.any?(
+        ~w(title digest slug)a,
+        &(Map.get(working_copy, &1) != Map.get(snapshot, &1))
+      )
   end
 
   defp post_refs_by_ticket(ticket_ids, community_id, public?) do
@@ -919,29 +940,29 @@ defmodule GroupherServer.CMS.Tickets.Query do
       {inner_id, ""} when inner_id > 0 ->
         query
         |> where(
-          [ticket_binding: binding, ticket_draft: draft, ticket_revision: revision],
+          [ticket_binding: binding, ticket_draft: draft, ticket_snapshot: snapshot],
           binding.inner_id == ^inner_id or
             like(fragment("lower(?)", draft.title), ^prefix) or
-            (is_nil(draft.article_id) and like(fragment("lower(?)", revision.title), ^prefix))
+            (is_nil(draft.id) and like(fragment("lower(?)", snapshot.title), ^prefix))
         )
         |> order_by([ticket_state: state],
           asc:
             fragment("CASE WHEN ? = ? THEN 0 ELSE 1 END", as(:ticket_binding).inner_id, ^inner_id),
           asc: as(:ticket_draft).title,
-          asc: as(:ticket_revision).title,
+          asc: as(:ticket_snapshot).title,
           asc: state.article_id
         )
 
       _ ->
         query
         |> where(
-          [ticket_draft: draft, ticket_revision: revision],
+          [ticket_draft: draft, ticket_snapshot: snapshot],
           like(fragment("lower(?)", draft.title), ^prefix) or
-            (is_nil(draft.article_id) and like(fragment("lower(?)", revision.title), ^prefix))
+            (is_nil(draft.id) and like(fragment("lower(?)", snapshot.title), ^prefix))
         )
         |> order_by([ticket_state: state],
           asc: as(:ticket_draft).title,
-          asc: as(:ticket_revision).title,
+          asc: as(:ticket_snapshot).title,
           asc: state.article_id
         )
     end
@@ -949,7 +970,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
 
   defp join_internal_content(query) do
     query
-    |> join(:left, [ticket_state: state], draft in ArticleDraft,
+    |> join(:left, [ticket_state: state], draft in ArticleWorkingCopy,
       on: draft.article_id == state.article_id,
       as: :ticket_draft
     )
@@ -957,9 +978,9 @@ defmodule GroupherServer.CMS.Tickets.Query do
       on: public.article_id == state.article_id,
       as: :ticket_public
     )
-    |> join(:left, [ticket_public: public], revision in ArticleRevision,
-      on: revision.id == public.revision_id,
-      as: :ticket_revision
+    |> join(:left, [ticket_public: public], snapshot in ArticleSnapshot,
+      on: snapshot.id == public.snapshot_id,
+      as: :ticket_snapshot
     )
   end
 

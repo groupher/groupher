@@ -10,10 +10,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Asset do
         -> complete / retry / snooze / terminal failure
   """
 
-  alias GroupherServer.{CMS, ErrorCat, Repo}
+  alias GroupherServer.{CMS, ErrorCat}
   alias CMS.Assets.Effects
-  alias CMS.Assets.ErrorCat, as: AssetErrorCat
-  alias CMS.Model.CommunityAsset
 
   @doc """
   Delivers one asset-provider deletion event under the Outbox lease.
@@ -48,24 +46,11 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Asset do
   end
 
   defp delete_provider_object(event) do
-    deliver_provider_object(event.resource_type, event)
-  end
-
-  defp deliver_provider_object("community_asset", event) do
-    case Repo.get(CommunityAsset, event.resource_id) do
-      %CommunityAsset{} = asset -> normalize_delete_result(Effects.deliver_provider_delete(asset))
-      nil -> {:ok, :already_deleted}
+    with {:ok, target} <- CMS.Assets.Deletion.provider_delete_target(event) do
+      normalize_delete_result(Effects.deliver_provider_delete(target))
     end
   end
 
-  defp deliver_provider_object("application_logo_upload", event) do
-    normalize_delete_result(Effects.deliver_application_upload_delete(event.data))
-  end
-
-  defp deliver_provider_object(resource_type, _event) do
-    {:error, AssetErrorCat.unsupported_asset_cleanup_resource(%{resource_type: resource_type})}
-  end
-
-  defp normalize_delete_result({:ok, _result}), do: {:ok, :deleted}
+  defp normalize_delete_result({:ok, :pass}), do: {:ok, :enqueued}
   defp normalize_delete_result({:error, reason}), do: {:error, reason}
 end

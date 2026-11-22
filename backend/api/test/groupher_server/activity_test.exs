@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.ActivityTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.{Activity, CMS}
+  alias GroupherServer.{Activity, CMS, ErrorCat}
   alias Activity.Artiment
   alias Activity.Const, as: ActivityConst
 
@@ -17,14 +17,14 @@ defmodule GroupherServer.Test.ActivityTest do
   }
 
   alias CMS.Artiment.Threads
-  alias CMS.Model.{Comment, PressConfig}
+  alias CMS.Model.{Comment, CommunityAdmin, PressConfig}
 
   test "routes abstract Articles, rejects invalid contracts and deduplicates event refs" do
     {_community, post, _attrs, user} = mock_article(:post)
     {_blog_community, blog, _attrs, _blog_user} = mock_article(:blog)
 
-    assert Repo.get_by!(PostLog, article_id: post.article_id, action: :created)
-    assert Repo.get_by!(BlogLog, article_id: blog.article_id, action: :created)
+    assert Repo.get_by!(PostLog, article_id: post.id, action: :created)
+    assert Repo.get_by!(BlogLog, article_id: blog.id, action: :created)
 
     assert {:error, _} = Activity.log(post, :released, actor: user)
 
@@ -144,7 +144,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {:ok, stranger} = db_insert(:user)
     command_id = Ecto.UUID.generate()
 
-    article = Repo.get!(CMS.Model.Article, post.article_id)
+    article = Repo.get!(CMS.Model.Article, post.id)
     lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: article.id)
 
     assert {:ok, _lifecycle} =
@@ -156,17 +156,16 @@ defmodule GroupherServer.Test.ActivityTest do
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CMS.Articles.trash_receipt(post, stranger, command_id: command_id)
 
-    denied = Repo.get_by!(PostLog, article_id: post.article_id, action: :trashed)
-    assert denied.outcome == :denied
-    assert denied.rejection_code == "permission_denied"
-    assert denied.operation_ref == command_id
-    assert denied.actor_type == :user
-    assert denied.actor_ref == stranger.login
+    denied =
+      Repo.all(from(log in PostLog, where: log.article_id == ^post.id and log.action == :trashed))
 
-    assert 1 ==
-             PostLog
-             |> Repo.all()
-             |> Enum.count(&(&1.article_id == post.article_id && &1.action == :trashed))
+    assert length(denied) == 2
+    assert Enum.all?(denied, &(&1.outcome == :denied))
+    assert Enum.all?(denied, &(&1.rejection_code == "permission_denied"))
+    assert Enum.all?(denied, fn log -> match?({:ok, _}, Ecto.UUID.cast(log.operation_ref)) end)
+    assert Enum.all?(denied, &(&1.operation_ref != command_id))
+    assert Enum.all?(denied, &(&1.actor_type == :user and &1.actor_ref == stranger.login))
+    assert length(Enum.uniq_by(denied, & &1.operation_ref)) == 2
   end
 
   test "log_rejection owns the denied outcome" do
@@ -200,7 +199,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     refute Repo.exists?(
              from(log in PostLog,
-               where: log.article_id == ^post.article_id and log.action == :trashed
+               where: log.article_id == ^post.id and log.action == :trashed
              )
            )
   end
@@ -233,7 +232,6 @@ defmodule GroupherServer.Test.ActivityTest do
            ]},
           {Activity.Doc,
            [
-             :draft_updated,
              :comment_created,
              :comment_updated
            ]}
@@ -246,14 +244,14 @@ defmodule GroupherServer.Test.ActivityTest do
 
     comment = %Comment{
       thread: :post,
-      article_id: post.article_id,
+      article_id: post.id,
       inner_id: 42
     }
 
     assert {:ok, log} =
              Activity.log(comment, :comment_pinned, actor: user, community_id: community.id)
 
-    assert log.article_id == post.article_id
+    assert log.article_id == post.id
     assert log.subject_type == "comment"
     assert log.subject_ref == "42"
 
@@ -300,7 +298,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert created.subject == %{
              type: :post,
-             ref: post.article_id,
+             ref: post.id,
              title: post.title,
              inner_id: article_inner_id(post, community)
            }
@@ -342,59 +340,52 @@ defmodule GroupherServer.Test.ActivityTest do
     assert Enum.take(restored_ids, 2) == [newer.event_ref, older.event_ref]
     refute Enum.any?(entries, &(&1.action in [:trashed, :permanently_deleted]))
 
-    stable_article = Repo.get!(CMS.Model.Article, post.article_id)
+    stable_article = Repo.get!(CMS.Model.Article, post.id)
     assert {:ok, _} = Activity.list_article_logs(stable_article, nil)
 
-    {_doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
+    {doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
+    public = Repo.get!(CMS.Model.ArticlePublic, doc.id)
+    actor = doc_user
 
-    assert {:ok, doc_draft} =
-             CMS.Docs.update_draft(
-               doc.article_id,
-               doc.branch_id,
-               %{title: "branch-scoped draft", expected_version: doc.version},
-               doc_user
+    assert {:ok, edit} =
+             CMS.docs_begin_edit(
+               doc_community,
+               doc.id,
+               public.snapshot_id,
+               actor,
+               Ecto.UUID.generate()
              )
 
-    assert doc_draft.branch_id
-    assert {:ok, _} = Activity.list_article_logs(doc_draft, doc_user)
-
-    raw_doc_draft =
-      Repo.get_by!(CMS.Model.DocDraft,
-        article_id: doc.article_id,
-        branch_id: doc.branch_id
-      )
-
-    assert {:ok, _} = Activity.list_article_logs(raw_doc_draft, doc_user)
-    assert {:error, _} = Activity.list_article_logs(raw_doc_draft, nil)
-    assert {:error, _} = Activity.list_article_logs(doc_draft, nil)
+    work = Repo.get!(CMS.Model.ArticleWorkingCopy, edit.working_copy_id)
+    assert {:ok, _} = Activity.list_article_logs(work, doc_user)
+    assert {:error, _} = Activity.list_article_logs(work, nil)
     {:ok, stranger} = db_insert(:user)
-    assert {:error, _} = Activity.list_article_logs(raw_doc_draft, stranger)
-    assert {:error, _} = Activity.list_article_logs(doc_draft, stranger)
+    assert {:error, _} = Activity.list_article_logs(work, stranger)
 
     assert {:ok, _trashed} = CMS.Articles.trash(post, user)
     assert {:error, _} = Activity.list_article_logs(post, nil)
   end
 
-  test "ArticleLog keeps ordinary Drafts owner-scoped" do
+  test "ArticleLog keeps ordinary WorkingCopies owner-scoped" do
     {community, _published, _attrs, user} = mock_article(:post)
     {:ok, stranger} = db_insert(:user)
 
-    assert {:ok, %{article: article}} =
-             CMS.Articles.create_stable_draft(
+    assert {:ok, %{working_copy: working_copy}} =
+             CMS.Articles.create_article(
                community,
                :post,
                %{
-                 title: "Draft log",
+                 title: "WorkingCopy log",
                  digest: "digest",
-                 body_bag: mock_body_bag(mock_rich_text("draft"))
+                 body_bag: mock_body_bag(mock_rich_text("working copy"))
                },
-               user
+               user,
+               command_id: Ecto.UUID.generate()
              )
 
-    assert {:ok, draft} = CMS.Articles.read_draft(article.id, user, community: community)
-    assert {:ok, %{entries: []}} = Activity.list_article_logs(draft, user)
-    assert {:error, _} = Activity.list_article_logs(draft, stranger)
-    assert {:error, _} = Activity.list_article_logs(draft, nil)
+    assert {:ok, %{entries: []}} = Activity.list_article_logs(working_copy, user)
+    assert {:error, _} = Activity.list_article_logs(working_copy, stranger)
+    assert {:error, _} = Activity.list_article_logs(working_copy, nil)
   end
 
   test "business state rolls back when its Activity append fails" do
@@ -422,7 +413,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
   test "database CHECK constraints reject invalid Activity action and source" do
     {_community, post, _attrs, _user} = mock_article(:post)
-    log = Repo.get_by!(PostLog, article_id: post.article_id, action: :created)
+    log = Repo.get_by!(PostLog, article_id: post.id, action: :created)
 
     declared_constraints =
       %PostLog{}
@@ -475,8 +466,13 @@ defmodule GroupherServer.Test.ActivityTest do
       assert check_values(table, :actor_type) == expected_actor_types
 
       expected_actions = Ecto.Enum.values(schema, :action) |> Enum.map(&to_string/1)
-      assert check_values(table, :action) == expected_actions
+      assert Enum.sort(check_values(table, :action)) == Enum.sort(expected_actions)
     end
+
+    community_actions = Ecto.Enum.values(CommunityLog, :action)
+    assert :admin_joined in community_actions
+    assert :admin_removed in community_actions
+    assert :admin_permissions_changed in community_actions
 
     for handler <- Activity.CommunityLog.handlers(),
         {action, contract} <- handler.contracts(),
@@ -503,10 +499,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     occurred_at = DateTime.utc_now(:second)
 
@@ -593,7 +586,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert Enum.any?(
              result.entries,
-             &(&1.action == :created and &1.resource.ref == post.article_id)
+             &(&1.action == :created and &1.resource.ref == post.id)
            )
 
     assert result.entries |> Enum.take(8) |> Enum.map(& &1.resource.type) == [
@@ -654,9 +647,104 @@ defmodule GroupherServer.Test.ActivityTest do
              )
   end
 
+  test "CommunityLog reuses an explicitly supplied actor-bound Passport scope" do
+    {community, _post, _attrs, _owner} = mock_article(:post)
+    {:ok, manager} = db_insert(:user)
+
+    admin =
+      %CommunityAdmin{}
+      |> CommunityAdmin.changeset(%{
+        user_id: manager.id,
+        community_id: community.id,
+        permissions: %{"audit.read" => true}
+      })
+      |> Repo.insert!()
+
+    {:ok, scope} = CMS.passport_community_scope(manager, community)
+    admin |> CommunityAdmin.changeset(%{permissions: %{}}) |> Repo.update!()
+
+    assert {:ok, _} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: scope
+             )
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10}
+             )
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: nil
+             )
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               []
+             )
+
+    {:ok, member} = db_insert(:user)
+
+    %CommunityAdmin{}
+    |> CommunityAdmin.changeset(%{
+      user_id: member.id,
+      community_id: community.id,
+      permissions: %{}
+    })
+    |> Repo.insert!()
+
+    {:ok, member_scope} = CMS.passport_community_scope(member, community)
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               member,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: member_scope
+             )
+
+    {:ok, other_manager} = db_insert(:user)
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               community,
+               other_manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: scope
+             )
+
+    {other_community, _other_post, _other_attrs, _other_owner} = mock_article(:post)
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.list_community_logs(
+               other_community,
+               manager,
+               %{filter: %{}},
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 10},
+               passport_scope: scope
+             )
+  end
+
   test "CommunityLog cursor traverses tied times and rejects another community or filter" do
     {community, post, _, manager} = mock_article(:post)
-    manager = %{manager | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}}
+    manager = grant_audit_read(community, manager)
     time = DateTime.utc_now(:second)
 
     for _ <- 1..4 do
@@ -723,10 +811,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     base_time = DateTime.add(DateTime.utc_now(:second), -60, :second)
 
@@ -770,10 +855,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     start = DateTime.new!(Date.add(Date.utc_today(), -2), ~T[00:00:00], "Etc/UTC")
 
@@ -837,10 +919,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     assert {:ok, result} =
              Activity.list_community_logs(
@@ -872,10 +951,7 @@ defmodule GroupherServer.Test.ActivityTest do
                parent_event_ref: parent.event_ref
              )
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     assert {:ok, detail} = Activity.get_community_log_event(community, manager, child.event_ref)
     assert detail.event_ref == child.event_ref
@@ -891,10 +967,7 @@ defmodule GroupherServer.Test.ActivityTest do
   test "CommunityLog rejects invalid and unbounded time windows" do
     {community, _post, _attrs, manager} = mock_article(:post)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     after_datetime = DateTime.utc_now()
     before_datetime = DateTime.add(after_datetime, -1, :second)
@@ -917,10 +990,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     assert {:ok, _} =
              Activity.log(
@@ -958,10 +1028,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     assert {:ok, result} =
              Activity.list_community_logs(
@@ -993,10 +1060,7 @@ defmodule GroupherServer.Test.ActivityTest do
     {community, _post, _attrs, _owner} = mock_article(:post)
     {:ok, manager} = db_insert(:user)
 
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
+    manager = grant_audit_read(community, manager)
 
     constraint = "community_logs_reject_export_test"
 
@@ -1033,5 +1097,27 @@ defmodule GroupherServer.Test.ActivityTest do
 
     Regex.scan(~r/'([^']+)'/, definition, capture: :all_but_first)
     |> List.flatten()
+  end
+
+  defp grant_audit_read(community, user) do
+    case Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) do
+      %CommunityAdmin{} = admin ->
+        admin
+        |> CommunityAdmin.changeset(%{
+          permissions: Map.put(admin.permissions || %{}, "audit.read", true)
+        })
+        |> Repo.update!()
+
+      nil ->
+        %CommunityAdmin{}
+        |> CommunityAdmin.changeset(%{
+          user_id: user.id,
+          community_id: community.id,
+          permissions: %{"audit.read" => true}
+        })
+        |> Repo.insert!()
+    end
+
+    user
   end
 end

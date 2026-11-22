@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Assets.ApplicationUploads do
         -> Repo / Assets Hub
   """
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
   alias CMS.Assets.Persist
@@ -36,25 +36,29 @@ defmodule GroupherServer.CMS.Assets.ApplicationUploads do
         %CommunityApplicationLogoUpload{} = upload,
         %User{} = user
       ) do
-    Persist.register(
-      community,
-      %{
-        public_ref: "asset_" <> Utils.uid(24),
-        url: upload.url,
-        storage: upload.storage,
-        storage_key: upload.storage_key,
-        content_hash: upload.content_hash,
-        size_bytes: upload.size_bytes,
-        filename: upload.filename,
-        mime_type: upload.mime_type,
-        asset_type: :image,
-        uploader_id: user.id,
-        meta: %{
-          "source" => "community_application_logo",
-          "applicationUploadRef" => upload.public_ref
-        }
-      },
-      user
-    )
+    register_asset = fn ->
+      Persist.register(
+        community,
+        %{
+          public_ref: "asset_" <> Utils.uid(24),
+          url: upload.url,
+          storage: upload.storage,
+          storage_key: upload.storage_key,
+          content_hash: upload.content_hash,
+          size_bytes: upload.size_bytes,
+          filename: upload.filename,
+          mime_type: upload.mime_type,
+          asset_type: :image,
+          uploader_id: user.id,
+          meta: %{
+            "source" => "community_application_logo",
+            "applicationUploadRef" => upload.public_ref
+          }
+        },
+        user
+      )
+    end
+
+    if Repo.in_transaction?(), do: register_asset.(), else: Repo.transact_result(register_asset)
   end
 end

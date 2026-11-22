@@ -138,7 +138,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, comments} =
         comment_page(
           :changelog,
-          changelog.article_id,
+          changelog.id,
           %{page: 1, size: 20},
           :replies
         )
@@ -175,7 +175,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      changelog_after = Repo.get!(CMS.Model.Article, changelog.article_id)
+      changelog_after = Repo.get!(CMS.Model.Article, changelog.id)
 
       assert not is_nil(changelog.active_at)
       assert changelog_after.active_at > changelog.inserted_at
@@ -184,11 +184,19 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
     test "changelog author create comment will not update active timestamp",
          ~m(community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      article_before = Repo.get!(CMS.Model.Article, changelog.article_id)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
+
+      article_before = Repo.get!(CMS.Model.Article, changelog.id)
 
       Process.sleep(1000)
-      author = changelog.author
+      author = changelog.author.user
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -200,7 +208,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      article_after = Repo.get!(CMS.Model.Article, changelog.article_id)
+      article_after = Repo.get!(CMS.Model.Article, changelog.id)
 
       assert not is_nil(article_after.active_at)
       assert article_after.active_at == article_before.active_at
@@ -213,7 +221,14 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       Process.sleep(1000)
 
@@ -227,7 +242,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      article = Repo.get!(CMS.Model.Article, changelog.article_id)
+      article = Repo.get!(CMS.Model.Article, changelog.id)
 
       assert article.active_at |> DateTime.to_date() == cur_date
 
@@ -238,9 +253,16 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         |> Datetime.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      article = Repo.get!(CMS.Model.Article, changelog.article_id)
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
+
+      article = Repo.get!(CMS.Model.Article, changelog.id)
 
       {:ok, _article} =
         article
@@ -259,7 +281,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      article = Repo.get!(CMS.Model.Article, changelog.article_id)
+      article = Repo.get!(CMS.Model.Article, changelog.id)
       assert article.active_at == inserted_at
     end
 
@@ -336,7 +358,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         )
 
       {:ok, state} =
-        CMS.Comments.comments_state(:changelog, changelog.article_id, nil, community.slug)
+        CMS.Comments.comments_state(:changelog, changelog.id, nil, community.slug)
 
       participator = List.first(state.participants)
       assert participator.id == user.id
@@ -364,7 +386,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         )
 
       {:ok, state} =
-        CMS.Comments.comments_state(:changelog, changelog.article_id, nil, community.slug)
+        CMS.Comments.comments_state(:changelog, changelog.id, nil, community.slug)
 
       assert 1 == length(state.participants)
     end
@@ -392,7 +414,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         )
 
       {:ok, state} =
-        CMS.Comments.comments_state(:changelog, changelog.article_id, nil, community.slug)
+        CMS.Comments.comments_state(:changelog, changelog.id, nil, community.slug)
 
       participator = List.first(state.participants)
 
@@ -454,7 +476,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      author_user = changelog.author
+      author_user = changelog.author.user
 
       CMS.Interactions.upvote(comment, author_user, Ecto.UUID.generate())
 
@@ -663,7 +685,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, folded} =
         shared_comment_page(
           :changelog,
-          changelog.article_id,
+          changelog.id,
           %{},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
@@ -697,7 +719,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, folded} =
         shared_comment_page(
           :changelog,
-          changelog.article_id,
+          changelog.id,
           %{},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
@@ -731,8 +753,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       assert comment.is_pinned
 
-      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{article_id: changelog.article_id})
-      assert pined_record.article_id == changelog.article_id
+      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{article_id: changelog.id})
+      assert pined_record.article_id == changelog.id
     end
 
     test "user can unpin a comment", ~m(community user changelog)a do
@@ -1152,13 +1174,13 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, stats} = CMS.ArticleStats.fetch(:changelog, changelog.article_id)
+      {:ok, stats} = CMS.ArticleStats.fetch(:changelog, changelog.id)
 
       assert stats.comments_count == 5
 
       {:ok, _} = CMS.Comments.delete_comment(comment, user, Ecto.UUID.generate())
 
-      {:ok, stats} = CMS.ArticleStats.fetch(:changelog, changelog.article_id)
+      {:ok, stats} = CMS.ArticleStats.fetch(:changelog, changelog.id)
       assert stats.comments_count == 4
     end
 
@@ -1205,7 +1227,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       assert not comment.is_article_author
 
-      author_user = changelog.author
+      author_user = changelog.author.user
 
       {:ok, comment} =
         CMS.Comments.create_comment(

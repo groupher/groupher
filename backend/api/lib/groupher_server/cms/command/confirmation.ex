@@ -96,10 +96,6 @@ defmodule GroupherServer.CMS.Command.Confirmation do
   def valid_type?(value, :map), do: is_map(value) and not is_struct(value)
   def valid_type?(value, :json), do: json_safe?(value)
 
-  def valid_type?(value, {:doc_tree_result, variant}) when is_map(value) do
-    GroupherServer.CMS.DocTree.Confirmation.valid_payload?(variant, value)
-  end
-
   def valid_type?(value, {:nullable, type}) do
     is_nil(value) or valid_type?(value, type)
   end

@@ -4,7 +4,7 @@
 >
 > 日期：2026-09-05
 >
-> 文件名中的 `fallback` 是历史命名。当前契约不再为 Wallpaper 定义 Content fallback。
+> 文件名中的 `fallback` 是历史命名。当前契约不再为 Wallpaper 定义 Content fallback；未初始化主题使用内置默认壁纸。
 >
 > 当前实现差异：浏览器长页面与真实预览宿主仍需验收；代码侧已将 Root 基础色移到全局 `html/body`，并
 > 将 Content surface 的颜色与 blur 收敛为有 Wallpaper 才启用。具体未完成项以 §10 未勾条目为准。
@@ -110,7 +110,7 @@ Wallpaper 设置负责：
 - Frontend 为 NONE 定义另一套默认 Wallpaper；
 - 生成纯色或透明占位图片；
 - 把 Content rgba 预先拍平成 Wallpaper 颜色；
-- 因缺少静态图片而回退到某个内置 Wallpaper preset。
+- 已保存的 Snapshot 缺图或图片加载失败时，用默认壁纸掩盖资产故障。
 
 ## 5. 运行时状态
 
@@ -126,7 +126,7 @@ Root page canvas 始终存在；条件只控制 Wallpaper 图片和 Content surf
 有 Wallpaper 时，Root 仍作为稳定底色存在，Wallpaper 图片覆盖其上；Content surface 才在中间显示区对
 图片进行局部着色和模糊。这是正常的空间合成，不表示 Content 设置参与 Wallpaper 的保存或生成。
 
-`StaticWallpaper` 只写已发布 Profile 图片变量，缺图时变量值为 `none`。它不接受 fallback 颜色，也不
+`StaticWallpaper` 只写 Backend 返回的 Profile 图片变量（已发布图片或未初始化默认图片），缺图时变量值为 `none`。它不接受 fallback 颜色，也不
 负责 Root page canvas。编辑页的 `EditorStaticWallpaper` 只提供当前编辑 draft 的 CSS 预览层，同样不能
 成为页面基础颜色的 owner。
 
@@ -137,7 +137,7 @@ Root page canvas 始终存在；条件只控制 Wallpaper 图片和 Content surf
 存在判断按消费场景分别取值，只共享规则，不共享同一个状态：
 
 ```ts
-// 普通页面：已发布静态数据
+// 普通页面：Backend 静态数据（已发布图片或未初始化默认图片）
 hasPublishedWallpaper = dashboard.wallpaper[currentTheme] !== null
 
 // 编辑器预览：当前尚未发布的 draft
@@ -179,20 +179,25 @@ NONE 分支不能产生白色闪烁，也不能先显示另一 theme 的 Wallpap
 
 ## 8. 未初始化状态
 
-Backend 为编辑器返回完整默认 `TWallpaperSettings`，Frontend 不指定默认设置。未初始化并不等于已经
-发布 Wallpaper：
+Backend 为编辑器返回完整默认 `TWallpaperSettings`，并为普通页面返回相同默认外观的内置 Profile 图片。
+未初始化仍不创建 Snapshot，也不递增 version：
 
 ```text
 dashboard.wallpaperSettings
   -> Backend 默认编辑配置
 
 dashboard.wallpaper
-  -> { version: 0, light: null, dark: null }
+  -> { version: 0, light: 默认 light Profile 图片, dark: 默认 dark Profile 图片 }
 ```
 
-默认编辑配置只帮助编辑器展示控件，不得自动成为普通页面的 Wallpaper 图片层。`dashboard.wallpaper`
-外层始终非空；未初始化和已经保存 NONE 在普通页面都不绘制图片，Root page canvas 负责基础颜色，
-Content surface 不重复绘制。
+默认静态图片使用 `/wallpaper/default-v1/<theme>-<profile>.webp`，来自与 seed 共用的八张 fixture，
+由 `scripts/sync-wallpaper-assets.mjs` 同步到 Dash、Community、Landing 的 public 目录，随正常构建分发。
+默认显示不依赖 seed、Assets Hub 或数据库写入。
+
+是否未初始化按每个 theme 的 active Snapshot pointer 独立判断，不能按全局 `version == 0` 判断。
+没有 active pointer 时返回默认图片；显式 NONE Snapshot 仍返回 `null`，不会被默认图片覆盖。
+已保存 Snapshot 缺失或 manifest 损坏仍返回 `null`，不伪装成未初始化。
+`dashboard.wallpaper` 外层始终非空；Root 与 Content 的背景职责保持不变。
 
 每个 theme 的 editor baseline 独立解析：有 active Snapshot 时返回该 Snapshot 的完整 settings，包含
 已保存的 `type: 'none'`；只有没有 active Snapshot 时才使用 Backend 默认 settings。Frontend 不得把
@@ -251,7 +256,7 @@ color 或 Content 设置所有权。图片加载失败不创建新的页面状�
 | light 有 Wallpaper，dark 为 NONE             | light 显示图片及 Content surface 效果；dark 只显示 Root page color         |
 | light/dark 都为 NONE                         | 两边都只显示各自的 Root page color，Content 区域没有色块                   |
 | Wallpaper 为 NONE，但 `contentShadow = true` | 仍不绘制 Content surface；独立 shadow 配置保留，Wallpaper 恢复后可重新生效 |
-| 未初始化                                     | 普通页面只显示 Root page color；编辑器使用 Backend 默认 settings           |
+| 未初始化                                     | 普通页面显示内置默认 Profile 图片；编辑器使用对应 Backend 默认 settings    |
 | 保存当前 theme 为 NONE                       | 外层保留，当前 branch 为 `null`；Content surface 同步关闭                  |
 | Editor 选择 NONE                             | 预览显示真实 Root page color，Save 不导出图片                              |
 | Editor Cancel NONE                           | 恢复之前的 Wallpaper 图片及 Content surface 效果                           |

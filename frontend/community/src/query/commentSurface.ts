@@ -4,7 +4,7 @@ import { toEffectivePagiConfig } from '~/lib/pagination/params'
 import { hasExplicitPagiPosition, readPagiMobileLayout } from '~/lib/pagination/viewport'
 import { dsbKeys } from '~/query'
 import { resolveCommentPosition } from '~/query/commentPage'
-import type { TArticleThread, TParseDashboard } from '~/spec'
+import type { TArticleThread, TDsb } from '~/spec'
 
 import { isPaginationRevisionMismatch, refreshArticleBootstrap } from './articleSurface'
 import { communityQueries } from './queries'
@@ -20,7 +20,7 @@ export async function prefetchComments(
   const prefetch = () => {
     const mobile = readPagiMobileLayout()
     const config = toEffectivePagiConfig(
-      client.getQueryData<TParseDashboard>(dsbKeys.config(community)),
+      client.getQueryData<TDsb>(dsbKeys.slug(community)),
       mobile === true,
     )
     const position = resolveCommentPosition(config, new URLSearchParams(search))

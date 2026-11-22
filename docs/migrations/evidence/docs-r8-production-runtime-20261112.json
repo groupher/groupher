@@ -1,0 +1,42 @@
+{
+  "cutover_id": "docs-r8-20261112",
+  "backend": {
+    "app": "groupher-api",
+    "machine_id": "0807979ad30968",
+    "state": "started",
+    "image": "registry.fly.io/groupher-api:deployment-01M77VFE1ES6TWT65RPHZGRR0J",
+    "fly_service_check": "passing",
+    "https_health_status": 200,
+    "graphql_typename": "RootQueryType"
+  },
+  "database": {
+    "name": "groupher_mentions_graph_20261106",
+    "latest_migration": 20261112234000,
+    "article_count": 0,
+    "article_history_owner_count": 0,
+    "active_oban_jobs": 0,
+    "schema_sha256": "53879d6dc5dddc9e8b4d4c359cab0afae5a2cf64939d058e410d9bd520906230"
+  },
+  "workers": {
+    "dash_version": "ec1a465c-4755-416f-999d-231655ba0dd6",
+    "community_version": "1668fdfb-5975-456e-a3fc-45bc3a96a3f7"
+  },
+  "anonymous_smoke": {
+    "doc_public_tree_dev_tabs": 0,
+    "workspace_tree_error": "account_login",
+    "configure_queue_error": "account_login",
+    "community_dev_doc_status": 200,
+    "old_doc_id_4_detail_status": 404
+  },
+  "authenticated_browser_smoke": {
+    "docs_editor_loaded": true,
+    "visible_controls": ["Add Group", "Import content", "Doc status"],
+    "provider_error_visible": false
+  },
+  "unverified": [
+    "real-identity D/Q and approval/preview/Release workflow",
+    "new public Doc detail and site tree after Release",
+    "D deletion or retention after Release and on-demand recreation",
+    "external Search, Press, and CDN delivery"
+  ]
+}

@@ -4,7 +4,14 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
   import Ecto.Query
 
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.Model.{ArticleLifecycle, ArtimentReview, CommentLifecycle, DocLifecycle, DocPublic}
+
+  alias CMS.Model.{
+    ArticleLifecycle,
+    ArtimentReview,
+    CommentLifecycle,
+    ArticlePublic,
+    CommunityAdmin
+  }
 
   for target_type <- [:article, :comment, :doc, :doc_comment] do
     @target_type target_type
@@ -13,6 +20,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
       applied_at = DateTime.utc_now(:second)
 
       attrs = %{
+        operation_ref: Ecto.UUID.generate(),
         scope_key: scope_key,
         type: :report_threshold_hold,
         source: :domain,
@@ -38,11 +46,13 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
 
   test "Doc Comment author notices include current checks and branch Community holds" do
     {community, _doc, author, comment} = doc_comment()
-    target = %{type: :comment, comment_id: comment.id}
+    target = %{type: :comment, comment_id: comment.id, community_id: community.id}
+    operation_ref = Ecto.UUID.generate()
 
     assert {:ok, request} =
              Repo.transact_result(fn ->
                CMS.Review.Requests.create_in_transaction(%{
+                 operation_ref: operation_ref,
                  target_type: :comment,
                  comment_id: comment.id,
                  community_id: community.id,
@@ -68,7 +78,8 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
                  scope_key: "community:#{community.id}",
                  type: :report_threshold_hold,
                  source: :domain,
-                 source_ref: "report_threshold:notice"
+                 source_ref: "report_threshold:notice",
+                 operation_ref: Ecto.UUID.generate()
                })
              end)
 
@@ -117,11 +128,11 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     assert hold.source_ref == "report_threshold:item:#{item_id}"
   end
 
-  test "Doc Comment recheck reads its public branch title and Comment body through the command" do
+  test "Doc Comment recheck reads its public title and Comment body through the command" do
     {community, doc, _author, comment} = doc_comment()
     reviewer = reviewer(community)
     command_id = Ecto.UUID.generate()
-    public = Repo.get_by!(DocPublic, article_id: comment.article_id)
+    public = Repo.get_by!(ArticlePublic, article_id: comment.article_id)
     body = Repo.get_by!(CMS.Model.CommentBody, comment_id: comment.id)
 
     assert {:ok, result} =
@@ -144,7 +155,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
         )
       )
 
-    assert is_nil(request.branch_id)
+    refute Map.has_key?(request, :branch_id)
     assert request.payload["text"]["title"] == public.title
     assert request.payload["text"]["body"] == body.plain_text
 
@@ -176,7 +187,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
                Ecto.UUID.generate()
              )
 
-    assert doc.article_id == comment.article_id
+    assert doc.id == comment.article_id
   end
 
   defp restriction_target(:article) do
@@ -186,7 +197,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
 
   defp restriction_target(:doc) do
     {_community, doc, _attrs, _author} = mock_article(:doc)
-    {Repo.get_by!(DocLifecycle, article_id: doc.id, branch_id: doc.branch_id), "platform"}
+    {Repo.get_by!(ArticleLifecycle, article_id: doc.id), "platform"}
   end
 
   defp restriction_target(:doc_comment) do
@@ -201,7 +212,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
       CMS.Comments.create_comment(
         community,
         :post,
-        article_inner_id(article, community),
+        binding_inner_id(article, community),
         mock_comment("Shared review candidate"),
         author,
         Ecto.UUID.generate()
@@ -217,7 +228,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
       CMS.Comments.create_comment(
         community,
         :doc,
-        article_inner_id(doc, community),
+        binding_inner_id(doc, community),
         mock_comment("Doc review candidate"),
         author,
         Ecto.UUID.generate()
@@ -226,15 +237,26 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     {community, doc, author, comment}
   end
 
+  defp binding_inner_id(article, community) do
+    assert {:ok, %{inner_id: inner_id}} = CMS.Articles.Bindings.get(article, community)
+    inner_id
+  end
+
   defp reviewer(community) do
     {:ok, user} = db_insert(:user)
 
-    %{
-      user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"review.decide" => true}}
-        }
-    }
+    member =
+      Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) ||
+        %CommunityAdmin{}
+
+    member
+    |> CommunityAdmin.changeset(%{
+      user_id: user.id,
+      community_id: community.id,
+      permissions: Map.put(member.permissions || %{}, "review.decide", true)
+    })
+    |> Repo.insert_or_update!()
+
+    user
   end
 end

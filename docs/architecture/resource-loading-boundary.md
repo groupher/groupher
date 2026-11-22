@@ -1,5 +1,7 @@
 # CMS 资源加载与 Canonical Reload 边界
 
+> **2026-11-14 Docs 目标更新：**本文 Doc branch / Draft / DocLifecycle reload 盘点记录当时实现，不是新 Docs 目标。新 Doc 读取以 Article ID 和显式请求社区 Binding 为准；单篇状态归 ArticleLifecycle，站点编排归 Queue / Release。Docs 调用链迁移以 [Docs 发布队列合同](../migrations/docs-publish-queue-refactor.md) 为准；本文通用 canonical reload 原则继续适用。
+
 > 状态：整改合同（Phase 1/2/3 已落地，Phase 4 的 Comment Gate aggregate callback 与首次发布通知 payload 已同步收口）。本文冻结资源从 transport ref 进入 CMS mutation 的加载边界，列出当前偏差与迁移顺序；不改变 Gate、Lifecycle、CMS.Command.Receipt 的既有职责。
 >
 > 范围：`backend/api` 中 GraphQL middleware/resolver、CMS facade、Command、Gate Access、Lifecycle，以及它们之间传递的 Community、Article、Doc、Comment 和内部状态资源。

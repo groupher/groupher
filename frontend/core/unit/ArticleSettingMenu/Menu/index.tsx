@@ -74,6 +74,17 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
           <CatItem onClick={() => openSubMenu(SUB_MENU.CATEGORY)} />
           <TagsItem onClick={() => openSubMenu(SUB_MENU.TAGS)} />
           <div className={s.divider} />
+          <button
+            type='button'
+            className={s.menuItem}
+            onClick={() => openSubMenu(SUB_MENU.HISTORY)}
+          >
+            <ArchivedSVG className={s.icon} />
+            <div className={s.menuTitle}>历史记录</div>
+            <div className='grow' />
+            <ArrowSVG className={cn(s.icon, 'rotate-180')} />
+          </button>
+          <div className={s.divider} />
           <PinItem />
           <div className={s.menuItem}>
             <LockSVG className={s.icon} />

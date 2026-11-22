@@ -12,7 +12,11 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
       {:ok, community} = Communities.mock(slug)
 
       {:ok, articles} =
-        Articles.mock(community, :post, count_range: {2, 2}, comment_range: {2, 2})
+        Articles.mock(community, :post,
+          count_range: {2, 2},
+          comment_range: {2, 2},
+          command_id_factory: &Ecto.UUID.generate/0
+        )
 
       assert length(articles) == 2
 
@@ -21,7 +25,7 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
       {:ok, public_stats} = CMS.ArticleStats.fetch(:post, first.id)
 
       comments_count =
-        from(c in Comment, where: c.article_id == ^first.article_id)
+        from(c in Comment, where: c.article_id == ^first.id)
         |> count()
 
       assert comments_count >= 2

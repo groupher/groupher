@@ -2,6 +2,7 @@ import { graphql } from '~/graphql/authoring'
 import type { ResolveAlertItemDocument } from '~/graphql/generated/graphql'
 
 export const alertItems = graphql(`
+  "Load alert items for the review queue."
   query AlertItems($scope: ReviewBotScopeInput!, $filter: AlertItemFilter, $pagi: PagiInput) {
     alertItems(scope: $scope, filter: $filter, pagi: $pagi) {
       entries {
@@ -40,6 +41,7 @@ export const alertItems = graphql(`
 `)
 
 export const alertItemReports = graphql(`
+  "Load reports for an alert item in the review queue."
   query AlertItemReports($id: ID!, $pagi: PagiInput) {
     alertItemReports(id: $id, pagi: $pagi) {
       entries {
@@ -65,6 +67,7 @@ export const alertItemReports = graphql(`
 `)
 
 export const resolveAlertItem = graphql(`
+  "Resolve an alert item at the version displayed to the reviewer."
   mutation ResolveAlertItem(
     $id: ID!
     $resolution: String!
@@ -84,6 +87,7 @@ export const resolveAlertItem = graphql(`
 `) as typeof ResolveAlertItemDocument
 
 export const myReports = graphql(`
+  "Load the current user's reports."
   query MyReports($pagi: PagiInput) {
     myReports(pagi: $pagi) {
       entries {
@@ -117,6 +121,7 @@ export const myReports = graphql(`
 `)
 
 export const submitReport = graphql(`
+  "Submit a report for an AlertWall target."
   mutation SubmitReport($input: AlertReportInput!, $commandId: ID!) {
     submitReport(input: $input, commandId: $commandId) {
       id
@@ -126,6 +131,7 @@ export const submitReport = graphql(`
 `)
 
 export const withdrawReport = graphql(`
+  "Withdraw a report submitted by the current user."
   mutation WithdrawReport($reportId: ID!, $commandId: ID!) {
     withdrawReport(reportId: $reportId, commandId: $commandId) {
       id

@@ -41,7 +41,9 @@ defmodule GroupherServer.CMS.Assets.Commands.Archive do
       end
     end)
 
-    change(fn {canonical, candidate} -> Persist.archive(canonical, candidate.id) end)
+    change(fn {canonical, candidate}, _operation_ref ->
+      Persist.archive(canonical, candidate.id)
+    end)
 
     confirm(fn archived ->
       {:ok, %Confirmation{data: %{"asset_id" => archived.id, "command_id" => command_id}}}

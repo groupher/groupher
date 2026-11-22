@@ -3,7 +3,7 @@ import useTopbar from '~/hooks/useTopbar'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TContainerMetric } from '~/hooks/useTwBelt/spec'
 import { hasPublishedWallpaper } from '~/shell/GlobalLayout/background'
-import useDsbConfig from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import useStaticWallpaper from '~/stores/staticWallpaper/hooks'
 
 type TProps = {
@@ -16,7 +16,7 @@ export default function useSalon({ containerMetric }: TProps) {
   const { topbarBg } = useTopbar()
   const { isDarkTheme } = useTheme()
   const publishedWallpaper = useStaticWallpaper()
-  const dashboard = useDsbConfig()
+  const dashboard = useDsb()
   const theme = isDarkTheme ? 'dark' : 'light'
   const hasWallpaper = hasPublishedWallpaper(publishedWallpaper, theme)
   const contentShadowEnabled = dashboard.contentShadow ?? false

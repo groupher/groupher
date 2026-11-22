@@ -242,7 +242,7 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
          %ArticleBinding{inner_id: inner_id} <-
            Repo.get_by(ArticleBinding, article_id: locked.id, community_id: community.id),
          {:ok, current} <- ArticleFrontDesk.read_stable(community, thread, inner_id, nil, []) do
-      {:ok, Map.merge(current, Map.take(projection, [:branch_id])), community, received_at}
+      {:ok, current, community, received_at}
     else
       _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
     end

@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
 
   alias GroupherServer.CMS
   alias CMS.Artiment.BodyBag
-  alias CMS.Model.ArticleBodySnapshot
+  alias CMS.Model.ArticleBody
 
   @json Jason.encode!([
           %{"type" => "p", "children" => [%{"text" => "Published body content"}]}
@@ -19,21 +19,24 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
              json: @json,
              markdown_toc: %{items: []},
              body_hash: body_hash,
-             schema_version: 2
+             schema_version: 3,
+             html: "<p>Published body content</p>",
+             markdown: "Published body content",
+             digest: "Published body content"
            } = BodyBag.to_document_attrs(body_bag)
 
     assert body_hash == String.duplicate("a", 64)
   end
 
-  test "rebuilds the input contract from a persisted ArticleBodySnapshot" do
+  test "rebuilds the input contract from a persisted ArticleBody" do
     document =
-      struct(ArticleBodySnapshot, %{
+      struct(ArticleBody, %{
         json: @json,
         markdown: "Published body content",
         markdown_toc: %{"items" => [%{"id" => "intro", "title" => "Intro", "level" => 1}]},
+        thumbnail: %{version: 1, blocks: []},
         html: "<p>Published body content</p>",
         plain_text: "Published body content",
-        body_hash: String.duplicate("a", 64),
         schema_version: 1
       })
 
@@ -42,7 +45,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
   end
 
   test "rejects unsupported schema, invalid hash, and invalid Plate root" do
-    attrs = %{valid_attrs() | json: "{}", body_hash: "not-a-hash", schema_version: 3}
+    attrs = %{valid_attrs() | json: "{}", body_hash: "not-a-hash", schema_version: 4}
 
     assert {:error, changeset} = BodyBag.cast(attrs)
     assert "must contain a Plate root list" in errors_on(changeset).json
@@ -74,6 +77,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
       markdown: "Published body content",
       html: "<p>Published body content</p>",
       toc: [],
+      thumbnail: %{version: 1, blocks: []},
       plain_text: "Published body content",
       digest: "Published body content",
       body_hash: String.duplicate("a", 64),

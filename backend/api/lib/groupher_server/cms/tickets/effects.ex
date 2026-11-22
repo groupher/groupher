@@ -16,18 +16,10 @@ defmodule GroupherServer.CMS.Tickets.Effects do
 
   ## Examples
 
-      Effects.enqueue_cache(community, ticket_id, 42, [17], command_id, "published")
+      Effects.projection_changed(community, ticket_state, binding, [17], operation_ref)
   """
-  defdelegate enqueue_cache(
-                community,
-                ticket_id,
-                inner_id,
-                post_inner_ids,
-                command_id,
-                effect_key
-              ),
-              to: Cache,
-              as: :enqueue
+  defdelegate projection_changed(community, state, binding, post_inner_ids, operation_ref),
+    to: Cache
 
   @doc """
   Purges cache tags for Ticket projections affected by a Post stats change.

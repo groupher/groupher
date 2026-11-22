@@ -1,5 +1,7 @@
 # CMS Query V2：Reader、List 与 FrontDesk 读取边界
 
+> **2026-11-14 Docs 目标更新：**本文所列 DocPublic、branch version 与旧 Docs Reader materialization 属于当时的已落地架构事实。Doc 新目标通过 ArticlePublic / ArticlePublicBody 读取当前共享正文；Docs 站点目录、Queue 和 Release 由 [Docs 发布队列合同](../migrations/docs-publish-queue-refactor.md) 管理。本文其他 Query 分层边界继续有效。
+
 > 状态：V2 已落地（2026-10-04）。本文定义 CMS `Reader`、`List` 向 `Query`、`Store/Facts`
 > 和 `Projection` 收敛的边界；本次迁移保持 `CMS.<Domain>` 公开 facade API 稳定，内部直接切换，
 > 不保留 `Reader` 兼容层。

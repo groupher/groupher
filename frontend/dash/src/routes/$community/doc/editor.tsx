@@ -34,7 +34,7 @@ function DocEditorPage() {
 
   return (
     <EditorLayout>
-      <DocEditorRoutePage initialData={initialData} />
+      <DocEditorRoutePage />
     </EditorLayout>
   )
 }

@@ -13,7 +13,13 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
 
-    {:ok, blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+    {:ok, blog} =
+      GroupherServer.Support.Factory.create_published_article(
+        community,
+        :blog,
+        mock_attrs(:blog),
+        user
+      )
 
     {:ok, ~m(user community blog)a}
   end
@@ -31,13 +37,25 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
 
     test "one community & thread can only pin certain count of blog", ~m(community user)a do
       Enum.reduce(1..@max_pinned_article_count_per_thread, [], fn _, acc ->
-        {:ok, new_blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+        {:ok, new_blog} =
+          GroupherServer.Support.Factory.create_published_article(
+            community,
+            :blog,
+            mock_attrs(:blog),
+            user
+          )
 
         {:ok, _} = CMS.Articles.pin(community, new_blog.id, user, Ecto.UUID.generate())
         acc
       end)
 
-      {:ok, new_blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+      {:ok, new_blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          mock_attrs(:blog),
+          user
+        )
 
       {:error, reason} = CMS.Articles.pin(community, new_blog.id, user, Ecto.UUID.generate())
 

@@ -94,13 +94,12 @@ Dashboard/editor
 Assets 还承载文章内容中的使用 projection，但这不是 `community_assets` 用户 mutation：
 
 ```text
-Article command / editor save
-  -> CMS.Assets.link_refs / copy_refs / cleanup_refs
+Article save / Snapshot freeze
   -> Assets.Refs
-  -> article_asset_refs + Article draft/revision scope
+  -> article_asset_refs + WorkingCopy / Snapshot owner
 ```
 
-`article_asset_refs` 描述“资产被哪里使用”，而 `community_assets` 描述“资产本身、存储和计费”。两者不能合并成一个 writer owner。`Refs` 的局部 transaction 只锁 Article body draft、替换 refs 和维护 completeness scope；它不取得 Register/Delete/Archive/Restore 用户 mutation 的事务所有权。
+`article_asset_refs` 描述“资产被哪里使用”，而 `community_assets` 描述“资产本身、存储和计费”。两者不能合并成一个 writer owner。普通 Article 的引用随 WorkingCopy 保存同事务更新，冻结 Snapshot 时复制；旧 `link_refs` / `copy_refs` 仅供待切换的 Docs Draft 使用，不再接受普通 Article 写入。
 
 Article ref 输入携带内联 asset 时，`Refs` 只在同一个 Article transaction 中显式调用 `Assets.Persist.register`；旧 Writer facade 已删除，资产行 helper 不再存在。
 

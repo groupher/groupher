@@ -13,6 +13,31 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentReplies do
   end
 
   describe "[basic article comment replies]" do
+    test "pathless Doc comment commands resolve the owning Community from its binding",
+         ~m(community doc user user2)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      pathless_comment = %{comment | request_community_slug: nil}
+
+      assert {:ok, reply} =
+               CMS.Comments.reply_comment(
+                 pathless_comment,
+                 mock_comment(),
+                 user2,
+                 Ecto.UUID.generate()
+               )
+
+      assert reply.reply_to_comment.id == comment.id
+    end
+
     test "exist comment can be reply", ~m(community doc user user2)a do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(
@@ -237,7 +262,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentReplies do
       {:ok, _} =
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
 
-      {:ok, state} = CMS.Comments.comments_state(:doc, doc.article_id, nil, community.slug)
+      {:ok, state} = CMS.Comments.comments_state(:doc, doc.id, nil, community.slug)
 
       assert exist_in?(user, state.participants)
       assert exist_in?(user2, state.participants)

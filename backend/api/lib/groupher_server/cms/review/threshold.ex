@@ -30,24 +30,25 @@ defmodule GroupherServer.CMS.Review.Threshold do
   def apply_report_in_transaction(_report), do: {:ok, :pass}
 
   defp load_context(%{target_type: :comment} = report, _report_community_scope) do
-    with {:ok, context} <-
-           CMS.Review.load_for_update("comment:#{report.target_id}", "platform") do
-      case context.target do
-        %{thread: :doc, article_id: article_id} ->
-          case CMS.Articles.Bindings.doc_owner(article_id) do
-            {:ok, %{id: community_id}} ->
-              {:ok, %{context | scope_key: "community:#{community_id}"}}
+    with {:ok, context} <- CMS.Review.load_for_update("comment:#{report.target_id}", "platform"),
+         true <- context.target.thread in [:post, :blog, :changelog, :doc] do
+      scope_key =
+        if context.target.thread == :doc and is_integer(report.community_id) do
+          "community:#{report.community_id}"
+        else
+          "platform"
+        end
 
-            _ ->
-              {:error, CMS.ErrorCat.invalid_review_block()}
-          end
-
-        %{thread: thread} when thread in [:post, :blog, :changelog] ->
-          {:ok, context}
-
-        _ ->
-          {:error, CMS.ErrorCat.invalid_review_block()}
+      if scope_key == "platform" do
+        {:ok, %{context | scope_key: scope_key}}
+      else
+        with {:ok, context} <-
+               CMS.Review.load_for_update("comment:#{report.target_id}", scope_key) do
+          {:ok, %{context | scope_key: scope_key}}
+        end
       end
+    else
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end
 

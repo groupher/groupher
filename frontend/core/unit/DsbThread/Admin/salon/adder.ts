@@ -29,7 +29,7 @@ export default function useSalon() {
     item: cn(
       'block w-full min-w-0 rounded px-2.5 py-2 outline-none pointer text-left',
       hover('bg'),
-      'data-[focused]:bg-menuHoverBg data-[selected]:bg-menuHoverBg',
+      'data-[highlighted]:bg-menuHoverBg data-[selected]:bg-menuHoverBg',
     ),
     itemInner: 'flex w-full min-w-0 items-start text-left',
     avatarBox: 'flex h-9 w-9 shrink-0 items-start justify-start',

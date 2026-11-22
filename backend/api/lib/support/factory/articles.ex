@@ -75,7 +75,8 @@ defmodule GroupherServer.Support.Factory.Articles do
       plainText: plain_text,
       digest: String.slice(plain_text, 0, 150),
       bodyHash: body |> then(&:crypto.hash(:sha256, &1)) |> Base.encode16(case: :lower),
-      schemaVersion: BodyBag.schema_version()
+      schemaVersion: BodyBag.schema_version(),
+      thumbnail: %{version: 1, blocks: [%{type: "paragraph", text: plain_text}]}
     }
   end
 

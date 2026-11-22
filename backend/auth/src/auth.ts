@@ -58,6 +58,7 @@ export const useSecureCookies =
   process.env.NODE_ENV === 'production'
 
 const SIGNIN_OAUTH_MUTATION = `
+  "Sign in with an OAuth provider and return token info."
   mutation SigninOauth($provider: OauthProviderInput!, $browserSession: BrowserSessionMetadataInput) {
     signinOauth(provider: $provider, browserSession: $browserSession) {
       accessToken
@@ -549,6 +550,7 @@ export const readBrowserSession = async (
 }
 
 const REFRESH_BROWSER_SESSION_MUTATION = `
+  "Refresh a persisted Browser Session for canonical Auth only."
   mutation RefreshBrowserSession($browserSessionRef: String!) {
     refreshBrowserSession(browserSessionRef: $browserSessionRef) {
       accessToken
@@ -560,6 +562,7 @@ const REFRESH_BROWSER_SESSION_MUTATION = `
 `
 
 const REVOKE_BROWSER_SESSION_MUTATION = `
+  "Revoke the current persisted Browser Session for canonical Auth only."
   mutation RevokeBrowserSession($browserSessionRef: String!) {
     revokeBrowserSession(browserSessionRef: $browserSessionRef) {
       done
@@ -568,6 +571,7 @@ const REVOKE_BROWSER_SESSION_MUTATION = `
 `
 
 const LIST_BROWSER_SESSIONS_QUERY = `
+  "List Browser Sessions for canonical Auth through trusted transport only."
   query BrowserSessions($browserSessionRef: String!, $pagi: PagiInput) {
     browserSessions(browserSessionRef: $browserSessionRef, pagi: $pagi) {
       entries {
@@ -593,18 +597,21 @@ const LIST_BROWSER_SESSIONS_QUERY = `
 `
 
 const REVOKE_BROWSER_SESSION_PUBLIC_MUTATION = `
+  "Revokes a browser session identified by its public reference through Auth."
   mutation RevokeBrowserSessionPublic($browserSessionRef: String!, $publicRef: String!) {
     revokeBrowserSessionPublic(browserSessionRef: $browserSessionRef, publicRef: $publicRef) { done }
   }
 `
 
 const REVOKE_OTHER_BROWSER_SESSIONS_MUTATION = `
+  "Revokes the other browser sessions while retaining the current session."
   mutation RevokeOtherBrowserSessions($browserSessionRef: String!) {
     revokeOtherBrowserSessions(browserSessionRef: $browserSessionRef) { done }
   }
 `
 
 const LINKED_OAUTH_ACCOUNTS_QUERY = `
+  "List linked OAuth accounts for canonical Auth."
   query LinkedOauthAccounts {
     linkedOauthAccounts {
       entries {
@@ -621,6 +628,7 @@ const LINKED_OAUTH_ACCOUNTS_QUERY = `
 `
 
 const LINK_OAUTH_IDENTITY_MUTATION = `
+  "Link a verified OAuth identity through canonical Auth."
   mutation LinkOauthIdentity($identity: VerifiedOauthIdentityInput!) {
     linkOauthIdentity(identity: $identity) {
       entries {
@@ -637,6 +645,7 @@ const LINK_OAUTH_IDENTITY_MUTATION = `
 `
 
 const UNLINK_OAUTH_IDENTITY_MUTATION = `
+  "Unlink one OAuth binding through canonical Auth."
   mutation UnlinkOauthIdentity($publicRef: ID!) {
     unlinkOauthIdentity(publicRef: $publicRef) {
       entries {

@@ -7,13 +7,13 @@ defmodule GroupherServer.CommandPipelineCompileTest do
     @pipeline operation: :pipeline_fixture_write, target: :resource
     direct_pipeline execute(resource, actor, opts) do
       gate(fn value -> {:ok, value} end)
-      change(fn value -> {:ok, {value, actor, opts}} end)
+      change(fn value, _operation_ref -> {:ok, {value, actor, opts}} end)
     end
 
     @pipeline operation: :pipeline_fixture_write_second, target: :resource
     direct_pipeline execute_second(resource, actor, opts) do
       gate(fn value -> {:ok, value} end)
-      change(fn value -> {:ok, {value, actor, opts}} end)
+      change(fn value, _operation_ref -> {:ok, {value, actor, opts}} end)
     end
   end
 
@@ -36,6 +36,21 @@ defmodule GroupherServer.CommandPipelineCompileTest do
            ] = contracts
   end
 
+  test "change callbacks require the resource and operation UUID" do
+    assert_raise ArgumentError, ~r/change callback must have arity 2/, fn ->
+      compile_fixture("""
+      defmodule PipelineSingleArgumentChangeFixture do
+        use GroupherServer.CommandPipeline
+
+        @pipeline operation: :pipeline_single_argument_change, access: :internal, target: :resource
+        direct_pipeline execute(resource) do
+          change(fn value -> {:ok, value} end)
+        end
+      end
+      """)
+    end
+  end
+
   test "rejects guards, defaults, and invalid target declarations" do
     assert_raise ArgumentError, ~r/does not support guards/, fn ->
       compile_fixture("""
@@ -45,7 +60,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
         @pipeline operation: :pipeline_guard_fixture
         direct_pipeline execute(resource) when is_map(resource) do
           gate fn value -> {:ok, value} end
-          change fn value -> {:ok, value} end
+          change fn value, _operation_ref -> {:ok, value} end
         end
       end
       """)
@@ -59,7 +74,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
         @pipeline operation: :pipeline_default_fixture
         direct_pipeline execute(resource \\\\ nil) do
           gate fn value -> {:ok, value} end
-          change fn value -> {:ok, value} end
+          change fn value, _operation_ref -> {:ok, value} end
         end
       end
       """)
@@ -73,7 +88,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
         @pipeline operation: :pipeline_target_fixture, target: :missing
         direct_pipeline execute(resource) do
           gate fn value -> {:ok, value} end
-          change fn value -> {:ok, value} end
+          change fn value, _operation_ref -> {:ok, value} end
         end
       end
       """)
@@ -87,7 +102,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
         @pipeline operation: :pipeline_missing_target_fixture
         direct_pipeline execute(resource) do
           gate fn value -> {:ok, value} end
-          change fn value -> {:ok, value} end
+          change fn value, _operation_ref -> {:ok, value} end
         end
       end
       """)
@@ -103,7 +118,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
                   target: :resource
         receipt_pipeline execute(resource, actor, command_id) do
           gate fn value -> {:ok, {value, actor}} end
-          change fn value -> {:ok, value} end
+          change fn value, _operation_ref -> {:ok, value} end
           confirm fn value -> {:ok, {value, command_id}} end
         end
       end
@@ -118,7 +133,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
 
         @pipeline operation: :pipeline_open_access_fixture, access: :open, target: :resource
         direct_pipeline execute(resource) do
-          change(fn value -> {:ok, value} end)
+          change(fn value, _operation_ref -> {:ok, value} end)
         end
       end
       """)
@@ -133,7 +148,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
                   access: :open,
                   target: :resource
         direct_pipeline execute(resource, actor) do
-          change(fn value -> {:ok, value} end)
+          change(fn value, _operation_ref -> {:ok, value} end)
           on_rejection(&build_rejection/1)
         end
 
@@ -151,9 +166,9 @@ defmodule GroupherServer.CommandPipelineCompileTest do
                   access: :open,
                   target: :resource,
                   params: [],
-                  confirmation: GroupherServer.CMS.Articles.Commands.PublishConfirmation
+                  confirmation: GroupherServer.CMS.Articles.Commands.PublishArticleConfirmation
         receipt_pipeline execute(resource, command_id) do
-          change(fn value -> {:ok, value} end)
+          change(fn value, _operation_ref -> {:ok, value} end)
           confirm(fn value -> {:ok, value} end)
         end
       end
@@ -169,7 +184,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
                   access: :open,
                   target: :resource
         direct_pipeline execute(resource) do
-          change(fn value -> {:ok, value} end)
+          change(fn value, _operation_ref -> {:ok, value} end)
           on_rejection(&build_rejection/1)
         end
 
@@ -186,7 +201,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
         @pipeline operation: :pipeline_open_gate_fixture, access: :open, target: :resource
         direct_pipeline execute(resource) do
           gate(fn value -> {:ok, value} end)
-          change(fn value -> {:ok, value} end)
+          change(fn value, _operation_ref -> {:ok, value} end)
         end
       end
       """)

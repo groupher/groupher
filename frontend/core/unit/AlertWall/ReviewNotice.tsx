@@ -1,22 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { browserGraphQLRequest } from '~/graphql/client'
-import type { CmsReviewTargetInput } from '~/graphql/generated/graphql'
+import type { ArtimentReviewTargetInput } from '~/graphql/generated/graphql'
 import useTrans from '~/hooks/useTrans'
 import { viewerQueryKeys } from '~/query/key'
 import useAccount from '~/stores/account/hooks'
-import { contentReviewNotice } from '~/unit/CMSReview/schema'
+import { artimentReviewNotice } from '~/unit/CMSReview/schema'
 
-type TProps = { target: CmsReviewTargetInput }
+type TProps = { target: ArtimentReviewTargetInput }
 
 export default function ReviewNotice({ target }: TProps) {
   const { t } = useTrans()
   const { accountScope } = useAccount()
   const query = useQuery({
-    queryKey: viewerQueryKeys.contentReview(accountScope || 'anonymous', target),
+    queryKey: viewerQueryKeys.artimentReview(accountScope || 'anonymous', target),
     queryFn: async () => {
-      const response = await browserGraphQLRequest(contentReviewNotice, { target })
-      return response.contentReviewNotice
+      const response = await browserGraphQLRequest(artimentReviewNotice, { target })
+      return response.artimentReviewNotice
     },
     staleTime: 10_000,
   })

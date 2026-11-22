@@ -27,9 +27,10 @@ defmodule GroupherServer.CMS.Comments.Summary do
   @active_key {__MODULE__, :active_comments}
 
   @doc "Applies a fact mutation and its summary delta in the caller's transaction."
-  @spec with_change(Comment.t(), (-> {:ok, term()} | {:error, term()})) ::
+  @spec with_change(Comment.t(), Ecto.UUID.t(), (-> {:ok, term()} | {:error, term()})) ::
           {:ok, term()} | {:error, term()}
-  def with_change(%Comment{} = comment, fun) when is_function(fun, 0) do
+  def with_change(%Comment{} = comment, operation_ref, fun)
+      when is_binary(operation_ref) and is_function(fun, 0) do
     active = Process.get(@active_key, MapSet.new())
 
     cond do
@@ -48,7 +49,7 @@ defmodule GroupherServer.CMS.Comments.Summary do
                {:ok, before} <- contribution(comment.id),
                {:ok, value} <- fun.(),
                {:ok, after_change} <- contribution(comment.id),
-               {:ok, :pass} <- persist_change(article, stats, before, after_change) do
+               {:ok, :pass} <- persist_change(article, stats, before, after_change, operation_ref) do
             {:ok, value}
           else
             nil -> {:error, :comment_summary_owner_missing}
@@ -65,12 +66,12 @@ defmodule GroupherServer.CMS.Comments.Summary do
   end
 
   @doc "Tracks Comment Lifecycle/restriction changes and leaves other resource owners alone."
-  @spec for_lifecycle(struct(), (-> {:ok, term()} | {:error, term()})) ::
+  @spec for_lifecycle(struct(), Ecto.UUID.t(), (-> {:ok, term()} | {:error, term()})) ::
           {:ok, term()} | {:error, term()}
-  def for_lifecycle(%CommentLifecycle{comment_id: id}, fun) do
+  def for_lifecycle(%CommentLifecycle{comment_id: id}, operation_ref, fun) do
     if Repo.in_transaction?() do
       case Repo.get(Comment, id) do
-        %Comment{} = comment -> with_change(comment, fun)
+        %Comment{} = comment -> with_change(comment, operation_ref, fun)
         nil -> {:error, :comment_summary_target_missing}
       end
     else
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.Comments.Summary do
     end
   end
 
-  def for_lifecycle(_lifecycle, fun), do: fun.()
+  def for_lifecycle(_lifecycle, _operation_ref, fun), do: fun.()
 
   defp lock_article(id) do
     Article |> where([a], a.id == ^id) |> lock("FOR UPDATE") |> Repo.one()
@@ -140,7 +141,7 @@ defmodule GroupherServer.CMS.Comments.Summary do
     )
   end
 
-  defp persist_change(article, stats, before, current) do
+  defp persist_change(article, stats, before, current, operation_ref) do
     if public_change?(before, current) do
       comment = current.comment
       delta = contribution_delta(before.visible?, current.visible?)
@@ -166,7 +167,8 @@ defmodule GroupherServer.CMS.Comments.Summary do
              CMS.Comments.Effects.summary_changed(
                article,
                stats.comments_revision + 1,
-               delta != 0
+               delta != 0,
+               operation_ref
              ) do
         {:ok, :pass}
       end

@@ -1,5 +1,7 @@
 # CMS DocTree / ContentImport：现状审计与独立重构计划
 
+> 阅读边界（2026-11-12）：本文保留旧 DocTree / ContentImport 重构阶段的入口与职责盘点。新的 Docs D/Q、队列、目录、审批、Release 和去 Branch 状态以 [Docs 发布队列合同](./docs-publish-queue-refactor.md)为准；下文的“当前”“已落地”指各自记录阶段，不证明旧 Branch 或 Import apply 已按新合同改接。ContentImport 的 Job / staging / apply 边界仍供依赖核对，外部 Git source branch 不属于 Docs 目标 branch 的退役范围。
+
 > 本文把 DocTree 与 Docs ContentImport 从 CMS Phase 5 总文档中单独拆出，记录当前真实功能、对外入口、Gate、lifecycle/version authority、identity、事务 owner、Receipt/workflow 边界和目录职责，并持续记录已落地的重构批次。
 >
 > 当前结论：DocTree 的 GraphQL 用户 mutation 已经有 concrete Command、非空 `commandId`、Confirmation/Replay 和明确的 Persist/Workflow owner；旧 Writer、writer_impl 和遗留 direct path 已在 caller migration 后删除。ContentImport 是一个有持久 Job、staging 和 atomic apply 的 workflow，现由 `DocTree.Workflows.ContentImport` 负责，不把内部步骤强行变成用户 Command。本文不创建第二套 Node/Phoenix 架构 source of truth。

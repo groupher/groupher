@@ -2,6 +2,7 @@ import type { VariablesOf } from '@graphql-typed-document-node/core'
 import { queryOptions } from '@tanstack/react-query'
 
 import { browserGraphQLRequest } from '~/graphql/client'
+import type { CommunityActivityExportFormat } from '~/lib/graphql/generated/enums'
 import {
   communityActivity,
   communityActivityConfig,
@@ -59,12 +60,18 @@ const config = (community: string) =>
     staleTime: 300_000,
   })
 
-const exportActivity = (community: string, selection: TActivitySelection, format: 'CSV' | 'JSON') =>
+const exportActivity = (
+  community: string,
+  selection: TActivitySelection,
+  format: CommunityActivityExportFormat,
+) =>
   browserGraphQLRequest(exportCommunityActivity, {
     community,
     selection,
     format,
   })
+
+export const activityCommands = { export: exportActivity }
 
 const event = (community: string, eventRef: string) =>
   queryOptions({
@@ -76,4 +83,4 @@ const event = (community: string, eventRef: string) =>
     enabled: !!community && !!eventRef,
   })
 
-export const activityQueries = { list, stats, config, export: exportActivity, event }
+export const activityQueries = { list, stats, config, event }

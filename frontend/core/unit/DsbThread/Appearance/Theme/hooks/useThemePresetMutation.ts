@@ -5,18 +5,13 @@ import { useRef } from 'react'
 import { DEFAULT_THEME_PRESET, THEME_PRESET } from '~/const/theme_preset'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
-import { dsbKeys } from '~/query'
+import { dsbKeys, dsbMutationKeys } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
-import type {
-  TParseDashboard,
-  TResolvedThemePreset,
-  TThemePreset,
-  TThemePresetOption,
-} from '~/spec'
+import type { TDsb, TResolvedThemePreset, TThemePreset, TThemePresetOption } from '~/spec'
 import type { TDsbFieldMap } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import { useDsbEditStore } from '~/stores/dsbEdit/hooks'
+import { useDsbShellStore } from '~/stores/dsbShell/hooks'
 import { toast } from '~/ui/Toaster'
 import * as S from '~/unit/DsbThread/Appearance/Theme/schema'
 
@@ -50,7 +45,7 @@ type TThemePresetMutationData = {
  *   saveThemePreset()
  */
 export default function useThemePresetMutation(): TThemePresetMutationRet {
-  const dashboardStore = useDsbEditStore()
+  const dashboardStore = useDsbShellStore()
   const { t } = useTrans()
   const storeRef = useRef(dashboardStore)
   const { slug: community } = useCommunity()
@@ -64,7 +59,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
   }
 
   const themeMutation = useTanStackMutation({
-    mutationKey: ['dsb', 'theme-save', community],
+    mutationKey: dsbMutationKeys.themeSave(community),
     mutationFn: async ({
       isCustomPreset,
       submitted,
@@ -105,7 +100,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
           }
         : submitted
 
-      queryClient.setQueryData<TParseDashboard>(dsbKeys.config(community), (previous) =>
+      queryClient.setQueryData<TDsb>(dsbKeys.slug(community), (previous) =>
         previous ? { ...previous, ...confirmed } : previous,
       )
       storeRef.current.reconcile({

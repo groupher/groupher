@@ -1,13 +1,12 @@
 defmodule GroupherServer.Test.CMS.Articles.CommentSummaryInitializationTest do
   use GroupherServer.TestMate, async: false
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Article, ArticleStats, Author, ArticleLifecycle, DocLifecycle}
-  alias CMS.Articles.Draft.Store
+  alias CMS.Model.{Article, ArticleStats, ArticlePublic, ArticleWorkingCopy}
 
   test "PUB-01 first and repeated publication preserve the one Comments owner" do
-    for thread <- [:post, :blog, :changelog, :doc] do
+    for thread <- [:post, :blog, :changelog] do
       {community, view, _, user} = mock_article(thread)
-      article = Repo.get!(Article, view.article_id)
+      article = Repo.get!(Article, view.id)
       initial = Repo.get_by!(ArticleStats, article_id: article.id)
       assert initial.comments_count == 0
       assert initial.comments_revision == 1
@@ -24,38 +23,35 @@ defmodule GroupherServer.Test.CMS.Articles.CommentSummaryInitializationTest do
         )
 
       before = Repo.get_by!(ArticleStats, article_id: article.id)
-      author = Repo.get!(Author, article.author_id)
-      opts = if thread == :doc, do: [branch_id: view.branch_id], else: []
-      {:ok, draft} = Store.ensure_from_public(article, author, opts)
+      work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_type: :default)
+      public = Repo.get!(ArticlePublic, article.id)
 
-      {:ok, updated} =
-        Store.update(
-          article,
-          %{title: "Republished #{thread}"},
-          author,
-          Keyword.put(opts, :expected_version, draft.version)
-        )
+      assert {:ok, saved} =
+               CMS.Articles.save_working_copy(
+                 article,
+                 community,
+                 work.id,
+                 %{title: "Republished #{thread}"},
+                 work.revision,
+                 user,
+                 Ecto.UUID.generate()
+               )
 
-      lifecycle =
-        if thread == :doc do
-          Repo.get_by!(DocLifecycle, article_id: article.id, branch_id: view.branch_id)
-        else
-          Repo.get_by!(ArticleLifecycle, article_id: article.id)
-        end
+      CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+        :last_publish_time,
+        user,
+        minutes: -CMS.Gate.RateLimit.Publish.Config.publish_throttle().interval_minutes
+      )
 
-      publish_opts = [
-        community: community,
-        expected_draft_version: updated.version,
-        expected_lifecycle_version: lifecycle.version,
-        command_id: Ecto.UUID.generate()
-      ]
-
-      if thread == :doc do
-        assert {:ok, _} =
-                 CMS.Articles.Publish.Doc.publish(article, view.branch_id, author, publish_opts)
-      else
-        assert {:ok, _} = CMS.Articles.Publish.Target.publish(article, author, publish_opts)
-      end
+      assert {:ok, _published} =
+               CMS.Articles.publish_article(
+                 article,
+                 community,
+                 %{working_copy_id: saved.id, revision: saved.revision},
+                 public.snapshot_id,
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       after_publish = Repo.get_by!(ArticleStats, article_id: article.id)
       assert after_publish.comments_count == before.comments_count

@@ -28,10 +28,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.CreateFromPost do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_create, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.create_user(canonical, post_id, attrs, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

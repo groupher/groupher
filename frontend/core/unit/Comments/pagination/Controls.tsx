@@ -35,7 +35,7 @@ export default function Controls() {
     )
   return (
     <CursorPagination
-      mode={feed.collection.rootInnerId ? 'load_more' : feed.config.mode}
+      mode={feed.collection.rootInnerId ? 'LOAD_MORE' : feed.config.mode}
       hasNextPage={feed.hasNext}
       isLoading={feed.loadingNext}
       error={feed.nextError}

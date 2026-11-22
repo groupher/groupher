@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Helper.Schema.Ticket do
         publicationState
         title
         digest
-        draftVersion
+        workingCopyRevision
         lifecycleVersion
         workflowVersion
         draftContent { title digest }

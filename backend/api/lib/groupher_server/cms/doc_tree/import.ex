@@ -16,19 +16,19 @@ defmodule GroupherServer.CMS.DocTree.Import do
               flatten in source order        O(N)
                               |
                               v
-              validate every node changeset
+              validate complete tree and permissions
                               |
                               v
-              last source identity wins
+              preserve unmentioned nodes
                               |
                               v
-              insert_all / 500-row batches
+              validated workspace persistence
                               |
                               v
               rebuild returned source order
                               |
                               v
-                    bump draft tree revision
+                    advance workspace revision
 
   Page nodes whose content item was skipped are not projected. Unmentioned
   existing nodes are not deleted here; `source_deleted` is an explicit import
@@ -42,54 +42,30 @@ defmodule GroupherServer.CMS.DocTree.Import do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.DocTree.{Revision, State}
-  alias CMS.Model.{Community, DocBranch, DocTreeNode}
+  alias CMS.DocTree.WorkspaceUpdate
+  alias CMS.Model.{Community, DocsTreeNode}
 
-  @insert_batch_size 500
-  @managed_fields ~w(parent_node_id doc_id type title index href updated_at)a
-
-  @doc """
-  Projects one imported navigation tree into the branch's draft tree.
-
-  `tree` follows the `branchSlug` + `tabs[]` contract. Page nodes whose content
-  item is missing from `items_by_target` are skipped. Existing nodes are updated
-  in place, and the draft tree revision is bumped on success.
-
-  ## Examples
-
-      Import.apply(community, branch, %{"branchSlug" => "main", "tabs" => tabs}, items_by_target)
-      #=> {:ok, %{nodes: [%DocTreeNode{}], state: %DocsSiteState{}}}
-
-  """
-  @spec apply(Community.t(), DocBranch.t(), map(), map()) ::
-          {:ok, %{nodes: [DocTreeNode.t()], state: CMS.Model.DocsSiteState.t()}}
-          | {:error, term()}
-  def apply(%Community{} = community, %DocBranch{} = branch, tree, items_by_target)
-      when is_map(tree) and is_map(items_by_target) do
-    with namespace when is_binary(namespace) and namespace != "" <- Map.get(tree, "branchSlug"),
-         {:ok, state} <- State.ensure_draft_state(community, branch_id: branch.id, lock: false),
+  @doc "Projects confirmed source navigation into the workspace without changing Queue membership or navigation."
+  def apply(%Community{} = community, tree, items_by_target, actor, operation_ref)
+      when is_map(tree) and is_map(items_by_target) and is_binary(operation_ref) do
+    with namespace when is_binary(namespace) and namespace != "" <- Map.get(tree, "namespace"),
          {:ok, attrs} <-
-           flatten_tabs(
-             community,
-             branch,
-             namespace,
-             Map.get(tree, "tabs", []),
-             items_by_target
-           ),
+           flatten_tabs(community, namespace, Map.get(tree, "tabs", []), items_by_target),
          attrs <- reuse_existing_node_ids(attrs),
-         {:ok, nodes} <- upsert_nodes(attrs),
-         {:ok, state} <- Revision.bump_tree_draft(community, state, transaction: false) do
-      {:ok, %{nodes: nodes, state: state}}
+         {:ok, result} <- WorkspaceUpdate.import_nodes(community, attrs, actor, operation_ref) do
+      {:ok, result}
     else
       namespace when namespace in [nil, ""] ->
         {:error, ErrorCat.custom("imported Doc tree namespace is required")}
 
-      error ->
+      {:error, _} = error ->
         error
     end
   end
 
-  defp flatten_tabs(community, branch, namespace, tabs, items_by_target) when is_list(tabs) do
+  def apply(_, _, _, _, _), do: {:error, :invalid_import_tree}
+
+  defp flatten_tabs(community, namespace, tabs, items_by_target) when is_list(tabs) do
     tabs
     |> Enum.with_index()
     |> Enum.reduce_while({:ok, []}, fn {tab, index}, {:ok, attrs} ->
@@ -98,17 +74,15 @@ defmodule GroupherServer.CMS.DocTree.Import do
       with {:ok, attrs} <-
              flatten_children(
                community,
-               branch,
                namespace,
                tab_id,
                Map.get(tab, "groups", []),
                items_by_target,
-               [base_attrs(community, branch, tab, :tab, tab_id, index) | attrs]
+               [base_attrs(community, tab, :tab, tab_id, index) | attrs]
              ),
            {:ok, attrs} <-
              flatten_pins(
                community,
-               branch,
                namespace,
                tab_id,
                Map.get(tab, "pins", []),
@@ -122,13 +96,12 @@ defmodule GroupherServer.CMS.DocTree.Import do
     |> reverse_attrs()
   end
 
-  defp flatten_tabs(_community, _branch, _namespace, _tabs, _items_by_target) do
+  defp flatten_tabs(_community, _namespace, _tabs, _items_by_target) do
     {:error, ErrorCat.custom("imported Doc tree tabs are invalid")}
   end
 
   defp flatten_children(
          community,
-         branch,
          namespace,
          parent_node_id,
          pages,
@@ -145,12 +118,11 @@ defmodule GroupherServer.CMS.DocTree.Import do
 
           group_attrs =
             community
-            |> base_attrs(branch, child, :group, group_node_id, index)
+            |> base_attrs(child, :group, group_node_id, index)
             |> Map.put(:parent_node_id, parent_node_id)
 
           case flatten_children(
                  community,
-                 branch,
                  namespace,
                  group_node_id,
                  Map.get(child, "pages", []),
@@ -168,7 +140,6 @@ defmodule GroupherServer.CMS.DocTree.Import do
             child_attrs =
               community
               |> base_attrs(
-                branch,
                 child,
                 :page,
                 node_id(:page, namespace, child["sourceId"]),
@@ -186,7 +157,6 @@ defmodule GroupherServer.CMS.DocTree.Import do
           child_attrs =
             community
             |> base_attrs(
-              branch,
               child,
               :link,
               node_id(:link, namespace, child["sourceId"]),
@@ -205,7 +175,6 @@ defmodule GroupherServer.CMS.DocTree.Import do
 
   defp flatten_children(
          _community,
-         _branch,
          _namespace,
          _parent_node_id,
          _children,
@@ -215,14 +184,13 @@ defmodule GroupherServer.CMS.DocTree.Import do
     {:error, ErrorCat.custom("imported Doc tree pages are invalid")}
   end
 
-  defp flatten_pins(community, branch, namespace, tab_id, pins, attrs) when is_list(pins) do
+  defp flatten_pins(community, namespace, tab_id, pins, attrs) when is_list(pins) do
     pins
     |> Enum.with_index()
     |> Enum.reduce_while({:ok, attrs}, fn {pin, index}, {:ok, attrs} ->
       pin_attrs =
         community
         |> base_attrs(
-          branch,
           pin,
           :pin,
           node_id(:pin, namespace, pin["sourceId"]),
@@ -235,19 +203,24 @@ defmodule GroupherServer.CMS.DocTree.Import do
     end)
   end
 
-  defp flatten_pins(_community, _branch, _namespace, _tab_id, _pins, _attrs) do
+  defp flatten_pins(_community, _namespace, _tab_id, _pins, _attrs) do
     {:error, ErrorCat.custom("imported Doc tree pins are invalid")}
   end
 
-  defp base_attrs(%Community{} = community, branch, source, type, source_node_id, index) do
+  defp base_attrs(%Community{} = community, source, type, source_node_id, index) do
     %{
       community_id: community.id,
-      branch_id: branch.id,
       node_id: source_node_id,
       stage: CMS.Const.stage(:draft),
       type: type,
       title: source["title"],
-      index: index
+      index: index,
+      parent_node_id: nil,
+      doc_id: nil,
+      href: nil,
+      marker: nil,
+      badge: nil,
+      hidden: false
     }
   end
 
@@ -258,11 +231,10 @@ defmodule GroupherServer.CMS.DocTree.Import do
 
   defp reuse_existing_node_ids([first | _] = attrs) do
     existing =
-      DocTreeNode
+      DocsTreeNode
       |> where(
         [node],
-        node.community_id == ^first.community_id and node.branch_id == ^first.branch_id and
-          node.stage == ^first.stage and like(node.node_id, "import:%")
+        node.community_id == ^first.community_id and node.stage == ^first.stage
       )
       |> Repo.all()
       |> existing_node_indexes()
@@ -334,68 +306,8 @@ defmodule GroupherServer.CMS.DocTree.Import do
     indexes.by_parent_title[{attrs.parent_node_id, attrs.type, attrs.title}]
   end
 
-  defp upsert_nodes([]), do: {:ok, []}
-
-  defp upsert_nodes(attrs) do
-    # Keep the projection linear and the database cost proportional to batch
-    # count rather than node count:
-    #
-    #     N ordered attrs --> validate --> last-wins dedupe --> ceil(N / 500) SQL
-    #
-    # Returned rows are indexed by stable node_id and then expanded back to the
-    # source order, including repeated source identities expected by callers.
-    now = DateTime.utc_now() |> DateTime.truncate(:second)
-
-    with {:ok, rows} <- validated_rows(attrs, now) do
-      nodes =
-        rows
-        |> dedupe_last_rows()
-        |> Enum.chunk_every(@insert_batch_size)
-        |> Enum.flat_map(fn batch ->
-          {_count, nodes} =
-            Repo.insert_all(DocTreeNode, batch,
-              on_conflict: {:replace, @managed_fields},
-              conflict_target: [:community_id, :branch_id, :stage, :node_id],
-              returning: true
-            )
-
-          nodes
-        end)
-
-      nodes_by_id = Map.new(nodes, &{&1.node_id, &1})
-      {:ok, Enum.map(attrs, &Map.fetch!(nodes_by_id, &1.node_id))}
-    end
-  end
-
-  defp validated_rows(attrs, now) do
-    Enum.reduce_while(attrs, {:ok, []}, fn attrs, {:ok, rows} ->
-      attrs = Map.merge(%{parent_node_id: nil, doc_id: nil, href: nil}, attrs)
-      changeset = DocTreeNode.changeset(%DocTreeNode{}, attrs)
-
-      case Ecto.Changeset.apply_action(changeset, :insert) do
-        {:ok, _node} ->
-          row = attrs |> Map.put(:inserted_at, now) |> Map.put(:updated_at, now)
-          {:cont, {:ok, [row | rows]}}
-
-        {:error, changeset} ->
-          {:halt, {:error, changeset}}
-      end
-    end)
-    |> case do
-      {:ok, rows} -> {:ok, Enum.reverse(rows)}
-      error -> error
-    end
-  end
-
   defp reverse_attrs({:ok, attrs}), do: {:ok, Enum.reverse(attrs)}
   defp reverse_attrs(error), do: error
-
-  defp dedupe_last_rows(rows) do
-    rows
-    |> Enum.reverse()
-    |> Enum.uniq_by(& &1.node_id)
-    |> Enum.reverse()
-  end
 
   defp node_id(type, namespace, source_id)
        when is_binary(namespace) and namespace != "" and is_binary(source_id) and source_id != "" do

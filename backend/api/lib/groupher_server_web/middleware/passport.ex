@@ -10,24 +10,24 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
       GraphQL field
           -> middleware(M.Passport, action: "...")
-          -> CMS.Passport.Registry.requirement(action)
-          -> resolve_grant(requirement, resolution)
-          -> read cur_user.cur_passport
-          -> match grant in proper context scope
+          -> CMS.Passport.Catalog scope dispatch
+          -> Global / Community Passport Store or unmigrated legacy requirement
 
-  Global action example (`community.create`):
+  Registered Global action example (`community.create`):
 
       action: "community.create"
-          -> requirement: %{scope: :global, grant: "community.create"}
-          -> passport["global"]["community.create"] == true ? allow : deny
+          -> load Global Passport scope for actor
+          -> check `community.create` against current stored facts
 
-  Community-scoped action example (`post.edit` style):
+  Registered Community action example (`review.read`):
 
-      action (for post operations) -> requirement: %{scope: :context, context: :cms, grant: "post.*"}
-          -> fetch community_slug from resolution.arguments.community
-          -> read cur_user.cur_passport[community_slug]["cms"]
-          -> check if that community whitelist contains required grant
-          -> true: allow, false/missing: deny
+      action: "review.read"
+          -> resolve canonical Community from request arguments
+          -> load actor-bound Community Passport scope
+          -> check `review.read` against current stored facts
+
+  Article actions whose consumer has not migrated yet keep the legacy
+  Registry requirement path until their assigned C3 / D1 migration.
 
   Notes:
 
@@ -36,8 +36,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
   - Article mutations parse `arguments.article` into `arguments.article_path` here, but the
     article is still loaded later by the `FrontDesk` article middleware. If an earlier
     `article_editor` middleware already supplied a struct, Passport preserves it.
-  - `global.god == true` bypasses normal checks.
-  - `<community_slug>.root == true` bypasses checks only inside that community.
+  - Registered Global / Community actions use current Store facts for root admission;
+    unmigrated Article actions retain their legacy fallback until C3 / D1.
   """
 
   @behaviour Absinthe.Middleware
@@ -69,11 +69,27 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   defp authorize_action(resolution, action, opts) do
+    case CMS.passport_catalog_action(action) do
+      {:ok, %{scope: scope, grantable: true}} when scope in [:global, :community] ->
+        case maybe_put_article_path(resolution, opts) do
+          {:ok, resolution} ->
+            check_catalog_requirement(resolution, action, scope, opts)
+
+          {:error, CmsErrorCat.error_pattern(reason: :invalid_article_path)} ->
+            invalid_article_path(resolution)
+        end
+
+      _ ->
+        authorize_legacy_action(resolution, action, opts)
+    end
+  end
+
+  defp authorize_legacy_action(resolution, action, opts) do
     case GroupherServer.CMS.passport_registry_requirement(action) do
       {:ok, requirement} ->
         case maybe_put_article_path(resolution, opts) do
           {:ok, resolution} ->
-            check_requirement(resolution, requirement)
+            check_legacy_requirement(resolution, requirement)
 
           {:error, CmsErrorCat.error_pattern(reason: :invalid_article_path)} ->
             invalid_article_path(resolution)
@@ -87,7 +103,43 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  defp check_requirement(resolution, requirement) do
+  defp check_catalog_requirement(resolution, action, :global, _opts) do
+    with %User{} = actor <- current_user(resolution),
+         {:ok, scope} <- CMS.passport_global_scope(actor),
+         {:ok, true} <- CMS.passport_allowed?(actor, scope, action) do
+      resolution
+    else
+      _ -> passport_denied(resolution)
+    end
+  end
+
+  defp check_catalog_requirement(resolution, action, :community, opts) do
+    with %User{} = actor <- current_user(resolution),
+         {:ok, slug} <- fetch_community_slug(resolution),
+         {:ok, community} <- FrontDesk.community(slug, mode: :internal),
+         {:ok, scope} <- CMS.passport_community_scope(actor, community),
+         {:ok, true} <-
+           CMS.passport_allowed?(actor, scope, action, passport_thread(resolution, opts)) do
+      maybe_put_passport_scope(resolution, opts, :community, scope)
+    else
+      _ -> passport_denied(resolution)
+    end
+  end
+
+  defp maybe_put_passport_scope(resolution, opts, scope_key, scope) do
+    if Keyword.get(opts, :pass_scope, false) do
+      arguments =
+        Map.update(resolution.arguments, :passport_scopes, %{scope_key => scope}, fn scopes ->
+          if is_map(scopes), do: Map.put(scopes, scope_key, scope), else: %{scope_key => scope}
+        end)
+
+      %{resolution | arguments: arguments}
+    else
+      resolution
+    end
+  end
+
+  defp check_legacy_requirement(resolution, requirement) do
     if owner_pass?(resolution, requirement) do
       resolution
     else
@@ -163,6 +215,9 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp fetch_cur_passport(_), do: {:error, GroupherServer.CMS.error_cat_missing_passport()}
 
+  defp current_user(%{context: %{cur_user: %User{} = user}}), do: user
+  defp current_user(_), do: nil
+
   defp has_permission?(cur_passport, resolution, requirement) do
     normalized_passport = GroupherServer.CMS.passport_registry_normalize_rules(cur_passport)
 
@@ -207,6 +262,14 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   defp resolve_grant(_, _), do: {:error, GroupherServer.CMS.error_cat_invalid_requirement()}
+
+  defp passport_thread(resolution, opts) do
+    Keyword.get(opts, :thread) ||
+      case fetch_thread(resolution) do
+        {:ok, thread} -> thread
+        {:error, _reason} -> nil
+      end
+  end
 
   defp fetch_thread(%{arguments: %{article_path: %{thread: thread}}}) when is_atom(thread) do
     {:ok, Atom.to_string(thread)}

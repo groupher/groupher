@@ -37,10 +37,11 @@ defmodule GroupherServer.CMS.Tickets.Commands.Update do
       CMS.Gate.check_community_workflow_in_transaction(actor, :ticket_update, candidate)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       CMS.Tickets.Persist.update(canonical, ticket_id, attrs, expected_version, %{
         actor: actor,
-        command_id: command_id
+        command_id: command_id,
+        operation_ref: operation_ref
       })
     end)
 

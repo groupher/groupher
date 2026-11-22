@@ -33,7 +33,7 @@ describe('Community query freshness', () => {
   it('uses an infinite hydration contract for cursor article surfaces', () => {
     const config: TEffectivePagiConfig = {
       api: 'cursor',
-      mode: 'load_more',
+      mode: 'LOAD_MORE',
       schemaVersion: 1,
       revision: 3,
       defaultSize: 10,
@@ -55,7 +55,7 @@ describe('Community query freshness', () => {
   it('uses the same offset request and cache key as the browser on page two', () => {
     const config: TEffectivePagiConfig = {
       api: 'offset',
-      mode: 'page',
+      mode: 'PAGE',
       schemaVersion: 1,
       revision: 4,
       defaultSize: 20,

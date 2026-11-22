@@ -60,7 +60,7 @@ describe('useCommentEmotion', () => {
     )
     const { result } = renderHook(() => useCommentEmotion(comment), { wrapper })
 
-    act(() => result.current.toggle('heart'))
+    act(() => result.current.toggle('HEART'))
 
     await waitFor(() => expect(result.current.emotions[0]?.count).toBe(2))
     await act(async () => {
@@ -93,7 +93,7 @@ describe('useCommentEmotion', () => {
     )
     const { result } = renderHook(() => useCommentEmotion(comment), { wrapper })
 
-    act(() => result.current.toggle('heart'))
+    act(() => result.current.toggle('HEART'))
 
     await waitFor(() => expect(mocks.toast).toHaveBeenCalledTimes(1))
     expect(mocks.toast).toHaveBeenCalledWith('Action failed. Please try again.', 'error')
@@ -121,8 +121,8 @@ describe('useCommentEmotion', () => {
     const { result } = renderHook(() => useCommentEmotion(comment), { wrapper })
 
     act(() => {
-      result.current.toggle('heart')
-      result.current.toggle('beer')
+      result.current.toggle('HEART')
+      result.current.toggle('BEER')
     })
     await waitFor(() => expect(rejectRequests).toHaveLength(1))
     await act(async () => rejectRequests.shift()?.(new Error('heart failed')))

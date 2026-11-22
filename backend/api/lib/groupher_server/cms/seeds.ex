@@ -35,10 +35,7 @@ defmodule GroupherServer.CMS.Seeds do
     Communities.set_category(communities_names, cat_name)
   end
 
-  @doc "Runs `full_community` through the public `Seeds` boundary."
-  @spec full_community(String.t() | atom()) :: T.domain_res(Community.t())
-  def full_community(slug), do: FullCommunity.mock(slug)
-
+  @doc "Seeds a full community with caller-supplied command identity allocation."
   @spec full_community(String.t() | atom(), keyword()) :: T.domain_res(Community.t())
   def full_community(slug, opts) when is_list(opts), do: FullCommunity.mock(slug, opts)
 
@@ -56,13 +53,10 @@ defmodule GroupherServer.CMS.Seeds do
 
   # Article seeds
 
-  @doc "Runs `articles` through the public `Seeds` boundary."
-  @spec articles(Community.t(), atom()) :: T.domain_res([map()])
-  def articles(%Community{} = community, thread), do: Articles.mock(community, thread)
-
-  @spec articles(Community.t(), atom(), integer()) :: T.domain_res([map()])
-  def articles(%Community{} = community, thread, count) do
-    Articles.mock(community, thread, count)
+  @doc "Seeds Articles using caller-supplied command identity allocation."
+  @spec articles(Community.t(), atom(), keyword()) :: T.domain_res([map()])
+  def articles(%Community{} = community, thread, opts) when is_list(opts) do
+    Articles.mock(community, thread, opts)
   end
 
   # Comment seeds

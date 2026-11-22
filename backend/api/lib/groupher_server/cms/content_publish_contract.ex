@@ -6,11 +6,17 @@ defmodule GroupherServer.CMS.ContentPublishContract do
       content-publish.contract.json -> generated registration macro -> CMS.ErrorCat
   """
 
+  @body_schema_version 3
+
+  @doc "Returns the canonical persisted Article and Comment body schema version."
+  def body_schema_version, do: @body_schema_version
+
   @doc "Injects the generated Publisher conflict errors into the calling ErrorCat module."
   defmacro define_errors do
     quote do
       error(:draft_version_conflict, code: 4539, actions: [:reconcile])
       error(:comment_body_version_conflict, code: 4540, actions: [:reconcile])
+      error(:article_working_copy_revision_conflict, code: 4561, actions: [:reconcile])
     end
   end
 end

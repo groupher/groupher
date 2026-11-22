@@ -65,8 +65,6 @@ defmodule GroupherServer.CommandPipeline.GraphAnalyzer do
   @trusted_dynamic_modules MapSet.new([
                              GroupherServer.Activity.Artiment,
                              GroupherServer.Activity.Event,
-                             GroupherServer.CMS.Articles.Draft.Store,
-                             GroupherServer.CMS.Articles.Revision.Persist,
                              GroupherServer.CMS.Command,
                              GroupherServer.CMS.Outbox,
                              GroupherServer.CMS.SearchArtiments.Indexer,
@@ -83,6 +81,16 @@ defmodule GroupherServer.CommandPipeline.GraphAnalyzer do
   @trusted_dynamic_calls MapSet.new([
                            {GroupherServer.Analysis.Web.Provision,
                             :ensure_umami_website_id_locked, :create_website, 1},
+                           # typed_extension/1 returns only the Article thread tables declared
+                           # beside these callers; the stored type is selected by Article.thread.
+                           {GroupherServer.CMS.Articles.WorkingCopy.Snapshotter,
+                            :freeze_typed_fields, :changeset, 2},
+                           {GroupherServer.CMS.Articles.WorkingCopy.Snapshotter,
+                            :clone_typed_fields, :changeset, 2},
+                           {GroupherServer.CMS.Articles.WorkingCopy.Store, :insert_typed_work,
+                            :changeset, 2},
+                           {GroupherServer.CMS.Articles.WorkingCopy.Store, :update_typed_work,
+                            :changeset, 2},
                            # Flop schemas are validated before this callback is invoked.
                            {Helper.ORM.Pagi, :validate_schema_order, :__flop_schema__, 0}
                          ])

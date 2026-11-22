@@ -1,7 +1,8 @@
 import { graphql } from '~/graphql/authoring'
 
 export const upvotePost = graphql(`
-  mutation QueryUpvotePost($article: ArticlePathInput!, $commandId: ID!) {
+  "Upvote to post"
+  mutation UpvotePost($article: ArticlePathInput!, $commandId: ID!) {
     upvotePost(article: $article, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -16,7 +17,8 @@ export const upvotePost = graphql(`
 `)
 
 export const undoUpvotePost = graphql(`
-  mutation QueryUndoUpvotePost($article: ArticlePathInput!, $commandId: ID!) {
+  "Undo upvote to post"
+  mutation UndoUpvotePost($article: ArticlePathInput!, $commandId: ID!) {
     undoUpvotePost(article: $article, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -31,7 +33,8 @@ export const undoUpvotePost = graphql(`
 `)
 
 export const upvoteBlog = graphql(`
-  mutation QueryUpvoteBlog($article: ArticlePathInput!, $commandId: ID!) {
+  "Upvote to blog"
+  mutation UpvoteBlog($article: ArticlePathInput!, $commandId: ID!) {
     upvoteBlog(article: $article, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -46,7 +49,8 @@ export const upvoteBlog = graphql(`
 `)
 
 export const undoUpvoteBlog = graphql(`
-  mutation QueryUndoUpvoteBlog($article: ArticlePathInput!, $commandId: ID!) {
+  "Undo upvote to blog"
+  mutation UndoUpvoteBlog($article: ArticlePathInput!, $commandId: ID!) {
     undoUpvoteBlog(article: $article, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -61,7 +65,8 @@ export const undoUpvoteBlog = graphql(`
 `)
 
 export const upvoteChangelog = graphql(`
-  mutation QueryUpvoteChangelog($article: ArticlePathInput!, $commandId: ID!) {
+  "Upvote to changelog"
+  mutation UpvoteChangelog($article: ArticlePathInput!, $commandId: ID!) {
     upvoteChangelog(article: $article, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -76,7 +81,8 @@ export const upvoteChangelog = graphql(`
 `)
 
 export const undoUpvoteChangelog = graphql(`
-  mutation QueryUndoUpvoteChangelog($article: ArticlePathInput!, $commandId: ID!) {
+  "Undo upvote to changelog"
+  mutation UndoUpvoteChangelog($article: ArticlePathInput!, $commandId: ID!) {
     undoUpvoteChangelog(article: $article, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -91,7 +97,7 @@ export const undoUpvoteChangelog = graphql(`
 `)
 
 export const upvoteDoc = graphql(`
-  mutation QueryUpvoteDoc($article: ArticlePathInput!, $commandId: ID!) {
+  mutation UpvoteDoc($article: ArticlePathInput!, $commandId: ID!) {
     upvoteDoc(article: $article, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -106,7 +112,7 @@ export const upvoteDoc = graphql(`
 `)
 
 export const undoUpvoteDoc = graphql(`
-  mutation QueryUndoUpvoteDoc($article: ArticlePathInput!, $commandId: ID!) {
+  mutation UndoUpvoteDoc($article: ArticlePathInput!, $commandId: ID!) {
     undoUpvoteDoc(article: $article, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -121,11 +127,8 @@ export const undoUpvoteDoc = graphql(`
 `)
 
 export const emotionToPost = graphql(`
-  mutation QueryEmotionToPost(
-    $article: ArticlePathInput!
-    $emotion: ArticleEmotion!
-    $commandId: ID!
-  ) {
+  "Emotion to post"
+  mutation EmotionToPost($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandId: ID!) {
     emotionToPost(article: $article, emotion: $emotion, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -140,7 +143,8 @@ export const emotionToPost = graphql(`
 `)
 
 export const undoEmotionToPost = graphql(`
-  mutation QueryUndoEmotionToPost(
+  "Undo emotion to post"
+  mutation UndoEmotionToPost(
     $article: ArticlePathInput!
     $emotion: ArticleEmotion!
     $commandId: ID!
@@ -159,11 +163,8 @@ export const undoEmotionToPost = graphql(`
 `)
 
 export const emotionToBlog = graphql(`
-  mutation QueryEmotionToBlog(
-    $article: ArticlePathInput!
-    $emotion: ArticleEmotion!
-    $commandId: ID!
-  ) {
+  "Emotion to blog"
+  mutation EmotionToBlog($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandId: ID!) {
     emotionToBlog(article: $article, emotion: $emotion, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -178,7 +179,8 @@ export const emotionToBlog = graphql(`
 `)
 
 export const undoEmotionToBlog = graphql(`
-  mutation QueryUndoEmotionToBlog(
+  "Undo emotion to blog"
+  mutation UndoEmotionToBlog(
     $article: ArticlePathInput!
     $emotion: ArticleEmotion!
     $commandId: ID!
@@ -197,7 +199,8 @@ export const undoEmotionToBlog = graphql(`
 `)
 
 export const emotionToChangelog = graphql(`
-  mutation QueryEmotionToChangelog(
+  "Emotion to changelog"
+  mutation EmotionToChangelog(
     $article: ArticlePathInput!
     $emotion: ArticleEmotion!
     $commandId: ID!
@@ -216,7 +219,8 @@ export const emotionToChangelog = graphql(`
 `)
 
 export const undoEmotionToChangelog = graphql(`
-  mutation QueryUndoEmotionToChangelog(
+  "Undo emotion to changelog"
+  mutation UndoEmotionToChangelog(
     $article: ArticlePathInput!
     $emotion: ArticleEmotion!
     $commandId: ID!
@@ -235,11 +239,7 @@ export const undoEmotionToChangelog = graphql(`
 `)
 
 export const emotionToDoc = graphql(`
-  mutation QueryEmotionToDoc(
-    $article: ArticlePathInput!
-    $emotion: ArticleEmotion!
-    $commandId: ID!
-  ) {
+  mutation EmotionToDoc($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandId: ID!) {
     emotionToDoc(article: $article, emotion: $emotion, commandId: $commandId) {
       commandId
       reactionOutcome
@@ -254,7 +254,7 @@ export const emotionToDoc = graphql(`
 `)
 
 export const undoEmotionToDoc = graphql(`
-  mutation QueryUndoEmotionToDoc(
+  mutation UndoEmotionToDoc(
     $article: ArticlePathInput!
     $emotion: ArticleEmotion!
     $commandId: ID!
@@ -273,7 +273,8 @@ export const undoEmotionToDoc = graphql(`
 `)
 
 export const addToCollect = graphql(`
-  mutation QueryAddToCollect($article: ArticlePathInput!, $folderId: ID!, $commandId: ID!) {
+  "Add article into a collect folder"
+  mutation AddToCollect($article: ArticlePathInput!, $folderId: ID!, $commandId: ID!) {
     addToCollect(article: $article, folderId: $folderId, commandId: $commandId) {
       commandId
       folder {
@@ -308,7 +309,8 @@ export const addToCollect = graphql(`
 `)
 
 export const removeFromCollect = graphql(`
-  mutation QueryRemoveFromCollect($article: ArticlePathInput!, $folderId: ID!, $commandId: ID!) {
+  "Remove article from a collect folder"
+  mutation RemoveFromCollect($article: ArticlePathInput!, $folderId: ID!, $commandId: ID!) {
     removeFromCollect(article: $article, folderId: $folderId, commandId: $commandId) {
       commandId
       folder {

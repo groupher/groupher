@@ -51,6 +51,35 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     assert saved["pagiRevision"] == 1
   end
 
+  test "dashboard enable mutation exposes nullable published editing settings", %{
+    community: community
+  } do
+    query = """
+    mutation($community: String!, $post: Boolean, $blog: Boolean, $commandId: ID!) {
+      updateDashboardEnable(community: $community, postPublishedEditing: $post,
+                            blogPublishedEditing: $blog, commandId: $commandId) {
+        enable { postPublishedEditing blogPublishedEditing changelogPublishedEditing }
+      }
+    }
+    """
+
+    conn = simu_conn(:user, cms: %{"community.update" => true})
+
+    saved =
+      gq_mutation(conn, query, %{
+        community: community.slug,
+        post: false,
+        blog: nil,
+        commandId: Ecto.UUID.generate()
+      })
+
+    assert saved["enable"] == %{
+             "postPublishedEditing" => false,
+             "blogPublishedEditing" => nil,
+             "changelogPublishedEditing" => nil
+           }
+  end
+
   describe "mutation cms category" do
     @create_category_query S.Category.m(:create_category)
     test "auth user can create category", ~m(user community)a do
@@ -437,7 +466,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     @set_moderator_query S.Moderation.m(:add_moderator)
     test "auth user can add moderator to community", ~m(user user2 community)a do
-      passport_rules = %{community.slug => %{"moderator.set" => true}}
+      passport_rules = %{community.slug => %{"root" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
       variables = %{
@@ -455,7 +484,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "auth user can add moderators to community", ~m(user user2 community)a do
       {:ok, user3} = db_insert(:user)
 
-      passport_rules = %{community.slug => %{"moderator.set" => true}}
+      passport_rules = %{community.slug => %{"root" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
       variables = %{
@@ -498,7 +527,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       assert {:ok, _} = Passport |> ORM.find_by(user_id: user2.id)
 
-      passport_rules = %{community.slug => %{"moderator.unset" => true}}
+      passport_rules = %{community.slug => %{"root" => true}}
       rule_conn = simu_conn(:user, cur_user, cms: passport_rules)
 
       variables = %{
@@ -520,13 +549,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
 
-      passport_rules = %{
-        "global" => %{},
-        community.slug => %{"cms" => %{"moderator.update" => true}}
-      }
-
-      rule_conn = simu_conn(:user, user2, cms: passport_rules)
-      root_rule_conn = simu_conn(:user, user, cms: passport_rules)
+      rule_conn = simu_conn(:user, user2)
+      root_rule_conn = simu_conn(:user, user, cms: %{community.slug => %{"root" => true}})
 
       new_passport_rules =
         Jason.encode!(%{
@@ -601,7 +625,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @set_moderator_query,
                variables,
-               ErrorCat.code(PassportErrorCat.permission_denied())
+               ErrorCat.code(CommunityErrorCat.community_root_only())
              )
 
       assert guest_conn
@@ -615,7 +639,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @set_moderator_query,
                variables,
-               ErrorCat.code(PassportErrorCat.permission_denied())
+               ErrorCat.code(CommunityErrorCat.community_root_only())
              )
     end
   end

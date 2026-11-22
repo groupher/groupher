@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Ticket do
 
   import Ecto.Query
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
   alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
   alias CMS.Gate.ErrorCat
 
@@ -17,10 +17,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Ticket do
     Article,
     ArticleBinding,
     ArticleLifecycle,
-    ArticlePublic
+    ArticlePublic,
+    Community
   }
-
-  alias Accounts.Model.User
 
   @actions [:read, :list]
 
@@ -69,15 +68,28 @@ defmodule GroupherServer.CMS.Gate.Scope.Ticket do
     |> where([ticket_state: state], state.article_id in subquery(public_articles))
   end
 
-  defp internal_scope(query, %User{} = actor, %TicketContext{} = context) do
-    rules = Map.get(actor, :cur_passport)
+  defp internal_scope(query, actor, %TicketContext{} = context) do
+    with {:ok, passport_predicate} <-
+           CMS.Passport.Store.action_predicate(
+             actor_id(actor),
+             {:community, context.community_id},
+             CMS.GateAction.ticket_read_internal()
+           ) do
+      community_identity =
+        dynamic(
+          [],
+          exists(
+            subquery(
+              from(community in Community,
+                where:
+                  community.id == ^context.community_id and
+                    community.slug == ^context.community_slug,
+                select: 1
+              )
+            )
+          )
+        )
 
-    if CMS.Passport.Authorization.allowed?(
-         rules,
-         context.community_slug,
-         CMS.GateAction.ticket_read_internal()
-       ) ==
-         {:ok, true} do
       query = from(state in query, as: :ticket_state)
 
       {:ok,
@@ -91,11 +103,18 @@ defmodule GroupherServer.CMS.Gate.Scope.Ticket do
        |> join(:inner, [ticket_state: state], article in Article,
          on: article.id == state.article_id and article.thread == :ticket,
          as: :ticket_article
-       )}
+       )
+       |> where(^community_identity)
+       |> where(exists(subquery(passport_predicate)))}
     else
-      {:error, ErrorCat.permission_denied()}
+      {:error, reason}
+      when reason in [:unknown_action, :permission_scope_mismatch, :invalid_scope] ->
+        {:error, ErrorCat.permission_denied()}
+
+      {:error, _reason} = error -> error
     end
   end
 
-  defp internal_scope(_query, _actor, _context), do: {:error, ErrorCat.permission_denied()}
+  defp actor_id(%{id: user_id}) when is_integer(user_id), do: user_id
+  defp actor_id(_), do: nil
 end

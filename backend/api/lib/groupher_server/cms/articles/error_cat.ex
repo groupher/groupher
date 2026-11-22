@@ -37,4 +37,8 @@ defmodule GroupherServer.CMS.Articles.ErrorCat do
   error(:post_linked_to_ticket, code: 6028)
   error(:doc_owner_missing, code: 6029)
   error(:doc_owner_ambiguous, code: 6030)
+  error(:binding_trash_revision_conflict, code: 6031, retryable: true, actions: [:retry])
+  error(:invalid_binding_trash_revision, code: 6032)
+  error(:unsupported_community_trash_thread, code: 6033)
+  error(:article_history_protected, code: 6034)
 end

@@ -18,8 +18,8 @@ vi.mock('~/stores/wallpaper/helper', () => ({
   }),
 }))
 
-vi.mock('~/stores/contentShadow/hooks', () => ({
-  default: () => ({ enabled: false }),
+vi.mock('~/stores/dsbShell/hooks', () => ({
+  default: () => ({ contentShadow: false }),
 }))
 
 vi.mock('~/hooks/useTwBelt', () => ({

@@ -84,16 +84,20 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
   @spec article_states_for_paths([map()], User.t(), keyword()) ::
           {:ok, [map()]} | {:error, term()}
   def article_states_for_paths(paths, %User{} = viewer, opts \\ []) when is_list(paths) do
-    with {:ok, resolved} <- CMS.FrontDesk.article(paths),
+    with {:ok, articles} <- CMS.FrontDesk.article(paths),
          states when is_map(states) <-
-           viewer_states(Enum.map(resolved, & &1.article), viewer, opts) do
+           viewer_states(articles, viewer, opts) do
       {:ok,
-       Enum.map(resolved, fn %{path: path, article: article, binding: binding} ->
+       Enum.map(articles, fn article ->
          {:ok, %{artiment: type}} = Matcher.match_interaction(article)
          state = Map.fetch!(states, {type, article.id})
 
          Projection.article_state(
-           %{community: path.community, thread: path.thread, inner_id: binding.inner_id},
+           %{
+             community: article.community.slug,
+             thread: article.thread,
+             inner_id: article.inner_id
+           },
            state
          )
        end)}

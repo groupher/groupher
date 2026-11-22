@@ -31,11 +31,11 @@ defmodule GroupherServer.CMS.Articles.Commands.Unmirror do
       CMS.Gate.check_in_transaction(actor, :unmirror, candidate, community)
     end)
 
-    change(fn canonical ->
+    change(fn canonical, operation_ref ->
       with {:ok, binding} <- Store.binding(canonical.id, community.id),
            {:ok, :done} <- BindingPersist.unmirror(canonical, community),
            {:ok, _} <-
-             BindingSupport.invalidate_scope(community, binding, canonical.thread, command_id) do
+             BindingSupport.invalidate_scope(community, binding, canonical.thread, operation_ref) do
         {:ok, canonical}
       end
     end)

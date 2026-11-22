@@ -28,7 +28,7 @@ const feed: RSSFeed = {
   items: [
     {
       articleRef: 'article-1',
-      articleRevision: 'revision-1',
+      contentVersion: 'snapshot-1',
       thread: 'post',
       title: 'A <great> & useful post',
       digest: 'Digest <script>',

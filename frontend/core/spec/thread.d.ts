@@ -1,9 +1,10 @@
-import type { ARTICLE_THREAD, THREAD, THREAD_PATH } from '~/const/thread'
+import type { THREAD_PATH } from '~/const/thread'
+import type { ArticleThread, Thread } from '~/lib/graphql/generated/enums'
 import type { TConstValues } from '~/spec'
 
-export type TArticleThread = TConstValues<typeof ARTICLE_THREAD>
+export type TArticleThread = ArticleThread
 
-export type TThread = TConstValues<typeof THREAD>
+export type TThread = Exclude<Thread, 'USER'>
 export type TThreadPath = TConstValues<typeof THREAD_PATH>
 
 export type TCommunityThread = {

@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Unpin do
   receipt_pipeline execute_pipeline(article, community, community_id, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :unpin, candidate, community) end)
 
-    change(fn canonical ->
+    change(fn canonical, _operation_ref ->
       with {:ok, :done} <- PinPersist.delete(canonical.id, community.id) do
         {:ok, canonical}
       end

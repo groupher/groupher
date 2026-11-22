@@ -1,5 +1,3 @@
-import { GraphQLError } from 'graphql'
-
 import {
   createAuthSession,
   listAuthSessions,
@@ -16,57 +14,6 @@ const todayISO = () => new Date().toISOString().slice(0, 10)
 
 let __mockStrId = 0
 const nextMockString = () => `mock_${++__mockStrId}`
-
-const initialDocDraftState = () => ({
-  scenario: 'conflict',
-  calls: 0,
-  receipts: new Map(),
-  draft: {
-    id: 'e2e-draft',
-    docId: 'e2e-doc',
-    branchId: '1',
-    version: 4,
-    contentHash: 'e2e-content-hash',
-    title: 'Canonical title',
-    subtitle: 'Canonical subtitle',
-    slug: 'canonical-title',
-    stage: 'DRAFT',
-    digest: 'Canonical subtitle',
-    insertedAt: nowISO(),
-    updatedAt: nowISO(),
-    author: makeUser(),
-    body: {
-      json: JSON.stringify([{ type: 'p', children: [{ text: 'Canonical body' }] }]),
-      markdown: 'Canonical body',
-      toc: [],
-      html: '<p>Canonical body</p>',
-    },
-    assetRefs: [],
-  },
-})
-
-let docDraftState
-
-/** Resets the Docs autosave mock to one isolated scenario and canonical draft. */
-export const resetDocDraftState = (scenario = 'conflict') => {
-  docDraftState = initialDocDraftState()
-  docDraftState.scenario = scenario
-}
-
-/** Selects and resets the deterministic Docs autosave scenario used by browser tests. */
-export const setDocDraftScenario = (scenario) => {
-  if (!['success', 'conflict', 'rate_limit_then_success'].includes(scenario))
-    throw new Error(`Unknown Doc Draft scenario: ${scenario}`)
-  resetDocDraftState(scenario)
-}
-
-/** Returns observable Docs autosave calls, receipts, and persisted draft state for assertions. */
-export const getDocDraftState = () => ({
-  calls: docDraftState.calls,
-  draft: docDraftState.draft,
-  receiptCount: docDraftState.receipts.size,
-  scenario: docDraftState.scenario,
-})
 
 const THEME_PRESET = {
   DEFAULT: 'DEFAULT',
@@ -264,8 +211,6 @@ const makeUser = (overrides = {}) => {
   }
 }
 
-resetDocDraftState()
-
 const makeDashboard = (slug = 'home') => {
   const lightWallpaper = makeWallpaperTheme()
   const darkWallpaper = makeWallpaperTheme({
@@ -364,10 +309,6 @@ const makeDashboard = (slug = 'home') => {
       homepage: 'http://localhost:3000',
       city: 'Shanghai',
       techstack: 'GraphQL / Next.js',
-    },
-    rss: {
-      rssFeedType: 'FULL',
-      rssFeedCount: 20,
     },
     nameAlias: [],
     headerLinks: [
@@ -494,48 +435,6 @@ export const resolvers = {
       ),
     me: () => makeUser(),
     sessionState: () => ({ isValid: true, user: makeUser() }),
-    docTree: () => ({
-      revision: 1,
-      treeState: { hasUnpublishedChanges: true, stagedEventCount: 1, revision: 1 },
-      stagedEvents: [],
-      tabs: [
-        {
-          id: 'e2e-tab',
-          type: 'TAB',
-          title: 'Docs',
-          index: 0,
-          pins: [],
-          groups: [
-            {
-              id: 'e2e-group',
-              parentNodeId: 'e2e-tab',
-              type: 'GROUP',
-              title: 'Guides',
-              index: 0,
-              pages: [
-                {
-                  id: 'e2e-page',
-                  parentNodeId: 'e2e-group',
-                  docId: 'e2e-doc',
-                  type: 'PAGE',
-                  title: 'Canonical title',
-                  index: 0,
-                  pages: [],
-                  publishState: {
-                    status: 'DRAFT',
-                    published: false,
-                    publishedBefore: false,
-                    hasDraft: true,
-                    hasUnpublishedChanges: true,
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    }),
-    docDraft: () => docDraftState.draft,
 
     community: (_parent, args) => {
       const slug = args?.slug ?? 'home'
@@ -569,36 +468,6 @@ export const resolvers = {
   },
   RootMutationType: {
     ...ticketMutations,
-    updateDocDraft: (_parent, args) => {
-      docDraftState.calls += 1
-      const receipt = docDraftState.receipts.get(args.commandId)
-      if (receipt) return receipt
-      if (docDraftState.scenario === 'conflict')
-        throw new GraphQLError('draft version conflict', { extensions: { code: 4539 } })
-      if (docDraftState.scenario === 'rate_limit_then_success' && docDraftState.calls === 1)
-        throw new GraphQLError('rate limited', { extensions: { code: 'RATE_LIMITED' } })
-
-      const next = {
-        ...docDraftState.draft,
-        version: docDraftState.draft.version + 1,
-        title: args.title ?? docDraftState.draft.title,
-        subtitle: args.subtitle ?? docDraftState.draft.subtitle,
-        slug: args.slug ?? docDraftState.draft.slug,
-        digest: args.subtitle ?? docDraftState.draft.digest,
-        updatedAt: nowISO(),
-        body: args.bodyBag
-          ? {
-              json: args.bodyBag.json,
-              markdown: args.bodyBag.markdown,
-              toc: args.bodyBag.toc,
-              html: args.bodyBag.html,
-            }
-          : docDraftState.draft.body,
-      }
-      docDraftState.draft = next
-      docDraftState.receipts.set(args.commandId, next)
-      return next
-    },
     refreshBrowserSession: (_parent, args) => refreshAuthSession(args.browserSessionRef),
     revokeBrowserSession: (_parent, args) => revokeAuthSession(args.browserSessionRef),
     revokeBrowserSessionPublic: (_parent, args) =>

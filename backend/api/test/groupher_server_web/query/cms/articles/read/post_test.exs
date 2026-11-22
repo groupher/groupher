@@ -3,6 +3,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
 
   use GroupherServer.TestMate
   alias GroupherServer.CMS
+  alias GroupherServer.ErrorCat, as: DomainErrorCat
   alias CMS.Articles.ErrorCat
 
   setup do
@@ -16,7 +17,8 @@ defmodule GroupherServer.Test.Query.Articles.Post do
 
   test "basic graphql query on post with login user",
        ~m(user_conn community user post_attrs)a do
-    {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+    {:ok, post} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs, user)
 
     variables = %{
       article: %{
@@ -26,19 +28,51 @@ defmodule GroupherServer.Test.Query.Articles.Post do
       }
     }
 
-    results = user_conn |> gq_query(S.Article.q(:article, :post), variables)
+    results = user_conn |> gq_query(S.Article.q(:article, :post, "author { login }"), variables)
 
     assert results["innerId"] == to_string(article_inner_id(post, community))
     assert get_in(results, ["community", "slug"]) == community.slug
+    assert get_in(results, ["author", "login"]) == user.login
 
     assert is_valid_kv?(results, "title", :string)
 
     assert results["meta"] == %{"isEdited" => false}
   end
 
+  test "Article detail exposes communities and public publication timestamps",
+       ~m(user_conn community user post_attrs)a do
+    {:ok, post} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs, user)
+
+    variables = %{
+      article: %{
+        inner_id: article_inner_id(post, community),
+        community: community.slug,
+        thread: "POST"
+      }
+    }
+
+    result =
+      user_conn
+      |> gq_query(
+        S.Article.q(
+          :article,
+          :post,
+          "communities { slug } insertedAt updatedAt articleTags { id }"
+        ),
+        variables
+      )
+
+    assert result["communities"] == [%{"slug" => community.slug}]
+    assert is_binary(result["insertedAt"])
+    assert result["insertedAt"] == result["updatedAt"]
+    assert result["articleTags"] == []
+  end
+
   test "basic graphql query on post with stranger(un-login user)",
        ~m(guest_conn community post_attrs user)a do
-    {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+    {:ok, post} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs, user)
 
     variables = %{
       article: %{
@@ -71,7 +105,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     created = Enum.find(result["entries"], &(&1["action"] == "created"))
     assert created["id"]
     assert created["subject"]["type"] == "post"
-    assert created["subject"]["ref"] == post.article_id
+    assert created["subject"]["ref"] == post.id
     assert created["payload"] == %{}
     refute Map.has_key?(created, "metadata")
     refute Map.has_key?(created, "source")
@@ -79,7 +113,8 @@ defmodule GroupherServer.Test.Query.Articles.Post do
 
   test "returns cancan error when post thread is disabled",
        ~m(guest_conn community post_attrs user)a do
-    {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+    {:ok, post} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs, user)
 
     {:ok, _} =
       CMS.Dashboard.update(
@@ -106,5 +141,11 @@ defmodule GroupherServer.Test.Query.Articles.Post do
              variables,
              ErrorCat.code(ErrorCat.thread_not_visible())
            )
+
+    assert {:error, %DomainErrorCat.Error{reason: :thread_not_visible}} =
+             CMS.FrontDesk.article(post.id, nil, mode: :public, community: community)
+
+    assert {:error, %DomainErrorCat.Error{reason: :thread_not_visible}} =
+             CMS.FrontDesk.article(post.id, user, mode: :admin, community: community)
   end
 end

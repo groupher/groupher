@@ -1,5 +1,5 @@
 import type { TServiceConfigContent, TServiceConfigFile } from '@shared/contracts'
-import { Check, Copy, Eye, EyeOff, RefreshCw } from 'lucide-react'
+import { Check, Copy, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 
 type TProps = {
@@ -7,20 +7,10 @@ type TProps = {
   content: TServiceConfigContent | null
   loading: boolean
   error: string | null
-  revealed: boolean
   onRetry: () => void
-  onToggleReveal: () => void
 }
 
-export function ConfigFileView({
-  file,
-  content,
-  loading,
-  error,
-  revealed,
-  onRetry,
-  onToggleReveal,
-}: TProps) {
+export function ConfigFileView({ file, content, loading, error, onRetry }: TProps) {
   const [copiedContentKey, setCopiedContentKey] = useState<string | null>(null)
   const contentKey = getContentKey(file.id, content)
   const copied = isCopiedContent(copiedContentKey, contentKey)
@@ -45,12 +35,6 @@ export function ConfigFileView({
           </small>
         </div>
         <div className='config-file-actions'>
-          {file.sensitive ? (
-            <button type='button' onClick={onToggleReveal}>
-              {revealed ? <EyeOff aria-hidden='true' /> : <Eye aria-hidden='true' />}
-              {revealed ? 'Hide values' : 'Reveal values'}
-            </button>
-          ) : null}
           <button type='button' disabled={!content || loading} onClick={() => void copyContent()}>
             {copied ? <Check aria-hidden='true' /> : <Copy aria-hidden='true' />}
             {copied ? 'Copied' : 'Copy'}

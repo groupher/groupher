@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.Communities.Pagi do
     root = Enum.find(members, &(&1.user_id == owner.id))
     assert root.is_root
     assert is_integer(root.passport_item_count)
-    assert Enum.all?(members, &Ecto.assoc_loaded?(&1.user.cms_passport))
+    assert Enum.all?(members, &is_map(&1.permissions))
     refute Enum.find(members, &(&1.user_id == target.id)).passport_item_count == 999
 
     {_, small_queries} =

@@ -2,7 +2,6 @@ import type { FC } from 'react'
 
 import Comment from './Comment'
 import ContentCheck from './ContentCheck'
-import DiffStatus from './DiffStatus'
 import DocInfo from './DocInfo'
 import EditToggle from './EditToggle'
 import ImportContent from './ImportContent'
@@ -13,7 +12,6 @@ const ArticleActions: FC = () => {
     <>
       <EditToggle />
       <DocInfo />
-      <DiffStatus />
       <ImportContent />
       <ContentCheck />
       <Comment />

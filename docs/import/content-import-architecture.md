@@ -216,7 +216,7 @@ type TThreadDatasetHeader = {
   thread: 'doc'
   source: {
     platform: 'github'
-    kind: 'repo'
+    type: 'repo'
     scopeRef: string
     revision: string
   }

@@ -15,21 +15,15 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
   test "Doc graph, one-hop list and Comment seeds share stable endpoints" do
     {community, doc, _attrs, user} = mock_article(:doc)
     {_, target, _, _} = mock_article(:blog, community, user)
-    endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: doc.article_id)
+    endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: doc.id)
 
-    public =
-      Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id, branch_id: doc.branch_id)
-
-    token = "#{doc.branch_id}:#{public.branch_version_id}:#{public.publication_version + 1}"
-
-    public
-    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
-    |> Repo.update!()
+    public = Repo.get!(ArticlePublic, doc.id)
+    token = "article-snapshot:#{public.snapshot_id}"
 
     ast = [
       %{
         "type" => "mention",
-        "key" => "blog:#{target.article_id}",
+        "key" => "blog:#{target.id}",
         "children" => [%{"text" => "target"}]
       }
     ]
@@ -37,14 +31,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :doc, article_id: doc.article_id},
+                 %{type: :doc, article_id: doc.id},
                  %{
                    published_revision_identity: token,
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: public.updated_at
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -88,7 +82,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
   test "a readable source with no edges remains queryable" do
     {community, article, _attrs, _user} = mock_article(:post)
 
-    assert %Endpoint{} = Repo.get_by(Endpoint, type: :post, article_id: article.article_id)
+    assert %Endpoint{} = Repo.get_by(Endpoint, type: :post, article_id: article.id)
 
     focus = %{type: :post, article_inner_id: article_inner_id(article, community)}
 
@@ -111,7 +105,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
   test "a missing Comment row is unreadable and a graph edge to it fails with an integrity error" do
     {community, article, _attrs, _user} = mock_article(:post)
-    source = Repo.get_by!(Endpoint, type: :post, article_id: article.article_id)
+    source = Repo.get_by!(Endpoint, type: :post, article_id: article.id)
     missing_comment_id = (Repo.aggregate(CMS.Model.Comment, :max, :id) || 0) + 100
 
     orphan =
@@ -170,7 +164,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, status} =
              CMS.Artiment.Status.read(community.slug, %{
                type: :comment,
-               article_id: article.article_id,
+               article_id: article.id,
                comment_inner_id: comment.inner_id
              })
 
@@ -196,9 +190,9 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: [
                      %{
                        "type" => "mention",
@@ -209,7 +203,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                    community_id: source_community.id,
                    mentioned_at: DateTime.utc_now(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -218,7 +212,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                target_community.slug,
                %{
                  type: :comment,
-                 article_id: doc.article_id,
+                 article_id: doc.id,
                  comment_inner_id: comment.inner_id
                },
                nil
@@ -261,7 +255,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
              )
 
     comment_endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
-    target_endpoint = Repo.get_by!(Endpoint, type: :blog, article_id: target.article_id)
+    target_endpoint = Repo.get_by!(Endpoint, type: :blog, article_id: target.id)
 
     %Edge{}
     |> Edge.changeset(%{
@@ -280,7 +274,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                community.slug,
                %{
                  type: :comment,
-                 article_id: parent.article_id,
+                 article_id: parent.id,
                  comment_inner_id: comment.inner_id
                },
                nil
@@ -319,7 +313,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     ast = [
       %{
         "type" => "mention",
-        "key" => "blog:#{target.article_id}",
+        "key" => "blog:#{target.id}",
         "value" => "Mentioned target",
         "children" => [%{"text" => "linked target"}]
       }
@@ -328,14 +322,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -358,7 +352,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       ast = [
         %{
           "type" => "mention",
-          "key" => "#{target.thread}:#{target.article_id}",
+          "key" => "#{target.thread}:#{target.id}",
           "children" => [%{"text" => "target"}]
         }
       ]
@@ -366,14 +360,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       assert {:ok, {:ok, _}} =
                Repo.transaction(fn ->
                  CMS.ArtimentMentions.Capture.execute(
-                   %{type: source.thread, article_id: source.article_id},
+                   %{type: source.thread, article_id: source.id},
                    %{
-                     published_revision_identity: next_published_revision_identity(source),
+                     published_revision_identity: current_snapshot_identity(source),
                      ast: ast,
                      community_id: community.id,
                      mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                    },
-                   {:command, Ecto.UUID.generate()}
+                   Ecto.UUID.generate()
                  )
                end)
     end
@@ -392,7 +386,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     ast = [
       %{
         "type" => "mention",
-        "key" => "blog:#{target.article_id}",
+        "key" => "blog:#{target.id}",
         "value" => "Mentioned target",
         "children" => [%{"text" => "linked target"}]
       }
@@ -401,14 +395,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -451,7 +445,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
   @tag :b2_independent
   test "one-hop lists preserve User targets and resolve incoming User mentions" do
     {community, source, _attrs, user} = mock_article(:post)
-    token = next_published_revision_identity(source)
+    token = current_snapshot_identity(source)
 
     ast = [
       %{
@@ -465,14 +459,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
                    published_revision_identity: token,
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -519,7 +513,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       Enum.map(targets, fn target ->
         %{
           "type" => "mention",
-          "key" => "blog:#{target.article_id}",
+          "key" => "blog:#{target.id}",
           "value" => "Mentioned target",
           "children" => [%{"text" => "linked target"}]
         }
@@ -528,14 +522,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -573,7 +567,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     ast = [
       %{
         "type" => "mention",
-        "key" => "blog:#{target.article_id}",
+        "key" => "blog:#{target.id}",
         "value" => "Mentioned target",
         "children" => [%{"text" => "linked target"}]
       }
@@ -582,19 +576,19 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
     Repo.update_all(
-      from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^target.article_id),
+      from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^target.id),
       set: [state: :draft]
     )
 
@@ -640,19 +634,19 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
     Repo.update_all(
-      from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^parent.article_id),
+      from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^parent.id),
       set: [state: :draft]
     )
 
@@ -662,8 +656,8 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
              CMS.mentions_graph_page(community.slug, focus, nil, 20)
 
     assert length(page.edges) == 1
-    # The parent's body is unavailable; the Comment retains its own readable status.
-    assert Enum.any?(page.nodes, &(&1.type == :comment and &1.status == :readable))
+    # A Comment under a hidden parent stays represented without becoming readable.
+    assert Enum.any?(page.nodes, &(&1.type == :comment and &1.status == :unavailable))
 
     assert Enum.any?(
              page.nodes,
@@ -687,7 +681,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       Enum.map(targets, fn target ->
         %{
           "type" => "mention",
-          "key" => "blog:#{target.article_id}",
+          "key" => "blog:#{target.id}",
           "value" => "Mentioned target",
           "children" => [%{"text" => "linked target"}]
         }
@@ -696,14 +690,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -759,7 +753,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       ast = [
         %{
           "type" => "mention",
-          "key" => "changelog:#{target.article_id}",
+          "key" => "changelog:#{target.id}",
           "value" => "Mentioned target",
           "children" => [%{"text" => "linked target"}]
         }
@@ -768,14 +762,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       assert {:ok, {:ok, _captured}} =
                Repo.transaction(fn ->
                  CMS.ArtimentMentions.Capture.execute(
-                   %{type: source.thread, article_id: source.article_id},
+                   %{type: source.thread, article_id: source.id},
                    %{
-                     published_revision_identity: next_published_revision_identity(source),
+                     published_revision_identity: current_snapshot_identity(source),
                      ast: ast,
                      community_id: community.id,
                      mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                    },
-                   {:command, Ecto.UUID.generate()}
+                   Ecto.UUID.generate()
                  )
                end)
     end)
@@ -784,7 +778,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     |> Enum.take(8)
     |> Enum.each(fn target ->
       Repo.update_all(
-        from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^target.article_id),
+        from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^target.id),
         set: [state: :draft]
       )
     end)
@@ -811,7 +805,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       Enum.map(targets, fn target ->
         %{
           "type" => "mention",
-          "key" => "blog:#{target.article_id}",
+          "key" => "blog:#{target.id}",
           "value" => "Mentioned target",
           "children" => [%{"text" => "linked target"}]
         }
@@ -820,14 +814,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -865,7 +859,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       |> Enum.map(fn target ->
         %{
           "type" => "mention",
-          "key" => "blog:#{target.article_id}",
+          "key" => "blog:#{target.id}",
           "value" => "Mentioned target",
           "children" => [%{"text" => "linked target"}]
         }
@@ -874,14 +868,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -939,19 +933,19 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
   @tag :b2_independent
   test "a 3,000-edge neighborhood returns a bounded page using the source window index" do
     {community, source, _attrs, _user} = mock_article(:post)
-    source_endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.article_id)
+    source_endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.id)
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: [],
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -1058,7 +1052,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     {_, target, _, _} = mock_article(:blog, community, user)
 
     ast =
-      Enum.map([{"post", source.article_id}, {"blog", target.article_id}], fn {thread, id} ->
+      Enum.map([{"post", source.id}, {"blog", target.id}], fn {thread, id} ->
         %{
           "type" => "mention",
           "key" => "#{thread}:#{id}",
@@ -1069,19 +1063,20 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, _}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :post, article_id: source.article_id},
+                 %{type: :post, article_id: source.id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now(:second)
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
     # Exercise read-side UNION deduplication independently of Parser self-reference policy.
-    edge = Repo.one!(Edge)
+    endpoint = Repo.get_by!(Endpoint, article_id: source.id)
+    edge = Repo.one!(from(e in Edge, where: e.source_endpoint_id == ^endpoint.id))
 
     attrs =
       edge
@@ -1101,7 +1096,10 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       })
 
     Repo.insert!(Edge.changeset(%Edge{}, attrs))
-    assert length(Repo.all(Edge)) == 2
+
+    assert Repo.aggregate(from(e in Edge, where: e.source_endpoint_id == ^endpoint.id), :count) ==
+             2
+
     focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
     assert {:ok, first} = CMS.mentions_graph_page(community.slug, focus, nil, 1)
     assert first.has_next_page
@@ -1124,21 +1122,15 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
   test "Doc main graph and one-hop keep stable identity without Comment runtime" do
     {community, doc, _attrs, user} = mock_article(:doc)
     {_, target, _, _} = mock_article(:blog, community, user)
-    endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: doc.article_id)
+    endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: doc.id)
 
-    public =
-      Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id, branch_id: doc.branch_id)
-
-    token = "#{doc.branch_id}:#{public.branch_version_id}:#{public.publication_version + 1}"
-
-    public
-    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
-    |> Repo.update!()
+    public = Repo.get!(ArticlePublic, doc.id)
+    token = "article-snapshot:#{public.snapshot_id}"
 
     ast = [
       %{
         "type" => "mention",
-        "key" => "blog:#{target.article_id}",
+        "key" => "blog:#{target.id}",
         "children" => [%{"text" => "target"}]
       }
     ]
@@ -1146,14 +1138,14 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert {:ok, {:ok, captured}} =
              Repo.transaction(fn ->
                CMS.ArtimentMentions.Capture.execute(
-                 %{type: :doc, article_id: doc.article_id},
+                 %{type: :doc, article_id: doc.id},
                  %{
                    published_revision_identity: token,
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: public.updated_at
                  },
-                 {:command, Ecto.UUID.generate()}
+                 Ecto.UUID.generate()
                )
              end)
 
@@ -1227,15 +1219,9 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     end
   end
 
-  defp next_published_revision_identity(article) do
-    public = Repo.get!(ArticlePublic, article.article_id)
-    next_version = public.publication_version + 1
-
-    public
-    |> Ecto.Changeset.change(publication_version: next_version)
-    |> Repo.update!()
-
-    "#{public.revision_id}:#{next_version}"
+  defp current_snapshot_identity(article) do
+    public = Repo.get!(ArticlePublic, article.id)
+    "article-snapshot:#{public.snapshot_id}"
   end
 
   defp query_events(ref, acc) do

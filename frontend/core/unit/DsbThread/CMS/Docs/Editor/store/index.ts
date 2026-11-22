@@ -1,7 +1,6 @@
 import { proxy } from 'valtio'
 
 import { EMPTY_EDITOR_VALUE } from '../Article/constant'
-import { composeLoadedDraftSession } from '../Article/helper'
 import { DOC_EDITOR_MODE } from '../constant'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import { findChild, needsPublishAttention } from '../SideTree/helper'
@@ -17,7 +16,6 @@ import type {
 
 const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
   id: '',
-  branchId: '',
   title: '',
   subtitle: '',
   slug: '',
@@ -32,9 +30,9 @@ const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
 
 const DEFAULT_PUBLISH_RUNTIME: TDocPublishRuntime = {
   isPublishing: false,
-  checklistLoaded: false,
+  queueLoaded: false,
   publishCount: 0,
-  hasSelectableChecklistItems: false,
+  queueHasItems: false,
 }
 
 /** Reports whether tree changes at the frontend shared boundary. */
@@ -55,32 +53,48 @@ const hasNodeChanges = (sideTree: TSideTreeController): boolean => {
 
 /** Builds publish view from typed frontend shared inputs. */
 export const buildPublishView = (
-  sideTree: TSideTreeController,
+  sideTree: TSideTreeController | null,
   saveStatus: TDocSaveStatus,
   runtime: TDocPublishRuntime,
 ): TDocPublishView => {
+  if (!sideTree) {
+    return {
+      activeNodeId: null,
+      activeDocId: null,
+      surfaceMode: 'hidden',
+      hasTreeChanges: false,
+      hasQueueItems: false,
+      isDirty: saveStatus === 'dirty',
+      isSaving: saveStatus === 'saving',
+      isPublishing: runtime.isPublishing,
+      showActions: false,
+      publishDisabled: true,
+      optionsDisabled: true,
+      publishCount: 0,
+      queueStatus: 'checking',
+    }
+  }
+
   const activeNode = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
   const activePage =
     activeNode?.type === SIDE_TREE_NODE_TYPE.PAGE && activeNode.docId ? activeNode : null
   const treeChanges = hasTreeChanges(sideTree)
   const nodeChanges = hasNodeChanges(sideTree)
-  const hasChecklistItems = runtime.publishCount > 0
-  const checklistSaysClean = runtime.checklistLoaded && !hasChecklistItems
+  const hasQueueItems = runtime.publishCount > 0
+  const queueSaysClean = runtime.queueLoaded && !hasQueueItems
   const isDirty = saveStatus === 'dirty'
   const isSaving = saveStatus === 'saving'
-  const hasPublishedChecklist =
-    runtime.checklistLoaded &&
-    runtime.hasSelectableChecklistItems &&
-    (treeChanges || nodeChanges || hasChecklistItems)
+  const hasPendingQueue =
+    runtime.queueLoaded && runtime.queueHasItems && (treeChanges || nodeChanges || hasQueueItems)
   const activePageNeedsPublish = needsPublishAttention(activePage?.publishState)
   const surfaceMode = activePage
     ? 'article'
-    : treeChanges || nodeChanges || hasChecklistItems || runtime.isPublishing
+    : treeChanges || nodeChanges || hasQueueItems || runtime.isPublishing
       ? 'tree'
       : 'hidden'
   const showActions =
     treeChanges ||
-    hasPublishedChecklist ||
+    hasPendingQueue ||
     activePageNeedsPublish ||
     isDirty ||
     isSaving ||
@@ -97,20 +111,17 @@ export const buildPublishView = (
     runtime.isPublishing ||
     isSaving ||
     isDirty ||
-    !hasPublishedChecklist ||
-    (!runtime.hasSelectableChecklistItems &&
-      (checklistSaysClean || (!treeChanges && !nodeChanges)) &&
-      !isDirty)
+    !hasPendingQueue ||
+    (!runtime.queueHasItems && (queueSaysClean || (!treeChanges && !nodeChanges)) && !isDirty)
 
-  const optionsDisabled =
-    runtime.isPublishing || isSaving || !runtime.checklistLoaded || !hasChecklistItems
+  const optionsDisabled = runtime.isPublishing || isSaving || !runtime.queueLoaded || !hasQueueItems
 
   return {
     activeNodeId: activeNode?.id ?? null,
     activeDocId: activePage?.docId ?? null,
     surfaceMode,
     hasTreeChanges: treeChanges,
-    hasChecklistItems,
+    hasQueueItems,
     isDirty,
     isSaving,
     isPublishing: runtime.isPublishing,
@@ -118,34 +129,40 @@ export const buildPublishView = (
     publishDisabled,
     optionsDisabled,
     publishCount: runtime.publishCount,
-    checklistStatus: !runtime.checklistLoaded ? 'checking' : hasChecklistItems ? 'pending' : 'none',
+    queueStatus: !runtime.queueLoaded ? 'checking' : hasQueueItems ? 'pending' : 'none',
   }
 }
 
 /** Creates the Docs Editor store that coordinates draft sessions, SideTree actions, and publishing. */
-export default function createDocsEditorStore(init: TInit): TStore {
+export default function createDocsEditorStore(init: TInit = {}): TStore {
   // Docs editor actions are split across the tree, article, snackbar, and future drawers.
   // Keep cross-region session commands here so toolbar actions do not reach into SideTree props.
-  let sideTree = init.sideTree
+  let sideTree = init.sideTree ?? null
   let saveDocDraftHandler: (() => Promise<void>) | null = null
   let store: TStore
-  const activeChild = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
-  const activePage =
-    activeChild?.type === SIDE_TREE_NODE_TYPE.PAGE && activeChild.docId ? activeChild : null
-  const initialArticleSession =
-    activePage && String(init.article?.docId) === String(activePage.docId)
-      ? composeLoadedDraftSession(init.article, activePage)
-      : null
-  const initialSaveStatus: TDocSaveStatus = initialArticleSession ? 'saved' : 'idle'
+  const initialSaveStatus: TDocSaveStatus = 'idle'
+
+  const currentSideTree = (): TSideTreeController => {
+    if (!sideTree) throw new Error('DocsEditor side tree is not attached')
+    return sideTree
+  }
 
   const refreshPublishView = (): void => {
-    store.publishView = buildPublishView(sideTree, store.saveStatus, store.publishRuntime)
+    const nextPublishView = buildPublishView(sideTree, store.saveStatus, store.publishRuntime)
+    const currentPublishView = store.publishView
+    const isUnchanged = Object.keys(nextPublishView).every(
+      (key) =>
+        nextPublishView[key as keyof TDocPublishView] ===
+        currentPublishView[key as keyof TDocPublishView],
+    )
+
+    if (!isUnchanged) store.publishView = nextPublishView
   }
 
   const initialStore: TStore = {
-    baselineValue: initialArticleSession?.body ?? EMPTY_EDITOR_VALUE,
-    bodyValue: initialArticleSession?.body ?? EMPTY_EDITOR_VALUE,
-    docDraftInfo: initialArticleSession?.info ?? EMPTY_DOC_DRAFT_INFO,
+    baselineValue: EMPTY_EDITOR_VALUE,
+    bodyValue: EMPTY_EDITOR_VALUE,
+    docDraftInfo: EMPTY_DOC_DRAFT_INFO,
     mode: DOC_EDITOR_MODE.EDIT,
     publishRuntime: { ...DEFAULT_PUBLISH_RUNTIME },
     publishView: buildPublishView(sideTree, initialSaveStatus, DEFAULT_PUBLISH_RUNTIME),
@@ -154,7 +171,7 @@ export default function createDocsEditorStore(init: TInit): TStore {
     saveStatus: initialSaveStatus,
 
     addGroup: (): void => {
-      sideTree.addGroup()
+      currentSideTree().addGroup()
     },
 
     attachSideTree: (nextSideTree): void => {
@@ -171,7 +188,7 @@ export default function createDocsEditorStore(init: TInit): TStore {
     },
 
     reloadSideTree: (): void => {
-      sideTree.reload()
+      currentSideTree().reload()
     },
 
     saveDocDraft: async (): Promise<void> => {

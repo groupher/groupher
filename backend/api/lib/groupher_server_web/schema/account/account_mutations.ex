@@ -71,6 +71,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.revoke_browser_session/3)
     end
 
+    @desc "Revokes a browser session identified by its public reference through Auth."
     field :revoke_browser_session_public, :done do
       arg(:browser_session_ref, non_null(:string))
       arg(:public_ref, non_null(:string))
@@ -79,6 +80,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.revoke_browser_session_public/3)
     end
 
+    @desc "Revokes the other browser sessions while retaining the current session."
     field :revoke_other_browser_sessions, :done do
       arg(:browser_session_ref, non_null(:string))
 

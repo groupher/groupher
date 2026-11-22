@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
   alias CMS.Gate.Config
 
   @threads Config.ordinary_article_threads()
-  @modes [:public, :owner_management, :moderator_management, :operations, :insights_management]
+  @modes [:public, :owner, :moderator_management, :operations, :insights_management]
   @enforce_keys [:thread, :stage, :policy_mode]
   defstruct [
     :thread,
@@ -39,8 +39,8 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
     build(thread, :public, Keyword.get(opts, :policy_mode, :public), opts)
   end
 
-  @doc "Builds a management-scoped draft Article read intent."
-  def draft(thread, policy_mode \\ :owner_management, opts \\ []) when thread in @threads do
+  @doc "Builds an owner-scoped draft Article read intent."
+  def draft(thread, policy_mode \\ :owner, opts \\ []) when thread in @threads do
     build(thread, :draft, policy_mode, opts)
   end
 

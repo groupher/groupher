@@ -63,11 +63,11 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
        %{guest_conn: guest_conn, community: community, post: post} do
     Repo.delete_all(
       from(binding in CMS.Model.ArticleBinding,
-        where: binding.article_id == ^post.article_id
+        where: binding.article_id == ^post.id
       )
     )
 
-    locator = %{type: "POST", article_id: post.article_id}
+    locator = %{type: "POST", article_id: post.id}
 
     node =
       gq_query(guest_conn, @artiment_status_query, %{
@@ -76,12 +76,12 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       })
 
     assert node["status"] == "UNAVAILABLE"
-    assert node["url"] == "/#{community.slug}/post/#{post.article_id}"
+    assert node["url"] == "/#{community.slug}/post/#{post.id}"
     assert is_binary(node["title"])
 
     Repo.update_all(
       from(lifecycle in CMS.Model.ArticleLifecycle,
-        where: lifecycle.article_id == ^post.article_id
+        where: lifecycle.article_id == ^post.id
       ),
       set: [state: :deleted]
     )
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     Repo.update_all(
       from(lifecycle in CMS.Model.ArticleLifecycle,
-        where: lifecycle.article_id == ^post.article_id
+        where: lifecycle.article_id == ^post.id
       ),
       set: [state: :destroy]
     )
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     node =
       gq_query(guest_conn, @artiment_status_query, %{
         community: community.slug,
-        locator: %{type: "DOC", article_id: doc.article_id}
+        locator: %{type: "DOC", article_id: doc.id}
       })
 
     assert node["url"] =~ ~r{^/#{community.slug}/doc/[^/]+/[^/]+$}
@@ -140,7 +140,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community: community.slug,
         locator: %{
           type: "COMMENT",
-          article_id: post.article_id,
+          article_id: post.id,
           comment_inner_id: comment.inner_id
         }
       })
@@ -151,7 +151,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     Repo.update_all(
       from(binding in CMS.Model.ArticleBinding,
-        where: binding.article_id == ^post.article_id and binding.community_id == ^community.id
+        where: binding.article_id == ^post.id and binding.community_id == ^community.id
       ),
       set: [inner_id: nil]
     )
@@ -161,13 +161,13 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community: community.slug,
         locator: %{
           type: "COMMENT",
-          article_id: post.article_id,
+          article_id: post.id,
           comment_inner_id: comment.inner_id
         }
       })
 
     assert stable_node["url"] ==
-             "/#{community.slug}/post/#{post.article_id}#comment-#{comment.inner_id}"
+             "/#{community.slug}/post/#{post.id}#comment-#{comment.inner_id}"
   end
 
   @tag :b2_independent
@@ -199,7 +199,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     encoded = Jason.encode!(mentions)
     refute String.contains?(encoded, article.id)
-    refute String.contains?(encoded, blog.article_id)
+    refute String.contains?(encoded, blog.id)
 
     incoming =
       guest_conn
@@ -258,7 +258,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
                community,
                ticket.id,
                "Public release",
-               draft_ticket.draft_version,
+               draft_ticket.working_copy_revision,
                draft_ticket.lifecycle_version,
                draft_ticket.workflow_version,
                actor,
@@ -283,23 +283,14 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         }
       ])
 
-    {:ok, %{article: article, draft: draft}} =
-      CMS.Articles.create_stable_draft(
+    {:ok, %{article: article}} =
+      CMS.Articles.create_and_publish_article(
         community,
         :post,
         %{title: "Ticket reference", digest: "Ticket", body_bag: mock_body_bag(body)},
-        user
+        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        command_id: Ecto.UUID.generate()
       )
-
-    command_id = Ecto.UUID.generate()
-
-    assert {:ok, _} =
-             CMS.Articles.publish(article.id, user,
-               community: community,
-               expected_draft_version: draft.version,
-               expected_lifecycle_version: 1,
-               command_id: command_id
-             )
 
     source_path = %{
       community: community.slug,
@@ -386,13 +377,13 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     encoded = Jason.encode!(page)
     refute String.contains?(encoded, article.id)
-    refute String.contains?(encoded, blog.article_id)
+    refute String.contains?(encoded, blog.id)
   end
 
   test "public Map and Article Comments remain readable from Y after physically deleting X",
        %{guest_conn: guest_conn, community: source_community, post: post, user: user} do
     {:ok, destination} = mock_community(user)
-    article = Repo.get!(CMS.Model.Article, post.article_id)
+    article = Repo.get!(CMS.Model.Article, post.id)
 
     assert {:ok, {:ok, _binding}} =
              Repo.transaction(fn -> CMS.Articles.BindingPersist.mirror(article, destination) end)
@@ -412,7 +403,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     )
 
     Repo.query!("DELETE FROM cms.artiment_reviews WHERE community_id = $1", [source_community.id])
-    Repo.delete!(source_community)
+    assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(source_community.slug)
 
     focus = %{type: "POST", article_inner_id: article_inner_id(post, destination)}
 
@@ -677,20 +668,17 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     assert is_binary(selected["body"]["html"])
 
     Repo.update_all(
-      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^post.article_id),
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^post.id),
       set: [state: :draft]
     )
 
-    restricted_selected =
-      gq_query(guest_conn, @mentioned_comment_query, %{
-        community: community.slug,
-        locator: selected_locator
-      })
-
-    assert restricted_selected["innerId"] == to_string(comment.inner_id)
+    assert query_error?(guest_conn, @mentioned_comment_query, %{
+             community: community.slug,
+             locator: selected_locator
+           }, 4412)
 
     Repo.update_all(
-      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^post.article_id),
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^post.id),
       set: [state: :published]
     )
 
@@ -849,7 +837,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     assert {:ok, {:ok, _}} =
              Repo.transaction(fn ->
                CMS.Articles.BindingPersist.mirror(
-                 Repo.get!(CMS.Model.Article, post.article_id),
+                 Repo.get!(CMS.Model.Article, post.id),
                  mirror
                )
              end)
@@ -960,19 +948,19 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     Repo.delete_all(
       from(binding in CMS.Model.ArticleBinding,
-        where: binding.article_id == ^post.article_id and binding.community_id == ^community.id
+        where: binding.article_id == ^post.id and binding.community_id == ^community.id
       )
     )
 
     stable_comment_focus = %{
       type: "COMMENT",
-      article_id: post.article_id,
+      article_id: post.id,
       comment_inner_id: comment.inner_id
     }
 
     stable_second_focus = %{
       type: "COMMENT",
-      article_id: post.article_id,
+      article_id: post.id,
       comment_inner_id: second_comment.inner_id
     }
 
@@ -1000,26 +988,25 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     stable_comment_node = Enum.find(stable_graph["nodes"], &(&1["id"] == first_node.id))
 
     assert stable_comment_node["url"] ==
-             "/#{community.slug}/post/#{post.article_id}#comment-#{comment.inner_id}"
+             "/#{community.slug}/post/#{post.id}#comment-#{comment.inner_id}"
 
     assert stable_comment_node["id"] ==
-             "comment:#{community.id}:post:id:#{post.article_id}:#{comment.inner_id}"
+             "comment:#{community.id}:post:id:#{post.id}:#{comment.inner_id}"
 
     assert stable_comment_node["locator"]["commentInnerId"] == to_string(comment.inner_id)
 
-    stable_live_comment =
+    assert_raise ExUnit.AssertionError, ~r/returned errors/, fn ->
       gq_query(guest_conn, @mentioned_comment_query, %{
         community: community.slug,
         locator: %{
           type: "COMMENT",
-          article_id: post.article_id,
+          article_id: post.id,
           comment_inner_id: second_comment.inner_id
         }
       })
+    end
 
-    assert stable_live_comment["innerId"] == to_string(second_comment.inner_id)
-
-    stable_parent_focus = %{type: "POST", article_id: post.article_id}
+    stable_parent_focus = %{type: "POST", article_id: post.id}
 
     parent_page =
       gq_query(guest_conn, @map_query, %{
@@ -1029,7 +1016,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     assert Enum.any?(parent_page["nodes"], fn node ->
              node["type"] == "POST" and
-               node["url"] == "/#{community.slug}/post/#{post.article_id}"
+               node["url"] == "/#{community.slug}/post/#{post.id}"
            end)
   end
 
@@ -1046,8 +1033,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       })
 
     assert [%{"type" => "DOC", "locator" => %{"type" => "DOC"}}] = page["nodes"]
-    public = Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id)
-    refute String.contains?(Jason.encode!(page), "\"#{public.branch_id}\"")
+    refute String.contains?(Jason.encode!(page), "branchId")
   end
 
   test "Doc main branch discovers its public Comment references",
@@ -1103,9 +1089,9 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
              ~r{^/#{community.slug}/doc/#{doc_id}/[^/]+#comment-#{comment.inner_id}$}
 
     assert CMS.FrontDesk.comment_url(
-             %{community_slug: community.slug, thread: :doc, article_id: doc.article_id},
+             %{community_slug: community.slug, thread: :doc, article_id: doc.id},
              comment.inner_id
-           ) == "/#{community.slug}/doc/#{doc.article_id}/doc#comment-#{comment.inner_id}"
+           ) == "/#{community.slug}/doc/#{doc.id}/doc#comment-#{comment.inner_id}"
   end
 
   @tag :b2_independent
@@ -1160,21 +1146,14 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         }
       ])
 
-    {:ok, %{article: article, draft: draft}} =
-      CMS.Articles.create_stable_draft(
+    {:ok, %{article: article}} =
+      CMS.Articles.create_and_publish_article(
         community,
         :post,
         %{title: "Many references", digest: "Fanout", body_bag: mock_body_bag(body)},
-        user
+        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        command_id: Ecto.UUID.generate()
       )
-
-    assert {:ok, _} =
-             CMS.Articles.publish(article.id, user,
-               community: community,
-               expected_draft_version: draft.version,
-               expected_lifecycle_version: 1,
-               command_id: Ecto.UUID.generate()
-             )
 
     project_article(article)
 
@@ -1297,7 +1276,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     {article, path} = published_source(ctx.community, ctx.blog, ctx.user)
 
     Repo.update_all(
-      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.article_id),
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.id),
       set: [state: :draft]
     )
 
@@ -1315,10 +1294,10 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     assert is_binary(url)
 
-    refute Jason.encode!(outgoing) =~ ctx.blog.article_id
+    refute Jason.encode!(outgoing) =~ ctx.blog.id
 
     Repo.update_all(
-      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.article_id),
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.id),
       set: [state: :published]
     )
 
@@ -1437,9 +1416,37 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     {article, path} = published_source(ctx.community, ctx.blog, ctx.user)
     public = Repo.get!(CMS.Model.ArticlePublic, article.id)
 
-    public
-    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
-    |> Repo.update!()
+    {:ok, [working_copy]} = CMS.Articles.working_copies(article, ctx.community)
+
+    {:ok, saved_working_copy} =
+      CMS.Articles.save_working_copy(
+        article,
+        ctx.community,
+        working_copy.id,
+        %{digest: "Source updated"},
+        working_copy.revision,
+        ctx.user,
+        Ecto.UUID.generate()
+      )
+
+    {:ok, _throttle} =
+      CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+        :last_publish_time,
+        ctx.user,
+        minutes: -4
+      )
+
+    assert {:ok, %{snapshot: %{id: snapshot_id}}} =
+             CMS.Articles.publish_article(
+               article,
+               ctx.community,
+               %{working_copy_id: saved_working_copy.id, revision: saved_working_copy.revision},
+               public.snapshot_id,
+               ctx.user,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.get!(CMS.Model.ArticlePublic, article.id).snapshot_id == snapshot_id
 
     result =
       gq_query(ctx.guest_conn, @mentions_query, %{
@@ -1455,7 +1462,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     {_article, path} = published_source(ctx.community, ctx.blog, ctx.user)
 
     Repo.update_all(
-      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.article_id),
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.id),
       set: [state: :draft]
     )
 
@@ -1508,23 +1515,14 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         }
       ])
 
-    {:ok, %{article: article, draft: draft}} =
-      CMS.Articles.create_stable_draft(
+    {:ok, %{article: article}} =
+      CMS.Articles.create_and_publish_article(
         community,
         :post,
         %{title: "Reference source", digest: "Source", body_bag: mock_body_bag(body)},
-        user
+        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        command_id: Ecto.UUID.generate()
       )
-
-    command_id = Ecto.UUID.generate()
-
-    assert {:ok, _} =
-             CMS.Articles.publish(article.id, user,
-               community: community,
-               expected_draft_version: draft.version,
-               expected_lifecycle_version: 1,
-               command_id: command_id
-             )
 
     {article, %{inner_id: article_inner_id(article, community)}}
   end

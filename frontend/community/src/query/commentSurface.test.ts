@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { dsbKeys } from '~/query'
 import { commentQueries } from '~/query/comment'
-import type { TParseDashboard } from '~/spec'
+import type { TDsb } from '~/spec'
 const { loadComments, refresh } = vi.hoisted(() => ({ loadComments: vi.fn(), refresh: vi.fn() }))
 vi.mock('../server/community', () => ({ loadComments }))
 vi.mock('./articleSurface', () => ({
@@ -15,7 +15,7 @@ import { prefetchComments } from './commentSurface'
 const article = { community: 'home', thread: 'POST' as const, innerId: '1' }
 const cursor = {
   api: 'cursor' as const,
-  mode: 'load_more' as const,
+  mode: 'LOAD_MORE' as const,
   schemaVersion: 1,
   revision: 2,
   defaultSize: 20,
@@ -30,10 +30,10 @@ const result = {
 describe('SSR comments Pagi', () => {
   it('hydrates the exact browser infinite key selected by bootstrap', async () => {
     const client = new QueryClient()
-    client.setQueryData(dsbKeys.config('home'), {
+    client.setQueryData(dsbKeys.slug('home'), {
       pagiMode: cursor.mode,
       pagiRevision: cursor.revision,
-    } as TParseDashboard)
+    } as TDsb)
     loadComments.mockResolvedValue(result)
     await prefetchComments(client, 'home', 'POST', '1')
     const options = commentQueries.infinite({ article, mode: 'REPLIES' }, cursor)
@@ -47,13 +47,13 @@ describe('SSR comments Pagi', () => {
   })
   it('prefetches an explicit offset link even when bootstrap defaults to cursor', async () => {
     const client = new QueryClient()
-    client.setQueryData(dsbKeys.config('home'), {
+    client.setQueryData(dsbKeys.slug('home'), {
       pagiMode: cursor.mode,
       pagiRevision: cursor.revision,
-    } as TParseDashboard)
+    } as TDsb)
     loadComments.mockResolvedValue(result)
     await prefetchComments(client, 'home', 'POST', '1', '?commentsApi=offset&commentsPage=4')
-    const config = { ...cursor, api: 'offset' as const, mode: 'page' as const }
+    const config = { ...cursor, api: 'offset' as const, mode: 'PAGE' as const }
     expect(
       client.getQueryData(commentQueries.page({ article, mode: 'REPLIES' }, config, 4).queryKey),
     ).toEqual(result)
@@ -65,13 +65,13 @@ describe('SSR comments Pagi', () => {
 
 it('refreshes bootstrap once on revision mismatch and retains an explicit cursor location', async () => {
   const client = new QueryClient()
-  client.setQueryData(dsbKeys.config('home'), {
+  client.setQueryData(dsbKeys.slug('home'), {
     pagiMode: cursor.mode,
     pagiRevision: cursor.revision,
-  } as TParseDashboard)
+  } as TDsb)
   loadComments.mockRejectedValueOnce({ revision: true }).mockResolvedValueOnce(result)
   refresh.mockImplementation(async () =>
-    client.setQueryData(dsbKeys.config('home'), {
+    client.setQueryData(dsbKeys.slug('home'), {
       pagiMode: cursor.mode,
       pagiRevision: 3,
     }),
@@ -118,9 +118,9 @@ afterEach(() =>
 it('uses the mobile preference for a phone or tablet entry', async () => {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 768 })
   const client = new QueryClient()
-  client.setQueryData(dsbKeys.config('home'), {
-    pagiMode: 'page',
-    pagiMobileMode: 'infinite_scroll',
+  client.setQueryData(dsbKeys.slug('home'), {
+    pagiMode: 'PAGE',
+    pagiMobileMode: 'INFINITE_SCROLL',
     pagiRevision: 2,
   })
   loadComments.mockResolvedValue(result)

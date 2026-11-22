@@ -1,3 +1,6 @@
+import { valueKeyedEnum } from '~/lib/enumValues'
+import { ArticleCatEnum, ArticleOrderEnum } from '~/lib/graphql/generated/enums'
+
 export const CAT = 'cat'
 export const STATUS = 'status'
 export const ORDER = 'order'
@@ -10,19 +13,9 @@ export const ARTICLE_STATUS_REJECT = {
   REJECT_STALE: 'REJECT_STALE', // 已过时
 } as const
 
-export const ARTICLE_ORDER = {
-  UPVOTES: 'UPVOTES',
-  COMMENTS: 'COMMENTS',
-  PUBLISH: 'PUBLISH',
-  VIEWS: 'VIEWS',
-} as const
+export const ARTICLE_ORDER = valueKeyedEnum(ArticleOrderEnum)
 
-export const ARTICLE_CAT = {
-  IDEA: 'IDEA',
-  BUG: 'BUG',
-  QA: 'QA',
-  DISCUSSION: 'DISCUSSION',
-} as const
+export const ARTICLE_CAT = valueKeyedEnum(ArticleCatEnum)
 
 export const ARTICLE_STATUS = {
   BACKLOG: 'BACKLOG',

@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.ArticlePath do
       GraphQL resolver / job / middleware
         -> ArticlePath parse / validate
         -> FrontDesk binding lookup
-        -> Article / ArticleView
+        -> Article
   """
 
   alias GroupherServer.CMS

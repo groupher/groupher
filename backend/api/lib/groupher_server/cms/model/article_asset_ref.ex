@@ -1,13 +1,10 @@
 defmodule GroupherServer.CMS.Model.ArticleAssetRef do
   @moduledoc """
-  Asset membership owned by either a mutable body Draft or immutable Revision.
+  Asset membership owned by one WorkingCopy or immutable Snapshot.
 
-      ArticleBodyDraft --\
-                          -> ArticleAssetRef -> CommunityAsset
-      ArticleRevision ---/
+      WorkingCopy / Snapshot -> ArticleAssetRef -> CommunityAsset
 
-  Exactly one owner is required. Draft discard and Revision cleanup therefore
-  release only the refs owned by that content version.
+  Exactly one owner is required. Snapshot refs retain historical asset membership.
   """
 
   use Ecto.Schema
@@ -20,8 +17,8 @@ defmodule GroupherServer.CMS.Model.ArticleAssetRef do
   alias GroupherServer.CMS
 
   alias CMS.Model.{
-    ArticleBodyDraft,
-    ArticleRevision,
+    ArticleSnapshot,
+    ArticleWorkingCopy,
     Community,
     CommunityAsset
   }
@@ -33,7 +30,8 @@ defmodule GroupherServer.CMS.Model.ArticleAssetRef do
   @schema_prefix DBPrefix.cms()
   @usage_values ~w(inline cover cover_dark attachment embed)a
   @required_fields ~w(community_id asset_id usage)a
-  @optional_fields ~w(body_draft_id revision_id block_id block_type position title alt source meta)a
+  @optional_fields ~w(working_copy_id snapshot_id block_id block_type
+                      position title alt source meta)a
 
   @type usage :: :inline | :cover | :cover_dark | :attachment | :embed
   @type t :: %__MODULE__{}
@@ -41,8 +39,8 @@ defmodule GroupherServer.CMS.Model.ArticleAssetRef do
   schema "article_asset_refs" do
     belongs_to(:community, Community)
     belongs_to(:asset, CommunityAsset)
-    belongs_to(:body_draft, ArticleBodyDraft, type: Ecto.UUID)
-    belongs_to(:revision, ArticleRevision, type: Ecto.UUID)
+    belongs_to(:working_copy, ArticleWorkingCopy, type: Ecto.UUID)
+    belongs_to(:snapshot, ArticleSnapshot, type: Ecto.UUID)
     field(:article_id, Ecto.UUID, virtual: true)
     field(:thread, Ecto.Enum, values: ThreadIdentity.values(), virtual: true)
     field(:usage, Ecto.Enum, values: @usage_values, default: :inline)
@@ -65,11 +63,28 @@ defmodule GroupherServer.CMS.Model.ArticleAssetRef do
     |> validate_number(:position, greater_than_or_equal_to: 0)
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:asset_id)
-    |> foreign_key_constraint(:body_draft_id)
-    |> foreign_key_constraint(:revision_id)
-    |> check_constraint(:body_draft_id, name: :article_asset_refs_exactly_one_owner)
-    |> unique_constraint([:body_draft_id, :usage], name: :article_asset_refs_draft_cover_index)
-    |> unique_constraint([:revision_id, :usage], name: :article_asset_refs_revision_cover_index)
+    |> foreign_key_constraint(:working_copy_id)
+    |> foreign_key_constraint(:snapshot_id)
+    |> validate_owner()
+    |> check_constraint(:working_copy_id, name: :article_asset_refs_exactly_one_owner)
+    |> unique_constraint([:working_copy_id, :usage],
+      name: :article_asset_refs_working_copy_cover_index
+    )
+    |> unique_constraint([:snapshot_id, :usage], name: :article_asset_refs_snapshot_cover_index)
+  end
+
+  defp validate_owner(changeset) do
+    owners =
+      Enum.count(
+        ~w(working_copy_id snapshot_id)a,
+        &(not is_nil(Ecto.Changeset.get_field(changeset, &1)))
+      )
+
+    if owners == 1 do
+      changeset
+    else
+      Ecto.Changeset.add_error(changeset, :working_copy_id, "must have exactly one content owner")
+    end
   end
 
   @doc "Returns every supported asset usage."

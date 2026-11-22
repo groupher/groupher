@@ -2,7 +2,7 @@ defmodule GroupherServer.Messaging.Notifications.Query do
   @moduledoc """
   Reads grouped activity notifications and unread counts.
 
-  Persistence and grouping mutation are owned by `Notifications.Persist`; this
+  Persistence and grouping mutation are owned by `Notices.Persist`; this
   module is read-only.
 
       Notification rows -> Notifications.Query -> Inbox

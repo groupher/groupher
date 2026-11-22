@@ -157,7 +157,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         )
 
       {:ok, comments} =
-        comment_page(:post, post.article_id, %{page: 1, size: 20}, :replies)
+        comment_page(:post, post.id, %{page: 1, size: 20}, :replies)
 
       assert exist_in?(post_comment_1, comments.entries)
       assert exist_in?(post_comment_2, comments.entries)
@@ -193,7 +193,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       refute Repo.get_by(
                CMS.Outbox.Event,
                event: "mention.notify",
-               command_id: command_id,
+               operation_ref: command_id,
                resource_id: endpoint.id
              )
     end
@@ -246,7 +246,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       refute Repo.get_by(CMS.Outbox.Event,
                event: "mention.notify",
-               command_id: delete_command_id,
+               operation_ref: delete_command_id,
                resource_id: endpoint.id
              )
 
@@ -266,7 +266,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      post_after = Repo.get!(CMS.Model.Article, post.article_id)
+      post_after = Repo.get!(CMS.Model.Article, post.id)
 
       assert not is_nil(post.active_at)
       assert post_after.active_at > post.inserted_at
@@ -274,11 +274,19 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "post author create comment will not update active timestamp", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      article_before = Repo.get!(CMS.Model.Article, post.article_id)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
+
+      article_before = Repo.get!(CMS.Model.Article, post.id)
 
       Process.sleep(1000)
-      author = post.author
+      author = post.author.user
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -290,7 +298,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      article_after = Repo.get!(CMS.Model.Article, post.article_id)
+      article_after = Repo.get!(CMS.Model.Article, post.id)
 
       assert not is_nil(article_after.active_at)
       assert article_after.active_at == article_before.active_at
@@ -302,7 +310,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       post_attrs = mock_attrs(:post)
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       Process.sleep(1000)
 
@@ -316,7 +331,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      article = Repo.get!(CMS.Model.Article, post.article_id)
+      article = Repo.get!(CMS.Model.Article, post.id)
 
       assert article.active_at |> DateTime.to_date() == cur_date
 
@@ -327,9 +342,16 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         |> Datetime.to_datetime()
 
       post_attrs = mock_attrs(:post)
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      article = Repo.get!(CMS.Model.Article, post.article_id)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
+
+      article = Repo.get!(CMS.Model.Article, post.id)
 
       {:ok, _article} =
         article
@@ -348,7 +370,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      article = Repo.get!(CMS.Model.Article, post.article_id)
+      article = Repo.get!(CMS.Model.Article, post.id)
       assert article.active_at == inserted_at
     end
 
@@ -453,7 +475,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:post, post.article_id, nil, community.slug)
+      {:ok, state} = CMS.Comments.comments_state(:post, post.id, nil, community.slug)
 
       participator = List.first(state.participants)
       assert participator.id == user.id
@@ -480,7 +502,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:post, post.article_id, nil, community.slug)
+      {:ok, state} = CMS.Comments.comments_state(:post, post.id, nil, community.slug)
 
       assert 1 == length(state.participants)
     end
@@ -507,7 +529,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:post, post.article_id, nil, community.slug)
+      {:ok, state} = CMS.Comments.comments_state(:post, post.id, nil, community.slug)
 
       participator = List.first(state.participants)
 
@@ -594,7 +616,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      author_user = post.author
+      author_user = post.author.user
 
       CMS.Interactions.upvote(comment, author_user, Ecto.UUID.generate())
 
@@ -617,7 +639,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      author_user = post.author
+      author_user = post.author.user
 
       {:ok, comment} = CMS.Interactions.upvote(comment, author_user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, author_user)
@@ -825,7 +847,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, folded} =
         shared_comment_page(
           :post,
-          post.article_id,
+          post.id,
           %{},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
@@ -859,7 +881,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, folded} =
         shared_comment_page(
           :post,
-          post.article_id,
+          post.id,
           %{},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
@@ -893,8 +915,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       assert comment.is_pinned
 
-      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{article_id: post.article_id})
-      assert pined_record.article_id == post.article_id
+      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{article_id: post.id})
+      assert pined_record.article_id == post.id
     end
 
     test "user can unpin a comment", ~m(community user post)a do
@@ -1320,13 +1342,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, stats} = CMS.ArticleStats.fetch(:post, post.article_id)
+      {:ok, stats} = CMS.ArticleStats.fetch(:post, post.id)
 
       assert stats.comments_count == 5
 
       {:ok, _} = CMS.Comments.delete_comment(comment, user, Ecto.UUID.generate())
 
-      {:ok, stats} = CMS.ArticleStats.fetch(:post, post.article_id)
+      {:ok, stats} = CMS.ArticleStats.fetch(:post, post.id)
       assert stats.comments_count == 4
     end
 
@@ -1372,7 +1394,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       assert not comment.is_article_author
 
-      author_user = post.author
+      author_user = post.author.user
 
       {:ok, comment} =
         CMS.Comments.create_comment(
@@ -1458,7 +1480,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment qa type]" do
     test "create comment for normal post should have default qa flags", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, post_comment} =
         CMS.Comments.create_comment(
@@ -1477,7 +1506,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "create comment for question post should have flags", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.qa})
 
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -1489,7 +1524,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, post_comment} =
         CMS.Comments.create_comment(
@@ -1507,7 +1548,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "update comment with is_question should batch update exist comments is_for_question field",
          ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.qa})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, comment1} =
         CMS.Comments.create_comment(
@@ -1539,7 +1587,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Articles.set_cat(post.article_id, @article_cat.qa, user, community.id)
+      {:ok, _} = CMS.Articles.set_cat(post.id, @article_cat.qa, user, community.id)
 
       {:ok, comment1} = ORM.find(Comment, comment1.id)
 
@@ -1553,7 +1601,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert comment2.is_for_question
       assert comment3.is_for_question
 
-      {:ok, _} = CMS.Articles.set_cat(post.article_id, @article_cat.idea, user, community.id)
+      {:ok, _} = CMS.Articles.set_cat(post.id, @article_cat.idea, user, community.id)
 
       {:ok, comment1} = ORM.find(Comment, comment1.id)
 

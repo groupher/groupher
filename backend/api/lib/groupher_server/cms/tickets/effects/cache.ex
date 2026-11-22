@@ -12,55 +12,58 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
   alias GroupherServer.{CMS, PublicCache, Repo}
   alias CMS.Model.{ArticleBinding, ArticleLifecycle, Community, TicketState}
   alias CMS.Tickets.Model.Source
+  alias CMS.Outbox.DedupeKey
 
-  @doc "Enqueues public Ticket and affected Post tags in the caller transaction."
-  def enqueue(
-        %Community{} = community,
-        ticket_id,
-        inner_id,
+  @doc "Records fixed public Ticket and affected Post projection targets in the caller transaction."
+  def projection_changed(
+        %Community{id: community_id, slug: slug},
+        %TicketState{type: :user, article_id: ticket_id, article_binding_id: binding_id},
+        %ArticleBinding{
+          id: binding_id,
+          article_id: ticket_id,
+          community_id: community_id,
+          thread: :ticket,
+          inner_id: inner_id
+        },
         post_inner_ids,
-        identity_ref,
-        effect_key
+        operation_ref
       )
-      when is_binary(ticket_id) and is_integer(inner_id) and is_list(post_inner_ids) and
-             (is_binary(identity_ref) or
-                (is_tuple(identity_ref) and tuple_size(identity_ref) == 2 and
-                   elem(identity_ref, 0) in [:command, :workflow] and
-                   is_binary(elem(identity_ref, 1)))) and is_binary(effect_key) do
-    identity =
-      case identity_ref do
-        {:command, _command_id} = value -> value
-        {:workflow, _workflow_ref} = value -> value
-        command_id -> {:command, command_id}
-      end
+      when is_integer(community_id) and is_binary(slug) and slug != "" and
+             is_binary(ticket_id) and is_integer(binding_id) and is_integer(inner_id) and
+             inner_id > 0 and is_list(post_inner_ids) and is_binary(operation_ref) do
+    if Enum.all?(post_inner_ids, &(is_integer(&1) and &1 > 0)) do
+      tags =
+        [PublicCache.ticket_list_tag(slug), PublicCache.ticket_detail_tag(slug, inner_id)] ++
+          post_tags(slug, post_inner_ids)
 
-    tags =
-      [
-        PublicCache.ticket_list_tag(community.slug),
-        PublicCache.ticket_detail_tag(community.slug, inner_id)
-      ] ++ post_tags(community.slug, post_inner_ids)
-
-    tags
-    |> Enum.uniq()
-    |> Enum.chunk_every(PublicCache.max_tags_per_request())
-    |> Enum.with_index()
-    |> Enum.reduce_while({:ok, []}, fn {batch, index}, {:ok, events} ->
-      case CMS.Outbox.send(%{
-             event: "ticket.cache_invalidation",
-             worker: GroupherServer.Jobs.CMSOutboxTicket,
-             resource_type: "ticket",
-             resource_id: ticket_id,
-             identity: identity,
-             effect_key: "#{effect_key}:#{index}",
-             data: %{"cache_tags" => batch}
-           }) do
-        {:ok, event} -> {:cont, {:ok, [event | events]}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
+      tags
+      |> Enum.uniq()
+      |> Enum.sort()
+      |> Enum.chunk_every(PublicCache.max_tags_per_request())
+      |> Enum.with_index()
+      |> Enum.reduce_while({:ok, []}, fn {batch, index}, {:ok, events} ->
+        case CMS.Outbox.send(%{
+               event: "ticket.cache_invalidation",
+               worker: GroupherServer.Jobs.CMSOutboxTicket,
+               resource_type: "ticket",
+               resource_id: ticket_id,
+               operation_ref: operation_ref,
+               dedupe_key:
+                 DedupeKey.encode([community_id, ticket_id, operation_ref, index | batch]),
+               data: %{"cache_tags" => batch}
+             }) do
+          {:ok, event} -> {:cont, {:ok, [event | events]}}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+      end)
+    else
+      {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
+    end
   end
 
-  def enqueue(_, _, _, _, _, _), do: {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
+  def projection_changed(_community, _state, _binding, _post_inner_ids, _operation_ref) do
+    {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
+  end
 
   @doc "Purges public Ticket pages affected by a committed Post stats change."
   def purge_post(post_id) when is_binary(post_id) do
@@ -117,5 +120,13 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
         PublicCache.article_list_tag(community, :post)
       ]
     end)
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "ticket.cache_invalidation" -> CMS.Outbox.Event.project_fields(data, ["cache_tags"])
+      _ -> {:error, {:outbox_event_owner_missing, event}}
+    end
   end
 end

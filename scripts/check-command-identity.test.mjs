@@ -34,5 +34,6 @@ test('detects command identity fallbacks but ignores infrastructure ids', () => 
   assert.equal(hasDerivedCommandIdentity('Keyword.get(opts, :command_id, Ecto.UUID.generate())'), true)
   assert.equal(hasDerivedCommandIdentity('Map.get(attrs, "command_id", Ecto.UUID.generate())'), true)
   assert.equal(hasDerivedCommandIdentity('id: Ecto.UUID.generate()'), false)
+  assert.equal(hasDerivedCommandIdentity('operation_ref: Ecto.UUID.generate()'), false)
   assert.equal(hasDerivedCommandIdentity('# command_id: Ecto.UUID.generate()'), false)
 })

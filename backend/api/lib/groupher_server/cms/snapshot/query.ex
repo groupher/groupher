@@ -118,6 +118,6 @@ defmodule GroupherServer.CMS.Snapshot.Query do
     %{id: id, body_digest: "Unavailable comment", thread: thread, unavailable: true}
   end
 
-  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(:doc), do: DocContext.public()
   defp scope_context(thread), do: ArticleContext.public(thread)
 end

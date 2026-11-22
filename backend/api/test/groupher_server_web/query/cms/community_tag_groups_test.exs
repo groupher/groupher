@@ -90,7 +90,14 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
         )
 
       post_attrs = mock_attrs(:post) |> Map.merge(%{community_tags: [article_tag.id]})
-      {:ok, _post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, _post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       results =
         guest_conn

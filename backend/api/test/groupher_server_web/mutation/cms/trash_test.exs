@@ -4,10 +4,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
   use GroupherServer.TestMate
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
 
   alias GroupherServer.CMS
   alias CMS.Model.{Article, ArticleEmotionCount, ArticleStats, TrashedArticle}
+
+  @throttle_interval CMS.Gate.RateLimit.Publish.Config.publish_throttle().interval_minutes
 
   setup do
     {community, post, _, owner} = mock_article(:post)
@@ -17,7 +19,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     {:ok, ~m(community post owner guest_conn owner_conn)a}
   end
 
-  test "owner moves an Article into Trash and a moderator restores it",
+  test "an Article owner moves it into Trash and restores it",
        ~m(community post owner_conn)a do
     variables = %{article: article_path(community, post, :post)}
     trashed = gq_mutation(owner_conn, S.Article.m(:trash_article), variables)
@@ -29,13 +31,10 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     assert Repo.get(Article, post.id)
     assert {:error, _} = read_article(community, :post, article_inner_id(post, community))
 
-    rule_conn =
-      simu_conn(:user, cms: %{community.slug => %{"post.restore" => true}})
-
     command_id = Ecto.UUID.generate()
 
     restored =
-      gq_mutation(rule_conn, S.Article.m(:restore_trashed_article), %{
+      gq_mutation(owner_conn, S.Article.m(:restore_trashed_article), %{
         id: trashed["id"],
         community: community.slug,
         thread: "POST",
@@ -47,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     assert {:ok, _} = read_article(community, :post, article_inner_id(post, community))
 
     replayed =
-      gq_mutation(rule_conn, S.Article.m(:restore_trashed_article), %{
+      gq_mutation(owner_conn, S.Article.m(:restore_trashed_article), %{
         id: trashed["id"],
         community: community.slug,
         thread: "POST",
@@ -57,7 +56,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     assert replayed == restored
   end
 
-  test "Trash requires login and either ownership or the thread grant",
+  test "global Trash requires login and Article ownership",
        ~m(community post guest_conn)a do
     variables = %{article: article_path(community, post, :post)}
     schema = S.Article.m(:trash_article)
@@ -75,26 +74,46 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              schema,
              variables,
-             ErrorCat.code(PassportErrorCat.permission_denied())
+             ErrorCat.code(GateErrorCat.permission_denied())
            )
 
-    moderator = simu_conn(:user, cms: %{community.slug => %{"post.trash" => true}})
-    assert gq_mutation(moderator, schema, variables)["id"]
+    moderator =
+      simu_conn(:user, cms: %{community.slug => %{"community.article.hide" => true}})
+
+    assert moderator
+           |> mutation_error?(
+             schema,
+             variables,
+             ErrorCat.code(GateErrorCat.permission_denied())
+           )
   end
 
   test "a grant from another community cannot move this Article to Trash", ~m(owner)a do
     {:ok, community_a} = mock_community(owner)
     {:ok, community_b} = mock_community(owner)
-    {:ok, post_b} = CMS.Articles.create(community_b, :post, mock_attrs(:post), owner)
 
-    conn = simu_conn(:user, cms: %{community_a.slug => %{"post.trash" => true}})
+    CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+      :last_publish_time,
+      owner,
+      minutes: -@throttle_interval
+    )
+
+    {:ok, post_b} =
+      GroupherServer.Support.Factory.create_published_article(
+        community_b,
+        :post,
+        mock_attrs(:post),
+        owner
+      )
+
+    conn = simu_conn(:user, cms: %{community_a.slug => %{"community.article.hide" => true}})
     variables = %{article: article_path(community_b, post_b, :post)}
 
     assert conn
            |> mutation_error?(
              S.Article.m(:trash_article),
              variables,
-             ErrorCat.code(PassportErrorCat.permission_denied())
+             ErrorCat.code(GateErrorCat.permission_denied())
            )
 
     assert {:ok, _} = read_article(community_b, :post, article_inner_id(post_b, community_b))
@@ -114,30 +133,17 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         article: article_path(community, post, :post)
       })
 
-    reader = simu_conn(:user, cms: %{community.slug => %{"post.trash" => true}})
+    {:ok, listed} = CMS.articles_list_trashed(community, %{thread: :post}, nil)
 
-    listed =
-      gq_query(
-        reader,
-        S.Article.q(:trashed_articles),
-        %{
-          community: community.slug,
-          thread: "POST",
-          filter: %{page: 1, size: 20}
-        }
-      )
+    assert listed.total_count == 1
+    assert hd(listed.entries).article.inner_id == article_inner_id(post, community)
 
-    assert listed["pageInfo"]["totalCount"] == 1
-
-    assert hd(listed["entries"])["article"]["innerId"] ==
-             to_string(article_inner_id(post, community))
-
-    assert hd(listed["entries"])["article"]["articleStats"]
-           |> Map.take(["views", "viewsRevision", "upvotesCount", "commentsCount"]) == %{
-             "views" => 12,
-             "viewsRevision" => 3,
-             "upvotesCount" => 0,
-             "commentsCount" => 0
+    assert hd(listed.entries).article.article_stats
+           |> Map.take([:views, :views_revision, :upvotes_count, :comments_count]) == %{
+             views: 12,
+             views_revision: 3,
+             upvotes_count: 0,
+             comments_count: 0
            }
 
     permanent_conn =

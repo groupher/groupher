@@ -1,5 +1,7 @@
 # Query / Store 边界收口与简化计划
 
+> 历史实施合同：本文的 Query confirmed owner、后台 reconcile 和发布缓存边界继续有效；Dsb 公共读取入口、`DsbShellStore` 命名及 BND-10 的编辑器临时状态归属，下一轮以 [Community / Dsb / DsbShell 状态边界重构](../dash/store-boundary-refactor.md)为目标。公共 Dsb 边界、pagi/contentShadow 与 DsbShell 命名已实施，其余 Editor 边界仍在迁移。
+>
 > 状态：2026-08-29 本地实现与自动验收已完成。真实 Cloudflare purge、跨 PoP 行为和生产告警
 > 仍属于发布门，不把本地测试结果冒充线上证据。
 >
@@ -103,23 +105,24 @@ CDN cache effect 随后由 server proxy 执行。purge 失败不得把已经成�
 
 ### 3.0 Owner / reader / writer 冻结表
 
-| 领域         | confirmed owner                                    | projection / working copy                                                  | confirmed writer                                               | 主要 reader                                      |
-| ------------ | -------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------ |
-| community    | `Q.community.config(slug)`                         | `CommunityStore` 是只读、可重建 projection；viewport 已拆为独立 UI context | SSR seed、refetch、baseInfo mutation patch                     | Community/Dash boundary 与展示 hooks             |
-| dashboard    | `Q.dsb.config(slug)`                               | `DsbEditStore.current/original/touched` 是编辑 working copy                | SSR seed、领域 save response、refetch                          | Community 展示、Dash editors、SavingBar          |
-| wallpaper    | `Q.wallpaper.config(slug)`                         | wallpaper store 是 draft/preview projection                                | SSR seed、wallpaper mutation response、refetch                 | Community renderer、Dash wallpaper editor        |
-| theme preset | `Q.dsb.config(slug).themePreset`                   | `ThemePresetStore` 只负责 CSS projection/preview                           | theme mutation response、Dsb refetch                           | pre-paint、Theme editor、CSS variable projection |
-| viewer       | `Q.viewer.*(accountScope, refs)`                   | render-time selector；unknown 保持 `undefined`                             | viewer batch、typed mutation、replay/reconcile response        | article/comment/account UI                       |
-| baseInfo     | `Q.community.config` + `Q.dsb.config` 各自领域字段 | 无独立 baseInfo cache/store                                                | baseInfo typed mutation response 同时 patch 两个 canonical key | Community brand/SEO、Dash baseInfo editor        |
+| 领域         | confirmed owner                                | projection / working copy                                                  | confirmed writer                                               | 主要 reader                                      |
+| ------------ | ---------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------ |
+| community    | `Q.community.slug(slug)`                       | `CommunityStore` 是只读、可重建 projection；viewport 已拆为独立 UI context | SSR seed、refetch、baseInfo mutation patch                     | Community/Dash boundary 与展示 hooks             |
+| dashboard    | `Q.dsb.slug(slug)`                             | `DsbEditStore.current/original/touched` 是编辑 working copy                | SSR seed、领域 save response、refetch                          | Community 展示、Dash editors、SavingBar          |
+| wallpaper    | `Q.wallpaper.slug(slug)`                       | wallpaper store 是 draft/preview projection                                | SSR seed、wallpaper mutation response、refetch                 | Community renderer、Dash wallpaper editor        |
+| theme preset | `Q.dsb.slug(slug).themePreset`                 | `ThemePresetStore` 只负责 CSS projection/preview                           | theme mutation response、Dsb refetch                           | pre-paint、Theme editor、CSS variable projection |
+| press        | `Q.press.slug(slug)`                           | Press config draft 在 Dashboard RSS 页面                                   | `updatePressConfig` response、refetch                          | Dashboard RSS 页                                 |
+| viewer       | `Q.viewer.*(accountScope, refs)`               | render-time selector；unknown 保持 `undefined`                             | viewer batch、typed mutation、replay/reconcile response        | article/comment/account UI                       |
+| baseInfo     | `Q.community.slug` + `Q.dsb.slug` 各自领域字段 | 无独立 baseInfo cache/store                                                | baseInfo typed mutation response 同时 patch 两个 canonical key | Community brand/SEO、Dash baseInfo editor        |
 
-`loadCommunity` 可以只发起一次 GraphQL bootstrap；`projectCommunityConfig`、dashboard 和 wallpaper
-随后分别 seed canonical key。浏览器端三个领域同时 refetch 时由 `fetchCommunitySnapshot` 只合并
+`loadCommunity` 可以只发起一次 GraphQL bootstrap；`pickCommunityFields`、dashboard 和 wallpaper
+随后分别 seed canonical key。浏览器端三个领域同时 refetch 时由 `fetchCommunity` 只合并
 当次 in-flight request，不保存第四份长期 confirmed cache。
 
 ### 3.1 公共读取
 
 当前主要风险是 `loadCommunity` 的 shell 同时包含 community、dashboard、wallpaper，之后 dashboard
-又 seed 到 `Q.dsb.config`，同一 payload 继续被 Provider 复制到多个 Valtio store。
+又 seed 到 `Q.dsb.slug`，同一 payload 继续被 Provider 复制到多个 Valtio store。
 
 目标：
 
@@ -143,18 +146,18 @@ bootstrap 可以共享一次网络请求，但不能共享一个长期拥有多�
 目标：
 
 ```text
-Q.dsb.config confirmed data
+Q.dsb.slug confirmed data
   -> create DsbEditStore once on editable route
   -> current/original/touched
 
-Q.dsb.config 后续变化
+Q.dsb.slug 后续变化
   -> reconcileConfirmed(nextConfirmed)
   -> untouched 跟随服务端
   -> touched 保留本地 current
 ```
 
 `initFilled` 这类一次性 hydration guard 不属于 editor UI state。额外的
-`communityBaseInfo` 查询如果读取的字段已存在于 `Q.dsb.config`，应删除并改由 canonical Query
+`communityBaseInfo` 查询如果读取的字段已存在于 `Q.dsb.slug`，应删除并改由 canonical Query
 提供；确有独立 freshness 要求时，也必须把结果写回 confirmed owner 后再统一 reconcile。
 
 ### 3.3 保存
@@ -166,7 +169,7 @@ domain save module
   -> typed submitted input
   -> Phoenix mutation
   -> typed confirmed patch
-  -> Q.dsb.config setQueryData / precise invalidate
+  -> Q.dsb.slug setQueryData / precise invalidate
   -> DsbEditStore.reconcile(submitted, confirmed)
   -> mutation success UI
   -> server-side CacheEffect
@@ -267,7 +270,7 @@ confirmed cache，也不得演化为 Valtio mirror 或通用 transaction engine�
 
 ### Phase B1：先补正确性闭环
 
-- [x] `Q.dsb.config` 后台更新统一调用 `reconcileConfirmed`；
+- [x] `Q.dsb.slug` 后台更新统一调用 `reconcileConfirmed`；
 - [x] 修复 ThemePreset confirmed/projection 分叉；
 - [x] 保证最终响应聚合完整 `Cache-Tag`；
 - [x] 为 refetch 遇到 touched/untouched 字段补充并发 reconcile 测试。

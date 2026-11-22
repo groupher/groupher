@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const communityActivityConfig = graphql(`
+  "Active Community Activity actions available to the current manager"
   query CommunityActivityConfig($community: String!) {
     communityActivityConfig(community: $community) {
       resources {
@@ -29,6 +30,7 @@ export const communityActivityConfig = graphql(`
 `)
 
 export const exportCommunityActivity = graphql(`
+  "Exports Activity evidence and records the export before returning the artifact"
   mutation ExportCommunityActivity(
     $community: String!
     $selection: CommunityActivitySelectionInput!
@@ -55,6 +57,7 @@ export const exportCommunityActivity = graphql(`
 `)
 
 export const communityActivityEvent = graphql(`
+  "Reads one safe Community Activity event by event reference"
   query CommunityActivityEvent($community: String!, $eventRef: ID!) {
     communityActivityEvent(community: $community, eventRef: $eventRef) {
       id
@@ -202,6 +205,7 @@ export const communityActivityEvent = graphql(`
 `)
 
 export const communityActivity = graphql(`
+  "Safe Community Activity timeline across readable resource streams"
   query CommunityActivity(
     $community: String!
     $selection: CommunityActivitySelectionInput!
@@ -289,6 +293,7 @@ export const communityActivity = graphql(`
 `)
 
 export const communityActivityStats = graphql(`
+  "UTC daily Community Activity counts for the timeline overview"
   query CommunityActivityStats($community: String!, $selection: CommunityActivitySelectionInput!) {
     communityActivityStats(community: $community, selection: $selection) {
       granularity

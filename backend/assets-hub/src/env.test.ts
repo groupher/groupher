@@ -28,6 +28,23 @@ afterEach(async () => {
 })
 
 describe('loadAssetsHubEnvironment', () => {
+  it('does not let application dotenv override the managed Hub environment', async () => {
+    const root = await createEnvironmentRoot()
+    const environment: Record<string, string | undefined> = {
+      DEV_HUB_MANAGED_ENVIRONMENT: 'true',
+      ASSETS_HUB_RUNTIME: 'local',
+      ASSETS_HUB_LOCAL_STORAGE_DIR: '/hub/owned/path',
+      SERVICE_AUTH_CLIENT_ID: 'assets-hub-development',
+      SERVICE_AUTH_CLIENT_SECRET: 'resolved-hub-secret',
+    }
+
+    loadAssetsHubEnvironment(environment, root)
+
+    expect(environment.SERVICE_AUTH_CLIENT_SECRET).toBe('resolved-hub-secret')
+    expect(environment.PHOENIX_GRAPHQL_ENDPOINT).toBeUndefined()
+    expect(environment.ASSETS_HUB_LOCAL_STORAGE_DIR).toBe('/hub/owned/path')
+  })
+
   it('overrides inherited service credentials in the local runtime', async () => {
     const root = await createEnvironmentRoot()
     const environment = {

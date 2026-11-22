@@ -24,6 +24,7 @@ import { markStale } from './invalidation'
 import { viewerQueryKeys } from './key'
 
 const articleViewerStates = graphql(`
+  "Reads current viewer state for up to 100 canonical Article paths; anonymous requests return an empty list"
   query ArticleViewerStates($paths: [ArticlePathInput!]!) {
     articleViewerStates(paths: $paths) {
       community
@@ -35,6 +36,7 @@ const articleViewerStates = graphql(`
 `)
 
 const articleInteractionStates = graphql(`
+  "Reads the current private Article interaction projection for confirmed-write reconciliation"
   query ArticleInteractionStates($paths: [ArticlePathInput!]!) {
     articleInteractionStates(paths: $paths) {
       community
@@ -49,6 +51,7 @@ const articleInteractionStates = graphql(`
 `)
 
 const commentViewerStates = graphql(`
+  "Reads current viewer state for up to 100 canonical Comment references; anonymous requests return an empty list"
   query CommentViewerStates($article: ArticlePathInput!, $commentInnerIds: [ID!]!) {
     commentViewerStates(article: $article, commentInnerIds: $commentInnerIds) {
       innerId

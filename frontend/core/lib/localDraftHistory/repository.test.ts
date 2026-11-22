@@ -9,7 +9,6 @@ const identity: TLocalDraftWorkspaceIdentity = {
   communityId: 'community-1',
   thread: 'doc',
   articleId: 'article-1',
-  branchId: 'main',
 }
 
 const input = (
@@ -17,9 +16,7 @@ const input = (
   overrides: Partial<TLocalDraftWriteInput> = {},
 ): TLocalDraftWriteInput => ({
   ...identity,
-  baseRevisionId: 'revision-1',
-  baseServerDraftVersion: 3,
-  baseServerContentHash: 'server-hash-1',
+  base: { workingCopyId: 'copy-1', revision: 3, snapshotId: null },
   payload: { title, body: [{ text: title }] },
   writerSessionId: 'writer-1',
   ...overrides,
@@ -32,16 +29,36 @@ describe('LocalDraftHistory repository', () => {
   it('classifies synced, local-only, and divergent working copies', async () => {
     const repository = createLocalDraftRepository({ databaseName: databaseName('inspection') })
 
-    expect(await repository.inspectWorkingCopy(identity, 'server-hash-1')).toEqual({
+    expect(await repository.inspectWorkingCopy(identity, input('').base)).toEqual({
       status: 'none',
     })
     expect(await repository.writeWorkingCopy(input('local edit'))).toBe(true)
 
-    const localOnly = await repository.inspectWorkingCopy(identity, 'server-hash-1')
+    const localOnly = await repository.inspectWorkingCopy(identity, input('').base)
     expect(localOnly.status).toBe('local-only')
 
-    const divergent = await repository.inspectWorkingCopy(identity, 'server-hash-2')
+    const divergent = await repository.inspectWorkingCopy(identity, {
+      ...input('').base,
+      revision: 4,
+    })
     expect(divergent.status).toBe('divergent')
+    expect(
+      (
+        await repository.inspectWorkingCopy(identity, {
+          ...input('').base,
+          workingCopyId: 'new-copy-with-same-revision',
+        })
+      ).status,
+    ).toBe('divergent')
+    expect(
+      (
+        await repository.inspectWorkingCopy(identity, {
+          workingCopyId: null,
+          revision: 0,
+          snapshotId: 'published-snapshot',
+        })
+      ).status,
+    ).toBe('divergent')
   })
 
   it('deduplicates recovery payloads and trims the oldest point by workspace budget', async () => {
@@ -68,7 +85,7 @@ describe('LocalDraftHistory repository', () => {
 
   it('clears one workspace without deleting another workspace owned by the account', async () => {
     const repository = createLocalDraftRepository({ databaseName: databaseName('workspace-clear') })
-    const other = { ...identity, branchId: 'preview' }
+    const other = { ...identity, articleId: 'article-2' }
 
     await repository.writeWorkingCopy(input('main'))
     await repository.appendRecoveryPoint(input('main point'))

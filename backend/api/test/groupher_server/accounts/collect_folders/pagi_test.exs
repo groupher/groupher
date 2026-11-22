@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolders.Pagi do
     for post <- posts, do: CollectFolders.add(post, folder.id, user)
 
     hidden = hd(posts)
-    article = Repo.get!(Article, hidden.article_id)
+    article = Repo.get!(Article, hidden.id)
     _lifecycle = Repo.get_by!(ArticleLifecycle, article_id: article.id)
 
     assert {:ok, %ArticleReviewBlock{}} =
@@ -23,6 +23,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolders.Pagi do
                with {:ok, locked} <- CMS.Articles.Lifecycle.lock(article),
                     {:ok, restriction} <-
                       CMS.Articles.Lifecycle.apply_review_block(locked, %{
+                        operation_ref: Ecto.UUID.generate(),
                         scope_key: "platform",
                         type: :manual_hold,
                         source_ref: "collect-folder-test:restricted",

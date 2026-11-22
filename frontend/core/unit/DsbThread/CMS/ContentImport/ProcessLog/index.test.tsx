@@ -63,13 +63,13 @@ describe('ImportProcessLog', () => {
     render(
       <ImportProcessLog
         process={{
-          progress: { completed: 6, total: 12, unit: 'document' },
+          progress: { completed: 6, total: 12, unit: 'DOCUMENT' },
           recentBatch: [
-            { label: 'docs/guide/start.md', ref: 'start', state: 'completed' },
-            { label: 'docs/guide/large.md', ref: 'large', state: 'skipped' },
+            { label: 'docs/guide/start.md', ref: 'start', state: 'COMPLETED' },
+            { label: 'docs/guide/large.md', ref: 'large', state: 'SKIPPED' },
           ],
-          stage: 'preparing',
-          state: 'running',
+          stage: 'PREPARING',
+          state: 'RUNNING',
           updatedAt: '2026-07-22T08:00:00.000Z',
         }}
       />,
@@ -98,8 +98,8 @@ describe('ImportProcessLog', () => {
         disconnected
         process={{
           recentBatch: [],
-          stage: 'building_preview',
-          state: 'running',
+          stage: 'BUILDING_PREVIEW',
+          state: 'RUNNING',
           updatedAt: '2026-07-22T08:00:00.000Z',
         }}
       />,

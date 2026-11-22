@@ -21,7 +21,7 @@ vi.mock('@tanstack/react-query', async () => ({
 vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ slug: 'home' }),
 }))
-vi.mock('~/stores/dsbEdit/hooks', () => ({
+vi.mock('~/stores/dsbShell/hooks', () => ({
   default: () => ({ docCoverLayout: 'OUTLINE_COLUMNS' }),
 }))
 

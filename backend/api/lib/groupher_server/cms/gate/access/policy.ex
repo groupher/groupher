@@ -14,8 +14,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy do
   defdelegate community(actor, action, resource, context), to: Community, as: :check_access
 
   @doc "Evaluates an Article admission policy."
-  defdelegate article(actor, action, resource, context), to: Article, as: :check_access
+  defdelegate article(actor, action, context), to: Article, as: :check_access
 
   @doc "Evaluates a Comment admission policy."
-  defdelegate comment(actor, action, resource, context), to: Comment, as: :check_access
+  defdelegate comment(actor, action, context), to: Comment, as: :check_access
 end

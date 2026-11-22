@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       community_ref: "home",
       thread: :post,
       article_id: article_id,
-      indexed_revision_id: Ecto.UUID.generate(),
+      indexed_snapshot_id: Ecto.UUID.generate(),
       title: title,
       plain_text: "#{title} body",
       locator: %{community: "home", thread: :post, inner_id: to_string(inner_id)},
@@ -118,7 +118,6 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       comments_count: 0,
       inserted_at: now,
       updated_at: now,
-      content_hash: "hash-#{inner_id}",
       schema_version: 1
     }
   end

@@ -11,7 +11,7 @@ vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }
 vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ title: 'Dev', slug: 'dev', logo: '' }),
 }))
-vi.mock('~/stores/dsbConfig/hooks', () => ({ default: () => state }))
+vi.mock('~/stores/dsb/hooks', () => ({ default: () => state }))
 vi.mock('~/Img', () => ({ default: () => null }))
 vi.mock('~/ui/ImgFallback', () => ({ default: () => null }))
 vi.mock('~/ui/Tooltip', () => ({

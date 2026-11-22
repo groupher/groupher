@@ -18,7 +18,7 @@ import { isPaginationRevisionMismatch, loadArticleSurface } from './articleSurfa
 
 const config: TEffectivePagiConfig = {
   api: 'offset',
-  mode: 'page',
+  mode: 'PAGE',
   schemaVersion: 1,
   revision: 1,
   defaultSize: 20,
@@ -52,7 +52,7 @@ const page = (api: 'offset' | 'cursor' = 'offset') => ({
 })
 const setup = () => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  client.setQueryData(dsbKeys.config('home'), {
+  client.setQueryData(dsbKeys.slug('home'), {
     pagiMode: config.mode,
     pagiRevision: config.revision,
   })
@@ -70,7 +70,7 @@ it.each(['posts', 'changelogs'] as const)(
     const fresh = {
       ...config,
       api: 'cursor' as const,
-      mode: 'infinite_scroll' as const,
+      mode: 'INFINITE_SCROLL' as const,
       revision: 2,
     }
     transport.refreshCommunity.mockResolvedValue({

@@ -21,7 +21,6 @@ defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
       else
         quote do
           belongs_to(:article, Model.Article, type: Ecto.UUID)
-          belongs_to(:branch, Model.DocBranch)
         end
       end
 
@@ -37,11 +36,10 @@ defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
       else
         quote do
           struct
-          |> cast(attrs, [:article_id, :branch_id, :emotion])
+          |> cast(attrs, [:article_id, :emotion])
           |> validate_required([:article_id, :emotion])
           |> foreign_key_constraint(:article_id)
-          |> foreign_key_constraint(:branch_id)
-          |> unique_constraint([:article_id, :branch_id, :emotion], name: unquote(unique_index))
+          |> unique_constraint([:article_id, :emotion], name: unquote(unique_index))
         end
       end
 

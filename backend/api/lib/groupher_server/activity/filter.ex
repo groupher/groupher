@@ -81,7 +81,6 @@ defmodule GroupherServer.Activity.Filter do
         actions: [
           :config_updated,
           :published,
-          :publish_restored,
           :released,
           :release_rescheduled,
           :release_withdrawn
@@ -90,7 +89,6 @@ defmodule GroupherServer.Activity.Filter do
       required_actions: [
         :config_updated,
         :published,
-        :publish_restored,
         :released,
         :release_rescheduled,
         :release_withdrawn

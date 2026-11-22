@@ -14,7 +14,7 @@ const scope = { community: 'home', thread: 'POST' as const, articleInnerId: '1' 
 const config = {
   ...DEFAULT_EFFECTIVE_PAGI_CONFIG,
   api: 'cursor' as const,
-  mode: 'load_more' as const,
+  mode: 'LOAD_MORE' as const,
 }
 const root = {
   innerId: '10',

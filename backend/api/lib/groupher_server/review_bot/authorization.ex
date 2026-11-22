@@ -10,16 +10,20 @@ defmodule GroupherServer.ReviewBot.Authorization do
 
   @doc "Authorizes a ReviewBot policy action in a typed scope."
   @spec authorize(map(), :read | :configure, struct()) :: {:ok, :pass} | {:error, term()}
-  def authorize(%{type: :community, community: %Community{slug: slug}}, action, actor)
+  def authorize(%{type: :community, community: %Community{} = community}, action, actor)
       when action in [:read, :configure] do
-    check_permission(actor, "review.#{action}", %{community: slug})
+    check_permission(actor, "review.#{action}", %{community: community})
   end
 
   def authorize(_scope, _action, _actor), do: {:error, CMS.passport_error_cat_permission_denied()}
 
   defp check_permission(actor, action, params) do
-    case CMS.passport_authorization_check(actor, action, params) do
-      {:ok, true} -> {:ok, :pass}
+    with %Community{} = community <- Map.get(params, :community),
+         {:ok, scope} <- CMS.passport_community_scope(actor, community),
+         {:ok, true} <- CMS.passport_allowed?(actor, scope, action) do
+      {:ok, :pass}
+    else
+      {:ok, false} -> {:error, CMS.passport_error_cat_permission_denied()}
       {:error, reason} -> {:error, reason}
       _ -> {:error, CMS.passport_error_cat_permission_denied()}
     end

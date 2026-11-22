@@ -11,13 +11,14 @@ defmodule GroupherServer.Messaging.Config do
   """
 
   @general_config Application.compile_env(:groupher_server, :general, [])
+  @activity_types GroupherServer.Messaging.NoticeContract.activity_types()
 
   @type t :: %__MODULE__{
           notify_actions: [atom()],
           notify_group_interval_hour: pos_integer()
         }
 
-  defstruct notify_actions: Keyword.get(@general_config, :nofity_actions, []),
+  defstruct notify_actions: @activity_types,
             notify_group_interval_hour: Keyword.get(@general_config, :notify_group_interval_hour)
 
   @doc """

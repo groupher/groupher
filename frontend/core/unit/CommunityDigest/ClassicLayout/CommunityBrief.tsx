@@ -9,7 +9,7 @@ import PlusSVG from '~/icons/PlusCircle'
 import GlobalSVG from '~/icons/social/Global'
 import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
-import useDsb from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import Tooltip from '~/ui/Tooltip'
 import CommunityBrand from '~/unit/CommunityBrand'
 

@@ -1,4 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
+import { CONTENT_HISTORY_ORIGIN_SCOPE } from '@groupher/contracts/content-publish'
 
 export type TServiceTokenRequest = {
   resource: string
@@ -37,6 +38,7 @@ export const serviceTokenErrorStatus = (error: unknown): 401 | 403 =>
 type TTokenResponse = {
   access_token?: unknown
   expires_in?: unknown
+  scope?: unknown
   token_type?: unknown
 }
 
@@ -95,6 +97,14 @@ export const createServiceAuthClient = ({
       typeof payload.expires_in !== 'number'
     ) {
       throw new Error(`Service token acquisition failed with status ${response.status}.`)
+    }
+
+    const originScopes: readonly string[] = Object.values(CONTENT_HISTORY_ORIGIN_SCOPE)
+    if (request.scopes.some((scope) => originScopes.includes(scope))) {
+      const granted = new Set(typeof payload.scope === 'string' ? payload.scope.split(/\s+/) : [])
+      if (request.scopes.some((scope) => !granted.has(scope))) {
+        throw new Error('Service token is missing a requested content history capability.')
+      }
     }
 
     cache.set(cacheKey(request), {

@@ -66,8 +66,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocReindexTag do
 
       passport_rules = %{
         community.title => %{
-          "community.update" => true,
-          "doc.community_tag.update" => true
+          "community_tag.reindex" => true
         }
       }
 

@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const updateDashboardBaseInfo = graphql(`
+  "Update base info in dashboard"
   mutation UpdateDashboardBaseInfo(
     $community: String!
     $commandId: ID!
@@ -40,6 +41,7 @@ export const updateDashboardBaseInfo = graphql(`
 `)
 
 export const updateDashboardMediaReports = graphql(`
+  "Update media reports in dashboard"
   mutation UpdateDashboardMediaReports(
     $community: String!
     $commandId: ID!
@@ -62,6 +64,7 @@ export const updateDashboardMediaReports = graphql(`
 `)
 
 export const updateDashboardThirdPartyAnalytics = graphql(`
+  "Update third-party analytics integrations in dashboard"
   mutation UpdateDashboardThirdPartyAnalytics(
     $community: String!
     $commandId: ID!
@@ -80,6 +83,7 @@ export const updateDashboardThirdPartyAnalytics = graphql(`
 `)
 
 export const updateDashboardSeo = graphql(`
+  "Update seo in dashboard"
   mutation UpdateDashboardSeo(
     $community: String!
     $commandId: ID!
@@ -128,6 +132,7 @@ export const updateDashboardSeo = graphql(`
 `)
 
 export const updateDashboardEnable = graphql(`
+  "Update enable in dashboard"
   mutation UpdateDashboardEnable(
     $community: String!
     $commandId: ID!
@@ -182,6 +187,7 @@ export const updateDashboardEnable = graphql(`
 `)
 
 export const updateDashboardSocialLinks = graphql(`
+  "Update social links in dashboard"
   mutation UpdateDashboardSocialLinks(
     $community: String!
     $commandId: ID!
@@ -201,6 +207,7 @@ export const updateDashboardSocialLinks = graphql(`
 `)
 
 export const updateDashboardNameAlias = graphql(`
+  "Update name alias in dashboard"
   mutation UpdateDashboardNameAlias(
     $community: String!
     $commandId: ID!
@@ -247,6 +254,7 @@ export const updateDashboardDocFaq = graphql(`
 `)
 
 export const updateDashboardHeaderLinks = graphql(`
+  "Update header links in dashboard"
   mutation UpdateDashboardHeaderLinks(
     $community: String!
     $commandId: ID!
@@ -265,6 +273,7 @@ export const updateDashboardHeaderLinks = graphql(`
 `)
 
 export const updateDashboardFooterLinks = graphql(`
+  "Update footer links in dashboard"
   mutation UpdateDashboardFooterLinks(
     $community: String!
     $commandId: ID!
@@ -283,6 +292,7 @@ export const updateDashboardFooterLinks = graphql(`
 `)
 
 export const updateDashboardFooterOnelineLinks = graphql(`
+  "Update footer oneline links in dashboard"
   mutation UpdateDashboardFooterOnelineLinks(
     $community: String!
     $commandId: ID!
@@ -315,6 +325,7 @@ export default {
 }
 
 export const updateDashboardPagiMode = graphql(`
+  "Updates the community-wide list interaction preference"
   mutation UpdateDashboardPagiMode(
     $community: String!
     $mode: PagiMode!

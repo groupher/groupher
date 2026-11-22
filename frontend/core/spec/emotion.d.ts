@@ -1,10 +1,9 @@
-import type EMOTION from '~/const/emotion'
-import type { TConstValues } from '~/spec'
+import type { EmotionType } from '~/lib/graphql/generated/graphql'
 
 import type { TSimpleUser } from './account'
 
-export type TEmotionType = TConstValues<typeof EMOTION>
-export type TEmotionRawType = Uppercase<TEmotionType> | 'UPVOTE'
+export type TEmotionType = Exclude<EmotionType, 'UPVOTE'>
+export type TEmotionRawType = EmotionType
 
 export type TEmotion = {
   type?: TEmotionRawType

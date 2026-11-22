@@ -12,6 +12,7 @@ defmodule GroupherServerWeb.Schema.AlertWall.Mutations do
   use Helper.GqlSchemaSuite
 
   object :alert_wall_mutations do
+    @desc "Submits a report for a target to AlertWall."
     field :submit_report, non_null(:alert_report) do
       arg(:input, non_null(:alert_report_input))
       arg(:command_id, non_null(:id))
@@ -19,6 +20,7 @@ defmodule GroupherServerWeb.Schema.AlertWall.Mutations do
       resolve(&R.AlertWall.submit_report/3)
     end
 
+    @desc "Withdraws a report submitted by the current user."
     field :withdraw_report, non_null(:alert_report) do
       arg(:report_id, non_null(:id))
       arg(:command_id, non_null(:id))
@@ -26,6 +28,7 @@ defmodule GroupherServerWeb.Schema.AlertWall.Mutations do
       resolve(&R.AlertWall.withdraw_report/3)
     end
 
+    @desc "Resolves an alert item using its expected version."
     field :resolve_alert_item, non_null(:alert_wall_command_result) do
       arg(:id, non_null(:id))
       arg(:resolution, non_null(:string))

@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   @moduledoc """
   Stable CMS facade for single-resource reads and relationship lookup.
 
-  `:public` is the default read mode. `:management` requires an actor and
+  `:public` is the default read mode. `:admin` requires an actor and
   delegates actor/resource policy to Gate. `:internal` is reserved for trusted
   backend command, event, and recovery reads. Bounded Article and Comment batch
   reads are implemented by their owning Query modules and exposed here; writes
@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.FrontDesk do
     to: CommentFrontDesk,
     as: :read_mentioned
 
-  @doc "Reads one Community by id or public slug in the default public mode."
+  @doc "Reads one Community by id, public slug, or explicit {:ref, stable_ref} locator."
   def community(ref), do: Community.read(ref)
 
   @doc "Reads one Community with an explicit mode and optional named view."
@@ -68,7 +68,8 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   ## Examples
 
-      CMS.FrontDesk.community(community_slug, actor, mode: :management)
+      CMS.FrontDesk.community(community_slug, actor, mode: :admin)
+      CMS.FrontDesk.community({:ref, stable_ref}, actor, mode: :admin)
   """
   @spec community(term(), term(), keyword()) :: T.domain_res(CMS.Model.Community.t())
   def community(ref, actor, opts), do: Community.read(ref, actor, opts)
@@ -167,9 +168,25 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec article(ArticlePath.t() | String.t(), term()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, actor), do: Article.read(article_path, actor, [])
 
-  @doc "Reads a public or management Article path with actor and explicit options."
+  @doc "Reads a bounded Article batch or one Article with the actor-aware public/admin contract."
+  @spec article([ArticlePath.t()], term(), keyword()) ::
+          {:ok, [CMS.Model.Article.t()]} | {:error, term()}
+  def article(article_paths, actor, opts) when is_list(article_paths) and is_list(opts) do
+    CMS.Articles.Query.Locator.resolve(article_paths, actor, opts)
+  end
+
   @spec article(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, actor, opts), do: Article.read(article_path, actor, opts)
+
+  @doc "Reads an explicitly selected Article Snapshot after edit admission."
+  def article_snapshot(article_id, snapshot_id, community, actor, opts \\ []) do
+    Article.read_snapshot(article_id, snapshot_id, community, actor, opts)
+  end
+
+  @doc "Reads an explicitly selected Article WorkingCopy after edit admission."
+  def article_working_copy(article_id, working_copy_id, community, actor, opts \\ []) do
+    Article.read_working_copy(article_id, working_copy_id, community, actor, opts)
+  end
 
   @doc "Resolves the canonical relationship between one Article and one Community."
   @spec resolve_binding(term(), term()) ::

@@ -136,7 +136,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         )
 
       {:ok, comments} =
-        comment_page(:blog, blog.article_id, %{page: 1, size: 20}, :replies)
+        comment_page(:blog, blog.id, %{page: 1, size: 20}, :replies)
 
       assert exist_in?(blog_comment_1, comments.entries)
       assert exist_in?(blog_comment_2, comments.entries)
@@ -170,7 +170,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      blog_after = Repo.get!(CMS.Model.Article, blog.article_id)
+      blog_after = Repo.get!(CMS.Model.Article, blog.id)
 
       assert not is_nil(blog.active_at)
       assert blog_after.active_at > blog.inserted_at
@@ -179,11 +179,19 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
     test "blog author create comment will not update active timestamp",
          ~m(community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
-      article_before = Repo.get!(CMS.Model.Article, blog.article_id)
+
+      {:ok, blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_attrs,
+          user
+        )
+
+      article_before = Repo.get!(CMS.Model.Article, blog.id)
 
       Process.sleep(1000)
-      author = blog.author
+      author = blog.author.user
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -195,7 +203,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      article_after = Repo.get!(CMS.Model.Article, blog.article_id)
+      article_after = Repo.get!(CMS.Model.Article, blog.id)
 
       assert not is_nil(article_after.active_at)
       assert article_after.active_at == article_before.active_at
@@ -208,7 +216,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       blog_attrs = mock_attrs(:blog)
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+
+      {:ok, blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_attrs,
+          user
+        )
 
       Process.sleep(1000)
 
@@ -222,7 +237,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      article = Repo.get!(CMS.Model.Article, blog.article_id)
+      article = Repo.get!(CMS.Model.Article, blog.id)
 
       assert article.active_at |> DateTime.to_date() == cur_date
 
@@ -233,9 +248,16 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         |> Datetime.to_datetime()
 
       blog_attrs = mock_attrs(:blog)
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-      article = Repo.get!(CMS.Model.Article, blog.article_id)
+      {:ok, blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_attrs,
+          user
+        )
+
+      article = Repo.get!(CMS.Model.Article, blog.id)
 
       {:ok, _article} =
         article
@@ -254,7 +276,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      article = Repo.get!(CMS.Model.Article, blog.article_id)
+      article = Repo.get!(CMS.Model.Article, blog.id)
       assert article.active_at == inserted_at
     end
 
@@ -328,7 +350,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:blog, blog.article_id, nil, community.slug)
+      {:ok, state} = CMS.Comments.comments_state(:blog, blog.id, nil, community.slug)
 
       participator = List.first(state.participants)
       assert participator.id == user.id
@@ -355,7 +377,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:blog, blog.article_id, nil, community.slug)
+      {:ok, state} = CMS.Comments.comments_state(:blog, blog.id, nil, community.slug)
 
       assert 1 == length(state.participants)
     end
@@ -382,7 +404,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:blog, blog.article_id, nil, community.slug)
+      {:ok, state} = CMS.Comments.comments_state(:blog, blog.id, nil, community.slug)
 
       participator = List.first(state.participants)
 
@@ -444,7 +466,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      author_user = blog.author
+      author_user = blog.author.user
 
       CMS.Interactions.upvote(comment, author_user, Ecto.UUID.generate())
 
@@ -649,7 +671,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, folded} =
         shared_comment_page(
           :blog,
-          blog.article_id,
+          blog.id,
           %{},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
@@ -683,7 +705,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, folded} =
         shared_comment_page(
           :blog,
-          blog.article_id,
+          blog.id,
           %{},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
@@ -717,8 +739,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       assert comment.is_pinned
 
-      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{article_id: blog.article_id})
-      assert pined_record.article_id == blog.article_id
+      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{article_id: blog.id})
+      assert pined_record.article_id == blog.id
     end
 
     test "user can unpin a comment", ~m(community user blog)a do
@@ -1129,13 +1151,13 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, stats} = CMS.ArticleStats.fetch(:blog, blog.article_id)
+      {:ok, stats} = CMS.ArticleStats.fetch(:blog, blog.id)
 
       assert stats.comments_count == 5
 
       {:ok, _} = CMS.Comments.delete_comment(comment, user, Ecto.UUID.generate())
 
-      {:ok, stats} = CMS.ArticleStats.fetch(:blog, blog.article_id)
+      {:ok, stats} = CMS.ArticleStats.fetch(:blog, blog.id)
       assert stats.comments_count == 4
     end
 
@@ -1182,7 +1204,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       assert not comment.is_article_author
 
-      author_user = blog.author
+      author_user = blog.author.user
 
       {:ok, comment} =
         CMS.Comments.create_comment(

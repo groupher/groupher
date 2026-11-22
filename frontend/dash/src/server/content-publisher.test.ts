@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { handleContentPublishRequest } from './content-publisher'
 
 const command = {
-  action: CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT,
+  action: CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY,
   commandId: '00000000-0000-4000-8000-000000000001',
-  expectedVersion: 3,
+  revision: 3,
   payload: {
     content: {
       format: CONTENT_SOURCE_FORMAT.PLATE,
@@ -16,7 +16,7 @@ const command = {
     subtitle: '',
     title: 'Draft',
   },
-  target: { community: 'home', documentId: 'doc-id' },
+  target: { community: 'home', articleId: 'doc-id', workingCopyId: 'work-id' },
 } as const
 
 const request = (body: unknown = command, headers: HeadersInit = {}) =>
@@ -29,9 +29,51 @@ const request = (body: unknown = command, headers: HeadersInit = {}) =>
 const serviceAuthClient = { getToken: vi.fn(async () => 'service-token') }
 
 describe('handleContentPublishRequest', () => {
+  it('sends Docs Queue content with both expected revisions through the trusted adapter', async () => {
+    const saveCommand = {
+      action: CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY,
+      commandId: '00000000-0000-4000-8000-000000000004',
+      revision: 3,
+      queueRevision: 5,
+      payload: {
+        content: {
+          format: CONTENT_SOURCE_FORMAT.PLATE,
+          value: [{ children: [{ text: 'Queue' }], type: 'p' }],
+        },
+        title: 'Queue',
+        subtitle: '',
+        slug: 'queue',
+      },
+      target: { articleId: 'doc-id', community: 'home' },
+    }
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const upstream = JSON.parse(String(init?.body))
+      expect(upstream.query).toContain('saveDocsQueueCopy(')
+      expect(upstream.variables).toMatchObject({
+        articleId: 'doc-id',
+        queueRevision: 5,
+        workingCopyRevision: 3,
+        title: 'Queue',
+      })
+      expect(typeof upstream.variables.bodyBag.thumbnail).toBe('string')
+      return Response.json({
+        data: { saveDocsQueueCopy: { queueRevision: 6, workingCopyRevision: 4 } },
+      })
+    })
+    const response = await handleContentPublishRequest(request(saveCommand), {
+      backendToken: 'user-token',
+      fetcher: fetcher as typeof fetch,
+      serviceAuthClient,
+    })
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      result: { queueRevision: 6, workingCopyRevision: 4 },
+    })
+  })
   it('uses the deployed GraphQL binding before legacy endpoint names', async () => {
     const fetcher = vi.fn(async () =>
-      Response.json({ data: { updateDocDraft: { docId: 'doc-id', version: 4 } } }),
+      Response.json({ data: { saveWorkingCopy: { docId: 'doc-id', version: 4 } } }),
     )
 
     await handleContentPublishRequest(request(), {
@@ -50,7 +92,7 @@ describe('handleContentPublishRequest', () => {
   it('calls the Workers fetch implementation without an object receiver', async () => {
     const fetcher = vi.fn(async function (this: unknown) {
       if (this !== undefined) throw new TypeError('Illegal invocation')
-      return Response.json({ data: { updateDocDraft: { docId: 'doc-id', version: 4 } } })
+      return Response.json({ data: { saveWorkingCopy: { docId: 'doc-id', version: 4 } } })
     })
     const response = await handleContentPublishRequest(request(), {
       backendToken: 'user-token',
@@ -65,10 +107,10 @@ describe('handleContentPublishRequest', () => {
   it('uses a fixed operation and separates service and user credentials', async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const upstream = JSON.parse(String(init?.body))
-      expect(upstream.query).toContain('mutation UpdateDocDraft')
+      expect(upstream.query).toContain('mutation SaveWorkingCopy')
       expect(upstream.variables).toMatchObject({
         commandId: command.commandId,
-        expectedVersion: command.expectedVersion,
+        revision: command.revision,
         title: command.payload.title,
       })
       expect(upstream.variables.bodyBag.html).toContain('Draft')
@@ -77,7 +119,7 @@ describe('handleContentPublishRequest', () => {
       expect(new Headers(init?.headers).get('x-groupher-user-authorization')).toBe(
         'Bearer user-token',
       )
-      return Response.json({ data: { updateDocDraft: { docId: 'doc-id', version: 4 } } })
+      return Response.json({ data: { saveWorkingCopy: { docId: 'doc-id', version: 4 } } })
     })
 
     const response = await handleContentPublishRequest(request(), {
@@ -92,7 +134,104 @@ describe('handleContentPublishRequest', () => {
     expect(JSON.stringify(payload)).not.toContain('bodyBag')
     expect(serviceAuthClient.getToken).toHaveBeenCalledWith({
       resource: 'https://api.groupher.com/content-publisher',
-      scopes: ['content:doc:write'],
+      scopes: ['content:article:write', 'content:history:browser'],
+    })
+  })
+
+  it('creates an Article and its default WorkingCopy through createArticle', async () => {
+    const createCommand = {
+      action: CONTENT_PUBLISH_ACTION.CREATE_ARTICLE,
+      commandId: '00000000-0000-4000-8000-000000000002',
+      payload: {
+        content: {
+          format: CONTENT_SOURCE_FORMAT.PLATE,
+          value: [{ children: [{ text: 'Published' }], id: 'node-1', type: 'p' }],
+        },
+        digest: 'Published summary',
+        slug: 'published',
+        tagIds: [],
+        title: 'Published article',
+      },
+      target: { community: 'home', thread: 'post' },
+    } as const
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const upstream = JSON.parse(String(init?.body))
+      expect(upstream.query).toContain('mutation CreateArticle')
+      expect(upstream.query).toContain('createArticle(')
+      expect(upstream.query).not.toContain('createPost(')
+      expect(upstream.variables).toMatchObject({
+        commandId: createCommand.commandId,
+        community: 'home',
+        digest: 'Published summary',
+        slug: 'published',
+        thread: 'POST',
+        title: 'Published article',
+      })
+      return Response.json({
+        data: { createArticle: { articleId: 'article-id', revision: 1 } },
+      })
+    })
+
+    const response = await handleContentPublishRequest(request(createCommand), {
+      backendToken: 'user-token',
+      fetcher: fetcher as typeof fetch,
+      serviceAuthClient,
+    })
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      result: { articleId: 'article-id', revision: 1 },
+    })
+  })
+
+  it('sends the Article WorkingCopy revision unchanged to saveWorkingCopy', async () => {
+    const saveCommand = {
+      action: CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY,
+      commandId: '00000000-0000-4000-8000-000000000003',
+      revision: 7,
+      payload: {
+        content: {
+          format: CONTENT_SOURCE_FORMAT.PLATE,
+          value: [{ children: [{ text: 'Saved' }], id: 'node-2', type: 'p' }],
+        },
+        tagIds: ['tag-1'],
+        title: 'Saved article',
+        linkAddr: 'https://example.test/source',
+        subtitle: 'Saved subtitle',
+      },
+      target: { articleId: 'article-id', community: 'home', workingCopyId: 'working-copy-id' },
+    } as const
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const upstream = JSON.parse(String(init?.body))
+      expect(upstream.query).toContain('mutation SaveWorkingCopy')
+      expect(upstream.query).toContain('saveWorkingCopy(')
+      expect(upstream.variables).toMatchObject({
+        articleId: 'article-id',
+        commandId: saveCommand.commandId,
+        revision: 7,
+        tagIds: ['tag-1'],
+        title: 'Saved article',
+        linkAddr: 'https://example.test/source',
+        subtitle: 'Saved subtitle',
+        workingCopyId: 'working-copy-id',
+      })
+      expect(upstream.variables).not.toHaveProperty('expectedVersion')
+      expect(typeof upstream.variables.bodyBag.thumbnail).toBe('string')
+      expect(JSON.parse(upstream.variables.bodyBag.thumbnail)).toMatchObject({ version: 1 })
+      return Response.json({ data: { saveWorkingCopy: { id: 'working-copy-id', revision: 8 } } })
+    })
+
+    const response = await handleContentPublishRequest(request(saveCommand), {
+      backendToken: 'user-token',
+      fetcher: fetcher as typeof fetch,
+      serviceAuthClient,
+    })
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      result: { id: 'working-copy-id', revision: 8 },
     })
   })
 
@@ -195,9 +334,10 @@ describe('handleContentPublishRequest', () => {
   })
 
   it.each([
-    ['Doc Draft version conflict', 4539],
-    ['Comment body version conflict', 4540],
-  ])('maps %s to a stable 409 response', async (_name, code) => {
+    ['Doc Draft version conflict', 4539, 'version_conflict'],
+    ['Comment body version conflict', 4540, 'version_conflict'],
+    ['Article WorkingCopy revision conflict', 4561, 'revision_conflict'],
+  ])('maps %s to a stable 409 response', async (_name, code, errorCode) => {
     const response = await handleContentPublishRequest(request(), {
       backendToken: 'user-token',
       fetcher: vi.fn(async () =>
@@ -208,7 +348,7 @@ describe('handleContentPublishRequest', () => {
 
     expect(response.status).toBe(409)
     await expect(response.json()).resolves.toMatchObject({
-      error: { code: 'version_conflict' },
+      error: { code: errorCode },
       ok: false,
     })
   })

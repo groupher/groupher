@@ -15,21 +15,32 @@ defmodule GroupherServer.CMS.Communities.Tags.Effects do
   alias GroupherServer.CMS
   alias CMS.Model.Community
 
-  @type identity :: {:command | :workflow, String.t()}
+  alias CMS.Outbox.DedupeKey
 
   @doc "Records one taxonomy invalidation in the caller-owned transaction."
-  @spec enqueue_taxonomy_changed(Community.t(), atom(), identity(), String.t()) ::
+  @spec enqueue_taxonomy_changed(Community.t(), atom(), Ecto.UUID.t()) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_taxonomy_changed(%Community{} = community, thread, identity, effect_key)
-      when is_atom(thread) and is_binary(effect_key) do
+  def enqueue_taxonomy_changed(%Community{} = community, thread, operation_ref)
+      when is_atom(thread) and is_binary(operation_ref) do
     CMS.Outbox.send(%{
       event: "community.taxonomy_changed",
       worker: GroupherServer.Jobs.CMSOutboxCommunity,
       resource_type: "community",
       resource_id: community.id,
-      identity: identity,
-      effect_key: effect_key,
+      operation_ref: operation_ref,
+      dedupe_key: DedupeKey.encode([community.id, thread, operation_ref]),
       data: %{community: community.slug, community_id: community.id, thread: thread}
     })
+  end
+
+  @doc "Projects immutable business fields for duplicate Outbox comparison."
+  def payload_projection(event, data) do
+    case event do
+      "community.taxonomy_changed" ->
+        CMS.Outbox.Event.project_fields(data, ["community", "community_id", "thread"])
+
+      _ ->
+        {:error, {:outbox_event_owner_missing, event}}
+    end
   end
 end
