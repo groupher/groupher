@@ -2,9 +2,10 @@ defmodule GroupherServer.Test.CMS.Articles.CommunityDocTrashQueryTest do
   use GroupherServer.TestMate, async: false
 
   alias Ecto.Adapters.SQL.Sandbox
-  alias GroupherServer.CMS.DocTree.CommunityTrashQuery
+  alias GroupherServer.CMS
+  alias CMS.DocTree.CommunityTrashQuery
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     CommunityAdmin,
     DocsPublishQueue,
     DocsTrashedTreeNode,

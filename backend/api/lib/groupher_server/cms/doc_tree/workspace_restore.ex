@@ -150,8 +150,9 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
   end
 
   defp prepare_parent(_public, _draft, current, _wanted, _root, parent)
-       when parent in [nil, :restore_original],
-       do: {:ok, current}
+       when parent in [nil, :restore_original] do
+    {:ok, current}
+  end
 
   defp prepare_parent(public, draft, current, wanted, root, parent) do
     if Enum.any?(wanted, &(&1.node_id == root)) do

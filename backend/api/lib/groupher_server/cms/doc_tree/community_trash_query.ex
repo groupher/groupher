@@ -392,8 +392,9 @@ defmodule GroupherServer.CMS.DocTree.CommunityTrashQuery do
     end
   end
 
-  defp node_snapshot(node),
-    do: node.draft_snapshot || node.public_snapshot || node.queue_snapshot || %{}
+  defp node_snapshot(node) do
+    node.draft_snapshot || node.public_snapshot || node.queue_snapshot || %{}
+  end
 
   defp revision_token(community, action, tree_revision, queue_revision) do
     payload =

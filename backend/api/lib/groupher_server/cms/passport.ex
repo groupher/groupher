@@ -14,7 +14,8 @@ defmodule GroupherServer.CMS.Passport do
 
   alias __MODULE__.{Authorization, Store}
   alias __MODULE__.Scope.{Article, Community, Global}
-  alias GroupherServer.CMS.Communities.Passport, as: CommunityPassport
+  alias GroupherServer.CMS
+  alias CMS.Communities.Passport, as: CommunityPassport
 
   @doc "Lists Passport assignments for a Community."
   defdelegate paged_passports(community, key), to: CommunityPassport
