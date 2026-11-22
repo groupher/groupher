@@ -177,6 +177,25 @@ describe('ArticleCoAuthors', () => {
     )
   })
 
+  it('keeps the candidate search when an invitation fails so the owner can retry', async () => {
+    mocks.executeCommand.mockRejectedValueOnce(new Error('invite failed'))
+    const { dialog } = await renderManager()
+
+    const search = await within(dialog).findByRole('textbox', {
+      name: 'dsb.cms.coauthors.search_label',
+    })
+    fireEvent.change(search, { target: { value: 'Candidate' } })
+
+    fireEvent.click(
+      await within(dialog).findByRole('button', {
+        name: 'dsb.cms.coauthors.invite_action',
+      }),
+    )
+
+    await waitFor(() => expect(mocks.toast).toHaveBeenCalledWith('invite failed', 'error'))
+    expect(search).toHaveValue('Candidate')
+  })
+
   it('lets the invited subject accept or decline their pending invitation', async () => {
     mocks.accountLogin = 'subject'
     mocks.browserGraphQLRequest.mockImplementation(async (document) => {

@@ -93,10 +93,12 @@ export default function ArticleCoAuthors({ article }: TProps) {
   })
 
   const refresh = async () => invalidatePrefix(queryClient, queryPrefix)
-  const run = async (key: string, action: () => Promise<unknown>) => {
+  const run = async (key: string, action: () => Promise<unknown>): Promise<boolean> => {
     setPendingKey(key)
+    let succeeded = false
     try {
       await action()
+      succeeded = true
       await refresh()
     } catch (error) {
       toast(
@@ -106,10 +108,12 @@ export default function ArticleCoAuthors({ article }: TProps) {
     } finally {
       setPendingKey(null)
     }
+
+    return succeeded
   }
 
   const invite = async (subjectLogin: string) => {
-    await run(`invite:${subjectLogin}`, () =>
+    const succeeded = await run(`invite:${subjectLogin}`, () =>
       executeCommand({
         request: (variables) => browserGraphQLRequest(S.createArticleCoAuthorRequest, variables),
         variables: {
@@ -120,7 +124,7 @@ export default function ArticleCoAuthors({ article }: TProps) {
         },
       }),
     )
-    setSearch('')
+    if (succeeded) setSearch('')
   }
 
   const decide = (
