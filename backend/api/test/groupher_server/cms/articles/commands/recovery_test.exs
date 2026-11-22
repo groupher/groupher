@@ -632,9 +632,8 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
              CMS.Gate.Access.Check.article(author, :edit, forged, community)
   end
 
-  test "Article admission uses the canonical Community rather than a forged slug" do
-    {community, public, _attrs, _author} = mock_article(:post)
-    article = Repo.get!(Article, public.id)
+  test "Community admission uses the canonical Community rather than a forged slug" do
+    {community, _public, _attrs, _author} = mock_article(:post)
     {:ok, other} = db_insert(:user)
     forged_slug = "forged-#{Ecto.UUID.generate()}"
 
@@ -647,7 +646,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     forged_community = %{community | slug: forged_slug}
 
     assert {:error, %CMS.Gate.Decision{allowed: false}} =
-             CMS.Gate.Access.Check.article(other, :edit, article, forged_community)
+             CMS.Gate.Access.Check.community(other, :pin, forged_community)
   end
 
   test "a Passport editor cannot save a published Article WorkingCopy" do

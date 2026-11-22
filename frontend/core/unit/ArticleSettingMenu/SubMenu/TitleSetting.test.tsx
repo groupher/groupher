@@ -71,4 +71,34 @@ describe('TitleSetting', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Server title v2'))
     expect(input).toHaveValue('My local title')
   })
+
+  it('does not show the cached title as current when the conflict refresh fails', async () => {
+    mocks.browserGraphQLRequest
+      .mockResolvedValueOnce(workingCopy(1, 'Cached server title'))
+      .mockRejectedValueOnce(new Error('refresh failed'))
+    mocks.saveWorkingCopy.mockResolvedValue({
+      error: new GraphQLRequestError(Response.json({}), [{ extensions: { code: 4561 } }]),
+    })
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TitleSetting onBack={vi.fn()} />
+      </QueryClientProvider>,
+    )
+
+    const input = await screen.findByRole('textbox')
+    fireEvent.change(input, { target: { value: 'My local title' } })
+    const confirm = screen.getByRole('button', { name: '确认' })
+    await waitFor(() => expect(confirm).toBeEnabled())
+    fireEvent.click(confirm)
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('最新服务端标题：暂不可用'),
+    )
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Cached server title')
+    expect(input).toHaveValue('My local title')
+  })
 })
