@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { GraphQLRequestError } from '~/graphql/client'
@@ -109,10 +109,12 @@ describe('TitleSetting', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent('Cached server title')
     expect(input).toHaveValue('My local title')
 
-    queryClient.setQueryData(
-      ['article-working-copies', 'article-id', 'community'],
-      workingCopy(2, 'Refreshed server title'),
-    )
+    act(() => {
+      queryClient.setQueryData(
+        ['article-working-copies', 'article-id', 'community'],
+        workingCopy(2, 'Refreshed server title'),
+      )
+    })
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('Refreshed server title'),
     )
