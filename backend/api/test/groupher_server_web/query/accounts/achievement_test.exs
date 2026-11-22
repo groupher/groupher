@@ -3,11 +3,12 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.CommunityAdmin
+  alias GroupherServer
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.Model.CommunityAdmin
 
-  @follow_weight GroupherServer.Accounts.Config.achieve_follow_weight()
-  @collect_weight GroupherServer.Accounts.Config.achieve_collect_weight()
+  @follow_weight Accounts.Config.achieve_follow_weight()
+  @collect_weight Accounts.Config.achieve_collect_weight()
   # @upvote_weight GroupherServer.Accounts.Config.achieve_upvote_weight()
 
   setup do
