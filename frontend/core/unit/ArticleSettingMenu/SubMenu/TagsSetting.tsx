@@ -14,6 +14,7 @@ import Checker from '~/ui/Checker'
 import TagNode from '~/ui/TagNode'
 import { toast } from '~/ui/Toaster'
 
+import { isWorkingCopyRevisionConflict } from '../helper'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
@@ -27,6 +28,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const s = useSalon()
 
   const [checked, setChecked] = useState<TID[]>([])
+  const [revisionConflict, setRevisionConflict] = useState(false)
   const { touched, setTouched, resetTouched } = useTouched()
 
   const { slug: community } = useCommunity()
@@ -50,10 +52,14 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const [saveResult, saveWorkingCopy] = useArticleSettingMutation(S.saveWorkingCopy)
 
   const tags = (result.data?.flatMap((group) => group.tags) || []) as unknown as TTag[]
+  const latestTagTitles = tags
+    .filter((tag) => tag.id !== undefined && workingCopy?.tagIds?.includes(tag.id as TID))
+    .map((tag) => tag.title)
+    .join('、')
 
   useEffect(() => {
-    setChecked((workingCopy?.tagIds || []) as TID[])
-  }, [workingCopy?.tagIds])
+    if (!touched) setChecked((workingCopy?.tagIds || []) as TID[])
+  }, [touched, workingCopy?.tagIds])
 
   const handleCheck = (id: TID, toggle: boolean): void => {
     const checkedIds = checked || []
@@ -79,11 +85,18 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
     })
 
     if (result.error || !result.data?.saveWorkingCopy) {
-      toast('编辑副本标签保存失败，请重新加载后重试', 'error')
+      if (isWorkingCopyRevisionConflict(result.error)) {
+        setRevisionConflict(true)
+        await workingCopiesQuery.refetch()
+        toast('检测到协作者已保存新版本。你的标签修改已保留，请核对后再保存。', 'error')
+      } else {
+        toast('编辑副本标签保存失败，请重新加载后重试', 'error')
+      }
       return
     }
 
     toast('标签已保存到默认编辑副本；公开版本未变')
+    setRevisionConflict(false)
     await workingCopiesQuery.refetch()
     resetTouched()
   }
@@ -109,6 +122,12 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
           <Checker size='small' checked={includes(item.id, checked)} />
         </button>
       ))}
+
+      {revisionConflict ? (
+        <div role='alert' className='text-digest mt-2 text-xs'>
+          最新服务端标签：{latestTagTitles || '无'}。本地未保存选择仍保留；请核对差异后再确认保存。
+        </div>
+      ) : null}
 
       <Footer
         onBack={onBack}

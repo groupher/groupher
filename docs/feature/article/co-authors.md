@@ -188,7 +188,7 @@ article.author.manage 明确包含完整成员 / 请求管理读取、邀请、a
 
 decide 接收 decision，apply accept 带 approvedPermissions，invite accept 使用持久化提议。响应含 requestId / revision / decision 及当前 member 身份 / revision，不以收到通知推断成功。
 
-Dash 的 Post / Changelog 列表及 Docs Article 编辑器工具栏共用协作者管理面板，支持 Article 管理者搜索邀请、查看与调整成员权限、移除成员，并支持请求处理。Docs 工具栏只提供 Article 协作者管理入口，不切换 Docs 的正文编辑准入；Docs 正文授权仍归 D1。C2 后端已按当前 Article scope 准入 `edit_article` 并执行历史贡献者和 Review 自审检查；当前用户权限 GraphQL 字段已提供。普通 Article 正文编辑入口的接线仍需保留本地脏内容和 revision 冲突提示。后端按当前 Article ID 校验成员与历史访问权限，发布仍需有效产品入口。
+Dash 的 Post / Changelog 列表及 Docs Article 编辑器工具栏共用协作者管理面板，支持 Article 管理者搜索邀请、查看与调整成员权限、移除成员，并支持请求处理。Docs 工具栏只提供 Article 协作者管理入口，不切换 Docs 的正文编辑准入；Docs 正文授权仍归 D1。C2 后端已按当前 Article scope 准入 `edit_article` 并执行历史贡献者和 Review 自审检查；当前用户权限 GraphQL 字段已提供。普通 Article 详情设置菜单现有标题 / 标签 WorkingCopy 编辑接入协作者准入；revision 冲突后刷新远端值、保留本地脏修改并提示用户核对，覆盖行为需用户再次确认。正文保存与发布已有后端和 GraphQL 合同，浏览器双账号验收仍待完成。后端按当前 Article ID 校验成员与历史访问权限。
 
 ## 6. 实施与验收
 
@@ -196,7 +196,7 @@ Dash 的 Post / Changelog 列表及 Docs Article 编辑器工具栏共用协作�
 | ---- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | C0   | Article 成员 / 请求数据、Passport scope 及 Article grant/revoke facade    | schema、permission contract、grant/revoke 和 fail-closed 范围检查已落地，co-author Passport/Gate focused tests 通过                                                                                                                                                                                                                                                          |
 | C1   | 请求 / 成员 Command、Receipt、授权事件、Outbox 意图及 GraphQL / Dash      | GraphQL invite→subject read→accept、currentMember、成员/请求隐私、命令/事件/Notice 去重与并发 focused suite 通过（15 passed、2 skipped）。Post / Changelog 列表和 Docs Article 编辑器已接入共用管理面板；双账号浏览器验收待完成。共用基础设施见 [Messaging Notices 与 Inbox 收口](../../migrations/messaging-notices-refactor.md)，不要求 Passport P3 或 Messaging M2 已验收 |
-| C2   | 普通 Article 的多人读取草稿、保存、发布、Review 和编辑器联调              | 双用户通过真实 co-author 授权保存 WorkingCopy，移除后写入拒绝；Article Gate 3 例、历史/Review 2 例及 Docs fixture 2 例通过。Dash 编辑器接线与双账号浏览器验收仍待完成                                                                                                                                                                                                        |
+| C2   | 普通 Article 的多人读取草稿、保存、发布、Review 和编辑器联调              | 双用户通过真实 co-author 授权保存 WorkingCopy，移除后写入拒绝；Article Gate 3 例、历史/Review 2 例及 Docs fixture 2 例通过。详情设置菜单标题 / 标签冲突用 focused tests 验证保留本地修改并显示远端值；双账号浏览器验收仍待完成                                                                                                                                               |
 | C3   | 正式切换普通 Article 授权入口并退役旧动作，交付供 D1 复用的 Passport 判断 | 用正式入口通过 C1、C2 的相关场景，旧社区正文权限退役，Doc 写入继续由 D1 切换                                                                                                                                                                                                                                                                                                 |
 
 ### 6.1 开发与联调
