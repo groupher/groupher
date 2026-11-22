@@ -43,7 +43,7 @@ const TitleActions: FC<TProps> = ({ coverVisible, disabled = false, docId, title
         <CopyPlusSVG className={s.icon} />
         <span className={s.label}>{t('dsb.doc.action.import_content')}</span>
       </button>
-      <ArticleCoAuthors article={{ id: docId, title }} />
+      <ArticleCoAuthors key={docId} article={{ id: docId, title }} />
     </div>
   )
 }

@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import TitleActions from './TitleActions'
@@ -17,8 +18,16 @@ vi.mock('./salon/title_actions', () => ({
 }))
 vi.mock('../../../ArticleCoAuthors', () => ({
   default: ({ article }: { article: { id: string; title: string; innerId?: number } }) => {
+    const [search, setSearch] = useState('')
     mocks.articleProps(article)
-    return <div data-testid='coauthors'>{article.id}</div>
+    return (
+      <div data-testid='coauthors' data-search={search}>
+        {article.id}
+        <button type='button' onClick={() => setSearch('state-from-current-page')}>
+          change local panel state
+        </button>
+      </div>
+    )
   },
 }))
 
@@ -31,5 +40,19 @@ describe('Docs Article title actions', () => {
       id: 'doc-id',
       title: 'Current title',
     })
+  })
+
+  it('resets local co-author panel state when the active Doc page changes', () => {
+    const { rerender } = render(<TitleActions coverVisible={false} docId='doc-a' title='A' />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'change local panel state' }))
+    expect(screen.getByTestId('coauthors')).toHaveAttribute(
+      'data-search',
+      'state-from-current-page',
+    )
+
+    rerender(<TitleActions coverVisible={false} docId='doc-b' title='B' />)
+
+    expect(screen.getByTestId('coauthors')).toHaveAttribute('data-search', '')
   })
 })
