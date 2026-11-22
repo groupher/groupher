@@ -197,14 +197,14 @@ Dash 的 Post / Changelog 列表及 Docs Article 编辑器工具栏共用协作�
 | C0   | Article 成员 / 请求数据、Passport scope 及 Article grant/revoke facade    | schema、permission contract、grant/revoke 和 fail-closed 范围检查已落地，co-author Passport/Gate focused tests 通过                                                                                                                                                                                                                                                          |
 | C1   | 请求 / 成员 Command、Receipt、授权事件、Outbox 意图及 GraphQL / Dash      | GraphQL invite→subject read→accept、currentMember、成员/请求隐私、命令/事件/Notice 去重与并发 focused suite 通过（15 passed、2 skipped）。Post / Changelog 列表和 Docs Article 编辑器已接入共用管理面板；双账号浏览器验收待完成。共用基础设施见 [Messaging Notices 与 Inbox 收口](../../migrations/messaging-notices-refactor.md)，不要求 Passport P3 或 Messaging M2 已验收 |
 | C2   | 普通 Article 的多人读取草稿、保存、发布、Review 和编辑器联调              | 双用户通过真实 co-author 授权保存 WorkingCopy，移除后写入拒绝；Article Gate 3 例、历史/Review 2 例及 Docs fixture 2 例通过。详情设置菜单标题 / 标签冲突用 focused tests 验证保留本地修改并显示远端值；双账号浏览器验收仍待完成                                                                                                                                               |
-| C3   | 正式切换普通 Article 授权入口并退役旧动作，交付供 D1 复用的 Passport 判断 | 当前切片已从 Gate 合同和旧 Passport requirement 移除 post / blog / changelog 的 update、draft update、draft publish；旧 `.edit` grant 退役。`post.set_category` 使用独立 grant；Doc 旧动作保留给 D1。定向验证及正式交付仍需通过 C2 / H3 验收门槛                                                                                                                             |
+| C3   | 正式切换普通 Article 授权入口并退役旧动作，交付供 D1 复用的 Passport 判断 | 普通 Article 入口已切至 Article 授权合同；Gate 合同和旧 Passport requirement 已移除 post / blog / changelog 的 update、draft update、draft publish，旧 `.edit` grant 退役。`post.set_category` 使用独立 grant；Doc 旧动作保留给 D1。代码和定向验证可独立交付，不等待完整 History H3 界面；Co-Authors 启用前仍须完成自己的双账号浏览器验收与实际使用的历史 / Review 合同验收  |
 
 ### 6.1 开发与联调
 
 - C1 采用 Passport 共享锁序和请求状态约定。用命令响应和请求查询验证状态，事务内验证授权事件和 Outbox 意图；GraphQL execution 验证字段与 resolver。Article 请求事件与 producer 的事件语义、接收方和实际投递归 C1；复用独立验收的 Messaging M1 / M2 Notice / Dedup 基础设施。Article 通知验收不阻塞 Passport P3。
 - C2 已在隔离测试环境用两个不同测试账号从邀请 / 接受建立成员关系，再通过真实 `save_working_copy` 验证编辑和移除后的失权；不需要先完成邀请 UI、Dev Hub 或其他模块。浏览器验收可后续按产品界面单独推进。夹具及替身仅限测试。
-- C1、C2 的开发、后端验收和管理 UI 可分别交付，不等待 Passport P4 或 Docs D1–D3。C3 是普通 Article 正式授权入口切换，完成自身 C2 / H3 验收后即可独立交付；它是 Docs D1 的输入，不要求等待 D1–D3。Passport P4 的全局残留检查与最终切换是后续汇总门槛，不把其未完成状态反向作为 C 批次的开发阻塞。
-- History 按自身批次交付和验收。C2 用真实保存和发布生成的事件验收本文要求的 actor、版本来源、授权读取和 Review 归因。H3 的完整界面验收按 History 计划推进。
+- C1、C2 的开发、后端验收和管理 UI 可分别交付，不等待 Passport P4 或 Docs D1–D3。C3 的普通 Article 授权入口切换在 C2 的 Article 准入、历史归因和 Review 定向检查通过后即可独立交付给 D1，不等待完整 History H3 界面或 D1–D3。Co-Authors 产品启用仍由本功能自己的双账号浏览器验收把关；Passport P4 的全局残留检查与最终切换不阻塞 C 批次开发或局部交付。
+- History 按自身批次交付和验收。C2 用真实保存和发布生成的事件验收本文实际依赖的 actor、版本来源、授权读取和 Review 归因；这些领域合同不要求等待完整历史列表 / Diff 界面。H3 的完整界面与端到端验收按 History 计划独立推进。
 
 ### 6.2 正式启用
 
