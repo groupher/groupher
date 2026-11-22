@@ -12,19 +12,20 @@ defmodule GroupherServer.CMS.Passport do
         -> normalized Passport facts
   """
 
-  alias __MODULE__.{Assignment, Authorization, Store}
+  alias __MODULE__.{Authorization, Store}
   alias __MODULE__.Scope.{Article, Community, Global}
+  alias GroupherServer.CMS.Communities.Passport, as: CommunityPassport
 
   @doc "Lists Passport assignments for a Community."
-  defdelegate paged_passports(community, key), to: Assignment
+  defdelegate paged_passports(community, key), to: CommunityPassport
   @doc "Loads the current Passport for a user."
-  defdelegate get_passport(user), to: Assignment
+  defdelegate get_passport(user), to: CommunityPassport
   @doc "Assigns normalized Passport rules to a user."
-  defdelegate stamp_passport(rules, user), to: Assignment
+  defdelegate stamp_passport(rules, user), to: CommunityPassport
   @doc "Erases Passport rules at a path for a user."
-  defdelegate erase_passport(path, user), to: Assignment
+  defdelegate erase_passport(path, user), to: CommunityPassport
   @doc "Deletes the Passport assignment for a user."
-  defdelegate delete_passport(user), to: Assignment
+  defdelegate delete_passport(user), to: CommunityPassport
 
   @doc "Checks a Passport action against the supplied context."
   defdelegate check(user, action, context \\ %{}), to: Authorization

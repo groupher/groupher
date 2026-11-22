@@ -550,6 +550,16 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_publish_queue/3)
     end
 
+    @desc "One Article's existing Queue member editor source"
+    field :docs_queue_member, :docs_queue_member_editor do
+      arg(:community, non_null(:string))
+      arg(:article_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_queue_member/3)
+    end
+
     @desc "Check whether removing Docs from the Queue discards unique edits"
     field :docs_dequeue_preview, :docs_dequeue_preview do
       arg(:community, non_null(:string))
@@ -569,17 +579,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Docs.docs_workspace_delete_preview/3)
-    end
-
-    @desc "dashboard docs trash items"
-    field :doc_tree_trash_items, non_null(:doc_tree_trash_page) do
-      arg(:community, non_null(:string))
-      arg(:pagi, :pagi_input)
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.Docs.doc_tree_trash_items/3)
     end
 
     @desc "public community docs cover"

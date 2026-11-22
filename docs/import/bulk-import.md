@@ -598,7 +598,7 @@ Workflow 负责确认前任务的 durable execution、步骤重试和状态恢�
 GitHub Repo URL
         │
         ▼
-Dashboard Next.js API（鉴权 → checkPassport → admission → start Workflow → 202）
+Dashboard Next.js API（鉴权 → canImportDocs → admission → start Workflow → 202）
         │
         ▼
 Cloudflare Workflows
@@ -645,11 +645,11 @@ Browser ── POST /previews/:previewRef/apply ──► Dashboard Next.js API
 职责边界：
 
 - Dashboard Browser 只负责三步交互、轮询、展示固定目标映射和用户确认，不接收 archive 或完整正文集合；用户点击某一 Page 时，可以按需读取该 Page 的安全正文预览。
-- Dashboard Next.js API 负责登录态鉴权、调用 Phoenix `checkPassport`、启动/查询 Cloudflare Workflows、校验 Preview 归属和映射 HTTP 响应；Route Handler 不等待完整分析结束。
+- Dashboard Next.js API 负责登录态鉴权、调用 Phoenix `canImportDocs`、启动/查询 Cloudflare Workflows、校验 Preview 归属和映射 HTTP 响应；Route Handler 不等待完整分析结束。
 - Cloudflare Workflows 负责 durable orchestration、步骤重试和运行状态，并固定拆为两个业务 Step。`analyzeSource` 下载、流式解压、候选过滤和 framework 分析，在当前 Step 的临时工作区内完成后写入 Dataset/manifest 并清理目录；`validateTarget` 读取已持久化的 SourceTree，调用 Phoenix Docs Validator，写入 Target Preview 并最后 `markReady`。后一个 Step 失败时不重跑下载分析。上线前必须分别测量两个 Step 及其内部阶段的耗时、内存和字节数；只有 `analyzeSource` 在最大允许 archive 下仍无法稳定落在当前 Function `maxDuration`/memory 内时才进一步拆分，其物化边界使用筛选后的 `SourceWorkspaceRef`，不保存完整原始 archive。
 - Cloudflare R2 是对象存储，不是数据库。首版为 Dashboard 项目创建一个 private store，按 `content-import/previews/{previewRef}/...` 隔离 Preview；不为每个社区或仓库单独创建 store。
 - Node/TS Publisher 在用户确认后把 Markdown/MDX 逐 Page 转换为 Groupher BodyBag，并以 count/bytes 双上限批次同步给 Phoenix；这里的“逐 Page”是 Bulk Job 的 item 粒度，不是编辑器单篇导入产品。
-- Phoenix 是社区权限的唯一事实来源。Import Worker 在创建 Preview 前调用 Phoenix `checkPassport` 做提前反馈；用户确认并创建正式 Job 的 mutation 再次执行 `doc.import` Passport middleware。Job 创建后的内部 stage/apply 是 Server Trust 对已授权 Job 的后台延续，不增加第三套用户权限判断，也不在 Node 复制权限规则。
+- Phoenix 是社区权限的唯一事实来源。Import Worker 在创建 Preview 前调用 Phoenix `canImportDocs`，由 Gate 检查当前用户的 `:import_docs` Community action；用户确认并创建正式 Job 时，`Jobs.create` 在写入事务中重新执行同一 Gate action。Job 创建后的内部 stage/apply 是 Server Trust 对已授权 Job 的后台延续，不增加第三套用户权限判断，也不在 Node 复制权限规则。
 - Phoenix 在用户确认前只接收 bounded `sourceInfo + SourceTree`，以只读方式查询当前 Docs 状态、生成 TargetTree 并返回 `targetRevision`；当前 `conflicts` 字段始终为空，未映射目标冲突检测尚未实现。不创建 Job，不保存来源正文。
 - Phoenix 负责创建正式 ContentImport Job、重新检查目标状态、持久化导入事实、BodyBag staging、幂等和原子 apply；Bulk v1 不进入 AssetStager lifecycle。
 - 用户确认前，archive 只存在于 `analyzeSource` Step 的流和临时工作区；筛选后的候选正文与 Preview 结果写入 Private Blob，不发送给 Phoenix。SourceTree 是允许跨 Step/服务边界的结构化小对象。
@@ -685,8 +685,8 @@ Content-Type: application/json
 创建 Preview 前的授权顺序：
 
 1. Import Worker 从当前登录会话取得用户身份，不接受浏览器自行声明 `userRef`。
-2. Import Worker 携带当前用户凭据调用 Phoenix 的通用 `checkPassport` query。
-3. Phoenix 使用现有 `PermissionRegistry` 和社区 Passport 规则返回 `true` 或 `false`。
+2. Import Worker 携带当前用户凭据调用 Phoenix 的 `canImportDocs(community)` query。
+3. Phoenix 解析当前用户与 Community，通过 Gate 的 `:import_docs` action 返回 `true` 或 `false`。
 4. 只有允许后，Import Worker 才生成服务端 idempotency key。若全局上限由共享 semaphore 实现，必须在启动 Workflow 前获取名额，失败时返回稳定的可重试错误。
 5. Node 调用 Workflow SDK `start(...)`，把 `previewRef` 与 Workflow run reference 绑定并立即返回 `202`；若全局上限由 Workflow 对应 Queue/consumer 承载，超过运行上限的任务保持 queued。Route Handler 不等待分析完成，queued 不等于已经占用分析执行名额，超限任务也不能提前下载 archive。
 6. 首版不实现“每社区同时最多一个”的独立 lease。全局名额优先由 Workflow 所使用的 Queue/consumer 显式配置最大并发；如果当前 Workflow 接口不能提供该配置，才使用共享 semaphore，并由成功、失败、取消和超时路径释放。不能把 平台自动扩容误认为并发上限。
@@ -694,27 +694,17 @@ Content-Type: application/json
    credential；Phoenix 必须验证两者并继续执行社区 Passport，service token 不能替代用户权限。
 
 ```graphql
-query CheckPassport($community: String, $action: String!) {
-  checkPassport(community: $community, action: $action)
+query CanImportDocs($community: String!) {
+  canImportDocs(community: $community)
 }
 ```
 
-本次使用：
+`canImportDocs` 的规则：
 
-```json
-{
-  "community": "acme",
-  "action": "doc.import"
-}
-```
-
-`checkPassport` 的规则：
-
-- 不接受 `user` 和 `thread` 参数；始终判断当前登录用户，action 本身必须足够具体。
-- 社区 action 必须传 `community`；global action 可以不传。
-- action 必须在 `PermissionRegistry` 注册，未知 action 返回 GraphQL error，不能与无权限的 `false` 混为一谈。
-- 该 query 是下载前的资源预检，不替代业务 mutation 的强制授权。
-- 正式创建 ContentImport Job 的 mutation 仍使用 `middleware(M.Passport, action: "doc.import")`，因此 Review 期间权限被撤销后不能继续 apply。
+- Community 必填；授权始终使用 GraphQL 登录态中的当前用户，不接收调用方指定的用户或 Action。
+- Gate 的 `:import_docs` 决定是否允许启动 Docs 导入预览；拒绝时返回 `false`。
+- 该 query 是下载前的资源预检，不替代正式创建 Job 时的强制授权。
+- 正式创建 ContentImport Job 时，`Jobs.create` 在事务内重新执行 Gate `:import_docs`（对应 `doc.import` grant）；读取 Job 时也由 Gate 检查同一 Action，因此预览后权限撤销会阻止创建和读取。
 - `doc.import` 是独立 community CMS grant，不复用 `doc.edit`；community root 和 global god 继续按现有规则 bypass。
 
 Node analyzer 生成 SourceTree 后，调用 Phoenix 的只读 Docs Validator query：
@@ -779,7 +769,7 @@ Content-Type: application/json
 `apply` 内部按以下顺序执行：
 
 1. 校验 PreviewRecord 所属用户、社区和 TTL，并读取 ready Dataset manifest。
-2. 调用创建正式 Job 的 Phoenix mutation；该 mutation 通过 Passport middleware 再次强制校验 `doc.import`，不依赖之前的 `checkPassport=true`。
+2. 调用创建正式 Job 的 Phoenix mutation；`Jobs.create` 在事务内独立强制校验 Gate `:import_docs`，不依赖之前的 `canImportDocs=true`。读取 Job 的 GraphQL query 也执行同一 Gate 检查。
 3. 向 Phoenix 发送 bounded import manifest、SourceTree、固定 source revision 和 Review 时的 targetRevision；Phoenix 验证 Review intent 仍有效后创建正式 Job，失败则要求重新 Review。
 4. 从 Private Blob 读取筛选后的来源文档，逐 Page 转换为 BodyBag。Node 使用共享 publisher 已有的 `ARTIMENT_MAX_INPUT_BYTES = 2 MiB`（序列化 Plate value），以及写死的 `MAX_BATCH_COUNT = 4`、`MAX_BATCH_BYTES = 6 MiB`（完整 GraphQL request JSON）和 `MAX_BODY_BAG_BYTES = 5 MiB`（单篇 canonical BodyBag JSON）切批并 stage；大小统一按未压缩 UTF-8 序列化 bytes 计算，不按字符数或压缩后大小计算。
 5. 单篇超过 2 MiB Plate input 或 5 MiB BodyBag 时返回 `content_too_large`，将该 Page 标记为 skipped 并从有效 TargetTree 排除，其他 Page 继续；普通转换失败则停止在 `conversion_failed` 且不调用 apply。所有有效 Page ready 后才调用 atomic apply；全部 Page 均被跳过时不调用 apply。
@@ -870,7 +860,7 @@ Cloudflare R2 是类似 S3 的对象存储，不是关系型数据库，也不�
 
 ### 18.2 架构与迁移
 
-- [x] 创建 Preview 前调用 Phoenix `checkPassport(community, "doc.import")`；正式 Job create/start mutation 使用同一 action 的 Passport middleware 再次强制校验，后续 stage/apply 仅接受 `service:content-import` 的 operation-scoped continuation。
+- [x] 创建 Preview 前调用 Phoenix `canImportDocs(community)`，由 Gate 检查当前用户的 `:import_docs` action；正式 Job create/start mutation 在写入事务中独立强制校验同一 Gate action，Job 查询也经 Gate 检查，后续 stage/apply 仅接受 `service:content-import` 的 operation-scoped continuation。
 - [x] Import Worker 流式下载固定 commit 的 archive，不把完整压缩包或解压结果放入进程内存。
 - [x] 用户确认前，Phoenix 不创建正式 ContentImport Job，不接收 archive、解压文件或正文集合。
 - [x] Node 只把 versioned SourceTree/sourceInfo 发送给 Phoenix；Phoenix 只读返回 TargetTree、conflicts 字段和 targetRevision。当前 `conflicts` 始终为空，冲突检测仍未实现。
@@ -1039,9 +1029,9 @@ VitePress 完整端到端作为内部开发基线；其余六类至少通过增�
 Phoenix：
 
 1. 在 `PermissionRegistry` 注册独立 `doc.import` community CMS grant，并同步 Passport 管理 UI/规则列表；community root 和 global god 保持 bypass。
-2. 增加通用 `checkPassport(community, action): Boolean!` query，未知 action 报错，且不接受 user/thread。
+2. 增加 Doc 专用 `canImportDocs(community): Boolean!` query，通过 Gate 检查当前用户的 `:import_docs` action，不接收 user/action/thread；Job 创建事务复用同一 Gate action 作为最终授权。
 3. 增加只读 `previewDocContentImportTarget` query，验证 SourceTree contract 并返回 TargetTree/conflicts/targetRevision。
-4. 调整正式创建 Job 的 mutation，使其使用 `M.Passport action: "doc.import"`，并在创建前验证 Review intent 和 targetRevision。
+4. 正式创建 Job 的 mutation 在写事务内使用 Gate `:import_docs`（对应 `doc.import` grant），并在创建前验证 Review intent 和 targetRevision。
 
 Dashboard Next.js：
 
@@ -1105,7 +1095,7 @@ GitHub/codeload rate limit 只是上游失败保护，不是 admission 或成本
 2. Extractor 单测：路径穿越、symlink/hardlink 安全跳过且不物化、device/FIFO、压缩炸弹、文件数/单文件/总体积边界。
 3. Analyzer fixture tests：七类框架的 source input → canonical Preview DTO。
 4. Workflow/Preview tests：用户/社区隔离、TTL、取消、重复 apply、两个 Step 重试复用固定 attemptRef、target validation 失败不重跑 `analyzeSource`、无 ready receipt 的半成品不可见、Workflow run 恢复、Private Blob artifact 完整性、全局并发上限和过期清理。
-5. Permission tests：`checkPassport` 不接受 user/thread、未知 action 报错、无权限返回 false；创建正式 Job 的 mutation 复用 `doc.import`。内部 stage/apply 只能通过 Server Trust 操作已存在且状态合法的 Job。
+5. Permission tests：`canImportDocs` 使用当前登录用户和解析后的 Community，通过 Gate 检查 `:import_docs`，无权限返回 false；Job 创建事务再次检查同一 Gate action。内部 stage/apply 只能通过 Server Trust 操作已存在且状态合法的 Job。
 6. Integration test：固定公开仓库 → archive → Review DTO → 用户确认 → Phoenix Job → atomic apply。
 7. Capacity tests：固定 2 MiB Plate input/4 篇/6 MiB request/5 MiB BodyBag 的边界值、未压缩 UTF-8 bytes、Phoenix 权威 `body_size_bytes`、跨批 stage、单篇超限跳过、过滤后 TargetTree 和零可导入项不 apply。
 8. Browser test：输入 URL、第一步分析子状态、刷新/Function 实例变化恢复、检查树、一次确认 apply、普通 item 转换失败、超大单篇跳过、完成和错误重试。

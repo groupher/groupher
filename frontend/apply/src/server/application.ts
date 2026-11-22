@@ -1,6 +1,8 @@
+import { GATE_ACTION } from '@groupher/contracts/gate'
 import {
   ApplyAccountDocument,
   ApplyInitialStateDocument,
+  CurrentGlobalPassportDocument,
   OwnedApplicationDocument,
   ReviewApplicationDocument,
   ReviewQueueDocument,
@@ -14,8 +16,15 @@ import type { TInit as TAccountInit } from '~/stores/account/spec'
 import type { ApplyInitialData, CommunityApplication, ReviewApplication } from '../spec'
 import { GraphQLRequestError, requestGraphQL } from './graphql'
 
+type TGlobalPassportFacts = {
+  currentGlobalPassport: { isRoot: boolean; permissions: readonly string[] }
+}
+
 const AUTH_FAILURE_CODES = new Set([
+  'ACCOUNT_LOGIN',
   'ACCOUNT_BLOCKED',
+  'INVALID_BROWSER_ACCESS_CLAIMS',
+  'INVALID_LEGACY_ACCESS_CLAIMS',
   'SESSION_EXPIRED',
   'SESSION_REVOKED',
   'TOKEN_EXPIRED',
@@ -43,13 +52,29 @@ export const loadApplyAccount = createServerFn({ method: 'GET', strict: false })
   resolveApplyAccount,
 )
 
+/** Resolves reviewer admission from current server-owned Global Passport facts. */
+export const resolveReviewAdmission = async (
+  loadFacts: () => Promise<TGlobalPassportFacts>,
+): Promise<boolean> => {
+  try {
+    const { currentGlobalPassport } = await loadFacts()
+    return (
+      currentGlobalPassport.isRoot ||
+      currentGlobalPassport.permissions.includes(
+        GATE_ACTION.COMMUNITY_APPLICATION_REVIEW.replaceAll('.', '_').toUpperCase(),
+      )
+    )
+  } catch (error) {
+    if (error instanceof GraphQLRequestError && AUTH_FAILURE_CODES.has(error.reasonCode || '')) {
+      return false
+    }
+    throw error
+  }
+}
+
 /** Resolves reviewer admission before protected child route loaders run. */
-export const loadReviewAdmission = createServerFn({ method: 'GET', strict: false }).handler(
-  async (): Promise<boolean> => {
-    const account = await resolveApplyAccount()
-    const globalPassport = account.user?.passport?.global
-    return Boolean(globalPassport?.god || globalPassport?.['community.application.review'])
-  },
+export const loadReviewAdmission = createServerFn({ method: 'GET', strict: false }).handler(() =>
+  resolveReviewAdmission(() => requestGraphQL(CurrentGlobalPassportDocument, {})),
 )
 
 export const loadApplyState = createServerFn({ method: 'GET', strict: false }).handler(

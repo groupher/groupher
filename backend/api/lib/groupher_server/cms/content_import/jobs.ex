@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.ContentImport.{Transaction, Model.Job.Item}
   alias CMS.ErrorCat
+  alias CMS.Gate.Decision
 
   alias Accounts.Model.User
   alias CMS.ContentImport.Model.{Connection, Job}
@@ -39,46 +40,62 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
     target_revision = Map.fetch!(input, :target_revision)
     documents = Map.fetch!(input, :documents)
 
-    with {:ok, _} <-
-           DocValidator.validate_intent(community, source_info, target_tree, target_revision),
-         {:ok, item_attrs} <- build_item_attrs(documents, target_tree, source_info),
-         {:ok, connection} <- get_or_create_connection(community, source_info) do
-      Transaction.run(fn ->
-        case Repo.get_by(Job,
-               community_id: community.id,
-               preview_ref: Map.fetch!(input, :preview_ref)
-             ) do
-          %Job{} = job ->
-            resume_job(job, input, source_info, item_attrs)
+    with {:ok, item_attrs} <- build_item_attrs(documents, target_tree, source_info),
+         {:ok, result} <-
+           Transaction.run(fn ->
+             with {:ok, canonical} <-
+                    CMS.Gate.check_community_workflow_in_transaction(
+                      actor,
+                      :import_docs,
+                      community
+                    ),
+                  {:ok, _} <-
+                    DocValidator.validate_intent(
+                      canonical,
+                      source_info,
+                      target_tree,
+                      target_revision
+                    ),
+                  {:ok, connection} <- get_or_create_connection(canonical, source_info) do
+               case Repo.get_by(Job,
+                      community_id: canonical.id,
+                      preview_ref: Map.fetch!(input, :preview_ref)
+                    ) do
+                 %Job{} = job ->
+                   resume_job(job, input, source_info, item_attrs)
 
-          nil ->
-            attrs = %{
-              actor_id: actor.id,
-              bad_smells: Map.get(input, :bad_smells, []),
-              community_id: community.id,
-              connection_id: connection.id,
-              counts: counts(target_tree),
-              dataset_ref: Map.fetch!(input, :dataset_ref),
-              preview_ref: Map.fetch!(input, :preview_ref),
-              progress: %{
-                "bodies" => %{
-                  "pending" => length(item_attrs),
-                  "ready" => 0,
-                  "skipped" => 0,
-                  "failed" => 0,
-                  "total" => length(item_attrs)
-                }
-              },
-              source_info: source_info,
-              status: :staging,
-              target_revision: target_revision,
-              target_tree: target_tree,
-              thread: :doc
-            }
+                 nil ->
+                   attrs = %{
+                     actor_id: actor.id,
+                     bad_smells: Map.get(input, :bad_smells, []),
+                     community_id: canonical.id,
+                     connection_id: connection.id,
+                     counts: counts(target_tree),
+                     dataset_ref: Map.fetch!(input, :dataset_ref),
+                     preview_ref: Map.fetch!(input, :preview_ref),
+                     progress: %{
+                       "bodies" => %{
+                         "pending" => length(item_attrs),
+                         "ready" => 0,
+                         "skipped" => 0,
+                         "failed" => 0,
+                         "total" => length(item_attrs)
+                       }
+                     },
+                     source_info: source_info,
+                     status: :staging,
+                     target_revision: target_revision,
+                     target_tree: target_tree,
+                     thread: :doc
+                   }
 
-            create_new_job(attrs, item_attrs)
-        end
-      end)
+                   create_new_job(attrs, item_attrs)
+               end
+             else
+               {:error, reason} -> Repo.rollback(reason)
+             end
+           end) do
+      {:ok, result}
     end
   end
 
@@ -104,6 +121,15 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
     case get_record(community.id, job_ref) do
       {:ok, job} -> {:ok, project(job)}
       error -> error
+    end
+  end
+
+  @doc "Returns a Job only when the current actor can import Docs into its Community."
+  def get(%Community{} = community, job_ref, %User{} = actor) do
+    case CMS.Gate.access_check(actor, :import_docs, community) do
+      {:ok, canonical} -> get(canonical, job_ref)
+      {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
+      {:error, reason} -> {:error, reason}
     end
   end
 

@@ -24,7 +24,7 @@ Article history -> actor / time / before / after
 - 成员可持有空 permissions。关系在所有 Binding 上共享，不复制到用户 Passport JSON 或站点。
 - Community Admin / lord 不自动获得 Article 正文编辑、历史、发布权限。
 - 移除成员直接删除当前关系行；请求、授权事件、贡献者及修改历史独立保留。再次加入走新请求。写入必须匹配 memberId，不能因新成员 revision 再次从 1 开始而误用旧操作。
-- owner 离职、封禁或其他不可用情况暂不纳入本期；不新增系统 root 接管邀请、维护者恢复或所有权转移入口，也不作为 C3 / D1 放行前置。后续按独立所有权转移方案处理，Community lord 本期不自动获得 Article 正文权限。
+- owner 离职、封禁或其他不可用情况暂不纳入本期；不新增系统 root 接管邀请、维护者恢复或所有权转移入口，也不构成本功能或 Queue-preserving D1 的准入前置。后续按独立所有权转移方案处理，Community lord 本期不自动获得 Article 正文权限。
 - 不实现实时光标 / 字符级协同，继续使用 WorkingCopy revision 检测并发覆盖。[co-edit POC](../../architecture/co-edit.md) 是独立未启用计划，不作为本批前置。
 
 ## 2. 数据合同
@@ -100,9 +100,9 @@ INDEX(expires_at, id) WHERE status = 'pending'
 | article.history.read    | 历史列表、Snapshot 与 Diff                                                                               | 无                                                              |
 | article.history.restore | 历史恢复为新修改                                                                                         | article.history.read + article.update + article.read_draft      |
 
-article.publish 的权限依赖不是完整发布前置：既有发布入口仍须加载实际 Community / Binding、校验资源可写、预期 Public head、内容完整性及 Review 等对应规则。D1 只解除正文发布与站点 Queue 的耦合，不增加零站点入口发布；缺少有效产品入口应拒绝，不能因拥有 permission 就自动创建公开入口。
+`article.publish` 的权限依赖不是完整发布前置：普通 Article 既有发布入口仍须加载实际 Community / Binding、校验资源可写、预期 Public head、内容完整性及 Review 等对应规则。Docs D1 保留 Queue 正文副本与 Queue Approval / Release；共同作者只通过 Article `read_draft` + `update` 读取和保存当前 Community 该 Doc 已有的 Queue member，不走通用 default WorkingCopy / fork / restore 或 Article publish 路径，也不因此获得 Queue 编排或发布权限。
 
-“打开编辑器但只读”只需 read_draft；从 Public 新建 WorkingCopy、fork 或写入需要 update，读取来源历史 Snapshot 另需 history.read。放弃副本执行其现有生命周期保护，不表示可删除共享 Article 或 Public。
+“打开编辑器但只读”只需 read_draft；普通 Article 从 Public 新建 WorkingCopy、fork 或写入需要 update，读取来源历史 Snapshot 另需 history.read。Docs co-author D1 不因此创建 default copy，编辑目标必须是现存 Queue WorkingCopy。放弃副本执行其现有生命周期保护，不表示可删除 Article 或 Public。
 
 缺依赖报 permission_dependency_missing，界面展示缺少项，不隐式加权。revoke 必须一并撤销依赖它的权限，确认页展示完整集合。首版不拆 asset / cover / tag 权限，上传仍执行资产域准入。
 
@@ -165,7 +165,7 @@ AcceptRequest / Receipt commandId
 
 ## 5. Review、GraphQL 与 Dash
 
-正文 Review 接入归 C2。目标正文不自审规则覆盖 owner、当前 co-author 和被审版本的实际历史贡献者；历史读取按目标发布 Snapshot 的同 Article lineage 判断，已退出的成员仍按其实际贡献判断。Docs 站点审批按目录贡献者判断，由 D1 负责。
+普通 Article 正文 Review 接入归 C2。目标正文不自审规则覆盖 owner、当前 co-author 和被审版本的实际历史贡献者；历史读取按目标发布 Snapshot 的同 Article lineage 判断，已退出的成员仍按其实际贡献判断。Docs 正文副本、Save / Merge、Approval 与 Release 继续归 Queue；D1 只接入共同作者对单篇现存 Queue member 的 Article 准入，不重新定义 Docs 站点审批或目录贡献者合同。
 
 ### 5.1 读取及请求处理权限
 
@@ -189,6 +189,8 @@ article.author.manage 明确包含完整成员 / 请求管理读取、邀请、a
 decide 接收 decision，apply accept 带 approvedPermissions，invite accept 使用持久化提议。响应含 requestId / revision / decision 及当前 member 身份 / revision，不以收到通知推断成功。
 
 Dash 的 Post / Changelog 列表及 Docs Article 编辑器工具栏共用协作者管理面板，支持 Article 管理者搜索邀请、查看与调整成员权限、移除成员，并支持请求处理。Docs 工具栏只提供 Article 协作者管理入口，不切换 Docs 的正文编辑准入；Docs 正文授权仍归 D1。C2 后端已按当前 Article scope 准入 `edit_article` 并执行历史贡献者和 Review 自审检查；当前用户权限 GraphQL 字段已提供。普通 Article 详情设置菜单现有标题 / 标签 WorkingCopy 编辑接入协作者准入；revision 冲突后刷新远端值、保留本地脏修改并提示用户核对，覆盖行为需用户再次确认。正文保存与发布已有后端和 GraphQL 合同，浏览器双账号验收仍待完成。后端按当前 Article ID 校验成员与历史访问权限。
+
+Docs D1 保留现有 Queue 正文所有权：拥有 `article.read_draft` 和 `article.update` 的共同作者，只能读取与保存当前 Community 中该 Doc 已存在的 Queue WorkingCopy。编辑入口按单篇 Doc 查询，不读取整站 Queue、工作区目录树或 Approval / Release 预览；共同作者不能创建 default WorkingCopy、Enqueue、修改目录、审批或 Release。Queue 继续负责正文副本、保存、合并、审批及发布。
 
 ## 6. 实施与验收
 
@@ -221,9 +223,9 @@ Dash 的 Post / Changelog 列表及 Docs Article 编辑器工具栏共用协作�
 7. 请求 ID / Article / subject 串用拒绝，旧通知不能授权，非公开邀请接受前不暴露正文。
 8. 历史记录和读取不依赖当前 Binding；不新增无站点入口继续发布的产品功能。公开 Doc 仍按站点可见性过滤。
 
-C3 退役旧社区正文 Action / grant，不把它们的持有者自动转成 co-author 或授予 article.update。post.set_category 保留为 Community 分类管理，不能作为正文准入；Doc 的对应正文切换由 D1 处理。
+C3 退役普通 Article 的旧社区正文 Action / grant，不把它们的持有者自动转成 co-author 或授予 article.update。post.set_category 保留为 Community 分类管理，不能作为正文准入；Doc 的 `doc.queue.write` / Queue 命令继续保留各自边界，D1 只增加基于 Article `read_draft` / `update` 的现存 Queue member 编辑入口。
 
-C3 修改共用 Scope / Access helper 时必须明确普通 Article 与 Doc 分支：普通 Article 在 C3 切换，Doc 继续保持原已保护路径，直到 D1 同时切换其正文入口与准入；不得因修改 Post / Doc 共用函数提前放开旧 Doc Queue 写入。
+C3 修改共用 Scope / Access helper 时必须明确普通 Article 与 Doc 分支：普通 Article 在 C3 切换，Doc 的 Queue 正文、tree、Approval 与 Release 语义保持原状，D1 仅切换共同作者的单 Doc Queue member 准入；不得因修改 Post / Doc 共用函数提前放开 Doc Queue 的站点编排或发布权限。
 
 新增 / 迁移账号、首次受邀且尚无 Author、删除成员后保留具体 member_id 历史也是 C1 必验场景。
 

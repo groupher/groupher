@@ -36,7 +36,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   alias CMS.Passport
 
   @read_actions [:read, :list]
-  @docs_read_actions [:docs_queue_preview, :docs_history_read, :docs_trash_read]
+  @docs_read_actions [
+    :docs_queue_preview,
+    :docs_history_read,
+    :community_article_trash_read
+  ]
   @docs_write_actions [
     :docs_queue_write,
     :docs_queue_approve,
@@ -347,7 +351,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp docs_passport_action(:docs_queue_configure), do: CMS.GateAction.doc_queue_configure()
   defp docs_passport_action(:docs_queue_publish), do: CMS.GateAction.doc_queue_publish()
   defp docs_passport_action(:docs_history_read), do: CMS.GateAction.doc_history_read()
-  defp docs_passport_action(:docs_trash_read), do: "doc.trash"
+
+  defp docs_passport_action(:community_article_trash_read) do
+    CMS.GateAction.community_article_trash_read()
+  end
+
   defp docs_passport_action(:docs_trash_purge), do: "doc.permanent_delete"
 
   defp ticket_passport_action(:ticket_create), do: CMS.GateAction.ticket_create()

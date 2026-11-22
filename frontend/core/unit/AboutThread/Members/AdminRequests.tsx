@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import { invalidatePrefix } from '~/query/invalidation'
+import { viewerQueryKeys } from '~/query/key'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
@@ -11,22 +12,23 @@ export default function AdminRequests() {
   const { slug, ref: communityRef = '' } = useCommunity()
   const { accountScope, refreshSession } = useAccount()
   const client = useQueryClient()
-  const key = ['community-admin-requests', slug, accountScope]
+  const requestsKey = ['community-admin-requests', slug, accountScope] as const
+  const membershipKey = viewerQueryKeys.communityAdmin(accountScope || 'anonymous', slug)
   const query = useQuery({
-    queryKey: key,
+    queryKey: requestsKey,
     queryFn: async () =>
       (await browserGraphQLRequest(S.adminRequests, { communityRef })).pagedCommunityAdminRequests
         .entries,
     enabled: !!communityRef && !!accountScope,
   })
   const membership = useQuery({
-    queryKey: ['community-current-admin', slug, accountScope],
+    queryKey: membershipKey,
     queryFn: async () =>
       (await browserGraphQLRequest(S.currentAdmin, { communityRef })).currentCommunityAdmin,
     enabled: !!communityRef && !!accountScope,
   })
 
-  const refresh = async () => invalidatePrefix(client, key)
+  const refresh = async () => invalidatePrefix(client, requestsKey)
   const apply = async () => {
     if (!communityRef) return
     await executeCommand({
@@ -54,7 +56,11 @@ export default function AdminRequests() {
               request: (variables) => browserGraphQLRequest(S.leaveCommunityAdmins, variables),
               variables: { communityRef, revision },
             })
-            await invalidatePrefix(client, ['community-current-admin', slug, accountScope])
+            await invalidatePrefix(client, membershipKey)
+            await invalidatePrefix(
+              client,
+              viewerQueryKeys.communityGateFacts(accountScope || 'anonymous', slug),
+            )
             await refresh()
             await refreshSession()
           }}
@@ -84,6 +90,11 @@ export default function AdminRequests() {
                         approvedPermissions: request.proposedPermissions ?? {},
                       },
                     })
+                    await invalidatePrefix(client, membershipKey)
+                    await invalidatePrefix(
+                      client,
+                      viewerQueryKeys.communityGateFacts(accountScope || 'anonymous', slug),
+                    )
                     await refresh()
                     await refreshSession()
                   }}

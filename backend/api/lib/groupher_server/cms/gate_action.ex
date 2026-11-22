@@ -90,7 +90,6 @@ defmodule GroupherServer.CMS.GateAction do
     "doc.queue.write",
     "doc.restore",
     "doc.sink",
-    "doc.trash",
     "doc.undo_lock_comment",
     "doc.undo_pin",
     "doc.undo_sink",
@@ -691,13 +690,6 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
-    "doc.trash" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
     "doc.undo_lock_comment" => %{
       scope: :community,
       grantable: true,
@@ -1246,10 +1238,6 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `doc.sink` Gate action name."
   @spec doc_sink() :: String.t()
   def doc_sink, do: "doc.sink"
-
-  @doc "Returns the stable `doc.trash` Gate action name."
-  @spec doc_trash() :: String.t()
-  def doc_trash, do: "doc.trash"
 
   @doc "Returns the stable `doc.undo_lock_comment` Gate action name."
   @spec doc_undo_lock_comment() :: String.t()

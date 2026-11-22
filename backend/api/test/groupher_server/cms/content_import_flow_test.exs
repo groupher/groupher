@@ -10,13 +10,13 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   alias Activity.Model.DocTreeLog
   alias CMS.Artiment.BodyBag
   alias CMS.ContentImport.{Jobs, Staging}
-  alias CMS.ContentImport.Model.{ImportSourceMapping, Job}
+  alias CMS.ContentImport.Model.{Connection, ImportSourceMapping, Job}
   alias CMS.ContentImport.Model.Job.Body
   alias CMS.ContentImport.DocValidator
   alias CMS.DocTree.Workflows.ContentImport
   alias CMS.DocTree.Publish.Queue
   alias CMS.DocTree.Commands.{Enqueue, ReleaseQueue, DeleteWorkspaceNode, CreateWorkspaceNode}
-  alias CMS.Model.{ArticleLifecycle, DocsTreeNode}
+  alias CMS.Model.{ArticleLifecycle, DocsTreeNode, TrashAction}
 
   test "an imported canonical Doc enters Mention capture only through its publish Command" do
     %{actor: actor, community: community, job: job} =
@@ -332,8 +332,12 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
     assert {:ok, second_import} = ContentImport.apply(community, second_job.job_ref)
     assert second_import.first_imported_doc_id == first_doc_id
-    assert Repo.aggregate(ImportSourceMapping, :count) == 1
-    assert Repo.aggregate(DocsTreeNode, :count) == 3
+    assert source_mapping_count(community) == 1
+
+    assert Repo.aggregate(
+             from(node in DocsTreeNode, where: node.community_id == ^community.id),
+             :count
+           ) == 3
 
     assert {:ok, %{working_copy: draft}} = CMS.docs_editor_read(community, first_doc_id, actor)
     assert CMS.Articles.Body.document(draft).plain_text == "Second version"
@@ -373,7 +377,8 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              )
 
     assert {:error, _} = CMS.docs_editor_read(community, first_doc_id, actor)
-    assert {:ok, %{entries: [trash_item]}} = CMS.docs_workspace_trash_read(community, nil, actor)
+
+    trash_action = Repo.get_by!(TrashAction, community_id: community.id, root_ref: page.node_id)
 
     documents = [document("docs/start.md", "/start", "b")]
     next_source_info = Map.put(source_info(), "commit", String.duplicate("d", 40))
@@ -411,16 +416,19 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert second_import.first_imported_doc_id == first_doc_id
 
     assert Repo.get_by!(DocTreeLog,
-             operation_ref: trash_item.id,
+             operation_ref: trash_action.hash_id,
              action: :restored,
              source: :worker
            )
 
-    assert {:ok, %{entries: []}} =
-             CMS.docs_workspace_trash_read(community, nil, actor)
+    refute Repo.get(TrashAction, trash_action.id)
 
-    assert Repo.aggregate(ImportSourceMapping, :count) == 1
-    assert Repo.aggregate(DocsTreeNode, :count) == 3
+    assert source_mapping_count(community) == 1
+
+    assert Repo.aggregate(
+             from(node in DocsTreeNode, where: node.community_id == ^community.id),
+             :count
+           ) == 3
 
     assert {:ok, %{working_copy: draft}} = CMS.docs_editor_read(community, first_doc_id, actor)
     assert CMS.Articles.Body.document(draft).plain_text == "Second version"
@@ -832,10 +840,13 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
             "doc.queue.write" => true,
             "doc.queue.publish" => true,
             "doc.restore" => true,
-            "doc.trash" => true
+            "community.article.trash.read" => true
           }
         }
       )
+
+    assert {:ok, passport_scope} = CMS.Passport.load_community_scope(actor, community)
+    assert {:ok, true} = CMS.Passport.allowed?(actor, passport_scope, "doc.import")
 
     source_info = source_info()
     source_tree = source_tree(documents)
@@ -853,6 +864,15 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              })
 
     %{actor: actor, community: community, job: job}
+  end
+
+  defp source_mapping_count(community) do
+    connection = Repo.get_by!(Connection, community_id: community.id)
+
+    Repo.aggregate(
+      from(mapping in ImportSourceMapping, where: mapping.connection_id == ^connection.id),
+      :count
+    )
   end
 
   defp source_info do

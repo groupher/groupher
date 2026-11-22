@@ -1,4 +1,5 @@
 import { graphql } from '~/graphql/authoring'
+import { currentCommunityAdmin as currentAdmin } from '~/schemas/pages/passport'
 
 /** Public Community Admin directory; exposes no permission facts. */
 export const adminDirectoryPage = graphql(`
@@ -106,21 +107,6 @@ export const adminRequests = graphql(`
           startCursor
           endCursor
         }
-      }
-    }
-  }
-`)
-
-export const currentAdmin = graphql(`
-  "Current viewer's Community Admin membership"
-  query DashboardCurrentCommunityAdmin($communityRef: String!) {
-    currentCommunityAdmin(communityRef: $communityRef) {
-      memberId
-      revision
-      isLord
-      permissions
-      user {
-        login
       }
     }
   }

@@ -651,14 +651,6 @@
       "requires_thread": {}
     },
     {
-      "action": "doc.trash",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "doc.undo_lock_comment",
       "scope": "community",
       "grantable": true,

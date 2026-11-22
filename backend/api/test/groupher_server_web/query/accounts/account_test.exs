@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
+  alias GroupherServerWeb.Schema
   alias CMS.Model.CommunitySubscriber
   alias Helper.Guardian.BrowserAccess
 
@@ -72,7 +73,6 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["nickname"] == user.nickname
       assert results["social"]["github"] == nil
       assert results["social"]["douban"] == nil
-      assert results["passport"] == nil
 
       assert results["subscribedCommunitiesCount"] == 0
       assert results["followersCount"] == 0
@@ -113,38 +113,22 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert target_user.views == 0
     end
 
-    test "login newbie user can get own empty passport", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-      variables = %{login: user.login}
-      results = user_conn |> gq_query(@query, variables)
+    test "User GraphQL type no longer exposes embedded Passport projections" do
+      assert {:ok, %{data: %{"__type" => user_type}}} =
+               Absinthe.run(
+                 """
+                 {
+                   __type(name: "User") {
+                     fields { name }
+                   }
+                 }
+                 """,
+                 Schema
+               )
 
-      assert results["passport"] == %{"global" => %{}}
-      assert Jason.decode!(results["passportString"]) == %{"global" => %{}}
-    end
-
-    @valid_rules %{
-      "global" => %{},
-      "javascript" => %{"cms" => %{"post.trash" => true, "post.pin" => true}}
-    }
-
-    test "login user can get own passport and passport_string", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-
-      {:ok, _} = CMS.Communities.stamp_passport(@valid_rules, user)
-
-      results = user_conn |> gq_query(@query, %{login: user.login})
-
-      assert Map.equal?(results["passport"], @valid_rules)
-      assert Map.equal?(Jason.decode!(results["passportString"]), @valid_rules)
-    end
-
-    test "login user can get empty if passport not exist", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-
-      results = user_conn |> gq_query(@query, %{login: user.login})
-
-      assert %{"global" => %{}} == results["passport"]
-      assert Jason.decode!(results["passportString"]) == %{"global" => %{}}
+      field_names = Enum.map(user_type["fields"], & &1["name"])
+      refute "passport" in field_names
+      refute "passportString" in field_names
     end
 
     @query S.Account.q(:paged_users)

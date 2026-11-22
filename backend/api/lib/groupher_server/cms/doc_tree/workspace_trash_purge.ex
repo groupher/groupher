@@ -129,9 +129,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
           )
         ) or
         Repo.exists?(from(p in ArticlePublic, where: p.article_id in ^doc_ids)) or
-        Repo.exists?(
-          from(m in DocsQueueArticle, where: m.queue_id == ^queue.id and m.article_id in ^doc_ids)
-        ) or
+        legacy_queue_references?(queue.id, doc_ids) or
         Repo.exists?(
           from(c in DocsQueueTreeChange,
             where:
@@ -140,7 +138,16 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
           )
         )
 
-    if referenced, do: {:error, :docs_trash_in_use}, else: {:ok, :pass}
+    if referenced, do: {:error, CMS.ErrorCat.docs_trash_in_use()}, else: {:ok, :pass}
+  end
+
+  @doc false
+  def legacy_queue_references?(_queue_id, []), do: false
+
+  def legacy_queue_references?(queue_id, doc_ids) do
+    Repo.exists?(
+      from(m in DocsQueueArticle, where: m.queue_id == ^queue_id and m.article_id in ^doc_ids)
+    )
   end
 
   defp purge_documents(community, docs, articles, command_id) do

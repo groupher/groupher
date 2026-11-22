@@ -171,7 +171,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
                queue.tree_lock_version,
                queue.queue_revision,
                id,
-               nil,
+               :restore_original,
                nil,
                actor,
                id

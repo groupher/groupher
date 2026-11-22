@@ -20,13 +20,13 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
   use Helper.GqlSchemaSuite
 
   object :cms_content_import_queries do
-    @desc "check one registered action against the current user's Passport"
-    field :check_passport, non_null(:boolean) do
-      arg(:community, :string)
-      arg(:action, non_null(:string))
+    @desc "checks whether the current user can import Docs into this Community"
+    field :can_import_docs, non_null(:boolean) do
+      arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
-      resolve(&R.ContentImport.check_passport/3)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.ContentImport.can_import_docs/3)
     end
 
     @desc "plan a bounded SourceTree against the current Docs target without creating a Job"
@@ -50,7 +50,6 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
       arg(:job_ref, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "doc.import")
       middleware(M.FrontDesk, :community)
       resolve(&R.ContentImport.job/3)
     end
@@ -69,7 +68,6 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
       arg(:bad_smells, non_null(:json))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "doc.import")
 
       middleware(M.DelegatedScope,
         audience: "phoenix:content-import-api",

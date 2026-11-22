@@ -129,6 +129,11 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :permissions
 
+  @doc "Rejects legacy Article WorkingCopy access for a current co-author."
+  defdelegate articles_co_authors_reject_working_copy_access(article, actor),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :reject_member_working_copy_access
+
   @doc "Creates an Article co-author invitation or application."
   defdelegate articles_co_authors_create_request(
                 article_id,
@@ -171,9 +176,15 @@ defmodule GroupherServer.CMS do
               as: :update_permissions
 
   @doc "Removes one Article co-author membership."
-  defdelegate articles_co_authors_remove_member(article_id, member_id, revision, actor, command_id),
-    to: GroupherServer.CMS.Articles.CoAuthors,
-    as: :remove_member
+  defdelegate articles_co_authors_remove_member(
+                article_id,
+                member_id,
+                revision,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Articles.CoAuthors,
+              as: :remove_member
 
   @doc "Leaves the actor's Article co-author membership."
   defdelegate articles_co_authors_leave_member(article_id, revision, actor, command_id),
@@ -2060,6 +2071,11 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.MergeQueue, as: :execute
 
+  @doc "Reads one Article's existing Docs Queue member through its scoped reader."
+  defdelegate docs_queue_member_read(community, article_id, actor),
+    to: GroupherServer.CMS.DocTree.Commands.QueueAccess,
+    as: :read_member
+
   defdelegate docs_editor_read(community, article_id, actor),
     to: GroupherServer.CMS.DocTree.DefaultCopy,
     as: :read
@@ -2071,10 +2087,6 @@ defmodule GroupherServer.CMS do
   defdelegate docs_workspace_read(community, actor),
     to: GroupherServer.CMS.DocTree.WorkspaceRead,
     as: :read
-
-  defdelegate docs_workspace_trash_read(community, pagi, actor),
-    to: GroupherServer.CMS.DocTree.WorkspaceTrashRead,
-    as: :list
 
   defdelegate docs_dequeue_preview(community, revision, ids, actor),
     to: GroupherServer.CMS.DocTree.Publish.Queue.DequeuePreview,
@@ -2112,6 +2124,7 @@ defmodule GroupherServer.CMS do
                 tree_revision,
                 queue_revision,
                 action_id,
+                record_revision,
                 parent,
                 index,
                 actor,

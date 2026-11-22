@@ -36,7 +36,11 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
                    ) do
     gate(fn _article ->
       action = if article.thread in [:post, :blog, :changelog], do: :edit_article, else: :edit
-      WorkingCopyAccess.check_in_transaction(actor, action, article, community)
+
+      with {:ok, :pass} <-
+             CMS.Articles.CoAuthors.reject_member_working_copy_access(article, actor) do
+        WorkingCopyAccess.check_in_transaction(actor, action, article, community)
+      end
     end)
 
     change(fn canonical_article, operation_ref ->

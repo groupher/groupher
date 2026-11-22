@@ -35,18 +35,6 @@ type TContributes = {
   totalCount?: number
 }
 
-export type TPassport = {
-  global?: Record<string, boolean>
-  [community: string]:
-    | Record<string, boolean>
-    | {
-        root?: boolean
-        cms?: Record<string, boolean>
-        account?: Record<string, boolean>
-      }
-    | undefined
-}
-
 export type TUser = TSimpleUser & {
   // TODO: figure it out
   extraId?: string
@@ -56,7 +44,6 @@ export type TUser = TSimpleUser & {
   geoCity?: string
   viewerHasFollowed?: boolean
   social?: TUserSocial
-  passport?: TPassport
   email?: string
   contributes?: TContributes
   followersCount?: number

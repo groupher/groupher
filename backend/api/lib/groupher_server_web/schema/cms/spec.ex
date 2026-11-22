@@ -102,11 +102,36 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
     field(:tree_path, non_null(list_of(non_null(:community_doc_trash_path_segment))))
     field(:pending_member_count, non_null(:integer))
     field(:removed_member_count, non_null(:integer))
+
+    field :paged_members, non_null(:community_doc_trash_member_page) do
+      arg(:pagi, :pagi_input)
+      arg(:record_revision, :string)
+      resolve(&R.CMS.CommunityTrash.doc_members/3)
+    end
+
+    field(:title, :string)
+    field(:node_id, :id)
+    field(:doc_id, :id)
+    field(:type, :string)
+    field(:deleted_from_parent_node_id, :id)
+    field(:deleted_from_index, :integer)
   end
 
   object :community_doc_trash_path_segment do
     field(:node_id, non_null(:id))
     field(:title, non_null(:string))
+  end
+
+  object :community_doc_trash_member do
+    field(:id, non_null(:id))
+    field(:title, :string)
+    field(:deletion_status, non_null(:community_article_trash_status))
+    field(:removed_from_public, non_null(:boolean))
+  end
+
+  object :community_doc_trash_member_page do
+    field(:entries, non_null(list_of(non_null(:community_doc_trash_member))))
+    pagi_fields()
   end
 
   object :community_article_trash_page do
@@ -1082,6 +1107,11 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
     field(:tree_changes, non_null(list_of(non_null(:docs_queue_tree_change))))
   end
 
+  object :docs_queue_member_editor do
+    field(:queue_revision, non_null(:integer))
+    field(:working_copy, non_null(:article_working_copy))
+  end
+
   enum :docs_queue_approval_status do
     value(:idle)
     value(:pending)
@@ -1262,23 +1292,6 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
     field(:tree_revision, non_null(:integer))
     field(:queue_revision, non_null(:integer))
     field(:nodes, non_null(list_of(non_null(:docs_workspace_node))))
-  end
-
-  object :doc_tree_trash_page do
-    field(:entries, non_null(list_of(non_null(:doc_tree_trash_item))))
-    pagi_fields()
-  end
-
-  object :doc_tree_trash_item do
-    field(:id, non_null(:id))
-    field(:node_id, non_null(:id))
-    field(:doc_id, :id)
-    field(:type, :string)
-    field(:title, :string)
-    field(:deleted_from_parent_node_id, :id)
-    field(:deleted_from_index, :integer)
-    field(:deleted_at, :datetime)
-    field(:restored_at, :datetime)
   end
 
   object :comment_mutation_article do

@@ -95,7 +95,7 @@ alias R7ImportFixtures, as: F
           "doc.queue.write" => true,
           "doc.queue.publish" => true,
           "doc.restore" => true,
-          "doc.trash" => true
+          "community.article.trash.read" => true
         }
       }
     },

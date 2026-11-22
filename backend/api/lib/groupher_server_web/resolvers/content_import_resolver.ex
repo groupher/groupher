@@ -10,30 +10,23 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
   See `docs/import/content-import-architecture.md`.
   """
 
-  require GroupherServer.CMS.Passport.ErrorCat
-
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.ContentImport.{Jobs, Staging}
 
+  alias CMS.Gate.Decision
   alias CMS.Model.Community
-  alias CMS.Passport.{ErrorCat, Registry}
 
-  @doc "Checks one registered community Passport action for the current caller."
-  def check_passport(
+  @doc "Checks whether the current caller can import Docs into the resolved Community."
+  def can_import_docs(
         _root,
-        %{community: community, action: action},
-        %{context: %{cur_user: %{cur_passport: passport}}}
+        %{community: %Community{} = community},
+        %{context: %{cur_user: %User{} = user}}
       ) do
-    case Registry.allowed?(passport, community, action) do
-      {:ok, allowed} ->
-        {:ok, allowed}
-
-      {:error, ErrorCat.error_pattern(reason: :unknown_action)} ->
-        {:error, ErrorCat.unknown_action("unknown Passport action #{action}")}
-
-      {:error, ErrorCat.error_pattern(reason: :community_required)} ->
-        {:error, ErrorCat.community_required("community is required for action #{action}")}
+    case CMS.gate_access_check(user, :import_docs, community) do
+      {:ok, _canonical_community} -> {:ok, true}
+      {:error, %Decision{allowed: false}} -> {:ok, false}
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -77,8 +70,12 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
   end
 
   @doc "Returns the current public Job projection."
-  def job(_root, %{community: %Community{} = community, job_ref: job_ref}, _info) do
-    Jobs.get(community, job_ref)
+  def job(
+        _root,
+        %{community: %Community{} = community, job_ref: job_ref},
+        %{context: %{cur_user: %User{} = user}}
+      ) do
+    Jobs.get(community, job_ref, user)
   end
 
   @doc "Applies a ready Job through the atomic ContentImport Workflow."

@@ -76,7 +76,6 @@ export default function Provider({ children, initData }: TProps) {
       session?.isValid && session.user
         ? ({
             ...session.user,
-            passport: session.user.passport as TUser['passport'],
           } as TAuthenticatedUser)
         : null,
     [session],

@@ -241,14 +241,14 @@ type RootQueryType {
   "Current authorized Docs publication queue"
   docsPublishQueue(community: String!): DocsPublishQueue
 
+  "One Article's existing Queue member editor source"
+  docsQueueMember(community: String!, articleId: ID!): DocsQueueMemberEditor
+
   "Check whether removing Docs from the Queue discards unique edits"
   docsDequeuePreview(community: String!, queueRevision: Int!, articleIds: [ID!]!): DocsDequeuePreview
 
   "Preview a workspace deletion and any Queue-only edits it would discard"
   docsWorkspaceDeletePreview(community: String!, treeRevision: Int!, queueRevision: Int!, nodeId: ID!): DocsWorkspaceDeletePreview
-
-  "dashboard docs trash items"
-  docTreeTrashItems(community: String!, pagi: PagiInput): DocTreeTrashPage!
 
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
@@ -433,8 +433,8 @@ type RootQueryType {
   "Loads a community site manifest for the Press service."
   pressSiteManifest(community: String!): PressSiteManifest
 
-  "check one registered action against the current user's Passport"
-  checkPassport(community: String, action: String!): Boolean!
+  "checks whether the current user can import Docs into this Community"
+  canImportDocs(community: String!): Boolean!
 
   "plan a bounded SourceTree against the current Docs target without creating a Job"
   previewDocContentImportTarget(community: String!, sourceInfo: ContentImportSourcePreviewInput!, tree: Json!): ContentImportTargetPreview!
@@ -1087,7 +1087,7 @@ type RootMutationType {
 
   "Restore a Docs workspace Trash action"
   restoreDocsWorkspaceNode(
-    commandId: ID!, community: String!, treeRevision: Int!, queueRevision: Int!, trashActionId: ID!, targetParentNodeId: ID, targetIndex: Int
+    commandId: ID!, community: String!, treeRevision: Int!, queueRevision: Int!, trashActionId: ID!, recordRevision: String!, targetParentNodeId: ID, targetIndex: Int
   ): DocsWorkspaceRestoreResult
 
   "Move a Docs workspace subtree to Trash and queue its public deletion"
@@ -2120,7 +2120,6 @@ enum PassportAction {
   DOC_QUEUE_WRITE
   DOC_RESTORE
   DOC_SINK
-  DOC_TRASH
   DOC_UNDO_LOCK_COMMENT
   DOC_UNDO_PIN
   DOC_UNDO_SINK
@@ -2226,11 +2225,30 @@ type CommunityDocTreeTrashItem implements CommunityArticleTrashItem {
   treePath: [CommunityDocTrashPathSegment!]!
   pendingMemberCount: Int!
   removedMemberCount: Int!
+  pagedMembers(pagi: PagiInput, recordRevision: String): CommunityDocTrashMemberPage!
+  title: String
+  nodeId: ID
+  docId: ID
+  type: String
+  deletedFromParentNodeId: ID
+  deletedFromIndex: Int
 }
 
 type CommunityDocTrashPathSegment {
   nodeId: ID!
   title: String!
+}
+
+type CommunityDocTrashMember {
+  id: ID!
+  title: String
+  deletionStatus: CommunityArticleTrashStatus!
+  removedFromPublic: Boolean!
+}
+
+type CommunityDocTrashMemberPage {
+  entries: [CommunityDocTrashMember!]!
+  pageInfo: PageInfo!
 }
 
 type CommunityArticleTrashPage {
@@ -3081,6 +3099,11 @@ type DocsPublishQueue {
   treeChanges: [DocsQueueTreeChange!]!
 }
 
+type DocsQueueMemberEditor {
+  queueRevision: Int!
+  workingCopy: ArticleWorkingCopy!
+}
+
 enum DocsQueueApprovalStatus {
   IDLE
   PENDING
@@ -3261,23 +3284,6 @@ type DocsWorkspaceTree {
   treeRevision: Int!
   queueRevision: Int!
   nodes: [DocsWorkspaceNode!]!
-}
-
-type DocTreeTrashPage {
-  entries: [DocTreeTrashItem!]!
-  pageInfo: PageInfo!
-}
-
-type DocTreeTrashItem {
-  id: ID!
-  nodeId: ID!
-  docId: ID
-  type: String
-  title: String
-  deletedFromParentNodeId: ID
-  deletedFromIndex: Int
-  deletedAt: DateTime
-  restoredAt: DateTime
 }
 
 type CommentMutationArticle {
@@ -5338,10 +5344,6 @@ type User {
   social: SocialMap
 
   achievement: Achievement
-
-  passportString: String
-
-  passport: Json
 
   subscribedCommunitiesCount: Int
 

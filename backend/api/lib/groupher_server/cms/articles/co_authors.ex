@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Articles.CoAuthors.Query
+
   alias CMS.Articles.CoAuthors.Commands.{
     CancelRequest,
     CreateRequest,
@@ -16,6 +17,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
     RemoveMember,
     UpdatePermissions
   }
+
   alias CMS.Model.{ArticleCoAuthor, ArticleCoAuthorRequest}
 
   @doc "Pages the current Article co-author roster for an authorized Article manager."
@@ -46,6 +48,13 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
     end
   end
 
+  @doc "Prevents current co-authors from using legacy Article WorkingCopy paths."
+  def reject_member_working_copy_access(%CMS.Model.Article{} = article, %User{} = actor) do
+    Query.reject_member_working_copy_access(article, actor)
+  end
+
+  def reject_member_working_copy_access(_, _), do: {:ok, :pass}
+
   @doc "Creates an invitation for a public login or an application for the current user."
   def create_request(article_id, subject_login, type, permissions, %User{} = actor, command_id) do
     with {:ok, article} <- Query.load_article(article_id),
@@ -57,7 +66,14 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
   end
 
   @doc "Decides a revisioned Article co-author request and presents its current membership."
-  def decide_request(request_id, revision, decision, approved_permissions, %User{} = actor, command_id) do
+  def decide_request(
+        request_id,
+        revision,
+        decision,
+        approved_permissions,
+        %User{} = actor,
+        command_id
+      ) do
     with {:ok, request} <- Query.load_request(request_id),
          {:ok, article} <- Query.load_article(request.article_id),
          {:ok, approved} <- approved_permissions(request, decision, approved_permissions),
@@ -91,7 +107,14 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
   end
 
   @doc "Replaces a co-author's grantable permissions at its current membership revision."
-  def update_permissions(article_id, member_id, revision, permissions, %User{} = actor, command_id) do
+  def update_permissions(
+        article_id,
+        member_id,
+        revision,
+        permissions,
+        %User{} = actor,
+        command_id
+      ) do
     with {:ok, article} <- Query.load_article(article_id),
          {:ok, member} <-
            UpdatePermissions.execute(article, member_id, revision, permissions, actor, command_id) do

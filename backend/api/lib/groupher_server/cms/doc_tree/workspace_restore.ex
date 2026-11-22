@@ -38,9 +38,10 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
       )
       when is_integer(tree_revision) and tree_revision >= 0 and is_integer(queue_revision) and
              queue_revision >= 0 and is_binary(action_id) and
-             (is_nil(target_parent) or is_binary(target_parent)) and
+             (is_nil(target_parent) or is_binary(target_parent) or
+                target_parent == :restore_original) and
              (is_nil(target_index) or (is_integer(target_index) and target_index >= 0)) and
-             (is_nil(target_index) or not is_nil(target_parent)) do
+             (is_nil(target_index) or target_parent != :restore_original) do
     with {:ok, action_id} <- Ecto.UUID.cast(action_id),
          {:ok, queue} <-
            Queue.advance(
@@ -130,7 +131,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
 
   def run(_, _, _, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
-  defp relocate(nodes, _root_id, nil, nil), do: {:ok, nodes}
+  defp relocate(nodes, _root_id, :restore_original, nil), do: {:ok, nodes}
 
   defp relocate(nodes, root_id, parent, index) do
     case Enum.find(nodes, &(&1.node_id == root_id)) do
@@ -148,7 +149,9 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
     end
   end
 
-  defp prepare_parent(_public, _draft, current, _wanted, _root, nil), do: {:ok, current}
+  defp prepare_parent(_public, _draft, current, _wanted, _root, parent)
+       when parent in [nil, :restore_original],
+       do: {:ok, current}
 
   defp prepare_parent(public, draft, current, wanted, root, parent) do
     if Enum.any?(wanted, &(&1.node_id == root)) do

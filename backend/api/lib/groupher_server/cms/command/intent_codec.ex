@@ -280,6 +280,7 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
          "tree_revision" => :raw,
          "queue_revision" => :raw,
          "action_id" => :raw,
+         "record_revision" => :raw,
          "target_parent" => :raw,
          "target_index" => :raw
        }},

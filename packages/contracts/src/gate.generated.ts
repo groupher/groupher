@@ -80,7 +80,6 @@ export const GATE_ACTION = {
   DOC_QUEUE_WRITE: 'doc.queue.write',
   DOC_RESTORE: 'doc.restore',
   DOC_SINK: 'doc.sink',
-  DOC_TRASH: 'doc.trash',
   DOC_UNDO_LOCK_COMMENT: 'doc.undo_lock_comment',
   DOC_UNDO_PIN: 'doc.undo_pin',
   DOC_UNDO_SINK: 'doc.undo_sink',
@@ -686,13 +685,6 @@ export const GATE_PERMISSION: Record<TGateAction, TGatePermission> = {
     requires_thread: {},
   },
   'doc.sink': {
-    scope: 'community',
-    grantable: true,
-    owner_only: false,
-    requires: [],
-    requires_thread: {},
-  },
-  'doc.trash': {
     scope: 'community',
     grantable: true,
     owner_only: false,

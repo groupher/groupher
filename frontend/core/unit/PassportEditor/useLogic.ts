@@ -11,8 +11,8 @@ import useAdmins from '../DsbThread/logic/useAdmins'
 
 /** Owns a revision-bound permission draft for the selected Admin membership. */
 export default function useLogic() {
-  const { slug } = useCommunity()
-  const { can } = useGate()
+  const { slug, ref } = useCommunity()
+  const { can } = useGate({ community: { slug, ref: ref ?? '' } })
   const { activeAdmin, updatePermissions, removeAdmin } = useAdmins()
   const [draft, setDraft] = useState<{ memberId: string; permissions: string[] } | null>(null)
   const [saving, setSaving] = useState(false)

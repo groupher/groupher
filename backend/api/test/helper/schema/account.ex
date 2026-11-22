@@ -50,8 +50,6 @@ defmodule GroupherServer.Test.Helper.Schema.Account do
               publishedBlogsCount
             }
             views
-            passport
-            passportString
             subscribedCommunitiesCount
             followersCount
             followingsCount

@@ -5,7 +5,7 @@ import GroupherServer.Support.Factory
 
 alias GroupherServer.{CMS, Repo}
 alias CMS.DocTree.Publish.Queue
-alias CMS.Model.{Article, ArticleWorkingCopy, Author, DocsLifecycle}
+alias CMS.Model.{Article, ArticleLifecycle, ArticleWorkingCopy, Author}
 
 [[database]] = Repo.query!("SELECT current_database()").rows
 expected = System.get_env("DOCS_B0_DISPOSABLE_DATABASE")
@@ -64,25 +64,30 @@ alias CMS.DocTree.Commands.{
 }
 
 alias CMS.Articles.Commands.SaveWorkingCopy
-alias CMS.Model.{ArticleBody, ArticlePublic, ArticleSnapshot, DocsPostPublishConflict}
 
-{:ok, _} =
-  CMS.Passport.stamp_passport(
-    %{
-      "global" => %{},
-      site.slug => %{
-        "cms" => %{
-          "doc.restore" => true,
-          "doc.trash" => true,
-          "doc.permanent_delete" => true,
-          "doc.queue.write" => true,
-          "doc.queue.publish" => true,
-          "doc.queue.preview" => true
-        }
-      }
-    },
-    actor
-  )
+alias CMS.Model.{
+  ArticleBody,
+  ArticlePublic,
+  ArticleSnapshot,
+  CommunityAdmin,
+  DocsPostPublishConflict
+}
+
+Repo.insert!(
+  CommunityAdmin.changeset(%CommunityAdmin{}, %{
+    user_id: actor.id,
+    community_id: site.id,
+    joined_at: DateTime.utc_now(:second),
+    permissions: %{
+      "doc.restore" => true,
+      "community.article.trash.read" => true,
+      "doc.permanent_delete" => true,
+      "doc.queue.write" => true,
+      "doc.queue.publish" => true,
+      "doc.queue.preview" => true
+    }
+  })
+)
 
 {:ok, %{node_id: tab}} =
   CreateWorkspaceNode.execute(site, 0, %{type: :tab, title: "Tab"}, actor, Ecto.UUID.generate())
@@ -160,7 +165,7 @@ revision = queue_doc.(article, work)
 {release_command, release_result} = release.(revision)
 assert Repo.get(ArticleWorkingCopy, work.id) == nil
 assert Repo.get(ArticleBody, work.body_id) == nil
-assert Repo.get_by!(DocsLifecycle, article_id: article.id).default_working_copy_id == nil
+assert Repo.get_by!(ArticleLifecycle, article_id: article.id).state == :published
 assert Repo.aggregate(from(s in ArticleSnapshot, where: s.article_id == ^article.id), :count) >= 2
 assert {:ok, %{nodes: nodes}} = CMS.docs_workspace_read(site, actor)
 assert Enum.find(nodes, &(&1.doc_id == article.id)).working_copy_id == nil
@@ -169,7 +174,7 @@ assert {:ok, %{working_copy: nil, public_snapshot: snapshot}} =
          CMS.docs_editor_read(site, article.id, actor)
 
 assert snapshot.id == Repo.get!(ArticlePublic, article.id).snapshot_id
-assert Repo.get_by(ArticleWorkingCopy, article_id: article.id, scope_kind: :default) == nil
+assert Repo.get_by(ArticleWorkingCopy, article_id: article.id, scope_type: :default) == nil
 
 assert {:error, _} =
          SaveWorkingCopy.execute(
@@ -282,7 +287,7 @@ revision = queue_doc.(article, new_work)
 release.(queue.queue_revision)
 retained = Repo.get!(ArticleWorkingCopy, new_work.id)
 assert retained.title == "Queue title" and retained.revision == changed_d.revision + 1
-assert Repo.get_by!(DocsLifecycle, article_id: article.id).default_working_copy_id == retained.id
+assert Repo.get_by!(ArticleLifecycle, article_id: article.id).state == :published
 
 assert {:ok, %{subtitle: "Unpublished subtitle"}} =
          CMS.DocTree.Publish.ContentState.load(retained)
@@ -298,7 +303,7 @@ assert Repo.get(ArticleWorkingCopy, retained.id) == nil
 assert {:ok, ^begun} =
          BeginEdit.execute(site, article.id, public.snapshot_id, actor, begin_command)
 
-assert Repo.get_by(ArticleWorkingCopy, article_id: article.id, scope_kind: :default) == nil
+assert Repo.get_by(ArticleWorkingCopy, article_id: article.id, scope_type: :default) == nil
 
 # Conflicting D remains unchanged; resolving to Public removes it and replays safely.
 work = begin_edit.(article)
@@ -451,7 +456,7 @@ alias CMS.DocTree.Commands.{DeleteWorkspaceNode, RestoreWorkspaceNode, PurgeWork
     Ecto.UUID.generate()
   )
 
-assert Repo.get_by!(DocsLifecycle, article_id: clean_article.id).default_working_copy_id == nil
+assert Repo.get_by!(ArticleLifecycle, article_id: clean_article.id).state == :published
 
 assert {:error, _} =
          BeginEdit.execute(
@@ -462,19 +467,23 @@ assert {:error, _} =
            Ecto.UUID.generate()
          )
 
+{:ok, trash_item} =
+  CMS.Articles.CommunityTrashQuery.get(site, actor, :doc, deleted.trash_action_id)
+
 {:ok, _} =
   RestoreWorkspaceNode.execute(
     site,
     deleted.tree_revision,
     deleted.queue_revision,
     deleted.trash_action_id,
-    nil,
+    trash_item.record_revision,
+    :restore_original,
     nil,
     actor,
     Ecto.UUID.generate()
   )
 
-assert Repo.get_by!(DocsLifecycle, article_id: clean_article.id).default_working_copy_id == nil
+assert Repo.get_by!(ArticleLifecycle, article_id: clean_article.id).state == :published
 {:ok, queue} = Queue.read(site)
 
 {:ok, deleted} =
@@ -493,9 +502,10 @@ release.(deleted.queue_revision)
 assert Repo.get(ArticlePublic, clean_article.id) == nil
 
 recovery =
-  Repo.get!(
-    ArticleWorkingCopy,
-    Repo.get_by!(DocsLifecycle, article_id: clean_article.id).default_working_copy_id
+  Repo.get_by!(ArticleWorkingCopy,
+    article_id: clean_article.id,
+    scope_type: :default,
+    scope_id: clean_article.id
   )
 
 assert CMS.Articles.Body.document(recovery) ==
@@ -503,13 +513,17 @@ assert CMS.Articles.Body.document(recovery) ==
 
 {:ok, queue} = Queue.read(site)
 
+{:ok, trash_item} =
+  CMS.Articles.CommunityTrashQuery.get(site, actor, :doc, deleted.trash_action_id)
+
 {:ok, _} =
   RestoreWorkspaceNode.execute(
     site,
     queue.tree_lock_version,
     queue.queue_revision,
     deleted.trash_action_id,
-    nil,
+    trash_item.record_revision,
+    :restore_original,
     nil,
     actor,
     Ecto.UUID.generate()
@@ -545,7 +559,7 @@ assert {:ok, _} =
            Ecto.UUID.generate()
          )
 
-assert Repo.get_by(DocsLifecycle, article_id: clean_article.id) == nil
+assert Repo.get_by!(ArticleLifecycle, article_id: clean_article.id).state == :deleted
 assert Repo.get_by(ArticleWorkingCopy, article_id: clean_article.id) == nil
 assert Repo.get!(ArticleSnapshot, old_public.snapshot_id)
 IO.puts("R5 rollback and Trash recovery lifecycle checks passed")
@@ -655,5 +669,5 @@ await_blocked.(save_pid)
 send(publisher, :commit)
 assert {:ok, _} = Task.await(publish_task, 15_000)
 assert {:error, _} = Task.await(save_task, 15_000)
-assert Repo.get_by(ArticleWorkingCopy, article_id: race_article.id, scope_kind: :default) == nil
+assert Repo.get_by(ArticleWorkingCopy, article_id: race_article.id, scope_type: :default) == nil
 IO.puts("R5 save/publication ordering checks passed")
