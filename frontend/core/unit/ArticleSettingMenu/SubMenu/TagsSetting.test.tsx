@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { GraphQLRequestError } from '~/graphql/client'
@@ -79,6 +79,38 @@ describe('TagsSetting', () => {
     )
 
     expect(await screen.findByRole('button', { name: /Tag A/ })).toBeDisabled()
+  })
+
+  it('blocks tag edits and confirmation while refreshing a conflicted working copy', async () => {
+    let resolveRefresh: ((value: ReturnType<typeof workingCopy>) => void) | undefined
+    mocks.browserGraphQLRequest.mockResolvedValueOnce(workingCopy(1, [])).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveRefresh = resolve
+        }),
+    )
+    mocks.saveWorkingCopy.mockResolvedValue({
+      error: new GraphQLRequestError(Response.json({}), [{ extensions: { code: 4561 } }]),
+    })
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TagsSetting onBack={vi.fn()} />
+      </QueryClientProvider>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: /Tag A/ }))
+    const confirm = screen.getByRole('button', { name: '确认' })
+    fireEvent.click(confirm)
+
+    await waitFor(() => expect(mocks.saveWorkingCopy).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(confirm).toBeDisabled())
+    expect(screen.getByRole('button', { name: /Tag B/ })).toBeDisabled()
+
+    await act(async () => resolveRefresh?.(workingCopy(2, ['tag-b'])))
   })
 
   it('preserves a dirty tag selection and shows the latest server tags after a revision conflict', async () => {

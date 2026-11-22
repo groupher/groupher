@@ -108,7 +108,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
           type='button'
           className={s.item}
           key={item.id}
-          disabled={!workingCopy}
+          disabled={!workingCopy || workingCopiesQuery.isFetching}
           onClick={() => item.id !== undefined && handleCheck(item.id, !includes(item.id, checked))}
         >
           <TagNode
@@ -132,10 +132,10 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
 
       <Footer
         onBack={onBack}
-        disabled={!touched || !workingCopy}
+        disabled={!touched || !workingCopy || workingCopiesQuery.isFetching}
         onConfirm={handleUpdate}
         top={10}
-        loading={saveResult.fetching || workingCopiesQuery.isLoading}
+        loading={saveResult.fetching || workingCopiesQuery.isFetching}
       />
     </div>
   )
