@@ -15,18 +15,18 @@ import AdminMember from './AdminMember'
 import useSalon, { cn } from './salon'
 
 const Members = () => {
-  const { slug } = useCommunity()
+  const { slug, ref: communityRef = '' } = useCommunity()
   const position = usePagiPosition(slug)
   const query = useQuery({
     queryKey: ['community', slug, 'admins', position.input],
     queryFn: async () =>
       (
         await browserGraphQLRequest(S.adminDirectoryPage, {
-          communityRef: slug,
+          communityRef,
           pagi: position.input,
         })
       ).pagedCommunityAdminMembers,
-    enabled: !!slug,
+    enabled: !!communityRef,
     meta: { hydration: 'public' },
   })
   const s = useSalon()

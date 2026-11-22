@@ -445,7 +445,6 @@ export const resolvers = {
       mockPage(
         Array.from({ length: 3 }, (_, index) => ({
           memberId: String(index + 1),
-          userId: String(index + 1),
           isLord: index === 0,
           user: makeUser({ login: `admin_${index}` }),
         })),

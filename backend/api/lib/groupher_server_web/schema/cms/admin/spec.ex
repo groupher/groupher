@@ -23,7 +23,6 @@ defmodule GroupherServerWeb.Schema.CMS.Admin.Spec do
 
   object :community_admin_directory_member do
     field(:member_id, non_null(:id))
-    field(:user_id, non_null(:id))
     field(:is_lord, non_null(:boolean))
     field(:user, non_null(:common_user))
   end
@@ -36,8 +35,6 @@ defmodule GroupherServerWeb.Schema.CMS.Admin.Spec do
   object :community_admin_request do
     field(:id, non_null(:id))
     field(:community_id, non_null(:id))
-    field(:subject_user_id, non_null(:id))
-    field(:created_by_id, non_null(:id))
     field(:type, non_null(:string))
     field(:status, non_null(:string))
     field(:decision, :string)

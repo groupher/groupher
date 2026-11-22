@@ -307,7 +307,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Tickets do
     CMS.tickets_set_assignees(
       args.community,
       to_string(args.ticket_id),
-      args.assignee_ids,
+      args.assignee_logins,
       args.expected_workflow_version,
       actor,
       args.command_id

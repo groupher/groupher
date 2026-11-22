@@ -251,7 +251,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Ticket do
       arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:ticket_id, non_null(:id))
-      arg(:assignee_ids, non_null(list_of(non_null(:integer))))
+      arg(:assignee_logins, non_null(list_of(non_null(:string))))
       arg(:expected_workflow_version, non_null(:integer))
 
       middleware(M.Authorize, :login)

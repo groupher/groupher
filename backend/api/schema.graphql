@@ -947,7 +947,7 @@ type RootMutationType {
 
   "Replace assigned Community Admins on a Ticket"
   setTicketAssignees(
-    commandId: ID!, community: String!, ticketId: ID!, assigneeIds: [Int!]!, expectedWorkflowVersion: Int!
+    commandId: ID!, community: String!, ticketId: ID!, assigneeLogins: [String!]!, expectedWorkflowVersion: Int!
   ): Ticket
 
   "Replace internal Post tags on a Ticket"
@@ -2008,7 +2008,6 @@ type CommunityAdminPage {
 
 type CommunityAdminDirectoryMember {
   memberId: ID!
-  userId: ID!
   isLord: Boolean!
   user: CommonUser!
 }
@@ -2021,8 +2020,6 @@ type CommunityAdminDirectoryPage {
 type CommunityAdminRequest {
   id: ID!
   communityId: ID!
-  subjectUserId: ID!
-  createdById: ID!
   type: String!
   status: String!
   decision: String
@@ -2396,7 +2393,7 @@ enum TicketUpdateVisibilityEnum {
 input TicketFilter {
   type: TicketTypeEnum
   status: TicketStatusEnum
-  assigneeId: Int
+  assigneeLogin: String
   priority: Int
   tagIds: [Int]
   versions: [String]
@@ -2416,9 +2413,7 @@ input TicketFacetInput {
 }
 
 type TicketAssignee {
-  id: ID!
-  login: String!
-  nickname: String
+  user: CommonUser!
 }
 
 type TicketTagRef {

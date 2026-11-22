@@ -73,7 +73,7 @@ const operationName = (document: unknown): string | undefined => {
 const renderManager = async (client = new QueryClient()) => {
   render(
     <QueryClientProvider client={client}>
-      <ArticleCoAuthors article={{ id: 'article-1', title: 'Article title', innerId: 17 }} />
+      <ArticleCoAuthors article={{ id: 'article-1', title: 'Article title', innerId: '17' }} />
     </QueryClientProvider>,
   )
 

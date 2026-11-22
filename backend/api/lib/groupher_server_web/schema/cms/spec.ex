@@ -266,7 +266,7 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
   input_object :ticket_filter do
     field(:type, :ticket_type_enum)
     field(:status, :ticket_status_enum)
-    field(:assignee_id, :integer)
+    field(:assignee_login, :string)
     field(:priority, :integer)
     field(:tag_ids, list_of(:integer))
     field(:versions, list_of(:string))
@@ -286,9 +286,7 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
   end
 
   object :ticket_assignee do
-    field(:id, non_null(:id))
-    field(:login, non_null(:string))
-    field(:nickname, :string)
+    field(:user, non_null(:common_user))
   end
 
   object :ticket_tag_ref do

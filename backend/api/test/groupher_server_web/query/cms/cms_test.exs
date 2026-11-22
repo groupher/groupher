@@ -363,15 +363,19 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     end
 
     test "guest can page the public admin directory", ~m(guest_conn community)a do
+      lifecycle = Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
+      Repo.update!(Ecto.Changeset.change(lifecycle, state: :active))
+      assert {:ok, _community} = CMS.FrontDesk.community({:ref, community.ref}, nil, mode: :public)
+
       query = """
       query($communityRef: String!, $pagi: PagiInput) {
         pagedCommunityAdminMembers(communityRef: $communityRef, pagi: $pagi) {
-          entries { memberId userId user { login } }
-          pageInfo { page size totalCount }
+          entries { memberId user { login } }
+          pageInfo { ... on OffsetPageInfo { page size totalCount } }
         }
       }
       """
-      variables = %{communityRef: community.slug, pagi: %{offset: %{page: 1, size: 10}}}
+      variables = %{communityRef: community.ref, pagi: %{offset: %{page: 1, size: 10}}}
       results = guest_conn |> gq_query(query, variables)
 
       assert results["pageInfo"]["page"] == 1

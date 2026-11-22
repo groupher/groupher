@@ -910,7 +910,7 @@ defmodule GroupherServer.CMS do
   defdelegate tickets_set_assignees(
                 community,
                 ticket_id,
-                user_ids,
+                user_logins,
                 expected_version,
                 actor,
                 command_id
