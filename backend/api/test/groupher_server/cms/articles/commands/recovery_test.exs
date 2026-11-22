@@ -639,14 +639,15 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     assert {:ok, _} =
              CMS.Passport.stamp_passport(
-               %{"global" => %{}, forged_slug => %{"cms" => %{"post.pin" => true}}},
+               %{"global" => %{}, forged_slug => %{"cms" => %{"community.update" => true}}},
                other
              )
 
     forged_community = %{community | slug: forged_slug}
 
-    assert {:error, %CMS.Gate.Decision{allowed: false}} =
-             CMS.Gate.Access.Check.community(other, :pin, forged_community)
+    assert {:error,
+            %CMS.Gate.Decision{allowed: false, primary: %{reason: :permission_denied}}} =
+             CMS.Gate.Access.Check.community(other, :update, forged_community)
   end
 
   test "a Passport editor cannot save a published Article WorkingCopy" do

@@ -22,7 +22,10 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
   const { article, articlePath } = useViewingArticle()
   const [title, setTitle] = useState(article.title ?? '')
   const [revisionConflict, setRevisionConflict] = useState(false)
-  const [conflictRefreshSucceeded, setConflictRefreshSucceeded] = useState(false)
+  const [conflictRefresh, setConflictRefresh] = useState<{
+    baselineUpdatedAt: number
+    succeeded: boolean
+  } | null>(null)
   const { touched, setTouched, resetTouched } = useTouched()
   const workingCopiesQuery = useQuery({
     queryKey: ['article-working-copies', article.id, articlePath?.community],
@@ -64,9 +67,14 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
       if (result.error) {
         if (isWorkingCopyRevisionConflict(result.error)) {
           setRevisionConflict(true)
-          setConflictRefreshSucceeded(false)
+          setConflictRefresh({
+            baselineUpdatedAt: workingCopiesQuery.dataUpdatedAt,
+            succeeded: false,
+          })
           const refreshed = await workingCopiesQuery.refetch()
-          setConflictRefreshSucceeded(refreshed.isSuccess)
+          setConflictRefresh((current) =>
+            current ? { ...current, succeeded: refreshed.isSuccess } : current,
+          )
           toast('检测到协作者已保存新版本。你的标题修改已保留，请核对后再保存。', 'error')
         } else {
           toast('修改失败', 'error')
@@ -74,7 +82,7 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
       } else if (result.data?.saveWorkingCopy?.title !== undefined) {
         toast('已保存到默认编辑副本；公开版本未变')
         setRevisionConflict(false)
-        setConflictRefreshSucceeded(false)
+        setConflictRefresh(null)
         const newTitle = result.data.saveWorkingCopy.title
         setTitle(newTitle)
         await workingCopiesQuery.refetch()
@@ -99,7 +107,11 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
       {revisionConflict ? (
         <div role='alert' className='text-digest mt-2 text-xs'>
           最新服务端标题：
-          {conflictRefreshSucceeded ? (workingCopy?.title ?? '暂不可用') : '暂不可用'}
+          {conflictRefresh &&
+          (conflictRefresh.succeeded ||
+            workingCopiesQuery.dataUpdatedAt > conflictRefresh.baselineUpdatedAt)
+            ? (workingCopy?.title ?? '暂不可用')
+            : '暂不可用'}
           。输入框中的本地标题仍保留；请先核对差异，再确认是否保存。
         </div>
       ) : null}

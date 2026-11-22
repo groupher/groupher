@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { GraphQLRequestError } from '~/graphql/client'
 
@@ -44,6 +44,12 @@ const workingCopy = (revision: number, title: string) => ({
   articleWorkingCopies: [{ id: 'copy-id', revision, scopeType: 'default', title }],
 })
 
+beforeEach(() => {
+  mocks.browserGraphQLRequest.mockReset()
+  mocks.saveWorkingCopy.mockReset()
+  mocks.toast.mockReset()
+})
+
 describe('TitleSetting', () => {
   it('preserves a dirty title and shows the latest server value after a revision conflict', async () => {
     mocks.browserGraphQLRequest
@@ -69,6 +75,7 @@ describe('TitleSetting', () => {
     fireEvent.click(confirm)
 
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Server title v2'))
+    expect(mocks.browserGraphQLRequest).toHaveBeenCalledTimes(2)
     expect(input).toHaveValue('My local title')
   })
 
@@ -98,7 +105,16 @@ describe('TitleSetting', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert')).toHaveTextContent('最新服务端标题：暂不可用'),
     )
+    expect(mocks.browserGraphQLRequest).toHaveBeenCalledTimes(2)
     expect(screen.getByRole('alert')).not.toHaveTextContent('Cached server title')
     expect(input).toHaveValue('My local title')
+
+    queryClient.setQueryData(
+      ['article-working-copies', 'article-id', 'community'],
+      workingCopy(2, 'Refreshed server title'),
+    )
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Refreshed server title'),
+    )
   })
 })
