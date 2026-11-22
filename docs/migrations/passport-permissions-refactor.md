@@ -1,6 +1,6 @@
 # Passport Permission 与 Community Admin
 
-> 状态：P1 基线、P2 Admin 请求 / 管理接口、P2B 非 Doc 本站 Trash 与 Passport P3 Community Admin 通知接入已有本地实现及定向验收记录，尚未发布。Messaging 通用 M1 / M2 验收单列于 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)；P3 在 M2 切换后按新 schema 复跑定向验收。P4 最终全消费方清理 / 迁移验收尚未开始；P4a 消费者盘点可并行启动，P4c 最终关闭依赖 C3、D1 / D2 消费者切换和 D3 验收。文档边界与跨模块依赖复审记录见 §7.1。
+> 状态：P1 基线、P2 Admin 请求 / 管理接口、P2B 非 Doc 本站 Trash 与 Passport P3 Community Admin 通知接入已有本地实现及定向验收记录，尚未发布。Messaging 通用 M1 / M2 验收单列于 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)；P3 在 M2 切换后按新 schema 复跑定向验收。P4a 已建立首轮消费者 owner map，逐入口复核尚未完成；P4c 最终关闭依赖 C3、D1 / D2 消费者切换和 D3 验收。P4 不阻塞各领域按自己的批次开工和局部交付。文档边界与跨模块依赖复审记录见 §7.1。
 >
 > 本文拥有权限目录 / Action 一一对应、Admin 命名、Community ref、Passport 并发写入及 Community Admin 请求通知生产者。通用 Notices / Dedup / Inbox 基础设施见 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)。Article 成员合同见 [Co-Authors](../feature/article/co-authors.md)，内容追溯见 [修改历史 / Diff](../feature/article/edit-history-diff.md)，后续站点修复见 [Docs Mirror Fix](./docs-mirror-fix.md)。
 >
@@ -394,7 +394,7 @@ Community Admin 请求 producer 已接入，列入 Messaging M2 的现有 produc
 
 跨文档批次顺序与并行边界统一见 [Docs Mirror Fix §6](./docs-mirror-fix.md#6-实施批次与依赖)。P1 完成后，P2、P2B 与 H2 可并行开发，共用 Gate / Scope 修改须串行合入。Passport P3 在 P2 后独立完成 Community Admin 通知闭环；Messaging 基础设施按 [独立计划](./messaging-notices-refactor.md) 验收。Co-Authors C1 独立验收 Article 请求和 Outbox 意图，再验收 Article 通知生产者接入同一基础设施；C1 不阻塞 Passport P3。
 
-P4 是最终全局收口门槛，不是各领域开工或局部交付的前置条件。P4a 消费者盘点可立即并行开始，产出“旧调用方、目标合同、负责人批次、移除方式、定向验收”清单。P4b Passport 自有旧层清理按消费者所属批次逐项完成；各领域在切换自己的调用方时负责移除该领域旧入口并完成局部检查，不需要等待其他领域。P4c 仅负责跨领域无残留核查、最终 DDL / 数据迁移演练及正式切换记录，等待 P2B、C3、D1 / D2 消费者切换和 D3 验收完成；D2 的旧 doc.trash 消费者与查询入口必须在此之前退役。批次完成不等于可独立发布：P1 删除旧生成协议涉及的消费者尚未迁移时，该开发中间态不可发布，也不引入兼容映射。
+P4 是最终全局收口门槛，不是各领域开工或局部交付的前置条件。P4a 首轮 owner map 见 [Passport P4a 消费者归属清单](./evidence/passport-p4-inventory.md)；逐入口复核、动态调用和生成 / job 消费者对照仍在进行。P4b Passport 自有旧层清理按消费者所属批次逐项完成；各领域在切换自己的调用方时负责移除该领域旧入口并完成局部检查，不需要等待其他领域。P4c 仅负责跨领域无残留核查、最终 DDL / 数据迁移演练及正式切换记录，等待 P2B、C3、D1 / D2 消费者切换和 D3 验收完成；D2 的旧 doc.trash 消费者与查询入口必须在此之前退役。批次完成不等于可独立发布：P1 删除旧生成协议涉及的消费者尚未迁移时，该开发中间态不可发布，也不引入兼容映射。
 
 ### 7.1 文档独立边界复审（2026-11-17）
 
@@ -439,4 +439,4 @@ P2B 验收记录（2026-11-17）：`mix compile --warnings-as-errors` 通过；B
 
 ### P4 最终收口待完成
 
-Passport 旧 Registry / Assignment / Moderators 入口和旧投影由 Passport 负责；跨领域消费者由所属批次负责，不将其实现工作整体挂在 P4 下等待。P4a 盘点可立即开始，P4b 随消费者批次逐项清理并验证。仍未完成的是 P4c 最终全消费方无残留核查、jobs / seeds / generated / 文档收尾、最终 DDL / 数据迁移演练及正式切换验收；该最终门槛依赖 P2B、C3、D1 / D2 的消费者切换和 D3 验收。Admin 浏览器验收不是 P4 前置。
+Passport 旧 Registry / Assignment / Moderators 入口和旧投影由 Passport 负责；跨领域消费者由所属批次负责，不将其实现工作整体挂在 P4 下等待。P4a 首轮 owner map 已建立，逐入口复核仍待完成；P4b 随消费者批次逐项清理并验证。仍未完成的是 P4c 最终全消费方无残留核查、jobs / seeds / generated / 文档收尾、最终 DDL / 数据迁移演练及正式切换验收；该最终门槛依赖 P2B、C3、D1 / D2 的消费者切换和 D3 验收。Admin 浏览器验收不是 P4 前置。
