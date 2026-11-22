@@ -1325,7 +1325,7 @@
     },
     {
       "access": "user",
-      "arity": 8,
+      "arity": 9,
       "confirmation": "GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNodeConfirmation",
       "module": "GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNode",
       "name": "run_receipt",

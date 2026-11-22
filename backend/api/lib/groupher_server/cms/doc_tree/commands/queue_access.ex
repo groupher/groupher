@@ -32,13 +32,15 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
          %Article{thread: :doc} = article <- Repo.get(Article, article_id) do
       CMS.Gate.with_community_check(actor, :edit, community, article, fn _ -> {:ok, :pass} end)
     else
-      _ -> {:error, :invalid_doc_identity}
+      nil -> {:error, :invalid_doc_identity}
+      :error -> {:error, :invalid_doc_identity}
+      {:error, _} = error -> error
     end
   end
 
   @doc "Allows existing Queue-body writes through site Queue access or this Doc's Article update grant."
   def authorize_body_write(community, article_id, actor) do
-    case site_queue_write(community, actor, :transaction) do
+    case site_queue_write_in_transaction(community, actor) do
       {:ok, canonical} ->
         {:ok, canonical}
 
@@ -58,7 +60,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
 
   @doc "Rechecks existing Queue-body write admission after the Receipt commits."
   def authorize_body_write_after_commit(community, article_id, actor) do
-    case site_queue_write(community, actor, :after_commit) do
+    case site_queue_write_after_commit(community, actor) do
       {:ok, canonical} ->
         {:ok, canonical}
 
@@ -127,14 +129,14 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
     end
   end
 
-  defp site_queue_write(community, actor, :transaction) do
+  defp site_queue_write_in_transaction(community, actor) do
     with {:ok, canonical} <- CMS.Gate.check_in_transaction(actor, :docs_queue_write, community),
          {:ok, canonical} <- CMS.Gate.check_in_transaction(actor, :docs_queue_preview, canonical) do
       {:ok, canonical}
     end
   end
 
-  defp site_queue_write(community, actor, :after_commit) do
+  defp site_queue_write_after_commit(community, actor) do
     with {:ok, canonical} <- CMS.Gate.access_check(actor, :docs_queue_write, community),
          {:ok, canonical} <- CMS.Gate.access_check(actor, :docs_queue_preview, canonical) do
       {:ok, canonical}
