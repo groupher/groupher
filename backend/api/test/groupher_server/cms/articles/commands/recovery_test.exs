@@ -579,7 +579,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     assert {:ok, _} =
              CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => false}}},
+               %{"global" => %{}, community.slug => %{"cms" => %{"post.pin" => false}}},
                author
              )
 
@@ -640,7 +640,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     assert {:ok, _} =
              CMS.Passport.stamp_passport(
-               %{"global" => %{}, forged_slug => %{"cms" => %{"post.edit" => true}}},
+               %{"global" => %{}, forged_slug => %{"cms" => %{"post.pin" => true}}},
                other
              )
 
@@ -660,7 +660,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     assert {:ok, _} =
              CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => true}}},
+               %{"global" => %{}, community.slug => %{"cms" => %{"post.pin" => true}}},
                editor
              )
 
@@ -677,7 +677,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     assert {:ok, _} =
              CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => false}}},
+               %{"global" => %{}, community.slug => %{"cms" => %{"post.pin" => false}}},
                editor
              )
 
@@ -706,7 +706,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     assert {:ok, _} =
              CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => true}}},
+               %{"global" => %{}, community.slug => %{"cms" => %{"post.pin" => true}}},
                editor
              )
 
@@ -722,7 +722,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     assert {:ok, _} =
              CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => false}}},
+               %{"global" => %{}, community.slug => %{"cms" => %{"post.pin" => false}}},
                editor
              )
 

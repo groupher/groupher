@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Passport.Authorization do
 
   ## Examples
 
-      Authorization.allowed?(passport, "community-slug", "post.edit")
+      Authorization.allowed?(passport, "community-slug", "post.pin")
       #=> {:ok, true}
 
       Authorization.allowed?(passport, "community-slug", "unknown.action")
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Passport.Authorization do
 
   ## Examples
 
-      Authorization.allowed?(passport, community_slug, "post.edit", :post)
+      Authorization.allowed?(passport, community_slug, "post.pin", :post)
   """
   def allowed?(passport, community, action, thread) do
     Registry.allowed?(passport, community, action, thread)
@@ -58,10 +58,10 @@ defmodule GroupherServer.CMS.Passport.Authorization do
 
   ## Examples
 
-      Authorization.check(user, "post.edit", %{community: %{slug: "elixir"}})
+      Authorization.check(user, "post.pin", %{community: %{slug: "elixir"}})
       #=> {:ok, true}
 
-      Authorization.check(user, "post.edit", %{community: %{slug: "elixir"}})
+      Authorization.check(user, "post.pin", %{community: %{slug: "elixir"}})
       #=> {:error, ErrorCat.error_pattern(reason: :permission_denied)}
 
       Authorization.check(user, "unknown.action", %{})

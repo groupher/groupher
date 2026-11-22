@@ -1171,11 +1171,10 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       {:ok, editor} = db_insert(:user)
 
-      assert {:ok, _} =
-               CMS.Passport.stamp_passport(
-                 %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => true}}},
-                 editor
-               )
+      editor = %{
+        editor
+        | cur_passport: %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => true}}}
+      }
 
       editor_params = %{
         params
@@ -1189,11 +1188,13 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
                CMS.Assets.replace_use(post, editor_params, editor, editor_command_id)
 
-      assert {:ok, _} =
-               CMS.Passport.stamp_passport(
-                 %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => false}}},
-                 editor
-               )
+      editor = %{
+        editor
+        | cur_passport: %{
+            "global" => %{},
+            community.slug => %{"cms" => %{"post.edit" => false}}
+          }
+      }
 
       assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
                CMS.Assets.replace_use(post, editor_params, editor, editor_command_id)

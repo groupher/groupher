@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
              ErrorCat.code(ProfileErrorCat.account_login())
            )
 
-    unrelated = simu_conn(:user, cms: %{community.slug => %{"post.edit" => true}})
+    unrelated = simu_conn(:user, cms: %{community.slug => %{"post.pin" => true}})
 
     assert unrelated
            |> mutation_error?(

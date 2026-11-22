@@ -183,22 +183,6 @@
       "requires_thread": {}
     },
     {
-      "action": "blog.draft.publish",
-      "scope": "article",
-      "grantable": false,
-      "owner_only": true,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "blog.draft.update",
-      "scope": "article",
-      "grantable": false,
-      "owner_only": true,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "blog.lock_comment",
       "scope": "community",
       "grantable": true,
@@ -271,14 +255,6 @@
       "requires_thread": {}
     },
     {
-      "action": "blog.update",
-      "scope": "community",
-      "grantable": false,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "category.create",
       "scope": "global",
       "grantable": true,
@@ -315,22 +291,6 @@
       "scope": "global",
       "grantable": true,
       "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "changelog.draft.publish",
-      "scope": "article",
-      "grantable": false,
-      "owner_only": true,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "changelog.draft.update",
-      "scope": "article",
-      "grantable": false,
-      "owner_only": true,
       "requires": [],
       "requires_thread": {}
     },
@@ -402,14 +362,6 @@
       "action": "changelog.undo_sink",
       "scope": "community",
       "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "changelog.update",
-      "scope": "community",
-      "grantable": false,
       "owner_only": false,
       "requires": [],
       "requires_thread": {}
@@ -755,22 +707,6 @@
       "requires_thread": {}
     },
     {
-      "action": "post.draft.publish",
-      "scope": "article",
-      "grantable": false,
-      "owner_only": true,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "post.draft.update",
-      "scope": "article",
-      "grantable": false,
-      "owner_only": true,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "post.lock_comment",
       "scope": "community",
       "grantable": true,
@@ -846,14 +782,6 @@
       "action": "post.undo_sink",
       "scope": "community",
       "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "post.update",
-      "scope": "community",
-      "grantable": false,
       "owner_only": false,
       "requires": [],
       "requires_thread": {}

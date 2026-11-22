@@ -18,7 +18,7 @@ defmodule Helper.PermissionRegistry do
         "<community_slug>" => %{
           "root" => true,
           "cms" => %{
-            "post.edit" => true,
+            "post.pin" => true,
             "thread.set" => true
           }
         }
@@ -27,7 +27,7 @@ defmodule Helper.PermissionRegistry do
   Requirement structure:
 
       %{scope: :global, grant: "community.create"}
-      %{scope: :context, context: :cms, grant: "post.edit"}
+      %{scope: :context, context: :cms, grant: "post.pin"}
       %{scope: :global, grant_by_thread: "community.unmirror"}
 
   Canonical passport shape:

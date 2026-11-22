@@ -98,7 +98,7 @@ defmodule Helper.PermissionConfig do
       %{
         "<community_slug>" => %{
           "cms" => %{
-            "post.edit" => true,
+            "post.pin" => true,
             "moderator.update" => true
           }
         }
@@ -106,7 +106,6 @@ defmodule Helper.PermissionConfig do
   """
   def cms_grants do
     threaded_grants([
-      "edit",
       "trash",
       "restore",
       "permanent_delete",
@@ -149,7 +148,9 @@ defmodule Helper.PermissionConfig do
         "ticket.assign",
         "ticket.manage_case",
         "ticket.manage_visibility",
-        "ticket.read_internal"
+        "ticket.read_internal",
+        "doc.edit",
+        "post.set_category"
       ]
   end
 
@@ -295,14 +296,10 @@ defmodule Helper.PermissionConfig do
         context: :cms,
         grant_by_thread: "community_tag.update"
       },
-      "post.update" => %{scope: :context, context: :cms, grant: "post.edit", owner_fallback: true},
-      "post.draft.update" => %{owner_fallback: true},
-      "post.draft.publish" => %{owner_fallback: true},
       "post.set_category" => %{
         scope: :context,
         context: :cms,
-        grant: "post.edit",
-        owner_fallback: true
+        grant: "post.set_category"
       },
       "doc.update" => %{scope: :context, context: :cms, grant: "doc.edit", owner_fallback: true},
       "doc.history.read" => %{scope: :context, context: :cms, grant: "doc.history.read"},
@@ -312,17 +309,6 @@ defmodule Helper.PermissionConfig do
       "doc.queue.preview" => %{scope: :context, context: :cms, grant: "doc.queue.preview"},
       "doc.queue.publish" => %{scope: :context, context: :cms, grant: "doc.queue.publish"},
       "doc.queue.write" => %{scope: :context, context: :cms, grant: "doc.queue.write"},
-      "blog.update" => %{scope: :context, context: :cms, grant: "blog.edit", owner_fallback: true},
-      "blog.draft.update" => %{owner_fallback: true},
-      "blog.draft.publish" => %{owner_fallback: true},
-      "changelog.update" => %{
-        scope: :context,
-        context: :cms,
-        grant: "changelog.edit",
-        owner_fallback: true
-      },
-      "changelog.draft.update" => %{owner_fallback: true},
-      "changelog.draft.publish" => %{owner_fallback: true},
       "comment.update" => %{owner_fallback: true},
       "comment.delete" => %{owner_fallback: true},
       "comment.pin" => %{owner_fallback: true},

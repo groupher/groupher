@@ -557,8 +557,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
           "global" => %{},
           "#{community.slug}" => %{
             "cms" => %{
-              "post.delete" => false,
-              "post.edit" => true,
+              "post.permanent_delete" => false,
+              "post.set_category" => true,
               "post.pin" => true,
               "post.undo_pin" => true
             }
@@ -583,7 +583,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert result["slug"] == community.slug
 
       {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
-      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.edit"])
+      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.set_category"])
 
       moderator = Enum.find(moderators(community), &(&1["user"]["login"] == user2.login))
       assert moderator["passportItemCount"] == 3
@@ -593,8 +593,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
           "global" => %{},
           "#{community.slug}" => %{
             "cms" => %{
-              "post.delete" => false,
-              "post.edit" => true,
+              "post.permanent_delete" => false,
+              "post.set_category" => true,
               "post.pin" => false,
               "post.undo_pin" => true
             }
@@ -606,7 +606,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert result["slug"] == community.slug
 
       {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
-      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.edit"])
+      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.set_category"])
       refute get_in(user2_passport, ["#{community.slug}", "cms", "post.pin"])
 
       {:ok, persisted_moderator} =
