@@ -1,14 +1,14 @@
 defmodule GroupherServer.Accounts.Achievements do
   @moduledoc """
-  Public account boundary for reputation and moderation eligibility.
+  Public account boundary for reputation and administered Community projections.
 
   Business position:
 
-      Client / Auth -> Accounts facade -> Commands / Moderatorable
+      Client / Auth -> Accounts facade -> Commands / AdministeredCommunities
                                       -> Persist / database projection
   """
 
-  alias __MODULE__.{Moderatorable, Commands}
+  alias __MODULE__.{AdministeredCommunities, Commands}
   alias GroupherServer.Accounts
 
   alias Accounts.Model.User
@@ -47,14 +47,14 @@ defmodule GroupherServer.Accounts.Achievements do
   end
 
   @doc """
-  Returns paged communities where the user can moderate.
+  Returns paged Communities where the user is an Admin.
 
   ## Examples
 
-      Accounts.Achievements.paged_moderatorable_communities(user, %{page: 1, size: 20})
+      Accounts.Achievements.paged_administered_communities(user, %{page: 1, size: 20})
   """
-  @spec paged_moderatorable_communities(User.t(), map()) :: T.domain_res(T.paged_data())
-  def paged_moderatorable_communities(%User{} = user, filter) do
-    Moderatorable.paged_moderatorable_communities(user, filter)
+  @spec paged_administered_communities(User.t(), map()) :: T.domain_res(T.paged_data())
+  def paged_administered_communities(%User{} = user, filter) do
+    AdministeredCommunities.paged_administered_communities(user, filter)
   end
 end

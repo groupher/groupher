@@ -206,7 +206,7 @@ purge request returned Cloudflare `success: true`. No secret values are stored
 in this repository.
 
 The previous Dashboard release also queried the removed
-`Community.moderators` field. Dashboard was rebuilt from the same checkout as
+`Community.admins` field. Dashboard was rebuilt from the same checkout as
 Phoenix and deployed to its original custom domain. Its Import service client
 was missing a secret; a distinct `serviceName: dash` client was registered with
 only audience `content-import:internal-api` and scope `docs:import:proxy`, and

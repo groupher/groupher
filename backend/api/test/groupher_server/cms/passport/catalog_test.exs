@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.CMS.Passport.CatalogTest do
              Catalog.requirements("community.article.hide", nil)
   end
 
-  test "Admin operation Gate actions are registered but never grants" do
+  test "admin operation Gate actions are registered but never grants" do
     actions = [
       {GroupherServer.CMS.GateAction.admin_request_decide(), "admin.request.decide"},
       {GroupherServer.CMS.GateAction.admin_permissions_update(), "admin.permissions.update"},

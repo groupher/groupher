@@ -15,9 +15,6 @@ defmodule GroupherServer.CMS.Passport.Assignment do
   @doc "Delegates paged passport listing for one community scope to `Communities.Passport`."
   defdelegate paged_passports(community, key), to: Passport
 
-  @doc "Delegates the default passport rule catalog to `Communities.Passport`."
-  defdelegate all_passport_rules(), to: Passport
-
   @doc "Delegates normalized passport reading for one user to `Communities.Passport`."
   defdelegate get_passport(user), to: Passport
 

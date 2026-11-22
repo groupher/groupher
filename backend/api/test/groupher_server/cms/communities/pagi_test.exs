@@ -4,9 +4,9 @@ defmodule GroupherServer.Test.CMS.Communities.Pagi do
   alias Helper.ORM.Pagi.{Page}
   alias GroupherServer.{Pagi}
   alias Pagi.Params
-  alias CMS.Model.CommunityModerator
+  alias CMS.Model.CommunityAdmin
 
-  test "member pages use their own stable identity and isolate community cursors" do
+  test "subscriber and admin pages use stable identities and isolate community cursors" do
     {:ok, owner} = db_insert(:user)
     {:ok, community} = mock_community(owner)
     {:ok, other} = mock_community(owner)
@@ -14,14 +14,19 @@ defmodule GroupherServer.Test.CMS.Communities.Pagi do
 
     for user <- Enum.reverse(users) do
       {:ok, _} = CMS.Communities.Subscriptions.Setup.subscribe(community, user)
-      {:ok, _} = CMS.Communities.add_moderator(community, user, owner, Ecto.UUID.generate())
+      {:ok, _} = Repo.insert(%CommunityAdmin{
+        user_id: user.id,
+        community_id: community.id,
+        permissions: %{},
+        revision: 1
+      })
     end
 
-    for kind <- [:subscribers, :moderators] do
+    for kind <- [:subscribers, :admins] do
       assert {:ok, %Page.Offset{entries: expected}} =
                CMS.Communities.members(kind, community, %{}, %Params.Offset{page: 1, size: 100})
 
-      ids = Enum.map(expected, & &1.id)
+      ids = Enum.map(expected, &Map.get(&1, :member_id, Map.get(&1, :id)))
       assert ids == Enum.sort(ids, :desc)
 
       assert {:ok, %Page.Cursor{entries: first, end_cursor: cursor, has_next_page: true}} =
@@ -33,52 +38,11 @@ defmodule GroupherServer.Test.CMS.Communities.Pagi do
                  after: cursor
                })
 
-      assert Enum.map(first ++ rest, & &1.id) == ids
+      assert Enum.map(first ++ rest, &Map.get(&1, :member_id, Map.get(&1, :id))) == ids
 
       assert {:error, _} =
                CMS.Communities.members(kind, other, %{}, %Params.Cursor{first: 2, after: cursor})
     end
-  end
-
-  test "moderator pages batch metadata and candidate picker excludes memberships before limit" do
-    {:ok, owner} = db_insert(:user)
-    {:ok, community} = mock_community(owner)
-    {:ok, target} = db_insert(:user)
-    {:ok, _} = CMS.Communities.add_moderator(community, target, owner, Ecto.UUID.generate())
-    {:ok, candidate} = db_insert(:user)
-
-    Repo.update_all(
-      from(m in CommunityModerator,
-        where: m.community_id == ^community.id and m.user_id == ^target.id
-      ),
-      set: [passport_item_count: 999]
-    )
-
-    assert {:ok, %Page.Offset{entries: members}} =
-             CMS.Communities.members(:moderators, community, %{}, %{offset: %{page: 1, size: 100}})
-
-    root = Enum.find(members, &(&1.user_id == owner.id))
-    assert root.is_root
-    assert is_integer(root.passport_item_count)
-    assert Enum.all?(members, &is_map(&1.permissions))
-    refute Enum.find(members, &(&1.user_id == target.id)).passport_item_count == 999
-
-    {_, small_queries} =
-      capture_queries(fn ->
-        CMS.Communities.members(:moderators, community, %{}, %{offset: %{page: 1, size: 1}})
-      end)
-
-    {_, large_queries} =
-      capture_queries(fn ->
-        CMS.Communities.members(:moderators, community, %{}, %{offset: %{page: 1, size: 100}})
-      end)
-
-    assert length(small_queries) > 0
-    assert length(small_queries) == length(large_queries)
-    assert {:ok, candidates} = CMS.Communities.moderator_candidates(community, candidate.login)
-    assert Enum.any?(candidates, &(&1.id == candidate.id))
-    assert {:ok, excluded} = CMS.Communities.moderator_candidates(community, target.login)
-    refute Enum.any?(excluded, &(&1.id == target.id))
   end
 
   test "community page and actual subscription cursors expose Community identities" do

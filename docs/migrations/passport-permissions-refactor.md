@@ -1,6 +1,6 @@
 # Passport Permission 与 Community Admin
 
-> 状态：P1 基线、P2 Admin 请求 / 管理接口、P2B 非 Doc 本站 Trash 与 Passport P3 Community Admin 通知接入已有本地实现及定向验收记录，尚未发布。Messaging 通用 M1 / M2 验收单列于 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)；P3 在 M2 切换后按新 schema 复跑定向验收。P4a 已建立首轮消费者 owner map，逐入口复核尚未完成；P4c 最终关闭依赖 C3、D1 / D2 消费者切换和 D3 验收。P4 不阻塞各领域按自己的批次开工和局部交付。文档边界与跨模块依赖复审记录见 §7.1。
+> 状态：P1 基线、P2 Admin 请求 / 管理接口、P2B 非 Doc 本站 Trash、Passport P3 Community Admin 通知，以及社区 Admin 身份旧链路清理已有本地实现及定向验收记录，尚未发布。旧 Moderators facade / compatibility schema、直接写 mutation、读查询、Passport actions、Account 投影、Gate 关系、计数及 Ticket / 前端消费均已在当前分支切换到 Admin 合同。Messaging 通用 M1 / M2 验收单列于 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)；P3 在 M2 切换后按新 schema 复跑定向验收。P4a 逐入口复核尚未完成；P4c 最终关闭依赖 C3、D1 / D2 消费者切换和 D3 验收。P4 不阻塞各领域按自己的批次开工和局部交付。文档边界与跨模块依赖复审记录见 §7.1。
 >
 > 本文拥有权限目录 / Action 一一对应、Admin 命名、Community ref、Passport 并发写入及 Community Admin 请求通知生产者。通用 Notices / Dedup / Inbox 基础设施见 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)。Article 成员合同见 [Co-Authors](../feature/article/co-authors.md)，内容追溯见 [修改历史 / Diff](../feature/article/edit-history-diff.md)，后续站点修复见 [Docs Mirror Fix](./docs-mirror-fix.md)。
 >
@@ -12,18 +12,18 @@
 
 ## 1. 目标及当前差距
 
-| 当前定位                                                        | 已核实基线 / 待改目标                                                                   |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Helper.PermissionConfig / PermissionRegistry                    | 现有权限目录及 action → requirement → grant 映射；目标目录在 Passport 内部，无别名映射  |
-| CMS.Passport.Registry / Assignment / Authorization              | 多层 delegate；目标公开 Passport，内部 Catalog / Store，消除纯转发链                    |
-| CMS.Communities.Moderators、CommunityModerator                  | 改为 Admins / CommunityAdmin；表 communities_admins                                     |
-| GraphQL addModerator / updateModeratorPassport、Dash admins     | 前端页面已叫 Admin；剩余 schema / operation / types / state / query key 统一 Admin 名称 |
-| cms.passports.rules                                             | 旧每用户 JSON 退出权威；Community 授权迁入 communities_admins，Global 授权独立存储      |
-| global.god、社区 root                                           | 直接转换为系统 root、社区 lord；owner 归属不变                                          |
-| Messaging.Model.Notification / Messaging.Notifications.Delivery | 改为 Notice / Notices.Dedup；公开入口 notify，Inbox 唯一收件箱概念                      |
-| Accounts.Mailbox                                                | 用户上只保留 Inbox 摘要；读 / 已读 / 未读事实归 Messaging                               |
+| 当前定位                                                        | 已核实基线 / 待改目标                                                                                                                    |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Helper.PermissionConfig / PermissionRegistry                    | 现有权限目录及 action → requirement → grant 映射；目标目录在 Passport 内部，无别名映射                                                   |
+| CMS.Passport.Registry / Assignment / Authorization              | 多层 delegate；目标公开 Passport，内部 Catalog / Store，消除纯转发链                                                                     |
+| CMS.Communities.Moderators、CommunityModerator                  | 当前分支已移除旧 facade / model / commands；成员、初始 lord、Gate 与请求全部经 Admins / CommunityAdmin；计数字段和 JSON 索引随新迁移切换 |
+| 旧 GraphQL 写 / 读接口及 Account 投影                           | 当前分支已移除旧直接写入及旧读取合同；公开目录、管理目录、候选人、count、viewer 标志和 Ticket assignee 使用 Admin 结构                   |
+| cms.passports.rules                                             | 旧每用户 JSON 退出权威；Community 授权迁入 communities_admins，Global 授权独立存储                                                       |
+| global.god、社区 root                                           | 直接转换为系统 root、社区 lord；owner 归属不变                                                                                           |
+| Messaging.Model.Notification / Messaging.Notifications.Delivery | 改为 Notice / Notices.Dedup；公开入口 notify，Inbox 唯一收件箱概念                                                                       |
+| Accounts.Mailbox                                                | 用户上只保留 Inbox 摘要；读 / 已读 / 未读事实归 Messaging                                                                                |
 
-上表是改造输入，不是完成声明。现有源码入口：cms/passport/、cms/communities/moderators/、helper/permission_config.ex、helper/permission_registry.ex、groupher_server_web/middleware/passport.ex、schema/cms/mutations/community.ex、frontend/core/unit/PassportEditor/、unit/DsbThread/logic/useAdmins.ts、messaging/、accounts/mailbox/。实现先盘点这些入口及 facade / GraphQL / generated / seeds / tests / job 消费者，不能只替换 UI 文案。
+上表是改造输入及当前分支状态，不代表已发布或完成 P4c。社区 Admin 清理同步覆盖 facade / GraphQL / generated / seeds / tests、Gate、Ticket 和前端状态；旧实现路径已删除。剩余 Passport 最终验收项见 P4c。
 
 ## 2. 固定术语与特权
 
@@ -398,13 +398,13 @@ P4 是最终全局收口门槛，不是各领域开工或局部交付的前置�
 
 ### 7.1 文档独立边界复审（2026-11-17）
 
-| 文档 / 批次          | 唯一领域所有权                                                                                                                         | 本次决定                                                                                                                                                                                                                          |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Passport P1–P3 / P2B | Permission Catalog / Store、Global / Community Admin 身份与请求、Admin Gate、Community Admin 请求通知生产者、非 Doc 本站 Binding Trash | 保留 P2 / P2B / Passport P3；请求 UI 只处理 Admin 请求，不新增通用 Inbox。直接 addModerator(s) 写入口仍由 GraphQL schema 暴露，是 P2 退出条件；其他 Moderator 旧读写入口由 P4b 清理，不在本批扩大迁移。通用 Notice / Inbox 归独立 Messaging 文档 |
-| History H1–H3        | Article 事件冻结、Diff、受保护历史引用及历史 UI                                                                                        | 按 History 自身批次验收。C2 验证普通 Article 写入口实际消费的历史能力                                                                                                                                                             |
-| Co-authors C0–C3     | Article 成员 / Article 请求、Article 授权消费与共同作者 UI                                                                             | C1、C2 以 C0 为基础并行，C2 可用测试成员联调。C3 交付普通 Article 授权给 D1。Passport 提供 Catalog 和授权判断                                                                                                                     |
-| Docs Mirror D0–D3    | DocTree / Mirror / Queue / Binding Trash / 旧 Q 处置与 Doc 写入口                                                                      | 保留 D0 只读盘点及其独立代码；D1 等 C3、P2、D0 必要处置及其实际消费的 History 数据 / 接口合同，完整 H3 UI / E2E 由 History 自身验收，不作为 D1 整体开工前置。D2 / D3 按 Docs 合同推进                                             |
-| Messaging M0–M2      | 通用 Notice / Dedup 合同、schema 与迁移、Inbox 读写和未读事实、现有生产者 / 消费者切换                                                 | 与主链并行；M2 同批切换 Community Admin 请求 producer，Passport P3 在新 schema 上单独复验领域行为；Co-authors C1 独立接入，不阻塞 M2                                                                                              |
+| 文档 / 批次          | 唯一领域所有权                                                                                                                         | 本次决定                                                                                                                                                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Passport P1–P3 / P2B | Permission Catalog / Store、Global / Community Admin 身份与请求、Admin Gate、Community Admin 请求通知生产者、非 Doc 本站 Binding Trash | 保留 P2 / P2B / Passport P3；请求 UI 只处理 Admin 请求，不新增通用 Inbox。当前分支已移除旧直接写入、旧成员目录与 Passport actions；社区身份消费清理归本分支 P4b 局部交付。通用 Notice / Inbox 归独立 Messaging 文档 |
+| History H1–H3        | Article 事件冻结、Diff、受保护历史引用及历史 UI                                                                                        | 按 History 自身批次验收。C2 验证普通 Article 写入口实际消费的历史能力                                                                                                                                               |
+| Co-authors C0–C3     | Article 成员 / Article 请求、Article 授权消费与共同作者 UI                                                                             | C1、C2 以 C0 为基础并行，C2 可用测试成员联调。C3 交付普通 Article 授权给 D1。Passport 提供 Catalog 和授权判断                                                                                                       |
+| Docs Mirror D0–D3    | DocTree / Mirror / Queue / Binding Trash / 旧 Q 处置与 Doc 写入口                                                                      | 保留 D0 只读盘点及其独立代码；D1 等 C3、P2、D0 必要处置及其实际消费的 History 数据 / 接口合同，完整 H3 UI / E2E 由 History 自身验收，不作为 D1 整体开工前置。D2 / D3 按 Docs 合同推进                               |
+| Messaging M0–M2      | 通用 Notice / Dedup 合同、schema 与迁移、Inbox 读写和未读事实、现有生产者 / 消费者切换                                                 | 与主链并行；M2 同批切换 Community Admin 请求 producer，Passport P3 在新 schema 上单独复验领域行为；Co-authors C1 独立接入，不阻塞 M2                                                                                |
 
 P1 提供 C0 所需的权限合同。Messaging Notices / Inbox 基础设施按独立文档验收，不依赖 C1。C1 的 Article 通知 producer 在该合同上单独做实际投递验收，其请求事务和 C2 多人联调各自验收。H1 可按 H0 / P1 合同并行，H2 等 H1 + P1。C3 → D1 → D2 → D3 描述 Docs 写入入口的切换顺序；D1 消费已验收的 Article history 数据 / 授权 / 贡献者接口，但不等待完整 H3 UI / E2E。H3 自身界面验收并行推进。P4 负责最后清零及迁移验收。
 
@@ -414,9 +414,9 @@ P0 清单供 P1–P4 实施查漏，不以全量历史数据迁移报告作为�
 
 测试以明确的新权限组合、跨 scope 负例、并发请求、Notice 枚举 / 去重 / 未读和 ref 非空数据迁移为主，隔离合成数据可以验证机制。生产 / 预发副本仅在确有真实数据转换任务时使用，不要求无条件取得。ref 的回填 / 约束检查属于该 DDL 实施，不要求 P0 先跑完。
 
-代码清单继续覆盖 Gate loader / Scope / access、Insights、Account 输出、PassportEditor、成员索引 / FK、旧 Moderator 字段、缓存键、seed / fixture / job，以及通知 action / Delivery claim / 未读投影；只清除待退役代码，不为了兼容旧写法引入新层。
+代码清单继续覆盖 Gate loader / Scope / access、Insights、Account 输出、PassportEditor、成员索引 / FK、Admin 缓存键、seed / fixture / job，以及通知 action / Delivery claim / 未读投影。当前分支已将社区身份消费与 Ticket assignee 切换为 Admin；P4c 继续检查跨领域消费者和最终迁移边界。
 
-management_binding_allowed? / base_command_binding_allowed? 中仅凭成员身份或任意登录身份放行的路径必须按对应 Action 迁移到显式 permission；不能只改 Moderator 字符串而保留身份旁路。P1 提供目录与判断，P2 改 Community 管理入口；旧 Doc 正文相关旁路由 Docs D1 在新正文入口同批退出，具体归属见 Docs 的唯一批次表。
+management_binding_allowed? / base_command_binding_allowed? 中仅凭成员身份或任意登录身份放行的路径必须按对应 Action 迁移到显式 permission；不能只改名称而保留身份旁路。P1 提供目录与判断，P2 改 Community 管理入口；旧 Doc 正文相关旁路由 Docs D1 在新正文入口同批退出，具体归属见 Docs 的唯一批次表。
 
 验收还必须覆盖：带本站 Binding Trash 的 Article 经合法永久删除后无残留 FK，保护未解除时全部回滚；Doc pending / effective / 工作区 Trash 组合视图、无重复与只读用户权限；owner / root 全局 Trash 集合和单读范围一致；全局无审计上下文明确拒绝，Activity 社区与 effect 正确；非 Doc X / Y 同文，X Admin 下线 / 恢复只影响 X，列表 / count / 详情 / 搜索一致；owner 全局 Trash 同时影响 X / Y，本站恢复不能绕过；旧社区永久删除授权不再可用；move 两端任一拒绝全事务回滚；非法 co-author event type / Notice event_type 与错误组合被 DB CHECK 拒绝。
 
@@ -439,4 +439,4 @@ P2B 验收记录（2026-11-17）：`mix compile --warnings-as-errors` 通过；B
 
 ### P4 最终收口待完成
 
-Passport 旧 Registry / Assignment / Moderators 入口和旧投影由 Passport 负责；跨领域消费者由所属批次负责，不将其实现工作整体挂在 P4 下等待。P4a 首轮 owner map 已建立，逐入口复核仍待完成；P4b 随消费者批次逐项清理并验证。仍未完成的是 P4c 最终全消费方无残留核查、jobs / seeds / generated / 文档收尾、最终 DDL / 数据迁移演练及正式切换验收；该最终门槛依赖 P2B、C3、D1 / D2 的消费者切换和 D3 验收。Admin 浏览器验收不是 P4 前置。
+Passport 旧 Registry / Assignment / 社区 Moderators 入口和旧投影由 Passport 负责；跨领域消费者由所属批次负责，不将其实现工作整体挂在 P4 下等待。当前分支完成社区成员旧链路的 P4b 切换，包括初始 lord、Admin 计数 / meta 索引、Gate scope、Ticket 指派、Account 社区列表、GraphQL、前端与生成合同；本地尚未发布，完整回归待运行。P4a 首轮 owner map 已建立，逐入口复核仍待完成。仍未完成的是 P4c 最终全消费方无残留核查、jobs / seeds / generated / 文档收尾、最终 DDL / 数据迁移演练及正式切换验收；该最终门槛依赖 P2B、C3、D1 / D2 的消费者切换和 D3 验收。Admin 浏览器验收不是 P4 前置。

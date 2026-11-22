@@ -59,16 +59,16 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
              CMS.Gate.scope(Community, owner, :read, CommunityContext.operations())
   end
 
-  test "Community scope compiles moderator and operations modes explicitly" do
-    {:ok, moderator} = db_insert(:user)
+  test "Community scope compiles admin and operations modes explicitly" do
+    {:ok, admin} = db_insert(:user)
 
-    moderator_query =
-      CMS.Gate.scope(Community, moderator, :list, CommunityContext.moderator_management())
+    admin_query =
+      CMS.Gate.scope(Community, admin, :list, CommunityContext.admin_management())
 
-    assert %Ecto.Query{} = moderator_query
-    {moderator_sql, _moderator_params} = to_sql(moderator_query)
-    assert moderator_sql =~ "communities_admins"
-    assert moderator_sql =~ "exists("
+    assert %Ecto.Query{} = admin_query
+    {admin_sql, _admin_params} = to_sql(admin_query)
+    assert admin_sql =~ "communities_admins"
+    assert admin_sql =~ "exists("
 
     operations_query =
       CMS.Gate.scope(Community, :operations, :read, CommunityContext.operations())

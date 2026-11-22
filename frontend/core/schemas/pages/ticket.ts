@@ -293,9 +293,9 @@ export const postTicketProgress = graphql(`
 `)
 
 export const ticketAssigneeCandidates = graphql(`
-  "Paged subscribers of a community"
+  "Paged Community Admin identities for Ticket assignment"
   query TicketAssigneeCandidates($community: String!, $pagi: PagiInput) {
-    pagedCommunityModerators(community: $community, pagi: $pagi) {
+    pagedCommunityAdminMembers(communityRef: $community, pagi: $pagi) {
       entries {
         userId
         user {
@@ -661,7 +661,7 @@ export const addTicketCaseWorker = graphql(`
 `)
 
 export const setTicketAssignees = graphql(`
-  "Replace assigned Community moderators on a Ticket"
+  "Replace assigned Community Admins on a Ticket"
   mutation SetTicketAssignees(
     $commandId: ID!
     $community: String!

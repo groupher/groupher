@@ -89,7 +89,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
 
               {:ok, _} = CMS.Communities.Lifecycle.ensure_created(c.id)
               {:ok, _} = ReviewBot.create_default_configs_for_community(c.id)
-              {:ok, _} = CMS.Communities.Moderators.Setup.add_root(c, owner)
+              {:ok, _} = CMS.Communities.Admins.Setup.add_lord(c, owner)
               c
 
             c ->

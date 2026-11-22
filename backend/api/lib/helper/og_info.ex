@@ -47,7 +47,7 @@ defmodule Helper.OgInfo do
         {:error, "get url page timeout"}
 
       # {:error, false} ->
-      #   {:error, [message: "only community root can add moderator", code: ...]}
+      #   {:error, [message: "only community lord can add Admin", code: ...]}
       false ->
         {:error, "invalid open graph info"}
 

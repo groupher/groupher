@@ -147,7 +147,7 @@ export default function Provider({ children, initData }: TProps) {
         ...user,
         isLogin: Boolean(user),
         isValidSession: Boolean(session?.isValid),
-        isModerator: false,
+        isAdmin: false,
       },
     }),
     [accountScope, query.isPending, refreshSession, session, user],

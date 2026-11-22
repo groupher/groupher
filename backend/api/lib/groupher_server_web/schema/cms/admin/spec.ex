@@ -21,6 +21,18 @@ defmodule GroupherServerWeb.Schema.CMS.Admin.Spec do
     pagi_fields()
   end
 
+  object :community_admin_directory_member do
+    field(:member_id, non_null(:id))
+    field(:user_id, non_null(:id))
+    field(:is_lord, non_null(:boolean))
+    field(:user, non_null(:common_user))
+  end
+
+  object :community_admin_directory_page do
+    field(:entries, non_null(list_of(non_null(:community_admin_directory_member))))
+    pagi_fields()
+  end
+
   object :community_admin_request do
     field(:id, non_null(:id))
     field(:community_id, non_null(:id))

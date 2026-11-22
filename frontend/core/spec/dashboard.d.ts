@@ -22,7 +22,7 @@ import type { TThirdPartyAnalyticsConfig } from '~/lib/thirdPartyAnalytics'
 import type { TConstValues } from '~/spec'
 
 import type { TColorName } from './color'
-import type { TModerator } from './community'
+import type { TAdmin } from './community'
 import type { TDsbFieldKey, TDsbFieldMap } from './dsb'
 import type { TPaginationMode } from './pagination'
 import type {

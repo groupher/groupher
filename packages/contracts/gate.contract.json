@@ -683,30 +683,6 @@
       "requires_thread": {}
     },
     {
-      "action": "moderator.set",
-      "scope": "community",
-      "grantable": false,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "moderator.unset",
-      "scope": "community",
-      "grantable": false,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "moderator.update",
-      "scope": "community",
-      "grantable": false,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "post.lock_comment",
       "scope": "community",
       "grantable": true,

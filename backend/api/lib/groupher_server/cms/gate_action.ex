@@ -94,9 +94,6 @@ defmodule GroupherServer.CMS.GateAction do
     "doc.undo_lock_comment",
     "doc.undo_pin",
     "doc.undo_sink",
-    "moderator.set",
-    "moderator.unset",
-    "moderator.update",
     "post.lock_comment",
     "post.permanent_delete",
     "post.pin",
@@ -722,27 +719,6 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
-    "moderator.set" => %{
-      scope: :community,
-      grantable: false,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
-    "moderator.unset" => %{
-      scope: :community,
-      grantable: false,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
-    "moderator.update" => %{
-      scope: :community,
-      grantable: false,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
     "post.lock_comment" => %{
       scope: :community,
       grantable: true,
@@ -1286,18 +1262,6 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `doc.undo_sink` Gate action name."
   @spec doc_undo_sink() :: String.t()
   def doc_undo_sink, do: "doc.undo_sink"
-
-  @doc "Returns the stable `moderator.set` Gate action name."
-  @spec moderator_set() :: String.t()
-  def moderator_set, do: "moderator.set"
-
-  @doc "Returns the stable `moderator.unset` Gate action name."
-  @spec moderator_unset() :: String.t()
-  def moderator_unset, do: "moderator.unset"
-
-  @doc "Returns the stable `moderator.update` Gate action name."
-  @spec moderator_update() :: String.t()
-  def moderator_update, do: "moderator.update"
 
   @doc "Returns the stable `post.lock_comment` Gate action name."
   @spec post_lock_comment() :: String.t()

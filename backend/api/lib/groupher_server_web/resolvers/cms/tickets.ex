@@ -302,7 +302,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Tickets do
     )
   end
 
-  @doc "Replaces assigned Community moderators on a Ticket."
+  @doc "Replaces assigned Community Admins on a Ticket."
   def set_assignees(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.tickets_set_assignees(
       args.community,

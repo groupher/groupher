@@ -55,7 +55,7 @@ describe('useGate', () => {
   })
 
   it('uses canonical permission keys and requirements for the actual resource thread', () => {
-    const moderator = renderHook(() => useGate(), {
+    const reviewer = renderHook(() => useGate(), {
       wrapper: wrapperFor({
         global: {},
         home: {
@@ -68,27 +68,27 @@ describe('useGate', () => {
     })
 
     expect(
-      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+      reviewer.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
         scope: 'community',
         community: 'home',
         thread: 'post',
       }),
     ).toBe(true)
     expect(
-      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+      reviewer.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
         scope: 'community',
         community: 'home',
         thread: 'doc',
       }),
     ).toBe(false)
     expect(
-      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+      reviewer.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
         scope: 'community',
         community: 'home',
       }),
     ).toBe(false)
     expect(
-      moderator.result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
+      reviewer.result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
         scope: 'article',
         article: {
           permissions: {
@@ -99,11 +99,11 @@ describe('useGate', () => {
       }),
     ).toBe(true)
     expect(
-      moderator.result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
+      reviewer.result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
         scope: 'article',
         article: { permissions: {} },
       }),
     ).toBe(false)
-    expect(moderator.result.current.can('bad.action' as TGateAction)).toBe(false)
+    expect(reviewer.result.current.can('bad.action' as TGateAction)).toBe(false)
   })
 })

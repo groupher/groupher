@@ -33,7 +33,7 @@ result =
                  user_id: user.id
                })
                |> Repo.insert(),
-             {:ok, _community} <- Count.update(community, user, :moderators_count, :inc) do
+             {:ok, _community} <- Count.update(community, user, :admins_count, :inc) do
           membership
         else
           {:error, reason} -> Repo.rollback(reason)

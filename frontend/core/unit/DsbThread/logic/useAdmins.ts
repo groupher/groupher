@@ -6,7 +6,7 @@ import usePagiPosition from '~/hooks/usePagiPosition'
 import { viewerQueryKeys } from '~/query'
 import { invalidatePrefix } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
-import type { TModerator, TUser, TUserSearchResult } from '~/spec'
+import type { TAdmin, TUser, TUserSearchResult } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import { useAdminEditor } from '~/stores/dsbShell/editor'
@@ -49,7 +49,7 @@ export default function useAdmins() {
   const client = useQueryClient()
   const { slug, ref: communityRef = '' } = useCommunity()
   const { accountScope, refreshSession, user } = useAccount()
-  const { activeModerator, setActiveModerator } = useAdminEditor()
+  const { activeAdmin, setActiveAdmin } = useAdminEditor()
   const position = usePagiPosition(`${accountScope}:${slug}`)
   const prefix = [...viewerQueryKeys.all, accountScope, 'admins', slug]
   const query = useQuery({
@@ -70,7 +70,7 @@ export default function useAdmins() {
         slug,
       ]),
     ])
-    if (activeModerator?.user.login === user?.login) await refreshSession()
+    if (activeAdmin?.user.login === user?.login) await refreshSession()
   }
 
   const grantablePermissions = Object.entries(GATE_PERMISSION)
@@ -81,9 +81,9 @@ export default function useAdmins() {
     admins: (query.data?.entries ?? []).map((admin) => ({
       ...admin,
       permissions: canonicalPermissions(admin.permissions as string[]),
-    })) as TModerator[],
-    activeModerator,
-    setActiveSettingAdmin: setActiveModerator,
+    })) as TAdmin[],
+    activeAdmin,
+    setActiveSettingAdmin: setActiveAdmin,
     pageInfo: query.data?.pageInfo,
     loading: query.isFetching,
     error: query.error,

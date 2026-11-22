@@ -179,20 +179,6 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     end
   end
 
-  describe "[account passport] test" do
-    @query S.Moderation.q(:all_passport_rules_string)
-    test "can get all cms rules with valid structure", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-      variables = %{}
-      results = user_conn |> gq_query(@query, variables)
-
-      assert results |> Map.has_key?("cms")
-      cms_rules = results["cms"]
-      assert cms_rules |> Map.has_key?("general")
-      assert cms_rules |> Map.has_key?("community")
-    end
-  end
-
   describe "[account subscrube]" do
     @query S.Account.q(:subscribed_communities)
     test "guest user can get bounded default community suggestions", ~m(guest_conn)a do

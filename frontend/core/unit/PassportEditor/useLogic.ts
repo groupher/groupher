@@ -13,29 +13,29 @@ import useAdmins from '../DsbThread/logic/useAdmins'
 export default function useLogic() {
   const { slug } = useCommunity()
   const { can } = useGate()
-  const { activeModerator, updatePermissions, removeAdmin } = useAdmins()
+  const { activeAdmin, updatePermissions, removeAdmin } = useAdmins()
   const [draft, setDraft] = useState<{ memberId: string; permissions: string[] } | null>(null)
   const [saving, setSaving] = useState(false)
   const selectedPermissions =
-    draft && draft.memberId === activeModerator?.memberId
+    draft && draft.memberId === activeAdmin?.memberId
       ? draft.permissions
-      : (activeModerator?.permissions ?? [])
+      : (activeAdmin?.permissions ?? [])
   const canManage = can(GATE_ACTION.ADMIN_PERMISSIONS_UPDATE, {
     scope: 'community',
     community: slug,
   })
-  const isReadonly = !canManage || !activeModerator || activeModerator.isLord
+  const isReadonly = !canManage || !activeAdmin || activeAdmin.isLord
 
   const run = async (remove: boolean): Promise<void> => {
-    if (!activeModerator || isReadonly) return
+    if (!activeAdmin || isReadonly) return
     setSaving(true)
     try {
       if (remove) {
-        await removeAdmin(activeModerator.memberId, activeModerator.revision)
+        await removeAdmin(activeAdmin.memberId, activeAdmin.revision)
       } else {
         await updatePermissions(
-          activeModerator.memberId,
-          activeModerator.revision,
+          activeAdmin.memberId,
+          activeAdmin.revision,
           expandAdminPermissions(selectedPermissions),
         )
       }
@@ -48,23 +48,23 @@ export default function useLogic() {
   }
 
   return {
-    activeModerator,
+    activeAdmin,
     selectedPermissions,
     grantablePermissions: Object.entries(GATE_PERMISSION)
       .filter(([, permission]) => permission.scope === 'community' && permission.grantable)
       .map(([action]) => action),
     toggleCheck: (permission: string, checked: boolean): void => {
-      if (!activeModerator) return
+      if (!activeAdmin) return
       setDraft({
-        memberId: activeModerator.memberId,
+        memberId: activeAdmin.memberId,
         permissions: checked
           ? [...new Set([...selectedPermissions, permission])]
           : selectedPermissions.filter((item) => item !== permission),
       })
     },
     updatePassport: () => void run(false),
-    deleteModerator: () => void run(true),
-    isActiveModeratorRoot: activeModerator?.isLord === true,
+    deleteAdmin: () => void run(true),
+    isActiveAdminLord: activeAdmin?.isLord === true,
     isReadonly,
     saving,
   }

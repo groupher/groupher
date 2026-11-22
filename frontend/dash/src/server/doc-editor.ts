@@ -8,7 +8,7 @@ import DashboardDocsSchema from '~/unit/DsbThread/schema/docs'
 import { fetchGraphQL, getAuthToken, GraphQLRequestError, setPrivateCacheHeader } from './graphql'
 
 // CMS deliberately returns Community not-found when a caller cannot see the
-// moderator-scoped resource, preventing membership enumeration.
+// Admin-scoped resource, preventing membership enumeration.
 const COMMUNITY_NOT_ACCESSIBLE_CODE = 5504
 
 export type TDocEditorInitialData = {

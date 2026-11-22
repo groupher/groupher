@@ -16,8 +16,4 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Passport do
     end
   end
 
-  def get_all_rules(_root, _args, %{context: %{cur_user: _}}) do
-    cms_rules = GroupherServer.CMS.passport_registry_all_rules(:cms, :stringify)
-    {:ok, %{cms: cms_rules}}
-  end
 end

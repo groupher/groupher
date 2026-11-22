@@ -53,10 +53,7 @@ type RootQueryType {
   pagedCollectedArticles(folderId: ID!, pagi: PagiInput, filter: ArticleCollectionFilter): ArticleCollectionPage
 
   "paged communities which the user it's the editor"
-  moderatorableCommunities(login: String, pagi: PagiInput): CommunityPage
-
-  "get all passport rules include system and community etc ..."
-  allPassportRulesString: Rules
+  administeredCommunities(login: String, pagi: PagiInput): CommunityPage
 
   "search user by name"
   searchUsers(name: String!): [CommonUser!]!
@@ -81,6 +78,9 @@ type RootQueryType {
 
   "Paged Community Admin memberships"
   pagedCommunityAdmins(communityRef: String!, pagi: PagiInput): CommunityAdminPage!
+
+  "Paged public Admin identities for a readable Community"
+  pagedCommunityAdminMembers(communityRef: String!, filter: UserListFilter, pagi: PagiInput): CommunityAdminDirectoryPage!
 
   "Paged Admin requests visible to the current user"
   pagedCommunityAdminRequests(communityRef: String!, pagi: PagiInput): CommunityAdminRequestPage!
@@ -274,23 +274,14 @@ type RootQueryType {
   "Service-scoped check for a successfully published Wallpaper Batch"
   wallpaperBatchPublished(batchRef: String!): Boolean!
 
-  "Get all passport rules available to the current user."
-  allPassportRules: AllRules
-
   "Check whether a community name is available."
   checkCommunityName(slug: String!): CommunityNameCheck
-
-  "Bounded user picker excluding current moderators"
-  moderatorCandidates(community: String!, name: String!): [User!]!
 
   "communities with pagination info"
   pagedCommunities(filter: CommunitiesFilter, pagi: PagiInput): CommunityPage
 
   "paged subscribers of a community"
   pagedCommunitySubscribers(community: String!, filter: UserListFilter, pagi: PagiInput): UserPage
-
-  "paged subscribers of a community"
-  pagedCommunityModerators(community: String!, filter: UserListFilter, pagi: PagiInput): CommunityModeratorPage
 
   "get all categories"
   categories: [Category!]!
@@ -583,18 +574,6 @@ type RootMutationType {
 
   "update category"
   updateCategory(commandId: ID!, community: String!, id: ID!, title: String!): Category
-
-  "add a moderator for a community"
-  addModerator(commandId: ID!, community: String!, user: String!): Community
-
-  "add moderators for a community"
-  addModerators(commandId: ID!, community: String!, users: [String!]!): Community
-
-  "unset a moderator from a community, the user's passport also deleted"
-  removeModerator(commandId: ID!, community: String!, user: String!): Community
-
-  "update cms moderator's title, passport is not effected"
-  updateModeratorPassport(commandId: ID!, community: String!, user: String!, rules: Json!): Community
 
   "create a tag"
   createCommunityTag(
@@ -966,7 +945,7 @@ type RootMutationType {
   "Reference a member-owned Worker as a shared Case fix"
   addTicketCaseWorker(commandId: ID!, community: String!, caseId: ID!, workerId: ID!, expectedWorkflowVersion: Int!): Ticket
 
-  "Replace assigned Community moderators on a Ticket"
+  "Replace assigned Community Admins on a Ticket"
   setTicketAssignees(
     commandId: ID!, community: String!, ticketId: ID!, assigneeIds: [Int!]!, expectedWorkflowVersion: Int!
   ): Ticket
@@ -2027,6 +2006,18 @@ type CommunityAdminPage {
   pageInfo: PageInfo!
 }
 
+type CommunityAdminDirectoryMember {
+  memberId: ID!
+  userId: ID!
+  isLord: Boolean!
+  user: CommonUser!
+}
+
+type CommunityAdminDirectoryPage {
+  entries: [CommunityAdminDirectoryMember!]!
+  pageInfo: PageInfo!
+}
+
 type CommunityAdminRequest {
   id: ID!
   communityId: ID!
@@ -2136,9 +2127,6 @@ enum PassportAction {
   DOC_UNDO_LOCK_COMMENT
   DOC_UNDO_PIN
   DOC_UNDO_SINK
-  MODERATOR_SET
-  MODERATOR_UNSET
-  MODERATOR_UPDATE
   POST_LOCK_COMMENT
   POST_PERMANENT_DELETE
   POST_PIN
@@ -4204,24 +4192,6 @@ type Dsb {
   enabledThirdPartyAnalytics: [DsbThirdPartyAnalytics]
 }
 
-type CommunityModerator {
-  id: ID!
-  userId: ID!
-  isRoot: Boolean!
-  passportItemCount: Int!
-  user: CommonUser!
-}
-
-type CommunityModeratorPage {
-  entries: [CommunityModerator!]!
-  pageInfo: PageInfo!
-}
-
-type AllRules {
-  root: String
-  moderator: String
-}
-
 type Community {
   "Stable, immutable Community identity."
   ref: String!
@@ -4263,7 +4233,7 @@ type Community {
 
   subscribersCount: Int
 
-  moderatorsCount: Int
+  adminsCount: Int
 
   "Total number of tags configured for the community."
   communityTagsCount: Int
@@ -4271,8 +4241,8 @@ type Community {
   "Whether the current viewer has subscribed to this community."
   viewerHasSubscribed: Boolean
 
-  "Whether the current viewer is a moderator of this community."
-  viewerIsModerator: Boolean
+  "Whether the current viewer is an Admin of this Community."
+  viewerIsAdmin: Boolean
 
   lifecycleState: CommunityLifecycleState
 
@@ -5530,10 +5500,6 @@ input BrowserSessionMetadataInput {
   createdCountry: String
   createdRegion: String
   createdCity: String
-}
-
-type Rules {
-  cms: Json
 }
 
 type UserPage {

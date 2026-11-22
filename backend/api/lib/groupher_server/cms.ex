@@ -20,11 +20,6 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.ProductionSeed.Logins,
     as: :redeem
 
-  @doc "Returns community-scoped moderator picker candidates."
-  defdelegate communities_moderator_candidates(community, name),
-    to: GroupherServer.CMS.Communities,
-    as: :moderator_candidates
-
   @doc "Lists canonical Passport Actions for cross-context contract generation."
   defdelegate passport_actions(), to: GroupherServer.CMS.GateAction, as: :actions
 
@@ -290,7 +285,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Review.Threshold,
     as: :apply_report_in_transaction
 
-  @doc "Returns the closed CMS moderator decision action set."
+  @doc "Returns the closed CMS reviewer decision action set."
   def review_decision_actions, do: GroupherServer.CMS.Review.Const.decision_actions()
 
   @doc "Expands the closed CMS review result action values for GraphQL enum declarations."
@@ -1454,31 +1449,6 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :viewer_states
 
-  @doc "Delegates GroupherServer.CMS.Communities.add_moderator/3 through the CMS Context boundary."
-  defdelegate communities_add_moderator(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Communities,
-    as: :add_moderator
-
-  @doc "Delegates GroupherServer.CMS.Communities.add_moderator/4 through the CMS Context boundary."
-  defdelegate communities_add_moderator(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Communities,
-    as: :add_moderator
-
-  @doc "Delegates GroupherServer.CMS.Communities.add_moderators/3 through the CMS Context boundary."
-  defdelegate communities_add_moderators(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Communities,
-    as: :add_moderators
-
-  @doc "Delegates GroupherServer.CMS.Communities.add_moderators/4 through the CMS Context boundary."
-  defdelegate communities_add_moderators(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Communities,
-    as: :add_moderators
-
-  @doc "Delegates GroupherServer.CMS.Communities.all_passport_rules/0 through the CMS Context boundary."
-  defdelegate communities_all_passport_rules(),
-    to: GroupherServer.CMS.Communities,
-    as: :all_passport_rules
-
   @doc "Delegates GroupherServer.CMS.Communities.check_name/1 through the CMS Context boundary."
   defdelegate communities_check_name(arg1), to: GroupherServer.CMS.Communities, as: :check_name
 
@@ -1666,16 +1636,6 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Communities,
     as: :release_expired_slug_claims
 
-  @doc "Delegates GroupherServer.CMS.Communities.remove_moderator/3 through the CMS Context boundary."
-  defdelegate communities_remove_moderator(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Communities,
-    as: :remove_moderator
-
-  @doc "Delegates GroupherServer.CMS.Communities.remove_moderator/4 through the CMS Context boundary."
-  defdelegate communities_remove_moderator(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Communities,
-    as: :remove_moderator
-
   @doc "Delegates GroupherServer.CMS.Communities.request_destroy/1 through the CMS Context boundary."
   defdelegate communities_request_destroy(arg1),
     to: GroupherServer.CMS.Communities,
@@ -1794,16 +1754,6 @@ defmodule GroupherServer.CMS do
   defdelegate communities_update_category(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :update_category
-
-  @doc "Delegates GroupherServer.CMS.Communities.update_moderator_passport/4 through the CMS Context boundary."
-  defdelegate communities_update_moderator_passport(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Communities,
-    as: :update_moderator_passport
-
-  @doc "Delegates GroupherServer.CMS.Communities.update_moderator_passport/5 through the CMS Context boundary."
-  defdelegate communities_update_moderator_passport(arg1, arg2, arg3, arg4, arg5),
-    to: GroupherServer.CMS.Communities,
-    as: :update_moderator_passport
 
   @doc "Delegates GroupherServer.CMS.Communities.update_operations/3 through the CMS Context boundary."
   defdelegate communities_update_operations(arg1, arg2, arg3),
@@ -2962,16 +2912,6 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Gate.ErrorCat,
     as: :throttle_day
 
-  @doc "Delegates CMS.Passport.Registry.all_rules/1 through the CMS Context boundary."
-  defdelegate passport_registry_all_rules(arg1),
-    to: GroupherServer.CMS.Passport.Registry,
-    as: :all_rules
-
-  @doc "Delegates CMS.Passport.Registry.all_rules/2 through the CMS Context boundary."
-  defdelegate passport_registry_all_rules(arg1, arg2),
-    to: GroupherServer.CMS.Passport.Registry,
-    as: :all_rules
-
   @doc "Delegates CMS.ErrorCat.custom/0 through the CMS Context boundary."
   defdelegate error_cat_custom(), to: ErrorCat, as: :custom
 
@@ -2990,11 +2930,6 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.Marker.field/2 through the CMS Context boundary."
   defdelegate marker_field(arg1, arg2), to: GroupherServer.CMS.Marker, as: :field
-
-  @doc "Delegates CMS.Passport.Registry.root_passport_item_count/0 through the CMS Context boundary."
-  defdelegate passport_registry_root_passport_item_count(),
-    to: GroupherServer.CMS.Passport.Registry,
-    as: :root_passport_item_count
 
   @doc "Delegates CMS.Dashboard.Fields.macro_schema/1 through the CMS Context boundary."
   defdelegate dashboard_fields_macro_schema(arg1),

@@ -201,7 +201,7 @@ const assigneeCandidates = (community: string) =>
         community,
         pagi: toPagiGraphQLInput({ api: 'offset', page: 1, size: 100 }),
       })
-      return (data.pagedCommunityModerators?.entries || []).map(({ userId, user }) => ({
+      return (data.pagedCommunityAdminMembers?.entries || []).map(({ userId, user }) => ({
         id: String(userId),
         login: user.login,
         nickname: user.nickname,

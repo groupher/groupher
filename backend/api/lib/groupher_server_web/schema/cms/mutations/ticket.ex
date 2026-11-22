@@ -246,7 +246,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Ticket do
       resolve(&R.CMS.Tickets.add_case_worker/3)
     end
 
-    @desc "Replace assigned Community moderators on a Ticket"
+    @desc "Replace assigned Community Admins on a Ticket"
     field :set_ticket_assignees, :ticket do
       arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))

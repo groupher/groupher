@@ -169,7 +169,7 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
     query($slug: String!) {
           community(slug: $slug) {
             slug
-            moderatorsCount
+            adminsCount
           }
         }
     """

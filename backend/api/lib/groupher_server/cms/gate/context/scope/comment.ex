@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
     unless policy_mode in [
              :public,
              :owner,
-             :moderator_management,
+             :admin_management,
              :operations
            ] do
       raise ArgumentError, "invalid Comment scope policy mode"

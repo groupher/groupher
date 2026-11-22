@@ -1,13 +1,12 @@
 import { graphql } from '~/graphql/authoring'
 
-/** Public community member listing; does not expose the legacy Passport string. */
-export const moderatorPage = graphql(`
-  query PagedCommunityModerators($community: String!, $pagi: PagiInput) {
-    pagedCommunityModerators(community: $community, pagi: $pagi) {
+/** Public Community Admin directory; exposes no permission facts. */
+export const adminDirectoryPage = graphql(`
+  query PagedCommunityAdminMembers($communityRef: String!, $pagi: PagiInput) {
+    pagedCommunityAdminMembers(communityRef: $communityRef, pagi: $pagi) {
       entries {
-        id
-        isRoot
-        passportItemCount
+        memberId
+        isLord
         user {
           login
           avatar
@@ -245,7 +244,7 @@ export const leaveCommunityAdmins = graphql(`
 `)
 
 export default {
-  moderatorPage,
+  adminDirectoryPage,
   adminPage,
   adminRequests,
   currentAdmin,

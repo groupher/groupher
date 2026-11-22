@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Community do
       iex> %__MODULE__{policy_mode: :owner} = owner()
   """
 
-  @modes [:public, :admin, :owner, :moderator_management, :operations]
+  @modes [:public, :admin, :owner, :admin_management, :operations]
   @enforce_keys [:policy_mode]
   defstruct [:policy_mode]
 
@@ -24,10 +24,10 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Community do
   def public, do: %__MODULE__{policy_mode: :public}
   @doc "Builds an owner-only Community read intent."
   def owner, do: %__MODULE__{policy_mode: :owner}
-  @doc "Builds an owner-or-moderator Community admin read intent."
+  @doc "Builds an owner-or-Admin Community read intent."
   def admin, do: %__MODULE__{policy_mode: :admin}
-  @doc "Builds a moderator-management Community read intent."
-  def moderator_management, do: %__MODULE__{policy_mode: :moderator_management}
+  @doc "Builds an Admin-management Community read intent."
+  def admin_management, do: %__MODULE__{policy_mode: :admin_management}
   @doc "Builds an operations Community read intent."
   def operations, do: %__MODULE__{policy_mode: :operations}
 

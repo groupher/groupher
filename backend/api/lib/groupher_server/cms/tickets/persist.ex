@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     ArticleReviewBlock,
     Author,
     Community,
-    CommunityModerator,
+    CommunityAdmin,
     CommunityTag,
     TicketCaseMember,
     TicketCaseWorker,
@@ -1631,7 +1631,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     else
       eligible_count =
         Repo.aggregate(
-          from(member in CommunityModerator,
+          from(member in CommunityAdmin,
             where: member.community_id == ^community_id and member.user_id in ^user_ids
           ),
           :count

@@ -272,10 +272,6 @@ defmodule GroupherServerWeb.Schema.Account.Spec do
     field(:created_city, :string)
   end
 
-  object :rules do
-    field(:cms, :json)
-  end
-
   object :user_page do
     field(:entries, non_null(list_of(non_null(:user))))
     pagi_fields()

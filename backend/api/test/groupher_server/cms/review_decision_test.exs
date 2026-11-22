@@ -330,16 +330,16 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
              CMS.ArtimentMentions.MentionsGraph.Revision.current()
 
     wall_item = Repo.get!(Item, item_id)
-    {:ok, moderator} = db_insert(:user)
+    {:ok, reviewer} = db_insert(:user)
 
-    moderator = grant_community_permissions(community, moderator, %{"review.decide" => true})
+    reviewer = grant_community_permissions(community, reviewer, %{"review.decide" => true})
 
     assert {:ok, %{item_id: ^item_id}} =
              AlertWall.resolve_item(
                wall_item.id,
                "reviewed",
                wall_item.version,
-               moderator,
+               reviewer,
                Ecto.UUID.generate()
              )
 
@@ -385,9 +385,9 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
       end)
 
     item_id = List.last(reports).item_id
-    {:ok, moderator} = db_insert(:user)
+    {:ok, reviewer} = db_insert(:user)
 
-    moderator = grant_community_permissions(community, moderator, %{"review.decide" => true})
+    reviewer = grant_community_permissions(community, reviewer, %{"review.decide" => true})
 
     Repo.update_all(
       from(request in ArtimentReview,
@@ -409,7 +409,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                "article:#{article.id}",
                "community:#{community.id}",
                :approve,
-               moderator,
+               reviewer,
                Ecto.UUID.generate()
              )
 
@@ -578,16 +578,16 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
         report
       end)
 
-    {:ok, moderator} = db_insert(:user)
+    {:ok, reviewer} = db_insert(:user)
 
-    moderator = grant_community_permissions(community, moderator, %{"review.decide" => true})
+    reviewer = grant_community_permissions(community, reviewer, %{"review.decide" => true})
 
     assert {:ok, _} =
              CMS.decide_review_target(
                "article:#{article.id}",
                "community:#{community.id}",
                :reject,
-               moderator,
+               reviewer,
                Ecto.UUID.generate()
              )
 

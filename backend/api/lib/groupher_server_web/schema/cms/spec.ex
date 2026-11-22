@@ -2153,24 +2153,6 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
     end
   end
 
-  object :community_moderator do
-    field(:id, non_null(:id))
-    field(:user_id, non_null(:id))
-    field(:is_root, non_null(:boolean))
-    field(:passport_item_count, non_null(:integer))
-    field(:user, non_null(:common_user))
-  end
-
-  object :community_moderator_page do
-    field(:entries, non_null(list_of(non_null(:community_moderator))))
-    pagi_fields()
-  end
-
-  object :all_rules do
-    field(:root, :string)
-    field(:moderator, :string)
-  end
-
   object :community do
     meta(:cache, max_age: 30)
     @desc "Stable, immutable Community identity."
@@ -2198,7 +2180,7 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
 
     field(:articles_count, :integer)
     field(:subscribers_count, :integer)
-    field(:moderators_count, :integer)
+    field(:admins_count, :integer)
 
     @desc "Total number of tags configured for the community."
     field :community_tags_count, :integer do
@@ -2207,8 +2189,8 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
 
     @desc "Whether the current viewer has subscribed to this community."
     field(:viewer_has_subscribed, :boolean)
-    @desc "Whether the current viewer is a moderator of this community."
-    field(:viewer_is_moderator, :boolean)
+    @desc "Whether the current viewer is an Admin of this Community."
+    field(:viewer_is_admin, :boolean)
 
     field(:lifecycle_state, :community_lifecycle_state,
       resolve: fn

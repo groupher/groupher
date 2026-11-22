@@ -52,8 +52,9 @@ Admin 中现有 PassportEditor 是 Passport 的管理入口，不是另一套权
 
 ```text
 PassportEditor
-  -> updateModeratorPassport
-  -> Phoenix CMS.Passport
+  -> updateCommunityAdminPermissions / removeCommunityAdmin
+  -> Phoenix Community Admin commands
+  -> CommunityAdmin permissions
 ```
 
 当 PassportEditor 修改当前用户时，保存成功后必须重新获取 `sessionState`，以服务端返回结果
