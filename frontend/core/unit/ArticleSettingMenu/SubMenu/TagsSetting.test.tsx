@@ -66,6 +66,21 @@ const workingCopy = (revision: number, tagIds: string[]) => ({
 })
 
 describe('TagsSetting', () => {
+  it('disables tag selection until the working copy is loaded', async () => {
+    mocks.browserGraphQLRequest.mockReturnValue(new Promise(() => {}))
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TagsSetting onBack={vi.fn()} />
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByRole('button', { name: /Tag A/ })).toBeDisabled()
+  })
+
   it('preserves a dirty tag selection and shows the latest server tags after a revision conflict', async () => {
     mocks.browserGraphQLRequest
       .mockResolvedValueOnce(workingCopy(1, []))

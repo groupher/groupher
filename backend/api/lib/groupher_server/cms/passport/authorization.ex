@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       Authorization.check(user, "post.pin", %{community: %{slug: "elixir"}})
       #=> {:ok, true}
 
-      Authorization.check(user, "post.pin", %{community: %{slug: "elixir"}})
+      Authorization.check(user_without_permission, "post.pin", %{community: %{slug: "elixir"}})
       #=> {:error, ErrorCat.error_pattern(reason: :permission_denied)}
 
       Authorization.check(user, "unknown.action", %{})

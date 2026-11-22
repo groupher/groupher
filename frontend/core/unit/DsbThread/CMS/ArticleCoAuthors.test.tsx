@@ -231,6 +231,16 @@ describe('ArticleCoAuthors', () => {
       'test-account-scope',
       'article-1',
     ])
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'dsb.cms.coauthors.reject' }))
+    await waitFor(() => expect(mocks.executeCommand).toHaveBeenCalledTimes(2))
+    expect(mocks.executeCommand.mock.calls[1][0].variables).toEqual({
+      requestId: 'request-invite-1',
+      revision: 4,
+      decision: 'REJECT',
+      approvedPermissions: undefined,
+    })
+    await waitFor(() => expect(mocks.invalidatePrefix).toHaveBeenCalledTimes(2))
   })
 
   it('does not fetch or render member and candidate data for a non-manager', async () => {

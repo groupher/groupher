@@ -100,7 +100,7 @@ const Article: FC<TProps> = ({ sideTree }) => {
           coverVisible={coverVisible}
           disabled={controlsDisabled}
           docId={docId}
-          title={activePage.title ?? ''}
+          title={title}
         />
         <Title
           value={title}

@@ -1176,6 +1176,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         | cur_passport: %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => true}}}
       }
 
+      assert {:error, %CMS.Gate.Decision{}} =
+               CMS.Gate.access_check(editor, :edit_article, post)
+
       editor_params = %{
         params
         | revision: receipt_revision,

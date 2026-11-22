@@ -32,13 +32,21 @@ vi.mock('../../../ArticleCoAuthors', () => ({
 }))
 
 describe('Docs Article title actions', () => {
-  it('opens co-author management for the active Article identity', () => {
-    render(<TitleActions coverVisible={false} docId='doc-id' title='Current title' />)
+  it('passes the active Article identity and current title to co-author management', () => {
+    const { rerender } = render(
+      <TitleActions coverVisible={false} docId='doc-id' title='Current title' />,
+    )
 
     expect(screen.getByTestId('coauthors')).toHaveTextContent('doc-id')
     expect(mocks.articleProps).toHaveBeenCalledWith({
       id: 'doc-id',
       title: 'Current title',
+    })
+
+    rerender(<TitleActions coverVisible={false} docId='doc-id' title='Updated editor title' />)
+    expect(mocks.articleProps).toHaveBeenLastCalledWith({
+      id: 'doc-id',
+      title: 'Updated editor title',
     })
   })
 

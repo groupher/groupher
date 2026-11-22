@@ -100,9 +100,9 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
       ) : null}
       <Footer
         onBack={onBack}
-        disabled={!touched || !workingCopy}
+        disabled={!touched || !workingCopy || workingCopiesQuery.isFetching}
         top={10}
-        loading={result.fetching}
+        loading={result.fetching || workingCopiesQuery.isFetching}
         onConfirm={() => handleUpdate()}
       />
     </div>

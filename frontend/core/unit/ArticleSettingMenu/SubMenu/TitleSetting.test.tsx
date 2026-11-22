@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { GraphQLRequestError } from '~/graphql/client'
@@ -64,9 +64,11 @@ describe('TitleSetting', () => {
 
     const input = await screen.findByRole('textbox')
     fireEvent.change(input, { target: { value: 'My local title' } })
-    fireEvent.click(screen.getByRole('button', { name: '确认' }))
+    const confirm = screen.getByRole('button', { name: '确认' })
+    await waitFor(() => expect(confirm).toBeEnabled())
+    fireEvent.click(confirm)
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Server title v2')
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Server title v2'))
     expect(input).toHaveValue('My local title')
   })
 })

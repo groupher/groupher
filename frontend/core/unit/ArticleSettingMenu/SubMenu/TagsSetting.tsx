@@ -108,6 +108,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
           type='button'
           className={s.item}
           key={item.id}
+          disabled={!workingCopy}
           onClick={() => item.id !== undefined && handleCheck(item.id, !includes(item.id, checked))}
         >
           <TagNode
