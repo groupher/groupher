@@ -181,12 +181,11 @@ defmodule GroupherServer.CMS.DocTree.CommunityTrashQuery do
   end
 
   defp read_snapshot(callback) when is_function(callback, 0) do
-    if Repo.in_transaction?() do
+    if Repo.in_transaction?() or Repo.checked_out?() do
       isolation = Repo.query!("SHOW transaction_isolation").rows
-      read_only = Repo.query!("SHOW transaction_read_only").rows
 
-      case {isolation, read_only} do
-        {[["repeatable read"]], [["on"]]} -> callback.()
+      case isolation do
+        [["repeatable read"]] -> callback.()
         _ -> {:error, :docs_snapshot_requires_repeatable_read}
       end
     else

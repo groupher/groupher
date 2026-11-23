@@ -357,7 +357,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   defp matching_scope(_, _, _, _), do: {:error, :scope_mismatch}
 
   defp passport_action(:publish, %{thread: :doc}, _context) do
-    {:ok, CMS.GateAction.article_publish()}
+    {:ok, CMS.GateAction.doc_queue_publish()}
   end
 
   defp passport_action(:publish, _article, _context) do
@@ -379,7 +379,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
          _context
        )
        when action in [:edit, :discard_draft, :restore_revision_to_draft] do
-    {:ok, CMS.GateAction.article_update()}
+    {:ok, CMS.GateAction.doc_queue_write()}
   end
 
   defp passport_action(action, _article, _context)
