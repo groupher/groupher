@@ -21,7 +21,7 @@ Community creation uses the existing receipt Command, which creates the core, de
 
 For an existing local community, do not recreate or claim it. Explicitly bootstrap a dedicated synthetic lord with `actors grant --run <run> --as <alias> --community <slug> --role lord`, then prepare ordinary Admins through that lord's normal invitation commands. Do not promote `local-debug` or another existing account.
 
-The tool adds no sample content by default. Verify a newly created community's real Dash page, then use `/home/xx` when a test needs existing content. Creating a fixture community does not validate application/reviewer onboarding; use that product workflow when it is the feature under test.
+The tool adds no sample content by default. When an Article is needed, use `articles create --run <run> --as owner --community <unique-slug> --thread post --key primary` from local-test-actors; it returns a real owner-bound Article UUID through the normal Publisher/Command path. Verify a newly created community's real Dash page, then use `/home/xx` when a test needs existing content. Creating a fixture community does not validate application/reviewer onboarding; use that product workflow when it is the feature under test.
 
 Report the run, owner login, resulting community ref/slug and opened Dash URL. Closing a run revokes sessions but preserves community/content/history; never delete shared resources by a slug prefix.
 

@@ -16,7 +16,7 @@ export async function runHubCommand(
   request: typeof fetch = fetch,
   origin = process.env.DEV_HUB_URL || 'http://127.0.0.1:4310',
 ): Promise<unknown> {
-  if (args[0] === 'actors' || args[0] === 'communities') {
+  if (['actors', 'communities', 'articles'].includes(args[0])) {
     const { runLocalTestCommand } = await import('./local-test-command.ts')
     return runLocalTestCommand(args, () => runHubCommand(['status'], request, origin), origin)
   }

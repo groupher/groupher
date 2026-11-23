@@ -238,6 +238,7 @@ defmodule GroupherServer.LocalTestActors.Cleanup do
       coauthors: length(data.coauthors),
       global_grants: length(data.globals) + data.legacy_grants,
       pending_requests: length(data.admin_requests) + length(data.article_requests),
+      article_fixtures_retained: LocalTestActors.Articles.retained(data.bindings),
       retained: ["accounts", "content", "audit_history", "closed_community_records"]
     }
   end

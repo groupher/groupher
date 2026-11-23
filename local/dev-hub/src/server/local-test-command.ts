@@ -2,12 +2,13 @@
 import { randomBytes } from 'node:crypto'
 
 import { localTestActorsSecret, prepareLocalEnvironment } from './local-environment.ts'
+import { createLocalArticle } from './local-test-article.ts'
 import { openActorBrowser, closeActorBrowsers, cleanActorBrowsers } from './local-test-browser.ts'
 
 type TOptions = Record<string, string | boolean>
 const NAME = /^[a-z][a-z0-9-]{0,39}$/
 const USAGE =
-  'Usage: pnpm devhub actors create|list|grant|open|close|clean --run <name> ... | communities create --run <name> --owner <alias> [--slug <slug>]'
+  'Usage: pnpm devhub actors create|list|grant|open|close|clean --run <name> ... | communities create --run <name> --owner <alias> [--slug <slug>] | articles create --run <name> --as <alias> --community <slug> --thread post [--key <key>]'
 
 export const assertLocalTestTarget = (origin: string, env: NodeJS.ProcessEnv = process.env) => {
   const url = new URL(origin)
@@ -48,6 +49,7 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
     'actors.close': ['run'],
     'actors.clean': ['run', 'apply'],
     'communities.create': ['run', 'owner', 'slug', 'title'],
+    'articles.create': ['run', 'as', 'community', 'thread', 'key', 'title', 'markdown'],
   }
   const allowed = commands[`${area}.${action}`]
   if (!allowed) throw new Error(USAGE)
@@ -77,6 +79,13 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
   if (options.app && !['dash', 'community'].includes(String(options.app)))
     throw new Error('--app must be dash or community.')
   if (area === 'communities' && !options.owner) throw new Error('--owner is required.')
+  if (area === 'articles') {
+    if (!options.as || !options.community)
+      throw new Error('--as and --community are required for Article fixtures.')
+    if (options.thread !== 'post')
+      throw new Error('Article fixtures currently require --thread post.')
+    if (options.key && !NAME.test(String(options.key))) throw new Error('Invalid --key.')
+  }
   if (action === 'grant') {
     const scopes = [options.community, options.article, options.scope].filter(Boolean)
     if (scopes.length !== 1 || (options.scope && options.scope !== 'global'))
@@ -101,7 +110,15 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
       )
     }
   }
-  return { command: area === 'actors' ? `actor.${action}` : 'community.create', options }
+  return {
+    command:
+      area === 'actors'
+        ? `actor.${action}`
+        : area === 'articles'
+          ? 'article.create'
+          : 'community.create',
+    options,
+  }
 }
 
 export const runLocalTestCommand = async (
@@ -113,7 +130,10 @@ export const runLocalTestCommand = async (
   const { command, options } = parseLocalTestCommand(args)
   const status = (await checkHub()) as Array<{ id: string; status: string }>
   const app = options.app === 'community' ? 'community' : 'dash'
-  const required = command === 'actor.open' ? ['phoenix', 'auth', app] : ['phoenix']
+  const required =
+    command === 'actor.open' || command === 'article.create'
+      ? ['phoenix', 'auth', app]
+      : ['phoenix']
   for (const id of required) {
     if (!status.some((service) => service.id === id && service.status === 'running'))
       throw new Error(`Start ${id} through pnpm devhub start ${id} first.`)
@@ -152,6 +172,16 @@ export const runLocalTestCommand = async (
       created.push(await call({ command, alias: name }))
     }
     return created
+  }
+  if (command === 'article.create') {
+    const input = { ...options, alias: options.as }
+    const prepared = await call({ ...input, command: 'article.prepare' })
+    if (prepared.existing) return prepared.existing
+    const created = await createLocalArticle(
+      { run: String(options.run), alias: String(options.as), community: String(options.community) },
+      prepared,
+    )
+    return call({ ...input, ...created, command: 'article.record' })
   }
   if (command === 'actor.open') {
     const actor = await call({

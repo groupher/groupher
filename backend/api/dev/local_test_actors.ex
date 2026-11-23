@@ -11,7 +11,7 @@ defmodule GroupherServer.LocalTestActors do
   alias GroupherServer.{Accounts, Repo}
   alias Accounts.Model.{BrowserSession, OauthProvider, User}
   alias Accounts.Profiles.{BrowserSessions, Oauth}
-  alias GroupherServer.LocalTestActors.{Cleanup, Communities, Grants, Guard}
+  alias GroupherServer.LocalTestActors.{Articles, Cleanup, Communities, Grants, Guard}
   alias Helper.ORM.AdvisoryLock
 
   @provider "local-test-actor-v1"
@@ -94,6 +94,8 @@ defmodule GroupherServer.LocalTestActors do
   end
 
   defp dispatch("community.create", run, input), do: Communities.create(run, input)
+  defp dispatch("article.prepare", run, input), do: Articles.prepare(run, input)
+  defp dispatch("article.record", run, input), do: Articles.record(run, input)
   defp dispatch("actor.grant", run, input), do: Grants.configure(run, input)
   defp dispatch("actor.clean", run, _input), do: Cleanup.report(run)
 

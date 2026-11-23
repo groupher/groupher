@@ -64,3 +64,25 @@ test('cleanup requires explicit apply and accepts no force or remote target', ()
     parseLocalTestCommand(['actors', 'clean', '--run', 'demo', '--url', 'https://example.com']),
   )
 })
+
+test('Article fixtures require a registered actor selector, explicit community and post thread', () => {
+  const base = [
+    'articles',
+    'create',
+    '--run',
+    'demo',
+    '--as',
+    'owner',
+    '--community',
+    'home',
+    '--thread',
+    'post',
+  ]
+  assert.equal(parseLocalTestCommand(base).command, 'article.create')
+  assert.equal(parseLocalTestCommand([...base, '--key', 'primary']).options.key, 'primary')
+  assert.throws(() => parseLocalTestCommand(base.slice(0, -2)), /thread post/)
+  assert.throws(() => parseLocalTestCommand([...base.slice(0, -1), 'doc']), /thread post/)
+  assert.throws(() => parseLocalTestCommand([...base, '--key', '../other']))
+  assert.throws(() => parseLocalTestCommand([...base, '--author-id', '42']))
+  assert.throws(() => parseLocalTestCommand([...base, '--url', 'https://example.com']))
+})

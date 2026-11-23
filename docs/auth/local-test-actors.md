@@ -58,6 +58,44 @@ creation uses the existing receipt Command, defaults, Lifecycle and initial lord
 for a random slug. An explicit slug is reusable only when that run/owner created and recorded it;
 unrelated existing resources are never claimed. Communities start without sample content.
 
+## Create an owner-bound Article fixture
+
+```bash
+pnpm devhub articles create --run coauthor-demo --as owner \
+  --community coauthor-demo --thread post --key primary
+```
+
+This creates a real unpublished Post and its default WorkingCopy through the existing Dash Content
+Publisher and Phoenix `CreateArticle` Command. The tool uses a fresh temporary browser session and
+attempts normal logout before closing it; existing actor browser profiles are not changed. The owner
+must be a registered active run identity and already an Admin of the explicit community. No management
+permissions are added by the create command. Only `--thread post` is supported in this first version.
+
+The response contains `articleId`, `workingCopyId`, `revision`, `ownerLogin`, `community`, `communityRef`,
+`thread` and `key`. Use **articleId**, not the WorkingCopy UUID, with Article permission commands.
+Phoenix checks the canonical Author user ID, Binding, default WorkingCopy and the initial creation
+Snapshot's causation commandId before recording a successful fixture.
+
+The fixture identity is run + owner alias + immutable Community ref + thread + key. Omitted key is
+`primary`; use distinct keys for multiple Articles. `--title` and `--markdown` optionally customize the
+initial content. Preparing an intent persists its commandId and input digest before calling Publisher.
+Retry with the same arguments recovers that command; once confirmed it reads the current canonical
+WorkingCopy without rewriting edited content. Changing inputs under an existing key is rejected;
+a missing or unrelated Article is not silently adopted or recreated.
+
+`actors clean` reports `article_fixtures_retained`, including confirmed IDs and pending intents.
+Cleanup retains Article content and history under the existing policy; it can archive the run-owned
+Community and remove synthetic grants without deleting a shared Article.
+
+The focused local skill acceptance creates and reuses an Article, checks owner/UUIDs and input
+conflicts, then validates the cleanup report. It does not exercise co-author invitation or editing:
+
+```bash
+pnpm --filter @groupher/local-dev-hub test:local-articles --clean
+```
+
+Non-secret evidence is written to `.playwright/local-test-articles-acceptance.json`.
+
 ## Resource-scoped permissions
 
 Accounts are global identities. Community and Article permissions always identify their scope.
