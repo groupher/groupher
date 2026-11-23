@@ -11,6 +11,7 @@ packages:
 nodeLinker: isolated
 injectWorkspacePackages: true
 strictDepBuilds: true
+verifyDepsBeforeRun: warn
 
 # pnpm 12 is provisioned explicitly by pnpm/setup, Docker, and local setup
 # instructions. Do not persist pnpm's own bootstrap packages in the project lockfile.

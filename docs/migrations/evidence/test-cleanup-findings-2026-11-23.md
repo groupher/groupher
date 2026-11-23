@@ -33,3 +33,10 @@
 - 当前 Import 命名已贯通 Phoenix facade / resolver / GraphQL、Worker、Dash、Core、测试和持久化表/索引；旧迁移文件保留其历史名称。生产 R2 bucket 与临时对象前缀迁移仍待资源创建、未过期对象复制校验和部署验收，不能把代码配置切换视作生产迁移完成。
 - Worker 测试 140 passed、1 skipped；Worker / Worker runtime / Dash type-check、GraphQL contract/generated checks、`pnpm docs:check`、backend warnings-as-errors compile 均通过。
 - 另跑 `pnpm run check:pagination-n-plus-one` 时，现有 report-only scanner test 仍期待 1 条，当前分支扫描到 15 条；该清单未在本轮擅自改写，需对新增 request-path findings 做单独归因和处置。它与上述 4 个已通过的 CI 后端回归分开跟踪。
+
+## 2026-11-23 follow-up — PR #615 backend CI regressions
+
+- PR #615 head `c292d64` 的 CI 另暴露三项失败：Docs Queue co-author 的 Gate 检查仍走站点 `doc.queue.write`；通用 Article WorkingCopy 查询把该站点权限当作 Docs 默认草稿读取权限；Community Trash 测试调用 Doc Trash 时遗漏 Repeatable Read sandbox 标签，且仍断言 Doc Trash 不支持。
+- 已按现有边界修正：co-author 仅可读写自己被加入的 Doc Queue member copy，读需 `article.read_draft`、写需 `article.update`；站点 tree / approval / Release 仍走原 Doc Queue 权限。通用 Docs WorkingCopy 查询要求 Article owner 管理权，不向站点 Queue writer 开放默认草稿。Doc Trash 测试补齐 Repeatable Read 标签，并按当前 Doc Trash 支持合同检查空页。
+- 隔离数据库 `groupher_server_test_codex_20261123` 重跑上述三个文件：9 tests, 0 failures；修改文件 `mix format --check-formatted` 与 `MIX_ENV=test mix compile --warnings-as-errors` 均通过。CI 尚待新 head 重跑，未据本地定向通过宣称全套后端 CI 完成。
+- Dev Hub 只读检查确认 PR #614 已在 `9c1dcd3` 合入；当前服务属于主 worktree，co-author 浏览器流仍未覆盖。Repo skill 声明 `verifyDepsBeforeRun: warn`，但合入 `dev` 的 `pnpm-workspace.yaml` 遗漏该设置，pnpm 12 因默认 `install` 开始下载 Worker 依赖。当前 PR 已补 `verifyDepsBeforeRun: warn`；再次运行 status 不再触发下载，并按 Dev Hub 约束拒绝从 co-author worktree 控制主 worktree 的服务。浏览器验收仍未完成。
