@@ -35,6 +35,19 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
+    case SUB_MENU.BODY: {
+      Content = (
+        <>
+          <EditSVG className={s.icon} />
+          编辑正文
+          <div className='grow' />
+          <InfoSVG className={s.questionIcon} />
+        </>
+      )
+      showDivider = false
+      break
+    }
+
     case SUB_MENU.CATEGORY: {
       Content = (
         <>
