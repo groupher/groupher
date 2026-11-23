@@ -369,6 +369,10 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:ok, CMS.GateAction.article_update()}
   end
 
+  defp passport_action(:edit_article, %{thread: :doc}, _context) do
+    {:ok, CMS.GateAction.article_update()}
+  end
+
   defp passport_action(:manage_coauthors, _article, _context) do
     {:ok, CMS.GateAction.article_author_manage()}
   end

@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
 
       {:error, %Decision{} = decision} = error ->
         if permission_denied?(decision) do
-          with {:ok, :pass} <- authorize(community, article_id, actor) do
+          with {:ok, :pass} <- authorize_member_edit(community, article_id, actor) do
             {:ok, community}
           end
         else
@@ -66,9 +66,27 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
 
       {:error, %Decision{} = decision} = error ->
         if permission_denied?(decision) do
-          with {:ok, :pass} <- authorize_after_commit(community, article_id, actor) do
+          with {:ok, :pass} <- authorize_member_edit_after_commit(community, article_id, actor) do
             {:ok, community}
           end
+        else
+          error
+        end
+
+      error ->
+        error
+    end
+  end
+
+  @doc "Rechecks existing Queue-body edit admission inside the Receipt transaction."
+  def authorize_body_edit(community, article_id, actor) do
+    case authorize(community, article_id, actor) do
+      {:ok, :pass} = result ->
+        result
+
+      {:error, %Decision{} = decision} = error ->
+        if permission_denied?(decision) do
+          authorize_member_edit(community, article_id, actor)
         else
           error
         end
@@ -122,10 +140,37 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
              article_scope,
              CMS.GateAction.article_read_draft()
            ),
-         {:ok, :pass} <- authorize(community, article.id, actor) do
+         {:ok, :pass} <- authorize_member_edit(community, article.id, actor) do
       {:ok, :pass}
     else
       _ -> {:error, CMS.Gate.ErrorCat.permission_denied()}
+    end
+  end
+
+  defp authorize_member_edit(community, article_id, actor) do
+    with {:ok, article_id} <- Ecto.UUID.cast(article_id),
+         %Article{thread: :doc} = article <- Repo.get(Article, article_id) do
+      CMS.Gate.Access.Check.with_authorized_article_binding(
+        actor,
+        :edit_article,
+        {community, article},
+        fn _ -> {:ok, :pass} end
+      )
+    else
+      _ -> {:error, :invalid_doc_identity}
+    end
+  end
+
+  defp authorize_member_edit_after_commit(community, article_id, actor) do
+    with {:ok, article_id} <- Ecto.UUID.cast(article_id),
+         %Article{thread: :doc} = article <- Repo.get(Article, article_id) do
+      CMS.Gate.with_community_check(actor, :edit_article, community, article, fn _ ->
+        {:ok, :pass}
+      end)
+    else
+      nil -> {:error, :invalid_doc_identity}
+      :error -> {:error, :invalid_doc_identity}
+      {:error, _} = error -> error
     end
   end
 

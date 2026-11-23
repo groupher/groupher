@@ -71,9 +71,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
   end
 
   defp working_copy_read_access(user, article, community) do
+    action = if article.thread == :doc, do: :manage_coauthors, else: :edit
+
     with {:ok, :pass} <- CMS.articles_co_authors_reject_working_copy_access(article, user),
          {:ok, canonical} <-
-           CMS.articles_working_copy_access_check(user, :edit, article, community) do
+           CMS.articles_working_copy_access_check(user, action, article, community) do
       {:ok, canonical}
     end
   end
