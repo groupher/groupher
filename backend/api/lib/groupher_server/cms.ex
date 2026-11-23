@@ -2931,14 +2931,14 @@ defmodule GroupherServer.CMS do
   @doc "Delegates CMS.ErrorCat.custom/1 through the CMS Context boundary."
   defdelegate error_cat_custom(arg1), to: ErrorCat, as: :custom
 
-  @doc "Delegates CMS.ContentImport.DocValidator.preview/3 through the CMS Context boundary."
-  defdelegate content_import_doc_validator_preview(arg1, arg2, arg3),
-    to: GroupherServer.CMS.ContentImport.DocValidator,
+  @doc "Delegates CMS.Import.DocValidator.preview/3 through the CMS Context boundary."
+  defdelegate import_doc_validator_preview(arg1, arg2, arg3),
+    to: GroupherServer.CMS.Import.DocValidator,
     as: :preview
 
-  @doc "Delegates CMS.DocTree.Workflows.ContentImport.apply/2 through the CMS Context boundary."
-  defdelegate doc_tree_workflows_content_import_apply(arg1, arg2),
-    to: GroupherServer.CMS.DocTree.Workflows.ContentImport,
+  @doc "Delegates CMS.DocTree.Workflows.Import.apply/2 through the CMS Context boundary."
+  defdelegate doc_tree_workflows_import_apply(arg1, arg2),
+    to: GroupherServer.CMS.DocTree.Workflows.Import,
     as: :apply
 
   @doc "Delegates CMS.Marker.field/2 through the CMS Context boundary."

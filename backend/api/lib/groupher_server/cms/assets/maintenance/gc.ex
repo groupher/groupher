@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.Assets.GC do
           is_nil(asset.deleted_at) and is_nil(asset.archived_at) and asset.inserted_at <= ^cutoff,
       where: not exists(authoritative_refs_query()),
       where: not exists(pending_upload_query()),
-      where: asset.community_id not in subquery(CMS.ContentImport.active_community_ids()),
+      where: asset.community_id not in subquery(CMS.Import.active_community_ids()),
       where: not exists(pending_replacement_query()),
       where: not exists(legal_hold_query()),
       select: asset

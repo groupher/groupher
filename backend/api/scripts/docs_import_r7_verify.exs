@@ -2,8 +2,8 @@ import ExUnit.Assertions
 import Ecto.Query
 import GroupherServer.Support.Factory
 alias GroupherServer.{CMS, Repo}
-alias CMS.ContentImport.{DocValidator, Jobs, Staging}
-alias CMS.DocTree.Workflows.ContentImport
+alias CMS.Import.{DocValidator, Jobs, Staging}
+alias CMS.DocTree.Workflows.Import
 alias CMS.DocTree.Publish.Queue
 alias CMS.Model.{Article, ArticleWorkingCopy, ArticlePublic, DocsTreeNode, DocsQueueArticle}
 [[database]] = Repo.query!("SELECT current_database()").rows
@@ -128,10 +128,10 @@ end
 
 documents = [F.document("docs/start.md", "/start"), F.document("docs/next.md", "/next")]
 job = make_job.(documents)
-assert {:ok, completed} = ContentImport.apply(site, job.job_ref)
+assert {:ok, completed} = Import.apply(site, job.job_ref)
 assert completed.status == :completed
 assert completed.counts.pages == 2
-assert {:ok, ^completed} = ContentImport.apply(site, job.job_ref)
+assert {:ok, ^completed} = Import.apply(site, job.job_ref)
 assert Repo.aggregate(from(n in DocsTreeNode, where: n.community_id == ^site.id), :count) == 4
 
 assert Repo.aggregate(
@@ -162,12 +162,12 @@ stale = make_job.(documents)
     Ecto.UUID.generate()
   )
 
-assert {:error, _} = ContentImport.apply(site, stale.job_ref)
-assert Repo.get_by!(CMS.ContentImport.Model.Job, hash_id: stale.job_ref).status == :ready
+assert {:error, _} = Import.apply(site, stale.job_ref)
+assert Repo.get_by!(CMS.Import.Model.Job, hash_id: stale.job_ref).status == :ready
 
 # Reimport uses the same identities and leaves existing Q content unchanged.
 fresh = make_job.(documents)
-assert {:ok, _} = ContentImport.apply(site, fresh.job_ref)
+assert {:ok, _} = Import.apply(site, fresh.job_ref)
 copy = Repo.get!(ArticleWorkingCopy, copy.id)
 {:ok, queue} = Queue.read(site)
 
@@ -191,7 +191,7 @@ copy = Repo.get!(ArticleWorkingCopy, copy.id)
 refute Repo.exists?(from(w in ArticleWorkingCopy, where: w.article_id == ^id))
 public = Repo.get!(ArticlePublic, id)
 again = make_job.(documents)
-assert {:ok, _} = ContentImport.apply(site, again.job_ref)
+assert {:ok, _} = Import.apply(site, again.job_ref)
 assert Repo.get_by!(ArticleWorkingCopy, article_id: id, scope_kind: :default)
 assert Repo.get!(ArticlePublic, id).snapshot_id == public.snapshot_id
 

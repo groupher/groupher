@@ -12,12 +12,12 @@
 
 ## 定位
 
-`content-import` 负责从外部来源读取内容，把来源差异收敛为 Groupher 可 Review、
+`import` 负责从外部来源读取内容，把来源差异收敛为 Groupher 可 Review、
 可 Apply 的版本化 Dataset。它是导入执行与编排层，不拥有社区内容，也不直接写入
 Phoenix 数据库。
 
 详细的 Dataset、PreviewStore 和 Phoenix 写入约束继续以
-[`../bulk-import/content_import_architecture.md`](./content-import-architecture.md)
+[`import-architecture.md`](./import-architecture.md)
 为准；本文只描述独立部署后的子应用边界。
 
 ## 本地入口

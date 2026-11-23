@@ -9,6 +9,32 @@
 > OCR, uploaded HTML conversion, and HTML conversion for online URLs are out of
 > scope. Online URL import accepts Markdown only.
 
+## Import resource rename rollout — pending
+
+The runtime source now uses the `import` name, `groupher-import` R2 binding, and
+`import/previews/` object prefix. Auth and Phoenix source contracts now use
+`import:internal-api`, `phoenix:import-api`, `import:write`, and
+`docs:import:proxy`. Production still has the previously provisioned
+`groupher-content-import` bucket and `content-import/` objects; the source/config
+rename is not production storage migration evidence.
+
+Complete the resource cutover in this order:
+
+1. Provision the private `groupher-import` bucket and configure the three-day
+   lifecycle for temporary Import preview artifacts.
+2. Inventory unexpired objects under `content-import/` in
+   `groupher-content-import`; copy them to the corresponding keys under
+   `import/previews/` in the new bucket and compare object counts, sizes, and
+   checksums.
+3. Deploy the Worker with the new R2 binding. Verify preview creation, read,
+   cancellation cleanup, Apply, and GraphQL readback against the new bucket.
+4. Keep the old bucket available during the rollback window. After no active
+   Workflow or Dash request reads it and the three-day TTL has elapsed, remove
+   the old prefix and bucket.
+
+If provisioning or copy verification fails, restore the old binding before
+retrying the cutover.
+
 ## Target architecture and behavior
 
 - Cloudflare Worker resource names and production hostnames are `converter`

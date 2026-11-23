@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
       ...(production ? { domains: ['import.groupher.com'] } : {}),
       env: {
         ENVIRONMENT: bindings.text(production ? 'production' : 'development'),
-        CONTENT_IMPORT_PREVIEW_SECRET: bindings.secret(),
+        IMPORT_PREVIEW_SECRET: bindings.secret(),
         PHOENIX_GRAPHQL_ENDPOINT: bindings.text(
           production ? 'https://api.groupher.com/graphiql' : 'http://127.0.0.1:4001/graphiql',
         ),
@@ -43,12 +43,12 @@ export default defineConfig(({ mode }) => {
         ),
         SERVICE_AUTH_CLIENT_ID: bindings.secret(),
         SERVICE_AUTH_CLIENT_SECRET: bindings.secret(),
-        CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE: bindings.text('content-import:internal-api'),
-        SERVICE_AUTH_PHOENIX_RESOURCE: bindings.text('https://api.groupher.com/content-import'),
+        IMPORT_SERVICE_AUTH_AUDIENCE: bindings.text('import:internal-api'),
+        SERVICE_AUTH_PHOENIX_RESOURCE: bindings.text('https://api.groupher.com/import'),
         DOCUMENT_CONVERTER_APP_ENDPOINT: bindings.text(
           production ? 'https://converter.groupher.com' : 'http://127.0.0.1:8000',
         ),
-        ARTIFACTS: bindings.r2({ name: 'groupher-content-import' }),
+        ARTIFACTS: bindings.r2({ name: 'groupher-import' }),
         ANALYSIS_WORKFLOW: bindings.workflow({
           name: analysisWorkflowName,
           worker: workerName,

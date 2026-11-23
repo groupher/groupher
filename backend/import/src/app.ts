@@ -1,10 +1,10 @@
 /**
- * Composes the Content Import HTTP application and its injected route dependencies.
+ * Composes the Import HTTP application and its injected route dependencies.
  *
  * Business position:
  *
  *   Dash proxy / Phoenix import job
- *     -> Content Import module
+ *     -> Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary
  */
@@ -61,7 +61,7 @@ const missingHandler = (name: string) => async (): Promise<Response> =>
     {
       error: {
         code: 'handler_unavailable',
-        message: `Content import handler ${name} is not configured.`,
+        message: `Import handler ${name} is not configured.`,
       },
       ok: false,
     },
@@ -113,11 +113,11 @@ const resolveAuthOptions = async (
     )
   }
 
-  const previewSecret = environment.CONTENT_IMPORT_PREVIEW_SECRET || environment.NEXTAUTH_SECRET
+  const previewSecret = environment.IMPORT_PREVIEW_SECRET || environment.NEXTAUTH_SECRET
   if (!previewSecret?.trim()) {
     return json(
       {
-        error: { code: 'service_unavailable', message: 'Content import is not configured.' },
+        error: { code: 'service_unavailable', message: 'Import is not configured.' },
         ok: false,
       },
       503,
@@ -143,7 +143,7 @@ const resolveAuthOptions = async (
   }
 }
 
-/** Creates the content import application with injectable runtime dependencies. */
+/** Creates the import application with injectable runtime dependencies. */
 export const createApp = ({
   environment = process.env,
   handlers = {},
@@ -155,7 +155,7 @@ export const createApp = ({
   const verifier =
     serviceTokenVerifier ||
     createServiceAuthVerifier({
-      audience: environment.CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE || 'content-import:internal-api',
+      audience: environment.IMPORT_SERVICE_AUTH_AUDIENCE || 'import:internal-api',
       issuer: environment.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
       jwksUrl:
         environment.SERVICE_AUTH_JWKS_URL || 'https://auth.groupher.com/.well-known/jwks.json',

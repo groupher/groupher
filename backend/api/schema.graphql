@@ -437,10 +437,10 @@ type RootQueryType {
   canImportDocs(community: String!): Boolean!
 
   "plan a bounded SourceTree against the current Docs target without creating a Job"
-  previewDocContentImportTarget(community: String!, sourceInfo: ContentImportSourcePreviewInput!, tree: Json!): ContentImportTargetPreview!
+  previewDocImportTarget(community: String!, sourceInfo: ImportSourcePreviewInput!, tree: Json!): ImportTargetPreview!
 
-  "read one community-scoped ContentImport Job and its safe Doc preview"
-  contentImportJob(community: String!, jobRef: ID!): ContentImportJob
+  "read one community-scoped Import Job and its safe Doc preview"
+  importJob(community: String!, jobRef: ID!): ImportJob
 
   "Lists reports submitted by the current user."
   myReports(filter: AlertReportFilter, pagi: PagiInput): AlertReportPage!
@@ -1149,21 +1149,21 @@ type RootMutationType {
   updatePinnedDocAppearance(commandId: ID!, community: String!, nodeId: ID!, appearance: Json!): DocCoverPinnedDoc!
 
   "create the persistent import Job after a temporary Preview is confirmed"
-  startDocContentImport(
-    community: String!, previewRef: ID!, sourceInfo: ContentImportSourcePreviewInput!, datasetRef: ID!, targetTree: Json!, documents: [ContentImportSourceDocumentInput!]!, targetRevision: String!, badSmells: Json!
-  ): ContentImportJob!
+  startDocImport(
+    community: String!, previewRef: ID!, sourceInfo: ImportSourcePreviewInput!, datasetRef: ID!, targetTree: Json!, documents: [ImportSourceDocumentInput!]!, targetRevision: String!, badSmells: Json!
+  ): ImportJob!
 
   "persist trusted Node-generated BodyBags in bounded batches"
-  stageDocContentImportBodies(community: String!, jobRef: ID!, items: [ContentImportBodyInput!]!): ContentImportBodyStageResult!
+  stageDocImportBodies(community: String!, jobRef: ID!, items: [ImportBodyInput!]!): ImportBodyStageResult!
 
   "atomically apply all staged BodyBags to the Docs draft"
-  applyDocContentImport(community: String!, jobRef: ID!): ContentImportApplyResult!
+  applyDocImport(community: String!, jobRef: ID!): ImportApplyResult!
 
   "mark an exhausted import workflow as failed"
-  failDocContentImport(community: String!, jobRef: ID!, code: String!, message: String!): ContentImportJob!
+  failDocImport(community: String!, jobRef: ID!, code: String!, message: String!): ImportJob!
 
   "cancel an unfinished import Job and discard its staged BodyBags"
-  cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
+  cancelDocImport(community: String!, jobRef: ID!): ImportJob!
 
   "Requests another review of an article in the given scope."
   recheckArticleV2(target: ArtimentReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
@@ -1196,7 +1196,7 @@ type RootMutationType {
   resolveAlertItem(id: ID!, resolution: String!, expectedVersion: Int!, commandId: ID!): AlertWallCommandResult!
 }
 
-enum ContentImportJobStatus {
+enum ImportJobStatus {
   STAGING
   READY
   APPLYING
@@ -1205,21 +1205,21 @@ enum ContentImportJobStatus {
   CANCELLED
 }
 
-enum ContentImportProcessState {
+enum ImportProcessState {
   QUEUED
   RUNNING
   COMPLETED
   FAILED
 }
 
-enum ContentImportProcessStage {
+enum ImportProcessStage {
   ANALYZING
   BUILDING_PREVIEW
   PREPARING
   APPLYING
 }
 
-enum ContentImportProcessUnit {
+enum ImportProcessUnit {
   DOCUMENT
   RELEASE
   DISCUSSION
@@ -1227,33 +1227,33 @@ enum ContentImportProcessUnit {
   COMMENT
 }
 
-enum ContentImportProcessItemState {
+enum ImportProcessItemState {
   COMPLETED
   FAILED
   SKIPPED
 }
 
-type ContentImportProcessProgress {
+type ImportProcessProgress {
   completed: Int!
   total: Int
-  unit: ContentImportProcessUnit!
+  unit: ImportProcessUnit!
 }
 
-type ContentImportProcessItem {
+type ImportProcessItem {
   ref: String!
   label: String!
-  state: ContentImportProcessItemState!
+  state: ImportProcessItemState!
 }
 
-type ContentImportProcess {
-  state: ContentImportProcessState!
-  stage: ContentImportProcessStage!
-  progress: ContentImportProcessProgress
-  recentBatch: [ContentImportProcessItem!]!
+type ImportProcess {
+  state: ImportProcessState!
+  stage: ImportProcessStage!
+  progress: ImportProcessProgress
+  recentBatch: [ImportProcessItem!]!
   updatedAt: DateTime!
 }
 
-type ContentImportSourceInfo {
+type ImportSourceInfo {
   repo: String!
   repoUrl: String!
   branch: String!
@@ -1263,7 +1263,7 @@ type ContentImportSourceInfo {
   configPaths: [String!]!
 }
 
-type ContentImportCounts {
+type ImportCounts {
   tabs: Int!
   groups: Int!
   pages: Int!
@@ -1271,7 +1271,7 @@ type ContentImportCounts {
   assets: Int!
 }
 
-input ContentImportSourcePreviewInput {
+input ImportSourcePreviewInput {
   repo: String!
   repoUrl: String!
   branch: String!
@@ -1281,7 +1281,7 @@ input ContentImportSourcePreviewInput {
   configPaths: [String!]!
 }
 
-input ContentImportSourceDocumentInput {
+input ImportSourceDocumentInput {
   sourceRef: String!
   sourcePath: String!
   title: String!
@@ -1290,58 +1290,58 @@ input ContentImportSourceDocumentInput {
   sizeBytes: Int!
 }
 
-type ContentImportTargetPreview {
+type ImportTargetPreview {
   targetTree: Json!
   conflicts: Json!
-  counts: ContentImportCounts!
+  counts: ImportCounts!
   targetRevision: String!
 }
 
-type ContentImportJob {
+type ImportJob {
   id: ID!
-  status: ContentImportJobStatus!
+  status: ImportJobStatus!
   progress: Json!
-  process: ContentImportProcess!
+  process: ImportProcess!
   errorCode: String
   errorMessage: String
   failedItems: Json!
   skipped: Json!
-  sourceInfo: ContentImportSourceInfo!
-  counts: ContentImportCounts!
+  sourceInfo: ImportSourceInfo!
+  counts: ImportCounts!
   tree: Json!
   badSmells: Json!
   firstImportedDocId: ID
 }
 
-input ContentImportSkipInput {
+input ImportSkipInput {
   code: String!
 }
 
-input ContentImportFailureInput {
+input ImportFailureInput {
   code: String!
   message: String!
   stage: String!
 }
 
-input ContentImportBodyInput {
+input ImportBodyInput {
   externalRef: String!
   bodyBag: ArtimentBodyBagInput
-  skipped: ContentImportSkipInput
-  failed: ContentImportFailureInput
+  skipped: ImportSkipInput
+  failed: ImportFailureInput
 }
 
-type ContentImportApplyResult {
+type ImportApplyResult {
   jobRef: ID!
-  status: ContentImportJobStatus!
+  status: ImportJobStatus!
   firstImportedDocId: ID
   counts: Json!
   failedItems: Json!
   skipped: Json!
 }
 
-type ContentImportBodyStageResult {
+type ImportBodyStageResult {
   jobRef: ID!
-  status: ContentImportJobStatus!
+  status: ImportJobStatus!
   progress: Json!
   failedItems: Json!
   skipped: Json!

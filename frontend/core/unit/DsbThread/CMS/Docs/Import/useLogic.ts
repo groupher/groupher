@@ -23,17 +23,17 @@ import useTrans from '~/hooks/useTrans'
 import { createCommandHandle } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 
-import { decodeImportProcess } from '../../ContentImport/ProcessLog/decoder'
-import type { TImportProcess, TImportProcessStage } from '../../ContentImport/ProcessLog/spec'
+import { decodeImportProcess } from '../../Import/ProcessLog/decoder'
+import type { TImportProcess, TImportProcessStage } from '../../Import/ProcessLog/spec'
 import { PHASE } from './constant'
 import S from './schema'
-import type { TContentImportJob, TDocImportPreview, TImportApplyResult, TImportPhase } from './spec'
+import type { TImportJob, TDocImportPreview, TImportApplyResult, TImportPhase } from './spec'
 
 type TRet = {
   analyze: () => Promise<void>
   apply: (selectedSourceIds: string[]) => Promise<void>
   error: string
-  job: TContentImportJob | null
+  job: TImportJob | null
   phase: TImportPhase
   pollingDisconnected: boolean
   preview: TDocImportPreview | null
@@ -87,10 +87,10 @@ export default function useLogic(): TRet {
   const initialPreviewRef = searchParams.get('preview') || ''
   const [previewRef, setPreviewRef] = useState(initialPreviewRef)
   const [jobRef, setJobRef] = useState(initialJobRef || '')
-  const commandId = useRef(createCommandHandle({ scope: 'content-import' }).commandId)
+  const commandId = useRef(createCommandHandle({ scope: 'import' }).commandId)
   const [repoUrl, setRepoUrl] = useState('')
   const [preview, setPreview] = useState<TDocImportPreview | null>(null)
-  const [job, setJob] = useState<TContentImportJob | null>(null)
+  const [job, setJob] = useState<TImportJob | null>(null)
   const [process, setProcess] = useState<TImportProcess | null>(() =>
     initialJobRef
       ? initialProcess('PREPARING')
@@ -110,15 +110,15 @@ export default function useLogic(): TRet {
   }, [])
 
   const loadJob = useCallback(
-    async (jobRef: string): Promise<TContentImportJob> => {
+    async (jobRef: string): Promise<TImportJob> => {
       const data = await browserGraphQLRequest<{
-        contentImportJob: Omit<TContentImportJob, 'process'> & {
+        importJob: Omit<TImportJob, 'process'> & {
           process: unknown
         }
       }>(S.job, { community, jobRef })
       const latest = {
-        ...data.contentImportJob,
-        process: decodeImportProcess(data.contentImportJob.process),
+        ...data.importJob,
+        process: decodeImportProcess(data.importJob.process),
       }
       return latest
     },
@@ -406,7 +406,7 @@ export default function useLogic(): TRet {
       setPreviewRef('')
       setProcess(null)
       commandId.current = createCommandHandle({
-        scope: 'content-import',
+        scope: 'import',
       }).commandId
       setPhase(PHASE.REPO)
       const url = new URL(window.location.href)

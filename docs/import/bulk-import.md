@@ -12,7 +12,7 @@
 >
 > 重构范围：七类 Docs framework adapter 已在 Import Worker/TS 落地并通过现有 basic golden fixtures；目录、PreviewStore/Files SDK、PostgreSQL staging 和 Phoenix 旧链路已完成直接切换，不恢复生产双路径。
 >
-> Source of truth：本文负责 GitHub Docs Bulk Import 的产品步骤与 UI。Cloudflare 部署和运行时以 [`cloudflare-workers-migration-plan.md`](./cloudflare-workers-migration-plan.md) 为准；跨来源架构、Dataset/Phoenix 业务边界以 [`content-import-architecture.md`](./content-import-architecture.md) 为准；共享 Import Content/BodyBag 以 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) 为准。
+> Source of truth：本文负责 GitHub Docs Bulk Import 的产品步骤与 UI。Cloudflare 部署和运行时以 [`cloudflare-workers-migration-plan.md`](./cloudflare-workers-migration-plan.md) 为准；跨来源架构、Dataset/Phoenix 业务边界以 [`import-architecture.md`](./import-architecture.md) 为准；共享 Import Content/BodyBag 以 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) 为准。
 >
 > 本文先定义目标产品规格，再单列当前实现快照、目标验收标准和迁移步骤。
 
@@ -78,7 +78,7 @@ Workflow Step B 读取 SourceTree，调用 Phoenix Validator 并保存 Target Pr
 
 Bulk v1 的 Review 只检查结构、目标映射、数量和 warning，不在确认前转换或展示单篇正文。用户确认后的“逐篇转换”只是一个 Bulk Import Job 内部的 item 执行单位；完成后进入 Docs 编辑器检查正文。
 
-两条产品流程不共享页面状态和 Review 状态，但共享现有 Import Content、content-publisher、BodyBag contract、PostgreSQL staging 和 Docs Writer。Bulk 只是把多个 source item 组织成 `DocsDataset` 并在最终阶段使用树级原子 apply；后续单篇来源同步使用同一写入链的 single-item mode。单篇导入的详细边界见 [`article_publish_import_refactor.md`](./article-publish-import-refactor.md)。
+两条产品流程不共享页面状态和 Review 状态，但共享现有 Import Content、content-publisher、BodyBag contract、PostgreSQL staging 和 Docs Writer。Bulk 只是把多个 source item 组织成 `DocsDataset` 并在最终阶段使用树级原子 apply；后续单篇来源同步使用同一写入链的 single-item mode。单篇导入的详细边界见 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md)。
 
 ## 3. 目标和非目标
 
@@ -86,7 +86,7 @@ Bulk v1 的 Review 只检查结构、目标映射、数量和 warning，不在�
 
 - 用户只需提供一个公开 GitHub 仓库地址。
 - Dashboard Next.js API 只负责鉴权、启动 Cloudflare Workflows 和映射响应；仓库下载、解压和分析发生在 Workflow Step，不把 archive、解压文件或未确认正文传给 Phoenix。
-- 用户确认前只创建有 TTL 的不可变 PreviewRecord 和 versioned `DocsDataset`，不创建正式 ContentImport Job，也不写入 Docs 数据。
+- 用户确认前只创建有 TTL 的不可变 PreviewRecord 和 versioned `DocsDataset`，不创建正式 Import Job，也不写入 Docs 数据。
 - Workflow 持久化执行状态、步骤结果和重试历史；筛选后的来源文件、SourceTree 和 `TBadSmell[]` 保存在 Cloudflare R2，不依赖 Node 进程内存或本地持久卷。
 - 系统自动解析默认分支，不要求用户判断文档框架。
 - 系统识别框架、配置文件、内容目录、导航和资源文件。
@@ -400,7 +400,7 @@ Guides                         Guides
 
 目标原则是：冲突必须由用户确认，不静默覆盖，不静默合并，也不在用户不可见的情况下自动改名。
 
-当前实现还没有达到这个目标：StartDocContentImport GraphQL/Phoenix intent 没有覆盖 acknowledgement 字段，因此服务端不能验证用户是否确认过 mapped Page 覆盖；Phoenix Docs Validator 目前也固定返回空 `conflicts`，未映射目标碰撞不会被检测或阻断。以下内容定义目标行为，不代表这些保护已上线。
+当前实现还没有达到这个目标：StartDocImport GraphQL/Phoenix intent 没有覆盖 acknowledgement 字段，因此服务端不能验证用户是否确认过 mapped Page 覆盖；Phoenix Docs Validator 目前也固定返回空 `conflicts`，未映射目标碰撞不会被检测或阻断。以下内容定义目标行为，不代表这些保护已上线。
 
 需要区分“同一已映射来源再次导入”和“未映射目标碰撞”：
 
@@ -468,7 +468,7 @@ Guides                         Guides
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-目标交互中的按钮必须使用实际 Page 数量，避免用户误以为只是在创建结构。当前 Phoenix Validator 尚未实现未映射目标冲突检测，`conflicts` 暂时始终为空；界面不能声称已按此类冲突禁用按钮。冲突检测是未完成项，完成后未映射目标冲突必须阻止 Apply；已映射来源覆盖只显示风险。当前 StartDocContentImport intent 不含 acknowledgement，服务端无法验证用户确认；该合同与 UI 都是未完成项。按钮 disabled 仍不能替代服务端幂等和 targetRevision 校验。
+目标交互中的按钮必须使用实际 Page 数量，避免用户误以为只是在创建结构。当前 Phoenix Validator 尚未实现未映射目标冲突检测，`conflicts` 暂时始终为空；界面不能声称已按此类冲突禁用按钮。冲突检测是未完成项，完成后未映射目标冲突必须阻止 Apply；已映射来源覆盖只显示风险。当前 StartDocImport intent 不含 acknowledgement，服务端无法验证用户确认；该合同与 UI 都是未完成项。按钮 disabled 仍不能替代服务端幂等和 targetRevision 校验。
 
 ## 12. 第三步：导入进度
 
@@ -577,14 +577,14 @@ QUEUED → DOWNLOADING → EXTRACTING → ANALYZING → READY
                                                     │
                                           用户确认  │
                                                     ▼
-Phoenix ContentImport Job（持久化）
+Phoenix Import Job（持久化）
 
 PUBLISHING_BODIES ───────────→ APPLYING → COMPLETED
         │                          │
         └── item failed ───────────┴──────────────→ FAILED
 ```
 
-`READY` 是重要边界：仓库分析和目标预览已完成，但 Phoenix 中尚未创建正式导入 Job，也没有产生用户可见写入。只有用户确认后，Import Worker 才创建 ContentImport Job，并进入 `PUBLISHING_BODIES / APPLYING`。
+`READY` 是重要边界：仓库分析和目标预览已完成，但 Phoenix 中尚未创建正式导入 Job，也没有产生用户可见写入。只有用户确认后，Import Worker 才创建 Import Job，并进入 `PUBLISHING_BODIES / APPLYING`。
 
 Workflow 负责确认前任务的 durable execution、步骤重试和状态恢复；immutable PreviewRecord/DocsDataset 负责提供有 TTL 的安全读取边界。Groupher 不维护可变 Workflow Session。正式 Job 从用户确认开始，继续使用 Phoenix 的持久化状态和原子 apply。
 
@@ -636,7 +636,7 @@ Browser ── POST /previews/:previewRef/apply ──► Dashboard Next.js API
                          Node/TS Publisher：Markdown / MDX → BodyBag（有界批次）
                                                       │
                                                       ▼
-                              Phoenix ContentImport Job + BodyBag Staging + Atomic Apply
+                              Phoenix Import Job + BodyBag Staging + Atomic Apply
                                                       │
                                                       ▼
                                               Docs Draft
@@ -647,11 +647,11 @@ Browser ── POST /previews/:previewRef/apply ──► Dashboard Next.js API
 - Dashboard Browser 只负责三步交互、轮询、展示固定目标映射和用户确认，不接收 archive 或完整正文集合；用户点击某一 Page 时，可以按需读取该 Page 的安全正文预览。
 - Dashboard Next.js API 负责登录态鉴权、调用 Phoenix `canImportDocs`、启动/查询 Cloudflare Workflows、校验 Preview 归属和映射 HTTP 响应；Route Handler 不等待完整分析结束。
 - Cloudflare Workflows 负责 durable orchestration、步骤重试和运行状态，并固定拆为两个业务 Step。`analyzeSource` 下载、流式解压、候选过滤和 framework 分析，在当前 Step 的临时工作区内完成后写入 Dataset/manifest 并清理目录；`validateTarget` 读取已持久化的 SourceTree，调用 Phoenix Docs Validator，写入 Target Preview 并最后 `markReady`。后一个 Step 失败时不重跑下载分析。上线前必须分别测量两个 Step 及其内部阶段的耗时、内存和字节数；只有 `analyzeSource` 在最大允许 archive 下仍无法稳定落在当前 Function `maxDuration`/memory 内时才进一步拆分，其物化边界使用筛选后的 `SourceWorkspaceRef`，不保存完整原始 archive。
-- Cloudflare R2 是对象存储，不是数据库。首版为 Dashboard 项目创建一个 private store，按 `content-import/previews/{previewRef}/...` 隔离 Preview；不为每个社区或仓库单独创建 store。
+- Cloudflare R2 是对象存储，不是数据库。首版为 Dashboard 项目创建一个 private store，按 `import/previews/{previewRef}/...` 隔离 Preview；不为每个社区或仓库单独创建 store。
 - Node/TS Publisher 在用户确认后把 Markdown/MDX 逐 Page 转换为 Groupher BodyBag，并以 count/bytes 双上限批次同步给 Phoenix；这里的“逐 Page”是 Bulk Job 的 item 粒度，不是编辑器单篇导入产品。
 - Phoenix 是社区权限的唯一事实来源。Import Worker 在创建 Preview 前调用 Phoenix `canImportDocs`，由 Gate 检查当前用户的 `:import_docs` Community action；用户确认并创建正式 Job 时，`Jobs.create` 在写入事务中重新执行同一 Gate action。Job 创建后的内部 stage/apply 是 Server Trust 对已授权 Job 的后台延续，不增加第三套用户权限判断，也不在 Node 复制权限规则。
 - Phoenix 在用户确认前只接收 bounded `sourceInfo + SourceTree`，以只读方式查询当前 Docs 状态、生成 TargetTree 并返回 `targetRevision`；当前 `conflicts` 字段始终为空，未映射目标冲突检测尚未实现。不创建 Job，不保存来源正文。
-- Phoenix 负责创建正式 ContentImport Job、重新检查目标状态、持久化导入事实、BodyBag staging、幂等和原子 apply；Bulk v1 不进入 AssetStager lifecycle。
+- Phoenix 负责创建正式 Import Job、重新检查目标状态、持久化导入事实、BodyBag staging、幂等和原子 apply；Bulk v1 不进入 AssetStager lifecycle。
 - 用户确认前，archive 只存在于 `analyzeSource` Step 的流和临时工作区；筛选后的候选正文与 Preview 结果写入 Private Blob，不发送给 Phoenix。SourceTree 是允许跨 Step/服务边界的结构化小对象。
 - 首版不引入 URL crawler，也不需要为 GitHub Bulk Import 新增 Python 抓取流程。
 - `backend/converter` 只服务 DOCX/PPTX/XLSX 的“外部文件 → Markdown”来源；GitHub Repo 已提供 Markdown/MDX，不经过 Converter。
@@ -704,18 +704,18 @@ query CanImportDocs($community: String!) {
 - Community 必填；授权始终使用 GraphQL 登录态中的当前用户，不接收调用方指定的用户或 Action。
 - Gate 的 `:import_docs` 决定是否允许启动 Docs 导入预览；拒绝时返回 `false`。
 - 该 query 是下载前的资源预检，不替代正式创建 Job 时的强制授权。
-- 正式创建 ContentImport Job 时，`Jobs.create` 在事务内重新执行 Gate `:import_docs`（对应 `doc.import` grant）；读取 Job 时也由 Gate 检查同一 Action，因此预览后权限撤销会阻止创建和读取。
+- 正式创建 Import Job 时，`Jobs.create` 在事务内重新执行 Gate `:import_docs`（对应 `doc.import` grant）；读取 Job 时也由 Gate 检查同一 Action，因此预览后权限撤销会阻止创建和读取。
 - `doc.import` 是独立 community CMS grant，不复用 `doc.edit`；community root 和 global god 继续按现有规则 bypass。
 
 Node analyzer 生成 SourceTree 后，调用 Phoenix 的只读 Docs Validator query：
 
 ```graphql
-query PreviewDocContentImportTarget(
+query PreviewDocImportTarget(
   $community: String!
-  $sourceInfo: ContentImportSourcePreviewInput!
+  $sourceInfo: ImportSourcePreviewInput!
   $tree: Json!
 ) {
-  previewDocContentImportTarget(community: $community, sourceInfo: $sourceInfo, tree: $tree) {
+  previewDocImportTarget(community: $community, sourceInfo: $sourceInfo, tree: $tree) {
     targetTree
     conflicts
     counts
@@ -749,7 +749,7 @@ GET /api/docs/import/previews/preview_xxx
 }
 ```
 
-用户确认时仍由 Dashboard Next.js API 编排，但从这一步起创建 Phoenix ContentImport Job：
+用户确认时仍由 Dashboard Next.js API 编排，但从这一步起创建 Phoenix Import Job：
 
 ```http
 POST /api/docs/import/previews/preview_xxx/apply
@@ -828,7 +828,7 @@ Dashboard 只接收可展示的安全 DTO：
 当前只有三类明确存储职责：
 
 - R2 PreviewStore：确认前的不可变 Preview/Dataset/Review 工作集；本地使用 R2 模拟，fs adapter 仅用于隔离单测。
-- PostgreSQL ContentImport staging：确认后、apply 前的 Job/JobItem/BodyBag；不保存 archive、解压文件或 Snapshot/Plan locator。
+- PostgreSQL Import staging：确认后、apply 前的 Job/JobItem/BodyBag；不保存 archive、解压文件或 Snapshot/Plan locator。
 - PostgreSQL Docs 数据：原子 apply 后的主 Draft、DocTree 与 ImportSourceMapping。
 
 Preview 不复用 `CONTENT_IMPORT_PAYLOAD_DIR`，也不新增 Phoenix 本地 payload 目录。Workflow Step 的本地临时目录只服务当前一次下载、解压和分析，Step 结束即丢弃。多媒体资源发现、复制、URL 重写和清理生命周期仍是后续能力，不属于本次迁移。
@@ -852,7 +852,7 @@ Cloudflare R2 是类似 S3 的对象存储，不是关系型数据库，也不�
 - [x] 无源 Tab 固定进入 `Introduction`；单/多源 Tab 保留源名称；Review 中不显示伪目标选择器。
 - [x] Review 只检查 SourceTree、TargetTree、标题、slug、数量和 warning；首版不在确认前转换或预览单篇正文。
 - [x] Review 操作区内联展示全量导入摘要，并通过一次带实际 Page 数量的按钮直接 apply，不增加独立确认页或二次弹窗。
-- [ ] 同一 Repo/branch 命中既有 Mapping 时，Review 返回 mapped Page 数量并显示覆盖风险；为 StartDocContentImport intent 增加并校验 acknowledgement，确保用户确认后才执行 source-wins 覆盖。当前 GraphQL/Phoenix 合同没有该字段，服务端不会验证确认。
+- [ ] 同一 Repo/branch 命中既有 Mapping 时，Review 返回 mapped Page 数量并显示覆盖风险；为 StartDocImport intent 增加并校验 acknowledgement，确保用户确认后才执行 source-wins 覆盖。当前 GraphQL/Phoenix 合同没有该字段，服务端不会验证确认。
 - [ ] 冲突页只提供真实可执行的“返回仓库”和“重新检查目标状态”，不出现不存在的 branch/path/逐 Tab 映射操作。
 - [ ] 转换结果显示失败/跳过 Page、来源路径、阶段、错误码和原因；普通转换失败不能跳过，只有稳定的 `content_too_large` 可排除该 Page 后继续。
 - [x] 全部有效 Page 转换成功后才 atomic apply；过滤后的 TargetTree 必须与有效 items 一致；零可导入项不 apply，任一失败都不留下用户可见的残缺树或正文。
@@ -860,9 +860,9 @@ Cloudflare R2 是类似 S3 的对象存储，不是关系型数据库，也不�
 
 ### 18.2 架构与迁移
 
-- [x] 创建 Preview 前调用 Phoenix `canImportDocs(community)`，由 Gate 检查当前用户的 `:import_docs` action；正式 Job create/start mutation 在写入事务中独立强制校验同一 Gate action，Job 查询也经 Gate 检查，后续 stage/apply 仅接受 `service:content-import` 的 operation-scoped continuation。
+- [x] 创建 Preview 前调用 Phoenix `canImportDocs(community)`，由 Gate 检查当前用户的 `:import_docs` action；正式 Job create/start mutation 在写入事务中独立强制校验同一 Gate action，Job 查询也经 Gate 检查，后续 stage/apply 仅接受 `service:import` 的 operation-scoped continuation。
 - [x] Import Worker 流式下载固定 commit 的 archive，不把完整压缩包或解压结果放入进程内存。
-- [x] 用户确认前，Phoenix 不创建正式 ContentImport Job，不接收 archive、解压文件或正文集合。
+- [x] 用户确认前，Phoenix 不创建正式 Import Job，不接收 archive、解压文件或正文集合。
 - [x] Node 只把 versioned SourceTree/sourceInfo 发送给 Phoenix；Phoenix 只读返回 TargetTree、conflicts 字段和 targetRevision。当前 `conflicts` 始终为空，冲突检测仍未实现。
 - [ ] Phoenix 检测未映射 TargetTree 与现存 Docs 项之间的冲突，返回稳定 conflict 列表，并在 Apply 前阻止未确认的冲突。
 - [ ] 七类 Node adapter 已通过 basic golden parity；继续补齐变体，并完成固定公开仓库 Preview 验收。
@@ -880,7 +880,7 @@ Cloudflare R2 是类似 S3 的对象存储，不是关系型数据库，也不�
 
 ### 19.1 复核并冻结 Preview contract
 
-1. 保留当前确认前 `TDocImportPreview` 与确认后 `TContentImportJob` 的边界。
+1. 保留当前确认前 `TDocImportPreview` 与确认后 `TImportJob` 的边界。
 2. 固定 `sourceInfo / counts / tree / badSmells / expiresAt` 的公开字段。
 3. 保持 `previewRef` 与 `jobRef` 分开命名，不允许重新合并为一个状态对象。
 4. 复用现有七类 framework golden，并为 Preview DTO 增加布局、hash 版本和规模 runtime decoder。
@@ -948,18 +948,18 @@ pnpm --filter @groupher/import run test:worker
 
 ```text
 backend/import/src/
-├── lib/content-import/
+├── lib/import/
 │   ├── core/contracts/
 │   ├── core/preview-store/
 │   ├── platforms/github/repo/
 │   ├── threads/docs/
 │   └── transport/phoenix/docsImport.ts
-└── workflows/content-import/docs/
+└── workflows/import/docs/
     ├── analyzeGitHubRepo.ts
     └── applyDocsDataset.ts
 ```
 
-详细文件树见 [`content_import_architecture.md`](./content-import-architecture.md#9-node-目录结构)。
+详细文件树见 [`import-architecture.md`](./import-architecture.md#9-node-目录结构)。
 
 #### 19.5.2 收敛共享解析基础设施
 
@@ -1011,7 +1011,7 @@ VitePress 完整端到端作为内部开发基线；其余六类至少通过增�
 2. Phoenix 提供只读 Docs Validator query，输入 bounded SourceTree，输出 TargetTree、conflicts、counts 和 targetRevision。
 3. `Introduction / Untitled` 等 Groupher 目标树 fallback、slug/route 碰撞和当前 Docs 状态判断由 Phoenix 维护。
 4. Docs Validator 和 Apply 必须遵守 [Section 16](#16-目标接口) 定义的 targetRevision、branch absence、事务与 advisory lock contract；本节不重复定义第二套规则。
-5. 实现时复用普通 Doc Tree 写入的锁键和 revision 机制，不创建仅供 ContentImport 使用的平行并发协议。
+5. 实现时复用普通 Doc Tree 写入的锁键和 revision 机制，不创建仅供 Import 使用的平行并发协议。
 6. Docs Validator 不持久化 Job/Plan，不接收 Markdown/BodyBag，也不暴露数据库 ID。
 
 #### 19.5.6 切换和清理旧路径
@@ -1030,7 +1030,7 @@ Phoenix：
 
 1. 在 `PermissionRegistry` 注册独立 `doc.import` community CMS grant，并同步 Passport 管理 UI/规则列表；community root 和 global god 保持 bypass。
 2. 增加 Doc 专用 `canImportDocs(community): Boolean!` query，通过 Gate 检查当前用户的 `:import_docs` action，不接收 user/action/thread；Job 创建事务复用同一 Gate action 作为最终授权。
-3. 增加只读 `previewDocContentImportTarget` query，验证 SourceTree contract 并返回 TargetTree/conflicts/targetRevision。
+3. 增加只读 `previewDocImportTarget` query，验证 SourceTree contract 并返回 TargetTree/conflicts/targetRevision。
 4. 正式创建 Job 的 mutation 在写事务内使用 Gate `:import_docs`（对应 `doc.import` grant），并在创建前验证 Review intent 和 targetRevision。
 
 Dashboard Next.js：
@@ -1083,7 +1083,7 @@ GitHub/codeload rate limit 只是上游失败保护，不是 admission 或成本
 | `document_conversion_failed`     | 一篇或多篇 Page 无法生成有效 BodyBag                                           | 展开失败列表并 reset/re-import |
 | `content_too_large`              | 单篇超过固定 2 MiB Plate input 或 5 MiB canonical BodyBag 上限；该 Page 已跳过 | 拆分或精简该文档后手动导入     |
 | `target_revision_conflict`       | Review 后目标 Docs 已变化                                                      | 重新检查目标状态               |
-| `content_import_apply_failed`    | 正式导入失败                                                                   | 查看 Job 诊断并重试            |
+| `import_apply_failed`            | 正式导入失败                                                                   | 查看 Job 诊断并重试            |
 
 所有错误响应使用统一安全结构：`code / stage / message / retryable / details`。`details` 可以包含 GitHub HTTP status、脱敏的 upstream request id、`retryAfter`、framework/config path 或失败 `sourceRef`，但不能返回 token、上游原始响应正文、服务端绝对路径或 stack trace。截图中的 `[GraphQL] GitHub request failed with status 403` 在目标流程中至少应映射成具体阶段、稳定错误码、是否可重试和用户下一步，而不是只透传一行 403。
 
@@ -1119,8 +1119,8 @@ Import 和 Converter 已独立部署到 Cloudflare Workers；Dashboard 只保留
 
 ## 21. 联调前提
 
-1. Auth 为 Dashboard、Content Import、Phoenix 和 Scheduler 分别配置独立 client；各调用方配置 `SERVICE_AUTH_TOKEN_ENDPOINT`、自己的 client id/secret，接收方配置 issuer/JWKS。
-2. 正式 ContentImport Job 使用 PostgreSQL JobItem/BodyBag staging；确认前 DocsDataset 使用 Files SDK 后的 Cloudflare R2。Phoenix 不再配置 PayloadStore。
+1. Auth 为 Dashboard、Import、Phoenix 和 Scheduler 分别配置独立 client；各调用方配置 `SERVICE_AUTH_TOKEN_ENDPOINT`、自己的 client id/secret，接收方配置 issuer/JWKS。
+2. 正式 Import Job 使用 PostgreSQL JobItem/BodyBag staging；确认前 DocsDataset 使用 Files SDK 后的 Cloudflare R2。Phoenix 不再配置 PayloadStore。
 3. 通过 Import Worker 的 `ARTIFACTS` binding 访问私有 R2 bucket；Dashboard 不直接访问 bucket，也不按社区创建 bucket。
 4. `cloudflare.config.ts` 声明 Import Worker 的两个 Workflow；本地通过 `cf dev` 模拟，线上与 Worker 一起部署。
 5. 显式配置并验证全局活动分析并发上限；优先使用 Workflow 对应 Queue/consumer 的最大并发配置，接口不支持时才增加共享 semaphore。首版不实现每社区 lease。

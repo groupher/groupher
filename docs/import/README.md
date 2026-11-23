@@ -6,10 +6,10 @@
 
 | 文档                                                                         | 负责边界                                                       |
 | ---------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| [`content-import-architecture.md`](./content-import-architecture.md)         | 跨来源总体架构、公共术语、Worker/Phoenix 职责与持久映射        |
+| [`import-architecture.md`](./import-architecture.md)                         | 跨来源总体架构、公共术语、Worker/Phoenix 职责与持久映射        |
 | [`markdown-title-normalization.md`](./markdown-title-normalization.md)       | MD/MDX 元数据标题、可见标题、导航标题与前导 H1 消费规则        |
 | [`bulk-import.md`](./bulk-import.md)                                         | GitHub Docs Bulk Import 产品步骤、Review、冲突与验收           |
-| [`content-import-refactor-plan.md`](./content-import-refactor-plan.md)       | 重构实施计划、历史迁移证据与剩余 release gate                  |
+| [`import-refactor-plan.md`](./import-refactor-plan.md)                       | 历史重构计划与迁移证据                                         |
 | [`import-file-sdk.md`](./import-file-sdk.md)                                 | PreviewStore、Files SDK、PostgreSQL staging 与临时对象生命周期 |
 | [`import-process-log.md`](./import-process-log.md)                           | Preview/Job Process 投影、轮询与过程日志                       |
 | [`import-plan.md`](./import-plan.md)                                         | 不可变 ImportPlan、Review 决策、Apply 确定性与演进路径         |
