@@ -158,7 +158,7 @@ defmodule GroupherServerWeb.Context do
         context
 
       ["Bearer " <> token] ->
-        case authorize_delegated_browser_token(token) do
+        case authorize_browser_token(token) do
           {:ok, cur_user} ->
             context
             |> Map.put(:cur_user, cur_user)
@@ -168,7 +168,7 @@ defmodule GroupherServerWeb.Context do
             })
 
           {:error, reason} ->
-            Map.put(context, :delegation_auth_failure, delegation_auth_failure_code(reason))
+            Map.put(context, :delegation_auth_failure, browser_auth_failure_code(reason))
         end
 
       _malformed ->
@@ -176,7 +176,7 @@ defmodule GroupherServerWeb.Context do
     end
   end
 
-  defp authorize_delegated_browser_token(token) do
+  defp authorize_browser_token(token) do
     with {:ok, claims} <- BrowserAccess.decode_claims(token),
          {:ok, cur_user} <- load_user(%{id: claims["sub"]}),
          true <-
@@ -200,25 +200,20 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp maybe_put_browser_auth_failure(context, {:browser, _token}, reason) do
-    code =
-      if reason == :token_expired,
-        do: GroupherServer.Auth.contract_token_expired(),
-        else: GroupherServer.Auth.contract_token_invalid()
-
-    Map.put(context, :auth_failure, code)
+    Map.put(context, :auth_failure, browser_auth_failure_code(reason))
   end
 
   defp maybe_put_browser_auth_failure(context, _token, _reason), do: context
 
-  defp delegation_auth_failure_code(:token_expired) do
+  defp browser_auth_failure_code(:token_expired) do
     GroupherServer.Auth.contract_token_expired()
   end
 
-  defp delegation_auth_failure_code(ProfileErrorCat.error_pattern(reason: :session_revoked)) do
+  defp browser_auth_failure_code(ProfileErrorCat.error_pattern(reason: :session_revoked)) do
     GroupherServer.Auth.contract_session_revoked()
   end
 
-  defp delegation_auth_failure_code(_reason), do: GroupherServer.Auth.contract_token_invalid()
+  defp browser_auth_failure_code(_reason), do: GroupherServer.Auth.contract_token_invalid()
 
   # --------------------------------------------------
   # Browser cookies must satisfy the V1 issuer/audience/type/session claims.
@@ -236,12 +231,7 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp authorize({:browser, token}) do
-    with {:ok, claims} <- BrowserAccess.decode_claims(token),
-         {:ok, resource} <- BrowserAccess.resource_from_claims(claims) do
-      load_user(resource)
-    else
-      {:error, reason} -> {:error, reason}
-    end
+    authorize_browser_token(token)
   end
 
   defp authorize({:bearer, token}) do

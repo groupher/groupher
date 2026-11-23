@@ -75,7 +75,6 @@ type TOptions = {
   oauthRateLimiter?: TRateLimitBinding
   serviceTokenRateLimiter?: TRateLimitBinding
   testLogin?: (request: Request) => Promise<Response>
-  testAdminLogin?: (request: Request) => Promise<Response>
 }
 
 const AUTH_CORE_ACTIONS = new Set([
@@ -206,7 +205,6 @@ export const createApp = ({
   oauthRateLimiter,
   serviceTokenRateLimiter,
   testLogin,
-  testAdminLogin,
 }: TOptions = {}) => {
   const app = new Hono<{ Bindings: TBindings }>()
   const fallbackRefreshRateLimiter = createMemoryRateLimiter()
@@ -385,16 +383,6 @@ export const createApp = ({
       }
 
       return testLogin(context.req.raw)
-    })
-  }
-
-  if (testAdminLogin) {
-    app.post(AUTH_ROUTE.TEST_ADMIN_LOGIN, async (context) => {
-      if (!requireStateChangeOrigin(context)) {
-        return context.json({ code: AUTH_ERROR.INVALID_ORIGIN }, 400, noStore())
-      }
-
-      return testAdminLogin(context.req.raw)
     })
   }
 

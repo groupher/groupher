@@ -51,6 +51,7 @@ export const MANAGED_ENV_KEYS = new Set([
   'GRAPHQL_ENDPOINT',
   'LANDING_SITE',
   'METRIC_IP_SALT',
+  'LOCAL_TEST_ACTORS_SECRET',
   'MOCK_GRAPHQL_PORT',
   'NEXT_PUBLIC_ASSETS_HUB_ENDPOINT',
   'NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT',
@@ -330,13 +331,20 @@ export const resolveLocalEnvironment = (
     )
     env.SERVICE_AUTH_RESOURCES_JSON = JSON.stringify(authResources)
     env.NEXTAUTH_SECRET = state.secrets['auth:session-secret']
-    env.AUTH_LOCAL_LOGIN_ENABLED = 'true'
-    env.AUTH_LOCAL_ADMIN_LOGIN_ENABLED =
-      environment.DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED?.trim() === 'true' ? 'true' : 'false'
+  }
+
+  if (serviceId === 'auth' || serviceId === 'phoenix') {
+    env.LOCAL_TEST_ACTORS_SECRET = localTestActorsSecret(state)
   }
 
   return { env }
 }
+
+/** Purpose-separated key, shared only by the local CLI, development Auth and Phoenix. */
+export const localTestActorsSecret = (state: TLocalEnvironmentState): string =>
+  createHmac('sha256', state.secrets['auth:session-secret'])
+    .update('dev-hub:local-test-actors:v1')
+    .digest('base64url')
 
 export const resolveExternalEnvironment = async (
   definition: TServiceDefinition,

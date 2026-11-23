@@ -126,9 +126,9 @@ B3b  clean remaining services; verify every managed service
 
 使用已被忽略的 `local/dev-hub/.data/local-environment/state.json`，保存格式版本、仓库
 realpath、签名/会话等必要开发密钥，以及按 service id 区分的客户端凭据。
-`AUTH_LOCAL_LOGIN_ENABLED` 等行为 flag 来自服务配置，不存进秘密状态文件。Admin 登录仍
-默认关闭；仅 Hub 进程显式设置 `DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED=true` 时，解析器才给
-本地 Auth 注入开启值。该 Hub 控制值从子进程环境中过滤，不进入 state 或应用配置来源。
+本地测试账号使用从已有私有状态按用途派生的独立凭据，仅注入开发 Auth 和 Phoenix。
+固定 local-debug / local-passport-admin 登录及原 Admin opt-in 已退役；新命令按 run 登记
+账号、显式配置 Community / Article 权限，并验证实际本地开发库。
 
 - 目录 0700、文件 0600；不提交，不出现在 UI/API/日志/测试报告中。
 - 首次生成，后续启动复用；普通启动不轮换，不写每个应用的 `.env.local`。
@@ -296,9 +296,9 @@ requested application ready
 ### 5.3 保留必要的安全与生产隔离
 
 - 本地仍校验 token 签名、issuer、audience、scope、用户委托及 Gate 权限。
-- 普通本地登录由 Hub 的本地配置明确设置 `AUTH_LOCAL_LOGIN_ENABLED=true`，受现有
-  非生产和本地主机限制；管理员开关默认 false，只能由 Hub 启动环境中的
-  `DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED=true` 显式启用。真实 OAuth 单独配置。
+- 本地测试身份由独立开发入口及实际本地数据库检查约束，受现有
+  开发编译、本地主机和专用凭据限制；授权必须指定 Community / Article。
+  旧固定账号与管理员开关已移除。真实 OAuth 单独配置。
 - 受管秘密只展示键名、来源和是否存在；服务端禁用 reveal，删除对应 UI 开关。
   `config-reader.test.ts` 保留脱敏检查，将原明文断言改为 reveal 被拒绝或仍不返回明文。
   普通非敏感源码查看不必删除，不能用隐藏按钮或正则脱敏代替服务端边界。
@@ -476,7 +476,7 @@ pnpm --filter @groupher/local-dev-hub run test:local-environment
 ### 7.3 浏览器闭环
 
 使用 canonical HTTPS 和 `/home/xx` 社区。普通登录 flag 由本地环境模块设置；有权写入
-的测试账户/成员关系需显式准备，不自动把 local-debug 升为管理员。测试内容使用唯一
+的测试账户/成员关系需显式准备，不自动授予未声明的管理权限。测试内容使用唯一
 `local-runtime:<run-id>` 标记，结果记录内容 id、receipt/operation id，截图放 `.playwright/`。
 
 | 场景             | 操作                                                 | 必须记录的结果                                                                      |
@@ -504,6 +504,6 @@ blocked/not-run 即可，秘密和 token 不进入证据。
 - [本地开发入口](../infra/local-development.md)
 - [Portless](../infra/portless.md)
 - [Dev Hub README](../../local/dev-hub/README.md)
-- [本地登录与当前 Dash 临时恢复流程](../auth/local-debug-login.md)
+- [本地测试账号与社区](../auth/local-test-actors.md)
 - [服务 token 协议](../auth/service-token.md)
 - [验证矩阵](../infra/tooling/validation.md)

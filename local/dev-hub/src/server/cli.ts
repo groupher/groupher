@@ -16,6 +16,10 @@ export async function runHubCommand(
   request: typeof fetch = fetch,
   origin = process.env.DEV_HUB_URL || 'http://127.0.0.1:4310',
 ): Promise<unknown> {
+  if (args[0] === 'actors' || args[0] === 'communities') {
+    const { runLocalTestCommand } = await import('./local-test-command.ts')
+    return runLocalTestCommand(args, () => runHubCommand(['status'], request, origin), origin)
+  }
   const [action, id, mode, ...extra] = args
   if (!action || extra.length) throw new Error(USAGE)
   if (action === 'setup-auth' && !id) return setupLocalServiceAuth()
@@ -93,6 +97,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     const result = await runHubCommand(process.argv.slice(2))
     console.log(typeof result === 'string' ? result : JSON.stringify(result, null, 2))
+    if (
+      result &&
+      typeof result === 'object' &&
+      'status' in result &&
+      ['partial', 'blocked'].includes(String(result.status))
+    )
+      process.exitCode = 1
   } catch (error) {
     console.error(error instanceof Error ? error.message : error)
     process.exitCode = 1

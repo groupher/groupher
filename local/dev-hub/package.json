@@ -13,6 +13,7 @@
     "build": "vite build",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "test:local-environment": "tsx test/local-environment.smoke.ts",
+    "test:local-actors": "tsx test/local-test-actors.smoke.ts",
     "type-check": "tsc --noEmit --project ./tsconfig.json",
     "format": "oxfmt -c ./oxfmt.json ./src ./*.json ./*.ts",
     "format:check": "oxfmt -c ./oxfmt.json --check ./src ./*.json ./*.ts"
