@@ -2801,11 +2801,6 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments.ErrorCat,
     as: :not_exist
 
-  @doc "Delegates CMS.Passport.Registry.requirement/1 through the CMS Context boundary."
-  defdelegate passport_registry_requirement(arg1),
-    to: GroupherServer.CMS.Passport.Registry,
-    as: :requirement
-
   @doc "Delegates CMS.Passport.ErrorCat.passport/0 through the CMS Context boundary."
   defdelegate passport_error_cat_passport(),
     to: GroupherServer.CMS.Passport.ErrorCat,
@@ -2843,11 +2838,6 @@ defmodule GroupherServer.CMS do
   defdelegate error_cat_missing_passport(arg1),
     to: ErrorCat,
     as: :missing_passport
-
-  @doc "Delegates CMS.Passport.Registry.normalize_rules/1 through the CMS Context boundary."
-  defdelegate passport_registry_normalize_rules(arg1),
-    to: GroupherServer.CMS.Passport.Registry,
-    as: :normalize_rules
 
   @doc "Delegates CMS.ErrorCat.invalid_requirement/0 through the CMS Context boundary."
   defdelegate error_cat_invalid_requirement(),

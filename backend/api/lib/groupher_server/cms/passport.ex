@@ -2,14 +2,14 @@ defmodule GroupherServer.CMS.Passport do
   @moduledoc """
   Ownership namespace for CMS Passport facts.
 
-  Passport is shared authorization data, not a Gate child module. CRUD,
-  registry, and authorization seams live below this namespace while Gate only
+  Passport is shared authorization data, not a Gate child module. CRUD and
+  authorization seams live below this namespace while Gate only
   consumes the authorization result.
 
       API / Gate policy
         -> CMS.Passport.Authorization
-        -> CMS.Passport.Registry
-        -> normalized Passport facts
+        -> Catalog / Store
+        -> typed Passport facts
   """
 
   alias __MODULE__.{Authorization, Store}
