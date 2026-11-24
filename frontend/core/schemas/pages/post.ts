@@ -4,6 +4,7 @@ export const post = graphql(`
   "Get post by id"
   query Post($article: ArticlePathInput!) {
     post(article: $article) {
+      id
       ...PostFields
       ...PostDetailFields
     }

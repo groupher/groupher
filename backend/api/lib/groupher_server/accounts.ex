@@ -36,10 +36,10 @@ defmodule GroupherServer.Accounts do
     to: GroupherServer.Accounts.Achievements,
     as: :achieve
 
-  @doc "Delegates GroupherServer.Accounts.Achievements.paged_moderatorable_communities/2 through the Accounts Context boundary."
-  defdelegate achievements_paged_moderatorable_communities(arg1, arg2),
+  @doc "Delegates GroupherServer.Accounts.Achievements.paged_administered_communities/2 through the Accounts Context boundary."
+  defdelegate achievements_paged_administered_communities(arg1, arg2),
     to: GroupherServer.Accounts.Achievements,
-    as: :paged_moderatorable_communities
+    as: :paged_administered_communities
 
   @doc "Delegates GroupherServer.Accounts.CollectFolders.add_result/4 through the Accounts Context boundary."
   defdelegate collect_folders_add_result(arg1, arg2, arg3, arg4),

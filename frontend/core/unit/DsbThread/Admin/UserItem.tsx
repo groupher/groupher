@@ -1,14 +1,14 @@
 import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
-import type { TModerator } from '~/spec'
+import type { TAdmin } from '~/spec'
 import Button from '~/ui/Buttons/Button'
 import AdminAvatar from '~/unit/AdminAvatar'
 
 import useSalon from './salon/user_item'
 
 type TProps = {
-  item: TModerator
+  item: TAdmin
   active?: boolean
   readonly?: boolean
   onOpen?: () => void

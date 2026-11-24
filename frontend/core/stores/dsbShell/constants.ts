@@ -16,7 +16,7 @@ export const DSB_SHELL_ACTION_KEYS = [
   'setTag',
   'setEditingAlias',
   'setDocFaqSaveZone',
-  'setActiveModerator',
+  'setActiveAdmin',
   'resetEditor',
 ] as const satisfies readonly (keyof TDsbShellStore)[]
 
@@ -29,5 +29,5 @@ export const DSB_SHELL_STATE_KEYS = [
   'settingTag',
   'editingAlias',
   'docFaqSaveZone',
-  'activeModerator',
+  'activeAdmin',
 ] as const satisfies readonly (keyof TDsbShellStore)[]

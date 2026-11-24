@@ -592,7 +592,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
         )
         |> Repo.all()
         |> Enum.map(fn {ticket_id, user} ->
-          {ticket_id, %{id: to_string(user.id), login: user.login, nickname: user.nickname}}
+          {ticket_id, %{user: user}}
         end)
         |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
 
@@ -1005,7 +1005,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
     |> where([ticket_state: state], state.type == ^(Map.get(filter, :type) || :user))
     |> maybe_filter_status(Map.get(filter, :status))
     |> maybe_filter_priority(Map.get(filter, :priority))
-    |> maybe_filter_assignee(Map.get(filter, :assignee_id))
+    |> maybe_filter_assignee(Map.get(filter, :assignee_login))
     |> maybe_filter_tags(filter_tag_ids(filter), community_id)
     |> maybe_filter_facet("version", filter_values(filter, :versions))
     |> maybe_filter_facet("os", filter_values(filter, :operating_systems))
@@ -1026,19 +1026,21 @@ defmodule GroupherServer.CMS.Tickets.Query do
 
   defp maybe_filter_priority(query, _priority), do: query
 
-  defp maybe_filter_assignee(query, assignee_id) when is_integer(assignee_id) do
+  defp maybe_filter_assignee(query, assignee_login) when is_binary(assignee_login) do
     assignee_query =
       from(assignee in TicketAssignee,
+        join: user in GroupherServer.Accounts.Model.User,
+        on: user.id == assignee.user_id,
         where:
           assignee.ticket_id == parent_as(:ticket_state).article_id and
-            assignee.user_id == ^assignee_id,
+            user.login == ^assignee_login,
         select: 1
       )
 
     where(query, [ticket_state: _state], exists(subquery(assignee_query)))
   end
 
-  defp maybe_filter_assignee(query, _assignee_id), do: query
+  defp maybe_filter_assignee(query, _assignee_login), do: query
 
   defp maybe_filter_tags(query, [_ | _] = tag_ids, community_id) do
     tag_query =

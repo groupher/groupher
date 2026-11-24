@@ -1,5 +1,7 @@
 # Dev Hub 统一本地运行环境
 
+> 本地覆盖配置的当前实现见 [Dev Hub 集中本地配置](./dev-hub-local-config.md)：由 Hub 按服务管理 `local-dev.env`，旧应用 dotenv 文件不再是 Hub 的日常配置来源；下文保留统一身份与历史迁移背景。
+
 > 状态：实施与验收记录；入口清单和验收矩阵见第 4、6、7 节。
 >
 > 基线：`5627fc9d01b59121592f058637d01aa556fe1c07`（2026-11-18）。工作树包含其他
@@ -69,7 +71,7 @@ Press 等调用方分别有自己的本地身份和最小权限；没有服务�
 | 父进程环境                        | 继承后删除全仓库受管 key 和已知凭据，保留工具链兼容性；仅按服务重新注入            |
 | 旧 Dash/Auth 初始化器             | 显式迁移其输出后删除旧 writer；setup-auth 只调用统一 prepare，不再写 Auth/Dash env |
 | Make、package scripts、cross-env  | 删除受管 key 的内联赋值，不能在 spawn 后再次覆盖                                   |
-| 应用 dotenv                       | 托管模式不再加载受管 key；外部授权只由统一 loader 按应用白名单读取                 |
+| 应用 dotenv                       | 托管模式跳过应用 dotenv；白名单外部授权从 Hub 集中 `local-dev.env` 读取            |
 | Vite / Cloudflare 配置            | 开发态消费统一 bindings，清除重复默认值；生产加载路径保持独立                      |
 
 关键约束是“一个 key 有一个 owner”。检查受管 key 的所有旧来源和最终有效值，不能只
@@ -126,9 +128,9 @@ B3b  clean remaining services; verify every managed service
 
 使用已被忽略的 `local/dev-hub/.data/local-environment/state.json`，保存格式版本、仓库
 realpath、签名/会话等必要开发密钥，以及按 service id 区分的客户端凭据。
-`AUTH_LOCAL_LOGIN_ENABLED` 等行为 flag 来自服务配置，不存进秘密状态文件。Admin 登录仍
-默认关闭；仅 Hub 进程显式设置 `DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED=true` 时，解析器才给
-本地 Auth 注入开启值。该 Hub 控制值从子进程环境中过滤，不进入 state 或应用配置来源。
+本地测试账号使用从已有私有状态按用途派生的独立凭据，仅注入开发 Auth 和 Phoenix。
+固定 local-debug / local-passport-admin 登录及原 Admin opt-in 已退役；新命令按 run 登记
+账号、显式配置 Community / Article 权限，并验证实际本地开发库。
 
 - 目录 0700、文件 0600；不提交，不出现在 UI/API/日志/测试报告中。
 - 首次生成，后续启动复用；普通启动不轮换，不写每个应用的 `.env.local`。
@@ -153,11 +155,11 @@ Worker 需要的私有投影固定在 `.data/local-environment/workers/<serviceI
 `.dev.vars`/`.env.local`。B2 须为下列三类工具记录实际配置入口、支持的传递 API/参数及
 禁用旧 dotenv 的方式，真实 handler 探针通过后才算交付；不预设它们支持同一个 CLI 参数：
 
-| 工具                   | 需要覆盖的入口                                           | 交付要求                                                                                      |
-| ---------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Cloudflare Vite plugin | Dash、Community 等 SSR 开发入口                          | 配置从 Hub child env 读取并交给 `bindings.text/secret()`，不使用 public defines 传 secret     |
-| cf CLI                 | Import、Converter、Assets Worker、Edge Router 等启动变体 | 配置从 Hub child env 读取并由 `bindings.*()` 传入；应用配置不得再读 dotenv                    |
-| Wrangler               | Status、Review AI                                        | Hub 在私有目录重建 `.env` 投影，以 pinned Wrangler 的 `--env-file` 加载；远端 AI 授权单独检查 |
+| 工具                   | 需要覆盖的入口                                   | 交付要求                                                                                      |
+| ---------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Cloudflare Vite plugin | Dash、Community 等 SSR 开发入口                  | 配置从 Hub child env 读取并交给 `bindings.text/secret()`，不使用 public defines 传 secret     |
+| cf CLI                 | Converter、Assets Worker、Edge Router 等启动变体 | 配置从 Hub child env 读取并由 `bindings.*()` 传入；应用配置不得再读 dotenv                    |
+| Wrangler               | Import、Status、Review AI                        | Hub 在私有目录重建 `.env` 投影，以 pinned Wrangler 的 `--env-file` 加载；远端 AI 授权单独检查 |
 
 Secret 不通过 `--var SECRET=...` 等命令行字面量传递；没有验证过交付方式时，B2 报告
 阻塞，不能临时改写每个应用的 dotenv 作为替代。
@@ -296,9 +298,9 @@ requested application ready
 ### 5.3 保留必要的安全与生产隔离
 
 - 本地仍校验 token 签名、issuer、audience、scope、用户委托及 Gate 权限。
-- 普通本地登录由 Hub 的本地配置明确设置 `AUTH_LOCAL_LOGIN_ENABLED=true`，受现有
-  非生产和本地主机限制；管理员开关默认 false，只能由 Hub 启动环境中的
-  `DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED=true` 显式启用。真实 OAuth 单独配置。
+- 本地测试身份由独立开发入口及实际本地数据库检查约束，受现有
+  开发编译、本地主机和专用凭据限制；授权必须指定 Community / Article。
+  旧固定账号与管理员开关已移除。真实 OAuth 单独配置。
 - 受管秘密只展示键名、来源和是否存在；服务端禁用 reveal，删除对应 UI 开关。
   `config-reader.test.ts` 保留脱敏检查，将原明文断言改为 reveal 被拒绝或仍不返回明文。
   普通非敏感源码查看不必删除，不能用隐藏按钮或正则脱敏代替服务端边界。
@@ -476,7 +478,7 @@ pnpm --filter @groupher/local-dev-hub run test:local-environment
 ### 7.3 浏览器闭环
 
 使用 canonical HTTPS 和 `/home/xx` 社区。普通登录 flag 由本地环境模块设置；有权写入
-的测试账户/成员关系需显式准备，不自动把 local-debug 升为管理员。测试内容使用唯一
+的测试账户/成员关系需显式准备，不自动授予未声明的管理权限。测试内容使用唯一
 `local-runtime:<run-id>` 标记，结果记录内容 id、receipt/operation id，截图放 `.playwright/`。
 
 | 场景             | 操作                                                 | 必须记录的结果                                                                      |
@@ -504,6 +506,6 @@ blocked/not-run 即可，秘密和 token 不进入证据。
 - [本地开发入口](../infra/local-development.md)
 - [Portless](../infra/portless.md)
 - [Dev Hub README](../../local/dev-hub/README.md)
-- [本地登录与当前 Dash 临时恢复流程](../auth/local-debug-login.md)
+- [本地测试账号与社区](../auth/local-test-actors.md)
 - [服务 token 协议](../auth/service-token.md)
 - [验证矩阵](../infra/tooling/validation.md)

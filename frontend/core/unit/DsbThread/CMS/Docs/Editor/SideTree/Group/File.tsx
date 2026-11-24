@@ -1,7 +1,6 @@
 import { type FC, type KeyboardEvent, type MouseEvent, useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import PaperPlaneTilt from '~/icons/PaperPlaneTilt'
 import MarkerPicker from '~/ui/MarkerPicker'
 
 import {
@@ -108,16 +107,9 @@ const File: FC<TProps> = ({
       )}
       {item.badge && <div className={s.badge}>{item.badge}</div>}
       <div className={s.meta}>
-        {(showPublishDot || item.publishState?.queued) && (
-          <div
-            className={s.publishDotSlot}
-            title={t(item.publishState?.queued ? 'dsb.doc.queue.enqueued' : 'dsb.doc.queue.draft')}
-          >
-            {item.publishState?.queued ? (
-              <PaperPlaneTilt className='size-3' aria-label={t('dsb.doc.queue.enqueued')} />
-            ) : (
-              <span className={s.unpublishedDot} aria-label={t('dsb.doc.queue.draft')} />
-            )}
+        {showPublishDot && (
+          <div className={s.publishDotSlot} title={t('dsb.doc.queue.draft')}>
+            <span className={s.unpublishedDot} aria-label={t('dsb.doc.queue.draft')} />
           </div>
         )}
         {!searching && (

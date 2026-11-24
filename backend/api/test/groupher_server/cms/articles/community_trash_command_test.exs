@@ -6,6 +6,7 @@ defmodule GroupherServer.Test.CMS.Articles.CommunityTrashCommandTest do
   alias CMS.Model.{ArticleBinding, ArticleBindingTrash, CommunityAdmin}
   alias GroupherServerWeb.Schema
 
+  @tag sandbox_isolation: "REPEATABLE READ"
   test "application GraphQL resolves local trash through scoped authorization" do
     {community, public, _, owner} = mock_article(:post)
     {:ok, actor} = db_insert(:user)
@@ -96,6 +97,7 @@ defmodule GroupherServer.Test.CMS.Articles.CommunityTrashCommandTest do
              )
   end
 
+  @tag sandbox_isolation: "REPEATABLE READ"
   test "Community hide, restore, replay and stale identity preserve other site" do
     {site_a, public, _, owner} = mock_article(:post)
     {:ok, site_b} = mock_community(owner)
@@ -162,7 +164,7 @@ defmodule GroupherServer.Test.CMS.Articles.CommunityTrashCommandTest do
     assert {:error, %{reason: :binding_not_found}} =
              CMS.Articles.CommunityTrashQuery.get(site_a, owner, :post, first.id)
 
-    assert {:error, %{reason: :unsupported_community_trash_thread}} =
+    assert {:ok, %{entries: [], total_count: 0}} =
              CMS.Articles.CommunityTrashQuery.page(site_a, actor, :doc, pagi)
 
     receipt = Repo.get_by!(CMS.Model.CommandReceipt, command_id: command)

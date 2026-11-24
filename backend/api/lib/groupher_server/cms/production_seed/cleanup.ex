@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
   import Ecto.Query
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.ProductionSeed
+  alias CMS.ProductionSeed.Privileges
   alias ProductionSeed.Run
   alias Accounts.Model.{User, BrowserSession, OauthProvider}
 
@@ -21,8 +22,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
     ArticleBinding,
     ArticleAssetRef,
     Community,
-    Comment,
-    Passport
+    Comment
   }
 
   alias CMS.Model.Mentions.{Edge, Endpoint}
@@ -88,12 +88,23 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
         )
 
       permissions_changed =
-        Enum.any?(manifest["users"], fn {name, id} ->
-          case Repo.get_by(Passport, user_id: id) do
-            nil -> false
-            passport -> passport.rules != get_in(manifest, ["passports", name])
-          end
-        end)
+        if manifest["cleanupMode"] do
+          not Privileges.globals_cleaned?(manifest["users"]) or
+            not Privileges.admins_valid?(
+              manifest["users"],
+              manifest["communities"],
+              manifest["communityAdmins"] || %{},
+              true
+            )
+        else
+          not Privileges.valid?(manifest["users"], manifest["globalPassports"] || %{}) or
+            not Privileges.admins_valid?(
+              manifest["users"],
+              manifest["communities"],
+              manifest["communityAdmins"] || %{},
+              false
+            )
+        end
 
       blockers = if permissions_changed, do: [:seed_permissions_changed], else: []
       blockers = if oauth > 0, do: [:unexpected_oauth | blockers], else: blockers
@@ -174,11 +185,10 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
             |> Enum.uniq()
 
           Repo.all(from(a in Article, where: a.id in ^ids, order_by: a.id, lock: "FOR UPDATE"))
-          users = Map.values(run.manifest["users"])
-
-          Repo.all(
-            from(p in Passport, where: p.user_id in ^users, order_by: p.id, lock: "FOR UPDATE")
-          )
+          users = run.manifest["users"]
+          communities = run.manifest["communities"]
+          {:ok, _} = Privileges.lock_owned!(users)
+          {:ok, _} = Privileges.lock_admins!(users, communities)
 
           plan =
             case report(run_id, database, mode) do
@@ -200,17 +210,33 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
             Repo.rollback(:seed_jobs_running)
           end
 
-          if mode == "purge" and is_nil(run.manifest["cleanupMode"]), do: purge!(run)
+          if mode == "purge" and is_nil(run.manifest["cleanupMode"]) do
+            system_actor_id = run.manifest["users"]["adminDev"]
+            Privileges.with_temporary_root!(system_actor_id, fn -> purge!(run) end)
+          end
+
           {:ok, _} = ProductionSeed.Logins.close(run_id, database)
-          users = plan.users_retained
+          user_ids = plan.users_retained
           now = DateTime.utc_now(:second)
 
           Repo.update_all(
-            from(s in BrowserSession, where: s.user_id in ^users and s.status == :active),
+            from(s in BrowserSession, where: s.user_id in ^user_ids and s.status == :active),
             set: [status: :revoked, revoked_at: now, revoked_reason: "production_seed_cleanup"]
           )
 
-          Repo.delete_all(from(p in Passport, where: p.user_id in ^users))
+          {:ok, _} =
+            Privileges.delete_owned!(
+              run.manifest["users"],
+              run.manifest["globalPassports"] || %{}
+            )
+
+          {:ok, _} =
+            Privileges.clear_admins!(
+              run.manifest["users"],
+              run.manifest["communities"],
+              run.manifest["communityAdmins"] || %{}
+            )
+
           run = Repo.get!(Run, run.id)
 
           run
@@ -234,8 +260,17 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
     with {:ok, plan} <- report(run_id, database, mode) do
       run = Repo.get_by!(Run, run_id: run_id)
 
-      roles =
-        Repo.aggregate(from(p in Passport, where: p.user_id in ^plan.users_retained), :count)
+      users = run.manifest["users"]
+      communities = run.manifest["communities"]
+
+      roles_cleaned? =
+        Privileges.globals_cleaned?(users) and
+          Privileges.admins_valid?(
+            users,
+            communities,
+            run.manifest["communityAdmins"] || %{},
+            true
+          )
 
       remaining =
         Repo.aggregate(
@@ -265,7 +300,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
 
       pending = plan.effects.outbox != [] or plan.effects.jobs != []
 
-      if run.status == "closed" and run.manifest["cleanupMode"] == mode and roles == 0 and
+      if run.status == "closed" and run.manifest["cleanupMode"] == mode and roles_cleaned? and
            plan.active_sessions == 0 and plan.blockers == [] and
            (mode == "retain" or remaining == 0) and (mode == "retain" or published_tickets == 0) and
            not pending do
@@ -283,7 +318,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
            reason: :seed_cleanup_incomplete,
            report: plan,
            remaining_articles: remaining,
-           remaining_roles: roles
+           roles_cleaned: roles_cleaned?
          }}
       end
     end
@@ -447,12 +482,11 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
           community = Repo.get_by!(Community, slug: resource["community"])
           name = if community.slug == "mock", do: "adminMock", else: "adminDev"
           scoped_actor = Repo.get!(User, run.manifest["users"][name])
-          {:ok, rules} = CMS.Passport.get_passport(scoped_actor)
 
           purge_article!(
             article,
             community,
-            %{scoped_actor | cur_passport: rules},
+            scoped_actor,
             run.manifest["commands"]
           )
       end

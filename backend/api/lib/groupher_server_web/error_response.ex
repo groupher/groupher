@@ -3,7 +3,7 @@ defmodule GroupherServerWeb.ErrorResponse do
   Formats declared application errors for the GraphQL transport boundary.
 
   Domain Error or Gate Decision -> validated typed Absinthe error -> final formatter.
-  Only the Pagi revision/API mismatch discriminator is exposed from details.
+  Transport discriminators identify Pagi configuration mismatches and Docs import conflicts.
   """
 
   alias GroupherServer.{CMS, ErrorCat}
@@ -143,6 +143,11 @@ defmodule GroupherServerWeb.ErrorResponse do
       _ ->
         %{code: error.code}
     end
+  end
+
+  defp domain_extensions(%Error{namespace: {:cms}, reason: reason} = error)
+       when reason in [:target_revision_conflict, :import_intent_conflict] do
+    %{code: error.code, reasonCode: Atom.to_string(reason)}
   end
 
   defp domain_extensions(%Error{code: code}), do: %{code: code}

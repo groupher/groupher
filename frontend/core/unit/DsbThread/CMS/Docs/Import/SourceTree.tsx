@@ -9,11 +9,18 @@ import { pageIdsFromNodes, totalPageSize, type TImportPageMeta } from './sourceT
 import type { TImportTreeGroup, TImportTreeLeaf, TImportTreeNode, TImportTreeTab } from './spec'
 
 type TProps = {
+  conflictIds: ReadonlySet<string>
   pageMeta: Map<string, TImportPageMeta>
   selectedSourceIds: ReadonlySet<string>
   tabs: TImportTreeTab[]
   onToggle: (sourceIds: string[], checked: boolean) => void
 }
+
+const dispositionLabel = {
+  conflict: 'dsb.doc.bulk_import.review.conflict',
+  create: 'dsb.doc.bulk_import.review.create',
+  overwrite: 'dsb.doc.bulk_import.review.overwrite',
+} as const
 
 const stateFor = (
   sourceIds: string[],
@@ -30,7 +37,13 @@ const stateFor = (
 }
 
 /** Renders recursive TargetTree Groups while preserving sourceId-based selection. */
-export default function SourceTree({ pageMeta, selectedSourceIds, tabs, onToggle }: TProps) {
+export default function SourceTree({
+  conflictIds,
+  pageMeta,
+  selectedSourceIds,
+  tabs,
+  onToggle,
+}: TProps) {
   const s = useSalon()
   const { t } = useTrans()
   const showTabTitle = tabs.length > 1
@@ -42,6 +55,7 @@ export default function SourceTree({ pageMeta, selectedSourceIds, tabs, onToggle
       : metadata?.navigationStatus === 'unlisted'
         ? t('dsb.doc.bulk_import.review.status.not_in_navigation')
         : null
+    const disposition = conflictIds.has(leaf.sourceId) ? 'conflict' : leaf.disposition
     const sizeLabel = metadata?.sizeBytes == null ? null : fmtFileSize(metadata.sizeBytes)
 
     return (
@@ -60,6 +74,9 @@ export default function SourceTree({ pageMeta, selectedSourceIds, tabs, onToggle
             <span aria-hidden>↗</span>
             <span className={s.pageTitle}>{leaf.title}</span>
           </div>
+        )}
+        {leaf.type === 'page' && disposition && (
+          <span className={s.pageMeta}>{t(dispositionLabel[disposition])}</span>
         )}
         {leaf.type === 'page' && (status || sizeLabel) ? (
           <span className={s.pageMeta}>

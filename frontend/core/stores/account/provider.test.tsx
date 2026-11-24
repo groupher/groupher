@@ -90,10 +90,10 @@ describe('stores/account/provider', () => {
     await waitFor(() => expect(queryClient.getQueryData(oldKey)).toBeUndefined())
   })
 
-  it('refreshes the canonical session after the current Passport changes', async () => {
+  it('refreshes the canonical session profile', async () => {
     const refreshedUser = {
       ...sessionUser,
-      passport: { global: { 'community.application.review': true } },
+      nickname: 'Updated profile',
     }
     const request = vi
       .fn()
@@ -110,7 +110,7 @@ describe('stores/account/provider', () => {
 
     await act(() => result.current.refreshSession())
 
-    await waitFor(() => expect(result.current.user?.passport).toEqual(refreshedUser.passport))
+    await waitFor(() => expect(result.current.user?.nickname).toEqual(refreshedUser.nickname))
     expect(request).toHaveBeenCalledOnce()
   })
 

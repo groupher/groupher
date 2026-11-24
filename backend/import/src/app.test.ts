@@ -2,10 +2,10 @@ import assert from 'node:assert/strict'
 
 import { test } from 'vitest'
 
-import { createApp as createContentImportApp } from './app'
+import { createApp as createImportApp } from './app'
 
 const environment = {
-  CONTENT_IMPORT_PREVIEW_SECRET: 'preview-secret',
+  IMPORT_PREVIEW_SECRET: 'preview-secret',
 }
 
 const userToken = `header.${Buffer.from(JSON.stringify({ sub: '42' })).toString('base64url')}.signature`
@@ -13,15 +13,15 @@ const userRef = 'user:test-subject'
 
 const serviceTokenVerifier = {
   verify: async (_token: string, scope: string) => ({
-    audience: 'content-import:internal-api',
+    audience: 'import:internal-api',
     scopes: new Set([scope]),
     subject: 'service:dash',
     tokenId: 'test-token',
   }),
 }
 
-const createApp = (options: Parameters<typeof createContentImportApp>[0] = {}) =>
-  createContentImportApp({
+const createApp = (options: Parameters<typeof createImportApp>[0] = {}) =>
+  createImportApp({
     environment,
     resolveDelegationSubject: async () => 'user:test-subject',
     serviceTokenVerifier,

@@ -12,7 +12,8 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     Comment,
     CommentLifecycle,
     PinnedComment,
-    PostSolution
+    PostSolution,
+    CommunityAdmin
   }
 
   @article_cat CMS.Artiment.Const.cat_map()
@@ -137,12 +138,11 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     refute Repo.get_by(PostLog, operation_ref: replacement.operation_ref, action: :comment_pinned)
   end
 
-  test "non-author moderators and non-QA posts are rejected by the current author-only policy",
+  test "non-author admins and non-QA posts are rejected by the current author-only policy",
        context do
     ~m(community post actor outsider first)a = context
 
-    assert {:ok, _community} =
-             CMS.Communities.add_moderator(community, outsider, actor, Ecto.UUID.generate())
+    Repo.insert!(%CommunityAdmin{community_id: community.id, user_id: outsider.id})
 
     assert {:error, %{reason: :permission_denied}} =
              CMS.Comments.accept_solution(first, outsider, Ecto.UUID.generate())

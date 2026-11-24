@@ -23,17 +23,17 @@ import useTrans from '~/hooks/useTrans'
 import { createCommandHandle } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 
-import { decodeImportProcess } from '../../ContentImport/ProcessLog/decoder'
-import type { TImportProcess, TImportProcessStage } from '../../ContentImport/ProcessLog/spec'
+import { decodeImportProcess } from '../../Import/ProcessLog/decoder'
+import type { TImportProcess, TImportProcessStage } from '../../Import/ProcessLog/spec'
 import { PHASE } from './constant'
 import S from './schema'
-import type { TContentImportJob, TDocImportPreview, TImportApplyResult, TImportPhase } from './spec'
+import type { TImportJob, TDocImportPreview, TImportApplyResult, TImportPhase } from './spec'
 
 type TRet = {
   analyze: () => Promise<void>
-  apply: (selectedSourceIds: string[]) => Promise<void>
+  apply: (selectedSourceIds: string[], overwriteSourceIds: string[]) => Promise<void>
   error: string
-  job: TContentImportJob | null
+  job: TImportJob | null
   phase: TImportPhase
   pollingDisconnected: boolean
   preview: TDocImportPreview | null
@@ -87,10 +87,10 @@ export default function useLogic(): TRet {
   const initialPreviewRef = searchParams.get('preview') || ''
   const [previewRef, setPreviewRef] = useState(initialPreviewRef)
   const [jobRef, setJobRef] = useState(initialJobRef || '')
-  const commandId = useRef(createCommandHandle({ scope: 'content-import' }).commandId)
+  const commandId = useRef(createCommandHandle({ scope: 'import' }).commandId)
   const [repoUrl, setRepoUrl] = useState('')
   const [preview, setPreview] = useState<TDocImportPreview | null>(null)
-  const [job, setJob] = useState<TContentImportJob | null>(null)
+  const [job, setJob] = useState<TImportJob | null>(null)
   const [process, setProcess] = useState<TImportProcess | null>(() =>
     initialJobRef
       ? initialProcess('PREPARING')
@@ -104,21 +104,22 @@ export default function useLogic(): TRet {
   )
   const [error, setError] = useState('')
   const applyInFlight = useRef<Promise<void> | null>(null)
+  const conflictingPreviewRef = useRef<string | null>(null)
 
   const commitProcess = useCallback((next: TImportProcess): void => {
     setProcess((current) => preserveMonotonicStage(current, next))
   }, [])
 
   const loadJob = useCallback(
-    async (jobRef: string): Promise<TContentImportJob> => {
+    async (jobRef: string): Promise<TImportJob> => {
       const data = await browserGraphQLRequest<{
-        contentImportJob: Omit<TContentImportJob, 'process'> & {
+        importJob: Omit<TImportJob, 'process'> & {
           process: unknown
         }
       }>(S.job, { community, jobRef })
       const latest = {
-        ...data.contentImportJob,
-        process: decodeImportProcess(data.contentImportJob.process),
+        ...data.importJob,
+        process: decodeImportProcess(data.importJob.process),
       }
       return latest
     },
@@ -255,7 +256,7 @@ export default function useLogic(): TRet {
   }, [commitProcess, community, phase, previewRef, t])
 
   const apply = useCallback(
-    (selectedSourceIds: string[]): Promise<void> => {
+    (selectedSourceIds: string[], overwriteSourceIds: string[]): Promise<void> => {
       const operation = (async (): Promise<void> => {
         if (!preview) return
         setError('')
@@ -265,35 +266,33 @@ export default function useLogic(): TRet {
         setPhase(PHASE.IMPORTING)
         try {
           const response = await fetch(DOCS_IMPORT_ROUTE.apply(preview.previewRef), {
-            body: JSON.stringify({ community, selectedSourceIds }),
+            body: JSON.stringify({
+              community,
+              selectedSourceIds,
+              overwriteSourceIds,
+              attemptRef: preview.attemptRef,
+            }),
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
           })
-          if (!response.ok) {
-            const errorPayload = (await response.json().catch(() => null)) as {
-              error?: { code?: string; message?: string }
-            } | null
-            const previewUnavailable =
-              errorPayload?.error?.code === 'preview_not_found' ||
-              errorPayload?.error?.code === 'preview_expired'
-            throw new Error(
-              previewUnavailable
-                ? t('dsb.doc.bulk_import.preview_unavailable')
-                : errorPayload?.error?.message || `Import failed (${response.status}).`,
-            )
-          }
-          const payload = (await response.json()) as TImportApplyResult & {
-            error?: { code?: string; message?: string }
-          }
-          if (!payload.jobRef) {
-            const previewUnavailable =
-              payload.error?.code === 'preview_not_found' ||
-              payload.error?.code === 'preview_expired'
-            throw new Error(
-              previewUnavailable
-                ? t('dsb.doc.bulk_import.preview_unavailable')
-                : payload.error?.message || 'Import failed.',
-            )
+          const payload = (await response.json().catch(() => null)) as
+            | (Partial<TImportApplyResult> & {
+                error?: { code?: string; message?: string }
+              })
+            | null
+          if (!response.ok || !payload?.jobRef) {
+            const code = payload?.error?.code
+            if (code === 'import_intent_conflict' || code === 'preview_attempt_conflict') {
+              // The server owns a different confirmed selection or a newer attempt at this ref.
+              conflictingPreviewRef.current = preview.previewRef
+            }
+            if (code === 'preview_not_found' || code === 'preview_expired') {
+              throw new Error(t('dsb.doc.bulk_import.preview_unavailable'))
+            }
+            if (code === 'target_revision_conflict' || code === 'preview_attempt_conflict') {
+              throw new Error(t('dsb.doc.bulk_import.review.preview_changed'))
+            }
+            throw new Error(payload?.error?.message || `Import failed (${response.status}).`)
           }
           const url = new URL(window.location.href)
           url.searchParams.set('job', payload.jobRef)
@@ -345,7 +344,11 @@ export default function useLogic(): TRet {
           terminal = true
         }
         if (status === 'failed' || status === 'cancelled') {
-          setError(latest.errorMessage || 'The bulk import could not be completed.')
+          setError(
+            latest.errorCode === 'target_revision_conflict'
+              ? t('dsb.doc.bulk_import.review.preview_changed')
+              : latest.errorMessage || 'The bulk import could not be completed.',
+          )
           setPhase(PHASE.FAILED)
           terminal = true
         }
@@ -371,13 +374,13 @@ export default function useLogic(): TRet {
       if (timer !== null) window.clearTimeout(timer)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [commitProcess, jobRef, loadJob, phase])
+  }, [commitProcess, jobRef, loadJob, phase, t])
 
   const reset = useCallback(async (): Promise<boolean> => {
     setError('')
     try {
       await applyInFlight.current
-      if (previewRef) {
+      if (previewRef && conflictingPreviewRef.current !== previewRef) {
         const response = await fetch(
           `${DOCS_IMPORT_ROUTE.preview(previewRef)}?community=${encodeURIComponent(community)}`,
           { method: 'DELETE' },
@@ -399,6 +402,7 @@ export default function useLogic(): TRet {
           throw new Error(payload.error?.message || 'Could not remove the import preview.')
         }
       }
+      conflictingPreviewRef.current = null
       setJob(null)
       setJobRef('')
       setPollingDisconnected(false)
@@ -406,7 +410,7 @@ export default function useLogic(): TRet {
       setPreviewRef('')
       setProcess(null)
       commandId.current = createCommandHandle({
-        scope: 'content-import',
+        scope: 'import',
       }).commandId
       setPhase(PHASE.REPO)
       const url = new URL(window.location.href)

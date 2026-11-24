@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 
-import ImportProcessLog from '../../ContentImport/ProcessLog'
-import type { TImportProcess } from '../../ContentImport/ProcessLog/spec'
+import ImportProcessLog from '../../Import/ProcessLog'
+import type { TImportProcess } from '../../Import/ProcessLog/spec'
 import useSalon from './salon/importing_step'
 
 type TProps = {

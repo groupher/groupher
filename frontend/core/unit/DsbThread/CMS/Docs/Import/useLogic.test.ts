@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PHASE } from './constant'
-import type { TContentImportJob, TDocImportPreview } from './spec'
+import type { TImportJob, TDocImportPreview } from './spec'
 import useLogic from './useLogic'
 
 const mocks = vi.hoisted(() => ({
@@ -38,6 +38,7 @@ const jsonResponse = (data: unknown): Response =>
 
 const preview = {
   previewRef: 'preview-1',
+  attemptRef: 'attempt-1',
   sourceInfo: { repoUrl: 'https://github.com/groupher/docs' },
 } as TDocImportPreview
 
@@ -51,7 +52,7 @@ const job = {
     updatedAt: '2026-07-22T08:00:00.000Z',
   },
   status: 'ready',
-} as unknown as TContentImportJob
+} as unknown as TImportJob
 
 describe('useLogic apply', () => {
   beforeEach(() => {
@@ -60,7 +61,7 @@ describe('useLogic apply', () => {
     vi.stubGlobal('fetch', mocks.fetch)
     mocks.fetch.mockReset()
     mocks.query.mockReset()
-    mocks.query.mockResolvedValue({ contentImportJob: job })
+    mocks.query.mockResolvedValue({ importJob: job })
   })
 
   afterEach(() => {
@@ -96,9 +97,20 @@ describe('useLogic apply', () => {
 
     let operation: Promise<void> = Promise.resolve()
     act(() => {
-      operation = result.current.apply(['page-a', 'page-b'])
+      operation = result.current.apply(['page-a', 'page-b'], ['page-a'])
     })
 
+    expect(mocks.fetch).toHaveBeenCalledWith(
+      `/api/docs/import/previews/${preview.previewRef}/apply`,
+      expect.objectContaining({
+        body: JSON.stringify({
+          community: 'home',
+          selectedSourceIds: ['page-a', 'page-b'],
+          overwriteSourceIds: ['page-a'],
+          attemptRef: preview.attemptRef,
+        }),
+      }),
+    )
     expect(result.current.phase).toBe(PHASE.IMPORTING)
     expect(result.current.process).toMatchObject({
       progress: { completed: 0, total: 2, unit: 'DOCUMENT' },
@@ -201,6 +213,40 @@ describe('useLogic apply', () => {
     expect(window.location.search).toBe('')
   })
 
+  it.each(['preview_attempt_conflict', 'import_intent_conflict'])(
+    'leaves the server Preview intact when reset races an apply rejected with %s',
+    async (code) => {
+      let rejectIntent: (response: Response) => void = () => undefined
+      const applying = new Promise<Response>((resolve) => {
+        rejectIntent = resolve
+      })
+      mocks.fetch.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url === '/api/docs/import/previews' && init?.method === 'POST') {
+          return Promise.resolve(jsonResponse({ previewRef: preview.previewRef }))
+        }
+        if (url.endsWith('/apply')) return applying
+        if (url.includes(`/${preview.previewRef}?`) && !init?.method) {
+          return Promise.resolve(jsonResponse({ preview, status: 'ready' }))
+        }
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`))
+      })
+      const { result } = renderHook(() => useLogic())
+      await act(async () => result.current.analyze())
+      await waitFor(() => expect(result.current.phase).toBe(PHASE.REVIEW))
+      await act(async () => {
+        const admission = result.current.apply(['page-a'], [])
+        const leaving = result.current.reset()
+        rejectIntent(Response.json({ error: { code } }, { status: 409 }))
+        await admission
+        await expect(leaving).resolves.toBe(true)
+      })
+      expect(result.current.phase).toBe(PHASE.REPO)
+      expect(window.location.search).toBe('')
+      expect(mocks.fetch.mock.calls.some(([, init]) => init?.method === 'DELETE')).toBe(false)
+    },
+  )
+
   it('waits for an in-flight apply admission before deleting the Preview', async () => {
     let resolveApply: (response: Response) => void = () => undefined
     const applyResponse = new Promise<Response>((resolve) => {
@@ -229,7 +275,7 @@ describe('useLogic apply', () => {
     let applyOperation: Promise<void> = Promise.resolve()
     let resetOperation: Promise<boolean> = Promise.resolve(false)
     act(() => {
-      applyOperation = result.current.apply(['page-a'])
+      applyOperation = result.current.apply(['page-a'], [])
       resetOperation = result.current.reset()
     })
 

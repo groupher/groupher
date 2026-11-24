@@ -27,7 +27,7 @@ describe('handleDocumentImportRequest', () => {
     const form = new FormData()
     form.set('file', new Blob(['docx']), 'guide.docx')
     const response = await handleDocumentImportRequest(
-      new Request('https://content-import.example.test/api/artiment/import', {
+      new Request('https://import.example.test/api/artiment/import', {
         body: form,
         method: 'POST',
       }),
@@ -51,7 +51,7 @@ describe('handleDocumentImportRequest', () => {
     const form = new FormData()
     form.set('file', new Blob(['docx']), 'guide.docx')
     const response = await handleDocumentImportRequest(
-      new Request('https://content-import.example.test/api/artiment/import', {
+      new Request('https://import.example.test/api/artiment/import', {
         body: form,
         method: 'POST',
       }),

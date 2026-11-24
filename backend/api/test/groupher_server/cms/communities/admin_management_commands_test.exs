@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminManagementCommandsTest do
              )
   end
 
-  test "removing an Admin cancels their pending request in the same transaction" do
+  test "removing an admin cancels their pending request in the same transaction" do
     {:ok, lord} = db_insert(:user)
     {:ok, admin_user} = db_insert(:user)
     {:ok, community} = mock_community(lord)
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminManagementCommandsTest do
     assert Repo.get!(CommunityAdminRequest, request.id).status == :cancelled
   end
 
-  test "ordinary Admins can leave while lord membership stays protected" do
+  test "ordinary admins can leave while lord membership stays protected" do
     {:ok, lord} = db_insert(:user)
     {:ok, admin_user} = db_insert(:user)
     {:ok, community} = mock_community(lord)

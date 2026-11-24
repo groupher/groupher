@@ -61,7 +61,7 @@ export const serializeLandingAppearanceCss = (scene: TLandingScene): string => {
       const rules = [
         `${rootSelector} { --color-pageBg: ${pageColor}; ${surfaceVars} }`,
         `${rootSelector} .landing-scene-page { ${surfaceDeclaration(appearance.page, 'var(--color-pageBg)')} }`,
-        `${rootSelector} .landing-opening-backdrop { ${surfaceDeclaration(appearance.opening)} }`,
+        `${rootSelector} .landing-opening-backdrop { ${surfaceDeclaration(appearance.opening, 'var(--color-pageBg)')} }`,
       ]
       for (const [tab, layer] of Object.entries(ARTICLE_LAYERS)) {
         const surface =

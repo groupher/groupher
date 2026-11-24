@@ -54,6 +54,7 @@ export type TServiceDefinition = {
   localEnvironment?: {
     env?: Record<string, string>
     secrets?: Record<string, string>
+    editableEnvKeys?: readonly string[]
     externalEnvKeys?: readonly string[]
     authResources?: Record<string, string>
     serviceAuth?: {
@@ -194,6 +195,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.auth.start.managed'],
     localEnvironment: {
+      externalEnvKeys: ['AUTH_GITHUB_ID', 'AUTH_GITHUB_SECRET'],
       env: {
         PORT: '3004',
         AUTH_URL: 'https://auth.groupher.localhost',
@@ -324,6 +326,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['fe.dev.dash.managed'],
     localEnvironment: {
+      editableEnvKeys: ['DASH_DEFAULT_COMMUNITY'],
       env: {
         PORT: '3005',
         NEXT_PUBLIC_SITE_URL: 'https://dash.groupher.localhost',
@@ -457,7 +460,31 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.start.managed'],
     localEnvironment: {
+      editableEnvKeys: [
+        'DB_NAME',
+        'DB_HOST',
+        'DB_PORT',
+        'DB_USERNAME',
+        'DB_PASSWORD',
+        'DB_POOL_SIZE',
+        'MIX_DEPS_PATH',
+        'MIX_BUILD_PATH',
+      ],
+      externalEnvKeys: [
+        'OAUTH_GITHUB_CLIENT_ID',
+        'OAUTH_GITHUB_CLIENT_SECRET',
+        'ALGOLIA_APPLICATION_ID',
+        'ALGOLIA_SEARCH_API_KEY',
+        'ALGOLIA_ADMIN_API_KEY',
+        'ALGOLIA_INDEX_NAME',
+      ],
       env: {
+        DB_NAME: 'groupher_server_dev',
+        DB_HOST: 'localhost',
+        DB_PORT: '5432',
+        DB_USERNAME: 'postgres',
+        DB_PASSWORD: 'postgres',
+        DB_POOL_SIZE: '50',
         ASSETS_HUB_BATCH_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
         ASSETS_HUB_DELETE_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
         ASSETS_PUBLIC_ENDPOINT: 'https://assets.groupher.localhost',
@@ -499,6 +526,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     },
     command: 'make',
     args: ['be.import.start.managed'],
+    workerEnvFile: true,
     localEnvironment: {
       env: {
         DOCUMENT_CONVERTER_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.converter,
@@ -541,6 +569,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.press.start.managed'],
     localEnvironment: {
+      editableEnvKeys: ['DB_NAME', 'DB_HOST', 'DB_PORT', 'DB_USERNAME', 'DB_PASSWORD'],
       env: {
         DB_HOST: 'localhost',
         DB_NAME: 'groupher_server_dev',

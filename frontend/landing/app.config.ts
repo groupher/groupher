@@ -85,6 +85,8 @@ const landingPreviewAssetRewrite: Plugin = {
 }
 
 export default defineConfig(({ command }) => ({
+  // Managed local runs consume Hub-injected values, not project dotenv files.
+  envDir: process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' ? false : undefined,
   base: command === 'build' ? '/landing/' : '/',
   publicDir: path.join(landingRoot, 'public'),
   resolve: { tsconfigPaths: true },

@@ -1,0 +1,40 @@
+/**
+ * Implements the Src Lib Import Core Contracts ThreadDataset boundary inside Import.
+ *
+ * Business position:
+ *
+ *   Dash proxy / Phoenix import job
+ *     -> Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
+import type { TArtifactRef } from './artifactRef'
+
+export const THREAD_DATASET_SCHEMA_VERSION = 1 as const
+
+export type TThreadDatasetHeader = {
+  capabilities: {
+    actors: boolean
+    assets: boolean
+    comments: boolean
+    reactions: boolean
+    replies: boolean
+  }
+  datasetRef: string
+  schemaVersion: typeof THREAD_DATASET_SCHEMA_VERSION
+  source: {
+    type: 'repo'
+    platform: 'github'
+    revision: string
+    scopeRef: string
+  }
+  thread: 'doc'
+}
+
+export type TThreadDatasetRefs = {
+  analysisRef: TArtifactRef
+  badSmellsRef: TArtifactRef
+  bodiesRef: TArtifactRef
+  treeRef: TArtifactRef
+}

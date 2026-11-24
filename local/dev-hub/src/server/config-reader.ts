@@ -176,7 +176,8 @@ function classifyConfigFile(config: TServiceConfigDefinition, name: string): TCo
     ]
     const activeIndex = activeOrder.indexOf(name)
     if (activeIndex >= 0) {
-      return { group: 'active', active: true, sensitive: true, sortOrder: activeIndex }
+      // These are reference files, not configuration inputs for Hub-managed processes.
+      return { group: 'other', active: false, sensitive: true, sortOrder: activeIndex }
     }
     if (name.endsWith('.example')) {
       return { group: 'template', active: false, sensitive: false, sortOrder: 200 }

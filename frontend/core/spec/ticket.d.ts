@@ -63,9 +63,10 @@ export type TTicketUpdate = {
 }
 
 export type TTicketAssignee = {
-  id: string
-  login: string
-  nickname: string | null
+  user: {
+    login: string
+    nickname: string | null
+  }
 }
 
 export type TTicketTagRef = {
@@ -83,7 +84,7 @@ export type TTicketFacet = {
 export type TTicketFilter = {
   type?: TicketTypeEnum
   status?: TTicketStatus
-  assigneeId?: number
+  assigneeLogin?: string
   priority?: number
   tagIds?: number[]
   versions?: string[]

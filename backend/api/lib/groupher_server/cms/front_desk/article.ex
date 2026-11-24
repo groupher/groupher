@@ -321,7 +321,10 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     with {:ok, _article_id} <- Ecto.UUID.cast(article_id),
          {:ok, _working_copy_id} <- Ecto.UUID.cast(working_copy_id) do
       read_version(article_id, community, actor, opts, fn article ->
-        CMS.Articles.working_copy(article, community, working_copy_id)
+        with {:ok, :pass} <-
+               CMS.Articles.CoAuthors.reject_member_working_copy_access(article, actor) do
+          CMS.Articles.working_copy(article, community, working_copy_id)
+        end
       end)
     else
       _ -> {:error, ArticleErrorCat.article_not_found("Article WorkingCopy not found")}

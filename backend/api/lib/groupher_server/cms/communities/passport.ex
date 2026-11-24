@@ -43,11 +43,6 @@ defmodule GroupherServer.CMS.Communities.Passport do
     |> done
   end
 
-  @spec all_passport_rules() :: T.domain_res(term())
-  def all_passport_rules do
-    PermissionRegistry.all_passport_rules() |> done
-  end
-
   @doc """
   return a user's passport in CMS context
   """

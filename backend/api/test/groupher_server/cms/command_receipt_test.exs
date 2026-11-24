@@ -503,7 +503,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     refute inspect(encoded) =~ "secret"
   end
 
-  test "Admin Receipt tags encode the configured request and membership parameters" do
+  test "admin Receipt tags encode the configured request and membership parameters" do
     requests = [
       {"community.admin_request_create",
        %{subject_user_id: 12, request_type: :invite, permissions: %{"doc.queue.write" => true}}},

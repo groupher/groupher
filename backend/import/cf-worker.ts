@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker entrypoint for Content Import.
+ * Cloudflare Worker entrypoint for Import.
  *
  * HTTP request -> import routes -> Phoenix and Cloudflare bindings
  */
@@ -7,7 +7,7 @@ import type { R2Bucket, Workflow } from '@cloudflare/workers-types'
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers'
 
 import { createApp } from './src/app'
-import type { TContentImportRuntime } from './src/lib/content-import/http'
+import type { TImportRuntime } from './src/lib/import/http'
 import { ImportWorkflow } from './workers/importWorkflow'
 
 type WorkflowPayload = {
@@ -23,13 +23,13 @@ type Env = {
   ARTIFACTS: R2Bucket
   ANALYSIS_WORKFLOW: Workflow<WorkflowPayload>
   APPLY_WORKFLOW: Workflow<WorkflowPayload>
-  CONTENT_IMPORT_PREVIEW_SECRET: string
+  IMPORT_PREVIEW_SECRET: string
   ENVIRONMENT: string
   PHOENIX_GRAPHQL_ENDPOINT: string
   SERVICE_AUTH_ISSUER: string
   SERVICE_AUTH_JWKS_URL: string
   DOCUMENT_CONVERTER_APP_ENDPOINT: string
-  CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE: string
+  IMPORT_SERVICE_AUTH_AUDIENCE: string
 }
 
 const disableUnsupportedConsoleTask = (): void => {
@@ -43,59 +43,75 @@ const disableUnsupportedConsoleTask = (): void => {
 export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
   async run(event: WorkflowEvent<WorkflowPayload>, step: WorkflowStep): Promise<void> {
     const payload = event.payload
-    if (!payload.jobRef || !payload.sourceRefs) throw new Error('apply_workflow_payload_invalid')
+    const { jobRef, sourceRefs } = payload
+    if (!jobRef || !sourceRefs?.length) throw new Error('apply_workflow_payload_invalid')
     disableUnsupportedConsoleTask()
     const [
       { createR2PreviewStore },
-      { runPreviewDocBulkImport },
+      { prepareDocStaging, stagePreviewDoc },
       { applyDocImport, failDocImport },
     ] = await Promise.all([
-      import('./src/lib/content-import/core/preview-store/cloudflare'),
-      import('./src/lib/content-import/threads/docs/publisher'),
-      import('./src/lib/content-import/transport/phoenix/docsImport'),
+      import('./src/lib/import/core/preview-store/cloudflare'),
+      import('./src/lib/import/threads/docs/publisher'),
+      import('./src/lib/import/transport/phoenix/docsImport'),
     ])
     try {
       const store = createR2PreviewStore(this.env.ARTIFACTS)
-      for (const [index, sourceRef] of payload.sourceRefs!.entries()) {
-        await step.do(`stage selected Doc ${index + 1}`, async () => {
-          const result = await runPreviewDocBulkImport(
-            payload.community,
-            payload.jobRef!,
-            payload.previewRef,
-            payload.attemptRef,
-            [sourceRef],
-            store,
-            { apply: false, serviceSubject: 'service:content-import' },
-          )
-          if (result.status.toLowerCase() === 'failed') {
-            throw new Error(`Document staging failed at item ${index + 1}.`)
-          }
-        })
-      }
-      await step.do('apply staged Docs', async () =>
-        applyDocImport(payload.community, payload.jobRef!, {
-          serviceSubject: 'service:content-import',
-        }),
+      const { markdownSource, titleSources } = await step.do('prepare selected Doc metadata', () =>
+        prepareDocStaging(store, payload, sourceRefs),
       )
+      for (const [index, sourceRef] of sourceRefs.entries()) {
+        const status = await step.do(`stage selected Doc ${index + 1}`, () =>
+          stagePreviewDoc(
+            store,
+            { ...payload, jobRef },
+            sourceRef,
+            markdownSource,
+            titleSources[index] ?? null,
+          ),
+        )
+        // Phoenix has already recorded the terminal outcome when no item can be imported.
+        if (status?.toLowerCase() === 'failed') return
+      }
+      const conflict = await step.do('apply staged Docs', async () => {
+        try {
+          await applyDocImport(payload.community, jobRef, {
+            serviceSubject: 'service:import',
+          })
+          return null
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            'code' in error &&
+            (error.code === 'target_revision_conflict' || error.code === 'import_intent_conflict')
+          ) {
+            return { code: error.code, message: error.message }
+          }
+          throw error
+        }
+      })
+      if (conflict) {
+        await step.do('record target revision conflict', () =>
+          failDocImport(payload.community, jobRef, conflict.code, conflict.message, {
+            serviceSubject: 'service:import',
+          }),
+        )
+      }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Docs import workflow failed.'
       await step.do('mark Phoenix import job failed', async () => {
-        await failDocImport(
-          payload.community,
-          payload.jobRef!,
-          'doc_import_workflow_failed',
-          message,
-          { serviceSubject: 'service:content-import' },
-        )
+        await failDocImport(payload.community, jobRef, 'doc_import_workflow_failed', message, {
+          serviceSubject: 'service:import',
+        })
       })
       throw cause
     }
   }
 }
 
-const workflowRuntime = async (env: Env): Promise<TContentImportRuntime> => {
+const workflowRuntime = async (env: Env): Promise<TImportRuntime> => {
   const { createR2PreviewStore } =
-    await import('./src/lib/content-import/core/preview-store/cloudflare')
+    await import('./src/lib/import/core/preview-store/cloudflare')
   const workflowStatus = async (binding: Workflow<WorkflowPayload>, id: string) => {
     const status = await (await binding.get(id)).status()
     if (status.status === 'errored') {
@@ -120,10 +136,16 @@ const workflowRuntime = async (env: Env): Promise<TContentImportRuntime> => {
         const instance = await env.ANALYSIS_WORKFLOW.create({ id, params: input })
         return instance.id
       },
-      async startApply(input) {
-        const id = `apply-${crypto.randomUUID()}`
-        const instance = await env.APPLY_WORKFLOW.create({ id, params: input })
-        return instance.id
+      async startApply(id, input) {
+        try {
+          await env.APPLY_WORKFLOW.create({ id, params: input })
+        } catch (error) {
+          // Concurrent or retried confirmations may already have created this ID.
+          const existing = await env.APPLY_WORKFLOW.get(id)
+            .then((instance) => instance.status())
+            .catch(() => null)
+          if (!existing || existing.status === 'unknown') throw error
+        }
       },
       status(id) {
         return workflowStatus(
@@ -143,7 +165,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     disableUnsupportedConsoleTask()
     const [handlers, runtime, documentImporter, workerPlatform] = await Promise.all([
-      import('./src/lib/content-import/http'),
+      import('./src/lib/import/http'),
       workflowRuntime(env),
       import('./src/lib/document-importer/http'),
       import('./src/lib/document-importer/workerPlatform'),
@@ -151,7 +173,7 @@ export default {
     const app = createApp({
       environment: {
         ...process.env,
-        CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE: env.CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE,
+        IMPORT_SERVICE_AUTH_AUDIENCE: env.IMPORT_SERVICE_AUTH_AUDIENCE,
         ENVIRONMENT: env.ENVIRONMENT,
       },
       handlers: {

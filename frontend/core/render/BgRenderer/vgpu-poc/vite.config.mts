@@ -8,6 +8,8 @@ const pocRoot = path.dirname(fileURLToPath(import.meta.url))
 const coreRoot = path.resolve(pocRoot, '../../..')
 
 export default defineConfig({
+  // Managed local runs consume Hub-injected values, not project dotenv files.
+  envDir: process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' ? false : undefined,
   root: pocRoot,
   resolve: {
     alias: { '~': coreRoot },

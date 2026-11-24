@@ -2,6 +2,8 @@ defmodule GroupherServer.Test.CMS.Communities.Query do
   @moduledoc false
   use GroupherServer.TestMate
   alias GroupherServer.CMS
+  alias GroupherServer.Repo
+  alias CMS.Model.CommunityAdmin
   alias CMS.Model.CommunityLifecycle
 
   setup do
@@ -70,30 +72,28 @@ defmodule GroupherServer.Test.CMS.Communities.Query do
       assert user2.id not in community.meta.subscribed_user_ids
     end
 
-    test "read moderatorable community should have a flag", ~m(community user user2 user3)a do
-      cur_user = user
-
-      {:ok, community} =
-        CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
+    test "read Admin membership should have a flag", ~m(community user user2 user3)a do
+      Repo.insert!(%CommunityAdmin{community_id: community.id, user_id: user2.id})
+      {:ok, community} = CMS.Communities.Count.update(community, user2, :admins_count, :inc)
 
       {:ok, community} = CMS.Communities.fetch(community.slug, user2)
-      assert community.viewer_is_moderator
+      assert community.viewer_is_admin
 
       {:ok, community} = CMS.Communities.fetch(community.slug, user3)
-      assert not community.viewer_is_moderator
+      assert not community.viewer_is_admin
 
-      {:ok, community} =
-        CMS.Communities.remove_moderator(community, user2, cur_user, Ecto.UUID.generate())
+      Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: user2.id)
+      |> Repo.delete!()
+      {:ok, community} = CMS.Communities.Count.update(community, user2, :admins_count, :dec)
 
       {:ok, community} = CMS.Communities.fetch(community.slug, user2)
 
-      assert not community.viewer_is_moderator
+      assert not community.viewer_is_admin
     end
 
-    test "owner policy mode does not widen to moderator admin access",
+    test "owner policy mode does not widen to Admin access",
          ~m(community user user2)a do
-      {:ok, _community} =
-        CMS.Communities.add_moderator(community, user2, user, Ecto.UUID.generate())
+      Repo.insert!(%CommunityAdmin{community_id: community.id, user_id: user2.id})
 
       assert {:error, %ErrorCat.Error{reason: :not_exist}} =
                CMS.Communities.fetch(community.slug, user2,
