@@ -23,7 +23,7 @@ type TFoldState = {
 }
 
 const ArtimentBody: FC<TProps> = ({
-  testid = 'article-body',
+  testid,
   document: doc,
   initLineClamp = 15,
   mode = 'article',
@@ -68,7 +68,7 @@ const ArtimentBody: FC<TProps> = ({
         )}
       >
         <div
-          data-testid={testid}
+          data-testid={testid ?? (mode === 'article' ? 'article-body' : undefined)}
           className={s.html}
           // oxlint-disable-next-line react/no-danger -- Article HTML is rendered from sanitized rich-text output.
           dangerouslySetInnerHTML={{ __html: doc.html || '' }}

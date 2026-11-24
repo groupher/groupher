@@ -2049,6 +2049,7 @@ type ImportProcessProgress {
 
   "Expected number of units, when known."
   total: Int
+
   unit: ImportProcessUnit!
 }
 
@@ -2057,6 +2058,7 @@ type ImportProcessItem {
 
   "Human-readable name shown in progress reports."
   label: String!
+
   state: ImportProcessItemState!
 }
 
@@ -2155,15 +2157,21 @@ type ImportTargetPreview {
 
   "Conflicts found while planning the import."
   conflicts: Json!
+
   counts: ImportCounts!
+
   targetRevision: String!
 }
 
 type ImportJob {
   id: ID!
+
   status: ImportJobStatus!
+
   progress: Json!
+
   process: ImportProcess!
+
   errorCode: String
 
   "Explanation of the job failure."
@@ -2174,8 +2182,11 @@ type ImportJob {
 
   "Source items omitted from the import."
   skipped: Json!
+
   sourceInfo: ImportSourceInfo!
+
   counts: ImportCounts!
+
   tree: Json!
 
   "Warnings found during source analysis."
@@ -2204,13 +2215,17 @@ input ImportBodyInput {
 
   "Prepared rich content for a successfully converted item."
   bodyBag: ArtimentBodyBagInput
+
   skipped: ImportSkipInput
+
   failed: ImportFailureInput
 }
 
 type ImportApplyResult {
   jobRef: ID!
+
   status: ImportJobStatus!
+
   firstImportedDocId: ID
 
   "Import totals reported after apply."
@@ -2225,7 +2240,9 @@ type ImportApplyResult {
 
 type ImportBodyStageResult {
   jobRef: ID!
+
   status: ImportJobStatus!
+
   progress: Json!
 
   "Source items that failed."
@@ -3597,6 +3614,8 @@ type CommunityAdminDirectoryMember {
 
 type CommunityAdminDirectoryPage {
   entries: [CommunityAdminDirectoryMember!]!
+
+  "Pagination metadata for this result page."
   pageInfo: PageInfo!
 }
 
@@ -3606,6 +3625,7 @@ type CommunityAdminRequest {
 
   "Community where the grant would apply."
   communityId: ID!
+
   type: String!
 
   "Current stage of the request."
@@ -3716,16 +3736,15 @@ enum PassportAction {
 
   "Identifies the Gate action `audit.read`."
   AUDIT_READ
-  BLOG_LOCK_COMMENT
 
+  "Identifies the Gate action `blog.lock_comment`."
+  BLOG_LOCK_COMMENT
 
   "Identifies the Gate action `blog.pin`."
   BLOG_PIN
 
-
   "Identifies the Gate action `blog.sink`."
   BLOG_SINK
-
 
   "Identifies the Gate action `blog.undo_lock_comment`."
   BLOG_UNDO_LOCK_COMMENT
@@ -3735,6 +3754,8 @@ enum PassportAction {
 
   "Identifies the Gate action `blog.undo_sink`."
   BLOG_UNDO_SINK
+
+  "Identifies the Gate action `category.create`."
   CATEGORY_CREATE
 
   "Identifies the Gate action `category.delete`."
@@ -3748,16 +3769,15 @@ enum PassportAction {
 
   "Identifies the Gate action `category.update`."
   CATEGORY_UPDATE
-  CHANGELOG_LOCK_COMMENT
 
+  "Identifies the Gate action `changelog.lock_comment`."
+  CHANGELOG_LOCK_COMMENT
 
   "Identifies the Gate action `changelog.pin`."
   CHANGELOG_PIN
 
-
   "Identifies the Gate action `changelog.sink`."
   CHANGELOG_SINK
-
 
   "Identifies the Gate action `changelog.undo_lock_comment`."
   CHANGELOG_UNDO_LOCK_COMMENT
@@ -3767,6 +3787,8 @@ enum PassportAction {
 
   "Identifies the Gate action `changelog.undo_sink`."
   CHANGELOG_UNDO_SINK
+
+  "Identifies the Gate action `comment.delete`."
   COMMENT_DELETE
 
   "Identifies the Gate action `comment.pin`."
@@ -3870,6 +3892,8 @@ enum PassportAction {
 
   "Identifies the Gate action `doc.sink`."
   DOC_SINK
+
+  "Identifies the Gate action `doc.undo_lock_comment`."
   DOC_UNDO_LOCK_COMMENT
 
   "Identifies the Gate action `doc.undo_pin`."
@@ -3877,19 +3901,18 @@ enum PassportAction {
 
   "Identifies the Gate action `doc.undo_sink`."
   DOC_UNDO_SINK
-  POST_LOCK_COMMENT
 
+  "Identifies the Gate action `post.lock_comment`."
+  POST_LOCK_COMMENT
 
   "Identifies the Gate action `post.pin`."
   POST_PIN
-
 
   "Identifies the Gate action `post.set_category`."
   POST_SET_CATEGORY
 
   "Identifies the Gate action `post.sink`."
   POST_SINK
-
 
   "Identifies the Gate action `post.undo_lock_comment`."
   POST_UNDO_LOCK_COMMENT
@@ -3899,6 +3922,8 @@ enum PassportAction {
 
   "Identifies the Gate action `post.undo_sink`."
   POST_UNDO_SINK
+
+  "Identifies the Gate action `review.configure`."
   REVIEW_CONFIGURE
 
   "Identifies the Gate action `review.decide`."
@@ -4110,12 +4135,19 @@ type CommunityDocTreeTrashItem implements CommunityArticleTrashItem {
 
   "Number of subtree members already removed."
   removedMemberCount: Int!
+
   pagedMembers(pagi: PagiInput, recordRevision: String): CommunityDocTrashMemberPage!
+
   title: String
+
   nodeId: ID
+
   docId: ID
+
   type: String
+
   deletedFromParentNodeId: ID
+
   deletedFromIndex: Int
 }
 
@@ -4136,6 +4168,8 @@ type CommunityDocTrashMember {
 
 type CommunityDocTrashMemberPage {
   entries: [CommunityDocTrashMember!]!
+
+  "Pagination metadata for this result page."
   pageInfo: PageInfo!
 }
 
@@ -4447,7 +4481,9 @@ input TicketFilter {
 
   "Match this workflow state."
   status: TicketStatusEnum
+
   assigneeLogin: String
+
   priority: Int
 
   "Match the specified ticket tags."
@@ -5842,25 +5878,50 @@ enum DocsQueueTreeChangeType {
 }
 
 type DocsQueueArticle {
+  "Stable ID of the queued Doc."
   articleId: ID!
+
+  "ID of its queued working copy."
   workingCopyId: ID!
+
+  "Revision of the queued working copy."
   revision: Int!
+
+  "Title of the queued content."
   title: String!
 }
 
 type DocsQueueTreeChange {
+  "Logical ID of the affected node."
   nodeId: ID!
+
+  "Whether release will upsert or delete the node."
   changeType: DocsQueueTreeChangeType!
+
+  "Intended node representation for the change."
   target: Json
 }
 
 type DocsPublishQueue {
+  "Revision identifying the current queue contents."
   revision: Int!
+
+  "Whether release requires queue approval."
   approvalRequired: Boolean!
+
+  "Whether self-approval is permitted."
   allowSelfApproval: Boolean!
+
+  "Revision of the approval policy."
   approvalPolicyRevision: Int!
+
+  "Approval state of the current queue."
   approvalStatus: DocsQueueApprovalStatus
+
+  "Document copies included in the queue."
   articles: [DocsQueueArticle!]!
+
+  "Navigation changes included in the queue."
   treeChanges: [DocsQueueTreeChange!]!
 }
 

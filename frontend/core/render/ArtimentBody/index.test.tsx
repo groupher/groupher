@@ -11,6 +11,17 @@ vi.mock('./salon', () => ({
 }))
 
 describe('Article body projection', () => {
+  it('reserves the default article locator for article mode and preserves explicit overrides', () => {
+    const doc = { html: '<p>Comment body</p>' } as TDocument
+    const { rerender } = render(<ArtimentBody document={doc} mode='comment' />)
+    expect(screen.queryByTestId('article-body')).toBeNull()
+    expect(screen.getByText('Comment body')).toBeTruthy()
+
+    rerender(<ArtimentBody document={doc} mode='comment' testid='custom-comment-body' />)
+    expect(screen.getByTestId('custom-comment-body').textContent).toBe('Comment body')
+    expect(screen.queryByTestId('article-body')).toBeNull()
+  })
+
   it('renders the persisted rich body and usable links when canonical JSON is present', () => {
     render(
       <ArtimentBody
