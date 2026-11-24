@@ -21,6 +21,7 @@
     "./server/content-publisher": "./lib/server/content-publisher.ts"
   },
   "scripts": {
+    "graphql:codegen": "cd ../.. && pnpm run graphql:codegen:generate",
     "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.app.json",
     "lint": "pnpm exec oxlint . --threads=1",
     "format": "pnpm exec oxfmt -c ./config/oxfmt.json .",

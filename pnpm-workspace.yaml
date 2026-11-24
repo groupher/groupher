@@ -10,6 +10,8 @@ packages:
 # only its declared dependencies.
 nodeLinker: isolated
 injectWorkspacePackages: true
+syncInjectedDepsAfterScripts:
+  - graphql:codegen
 strictDepBuilds: true
 
 # pnpm 12 is provisioned explicitly by pnpm/setup, Docker, and local setup
