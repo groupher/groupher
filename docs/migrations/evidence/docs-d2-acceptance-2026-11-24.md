@@ -40,3 +40,7 @@ The corrected paging fixtures were subsequently verified separately at commit `4
 Together these cases cover saved subtree ordering, pending-ancestor/cycle rejection, rollback preservation, protected Binding purge, site-scoped Activity/cache effects, Release/Outbox atomicity, row-local public admission, cross-site mutation rechecks and Doc Comment Mention/Review behavior.
 
 Source style and whitespace checks passed. This is backend/GraphQL acceptance, not a claim of new browser or production acceptance. No deployment, credential rotation, historical-data conversion or production write was performed. Both task-owned test databases were removed after verification.
+
+## GraphQL projection review follow-up — 2026-11-25
+
+The focused paging tests additionally compare each nested GraphQL member ID, serialized deletion status (PENDING/EFFECTIVE), and removedFromPublic flag against its fixture, in order. Both tests passed on fresh database `groupher_d2_graphql_review_20261125_test` in 1.3 seconds. This is a focused follow-up, not a new combined 85-test run.

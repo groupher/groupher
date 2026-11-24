@@ -164,7 +164,20 @@ defmodule GroupherServer.Test.CMS.Articles.DocTrashAcceptanceTest do
              )
 
     assert projected["id"] == action.hash_id
-    assert length(projected["pagedMembers"]["entries"]) == 2
+
+    assert projected["pagedMembers"]["entries"] == [
+             %{
+               "id" => Enum.at(members, 0).hash_id,
+               "deletionStatus" => "PENDING",
+               "removedFromPublic" => false
+             },
+             %{
+               "id" => Enum.at(members, 1).hash_id,
+               "deletionStatus" => "EFFECTIVE",
+               "removedFromPublic" => true
+             }
+           ]
+
     assert projected["pagedMembers"]["pageInfo"]["hasNextPage"]
 
     pages =
