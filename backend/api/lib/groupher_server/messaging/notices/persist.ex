@@ -182,7 +182,18 @@ defmodule GroupherServer.Messaging.Notices.Persist do
     users |> Enum.map(&Embeds.User.normalize/1) |> Enum.filter(&Embeds.User.valid?/1)
   end
 
-  @doc false
+  @doc """
+  Checks whether notification attributes use a supported action and provide its required fields.
+
+  Required fields must be present and non-nil; this check does not query their database records.
+
+  ## Examples
+
+      iex> GroupherServer.Messaging.Notices.Persist.valid?(%{type: :follow, user_id: 1})
+      true
+      iex> GroupherServer.Messaging.Notices.Persist.valid?(%{type: :follow, user_id: nil})
+      false
+  """
   def valid?(%{type: type} = attrs) do
     type in @notify_actions and valid_attrs?(attrs)
   end

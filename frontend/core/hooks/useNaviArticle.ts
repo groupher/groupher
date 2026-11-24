@@ -1,13 +1,11 @@
-import { findIndex, includes, values } from 'ramda'
 import { useContext } from 'react'
 
-import { ARTICLE_THREAD } from '~/const/thread'
-import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
-import { plural } from '~/fmt'
+import { THREAD } from '~/const/thread'
+import { PagedChangelogsContext } from '~/hooks/usePagedChangelogs/context'
+import { PagedPostsContext } from '~/hooks/usePagedPosts/context'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TArticle } from '~/spec'
-import { StoreContext } from '~/stores/articleList/context'
 
 type TRes = {
   previous: TArticle | null
@@ -16,32 +14,28 @@ type TRes = {
 
 /** Exposes navi article state and actions through the shared React hook boundary. */
 export default function useNaviArticle(): TRes {
-  const articles = useContext(StoreContext)
+  const posts = useContext(PagedPostsContext)
+  const changelogs = useContext(PagedChangelogsContext)
   const curThread = useViewingThread()
   const { article: viewingArticle } = useViewingArticle()
 
-  if (!articles || !includes(curThread, values(ARTICLE_THREAD)) || !viewingArticle?.id) {
+  const entries =
+    curThread === THREAD.POST
+      ? posts?.pagedPosts.entries
+      : curThread === THREAD.CHANGELOG
+        ? changelogs?.pagedChangelogs.entries
+        : undefined
+  const curIndex = entries?.findIndex(({ content }) => content.id === viewingArticle?.id) ?? -1
+
+  if (!viewingArticle?.id || !entries || curIndex < 0) {
     return {
       previous: null,
       next: null,
     }
   }
 
-  const viewingArticleId = viewingArticle.id
-
-  let pagedArticles = EMPTY_PAGED_ARTICLES
-
-  switch (curThread) {
-    default: {
-      pagedArticles = articles[`paged${plural(curThread, 'titleCase')}`]
-      break
-    }
-  }
-
-  const curIndex = findIndex((a: TArticle) => a.id === viewingArticleId, pagedArticles.entries)
-
   return {
-    previous: pagedArticles.entries[curIndex - 1] || null,
-    next: pagedArticles.entries[curIndex + 1] || null,
+    previous: entries[curIndex - 1]?.content || null,
+    next: entries[curIndex + 1]?.content || null,
   }
 }
