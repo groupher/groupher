@@ -50,6 +50,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   ]
   @command_actions [
     :update,
+    :dashboard_theme_update,
+    :dashboard_rss_update,
     :category_create,
     :category_update,
     :category_delete,
@@ -279,6 +281,14 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       )
   end
 
+  defp command_binding_allowed?(user, community, :dashboard_theme_update, context) do
+    passport_allowed?(user, community, CMS.GateAction.dashboard_theme_update(), context, nil)
+  end
+
+  defp command_binding_allowed?(user, community, :dashboard_rss_update, context) do
+    passport_allowed?(user, community, CMS.GateAction.dashboard_rss_update(), context, nil)
+  end
+
   defp command_binding_allowed?(user, community, :import_docs, context) do
     passport_allowed?(user, community, CMS.GateAction.doc_import(), context, nil)
   end
@@ -304,8 +314,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
               :category_set,
               :category_unset
             ] do
-    base_command_binding_allowed?(user, community, context) or
-      passport_allowed?(user, community, category_passport_action(action), context, nil)
+    passport_allowed?(user, community, category_passport_action(action), context, nil)
   end
 
   defp command_binding_allowed?(user, community, action, context)
@@ -373,7 +382,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp management_binding_allowed?(%{type: :operations}, _community, _context), do: true
 
   defp management_binding_allowed?(%User{} = user, community, context) do
-    owner?(user, community) or admin?(user, community) or god?(context) or
+    owner?(user, community) or admin?(user, community, context) or god?(context) or
       root?(community, context) or docs_member?(user, community)
   end
 
@@ -385,7 +394,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp docs_member?(_, _), do: false
 
   defp base_command_binding_allowed?(%User{} = user, community, context) do
-    owner?(user, community) or admin?(user, community) or god?(context) or
+    owner?(user, community) or admin?(user, community, context) or god?(context) or
       root?(community, context)
   end
 
@@ -394,17 +403,23 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp owner?(%User{id: user_id}, %Community{user_id: user_id}), do: true
   defp owner?(_, _), do: false
 
-  defp admin?(%User{id: user_id}, %Community{admins: admins})
-       when is_list(admins) do
-    Enum.any?(admins, &(&1.user_id == user_id))
+  # Membership mirrors are display projections; only canonical Passport facts authorize.
+  defp admin?(
+         %User{id: user_id},
+         %Community{id: community_id},
+         %CommunityContext{
+           community_passport_scope: %Passport.Scope.Community{
+             actor_id: user_id,
+             community_id: community_id,
+             community: %{member_id: member_id}
+           }
+         }
+       )
+       when not is_nil(member_id) do
+    true
   end
 
-  defp admin?(%User{id: user_id}, %Community{meta: %{admins_ids: ids}})
-       when is_list(ids) do
-    user_id in ids
-  end
-
-  defp admin?(_, _), do: false
+  defp admin?(_, _, _), do: false
 
   defp root?(_community, %CommunityContext{
          community_passport_scope: %Passport.Scope.Community{community: %{is_lord: true}}
