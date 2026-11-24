@@ -225,4 +225,13 @@ export default {
   BOSS: 'Boss 直聘',
   TIKTOK: '抖音',
   '??': '??',
+  'dsb.doc.queue.editor_open': '编辑队列内容',
+  'dsb.doc.queue.editor_title': '编辑发布队列内容',
+  'dsb.doc.queue.editor_title_field': '标题',
+  'dsb.doc.queue.editor_subtitle_field': '副标题',
+  'dsb.doc.queue.editor_slug_field': '地址标识',
+  'dsb.doc.queue.editor_save': '保存队列内容',
+  'dsb.doc.queue.editor_discard': '队列内容有未保存的修改，关闭后将丢失。',
+  'dsb.doc.queue.editor_discard_confirm': '放弃修改',
+  'dsb.doc.queue.close': '关闭发布队列',
 }

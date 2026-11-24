@@ -228,4 +228,13 @@ export default {
   BOSS: 'Boss',
   TIKTOK: 'TikTok',
   '??': '??',
+  'dsb.doc.queue.editor_open': 'Edit queued content',
+  'dsb.doc.queue.editor_title': 'Edit queued content',
+  'dsb.doc.queue.editor_title_field': 'Title',
+  'dsb.doc.queue.editor_subtitle_field': 'Subtitle',
+  'dsb.doc.queue.editor_slug_field': 'URL slug',
+  'dsb.doc.queue.editor_save': 'Save queued content',
+  'dsb.doc.queue.editor_discard': 'Unsaved queue edits will be lost if you close this editor.',
+  'dsb.doc.queue.editor_discard_confirm': 'Discard changes',
+  'dsb.doc.queue.close': 'Close publish queue',
 }
