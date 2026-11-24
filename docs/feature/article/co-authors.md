@@ -1,6 +1,6 @@
 # Article Co-Authors 与权限授权
 
-> 状态：后端实现与 focused 验收已通过；多人编辑尚未正式启用或发布。C0 Passport 成员目录与授权、C1 请求/成员 Receipt Command、授权事件、Notice Outbox、GraphQL 读写字段，以及 C2 普通 Article `edit_article` 准入、历史贡献者归因和 Review 自审保护均已实现。独立测试用户已通过 GraphQL 邀请/接受，并实际保存 WorkingCopy；移除后写入被拒绝。Dash 的 Post / Changelog 列表已接入 Article 协作者管理面板；Docs 编辑器接线与双账号浏览器验收仍待完成。后端按 Article 和测试账号可闭环验收，不等待邀请 UI、P3、M2 或 Dev Hub 改造。
+> 状态：后端实现与 focused 验收已通过；多人编辑尚未正式启用或发布。C0 Passport 成员目录与授权、C1 请求/成员 Receipt Command、授权事件、Notice Outbox、GraphQL 读写字段，以及 C2 普通 Article `edit_article` 准入、历史贡献者归因和 Review 自审保护均已实现。独立测试用户已通过 GraphQL 邀请/接受，并实际保存 WorkingCopy；移除后写入被拒绝。Dash 的 Post / Changelog 列表已接入 Article 协作者管理面板；Docs 编辑器已接入同一面板，普通 Post 的双账号保存验收已通过。后端按 Article 和测试账号可闭环验收，不等待邀请 UI、P3、M2 或 Dev Hub 改造。
 >
 > Co-Authors 使用 [Passport](../../migrations/passport-permissions-refactor.md) 的 Article 权限合同。正文联调可用测试成员独立开展，启用时验证编辑入口实际使用的 [历史与归因能力](./edit-history-diff.md)。[Docs Mirror Fix](../../migrations/docs-mirror-fix.md) 的 D1 消费本批交付的 Article 授权。
 >
@@ -188,16 +188,16 @@ article.author.manage 明确包含完整成员 / 请求管理读取、邀请、a
 
 decide 接收 decision，apply accept 带 approvedPermissions，invite accept 使用持久化提议。响应含 requestId / revision / decision 及当前 member 身份 / revision，不以收到通知推断成功。
 
-Dash 的 Post / Changelog 列表已接入协作者管理面板，支持 Article 管理者搜索邀请、查看与调整成员权限、移除成员，并支持请求处理；Docs 编辑器入口仍待接线。C2 后端已按当前 Article scope 准入 `edit_article` 并执行历史贡献者和 Review 自审检查；当前用户权限 GraphQL 字段已提供。Dash 编辑器接线仍需保留本地脏内容和 revision 冲突提示。后端按当前 Article ID 校验成员与历史访问权限，发布仍需有效产品入口。
+Dash 的 Post / Changelog 列表已接入协作者管理面板，支持 Article 管理者搜索邀请、查看与调整成员权限、移除成员，并支持请求处理；Docs 编辑器复用同一面板。C2 后端已按当前 Article scope 准入 `edit_article` 并执行历史贡献者和 Review 自审检查；当前用户权限 GraphQL 字段已提供。Dash 编辑器接线仍需保留本地脏内容和 revision 冲突提示。后端按当前 Article ID 校验成员与历史访问权限，发布仍需有效产品入口。
 
 ## 6. 实施与验收
 
-| 批次 | 交付                                                                      | 独立验收                                                                                                                                                                                                                                                                                                                                                        |
-| ---- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C0   | Article 成员 / 请求数据、Passport scope 及 Article grant/revoke facade    | schema、permission contract、grant/revoke 和 fail-closed 范围检查已落地，co-author Passport/Gate focused tests 通过                                                                                                                                                                                                                                             |
-| C1   | 请求 / 成员 Command、Receipt、授权事件、Outbox 意图及 GraphQL / Dash      | GraphQL invite→subject read→accept、currentMember、成员/请求隐私、命令/事件/Notice 去重与并发 focused suite 通过（15 passed、2 skipped）。Post / Changelog 列表已接入管理面板；Docs 编辑器与双账号浏览器验收待完成。共用基础设施见 [Messaging Notices 与 Inbox 收口](../../migrations/messaging-notices-refactor.md)，不要求 Passport P3 或 Messaging M2 已验收 |
-| C2   | 普通 Article 的多人读取草稿、保存、发布、Review 和编辑器联调              | 双用户通过真实 co-author 授权保存 WorkingCopy，移除后写入拒绝；Article Gate 3 例、历史/Review 2 例及 Docs fixture 2 例通过。Dash 编辑器接线与双账号浏览器验收仍待完成                                                                                                                                                                                           |
-| C3   | 正式切换普通 Article 授权入口并退役旧动作，交付供 D1 复用的 Passport 判断 | 用正式入口通过 C1、C2 的相关场景，旧社区正文权限退役，Doc 写入继续由 D1 切换                                                                                                                                                                                                                                                                                    |
+| 批次 | 交付                                                                      | 独立验收                                                                                                                                                                                                                                                                                                                                                                          |
+| ---- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C0   | Article 成员 / 请求数据、Passport scope 及 Article grant/revoke facade    | schema、permission contract、grant/revoke 和 fail-closed 范围检查已落地，co-author Passport/Gate focused tests 通过                                                                                                                                                                                                                                                               |
+| C1   | 请求 / 成员 Command、Receipt、授权事件、Outbox 意图及 GraphQL / Dash      | GraphQL invite→subject read→accept、currentMember、成员/请求隐私、命令/事件/Notice 去重与并发 focused suite 通过（15 passed、2 skipped）。Post / Changelog 列表已接入管理面板；Docs 编辑器已接入；owner 邀请与成员移除已在浏览器验证。共用基础设施见 [Messaging Notices 与 Inbox 收口](../../migrations/messaging-notices-refactor.md)，不要求 Passport P3 或 Messaging M2 已验收 |
+| C2   | 普通 Article 的多人读取草稿、保存、发布、Review 和编辑器联调              | 双用户通过真实 co-author 授权保存 WorkingCopy，移除后写入拒绝；Article Gate 3 例、历史/Review 2 例及 Docs fixture 2 例通过。普通 Post 的浏览器正文保存验收已通过                                                                                                                                                                                                                  |
+| C3   | 正式切换普通 Article 授权入口并退役旧动作，交付供 D1 复用的 Passport 判断 | 用正式入口通过 C1、C2 的相关场景，旧社区正文权限退役，Doc 写入继续由 D1 切换                                                                                                                                                                                                                                                                                                      |
 
 ### 6.1 开发与联调
 
@@ -230,3 +230,9 @@ C3 修改共用 Scope / Access helper 时必须明确普通 Article 与 Doc 分�
 按交付范围执行定向验证。C1 跑请求、成员、Receipt 和 Outbox 事务测试，实际投递接入时跑 Article 请求的 Messaging 测试。C2 跑 Passport / Gate、WorkingCopy、History 和 Review 的相关测试，并在 `/home/xx` 用测试成员走真实双账号浏览器流程。C3 用正式入口复验本节的启用条件。后端变更执行 `mix compile --warnings-as-errors`，Gate 合同变更执行 `generate:gate`、`generate:gate:check` 及 parity，GraphQL 变更执行 `make be.gen.schema`、`pnpm graphql:codegen`、`pnpm contract:graphql:generated` 和受影响前端的 type-check。
 
 共用 Gate / Scope 或全局永久删除改动影响本站 Trash 时，按 Passport §4.4.2 验证其合同。在 packages/contracts 执行 pnpm run generate:community-article-trash、pnpm run generate:community-article-trash:check 和 pnpm test，在根目录执行 pnpm run contract:community-article-trash，在 backend/api 执行 mix test test/groupher_server/cms/articles/community_article_trash_contract_test.exs。涉及 GraphQL 字段时执行 pnpm graphql:codegen 和 pnpm contract:graphql:generated。
+
+### 2026-11-24 普通 Post 正文验收
+
+在本地社区 `coauthor-final24`，owner 通过 Dash 邀请 editor，editor 通过 fixture 的正式命令接受邀请，仅获 `article.read_draft` 和 `article.update`。editor 从独立 Community 会话打开 Post 设置，插入提示块并保存。owner 复查同一 WorkingCopy 的 revision 从 1 增至 2，公开 Snapshot 保持 `b010f7ac-f159-4c1f-9483-22154c775c3e`。owner 在 Dash 确认请求已处理并移除了该成员。
+
+2026-11-24 收尾清理通过 Dev Hub fixture 工具完成。预览无 blocker，apply 返回 cleaned、errors 为空，Admin、Global grant、co-author 和 pending request 均为 0。随后 close 返回 closed、actors 为 2。测试社区已归档，账号、Article、Snapshot 和审计历史按现有保留合同留存。
