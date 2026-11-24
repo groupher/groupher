@@ -8,6 +8,7 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
+import { verifyLocalTestViewer } from './local-test-viewer.ts'
 import { REPO_ROOT } from './services.ts'
 
 type TActor = { run: string; alias: string; community: string }
@@ -52,16 +53,7 @@ export const createLocalArticle = async (actor: TActor, prepared: TPrepared) => 
       return response.status
     }, actor)
     if (status !== 204) throw new Error(`Local Article login was rejected (${status}).`)
-    const viewer = await page.evaluate(async () => {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
-        body: JSON.stringify({ query: '{ sessionState { isValid user { login } } }' }),
-      })
-      return (await response.json()).data?.sessionState
-    })
-    if (!viewer?.isValid || viewer.user?.login !== prepared.ownerLogin)
-      throw new Error('Article fixture viewer does not match its registered owner.')
+    await page.evaluate(verifyLocalTestViewer, prepared.ownerLogin)
     const result = await page.evaluate(async ({ command, publish }) => {
       const response = await fetch('/api/content/publish', {
         method: 'POST',
