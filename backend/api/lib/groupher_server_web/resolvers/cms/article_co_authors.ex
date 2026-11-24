@@ -8,12 +8,14 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleCoAuthors do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
 
+  @doc "Pages co-authors for an article on behalf of the signed-in actor."
   def members(_root, %{article_id: article_id} = args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_members(article_id, actor, Map.get(args, :pagi))
   end
 
   def members(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Searches co-author candidates by name for the specified article and actor."
   def candidates(
         _root,
         %{article_id: article_id, name: name},
@@ -24,18 +26,21 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleCoAuthors do
 
   def candidates(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Pages co-author requests for the article on behalf of the signed-in actor."
   def requests(_root, %{article_id: article_id} = args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_requests(article_id, actor, Map.get(args, :pagi))
   end
 
   def requests(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Reads the signed-in actor's co-author permissions for an article."
   def permissions(_root, %{article_id: article_id}, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_permissions(article_id, actor)
   end
 
   def permissions(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Creates a co-author request with its type, requested permissions, and optional subject login."
   def create(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_create_request(
       args.article_id,
@@ -49,6 +54,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleCoAuthors do
 
   def create(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Decides a co-author request at the supplied revision, with optional approved permissions."
   def decide(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_decide_request(
       args.request_id,
@@ -62,6 +68,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleCoAuthors do
 
   def decide(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Cancels a co-author request at the supplied revision on behalf of the actor."
   def cancel(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_cancel_request(
       args.request_id,
@@ -73,6 +80,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleCoAuthors do
 
   def cancel(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Updates an article member's co-author permissions at the expected revision."
   def update_permissions(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_update_permissions(
       args.article_id,
@@ -86,6 +94,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleCoAuthors do
 
   def update_permissions(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Removes a co-author from the specified article at the expected membership revision."
   def remove(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_remove_member(
       args.article_id,
@@ -98,6 +107,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleCoAuthors do
 
   def remove(_root, _args, _resolution), do: {:error, :permission_denied}
 
+  @doc "Ends the actor's own co-author membership at the supplied revision."
   def leave(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.articles_co_authors_leave_member(
       args.article_id,

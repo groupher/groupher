@@ -30,6 +30,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Access do
 
   def generic_snapshot_mutation(%Article{}), do: {:ok, :pass}
 
+  @doc "Checks Article access through Gate and normalizes a denied decision to its primary error."
   def access_check(actor, action, %Article{} = article, %Community{} = community) do
     CMS.Gate.access_check(actor, action, %{
       id: article.id,
@@ -45,6 +46,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Access do
 
   defp normalize_decision(result), do: result
 
+  @doc "Checks Article access with Gate's caller-transaction semantics."
   def check_in_transaction(actor, action, %Article{} = article, %Community{} = community) do
     CMS.Gate.check_in_transaction(actor, action, article, community)
   end

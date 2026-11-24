@@ -46,6 +46,7 @@ defmodule GroupherServer.CMS.Articles.CommunityTrashQuery do
 
   def page(_, _, _, _), do: {:error, ErrorCat.unsupported_community_trash_thread()}
 
+  @doc "Loads one authorized Community Trash entry by its stable ID."
   def get(%Community{} = community, actor, thread, id)
       when thread in @ordinary and is_binary(id) do
     with {:ok, :pass} <- authorize(community, actor, thread),
@@ -88,6 +89,7 @@ defmodule GroupherServer.CMS.Articles.CommunityTrashQuery do
 
   def authorize(_, _, _), do: {:error, ErrorCat.unsupported_community_trash_thread()}
 
+  @doc "Reports whether a valid Article UUID belongs to the requested ordinary thread."
   def article_thread_matches?(id, thread) when thread in @ordinary and is_binary(id) do
     case Ecto.UUID.cast(id) do
       {:ok, id} ->

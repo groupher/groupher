@@ -26,16 +26,17 @@ defmodule Helper.Multi do
 
   @type t :: Ecto.Multi.t()
 
+  @doc "Creates an empty Ecto.Multi without opening a database transaction."
   @spec new() :: t()
-  @doc "Runs `new` through the public `Multi` boundary."
   # credo:disable-for-next-line Credo.Check.Refactor.Apply
   def new, do: apply(Ecto.Multi, :new, [])
 
+  @doc "Appends a named callback that receives the repo and preceding results when the multi executes."
   @spec run(t(), Ecto.Multi.name(), Ecto.Multi.run()) :: t()
-  @doc "Runs `run` through the public `Multi` boundary."
   # credo:disable-for-next-line Credo.Check.Refactor.Apply
   def run(multi, name, run), do: apply(Ecto.Multi, :run, [multi, name, run])
 
+  @doc "Queues a named insert from a changeset, struct, or function of preceding results, forwarding the insert options."
   @spec insert(
           t(),
           Ecto.Multi.name(),
@@ -44,7 +45,6 @@ defmodule Helper.Multi do
           | (Ecto.Multi.changes() -> Ecto.Changeset.t() | Ecto.Schema.t()),
           Keyword.t()
         ) :: t()
-  @doc "Runs `insert` through the public `Multi` boundary."
   def insert(multi, name, changeset_or_struct_or_fun, opts \\ []) do
     # credo:disable-for-next-line Credo.Check.Refactor.Apply
     apply(Ecto.Multi, :insert, [multi, name, changeset_or_struct_or_fun, opts])

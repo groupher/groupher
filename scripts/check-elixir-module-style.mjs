@@ -175,7 +175,7 @@ for (const file of allElixirRoots.flatMap(walk)) {
         fail(file, index + 1, '@doc must appear before its @spec')
         break
       }
-      if (/^\s*def(?:p|macro|guard|delegate)?\s/.test(lines[cursor])) break
+      if (/^\s*(?:def(?:p|macro|guard|delegate)?|direct_pipeline|receipt_pipeline)\s/.test(lines[cursor])) break
     }
   }
 

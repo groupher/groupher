@@ -42,6 +42,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
+  @doc "Enqueues durable synchronization of one Article's current search ranking metrics."
   @spec enqueue_metrics(struct()) :: T.done()
   def enqueue_metrics(article) do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
@@ -49,6 +50,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
+  @doc "Enqueues removal of all indexed references associated with one Article."
   @spec enqueue_delete(struct()) :: T.done()
   def enqueue_delete(article) do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
@@ -56,6 +58,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
+  @doc "Enqueues deletion by the canonical Article thread and stable Article id."
   @spec enqueue_delete(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def enqueue_delete(thread, article_id) do
     enqueue(:delete_article, thread, article_id)
@@ -116,6 +119,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
+  @doc "Deletes the base Article index key and every community-binding key for that Article."
   @spec delete_article(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def delete_article(thread, article_id) do
     refs =

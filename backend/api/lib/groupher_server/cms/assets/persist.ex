@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.Assets.Persist do
   @asset_url_conflict_target {:unsafe_fragment,
                               "(community_id, url_hash) WHERE deleted_at IS NULL"}
 
+  @doc "Upserts an active asset inside the caller's transaction, preserving storage identity ownership."
   @spec register(Community.t(), map(), User.t() | nil) ::
           {:ok, CommunityAsset.t()} | {:error, term()}
   def register(%Community{id: community_id}, attrs, user \\ nil) when is_map(attrs) do
@@ -42,6 +43,7 @@ defmodule GroupherServer.CMS.Assets.Persist do
     end
   end
 
+  @doc "Soft-deletes an active asset only when it has no references and the usage fence is complete."
   @spec delete(Community.t(), term()) ::
           {:ok, CommunityAsset.t()} | {:error, term()}
   def delete(%Community{id: community_id}, asset_id) do
@@ -57,12 +59,14 @@ defmodule GroupherServer.CMS.Assets.Persist do
     end
   end
 
+  @doc "Marks an active community asset archived without removing its content references."
   def archive(%Community{id: community_id}, asset_id) do
     with {:ok, asset} <- find_active_asset_for_update(community_id, asset_id) do
       ORM.update(asset, %{status: :archived, archived_at: DateTime.utc_now(:second)})
     end
   end
 
+  @doc "Restores an archived, non-deleted community asset to active status."
   def restore(%Community{id: community_id}, asset_id) do
     with {:ok, asset} <- find_asset_for_update(community_id, asset_id) do
       case asset do

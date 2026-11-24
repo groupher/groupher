@@ -8,7 +8,6 @@
 
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
-import PagedPostsProvider from '~/hooks/usePagedPosts/provider'
 
 import ArticlesFilter from './ArticlesFilter'
 // import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
@@ -21,16 +20,14 @@ export default function PostThread() {
   const { communityLayout } = useLayout()
   const s = useSalon()
   return (
-    <PagedPostsProvider>
-      <div className={s.wrapper}>
-        <div className={s.layout}>
-          <TagNote top={2.5} />
-          <ArticlesFilter left={-1.5} top={1.5} bottom={1.5} />
-          <PagedPosts />
-        </div>
-
-        {communityLayout !== COMMUNITY_LAYOUT.SIDEBAR && <ThreadSidebar />}
+    <div className={s.wrapper}>
+      <div className={s.layout}>
+        <TagNote top={2.5} />
+        <ArticlesFilter left={-1.5} top={1.5} bottom={1.5} />
+        <PagedPosts />
       </div>
-    </PagedPostsProvider>
+
+      {communityLayout !== COMMUNITY_LAYOUT.SIDEBAR && <ThreadSidebar />}
+    </div>
   )
 }

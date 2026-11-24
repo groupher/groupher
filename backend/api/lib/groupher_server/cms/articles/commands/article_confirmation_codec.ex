@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ArticleConfirmationCodec do
 
   alias CMS.Command.Confirmation, as: Codec
 
+  @doc "Builds a JSON-safe versioned Confirmation payload for the given operation."
   def encode_payload(operation, fields) do
     payload =
       Map.merge(%{"schema_version" => 1, "operation" => Codec.operation_tag(operation)}, fields)
@@ -19,6 +20,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ArticleConfirmationCodec do
     if Codec.json_safe?(payload), do: {:ok, payload}, else: {:error, :invalid_confirmation}
   end
 
+  @doc "Validates the schema version, operation tag, exact keys, and declared field types of a Confirmation payload."
   def decode_payload(payload, operation, fields) when is_map(payload) do
     with {:ok, :pass} <-
            Codec.strict_keys(payload, ["schema_version", "operation" | Map.keys(fields)]),

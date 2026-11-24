@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Comments.RequestCommunity do
   alias GroupherServer.CMS
   alias CMS.Model.{ArticleBinding, Comment, Community}
 
+  @doc "Resolves the current Community from the Comment request path or its unique Article binding."
   def resolve(%Comment{request_community_slug: slug} = comment) when is_binary(slug) do
     with {:ok, community} <- CMS.FrontDesk.community(slug, mode: :internal),
          {:ok, _binding} <- CMS.Articles.Bindings.fetch_binding(comment.article_id, community.id) do

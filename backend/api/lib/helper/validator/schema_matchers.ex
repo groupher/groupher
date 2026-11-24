@@ -9,7 +9,7 @@ defmodule Helper.Validator.Schema.Matchers do
         -> normalized value / infrastructure
   """
 
-  @doc "Injects the public `Matchers` imports and aliases into the caller."
+  @doc "Generates type-specific match clauses, accepting nil for optional fields and using the binary guard for `:string`."
   defmacro __using__(types) do
     # can not use Enum.each here, see https://elixirforum.com/t/define-multiple-modules-in-macro-only-last-one-gets-created/1654/4
     for type <- types do

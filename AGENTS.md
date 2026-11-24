@@ -8,6 +8,14 @@
 - Select checks based on the changed behavior and its consumers. Start with [the validation matrix](docs/infra/tooling/validation.md); report checks that failed, were blocked, or were not run.
 - Local Git hooks are focused checks, not a substitute for relevant tests or CI. Inspect the staged diff before committing, especially after hooks that modify files.
 
+## Branch and Worktree Ownership
+
+- Work in the current local branch and worktree by default. Preserve unrelated staged, unstaged and untracked changes there.
+- Creating a branch/worktree, switching branches/worktrees, or moving the shared Dev Hub runtime to another checkout requires explicit user authorization for that action. Before requesting it, state the concrete obstacle to completing the task in the current checkout and the proposed target. Existing authorization remains valid within its stated scope.
+- A dirty checkout, convenient isolation, parallel work, or loading a skill does not authorize creating or switching branches/worktrees. Permission to implement, test, commit or open a PR does not by itself authorize those actions.
+- When parallel work is authorized, default to the same worktree with distinct file ownership. Keep tasks already assigned to a separate worktree in their assigned location; do not move or split other work into it automatically.
+- Treat `pr-integration` and `dev-hub-worktree` as procedures for an explicitly authorized exception, not default development steps. Follow any agreed restoration plan after temporary acceptance.
+
 ## Backend Test Failure Triage
 
 - When a broad backend suite reports failures, first rerun each failure as a focused test against a fresh, isolated test database. Separate a production regression from stale rows, test ordering, and shared-database contamination before changing production code.

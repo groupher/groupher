@@ -3,9 +3,13 @@ defmodule GroupherServer.Auth.Contract do
   @moduledoc """
   Phoenix mirror of the generated public auth protocol contract.
 
-  Auth request
-    -> generated contract values
-    -> Phoenix and Assets Hub verification
+  Auth / Assets Hub response mapping
+    -> Contract error-code vocabulary
+    -> callers translate stable protocol codes for API responses
+
+  Browser service-token claims follow the same contract and are consumed by
+  Phoenix service-token verification. This module is generated from the shared
+  contract source; keep its values and descriptions aligned with that source.
   """
 
   @codes %{
@@ -50,23 +54,29 @@ defmodule GroupherServer.Auth.Contract do
     type: "browser_access"
   }
 
+  @doc "Returns the complete mapping from internal auth error keys to stable public protocol codes."
   @spec all() :: %{atom() => String.t()}
   def all, do: @codes
 
   for {name, _value} <- @codes do
+    @doc "Returns the stable public protocol code for the corresponding auth error."
     @spec unquote(name)() :: String.t()
     def unquote(name)(), do: @codes[unquote(name)]
   end
 
+  @doc "Returns the issuer, audience, and token type required for Phoenix browser access tokens."
   @spec phoenix_browser_token_claims() :: %{atom() => String.t()}
   def phoenix_browser_token_claims, do: @phoenix_browser_token_claims
 
+  @doc "Returns the issuer claim required for Phoenix browser access tokens."
   @spec phoenix_token_issuer() :: String.t()
   def phoenix_token_issuer, do: @phoenix_browser_token_claims.issuer
 
+  @doc "Returns the audience claim required for Phoenix browser access tokens."
   @spec phoenix_token_audience() :: String.t()
   def phoenix_token_audience, do: @phoenix_browser_token_claims.audience
 
+  @doc "Returns the token type required for Phoenix browser access tokens."
   @spec phoenix_token_type() :: String.t()
   def phoenix_token_type, do: @phoenix_browser_token_claims.type
 end

@@ -33,7 +33,10 @@ defmodule GroupherServer.Accounts.Model.UserFollowing do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Builds the forward follow row: `user_id` follows `following_id`. Both IDs are required;
+  missing users and duplicate pairs are reported as constraint errors on write.
+  """
   def changeset(%UserFollowing{} = user_following, attrs) do
     user_following
     |> cast(attrs, @required_fields)

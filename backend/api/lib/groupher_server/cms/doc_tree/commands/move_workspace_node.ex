@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.MoveWorkspaceNode do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Moves a workspace node to the requested parent and position under a command receipt."
   def execute(
         %Community{} = community,
         revision,

@@ -15,3 +15,4 @@ V2 的[来源关联合同](./v2.md#4-ticketsource-与首批-post-规则)明确�
 - [T0 出口合同](./t0-contract.md)
 - [Ticket V2 当前合同与实施记录](./v2.md)
 - [Goal 与 Ticket 组织关系讨论稿](./goal-design.md)：后续产品方向，尚未实现。
+- [Goal 公开进展交互原型](./goal-ui-prototype.html)：独立 HTML；较早一轮的完整导航探索（Overview / Roadmap / People + Goal 内 Kanban / Timeline），当前信息架构以 [goal-design.md 第 5.3 节](./goal-design.md#53-页面层级与入口)为准。使用浏览器打开即可预览，数据与操作均为设计演示。

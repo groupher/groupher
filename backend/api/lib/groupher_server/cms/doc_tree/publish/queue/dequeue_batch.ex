@@ -89,6 +89,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.DequeueBatch do
     end
   end
 
+  @doc "Rejects batch removal requests that do not provide a valid member list and Queue revision."
   def run(_, _, _, _, _, _), do: {:error, :invalid_queue_members}
 
   defp operation(ids), do: %{"kind" => "dequeue", "article_ids" => ids}

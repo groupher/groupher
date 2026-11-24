@@ -11,6 +11,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
   alias GroupherServer.{CMS, FrontDesk}
   alias CMS.Model.Community
 
+  @doc "Reads cover editing information for the parent article and optional viewer."
   def cover_edit_info(article, _, %{context: %{cur_user: user}}) do
     CMS.articles_cover_edit_info(article, user)
   end
@@ -19,10 +20,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.articles_cover_edit_info(article, nil)
   end
 
+  @doc "Reads an article for the current viewer using the default path parsing options."
   def read_article(root, args, info) do
     read_article(root, args, info, [])
   end
 
+  @doc "Reads by article path or community, thread, and inner ID; options apply to path parsing."
   def read_article(_root, %{article: article_path}, info, opts) do
     with {:ok, article_path} <- CMS.parse_article_path(article_path, opts) do
       do_read_article(article_path, info)
@@ -42,6 +45,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     do_read_article(%{community: community, thread: thread, inner_id: inner_id}, info)
   end
 
+  @doc "Sets the resolved post's category for the actor and returns the command result."
   def set_post_cat(_root, %{article: article, cat: cat, command_id: command_id}, %{
         context: %{cur_user: user}
       }) do
@@ -58,6 +62,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     )
   end
 
+  @doc "Lists working copies in the community after checking edit access to the canonical article."
   def article_working_copies(
         _root,
         %{article_id: article_id, community: %Community{} = community},
@@ -93,6 +98,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
+  @doc "Fetches a specific article snapshot through FrontDesk for the community and viewer."
   def article_snapshot(
         _root,
         %{article_id: article_id, snapshot_id: snapshot_id, community: %Community{} = community},
@@ -101,6 +107,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.front_desk_article_snapshot(article_id, snapshot_id, community, user)
   end
 
+  @doc "Pages an article's history for the signed-in user with the supplied history options."
   def paged_article_events(_root, %{article_id: article_id} = args, %{
         context: %{cur_user: user}
       }) do
@@ -111,6 +118,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     )
   end
 
+  @doc "Reads one event by article and event ID with the viewer's history options."
   def article_event(_root, %{article_id: article_id, event_id: event_id} = args, %{
         context: %{cur_user: user}
       }) do
@@ -122,10 +130,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     )
   end
 
+  @doc "Compares the requested before and after states in the article's history for the viewer."
   def article_diff(_root, %{article_id: article_id} = args, %{context: %{cur_user: user}}) do
     CMS.articles_history_diff(article_id, args[:before], args[:after], user)
   end
 
+  @doc "Creates an article with the request's history origin and returns its working copy."
   def create_article(_root, %{community: %Community{} = community, thread: thread} = args, %{
         context: %{cur_user: user} = context
       }) do
@@ -154,6 +164,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
+  @doc "Creates and publishes an article with the request's history origin, returning the public version."
   def create_and_publish_article(
         _root,
         %{community: %Community{} = community, thread: thread} = args,
@@ -184,6 +195,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
+  @doc "Saves edits to the specified working copy using its revision and the request's history origin."
   def save_working_copy(
         _root,
         %{community: %Community{} = community, article_id: article_id} = args,
@@ -216,6 +228,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
+  @doc "Forks a snapshot into a working copy in the requested scope and records the history origin."
   def fork_snapshot(
         _root,
         %{community: %Community{} = community, snapshot_id: snapshot_id} = args,
@@ -245,6 +258,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
+  @doc "Publishes a versioned working copy or a snapshot and returns the public article."
   def publish_article(
         _root,
         %{community: %Community{} = community, article_id: article_id, source: source} = args,
@@ -278,6 +292,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
+  @doc "Deletes the identified working copy in the community and returns `{:ok, :done}` on success."
   def delete_working_copy(
         _root,
         %{
@@ -323,10 +338,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
 
   defp publish_source(_), do: {:error, :invalid_publish_source}
 
+  @doc "Sends the resolved article to trash and returns the trash command receipt."
   def trash_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
     CMS.articles_trash_receipt(article, user, command_id: args[:command_id])
   end
 
+  @doc "Restores a trashed article by ID within the given community and thread, returning a receipt."
   def restore_trashed_article(
         _root,
         %{id: id, community: %Community{} = community, thread: thread} = args,
@@ -337,6 +354,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.articles_restore_trashed_receipt(id, user, opts)
   end
 
+  @doc "Permanently deletes a trashed article within the given community and thread, returning a receipt."
   def permanently_delete_trashed_article(
         _root,
         %{id: id, community: %Community{} = community, thread: thread} = args,
@@ -347,6 +365,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.articles_permanently_delete_trashed_receipt(id, user, opts)
   end
 
+  @doc "Executes permanent deletion by trash action ID within the specified community and thread."
   def permanently_delete_trash_action(
         _root,
         %{id: id, community: %Community{} = community, thread: thread} = args,
@@ -357,6 +376,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     )
   end
 
+  @doc "Pages a community's trashed articles, restricting the filter to the requested thread."
   def trashed_articles(
         _root,
         %{community: %Community{} = community, thread: thread} = args,
@@ -369,6 +389,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
+  @doc "Reads one trashed article by ID within the specified community and thread."
   def trashed_article(
         _root,
         %{id: id, community: %Community{} = community, thread: thread},
@@ -377,12 +398,14 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.articles_get_trashed(id, community, thread, actor)
   end
 
+  @doc "Pins the article in the community identified by its request path."
   def pin_article(_root, ~m(article article_path command_id)a, %{context: %{cur_user: user}}) do
     with {:ok, community} <- article_path_community(article_path) do
       CMS.articles_pin(community, article.id, user, command_id)
     end
   end
 
+  @doc "Removes the article's pin in the community identified by its request path."
   def undo_pin_article(_root, ~m(article article_path command_id)a, %{
         context: %{cur_user: user}
       }) do
@@ -391,14 +414,17 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
+  @doc "Applies the sink command to the resolved article for the signed-in actor."
   def sink_article(_root, ~m(article command_id)a, %{context: %{cur_user: user}}) do
     CMS.articles_sink_result(article, user, command_id)
   end
 
+  @doc "Removes the resolved article's sunk status for the signed-in actor."
   def undo_sink_article(_root, ~m(article command_id)a, %{context: %{cur_user: user}}) do
     CMS.articles_undo_sink_result(article, user, command_id)
   end
 
+  @doc "Mirrors the article into the target community with the supplied community tags."
   def mirror_article(_root, ~m(target_community article community_tags command_id)a, %{
         context: %{cur_user: user}
       }) do
@@ -412,12 +438,14 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     )
   end
 
+  @doc "Removes the article's mirror from the target community."
   def unmirror_article(_root, ~m(target_community article command_id)a, %{
         context: %{cur_user: user}
       }) do
     CMS.articles_unmirror(target_community, article.id, user, command_id)
   end
 
+  @doc "Moves the article between resolved communities with the supplied destination tags."
   def move_article(_root, ~m(target_community article community_tags command_id)a, %{
         context: %{cur_user: user}
       }) do

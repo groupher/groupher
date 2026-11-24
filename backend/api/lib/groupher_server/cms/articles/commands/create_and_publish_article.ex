@@ -76,6 +76,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
     present(fn confirmation -> present_confirmation(confirmation) end)
   end
 
+  @doc "Creates and publishes an ordinary Article as one Gate-authorized, retry-safe command."
   def execute(%Community{} = community, thread, attrs, %User{} = actor, opts)
       when is_map(attrs) and is_list(opts) and thread in [:post, :blog, :changelog] do
     command_id = Keyword.fetch!(opts, :command_id)

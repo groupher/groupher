@@ -30,6 +30,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   alias CMS.ErrorCat, as: CmsErrorCat
   alias CMS.Model.{Comment, Community}
 
+  @doc "Resolves resource references into the arguments expected by the field resolver."
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
   end

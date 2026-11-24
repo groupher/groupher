@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
   alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
   alias Helper.{ORM, T}
 
+  @doc "Creates a tag in a Community thread and invalidates its taxonomy projection."
   @spec create(Community.t(), atom(), map(), User.t(), keyword()) ::
           {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
   def create(%Community{} = community, thread, attrs, %User{id: user_id}, opts) do
@@ -74,6 +75,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
+  @doc "Updates a tag and invalidates the affected taxonomy projection."
   def update(id, attrs, opts), do: update_with_identity(id, attrs, opts)
 
   defp update_with_identity(id, attrs, opts) do
@@ -96,6 +98,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
+  @doc "Creates a tag group in a Community thread and updates the taxonomy index."
   def create_group(%Community{} = community, thread, attrs, opts) do
     {attrs, opts} = split_identity(attrs, opts)
 
@@ -119,6 +122,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
+  @doc "Updates a tag group and invalidates its Community thread taxonomy."
   def update_group(%Community{} = community, thread, id, attrs, opts) do
     {attrs, opts} = split_identity(attrs, opts)
 
@@ -141,6 +145,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
+  @doc "Deletes a tag group and its group assignment from the Community taxonomy."
   def delete_group(%Community{} = community, thread, id, opts) do
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
          {:ok, group} <- find_group_in_thread(community, thread, id) do
@@ -169,6 +174,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
+  @doc "Deletes a tag and invalidates its affected taxonomy projection."
   def delete(id, opts) do
     with {:ok, tag} <- FrontDesk.community_tag(id),
          {:ok, community} <- ORM.find(Community, tag.community_id) do
@@ -184,6 +190,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
+  @doc "Reorders tags within one group and verifies the complete requested membership."
   @spec reindex_in_group(Community.t(), atom(), T.id(), list(), keyword()) ::
           {:ok, atom()} | {:error, any()}
   def reindex_in_group(%Community{} = community, thread, group_id, indexed_tags, opts) do
@@ -199,6 +206,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
+  @doc "Reorders tags across the selected Community thread taxonomy."
   @spec reindex(Community.t(), atom(), list(), keyword()) :: {:ok, atom()} | {:error, any()}
   def reindex(%Community{} = community, thread, indexed_tags, opts) do
     with {:ok, indexed_tags} <- normalize_indexed_tags(indexed_tags, true),
@@ -213,6 +221,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Mutation do
     end
   end
 
+  @doc "Reorders tag groups for a Community thread and validates the submitted group set."
   @spec reindex_groups(Community.t() | String.t(), atom(), list(), keyword()) ::
           {:ok, atom()} | {:error, any()}
   def reindex_groups(%Community{} = community, thread, indexed_groups, opts) do

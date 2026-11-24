@@ -75,6 +75,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
     end
   end
 
+  @doc "Retries Community setup after authorizing the reviewer and checking the expected version."
   @spec retry(String.t(), User.t(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def retry(application_ref, %User{} = reviewer, expected_version, command_id \\ nil) do
@@ -144,6 +145,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
     end
   end
 
+  @doc "Marks the matching setup operation failed and records its reason and attempt."
   @spec mark_failed(String.t(), String.t(), term(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def mark_failed(application_ref, operation_ref, reason, attempt) do

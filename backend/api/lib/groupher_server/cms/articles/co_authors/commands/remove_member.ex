@@ -63,6 +63,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember do
 
   def execute(_, _, _, _, _), do: {:error, :invalid_article_co_author_removal}
 
+  @doc "Authorizes a member removal or self-leave against the Article's current membership and manager rules."
   def authorize_member(article, member_id, actor, mode) do
     with %ArticleCoAuthor{} = member <-
            Repo.get_by(ArticleCoAuthor, id: member_id, article_id: article.id),
@@ -79,6 +80,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Commands.RemoveMember do
     end
   end
 
+  @doc "Removes the revision-matched member, cancels that subject's pending requests, and records the audit effects in the caller transaction."
   def remove_locked(article, member_id, revision, actor, operation, mode) do
     with %ArticleCoAuthor{} = candidate <-
            Repo.get_by(ArticleCoAuthor, id: member_id, article_id: article.id),

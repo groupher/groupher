@@ -33,7 +33,10 @@ defmodule GroupherServer.Accounts.Model.UserFollower do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Builds the reverse follow row: `follower_id` follows `user_id`. Both IDs are required;
+  missing users and duplicate pairs are reported as constraint errors on write.
+  """
   def changeset(%UserFollower{} = user_follower, attrs) do
     user_follower
     |> cast(attrs, @required_fields)

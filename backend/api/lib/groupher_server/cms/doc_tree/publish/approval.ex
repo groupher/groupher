@@ -132,12 +132,12 @@ defmodule GroupherServer.CMS.DocTree.Publish.Approval do
   defp lock_content(_community, _queue, []), do: {:ok, %{rows: []}}
   defp lock_content(community, queue, ids), do: Dequeue.load_locked(community, queue, ids)
 
-  @doc false
+  @doc "Builds the approval plan from locked Queue members and their current content."
   def build_plan(community, queue, rows, changes) do
     build_plan(community, queue, rows, changes, :locked)
   end
 
-  @doc false
+  @doc "Builds the approval plan, optionally reading its source rows without locks for snapshot checks."
   def build_plan(community, queue, rows, changes, mode) when mode in [:locked, :snapshot] do
     public =
       from(n in DocsTreeNode,

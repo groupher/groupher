@@ -17,9 +17,13 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
   enum(:review_action, do: enum_values(CMS.review_result_action_values_ast()))
 
   object :review_command_result do
+    @desc "Identifier of the review command."
     field(:command_id, non_null(:id))
+    @desc "Kind of reviewed content."
     field(:target_type, non_null(:artiment_review_target_type))
+    @desc "ID of the reviewed target."
     field(:target_id, non_null(:string))
+    @desc "Review action performed."
     field(:action, non_null(:review_action))
   end
 

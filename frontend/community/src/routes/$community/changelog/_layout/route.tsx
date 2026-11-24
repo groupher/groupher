@@ -5,6 +5,7 @@ import { Outlet, createFileRoute, redirect, useLocation } from '@tanstack/react-
 
 import { THREAD } from '~/const/thread'
 import URL_PARAM from '~/const/url_param'
+import PagedChangelogsProvider from '~/hooks/usePagedChangelogs/provider'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import ChangelogThread from '~/unit/ChangelogThread'
 
@@ -48,9 +49,11 @@ function ChangelogListLayout() {
         surface='changelogs'
         recovery={recovery}
       >
-        <ChangelogThread />
+        <PagedChangelogsProvider>
+          <ChangelogThread />
+          <Outlet />
+        </PagedChangelogsProvider>
       </ArticlePageBoundary>
-      <Outlet />
     </ArticleListStoreProvider>
   )
 }

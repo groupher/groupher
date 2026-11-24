@@ -45,7 +45,15 @@ defmodule GroupherServer.Accounts.Achievements.Commands.Achieve do
           {:ok, Achievement.t()} | {:error, term()}
   def run(%User{} = user, operation, key), do: execute_pipeline(user, operation, key)
 
-  @doc false
+  @doc """
+  Ensures the user has an achievement row, then adjusts the follow, upvote, or collect
+  counter and its weighted reputation in the caller's transaction. Decrements stop at zero.
+  Unlike `run/3`, this helper does not acquire the advisory lock.
+
+  ## Examples
+
+      Accounts.Achievements.Commands.Achieve.apply_in_transaction(target_user, :inc, :follow)
+  """
   def apply_in_transaction(%User{id: user_id}, operation, key) do
     with {:ok, _} <- Persist.ensure(user_id),
          {:ok, achievement} <- Persist.find(user_id),

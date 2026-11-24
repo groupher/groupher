@@ -16,6 +16,7 @@ defmodule Mix.Tasks.Passport.LegacyReport do
   alias CMS.Passport.LegacyPlan
 
   @shortdoc "Reports legacy Passport conversion candidates without writes"
+  @doc "Runs a repeatable-read, read-only legacy Passport conversion report for every user with a Passport row."
   def run([]) do
     Mix.Task.run("app.config")
     {:ok, _} = Application.ensure_all_started(:ecto_sql)

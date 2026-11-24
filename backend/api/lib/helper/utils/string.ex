@@ -1,6 +1,6 @@
 defmodule Helper.Utils.String do
   @moduledoc """
-  String normalization, truncation, and naming helpers used across contexts.
+  String coercion, substring counting, and word frequencies for `Helper.Utils`.
 
   Business position:
 
@@ -9,15 +9,15 @@ defmodule Helper.Utils.String do
         -> normalized value / infrastructure
   """
 
-  @doc "Runs `stringify` through the public `String` boundary."
+  @doc "Converts integers and atoms to strings and returns other values unchanged."
   def stringify(v) when is_binary(v), do: v
   def stringify(v) when is_integer(v), do: to_string(v)
   def stringify(v) when is_atom(v), do: to_string(v)
   def stringify(v), do: v
 
   # see https://stackoverflow.com/a/49558074/4050784
+  @doc "Counts non-overlapping substring matches; returns `\"must be strings\"` for non-binary inputs."
   @spec str_occurrence(String.t(), String.t()) :: integer()
-  @doc "Runs `str_occurrence` through the public `String` boundary."
   def str_occurrence(string, substr) when is_binary(string) and is_binary(substr) do
     len = string |> String.split(substr) |> length()
     len - 1

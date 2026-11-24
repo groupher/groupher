@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
   alias CMS.Articles.Effects
   alias CMS.Articles.Commands.CommunityTrashConfirmation, as: Confirmation
 
+  @doc "Loads an ordinary Article by UUID for a Community-scoped Trash command."
   def load_article(id) do
     with {:ok, id} <- Ecto.UUID.cast(id),
          %CMS.Model.Article{thread: thread} = article <- Repo.get(CMS.Model.Article, id),
@@ -18,6 +19,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
     end
   end
 
+  @doc "Records Activity, visibility invalidation, and count refresh for an effective Binding Trash change."
   def effects(%{changed?: false}, _article, _community, _actor, _action, _operation_ref) do
     {:ok, :pass}
   end
@@ -39,6 +41,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
     end
   end
 
+  @doc "Freezes the Community Trash result identity and action for Receipt replay."
   def confirmation(%{row: row}, article, command_id, action) do
     %Confirmation{
       data: %{
@@ -54,6 +57,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityTrashSupport do
     }
   end
 
+  @doc "Reconstructs the Community Trash result from its stored Confirmation."
   def present(%Confirmation{data: data}) do
     with {:ok, hidden_at, 0} <- DateTime.from_iso8601(data["hidden_at"]),
          {:ok, thread} <- thread(data["thread"]),

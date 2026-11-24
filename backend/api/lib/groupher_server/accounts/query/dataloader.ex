@@ -15,7 +15,10 @@ defmodule GroupherServer.Accounts.Query.Dataloader do
   @spec dataloader_source() :: Dataloader.Ecto.t()
   def dataloader_source, do: Dataloader.Ecto.new(Repo, query: &query/2)
 
-  @doc false
+  @doc """
+  For the community subscription association with a filter, filters subscription rows
+  and selects their joined communities. Returns other queryables unchanged.
+  """
   def query({"communities_subscribers", CommunitySubscriber}, %{filter: filter}) do
     CommunitySubscriber
     |> QueryBuilder.filter_pack(filter)

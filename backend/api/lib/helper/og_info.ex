@@ -21,7 +21,7 @@ defmodule Helper.OgInfo do
 
   @default_site_favicon_adapter Helper.SiteFavicon
 
-  @doc "Runs `get` through the public `OgInfo` boundary."
+  @doc "Returns a validated page's Open Graph metadata and favicon in an ok tuple, or an error when fetching or parsing fails."
   def get(url) do
     adapter = site_favicon_adapter()
 

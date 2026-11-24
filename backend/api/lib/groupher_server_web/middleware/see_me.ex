@@ -18,6 +18,7 @@ defmodule GroupherServerWeb.Middleware.SeeMe do
   """
   @behaviour Absinthe.Middleware
 
+  @doc "Passes the resolution through unchanged."
   def call(resolution, _) do
     resolution
   end

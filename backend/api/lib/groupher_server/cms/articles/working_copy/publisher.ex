@@ -41,6 +41,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
     )
   end
 
+  @doc "Publishes a WorkingCopy revision or Snapshot with lifecycle and outbound-effect intents in the caller transaction."
   def publish_in_transaction(
         %Article{thread: thread} = article,
         %Community{} = community,

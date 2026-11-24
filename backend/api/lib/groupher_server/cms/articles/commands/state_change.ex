@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, Community}
 
+  @doc "Runs a Gate-authorized Article sink, unsink, or category command in its Community context."
   @spec execute(atom(), Ecto.UUID.t(), User.t(), keyword()) :: {:ok, term()} | {:error, term()}
   def execute(action, article_id, %User{} = actor, opts \\ [])
       when action in [:sink, :undo_sink, :set_category] do
@@ -54,6 +55,7 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
     end)
   end
 
+  @doc "Refreshes an Article's activity timestamp only while it remains within its thread's active period."
   @spec update_active_timestamp(atom(), Article.t()) :: {:ok, Article.t()} | {:error, term()}
   def update_active_timestamp(thread, %Article{} = article) do
     States.update_active_timestamp(thread, article)

@@ -16,9 +16,15 @@ defmodule GroupherServer.CMS.Search.Community do
 
   @search_items_count 15
 
+  @doc "Searches public communities by title, slug, or alias, returning at most fifteen results."
   def search(title), do: run(title, nil, nil)
+
+  @doc "Searches public communities with a viewer for subscription state or a category filter."
   def search(title, %User{} = viewer), do: run(title, nil, viewer)
+
   def search(title, category) when is_binary(category), do: run(title, category, nil)
+
+  @doc "Searches a category for public communities and includes viewer subscription state."
   def search(title, category, %User{} = viewer), do: run(title, category, viewer)
 
   defp run(title, category, viewer) do

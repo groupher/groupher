@@ -39,12 +39,14 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     get(type) |> Enum.each(&mock(&1, type)) |> done
   end
 
+  @doc "Seeds one of the built-in home or feedback communities."
   @spec mock(String.t() | atom()) :: T.domain_res(Community.t())
   def mock(:home), do: Domain.seed_community(:home)
   def mock(:feedback), do: Domain.seed_community(:feedback)
 
   def mock(slug, type_or_opts \\ [])
 
+  @doc "Creates or reuses a community by slug, using a built-in type or caller-supplied options."
   @spec mock(atom(), atom()) :: T.domain_res(Community.t())
   def mock(slug, type) when type in @community_types do
     Domain.community(slug, type)
@@ -66,6 +68,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     end
   end
 
+  @doc "Assigns the named category to each community through the domain seed flow."
   @spec set_category([atom() | String.t()], atom() | String.t()) :: T.domain_res(:ok)
   def set_category(communities_names, cat_name) when is_list(communities_names) do
     Domain.set_category(communities_names, cat_name)
@@ -104,6 +107,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     CMS.Dashboard.update(community, :enable, enable, :operations, Ecto.UUID.generate())
   end
 
+  @doc "Returns the configured community slugs for a built-in seed type."
   def get(:pl) do
     [
       "c",

@@ -5,7 +5,19 @@ defmodule GroupherServer.Messaging.Notices.Persist do
   It creates, merges, finds and revokes rows without opening a transaction.
   Commands own transaction scope and mailbox projection synchronization.
 
-      notification facts -> find/create/merge/revoke row
+      Notice command
+          -> validate notification shape
+          -> find or create/merge a grouped Notice row
+          -> synchronize mailbox projection in the caller transaction
+
+      Revoke command
+          -> locate rows containing the actor
+          -> remove that actor or delete the now-empty row
+          -> update mailbox projection before commit
+
+  This module performs persistence primitives only. It does not start a
+  transaction or invalidate account caches; command owners coordinate those
+  boundaries.
   """
 
   import Ecto.Query, warn: false
@@ -182,7 +194,18 @@ defmodule GroupherServer.Messaging.Notices.Persist do
     users |> Enum.map(&Embeds.User.normalize/1) |> Enum.filter(&Embeds.User.valid?/1)
   end
 
-  @doc false
+  @doc """
+  Checks whether notification attributes use a supported action and provide its required fields.
+
+  Required fields must be present and non-nil; this check does not query their database records.
+
+  ## Examples
+
+      iex> GroupherServer.Messaging.Notices.Persist.valid?(%{type: :follow, user_id: 1})
+      true
+      iex> GroupherServer.Messaging.Notices.Persist.valid?(%{type: :follow, user_id: nil})
+      false
+  """
   def valid?(%{type: type} = attrs) do
     type in @notify_actions and valid_attrs?(attrs)
   end

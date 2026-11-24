@@ -77,9 +77,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     end
   end
 
+  @doc "Returns the normalized Artiment types selected by the query filters."
   @spec types(t()) :: [Artiment.artiment_type()]
   def types(%__MODULE__{filters: filters}), do: Map.get(filters, :types, [])
 
+  @doc "Returns the normalized Article threads selected by the query filters."
   @spec threads(t()) :: [Artiment.thread()]
   def threads(%__MODULE__{filters: filters}), do: Map.get(filters, :threads, [])
 

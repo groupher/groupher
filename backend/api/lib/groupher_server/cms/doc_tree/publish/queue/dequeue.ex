@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
 
   def remove_many(_, _, _, _, _, _, _), do: {:error, :invalid_queue_members}
 
-  @doc false
+  @doc "Casts Queue member IDs to UUIDs, rejects duplicates, and returns them in stable order."
   def normalize_ids([]), do: {:error, :invalid_queue_members}
 
   def normalize_ids(ids) do
@@ -81,7 +81,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
     end
   end
 
-  @doc false
+  @doc "Locks the requested Articles, bindings, Queue members, copies, and source Snapshots for removal."
   def load_locked(community, queue, ids) do
     articles =
       Repo.all(from(a in Article, where: a.id in ^ids, order_by: a.id, lock: "FOR UPDATE"))
@@ -184,7 +184,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
     end
   end
 
-  @doc false
+  @doc "Deletes the locked Queue members and their working copies within the caller's transaction."
   def remove_members(locked) do
     Enum.reduce_while(locked.rows, {:ok, :pass}, fn row, _ ->
       with {:ok, _} <- Repo.delete(row.member),

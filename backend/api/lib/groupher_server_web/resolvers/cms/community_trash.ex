@@ -9,6 +9,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityTrash do
 
   @ordinary [:post, :blog, :changelog]
 
+  @doc "Pages local article trash for a community the actor can resolve, restricted to one thread."
   def page(_root, %{community_ref: ref, thread: thread} = args, %{context: %{cur_user: actor}}) do
     with {:ok, community} <- community(ref, actor),
          {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
@@ -16,6 +17,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityTrash do
     end
   end
 
+  @doc "Reads one local trash record by ID, community, and thread for the actor."
   def get(_root, %{community_ref: ref, thread: thread, id: id}, %{context: %{cur_user: actor}}) do
     with {:ok, community} <- community(ref, actor) do
       case CommunityTrashQuery.get(community, actor, thread, id) do
@@ -54,6 +56,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityTrash do
 
   def hide(_, _, _), do: {:error, CMS.articles_error_cat_unsupported_community_trash_thread()}
 
+  @doc "Restores a locally hidden article after checking permission, thread, and the trash record revision."
   def restore(
         _root,
         %{

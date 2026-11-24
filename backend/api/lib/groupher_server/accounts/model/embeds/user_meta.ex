@@ -18,6 +18,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta.Macro do
 
   @threads CMS.artiment_config_threads()
 
+  @doc "Declares a zero-default `published_<plural_thread>_count` field for each configured thread."
   defmacro published_article_count_fields do
     @threads
     |> Enum.map(fn thread ->
@@ -61,6 +62,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
   @optional_fields Map.keys(@general_options) ++
                      Enum.map(@threads, &:"published_#{plural(&1)}_count")
 
+  @doc "Returns non-maker defaults, empty follow and subscription ID lists, and zero publication counts."
   def default_meta do
     published_article_counts =
       @threads
@@ -81,6 +83,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
     published_article_count_fields()
   end
 
+  @doc "Casts maker status, follow and subscription ID lists, and per-thread publication counts."
   def changeset(struct, params) do
     struct |> cast(params, @optional_fields)
   end

@@ -784,10 +784,12 @@ defmodule GroupherServer.CMS do
   @doc "Pages canonical ArticleLite collections through the CMS Context boundary."
   defdelegate articles_page(thread, filter, pagi), to: GroupherServer.CMS.Articles, as: :page
 
+  @doc "Pages filtered Articles in a thread and presents entries for the given viewer."
   defdelegate articles_page(thread, filter, pagi, viewer),
     to: GroupherServer.CMS.Articles,
     as: :page
 
+  @doc "Pages Articles for the viewer with explicit pagination and pinned-entry options."
   defdelegate articles_page(thread, filter, pagi, viewer, opts),
     to: GroupherServer.CMS.Articles,
     as: :page
@@ -827,6 +829,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Tickets,
     as: :grouped_internal
 
+  @doc "Applies the board filter and pagination separately to the actor's todo, wip and done Ticket columns."
   defdelegate tickets_grouped_internal(community, actor, pagi, filter),
     to: GroupherServer.CMS.Tickets,
     as: :grouped_internal
@@ -1122,6 +1125,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :permanently_delete_trashed
 
+  @doc "Permanently deletes a trashed Article by trash item ID through the retry-safe command pipeline."
   defdelegate articles_permanently_delete_trashed_receipt(arg1, arg2, arg3),
     to: GroupherServer.CMS.Articles,
     as: :permanently_delete_trashed_receipt
@@ -1154,6 +1158,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :restore_trashed
 
+  @doc "Restores an Article by trash item ID through the retry-safe command pipeline."
   defdelegate articles_restore_trashed_receipt(arg1, arg2, arg3),
     to: GroupherServer.CMS.Articles,
     as: :restore_trashed_receipt
@@ -1182,6 +1187,7 @@ defmodule GroupherServer.CMS do
   @doc "Delegates GroupherServer.CMS.Articles.trash/3 through the CMS Context boundary."
   defdelegate articles_trash(arg1, arg2, arg3), to: GroupherServer.CMS.Articles, as: :trash
 
+  @doc "Moves an Article to Trash through the retry-safe command pipeline."
   defdelegate articles_trash_receipt(arg1, arg2, arg3),
     to: GroupherServer.CMS.Articles,
     as: :trash_receipt
@@ -1358,6 +1364,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :delete_comment_result
 
+  @doc "Deletes a Comment in the Community selected by slug and returns the post-commit mutation result."
   defdelegate comments_delete_comment_result(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Comments,
     as: :delete_comment_result
@@ -1414,6 +1421,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :reply_comment_result
 
+  @doc "Replies to a Comment in the Community selected by slug and returns the post-commit mutation result."
   defdelegate comments_reply_comment_result(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Comments,
     as: :reply_comment_result
@@ -1448,6 +1456,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :update_comment_result
 
+  @doc "Updates a Comment at the expected version in the Community selected by slug and returns the post-commit result."
   defdelegate comments_update_comment_result(arg1, arg2, arg3, arg4, arg5, arg6),
     to: GroupherServer.CMS.Comments,
     as: :update_comment_result
@@ -2047,6 +2056,7 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.SaveQueue, as: :execute
 
+  @doc "Merges the selected default Doc revision into its queued copy using the supplied conflict choices."
   defdelegate docs_queue_merge(
                 community,
                 queue_revision,
@@ -2063,14 +2073,17 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.DocTree.Commands.QueueAccess,
     as: :read_member
 
+  @doc "Reads the default working copy and public snapshot, when present, without creating a copy."
   defdelegate docs_editor_read(community, article_id, actor),
     to: GroupherServer.CMS.DocTree.DefaultCopy,
     as: :read
 
+  @doc "Returns the default working copy or creates it from the specified current public snapshot."
   defdelegate docs_begin_edit(community, article_id, snapshot_id, actor, command_id),
     to: GroupherServer.CMS.DocTree.Commands.BeginEdit,
     as: :execute
 
+  @doc "Reads the working tree and its tree and queue revisions without initializing an empty queue."
   defdelegate docs_workspace_read(community, actor),
     to: GroupherServer.CMS.DocTree.WorkspaceRead,
     as: :read
@@ -2079,22 +2092,27 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.DocTree.Publish.Queue.DequeuePreview,
     as: :read
 
+  @doc "Previews the subtree deletion and any required discard confirmation at the given tree and queue revisions."
   defdelegate docs_delete_preview(community, tree_revision, queue_revision, node_id, actor),
     to: GroupherServer.CMS.DocTree.WorkspaceDeletePreview,
     as: :read
 
+  @doc "Permanently removes an unreferenced Docs trash action after checking the queue revision."
   defdelegate docs_trash_purge(community, revision, action_id, actor, command_id),
     to: GroupherServer.CMS.DocTree.Commands.PurgeWorkspaceTrash,
     as: :execute
 
+  @doc "Seals the plan and content snapshots for the specified queue revision without publishing them."
   defdelegate docs_approve_queue(community, revision, actor, command_id),
     to: GroupherServer.CMS.DocTree.Commands.ApproveQueue,
     as: :execute
 
+  @doc "Reads the Doc's post-publish conflict and current revisions, or returns nil when no conflict exists."
   defdelegate docs_post_publish_conflict(community, article_id, actor),
     to: GroupherServer.CMS.DocTree.PostPublishConflictRead,
     as: :read
 
+  @doc "Resolves a conflict on the default working copy against the specified revision and public snapshot."
   defdelegate docs_resolve_post_publish(
                 community,
                 article_id,
@@ -2106,6 +2124,7 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.ResolvePostPublish, as: :execute
 
+  @doc "Restores all nodes and Docs in one trash action at the requested parent and position, or restores none."
   defdelegate docs_workspace_restore(
                 community,
                 tree_revision,
@@ -2118,6 +2137,7 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNode, as: :execute
 
+  @doc "Trashes the subtree at the expected tree and queue revisions, checking discard confirmation when required."
   defdelegate docs_workspace_delete(
                 community,
                 tree_revision,
@@ -2128,10 +2148,12 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.DeleteWorkspaceNode, as: :execute
 
+  @doc "Removes selected Docs from the specified queue revision, checking confirmation for edits that would be lost."
   defdelegate docs_dequeue(community, revision, ids, confirmation, actor, command_id),
     to: GroupherServer.CMS.DocTree.Commands.Dequeue,
     as: :execute
 
+  @doc "Moves a working-tree node to the requested parent and position and reconciles its queued position when applicable."
   defdelegate docs_workspace_move(
                 community,
                 revision,
@@ -2142,33 +2164,57 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.MoveWorkspaceNode, as: :execute
 
+  @doc "Updates working-tree node metadata and stages the corresponding change if the node is visible in the queue."
   defdelegate docs_workspace_update(community, revision, node_id, patch, actor, command_id),
     to: GroupherServer.CMS.DocTree.Commands.UpdateWorkspaceNode,
     as: :execute
 
+  @doc "Duplicates a workspace page or link as a new sibling without changing the queue or the public tree."
   defdelegate docs_workspace_duplicate(community, revision, node_id, actor, command_id),
     to: GroupherServer.CMS.DocTree.Commands.DuplicateWorkspaceNode,
     as: :execute
 
+  @doc "Creates a node at the expected tree revision and creates a default working copy for a new page."
   defdelegate docs_workspace_create(community, revision, attrs, actor, command_id),
     to: GroupherServer.CMS.DocTree.Commands.CreateWorkspaceNode,
     as: :execute
 
+  @doc "Stages the selected default Doc copies and their required directory nodes in the publish queue."
   defdelegate docs_enqueue(community, revision, entries, actor, command_id),
     to: GroupherServer.CMS.DocTree.Commands.Enqueue,
     as: :execute
 
+  @doc "Returns the error for a Docs operation based on state that is no longer current."
   defdelegate docs_state_conflict(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error for an invalid conflict resolution choice."
   defdelegate docs_invalid_merge_choice(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error for attempting to approve an empty queue or one that does not require approval."
   defdelegate docs_approval_not_allowed(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error for a contributor approving their own queue when self-approval is disabled."
   defdelegate docs_self_approval_forbidden(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error for publishing without a valid approval for the current queue."
   defdelegate docs_approval_required(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error for an operation that would discard queued changes without confirmation."
   defdelegate docs_discard_confirmation_required(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error when a discard confirmation no longer matches the proposed changes."
   defdelegate docs_discard_confirmation_stale(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error when a restored node ID already exists in the target tree."
   defdelegate docs_restore_node_conflict(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error when deletion would also remove a queued node outside the selected workspace subtree."
   defdelegate docs_delete_diverged_tree(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns the error when a reference prevents a Docs trash action from being purged."
   defdelegate docs_trash_in_use(), to: GroupherServer.CMS.ErrorCat
 
+  @doc "Reads the authorized queue members, staged tree changes and revision without initializing an empty queue."
   defdelegate docs_publish_queue(community, actor),
     to: GroupherServer.CMS.DocTree.Publish.QueueRead,
     as: :read
@@ -2660,6 +2706,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.FrontDesk,
     as: :article_snapshot
 
+  @doc "Reads a specific Article snapshot in its Community; admin mode requires edit access, internal mode requires no actor."
   defdelegate front_desk_article_snapshot(article_id, snapshot_id, community, actor, opts),
     to: GroupherServer.CMS.FrontDesk,
     as: :article_snapshot
@@ -2669,6 +2716,7 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.FrontDesk,
     as: :article_working_copy
 
+  @doc "Reads a specific Article working copy in its Community; admin mode requires edit access, internal mode requires no actor."
   defdelegate front_desk_article_working_copy(
                 article_id,
                 working_copy_id,

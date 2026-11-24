@@ -19,7 +19,12 @@ defmodule GroupherServer.AI.Const do
 
   enum(coverage, do: Enum.map(@coverage_values, &{&1, &1}))
 
+  @doc "Returns the closed set of moderation outcome atoms."
   def statuses, do: @statuses
+
+  @doc "Returns the public string values accepted for suspected issue types."
   def note_types, do: Enum.map(@note_types, &Atom.to_string/1)
+
+  @doc "Returns the closed set of modality coverage outcome atoms."
   def coverages, do: @coverage_values
 end

@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
-  @doc false
+  @doc "Applies a pin-state change within the caller's aggregate transaction."
   @spec apply_in_transaction(atom(), Comment.t(), map(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Comment.t())
   def apply_in_transaction(action, %Comment{} = comment, article, %User{} = user, operation_ref) do
@@ -82,6 +82,7 @@ defmodule GroupherServer.CMS.Comments.States do
     end
   end
 
+  @doc "Folds a Comment by record or id and updates its public summary with the operation reference."
   @spec fold(T.id() | Comment.t(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
   def fold(%Comment{} = comment, %User{} = _user, operation_ref) do
     do_fold_comment(comment, true, operation_ref)
@@ -93,6 +94,7 @@ defmodule GroupherServer.CMS.Comments.States do
     end
   end
 
+  @doc "Unfolds a Comment by record or id and updates its public summary with the operation reference."
   @spec unfold(Comment.t(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
   def unfold(%Comment{} = comment, %User{} = _user, operation_ref) do
     do_fold_comment(comment, false, operation_ref)

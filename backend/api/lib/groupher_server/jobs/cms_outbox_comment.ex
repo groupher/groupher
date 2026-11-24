@@ -1,8 +1,13 @@
 defmodule GroupherServer.Jobs.CMSOutboxComment do
   @moduledoc """
-  Oban entrypoint for Comment outbox delivery.
+  Routes committed Comment outbox wakeups to the CMS delivery workflow. The
+  worker delegates event validation, leasing, retries, and effect execution to
+  the durable outbox owner.
 
-      caller -> GroupherServer.Jobs.CMSOutboxComment -> result
+      Comment command commits outbox event
+          -> Oban wakeup with event_id
+          -> CMS.deliver_outbox(:comment, job)
+          -> Comment outbox workflow and downstream effects
   """
   use Oban.Worker,
     queue: :cloudflare_purge,

@@ -1,8 +1,13 @@
 defmodule GroupherServer.Jobs.CMSOutboxInteraction do
   @moduledoc """
-  Oban entrypoint for Interaction outbox delivery.
+  Routes committed Interaction outbox wakeups to the CMS delivery workflow.
+  The worker is a typed queue boundary; event leasing and durable effect
+  handling stay within CMS.
 
-      caller -> GroupherServer.Jobs.CMSOutboxInteraction -> result
+      Interaction command commits event
+          -> Oban wakeup with event_id
+          -> CMS.deliver_outbox(:interaction, job)
+          -> Interaction outbox workflow and downstream effects
   """
   use Oban.Worker,
     queue: :cms_outbox,

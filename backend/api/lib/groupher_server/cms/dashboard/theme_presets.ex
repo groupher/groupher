@@ -64,6 +64,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
     end
   end
 
+  @doc "Selects an existing custom theme for a community or dashboard row."
   @spec select(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   def select(%Community{} = community, %{theme_preset: :custom} = args) do
     with {:ok, dashboard} <- Persist.get_or_insert_dashboard(community) do
@@ -83,7 +84,6 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
     end
   end
 
-  @doc "Selects a theme preset on a community or an existing dashboard row."
   def select(%Community{} = community, args) do
     with {:ok, dashboard} <- Persist.get_or_insert_dashboard(community) do
       select(dashboard, args)

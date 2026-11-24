@@ -17,11 +17,11 @@ defmodule Helper.Cache.Config do
 
   defstruct pool: Keyword.get(@cache_config, :pool, %{})
 
+  @doc "Returns a config struct populated from the compile-time `:cache` settings."
   @spec base() :: t()
-  @doc "Runs `base` through the public `Config` boundary."
   def base, do: %__MODULE__{}
 
+  @doc "Returns the configured map of named pool settings, or an empty map when none are configured."
   @spec pool() :: map()
-  @doc "Runs `pool` through the public `Config` boundary."
   def pool, do: base().pool
 end

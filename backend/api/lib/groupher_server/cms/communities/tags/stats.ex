@@ -104,6 +104,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
     end
   end
 
+  @doc "Recomputes the stored usage statistic for a tag from its trackable Articles."
   @spec rebuild(CommunityTag.t() | T.id()) :: T.domain_res(CommunityTagStat.t())
   def rebuild(tag) do
     with {:ok, tag} <- ensure_tag(tag) do
@@ -116,6 +117,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
 
   defp trackable_tag?(%CommunityTag{thread: thread}), do: thread in @tracked_threads
 
+  @doc "Rebuilds usage statistics for all tracked tags in a Community thread."
   @spec rebuild_for_community(Community.t() | String.t(), atom()) :: T.domain_res(:pass)
   def rebuild_for_community(community, thread \\ @default_thread)
 
@@ -182,6 +184,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
     )
   end
 
+  @doc "Loads a tag statistic by tag struct or ID."
   @spec get(CommunityTag.t() | T.id()) :: T.domain_res(CommunityTagStat.t())
   def get(tag) do
     with {:ok, tag} <- ensure_tag(tag) do
@@ -192,6 +195,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
     end
   end
 
+  @doc "Loads a tag statistic by Community reference, thread, and tag slug."
   @spec get(String.t(), atom(), String.t()) :: T.domain_res(CommunityTagStat.t())
   def get(community, thread, slug) do
     with {:ok, tag} <- FrontDesk.community_tag(community, thread, slug) do

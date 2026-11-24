@@ -20,9 +20,11 @@ defmodule Helper.Guardian.BrowserAccess do
 
   @access_ttl_seconds 30 * 60
 
+  @doc "Uses the resource id as the string subject for a signed token."
   @impl true
   def subject_for_token(resource, _claims), do: {:ok, to_string(resource.id)}
 
+  @doc "Returns an id-only resource from the subject claim without looking up an account."
   @impl true
   def resource_from_claims(claims), do: {:ok, %{id: claims["sub"]}}
 
@@ -57,7 +59,7 @@ defmodule Helper.Guardian.BrowserAccess do
     end
   end
 
-  @doc "Reports whether claims? according to `BrowserAccess`."
+  @doc "Checks the browser issuer, audience, token type and non-empty binary session id; does not verify a signature."
   def valid_claims?(claims) do
     claims["iss"] == Auth.phoenix_token_issuer() and
       claims["aud"] == Auth.phoenix_token_audience() and
@@ -65,7 +67,7 @@ defmodule Helper.Guardian.BrowserAccess do
       claims["sid"] != ""
   end
 
-  @doc "Runs `expires_at` through the public `BrowserAccess` boundary."
+  @doc "Returns the earlier of the 30-minute access deadline and the session deadline, using second precision for the remaining lifetime."
   def expires_at(session_absolute_expires_at, now \\ DateTime.utc_now()) do
     DateTime.add(
       now,

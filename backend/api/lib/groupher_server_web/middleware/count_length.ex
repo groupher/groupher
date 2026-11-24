@@ -18,6 +18,7 @@ defmodule GroupherServerWeb.Middleware.CountLength do
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function
 
+  @doc "Replaces a successfully resolved list with its length."
   def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 
   def call(%{value: []} = resolution, _) do

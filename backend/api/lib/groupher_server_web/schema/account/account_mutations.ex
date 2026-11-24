@@ -16,7 +16,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
   use Helper.GqlSchemaSuite
 
   object :account_mutations do
-    @desc "Redeem a bounded acceptance credential for canonical Auth only."
+    @desc "Exchange an acceptance credential for a browser session through the Auth service."
     field :redeem_production_seed_login, :browser_signin_result do
       arg(:credential, non_null(:string))
       arg(:browser_session, :browser_session_metadata_input)
@@ -24,7 +24,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.redeem_production_seed_login/3)
     end
 
-    @desc "Records one visible public Profile read through ProfileViewTracker"
+    @desc "Evaluate a public profile visit and return whether it counted and the resulting view total."
     field :track_profile_view, non_null(:profile_view_track_result) do
       arg(:login, non_null(:string))
 
@@ -37,7 +37,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.ProfileViewTracker.track_profile_view/3)
     end
 
-    @desc "update user's profile"
+    @desc "Update the signed-in user's profile and optional social details."
     field :update_profile, :user do
       arg(:profile, non_null(:user_profile_input))
       arg(:social, :social_input)
@@ -46,7 +46,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Profiles.update_profile/3)
     end
 
-    @desc "Sign in with an OAuth provider and return token info."
+    @desc "Sign in through the Auth service with an OAuth identity and return browser session credentials."
     field :signin_oauth, :browser_signin_result do
       arg(:provider, non_null(:oauth_provider_input))
       arg(:browser_session, :browser_session_metadata_input)
@@ -55,7 +55,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.signin_oauth/3)
     end
 
-    @desc "Refresh a persisted Browser Session for canonical Auth only."
+    @desc "Issue a fresh access token for an active browser session through the Auth service."
     field :refresh_browser_session, :browser_signin_result do
       arg(:browser_session_ref, non_null(:string))
 
@@ -63,7 +63,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.refresh_browser_session/3)
     end
 
-    @desc "Revoke the current persisted Browser Session for canonical Auth only."
+    @desc "Revoke the browser session identified by its Auth service session reference."
     field :revoke_browser_session, :done do
       arg(:browser_session_ref, non_null(:string))
 
@@ -71,7 +71,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.revoke_browser_session/3)
     end
 
-    @desc "Revokes a browser session identified by its public reference through Auth."
+    @desc "Revoke another session on the same account by its public reference."
     field :revoke_browser_session_public, :done do
       arg(:browser_session_ref, non_null(:string))
       arg(:public_ref, non_null(:string))
@@ -80,7 +80,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.revoke_browser_session_public/3)
     end
 
-    @desc "Revokes the other browser sessions while retaining the current session."
+    @desc "Revoke the account's other browser sessions and keep the current session."
     field :revoke_other_browser_sessions, :done do
       arg(:browser_session_ref, non_null(:string))
 
@@ -88,7 +88,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.revoke_other_browser_sessions/3)
     end
 
-    @desc "Link a verified OAuth identity through canonical Auth."
+    @desc "Link a verified provider identity to the signed-in user and return the updated bindings."
     field :link_oauth_identity, non_null(:linked_oauth_accounts) do
       arg(:identity, non_null(:verified_oauth_identity_input))
 
@@ -100,7 +100,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.link_oauth_identity/3)
     end
 
-    @desc "Unlink one OAuth binding through canonical Auth."
+    @desc "Remove the specified OAuth binding and return the remaining bindings."
     field :unlink_oauth_identity, non_null(:linked_oauth_accounts) do
       arg(:public_ref, non_null(:id))
 
@@ -112,7 +112,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.unlink_oauth_identity/3)
     end
 
-    @desc "follow a user"
+    @desc "Follow the user identified by login."
     field :follow, :user do
       arg(:login, non_null(:string))
 
@@ -121,7 +121,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Relationships.follow/3)
     end
 
-    @desc "unfollow a user"
+    @desc "Stop following the user identified by login."
     field :undo_follow, :user do
       arg(:login, non_null(:string))
 
@@ -130,7 +130,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Relationships.undo_follow/3)
     end
 
-    @desc "create a collect folder"
+    @desc "Create a collection folder for the signed-in user."
     field :create_collect_folder, :collect_folder do
       arg(:title, non_null(:string))
       arg(:private, :boolean)
@@ -140,7 +140,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Relationships.create_collect_folder/3)
     end
 
-    @desc "update a collect folder"
+    @desc "Change a collection folder's title, description, or privacy setting."
     field :update_collect_folder, :collect_folder do
       arg(:id, non_null(:id))
       arg(:title, :string)
@@ -151,7 +151,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Relationships.update_collect_folder/3)
     end
 
-    @desc "delete a collect folder"
+    @desc "Delete the collection folder identified by its ID."
     field :delete_collect_folder, :collect_folder do
       arg(:id, non_null(:id))
 
@@ -159,7 +159,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Relationships.delete_collect_folder/3)
     end
 
-    @desc "add article into a collect folder"
+    @desc "Add the specified article to a collection folder and return the collection result."
     field :add_to_collect, :article_collect_result do
       arg(:article, non_null(:article_path_input))
       arg(:folder_id, non_null(:id))
@@ -171,7 +171,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Relationships.add_to_collect/3)
     end
 
-    @desc "remove article from a collect folder"
+    @desc "Remove the specified article from a collection folder and return the collection result."
     field :remove_from_collect, :article_collect_result do
       arg(:article, non_null(:article_path_input))
       arg(:folder_id, non_null(:id))
@@ -183,7 +183,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Relationships.remove_from_collect/3)
     end
 
-    @desc "mark a message as read"
+    @desc "Mark the selected mentions or notifications in the viewer's mailbox as read."
     field :mark_read, :done do
       arg(:ids, list_of(:id))
       arg(:type, :mailbox_type, default_value: :mention)
@@ -192,7 +192,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Mailbox.mark_read/3)
     end
 
-    @desc "mark all unread message as read"
+    @desc "Mark all messages of the selected type in the viewer's mailbox as read."
     field :mark_read_all, :done do
       arg(:type, :mailbox_type, default_value: :mention)
 

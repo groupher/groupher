@@ -36,6 +36,7 @@ defmodule GroupherServer.Support.Factory do
   use GroupherServer.Support.Factory.Articles
   use GroupherServer.Support.Factory.Oauth
 
+  @doc "Builds rich-text fixtures containing an escaped safe sample or an untrusted script tag."
   def mock_xss_string(text \\ "blackmail")
 
   def mock_xss_string(:safe) do
@@ -46,6 +47,7 @@ defmodule GroupherServer.Support.Factory do
     mock_rich_text("<script>alert(#{text})</script>")
   end
 
+  @doc "Builds comment fixture attributes with Plate JSON and a padded plain-text body."
   def mock_comment(text \\ "comment") do
     json = GroupherServer.Support.Factory.Articles.comment_rich_text(text)
     plain_text = String.pad_trailing(text, 10)
@@ -145,6 +147,7 @@ defmodule GroupherServer.Support.Factory do
     }
   end
 
+  @doc "Builds default attributes for a supported fixture kind and merges caller overrides."
   def mock_attrs(_, attrs \\ %{})
   def mock_attrs(:user, attrs), do: mock_meta(:user) |> Map.merge(attrs)
   def mock_attrs(:author, attrs), do: mock_meta(:author) |> Map.merge(attrs)
@@ -170,6 +173,7 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_attrs(thread, attrs), do: mock_meta(thread) |> Map.merge(attrs)
 
+  @doc "Resolves the Community for an Article projection using its community database id."
   def article_binding(%{community_id: community_id}) do
     GroupherServer.Repo.get!(Community, community_id)
   end
@@ -369,6 +373,7 @@ defmodule GroupherServer.Support.Factory do
     |> then(&"#{&1}-#{unique_num}")
   end
 
+  @doc "Inserts `count` fixtures sequentially, optionally sleeping between inserts, then returns the inserted values."
   def db_insert_multi(factory_name, count, delay \\ 0) do
     results =
       Enum.reduce(1..count, [], fn _, acc ->
@@ -406,6 +411,7 @@ defmodule GroupherServer.Support.Factory do
     @images |> Enum.slice(0, count)
   end
 
+  @doc "Persists a post mention fixture from one user to another through Messaging."
   def mock_mention_for(user, from_user) do
     {:ok, post} = db_insert(:post)
 
@@ -426,6 +432,7 @@ defmodule GroupherServer.Support.Factory do
     Messaging.send_mention(post, mention_contents, from_user)
   end
 
+  @doc "Persists an upvote notice fixture for a generated post through Messaging."
   def mock_notification_for(user, from_user) do
     {:ok, post} = db_insert(:post)
 
@@ -441,6 +448,7 @@ defmodule GroupherServer.Support.Factory do
     Messaging.send_notice(notify_attrs, from_user)
   end
 
+  @doc "Creates a user and community fixture and returns the Communities create result."
   def mock_community do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
@@ -448,15 +456,14 @@ defmodule GroupherServer.Support.Factory do
     CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
   end
 
+  @doc "Creates a community fixture for the supplied user, merging caller attributes over defaults."
   def mock_community(%User{} = user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user}) |> Map.merge(attrs)
 
     CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
   end
 
-  @doc """
-  mock article with default output format
-  """
+  @doc "Creates a user, community, and published Article fixture; returns `{community, article, attrs, user}`."
   def mock_article(thread) do
     {:ok, user} = db_insert(:user)
 
@@ -475,9 +482,11 @@ defmodule GroupherServer.Support.Factory do
     {community, article, attrs, user}
   end
 
+  @doc "Creates a published Article fixture and returns `{community, article, attrs, user}`."
+  def mock_article(thread, opts)
+
   def mock_article(thread, preload: []), do: mock_article(thread)
 
-  @doc "Creates one stable Article projection; requested public bindings are already materialized."
   def mock_article(thread, preload: preload) do
     {community, article, attrs, user} = mock_article(thread)
 
@@ -489,6 +498,7 @@ defmodule GroupherServer.Support.Factory do
     {community, article, attrs, user}
   end
 
+  @doc "Creates a published Article fixture in an existing community for the supplied author."
   def mock_article(thread, %Community{} = community, %User{} = user) do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
 

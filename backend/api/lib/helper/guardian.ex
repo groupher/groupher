@@ -19,27 +19,29 @@ defmodule Helper.Guardian do
 
   @token_expiration 24 * 30
   @legacy_issuer "groupher_server"
+  @doc "Uses the resource id as the string subject for a signed token."
   @spec subject_for_token(atom | %{id: any}, any) :: {:ok, binary}
   @impl true
   def subject_for_token(resource, _claims) do
     {:ok, to_string(resource.id)}
   end
 
+  @doc "Returns an id-only resource from the subject claim without looking up an account."
   @spec resource_from_claims(nil | keyword | map) :: {:ok, %{id: any}}
   @impl true
   def resource_from_claims(claims) do
     {:ok, %{id: claims["sub"]}}
   end
 
-  @spec jwt_encode(any, map) :: {:error, any} | {:ok, binary, map}
   @doc "Encodes a legacy Groupher access token."
+  @spec jwt_encode(any, map) :: {:error, any} | {:ok, binary, map}
   def jwt_encode(source, args \\ %{}) do
     encode_and_sign(source, args, ttl: {@token_expiration, :hour})
   end
 
   # jwt_decode
-  @spec jwt_decode(binary) :: {:error, any} | {:ok, any, map}
   @doc "Decodes a token only when its legacy access claims match this boundary."
+  @spec jwt_decode(binary) :: {:error, any} | {:ok, any, map}
   def jwt_decode(token) do
     with {:ok, claims} <- decode_and_verify(token),
          true <- valid_legacy_claims?(claims),

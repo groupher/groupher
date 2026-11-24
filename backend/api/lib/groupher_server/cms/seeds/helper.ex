@@ -49,6 +49,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     end)
   end
 
+  @doc "Creates the configured seed tags for one community thread as the seed bot."
   def create_tags(%Community{} = community, %{slug: slug}, bot, type) do
     {:ok, thread} = Threads.to_atom(slug)
 
@@ -62,6 +63,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   # create tags end
 
+  @doc "Assigns the matching category to supplied communities; the editor type selects the tools category."
   def categorify_communities(communities, categories, :editor) do
     categorify_communities(communities, categories, :tools)
   end
@@ -82,6 +84,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   # seed community end
 
+  @doc "Creates the configured categories only when the category table is empty, then lists them."
   def seed_categories_ifneed(bot) do
     with true <- empty_in_db?(Category) do
       {:ok, author} = Persist.ensure_author_exists(bot)
@@ -96,6 +99,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     CMS.Communities.Query.categories()
   end
 
+  @doc "Upserts a development user whose login and nickname are derived from the supplied name."
   def seed_user(name) do
     nickname = name
     login = name
@@ -104,6 +108,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     User |> ORM.upsert_by([login: login], ~m(nickname avatar login)a)
   end
 
+  @doc "Upserts and returns the shared development seed-bot account."
   def seed_bot do
     nickname = "seed_bot_v2"
     login = "seed_bot_v2"
@@ -112,11 +117,13 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     User |> ORM.upsert_by([login: login], ~m(nickname avatar login)a)
   end
 
+  @doc "Returns whether the queryable has no persisted rows, for seed idempotency checks."
   # check is the seeds alreay runed
   def empty_in_db?(queryable) do
     not Repo.exists?(queryable)
   end
 
+  @doc "Inserts a configured seed community and selects its type-specific logo asset."
   def insert_community(bot, slug, type) do
     type = Atom.to_string(type)
     ext = if Enum.member?(SeedsConfig.svg_icons(), slug), do: "svg", else: "png"

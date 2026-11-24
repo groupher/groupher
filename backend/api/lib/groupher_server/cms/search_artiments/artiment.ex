@@ -104,6 +104,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
     "ARTICLE:#{encode_thread(thread)}:#{community_ref}:#{article_id}"
   end
 
+  @doc "Builds the stable search object reference for a Comment within an Article."
   @spec comment_ref(thread(), Ecto.UUID.t(), non_neg_integer()) :: String.t()
   def comment_ref(thread, article_id, comment_inner_id) do
     "COMMENT:#{encode_thread(thread)}:#{article_id}:#{comment_inner_id}"

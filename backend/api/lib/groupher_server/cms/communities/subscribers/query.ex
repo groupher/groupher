@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Communities.Subscribers.Query do
   alias Helper.ORM.Pagi.{Order}
   alias Pagi.Params
 
+  @doc "Pages subscribers for a Community reference, applying viewer-specific fields when present."
   @spec page(Community.t(), map(), Params.t() | nil, User.t() | nil) :: tuple()
   def page(community, filter, pagi, viewer \\ nil)
 

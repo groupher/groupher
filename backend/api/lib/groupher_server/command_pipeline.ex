@@ -125,6 +125,7 @@ defmodule GroupherServer.CommandPipeline do
     clauses =
       Enum.map(contracts, fn contract ->
         quote do
+          @doc "Returns the compiled pipeline contract for this declared command function."
           def __pipeline_contract__(unquote(contract.name)), do: unquote(Macro.escape(contract))
         end
       end)
@@ -199,6 +200,7 @@ defmodule GroupherServer.CommandPipeline do
         stages: unquote(Enum.map(stages, &elem(&1, 0)))
       }
 
+      @doc "Executes this command using its declared receipt or direct pipeline stages."
       def unquote(name)(unquote_splicing(args)) do
         contract = __pipeline_contract__(unquote(name))
         input = Runner.build_input(unquote(args_map), contract)

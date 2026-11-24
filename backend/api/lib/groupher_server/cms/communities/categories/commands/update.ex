@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Update do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Updates a category through the retry-safe command pipeline."
   @spec execute(String.t(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
   def execute(community_ref, %{id: id} = attrs, %User{} = actor, command_id) do
     case Support.community(community_ref) do

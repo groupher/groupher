@@ -52,6 +52,7 @@ defmodule GroupherServer.Messaging.Model.Notification do
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Casts a legacy Notification row and validates required recipient and embedded actor data."
   def changeset(%Notification{} = mention, attrs) do
     mention
     |> cast(attrs, @optional_fields ++ @required_fields)

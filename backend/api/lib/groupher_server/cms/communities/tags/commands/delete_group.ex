@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.DeleteTagGroup do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Deletes a tag group from a Community thread through the command pipeline."
   @spec execute(Community.t(), atom(), T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(CommunityTagGroup.t())
   def execute(community, thread, id, %User{} = actor, command_id) do

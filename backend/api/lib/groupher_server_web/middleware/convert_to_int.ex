@@ -20,6 +20,7 @@ defmodule GroupherServerWeb.Middleware.ConvertToInt do
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function
 
+  @doc "Unwraps a singleton result list or maps an empty list to zero on success."
   def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 
   def call(%{value: [value]} = resolution, _) do

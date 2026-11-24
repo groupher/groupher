@@ -65,23 +65,28 @@ pnpm devhub articles create --run coauthor-demo --as owner \
   --community coauthor-demo --thread post --key primary
 ```
 
-This creates a real unpublished Post and its default WorkingCopy through the existing Dash Content
-Publisher and Phoenix `CreateArticle` Command. The tool uses a fresh temporary browser session and
-attempts normal logout before closing it; existing actor browser profiles are not changed. The owner
-must be a registered active run identity and already an Admin of the explicit community. No management
-permissions are added by the create command. Only `--thread post` is supported in this first version.
+By default, this creates a real unpublished Post and its default WorkingCopy through the existing Dash
+Content Publisher and Phoenix `CreateArticle` Command. Add `--publish` to create and publish the Post
+atomically through the Content Publisher's `article.create_and_publish` action and Phoenix Command.
+The tool uses a fresh temporary browser session and attempts normal logout before closing it; existing
+actor browser profiles are not changed. The owner must be a registered active run identity and already
+an Admin of the explicit community. No management permissions are added by the create command. Only
+`--thread post` is supported in this first version.
 
 The response contains `articleId`, `workingCopyId`, `revision`, `ownerLogin`, `community`, `communityRef`,
-`thread` and `key`. Use **articleId**, not the WorkingCopy UUID, with Article permission commands.
-Phoenix checks the canonical Author user ID, Binding, default WorkingCopy and the initial creation
-Snapshot's causation commandId before recording a successful fixture.
+`thread`, `key`, `publish` and `snapshotId` (null for a draft). A published Article is visible in Posts.
+Use **articleId**, not the WorkingCopy UUID, with Article permission commands. Phoenix checks the
+canonical Author user ID, Binding, default WorkingCopy and the initial creation Snapshot's causation
+commandId before recording a successful fixture. Published fixtures also verify the publish event,
+Snapshot provenance and current public Snapshot.
 
 The fixture identity is run + owner alias + immutable Community ref + thread + key. Omitted key is
 `primary`; use distinct keys for multiple Articles. `--title` and `--markdown` optionally customize the
-initial content. Preparing an intent persists its commandId and input digest before calling Publisher.
-Retry with the same arguments recovers that command; once confirmed it reads the current canonical
-WorkingCopy without rewriting edited content. Changing inputs under an existing key is rejected;
-a missing or unrelated Article is not silently adopted or recreated.
+initial content. The publish mode is part of the intent digest, so changing publish mode, title or
+Markdown under an existing key is rejected. Preparing an intent persists its commandId and input digest
+before calling Publisher. Retry with the same arguments recovers that command; once confirmed it reads
+the current canonical WorkingCopy without rewriting edited content. A missing or unrelated Article is
+not silently adopted or recreated.
 
 `actors clean` reports `article_fixtures_retained`, including confirmed IDs and pending intents.
 Cleanup retains Article content and history under the existing policy; it can archive the run-owned
@@ -144,6 +149,37 @@ screenshot under `.playwright/`. `--headless` is available for a local acceptanc
 pnpm devhub actors close --run coauthor-demo
 ```
 
+### Bounded UI actions
+
+`actors ui` operates only an already-open profile for the named run and alias. Each call first asks
+Phoenix to recheck that actor's active identity and access to the selected Community. Dash actions
+require the normal Community Admin admission; Community actions require the normal read scope. Use
+the corresponding app profile for each actor.
+
+```bash
+pnpm devhub actors ui --run coauthor-demo --as owner --community coauthor-demo \
+  --app dash --op snapshot
+pnpm devhub actors ui --run coauthor-demo --as owner --community coauthor-demo \
+  --app dash --op navigate --path /coauthor-demo/docs
+pnpm devhub actors ui --run coauthor-demo --as owner --community coauthor-demo \
+  --app dash --op click --role button --name Save
+pnpm devhub actors ui --run coauthor-demo --as owner --community coauthor-demo \
+  --app dash --op fill --role textbox --name Title --value 'Updated title'
+pnpm devhub actors ui --run coauthor-demo --as owner --community coauthor-demo \
+  --app dash --op press --key Enter
+pnpm devhub actors ui --run coauthor-demo --as owner --community coauthor-demo \
+  --app dash --op assert-text --text 'Saved'
+```
+
+`snapshot` returns at most 4,000 characters of visible page text and 4,000 characters of accessible
+control summaries; it omits form values. `click` and `fill` require an exact accessible role/name and
+exactly one matching control. Link clicks validate the href before navigation, then every operation
+checks that the resulting page stays on the selected app origin and either the selected Community
+route or `/home`. `navigate` accepts a path only; absolute URLs, query/hash values, other Communities,
+and traversal segments are rejected. `press` accepts only Enter, Tab, Escape, arrow keys, Backspace,
+Delete, Home and End. The interface has no arbitrary selector, script evaluation, cookie/storage,
+header or network inspection. It does not expose an HTTP listener.
+
 Close revokes all sessions for that run's accounts, closes their browsers and seals the run. Existing
 cookies then fail normal session validation. Accounts, permissions, communities, requests and history
 are retained; physical deletion is not part of close. A new run is required after closure. Runs do
@@ -179,15 +215,16 @@ pnpm --filter @groupher/local-dev-hub test:local-actors --clean
 
 ## Diagnose failures
 
-| Result                        | Action                                                                                            |
-| ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| Fixture route 404             | Confirm the development runtime and restart Phoenix through Hub. Production must stay 404.        |
-| Local access denied           | Restart Hub and affected services to receive matching private configuration. Never print the key. |
-| Environment/database required | Repair the real local target. No override is supported.                                           |
-| Actor unavailable             | Check run/alias, registration and whether the run is closed.                                      |
-| Community Admin required      | Grant the intended scoped membership explicitly, or use Community mode for an ordinary account.   |
-| Permission dependency missing | Supply the complete intended set from Catalog; no automatic elevation.                            |
-| Login succeeds, Dash fails    | Check the viewer, Dash service identity, GraphQL path and actual resource admission separately.   |
+| Result                               | Action                                                                                                                                                                                                                |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fixture route 404                    | Confirm the development runtime and restart Phoenix through Hub. Production must stay 404.                                                                                                                            |
+| Local access denied                  | Restart Hub and affected services to receive matching private configuration. Never print the key.                                                                                                                     |
+| Environment/database required        | Repair the real local target. No override is supported.                                                                                                                                                               |
+| Actor unavailable                    | Check run/alias, registration and whether the run is closed.                                                                                                                                                          |
+| Community Admin required             | Grant the intended scoped membership explicitly, or use Community mode for an ordinary account.                                                                                                                       |
+| Permission dependency missing        | Supply the complete intended set from Catalog; no automatic elevation.                                                                                                                                                |
+| Login succeeds, Dash fails           | Check the viewer, Dash service identity, GraphQL path and actual resource admission separately.                                                                                                                       |
+| Viewer query HTTP/JSON/GraphQL error | Check the selected app's logs before diagnosing account identity. A 204 login does not prove `/api/graphql` is healthy; after dependency changes, restart an app through Hub if logs show stale missing module paths. |
 
 For existing content acceptance use `/home/xx`. For new-community acceptance use the community just
 created by the command. Keep screenshots in `.playwright/`. Never put cookies, session refs, private

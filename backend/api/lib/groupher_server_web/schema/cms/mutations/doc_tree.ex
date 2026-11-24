@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
   import GroupherServerWeb.Schema.Helper.Mutations
 
   object :cms_doc_tree_mutations do
+    @desc "Restore a saved Doc snapshot into an editable working copy."
     field :restore_docs_snapshot, :docs_begin_edit_result do
       arg(:community, non_null(:string))
       arg(:article_id, non_null(:id))
@@ -26,6 +27,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.Docs.restore_docs_snapshot/3)
     end
 
+    @desc "Change approval requirements for the Docs publish queue."
     field :configure_docs_queue, :json do
       arg(:community, non_null(:string))
       arg(:approval_policy_revision, non_null(:integer))

@@ -15,12 +15,14 @@ defmodule GroupherServer.CMS.Articles.PinPersist do
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Model.{Article, ArticleBinding, Community, PinnedArticle}
 
+  @doc "Locks a Community row to serialize pin operations and capacity checks."
   def lock_community(community_id) do
     Repo.one(
       from(community in Community, where: community.id == ^community_id, lock: "FOR UPDATE")
     )
   end
 
+  @doc "Counts pinned Articles in a Community for the requested thread."
   def count(community_id, thread) do
     Repo.aggregate(
       from(pin in PinnedArticle,
@@ -31,6 +33,7 @@ defmodule GroupherServer.CMS.Articles.PinPersist do
     )
   end
 
+  @doc "Creates or returns the pin for an existing Article Binding in the caller transaction."
   def insert(%Article{} = article, %Community{} = community) do
     case Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id) do
       %ArticleBinding{} = binding -> upsert(binding, community, article.thread)
@@ -38,6 +41,7 @@ defmodule GroupherServer.CMS.Articles.PinPersist do
     end
   end
 
+  @doc "Deletes the pin for an Article in a Community, returning an error when none exists."
   def delete(article_id, community_id) do
     query =
       from(pin in PinnedArticle,

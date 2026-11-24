@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, ArticleBinding, Community, PinnedArticle}
 
+  @doc "Loads an Article by stable ID through the internal FrontDesk boundary."
   def load_article(article_id) when is_binary(article_id) do
     case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
@@ -21,6 +22,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
     end
   end
 
+  @doc "Rejects Binding commands for Docs and Tickets while accepting ordinary Article threads."
   def ensure_ordinary(%Article{thread: :doc}), do: {:error, :unsupported_for_doc}
 
   def ensure_ordinary(%Article{thread: :ticket}) do
@@ -29,6 +31,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
 
   def ensure_ordinary(%Article{}), do: {:ok, :supported}
 
+  @doc "Freezes the Binding command identity used for Receipt confirmation and replay."
   def confirmation(article, community, command_id) do
     %BindingConfirmation{
       data: %{
@@ -39,6 +42,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
     }
   end
 
+  @doc "Rehydrates the committed Binding result from a Binding Confirmation."
   def present_binding({:ok, %BindingConfirmation{data: data}}) do
     case Bindings.fetch_binding(data["article_id"], data["community_id"]) do
       {:ok, %ArticleBinding{} = binding} ->
@@ -51,6 +55,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
 
   def present_binding(error), do: error
 
+  @doc "Rehydrates the Article result from a Binding Confirmation."
   def present_article({:ok, %BindingConfirmation{data: data}}) do
     case FrontDesk.article(data["article_id"], mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, Map.put(article, :command_id, data["command_id"])}
@@ -60,6 +65,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
 
   def present_article(error), do: error
 
+  @doc "Rehydrates the pinned Article result from a Binding Confirmation."
   def present_pin({:ok, %BindingConfirmation{data: data}}) do
     case Bindings.fetch_pin(data["article_id"], data["community_id"]) do
       {:ok, %PinnedArticle{} = pin} ->
@@ -72,9 +78,11 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
 
   def present_pin(error), do: error
 
+  @doc "Converts a successful Binding Confirmation into the command's done result."
   def present_done({:ok, %BindingConfirmation{}}), do: {:ok, :done}
   def present_done(error), do: error
 
+  @doc "Records a visibility-change Outbox intent when the persisted Binding has an assigned community identity."
   def invalidate_scope(_community, %{inner_id: inner_id}, _thread, _operation_ref)
       when not is_integer(inner_id) do
     {:ok, :pass}

@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Delete do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Deletes a category from the Community through its command pipeline."
   @spec execute(String.t(), T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
   def execute(community_ref, id, %User{} = actor, command_id) do
     case Support.community(community_ref) do

@@ -68,7 +68,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Save do
 
   def save(_, _, _, _, _, _, _, _), do: {:error, :invalid_queue_member}
 
-  @doc false
+  @doc "Locks and validates one Doc Queue member and its working-copy revision for saving."
   def lock_member(community, queue, article_id, work_revision) do
     article = Repo.one(from(a in Article, where: a.id == ^article_id, lock: "FOR UPDATE"))
 

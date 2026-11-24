@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.CommandPipelineAdapter do
   alias CMS.Gate.Decision
   alias CommandPipeline.{Rejected, RejectionLog}
 
+  @doc "Accepts generic contracts and supported CMS contracts, rejecting CMS open-access contracts."
   @impl true
   def validate_contract(%{module: module, access: :open}) do
     if cms_module?(module) do
@@ -28,9 +29,11 @@ defmodule GroupherServer.CMS.CommandPipelineAdapter do
 
   def validate_contract(_contract), do: {:ok, :pass}
 
+  @doc "Delegates command-id validation to the CMS receipt boundary."
   @impl true
   def validate_command_id(command_id), do: CommandReceipt.validate_command_id(command_id)
 
+  @doc "Executes the callback within a CMS receipt and normalizes pipeline rejections."
   @impl true
   def execute_receipt(_module, contract, input, command_id, callback) do
     command = %Command{
@@ -42,7 +45,9 @@ defmodule GroupherServer.CMS.CommandPipelineAdapter do
     }
 
     Command.execute(command,
-      action: fn context -> normalize_receipt_result(callback.(context.operation_ref), context) end,
+      action: fn context ->
+        normalize_receipt_result(callback.(context.operation_ref), context)
+      end,
       confirmation: contract.confirmation
     )
   end
@@ -56,6 +61,7 @@ defmodule GroupherServer.CMS.CommandPipelineAdapter do
 
   defp normalize_receipt_result(result, _context), do: result
 
+  @doc "Converts denied Gate decisions into command-pipeline rejection values."
   @impl true
   def normalize_gate_result({:error, %Decision{allowed: false} = decision}) do
     {:error, Rejected.new(Decision.primary_reason(decision), Decision.primary_error(decision))}
@@ -63,6 +69,7 @@ defmodule GroupherServer.CMS.CommandPipelineAdapter do
 
   def normalize_gate_result(result), do: result
 
+  @doc "Maps transient database contention to pending and returns other transaction errors unchanged."
   @impl true
   def normalize_transaction_error(%Postgrex.Error{postgres: %{code: code}} = reason)
       when code in [:lock_not_available, :query_canceled] do
@@ -75,12 +82,15 @@ defmodule GroupherServer.CMS.CommandPipelineAdapter do
 
   def normalize_transaction_error(reason), do: reason
 
+  @doc "Normalizes an activity source using the Activity boundary."
   @impl true
   def normalize_source(source), do: Activity.const_normalize_source(source)
 
+  @doc "Checks whether the Activity boundary recognizes a source."
   @impl true
   def valid_source?(source), do: Activity.const_valid_source?(source)
 
+  @doc "Persists a command rejection as an Activity event in a transaction."
   @impl true
   def record_rejection(%RejectionLog{} = log) do
     Repo.transaction(fn ->

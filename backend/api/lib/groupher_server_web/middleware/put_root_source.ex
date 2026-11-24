@@ -26,6 +26,7 @@ defmodule GroupherServerWeb.Middleware.PutRootSource do
   # %{resolution | arguments: arguments}
   # end
 
+  @doc "Forwards the parent object's ID to the resolver in the `:jj` argument."
   def call(%{source: %{id: id}} = resolution, _) do
     arguments = resolution.arguments |> Map.merge(%{jj: id})
 

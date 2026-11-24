@@ -7,6 +7,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.OpenGraph do
 
   alias Helper.OgInfo
 
+  @doc "Fetches Open Graph metadata for the supplied URL through the platform metadata reader."
   def open_graph_info(_root, %{url: url}, _info) do
     OgInfo.get(url)
   end

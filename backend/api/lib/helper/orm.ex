@@ -7,8 +7,8 @@ defmodule Helper.ORM do
   - Query and pagination:
     `pagi/3`, `find/2`, `find/3`, `find_by/2`, `find_by/3`, `find_all/2`, `count/1`, `count/2`
   - Create and update:
-    `create/2`, `update/2`, `update/3`, `find_update/3`, `update_by/3`,
-    `update_embed/3`, `update_embed/4`, `update_dashboard/3`
+    `create/2`, `update/2`, `update/3`, `find_update/2`, `find_update/3`, `update_by/3`,
+    `update_embed/3`, `update_embed/4`, `replace_dsb_section/3`, `merge_dsb_section/3`
   - Upsert and idempotent insert:
     `upsert_by/3`, `insert_or_ignore/3`
   - Delete operations:
@@ -339,6 +339,8 @@ defmodule Helper.ORM do
       {:ok, %Post{title: "new"}}
   """
   def find_update(queryable, id, attrs), do: do_find_update(queryable, id, attrs)
+
+  @doc "Looks up `attrs.id` and passes the full attribute map to the record's changeset before updating it."
   def find_update(queryable, %{id: id} = attrs), do: do_find_update(queryable, id, attrs)
 
   defp do_find_update(queryable, id, attrs) do
@@ -455,6 +457,7 @@ defmodule Helper.ORM do
     queryable |> Repo.aggregate(:count, prefix: prefix) |> done
   end
 
+  @doc "Returns `{:ok, count}` for the queryable without overriding its database prefix."
   def count(queryable) do
     queryable |> Repo.aggregate(:count) |> done
   end
@@ -462,8 +465,8 @@ defmodule Helper.ORM do
   @doc """
   Updates a dsb embed key.
 
-  For list-like embed keys (`:header_links`, `:footer_links`, etc), values are replaced.
-  For map-like keys, existing and incoming fields are merged.
+  Replaces the embed with the supplied value. Use `merge_dsb_section/3` to
+  preserve unspecified fields in a map-like section.
 
   ## Examples
 
@@ -497,7 +500,7 @@ defmodule Helper.ORM do
     |> Repo.update()
   end
 
-  @doc "Runs `merge_dsb_section` through the public `ORM` boundary."
+  @doc "Shallow-merges changes into the current dashboard embed (or an empty map) and persists the updated section."
   def merge_dsb_section(%CommunityDashboard{} = community_dashboard, key, args) do
     merged_args =
       community_dashboard[key] |> ensure_dsb_key_exist |> Map.merge(args) |> strip_struct

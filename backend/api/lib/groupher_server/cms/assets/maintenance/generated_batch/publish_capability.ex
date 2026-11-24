@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Assets.Maintenance.GeneratedBatch.PublishCapability
 
   @purpose "generated_image_publish"
 
+  @doc "Verifies a signed generated-image publish grant and returns its validated canonical payload."
   @spec verify(String.t()) :: {:ok, map()} | {:error, :invalid_publish_capability}
   def verify(token) when is_binary(token) do
     with {:ok, payload} <- Capability.verify(token),

@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Assets.Completeness do
   @doc "Marks a bounded backfill scope as pending."
   def mark_pending(community_id), do: upsert(community_id, %{status: :pending, completed_at: nil})
 
-  @doc false
+  @doc "Locks the community usage-completeness row, creating its initial scope when needed."
   def lock_scope(community_id) do
     with {:ok, _} <- ensure_new_scope(community_id),
          %AssetUsageCompleteness{} <-
@@ -69,7 +69,7 @@ defmodule GroupherServer.CMS.Assets.Completeness do
     })
   end
 
-  @doc false
+  @doc "Requires a completed usage backfill while holding the scope lock, otherwise returns an error."
   def guard(community_id) do
     with {:ok, _} <- lock_scope(community_id),
          true <- completed?(community_id) do

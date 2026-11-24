@@ -16,6 +16,7 @@ defmodule GroupherServerWeb.Middleware.DelegatedScope do
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
   alias GroupherServerWeb.ErrorResponse
 
+  @doc "Checks the delegated service identity against the field's scope requirements."
   @impl Absinthe.Middleware
   def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts) do
     reject(resolution, auth_error(code, "delegated user identity could not be verified"))

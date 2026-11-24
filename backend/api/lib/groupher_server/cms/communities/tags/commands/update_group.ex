@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.UpdateTagGroup do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Updates a tag group in a Community thread through the command pipeline."
   @spec execute(Community.t(), atom(), T.id(), map(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(CommunityTagGroup.t())
   def execute(community, thread, id, attrs, %User{} = actor, command_id) do

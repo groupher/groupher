@@ -24,6 +24,7 @@ defmodule GroupherServerWeb.Middleware.Analysis.MakeContribution do
 
   alias Accounts.Model.User
 
+  @doc "Records contributions for the configured user or community after successful resolution."
   def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 
   def call(%{value: nil, errors: _} = resolution, _), do: resolution

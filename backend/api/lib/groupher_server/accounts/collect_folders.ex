@@ -152,7 +152,15 @@ defmodule GroupherServer.Accounts.CollectFolders do
     |> CommandResult.build(article, user)
   end
 
-  @doc false
+  @doc """
+  Removes one binding from the folder in the caller's transaction. On success, returns
+  the updated folder and flags indicating whether the article still has entries in this
+  folder and in any folder owned by `user_id`. A missing binding entry returns an error.
+
+  ## Examples
+
+      Accounts.CollectFolders.remove_in_transaction(folder, :post, binding, user.id)
+  """
   @spec remove_in_transaction(CollectFolder.t(), atom(), ArticleBinding.t(), T.id()) ::
           T.domain_res(map())
   defdelegate remove_in_transaction(folder, thread, binding, user_id), to: Persist
