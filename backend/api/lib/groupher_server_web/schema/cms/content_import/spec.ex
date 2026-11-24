@@ -100,6 +100,7 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport.Spec do
   end
 
   input_object :content_import_source_document_input do
+    field(:overwrite_confirmed, :boolean, default_value: false)
     field(:source_ref, non_null(:string))
     field(:source_path, non_null(:string))
     field(:title, non_null(:string))

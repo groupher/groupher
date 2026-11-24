@@ -326,7 +326,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              Jobs.create(community, actor, %{
                bad_smells: [],
                dataset_ref: "dset_#{System.unique_integer([:positive])}",
-               documents: documents,
+               documents: confirm_overwrites(documents, preview),
                preview_ref: "prv_#{System.unique_integer([:positive])}",
                source_info: next_source_info,
                target_revision: preview.target_revision,
@@ -459,7 +459,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              Jobs.create(community, actor, %{
                bad_smells: [],
                dataset_ref: "dset_#{System.unique_integer([:positive])}",
-               documents: documents,
+               documents: confirm_overwrites(documents, preview),
                preview_ref: "prv_#{System.unique_integer([:positive])}",
                source_info: next_source_info,
                target_revision: preview.target_revision,
@@ -617,6 +617,106 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert completed.failed_items == staged.failed_items
   end
 
+  test "review binds overwrites to selected mappings and blocks unmapped title collisions" do
+    original = document("docs/start.md", "/start")
+    %{community: site, actor: actor, job: first} = create_job([original])
+
+    assert {:ok, _} =
+             Staging.stage(site, first.job_ref, [
+               %{external_ref: original["source_ref"], body_bag: body_bag("Existing", "a")}
+             ])
+
+    assert {:ok, completed} = ContentImport.apply(site, first.job_ref)
+
+    # The old intent still replays after apply changed the workspace revision and added the mapping.
+    record = Repo.get_by!(Job, hash_id: first.job_ref)
+
+    replay = %{
+      dataset_ref: record.dataset_ref,
+      preview_ref: record.preview_ref,
+      source_info: source_info(),
+      target_tree: record.target_tree,
+      target_revision: record.target_revision,
+      documents: [original]
+    }
+
+    assert {:ok, %{status: :completed, job_ref: ref}} = Jobs.create(site, actor, replay)
+    assert ref == first.job_ref
+
+    assert {:error, %{reason: :import_intent_conflict}} =
+             Jobs.create(site, actor, %{
+               replay
+               | documents: [Map.put(original, "overwrite_confirmed", true)]
+             })
+
+    collision = document("other/start.md", "/other/start")
+    new_doc = document("docs/other.md", "/other")
+
+    assert {:ok, preview} =
+             DocValidator.preview(
+               site,
+               source_info(),
+               source_tree([original, collision, new_doc])
+             )
+
+    pages = DocValidator.page_targets(preview.target_tree)
+    assert pages["docs/start.md"]["disposition"] == "overwrite"
+    assert pages["other/start.md"]["disposition"] == "create"
+    assert pages["other/start.md"]["docId"] != completed.first_imported_doc_id
+
+    assert preview.conflicts == [
+             %{"sourceId" => "other/start.md", "code" => "target_identity_conflict"}
+           ]
+
+    input = %{
+      replay
+      | preview_ref: "prv_next",
+        target_tree: preview.target_tree,
+        target_revision: preview.target_revision
+    }
+
+    for docs <- [[original], [collision], [Map.put(new_doc, "overwrite_confirmed", true)]] do
+      assert {:error, %{reason: :import_intent_conflict}} =
+               Jobs.create(site, actor, %{input | documents: docs})
+    end
+
+    confirmed = Map.put(original, "overwrite_confirmed", true)
+    assert {:ok, next} = Jobs.create(site, actor, %{input | documents: [confirmed, new_doc]})
+
+    assert {:error, %{reason: :import_intent_conflict}} =
+             Jobs.create(site, actor, %{input | documents: [new_doc]})
+
+    assert {:ok, _} =
+             Staging.stage(site, next.job_ref, [
+               %{external_ref: original["source_ref"], body_bag: body_bag("Updated", "b")},
+               %{external_ref: new_doc["source_ref"], body_bag: body_bag("New", "c")}
+             ])
+
+    assert {:ok, %{counts: %{pages: 2}}} = ContentImport.apply(site, next.job_ref)
+    refute Repo.get(Article, pages["other/start.md"]["docId"])
+  end
+
+  test "apply rechecks the confirmed source mapping before replacing a working copy" do
+    documents = [document("docs/start.md", "/start")]
+    %{community: site, actor: actor, job: first} = create_job(documents)
+    body = %{external_ref: "docs/start.md", body_bag: body_bag("Original", "a")}
+    assert {:ok, _} = Staging.stage(site, first.job_ref, [body])
+    assert {:ok, result} = ContentImport.apply(site, first.job_ref)
+    %{job: next} = create_job(site, actor, documents)
+
+    assert {:ok, _} =
+             Staging.stage(site, next.job_ref, [%{body | body_bag: body_bag("Replacement", "b")}])
+
+    id = result.first_imported_doc_id
+    Repo.delete!(Repo.get_by!(ImportSourceMapping, thread_ref: id))
+    assert {:error, %{reason: :import_intent_conflict}} = ContentImport.apply(site, next.job_ref)
+
+    assert CMS.Articles.Body.document(Repo.get_by!(ArticleWorkingCopy, article_id: id)).plain_text ==
+             "Original"
+
+    assert {:ok, %{status: :ready}} = Jobs.get(site, next.job_ref)
+  end
+
   test "binds a previewRef to the original selected document hashes" do
     %{actor: actor, community: community, job: job} =
       create_job([document("docs/start.md", "/start")])
@@ -625,7 +725,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
     assert {:error,
             %ErrorCat.Error{
-              reason: :custom,
+              reason: :import_intent_conflict,
               details: "previewRef is already bound to another intent"
             }} =
              Jobs.create(community, actor, %{
@@ -648,7 +748,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
     assert {:error,
             %ErrorCat.Error{
-              reason: :custom,
+              reason: :import_intent_conflict,
               details: "previewRef is already bound to another intent"
             }} =
              Jobs.create(community, actor, %{
@@ -1005,7 +1105,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              Jobs.create(community, actor, %{
                bad_smells: [],
                dataset_ref: "dset_#{System.unique_integer([:positive])}",
-               documents: documents,
+               documents: confirm_overwrites(documents, preview),
                preview_ref: "prv_#{System.unique_integer([:positive])}",
                source_info: source_info,
                target_revision: preview.target_revision,
@@ -1013,6 +1113,15 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              })
 
     %{actor: actor, community: community, job: job}
+  end
+
+  defp confirm_overwrites(documents, preview) do
+    pages = DocValidator.page_targets(preview.target_tree)
+
+    Enum.map(documents, fn doc ->
+      confirmed = pages[doc["source_ref"]]["disposition"] == "overwrite"
+      Map.put(doc, "overwrite_confirmed", confirmed)
+    end)
   end
 
   defp source_info do

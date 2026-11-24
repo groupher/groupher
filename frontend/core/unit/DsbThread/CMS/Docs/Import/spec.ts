@@ -5,6 +5,7 @@ export type TImportPhase = (typeof PHASE)[keyof typeof PHASE]
 
 export type TImportTreeLeaf = {
   sourceId: string
+  disposition?: 'create' | 'overwrite'
   sourcePath?: string
   title: string
   type: 'link' | 'page'
@@ -68,7 +69,8 @@ export type TContentImportIssue = {
 }
 
 export type TDocImportPreview = {
-  conflicts: Array<Record<string, unknown>>
+  attemptRef?: string
+  conflicts: Array<{ sourceId: string; code: string }>
   counts: TDocImportCounts
   badSmells: TDocImportBadSmell[]
   expiresAt: string

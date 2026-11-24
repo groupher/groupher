@@ -31,7 +31,6 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:invalid_mention_type, code: 4518)
   error(:invalid_comment_link, code: 4519)
   error(:invalid_thread, code: 4520)
-  error(:target_revision_conflict, code: 4579, actions: [:reconcile])
   error(:content_import_connection_create_failed, code: 4521, retryable: true)
   error(:content_import_has_no_ready_documents, code: 4522)
   error(:content_import_staged_body_missing, code: 4523)
@@ -90,6 +89,8 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:docs_approval_not_allowed, code: 4576, actions: [:reconcile])
   error(:docs_self_approval_forbidden, code: 4577)
   error(:docs_approval_required, code: 4578, actions: [:reconcile])
+  error(:target_revision_conflict, code: 4579, actions: [:reconcile])
+  error(:import_intent_conflict, code: 4580, actions: [:reconcile])
   error(:invalid_mention_notification_event, code: 4555)
   error(:mention_url_too_long, code: 4556)
 end

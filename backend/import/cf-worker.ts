@@ -82,7 +82,7 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
           if (
             error instanceof Error &&
             'code' in error &&
-            error.code === 'target_revision_conflict'
+            (error.code === 'target_revision_conflict' || error.code === 'import_intent_conflict')
           ) {
             return { code: error.code, message: error.message }
           }
@@ -139,10 +139,16 @@ const workflowRuntime = async (env: Env): Promise<TContentImportRuntime> => {
         const instance = await env.ANALYSIS_WORKFLOW.create({ id, params: input })
         return instance.id
       },
-      async startApply(input) {
-        const id = `apply-${crypto.randomUUID()}`
-        const instance = await env.APPLY_WORKFLOW.create({ id, params: input })
-        return instance.id
+      async startApply(id, input) {
+        try {
+          await env.APPLY_WORKFLOW.create({ id, params: input })
+        } catch (error) {
+          // Concurrent or retried confirmations may already have created this ID.
+          const existing = await env.APPLY_WORKFLOW.get(id)
+            .then((instance) => instance.status())
+            .catch(() => null)
+          if (!existing || existing.status === 'unknown') throw error
+        }
       },
       status(id) {
         return workflowStatus(

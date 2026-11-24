@@ -95,7 +95,17 @@ describe('Docs import GraphQL Json variables', () => {
         targetTree: target.targetTree,
         tree,
       } satisfies TDocImportPreview,
-      analysis,
+      {
+        ...analysis,
+        documents: ['a.md', 'b.md'].map((sourceRef) => ({
+          contentHash: 'hash',
+          route: '/',
+          sizeBytes: 15,
+          sourceRef,
+          title: 'title',
+          titleSource: 'filename',
+        })),
+      },
       'dset_123',
       {
         backendToken: 'backend-token',
@@ -103,6 +113,7 @@ describe('Docs import GraphQL Json variables', () => {
         graphqlEndpoint: 'https://example.test/graphql',
         serviceSubject: 'service:content-import',
       },
+      new Set(['a.md']),
     )
     await cancelDocImport('home', 'job-1', {
       fetchImpl,
@@ -130,6 +141,10 @@ describe('Docs import GraphQL Json variables', () => {
 
     const startVariables = requests[1]!.variables as Record<string, unknown>
     expect(startVariables.datasetRef).toBe('dset_123')
+    expect(startVariables.documents).toMatchObject([
+      { sourceRef: 'a.md', overwriteConfirmed: true },
+      { sourceRef: 'b.md', overwriteConfirmed: false },
+    ])
     expect(typeof startVariables.targetTree).toBe('string')
 
     expect(requests[2]!.variables).toEqual({ community: 'home', jobRef: 'job-1' })

@@ -34,60 +34,81 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   @doc "Creates or idempotently resumes the Job bound to one confirmed Preview intent."
   @spec create(Community.t(), User.t(), map()) :: {:ok, map()} | {:error, term()}
   def create(%Community{} = community, %User{} = actor, input) when is_map(input) do
-    source_info = Map.fetch!(input, :source_info)
-    target_tree = Map.fetch!(input, :target_tree)
-    target_revision = Map.fetch!(input, :target_revision)
-    documents = Map.fetch!(input, :documents)
+    Transaction.run(fn ->
+      # The preview identity is community-scoped, including across different source connections.
+      Repo.one!(
+        from(c in Community, where: c.id == ^community.id, select: c.id, lock: "FOR UPDATE")
+      )
 
-    with {:ok, _} <-
-           DocValidator.validate_intent(community, source_info, target_tree, target_revision),
-         {:ok, item_attrs} <- build_item_attrs(documents, target_tree, source_info),
-         {:ok, connection} <- get_or_create_connection(community, source_info) do
-      Transaction.run(fn ->
-        case Repo.get_by(Job,
-               community_id: community.id,
-               preview_ref: Map.fetch!(input, :preview_ref)
-             ) do
-          %Job{} = job ->
-            resume_job(job, input, source_info, item_attrs)
+      case Repo.get_by(Job, community_id: community.id, preview_ref: input.preview_ref) do
+        %Job{actor_id: actor_id} = job when actor_id == actor.id ->
+          resume_job(job, input)
 
-          nil ->
-            attrs = %{
-              actor_id: actor.id,
-              bad_smells: Map.get(input, :bad_smells, []),
-              community_id: community.id,
-              connection_id: connection.id,
-              counts: counts(target_tree),
-              dataset_ref: Map.fetch!(input, :dataset_ref),
-              preview_ref: Map.fetch!(input, :preview_ref),
-              progress: %{
-                "bodies" => %{
-                  "pending" => length(item_attrs),
-                  "ready" => 0,
-                  "skipped" => 0,
-                  "failed" => 0,
-                  "total" => length(item_attrs)
-                }
-              },
-              source_info: source_info,
-              status: :staging,
-              target_revision: target_revision,
-              target_tree: target_tree,
-              thread: :doc
-            }
+        %Job{} ->
+          Repo.rollback(
+            ErrorCat.import_intent_conflict("previewRef is already bound to another actor")
+          )
 
-            create_new_job(attrs, item_attrs)
-        end
-      end)
-    end
+        nil ->
+          start_job(community, actor, input)
+      end
+    end)
   end
 
-  defp resume_job(job, input, source_info, item_attrs) do
-    case assert_same_job(job, input, source_info, item_attrs) do
-      {:ok, _} -> project(job)
+  defp resume_job(job, input) do
+    with {:ok, items} <- build_item_attrs(input.documents, job.target_tree, input.source_info),
+         {:ok, :pass} <- assert_same_job(job, input, input.source_info, items) do
+      project(job)
+    else
       {:error, reason} -> Repo.rollback(reason)
     end
   end
+
+  defp start_job(community, actor, %{documents: documents} = input) when is_list(documents) do
+    confirmations =
+      Map.new(documents, &{value(&1, "source_ref"), value(&1, "overwrite_confirmed") == true})
+
+    with {:ok, :pass} <-
+           DocValidator.validate_intent(
+             community,
+             input.source_info,
+             input.target_tree,
+             input.target_revision,
+             confirmations
+           ),
+         {:ok, items} <- build_item_attrs(documents, input.target_tree, input.source_info),
+         {:ok, connection} <- get_or_create_connection(community, input.source_info) do
+      attrs = %{
+        actor_id: actor.id,
+        bad_smells: Map.get(input, :bad_smells, []),
+        community_id: community.id,
+        connection_id: connection.id,
+        counts: counts(input.target_tree),
+        dataset_ref: input.dataset_ref,
+        preview_ref: input.preview_ref,
+        progress: %{
+          "bodies" => %{
+            "pending" => length(items),
+            "ready" => 0,
+            "skipped" => 0,
+            "failed" => 0,
+            "total" => length(items)
+          }
+        },
+        source_info: input.source_info,
+        status: :staging,
+        target_revision: input.target_revision,
+        target_tree: input.target_tree,
+        thread: :doc
+      }
+
+      create_new_job(attrs, items)
+    else
+      {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
+  defp start_job(_, _, _), do: Repo.rollback(ErrorCat.custom("source documents must be a list"))
 
   defp create_new_job(attrs, item_attrs) do
     with {:ok, job} <- %Job{} |> Job.changeset(attrs) |> Repo.insert(),
@@ -290,13 +311,22 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   end
 
   defp build_item(document, target, external_ref, source_hash, source_info) do
+    metadata = %{
+      "sizeBytes" => value(document, "size_bytes"),
+      "sourcePath" => value(document, "source_path")
+    }
+
+    metadata =
+      if value(document, "overwrite_confirmed") == true do
+        Map.put(metadata, "overwriteConfirmed", true)
+      else
+        metadata
+      end
+
     %{
       content_status: :pending,
       external_ref: external_ref,
-      metadata: %{
-        "sizeBytes" => value(document, "size_bytes"),
-        "sourcePath" => value(document, "source_path")
-      },
+      metadata: metadata,
       route: value(document, "route"),
       selected: true,
       slug: target["slug"],
@@ -349,15 +379,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
             {:ok, connection}
 
           {:error, _changeset} ->
-            case Repo.get_by(Connection,
-                   community_id: community.id,
-                   platform: :github,
-                   source_ref: repo,
-                   connection_key: branch
-                 ) do
-              %Connection{} = connection -> {:ok, connection}
-              nil -> {:error, ErrorCat.content_import_connection_create_failed()}
-            end
+            {:error, ErrorCat.content_import_connection_create_failed()}
         end
     end
   end
@@ -393,7 +415,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
     if same? and same_item_intent?(persisted_items, item_attrs) do
       {:ok, :pass}
     else
-      {:error, ErrorCat.custom("previewRef is already bound to another intent")}
+      {:error, ErrorCat.import_intent_conflict("previewRef is already bound to another intent")}
     end
   end
 

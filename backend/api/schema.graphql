@@ -1303,6 +1303,7 @@ input ContentImportSourcePreviewInput {
 }
 
 input ContentImportSourceDocumentInput {
+  overwriteConfirmed: Boolean
   sourceRef: String!
   sourcePath: String!
   title: String!

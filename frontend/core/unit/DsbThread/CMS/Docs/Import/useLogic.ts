@@ -31,7 +31,7 @@ import type { TContentImportJob, TDocImportPreview, TImportApplyResult, TImportP
 
 type TRet = {
   analyze: () => Promise<void>
-  apply: (selectedSourceIds: string[]) => Promise<void>
+  apply: (selectedSourceIds: string[], overwriteSourceIds: string[]) => Promise<void>
   error: string
   job: TContentImportJob | null
   phase: TImportPhase
@@ -104,6 +104,7 @@ export default function useLogic(): TRet {
   )
   const [error, setError] = useState('')
   const applyInFlight = useRef<Promise<void> | null>(null)
+  const conflictingPreviewRef = useRef<string | null>(null)
 
   const commitProcess = useCallback((next: TImportProcess): void => {
     setProcess((current) => preserveMonotonicStage(current, next))
@@ -255,7 +256,7 @@ export default function useLogic(): TRet {
   }, [commitProcess, community, phase, previewRef, t])
 
   const apply = useCallback(
-    (selectedSourceIds: string[]): Promise<void> => {
+    (selectedSourceIds: string[], overwriteSourceIds: string[]): Promise<void> => {
       const operation = (async (): Promise<void> => {
         if (!preview) return
         setError('')
@@ -265,35 +266,33 @@ export default function useLogic(): TRet {
         setPhase(PHASE.IMPORTING)
         try {
           const response = await fetch(DOCS_IMPORT_ROUTE.apply(preview.previewRef), {
-            body: JSON.stringify({ community, selectedSourceIds }),
+            body: JSON.stringify({
+              community,
+              selectedSourceIds,
+              overwriteSourceIds,
+              attemptRef: preview.attemptRef,
+            }),
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
           })
-          if (!response.ok) {
-            const errorPayload = (await response.json().catch(() => null)) as {
-              error?: { code?: string; message?: string }
-            } | null
-            const previewUnavailable =
-              errorPayload?.error?.code === 'preview_not_found' ||
-              errorPayload?.error?.code === 'preview_expired'
-            throw new Error(
-              previewUnavailable
-                ? t('dsb.doc.bulk_import.preview_unavailable')
-                : errorPayload?.error?.message || `Import failed (${response.status}).`,
-            )
-          }
-          const payload = (await response.json()) as TImportApplyResult & {
-            error?: { code?: string; message?: string }
-          }
-          if (!payload.jobRef) {
-            const previewUnavailable =
-              payload.error?.code === 'preview_not_found' ||
-              payload.error?.code === 'preview_expired'
-            throw new Error(
-              previewUnavailable
-                ? t('dsb.doc.bulk_import.preview_unavailable')
-                : payload.error?.message || 'Import failed.',
-            )
+          const payload = (await response.json().catch(() => null)) as
+            | (Partial<TImportApplyResult> & {
+                error?: { code?: string; message?: string }
+              })
+            | null
+          if (!response.ok || !payload?.jobRef) {
+            const code = payload?.error?.code
+            if (code === 'import_intent_conflict' || code === 'preview_attempt_conflict') {
+              // The server owns a different confirmed selection or a newer attempt at this ref.
+              conflictingPreviewRef.current = preview.previewRef
+            }
+            if (code === 'preview_not_found' || code === 'preview_expired') {
+              throw new Error(t('dsb.doc.bulk_import.preview_unavailable'))
+            }
+            if (code === 'target_revision_conflict' || code === 'preview_attempt_conflict') {
+              throw new Error(t('dsb.doc.bulk_import.review.preview_changed'))
+            }
+            throw new Error(payload?.error?.message || `Import failed (${response.status}).`)
           }
           const url = new URL(window.location.href)
           url.searchParams.set('job', payload.jobRef)
@@ -345,7 +344,11 @@ export default function useLogic(): TRet {
           terminal = true
         }
         if (status === 'failed' || status === 'cancelled') {
-          setError(latest.errorMessage || 'The bulk import could not be completed.')
+          setError(
+            latest.errorCode === 'target_revision_conflict'
+              ? t('dsb.doc.bulk_import.review.preview_changed')
+              : latest.errorMessage || 'The bulk import could not be completed.',
+          )
           setPhase(PHASE.FAILED)
           terminal = true
         }
@@ -371,13 +374,13 @@ export default function useLogic(): TRet {
       if (timer !== null) window.clearTimeout(timer)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [commitProcess, jobRef, loadJob, phase])
+  }, [commitProcess, jobRef, loadJob, phase, t])
 
   const reset = useCallback(async (): Promise<boolean> => {
     setError('')
     try {
       await applyInFlight.current
-      if (previewRef) {
+      if (previewRef && conflictingPreviewRef.current !== previewRef) {
         const response = await fetch(
           `${DOCS_IMPORT_ROUTE.preview(previewRef)}?community=${encodeURIComponent(community)}`,
           { method: 'DELETE' },
@@ -399,6 +402,7 @@ export default function useLogic(): TRet {
           throw new Error(payload.error?.message || 'Could not remove the import preview.')
         }
       }
+      conflictingPreviewRef.current = null
       setJob(null)
       setJobRef('')
       setPollingDisconnected(false)

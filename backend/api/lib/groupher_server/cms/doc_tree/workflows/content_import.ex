@@ -92,7 +92,8 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
              community,
              job.source_info,
              job.target_tree,
-             job.target_revision
+             job.target_revision,
+             Map.new(items, &{&1.external_ref, &1.metadata["overwriteConfirmed"] == true})
            ),
          {:ok, job} <- job |> Job.changeset(%{status: :applying}) |> Repo.update(),
          ready_refs <- MapSet.new(ready_items, & &1.external_ref),

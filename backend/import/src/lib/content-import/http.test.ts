@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { GroupherGraphQLError } from '../groupherGraphql'
 import type { PreviewStore, TPreviewRecord } from './core/preview-store'
 
 const mocks = vi.hoisted(() => ({
@@ -8,11 +9,15 @@ const mocks = vi.hoisted(() => ({
   checkPassport: vi.fn(),
   create: vi.fn(),
   delete: vi.fn(),
+  getAnalysis: vi.fn(),
   getAnalysisRun: vi.fn(),
   getApplyRun: vi.fn(),
   getReady: vi.fn(),
   getRecord: vi.fn(),
+  getReview: vi.fn(),
   putAnalysisRun: vi.fn(),
+  putApplyRun: vi.fn(),
+  startJob: vi.fn(),
   start: vi.fn(),
 }))
 
@@ -21,11 +26,13 @@ vi.mock('./transport/phoenix/docsImport', async (importOriginal) => {
   return {
     ...actual,
     cancelDocImport: mocks.cancelJob,
+    startDocImport: mocks.startJob,
     checkDocImportPassport: mocks.checkPassport,
   }
 })
 
 import {
+  handleApplyDocImportPreview,
   handleCancelDocImportPreview,
   handleCreateDocImportPreview,
   handleGetDocImportPreview,
@@ -35,11 +42,15 @@ const runtime = {
   store: {
     create: mocks.create,
     delete: mocks.delete,
+    getAnalysis: mocks.getAnalysis,
     getAnalysisRun: mocks.getAnalysisRun,
     getApplyRun: mocks.getApplyRun,
     getReady: mocks.getReady,
+    getDataset: vi.fn(),
     getRecord: mocks.getRecord,
+    getReview: mocks.getReview,
     putAnalysisRun: mocks.putAnalysisRun,
+    putApplyRun: mocks.putApplyRun,
   } as unknown as PreviewStore,
   workflows: {
     startAnalysis: mocks.start,
@@ -225,5 +236,146 @@ describe('docs import preview expiration', () => {
     expect(mocks.cancelJob.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.delete.mock.invocationCallOrder[0]!,
     )
+  })
+})
+
+describe('Docs import apply confirmation', () => {
+  const previewRef = expiredRecord.previewRef
+  const a = 'docs/a.md'
+  const b = 'docs/b.md'
+  const apply = (selectedSourceIds: string[], overwriteSourceIds?: string[], attemptRef?: string) =>
+    handleApplyDocImportPreview(
+      new Request('https://example.test/apply', {
+        body: JSON.stringify({
+          community: 'home',
+          selectedSourceIds,
+          overwriteSourceIds,
+          attemptRef,
+        }),
+        method: 'POST',
+      }),
+      previewRef,
+      authenticatedOptions,
+      runtime,
+    )
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.getRecord.mockResolvedValue({
+      ...expiredRecord,
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    })
+    mocks.getReview.mockResolvedValue({ previewRef })
+    mocks.getReady.mockResolvedValue({ datasetRef: 'dset_123' })
+    mocks.getAnalysis.mockResolvedValue({
+      documents: [a, b].map((sourceRef) => ({ sourceRef })),
+      tree: { navigation: [a, b].map((id) => ({ type: 'page', sourceId: id, sourcePath: id })) },
+    })
+    mocks.getApplyRun.mockResolvedValue(null)
+    mocks.startJob.mockResolvedValue({ id: 'job-1', status: 'STAGING' })
+  })
+
+  it('checks the submitted intent with Phoenix on replay and returns the real Job status', async () => {
+    mocks.getApplyRun.mockResolvedValue({
+      attemptRef: expiredRecord.attemptRef,
+      jobRef: 'job-1',
+      workflowRunRef: 'apply-old-id',
+    })
+    mocks.startJob.mockResolvedValue({ id: 'job-1', status: 'COMPLETED' })
+
+    const response = await apply([a, b], [a], expiredRecord.attemptRef)
+    expect(response.status).toBe(202)
+    await expect(response.json()).resolves.toMatchObject({ jobRef: 'job-1', status: 'COMPLETED' })
+    expect(mocks.startJob).toHaveBeenCalledWith(
+      'home',
+      { previewRef },
+      expect.objectContaining({ documents: [{ sourceRef: a }, { sourceRef: b }] }),
+      'dset_123',
+      authenticatedOptions,
+      new Set([a]),
+    )
+    expect(mocks.start).not.toHaveBeenCalled()
+
+    mocks.startJob.mockRejectedValueOnce(
+      new GroupherGraphQLError('Preview is bound to another selection', 'import_intent_conflict'),
+    )
+    const changed = await apply([b])
+    expect(changed.status).toBe(409)
+    await expect(changed.json()).resolves.toMatchObject({
+      error: { code: 'import_intent_conflict' },
+    })
+    expect(mocks.start).not.toHaveBeenCalled()
+  })
+
+  it('exposes the Review attempt for confirmation', async () => {
+    const response = await handleGetDocImportPreview(
+      previewRef,
+      'home',
+      authenticatedOptions,
+      runtime,
+    )
+    await expect(response.json()).resolves.toMatchObject({
+      status: 'ready',
+      preview: { previewRef, attemptRef: expiredRecord.attemptRef },
+    })
+  })
+
+  it.each([
+    { selected: [a], overwrite: [a], attempt: undefined },
+    { selected: [a], overwrite: [a], attempt: 'att_old' },
+    { selected: [b], overwrite: [], attempt: 'att_old' },
+  ])(
+    'rejects obsolete confirmations before creating a Job',
+    async ({ selected, overwrite, attempt }) => {
+      const response = await apply(selected, overwrite, attempt)
+      expect(response.status).toBe(409)
+      await expect(response.json()).resolves.toMatchObject({
+        error: { code: 'preview_attempt_conflict' },
+      })
+      expect(mocks.startJob).not.toHaveBeenCalled()
+    },
+  )
+
+  it('rejects overwrite confirmation outside the selected documents', async () => {
+    const response = await apply([a], [b])
+    expect(response.status).toBe(400)
+    expect(mocks.startJob).not.toHaveBeenCalled()
+  })
+
+  it('tracks a cancellable Job before dispatch and retries with the same Workflow ID', async () => {
+    mocks.start.mockRejectedValueOnce(new Error('dispatch timed out'))
+    const first = await apply([a])
+    expect(first.status).toBe(500)
+    const run = mocks.putApplyRun.mock.calls[0]![1]
+    expect(run).toMatchObject({
+      attemptRef: expiredRecord.attemptRef,
+      jobRef: 'job-1',
+      workflowRunRef: 'apply-job-1',
+    })
+    expect(mocks.putApplyRun.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.start.mock.invocationCallOrder[0]!,
+    )
+    mocks.getApplyRun.mockResolvedValue(run)
+
+    const replay = await apply([a])
+    expect(replay.status).toBe(202)
+    expect(mocks.start.mock.calls[0]).toEqual(mocks.start.mock.calls[1])
+    expect(mocks.putApplyRun).toHaveBeenCalledOnce()
+    expect(mocks.cancelJob).not.toHaveBeenCalled()
+  })
+
+  it('reuses the persisted Workflow ID for Jobs created before deterministic dispatch', async () => {
+    mocks.getApplyRun.mockResolvedValue({
+      attemptRef: expiredRecord.attemptRef,
+      jobRef: 'job-1',
+      workflowRunRef: 'apply-old-id',
+    })
+    const response = await apply([a])
+    expect(response.status).toBe(202)
+    expect(mocks.start).toHaveBeenCalledWith(
+      'apply-old-id',
+      expect.objectContaining({ jobRef: 'job-1', sourceRefs: [a] }),
+    )
+    expect(mocks.putApplyRun).not.toHaveBeenCalled()
   })
 })

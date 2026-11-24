@@ -55,13 +55,16 @@ export type TImportWorkflowRuntime = {
     previewRef: string
     repoUrl: string
   }) => Promise<string>
-  startApply: (input: {
-    attemptRef: string
-    community: string
-    jobRef: string
-    previewRef: string
-    sourceRefs: string[]
-  }) => Promise<string>
+  startApply: (
+    workflowRunRef: string,
+    input: {
+      attemptRef: string
+      community: string
+      jobRef: string
+      previewRef: string
+      sourceRefs: string[]
+    },
+  ) => Promise<void>
   status: (workflowRunRef: string) => Promise<{
     status: 'cancelled' | 'complete' | 'errored' | 'pending' | 'queued' | 'running' | 'waiting'
     error?: { message: string }
@@ -84,8 +87,17 @@ const resolveRuntime = async (
 const json = (body: unknown, status = 200): Response =>
   Response.json(body, { headers: { 'Cache-Control': 'no-store' }, status })
 
+const previewErrorStatus: Record<string, number> = {
+  preview_not_found: 404,
+  preview_expired: 410,
+  preview_attempt_conflict: 409,
+}
+
 const failure = (error: unknown): Response => {
-  if (error instanceof GroupherGraphQLError && error.code === 'target_revision_conflict') {
+  if (
+    error instanceof GroupherGraphQLError &&
+    (error.code === 'target_revision_conflict' || error.code === 'import_intent_conflict')
+  ) {
     return json({ error: { code: error.code, message: error.message }, ok: false }, 409)
   }
   if (error instanceof DocsImportError) {
@@ -94,7 +106,7 @@ const failure = (error: unknown): Response => {
         error: { code: error.code, message: error.message, retryable: error.retryable },
         ok: false,
       },
-      error.code === 'preview_not_found' ? 404 : error.code === 'preview_expired' ? 410 : 400,
+      previewErrorStatus[error.code] ?? 400,
     )
   }
   return json(
@@ -124,8 +136,8 @@ const required = (value: unknown, name: string, max: number): string => {
   return value.trim()
 }
 
-const requiredStringArray = (value: unknown, name: string, maxItems: number): string[] => {
-  if (!Array.isArray(value) || value.length === 0 || value.length > maxItems) {
+const sourceIdList = (value: unknown, name: string, minItems: number): string[] => {
+  if (!Array.isArray(value) || value.length < minItems || value.length > 5_000) {
     throw new DocsImportError('invalid_request', 'admission', `${name} is required.`)
   }
   return Array.from(new Set(value.map((item) => required(item, name, 1_024))))
@@ -287,7 +299,7 @@ export const handleGetDocImportPreview = async (
           ? (error ?? { code: 'preview_analysis_failed', message: 'Repository analysis failed.' })
           : undefined,
       ok: status !== 'failed',
-      preview,
+      preview: preview ? { ...preview, attemptRef: record.attemptRef } : preview,
       process,
       status,
     })
@@ -327,11 +339,20 @@ export const handleApplyDocImportPreview = async (
     const runtime = await resolveRuntime(runtimeOverride)
     const input = await body(request)
     const community = required(input.community, 'community', 128)
-    const selectedSourceIds = requiredStringArray(
-      input.selectedSourceIds,
-      'selectedSourceIds',
-      5_000,
+    const selectedSourceIds = sourceIdList(input.selectedSourceIds, 'selectedSourceIds', 1)
+    const overwriteIds = sourceIdList(
+      input.overwriteSourceIds === undefined ? [] : input.overwriteSourceIds,
+      'overwriteSourceIds',
+      0,
     )
+    const selectedIds = new Set(selectedSourceIds)
+    if (overwriteIds.some((id) => !selectedIds.has(id))) {
+      throw new DocsImportError(
+        'invalid_selection',
+        'preview',
+        'Confirm overwrites only for selected documents.',
+      )
+    }
     const store = runtime.store
     const record = await store.getRecord(previewRef)
     if (!record) {
@@ -347,6 +368,16 @@ export const handleApplyDocImportPreview = async (
       },
       runtime.workflows,
     )
+    if (
+      (input.attemptRef !== undefined || overwriteIds.length > 0) &&
+      input.attemptRef !== record.attemptRef
+    ) {
+      throw new DocsImportError(
+        'preview_attempt_conflict',
+        'preview',
+        'Open the current preview and review your selection before importing.',
+      )
+    }
     const [ready, preview, analysis] = await Promise.all([
       store.getReady(previewRef, record.attemptRef),
       store.getReview(previewRef, record.attemptRef),
@@ -356,11 +387,6 @@ export const handleApplyDocImportPreview = async (
       throw new DocsImportError('preview_not_ready', 'preview', 'Preview is not ready to apply.')
     }
 
-    const existingApplyRun = await store.getApplyRun(previewRef)
-    if (existingApplyRun) {
-      return json({ jobRef: existingApplyRun.jobRef, ok: true, status: 'STAGING' }, 202)
-    }
-
     const selected = selectSourceAnalysis(analysis, selectedSourceIds)
     const job = await startDocImport(
       community,
@@ -368,36 +394,37 @@ export const handleApplyDocImportPreview = async (
       selected.analysis,
       ready.datasetRef,
       options,
+      new Set(overwriteIds),
     )
-    let workflowRunRef: string
-    try {
-      workflowRunRef = await runtime.workflows.startApply({
+    // Only Phoenix decides whether the submitted intent can resume its Job.
+    if (['STAGING', 'READY'].includes(job.status.toUpperCase())) {
+      const existingRun = await store.getApplyRun(previewRef)
+      if (
+        existingRun &&
+        (existingRun.jobRef !== job.id || existingRun.attemptRef !== record.attemptRef)
+      ) {
+        throw new Error('Apply workflow association does not match the confirmed Job.')
+      }
+      const workflowRunRef = existingRun?.workflowRunRef ?? `apply-${job.id}`
+      if (!existingRun) {
+        // Store a deterministic association before dispatch so a failed attempt
+        // can be cancelled or retried with the same Workflow ID.
+        await store.putApplyRun(previewRef, {
+          attemptRef: record.attemptRef,
+          createdAt: record.createdAt,
+          jobRef: job.id,
+          previewRef,
+          schemaVersion: APPLY_RUN_SCHEMA_VERSION,
+          workflowRunRef,
+        })
+      }
+      await runtime.workflows.startApply(workflowRunRef, {
         attemptRef: record.attemptRef,
         community,
         jobRef: job.id,
         previewRef,
         sourceRefs: selected.sourceRefs,
       })
-    } catch (error) {
-      await cancelDocImport(community, job.id, options).catch(() => undefined)
-      throw error
-    }
-    try {
-      await store.putApplyRun(previewRef, {
-        attemptRef: record.attemptRef,
-        createdAt: new Date().toISOString(),
-        jobRef: job.id,
-        previewRef,
-        schemaVersion: APPLY_RUN_SCHEMA_VERSION,
-        workflowRunRef,
-      })
-    } catch (error) {
-      await runtime.workflows.cancel(workflowRunRef).catch(() => undefined)
-      const persistedRun = await store.getApplyRun(previewRef)
-      if (!persistedRun || persistedRun.jobRef !== job.id) {
-        await cancelDocImport(community, job.id, options).catch(() => undefined)
-        throw error
-      }
     }
     return json({ jobRef: job.id, ok: true, status: job.status }, 202)
   } catch (error) {

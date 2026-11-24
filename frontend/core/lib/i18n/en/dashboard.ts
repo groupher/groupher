@@ -228,6 +228,14 @@ export default {
   'dsb.doc.bulk_import.review.mapping':
     'Source tabs, groups, and pages will keep their hierarchy in the Docs draft. Nothing will be published. The complete import is written atomically. Local media files are not copied yet.',
   'dsb.doc.bulk_import.review.restart': 'Back to import',
+  'dsb.doc.bulk_import.review.create': 'New',
+  'dsb.doc.bulk_import.review.overwrite': 'Overwrite working copy',
+  'dsb.doc.bulk_import.review.conflict': 'Directory conflict',
+  'dsb.doc.bulk_import.review.resolve_conflict':
+    'Deselect the conflicting documents, or resolve the directory conflict and preview again.',
+  'dsb.doc.bulk_import.review.preview_changed':
+    'Run the preview again to confirm changes against the current workspace.',
+  'dsb.doc.bulk_import.review.confirm_overwrite': 'Overwrite the selected working copies',
   'dsb.doc.bulk_import.review.confirm': 'Import selected docs',
   'dsb.doc.bulk_import.review.selected_of': 'of',
   'dsb.doc.bulk_import.review.select': 'Select',

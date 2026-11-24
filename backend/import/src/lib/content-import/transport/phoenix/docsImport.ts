@@ -125,9 +125,11 @@ export const startDocImport = async (
   analysis: TSourceAnalysis,
   datasetRef: string,
   options: TRequestOptions & { backendToken: string; serviceSubject: string },
+  overwriteIds: ReadonlySet<string>,
 ): Promise<TStartedImportJob> => {
   const documents = analysis.documents.map((document) => ({
     contentHash: document.contentHash,
+    overwriteConfirmed: overwriteIds.has(document.sourceRef),
     route: document.route,
     sizeBytes: document.sizeBytes,
     sourcePath: document.sourceRef,

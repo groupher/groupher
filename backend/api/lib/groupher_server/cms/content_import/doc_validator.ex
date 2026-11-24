@@ -28,7 +28,16 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
   alias CMS.ErrorCat
 
   alias CMS.ContentImport.Model.{Connection, ImportSourceMapping}
-  alias CMS.Model.{ArticleBinding, ArticleLifecycle, ArticlePublic, ArticleWorkingCopy, Community}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    ArticleLifecycle,
+    ArticlePublic,
+    ArticleWorkingCopy,
+    Community
+  }
+
   alias CMS.DocTree.Publish.Queue
 
   @max_depth CMS.DocTree.Const.max_depth()
@@ -45,7 +54,10 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
       mapping_refs = source_mapping_refs(community, info)
       target_tree = plan_target_tree(source_tree, branch_slug, mapping_refs)
 
-      with {:ok, {target_revision, conflicts}} <- target_state(community) do
+      pages = page_targets(target_tree)
+
+      with {:ok, target_revision} <- target_state(community),
+           {:ok, conflicts} <- page_conflicts(community, target_tree, pages, mapping_refs) do
         {:ok,
          %{
            conflicts: conflicts,
@@ -58,26 +70,76 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
   end
 
   @doc "Revalidates only the confirmed target intent and revision; it never replans SourceTree."
-  @spec validate_intent(Community.t(), map(), map(), String.t()) ::
+  @spec validate_intent(Community.t(), map(), map(), String.t(), map()) ::
           {:ok, :pass} | {:error, term()}
-  def validate_intent(%Community{} = community, source_info, target_tree, target_revision) do
+  def validate_intent(
+        %Community{} = community,
+        source_info,
+        target_tree,
+        target_revision,
+        confirmations
+      ) do
     with {:ok, info} <- normalize_source_info(source_info),
          branch_slug <- site_namespace(community, info),
          mapping_refs <- source_mapping_refs(community, info),
          {:ok, _} <- validate_target_tree(target_tree, branch_slug, mapping_refs),
-         {:ok, {current_revision, conflicts}} <- target_state(community),
+         {:ok, current_revision} <- target_state(community),
          true <- current_revision == target_revision,
-         [] <- conflicts do
+         {:ok, :pass} <- validate_selection(community, target_tree, confirmations, mapping_refs) do
       {:ok, :pass}
     else
       false ->
         {:error, ErrorCat.target_revision_conflict("The Docs target changed after Review")}
 
-      [_ | _] ->
-        {:error, ErrorCat.custom("The confirmed Docs target is no longer available")}
-
       error ->
         error
+    end
+  end
+
+  defp validate_selection(community, tree, confirmations, mapping_refs) do
+    selected = MapSet.new(Map.keys(confirmations))
+    tree = filter_target_tree(tree, selected)
+
+    wrong_confirmation =
+      Enum.any?(confirmations, fn {ref, confirmed} ->
+        Map.has_key?(mapping_refs, ref) != confirmed
+      end)
+
+    with false <- wrong_confirmation,
+         {:ok, []} <- page_conflicts(community, tree, page_targets(tree), mapping_refs) do
+      {:ok, :pass}
+    else
+      true ->
+        {:error,
+         ErrorCat.import_intent_conflict(
+           "Overwrite confirmation does not match the selected Docs"
+         )}
+
+      {:ok, [_ | _]} ->
+        {:error, ErrorCat.import_intent_conflict("Selected Docs conflict with the workspace")}
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  defp page_conflicts(community, tree, pages, mappings) do
+    by_doc = Map.new(pages, fn {ref, page} -> {page["docId"], ref} end)
+    unowned = for {id, ref} <- by_doc, not Map.has_key?(mappings, ref), do: id
+
+    with {:ok, %{conflicting_doc_ids: conflicting}} <-
+           CMS.DocTree.Import.plan(community, tree, by_doc) do
+      occupied = Repo.all(from(a in Article, where: a.id in ^unowned, select: a.id))
+
+      conflicts =
+        (conflicting ++ occupied)
+        |> Enum.uniq()
+        |> Enum.map(fn id ->
+          %{"sourceId" => Map.fetch!(by_doc, id), "code" => "target_identity_conflict"}
+        end)
+        |> Enum.sort_by(& &1["sourceId"])
+
+      {:ok, conflicts}
     end
   end
 
@@ -378,6 +440,8 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
       "title" => node["title"],
       "slug" => route_slug(node["route"]),
       "route" => node["route"],
+      "disposition" =>
+        if(Map.has_key?(mapping_refs, node["sourceId"]), do: "overwrite", else: "create"),
       "docId" =>
         Map.get(mapping_refs, node["sourceId"], target_ref(branch_slug, node["sourceId"]))
     }
@@ -494,7 +558,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
     if doc_id == Map.get(mapping_refs, source_id, target_ref(branch_slug, source_id)) do
       {:ok, MapSet.put(ids, source_id)}
     else
-      invalid_target_intent()
+      {:error, ErrorCat.import_intent_conflict("The selected Doc target changed after Review")}
     end
   end
 
@@ -581,7 +645,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
     revision = Jason.encode!([queue.tree_lock_version, queue.queue_revision, copies])
 
     if String.length(revision) <= @max_target_revision_chars do
-      {:ok, {revision, []}}
+      {:ok, revision}
     else
       {:error, ErrorCat.custom("The Docs target is too large to preview")}
     end

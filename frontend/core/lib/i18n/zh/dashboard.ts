@@ -216,6 +216,13 @@ export default {
   'dsb.doc.bulk_import.review.mapping':
     '源 Tabs、Groups 和 Pages 将保持层级写入 Docs 草稿。不会自动发布，全部内容会一次性原子写入；本地多媒体文件暂不复制。',
   'dsb.doc.bulk_import.review.restart': '返回导入',
+  'dsb.doc.bulk_import.review.create': '新增',
+  'dsb.doc.bulk_import.review.overwrite': '覆盖工作副本',
+  'dsb.doc.bulk_import.review.conflict': '目录冲突',
+  'dsb.doc.bulk_import.review.resolve_conflict':
+    '请取消选择有目录冲突的文档，或调整目录后重新预览。',
+  'dsb.doc.bulk_import.review.preview_changed': '请重新预览，再确认要写入当前工作区的文档。',
+  'dsb.doc.bulk_import.review.confirm_overwrite': '我确认覆盖所选文档的工作副本',
   'dsb.doc.bulk_import.review.confirm': '导入选中文档',
   'dsb.doc.bulk_import.review.selected_of': '/',
   'dsb.doc.bulk_import.review.select': '选择',
