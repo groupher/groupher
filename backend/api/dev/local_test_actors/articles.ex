@@ -3,8 +3,8 @@ defmodule GroupherServer.LocalTestActors.Articles do
   Owns local Article fixture intent and verified references, never Article content writes.
 
       run/actor/community/key -> persisted commandId + input digest
-        -> normal Dash Content Publisher -> CreateArticle Command
-        -> verified owner + initial Snapshot provenance -> fixture references
+        -> normal Dash Content Publisher -> Article Command
+        -> verified owner + Snapshot provenance -> fixture references
 
   Recording metadata does not create or rewrite an Article, Author or BodyBag.
   Confirmed fixtures return canonical current WorkingCopy identities on repeat.
@@ -34,6 +34,7 @@ defmodule GroupherServer.LocalTestActors.Articles do
             "commandId" => Ecto.UUID.generate(),
             "communityRef" => context.community.ref,
             "thread" => "post",
+            "publish" => context.publish,
             "digest" => context.digest,
             "status" => "pending"
           }
@@ -45,7 +46,8 @@ defmodule GroupherServer.LocalTestActors.Articles do
         %{"digest" => digest} = entry when digest == context.digest ->
           case entry do
             %{"articleId" => article_id, "workingCopyId" => work_id} ->
-              with {:ok, result} <- canonical(context, entry, article_id, work_id) do
+              with {:ok, result} <-
+                     canonical(context, entry, article_id, work_id, entry["snapshotId"]) do
                 {:ok, %{existing: result}}
               end
 
@@ -69,13 +71,17 @@ defmodule GroupherServer.LocalTestActors.Articles do
          true <- digest == context.digest,
          true <- is_nil(entry["articleId"]) or entry["articleId"] == article_id,
          true <- is_nil(entry["workingCopyId"]) or entry["workingCopyId"] == work_id,
-         {:ok, result} <- canonical(context, entry, article_id, work_id),
+         snapshot_id <- input["snapshotId"],
+         true <- context.publish == is_binary(snapshot_id),
+         true <- is_nil(entry["snapshotId"]) or entry["snapshotId"] == snapshot_id,
+         {:ok, result} <- canonical(context, entry, article_id, work_id, snapshot_id),
          {:ok, _} <-
            put_entry(
              context,
              Map.merge(entry, %{
                "articleId" => article_id,
                "workingCopyId" => work_id,
+               "snapshotId" => snapshot_id,
                "status" => "confirmed"
              })
            ) do
@@ -96,8 +102,10 @@ defmodule GroupherServer.LocalTestActors.Articles do
           "key",
           "commandId",
           "communityRef",
+          "publish",
           "articleId",
           "workingCopyId",
+          "snapshotId",
           "status"
         ])
         |> Map.put("ownerAlias", binding.raw["alias"])
@@ -113,14 +121,19 @@ defmodule GroupherServer.LocalTestActors.Articles do
     key = input["key"] || "primary"
     title = input["title"] || "Local Article #{key}"
     markdown = input["markdown"] || "Local Article fixture for #{run}/#{name}/#{key}."
+    publish = Map.get(input, "publish", false)
 
     with true <- is_binary(key) and Regex.match?(@key, key),
          true <- is_binary(title) and String.trim(title) != "" and byte_size(title) <= 1000,
          true <- is_binary(markdown) and byte_size(markdown) <= 512_000,
+         true <- is_boolean(publish),
          {:ok, user, binding} <- LocalTestActors.actor(run, name),
          {:ok, community, _} <- Communities.require_admin(user, slug) do
+      digest_input =
+        if publish, do: ["post", title, markdown, "published"], else: ["post", title, markdown]
+
       digest =
-        :crypto.hash(:sha256, Jason.encode!(["post", title, markdown]))
+        :crypto.hash(:sha256, Jason.encode!(digest_input))
         |> Base.encode16(case: :lower)
 
       {:ok,
@@ -132,6 +145,7 @@ defmodule GroupherServer.LocalTestActors.Articles do
          fixture_key: "#{community.ref}/post/#{key}",
          title: title,
          markdown: markdown,
+         publish: publish,
          digest: digest
        }}
     else
@@ -145,19 +159,25 @@ defmodule GroupherServer.LocalTestActors.Articles do
   defp prepared(context, entry) do
     %{
       ownerLogin: context.user.login,
+      publish: context.publish,
       command: %{
-        action: "article.create",
+        action:
+          if(context.publish,
+            do: "article.create_and_publish",
+            else: "article.create"
+          ),
         commandId: entry["commandId"],
         target: %{community: context.community.slug, thread: "post"},
         payload: %{
           title: context.title,
-          content: %{format: "markdown", markdown: context.markdown}
+          content: %{format: "markdown", markdown: context.markdown},
+          tagIds: []
         }
       }
     }
   end
 
-  defp canonical(context, entry, article_id, work_id) do
+  defp canonical(context, entry, article_id, work_id, snapshot_id) do
     with {:ok, _} <- Ecto.UUID.cast(article_id),
          {:ok, _} <- Ecto.UUID.cast(work_id),
          %Article{thread: :post} = article <- Repo.get(Article, article_id),
@@ -170,7 +190,10 @@ defmodule GroupherServer.LocalTestActors.Articles do
          } = work <- Repo.get(ArticleWorkingCopy, work_id),
          %ArticleBinding{} <-
            Repo.get_by(ArticleBinding, article_id: article_id, community_id: context.community.id),
-         true <- creation_provenance?(context, entry, article_id, work_id) do
+         true <- creation_provenance?(context, entry, article_id, work_id),
+         true <-
+           not context.publish or
+             published_provenance?(context, entry, article, work, snapshot_id) do
       {:ok,
        %{
          articleId: article.id,
@@ -180,12 +203,43 @@ defmodule GroupherServer.LocalTestActors.Articles do
          community: context.community.slug,
          communityRef: context.community.ref,
          thread: "post",
-         key: context.key
+         key: context.key,
+         publish: context.publish,
+         snapshotId: snapshot_id
        }}
     else
       _ -> {:error, :local_test_article_provenance_mismatch}
     end
   end
+
+  defp published_provenance?(context, entry, article, work, snapshot_id)
+       when is_binary(snapshot_id) do
+    with {:ok, _} <- Ecto.UUID.cast(snapshot_id),
+         %ArticleSnapshot{
+           id: ^snapshot_id,
+           source_working_copy_id: work_id,
+           causation_command_id: command_id
+         } <- Repo.get(ArticleSnapshot, snapshot_id),
+         true <- work_id == work.id and command_id == entry["commandId"],
+         true <-
+           Repo.exists?(
+             from(e in ArticleEvent,
+               where:
+                 e.article_id == ^article.id and e.after_snapshot_id == ^snapshot_id and
+                   e.type == :publish and
+                   e.actor_id == ^context.user.id and
+                   e.source_community_id == ^context.community.id
+             )
+           ),
+         {:ok, public} <- CMS.Articles.Public.get(article),
+         true <- public.snapshot_id == snapshot_id do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp published_provenance?(_, _, _, _, _), do: false
 
   defp creation_provenance?(context, entry, article_id, work_id) do
     command_id = entry["commandId"]

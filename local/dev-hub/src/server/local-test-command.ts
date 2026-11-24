@@ -3,12 +3,130 @@ import { randomBytes } from 'node:crypto'
 
 import { localTestActorsSecret, prepareLocalEnvironment } from './local-environment.ts'
 import { createLocalArticle } from './local-test-article.ts'
-import { openActorBrowser, closeActorBrowsers, cleanActorBrowsers } from './local-test-browser.ts'
+import {
+  cleanActorBrowsers,
+  closeActorBrowsers,
+  openActorBrowser,
+  operateActorBrowser,
+  validateActorUIOperation,
+  type TActorUIKey,
+  type TActorUIOperation,
+  type TActorUIRole,
+} from './local-test-browser.ts'
 
 type TOptions = Record<string, string | boolean>
 const NAME = /^[a-z][a-z0-9-]{0,39}$/
 const USAGE =
-  'Usage: pnpm devhub actors create|list|grant|open|close|clean --run <name> ... | communities create --run <name> --owner <alias> [--slug <slug>] | articles create --run <name> --as <alias> --community <slug> --thread post [--key <key>]'
+  'Usage: pnpm devhub actors create|list|grant|open|ui|close|clean --run <name> ... | communities create --run <name> --owner <alias> [--slug <slug>] | articles create --run <name> --as <alias> --community <slug> --thread post [--key <key>] [--publish]'
+
+const UI_OPERATIONS = ['snapshot', 'navigate', 'click', 'fill', 'press', 'assert-text'] as const
+const UI_ROLES = [
+  'button',
+  'link',
+  'textbox',
+  'checkbox',
+  'radio',
+  'combobox',
+  'menuitem',
+  'tab',
+] as const
+const UI_KEYS = [
+  'Enter',
+  'Tab',
+  'Escape',
+  'ArrowDown',
+  'ArrowUp',
+  'ArrowLeft',
+  'ArrowRight',
+  'Backspace',
+  'Delete',
+  'Home',
+  'End',
+] as const
+
+export const parseActorUIOperation = (op: string, options: TOptions): TActorUIOperation => {
+  const common = new Set(['run', 'as', 'community', 'app', 'op'])
+  const fieldsByOperation: Record<string, string[]> = {
+    snapshot: [],
+    navigate: ['path'],
+    click: ['role', 'name'],
+    fill: ['role', 'name', 'value'],
+    press: ['key'],
+    'assert-text': ['text'],
+  }
+  const allowedFields = fieldsByOperation[op]
+  if (!allowedFields)
+    throw new Error(`Unsupported actor UI operation. Allowed: ${UI_OPERATIONS.join(', ')}.`)
+  const unexpected = Object.keys(options).filter(
+    (key) => !common.has(key) && !allowedFields.includes(key),
+  )
+  if (unexpected.length > 0) throw new Error(`Unexpected UI option: --${unexpected[0]}.`)
+
+  let operation: TActorUIOperation
+  if (op === 'snapshot') {
+    operation = { op }
+  } else if (op === 'navigate') {
+    if (typeof options.path !== 'string') throw new Error('UI navigate requires --path.')
+    operation = { op, path: options.path }
+  } else if (op === 'click') {
+    if (typeof options.role !== 'string' || typeof options.name !== 'string')
+      throw new Error('UI click requires --role and --name.')
+    operation = { op, role: options.role as TActorUIRole, name: options.name }
+  } else if (op === 'fill') {
+    if (
+      typeof options.role !== 'string' ||
+      typeof options.name !== 'string' ||
+      typeof options.value !== 'string'
+    )
+      throw new Error('UI fill requires --role, --name and --value.')
+    operation = {
+      op,
+      role: options.role as 'textbox' | 'combobox',
+      name: options.name,
+      value: options.value,
+    }
+  } else if (op === 'press') {
+    if (typeof options.key !== 'string') throw new Error('UI press requires --key.')
+    operation = { op, key: options.key as TActorUIKey }
+  } else if (op === 'assert-text') {
+    if (typeof options.text !== 'string') throw new Error('UI assert-text requires --text.')
+    operation = { op, text: options.text }
+  } else {
+    throw new Error(`Unsupported actor UI operation. Allowed: ${UI_OPERATIONS.join(', ')}.`)
+  }
+  validateActorUIOperation(operation)
+  return operation
+}
+
+export const runCheckedActorUI = async (
+  input: {
+    run: string
+    alias: string
+    community: string
+    app: 'dash' | 'community'
+    operation: TActorUIOperation
+  },
+  call: (body: Record<string, unknown>) => Promise<any>,
+  operate: typeof operateActorBrowser = operateActorBrowser,
+) => {
+  const actor = await call({
+    command: 'actor.check',
+    alias: input.alias,
+    community: input.community,
+    app: input.app,
+  })
+  return operate(
+    {
+      run: input.run,
+      alias: input.alias,
+      community: input.community,
+      login: String(actor.login),
+      app: input.app,
+      headless: false,
+    },
+    input.operation,
+  )
+}
 
 export const assertLocalTestTarget = (origin: string, env: NodeJS.ProcessEnv = process.env) => {
   const url = new URL(origin)
@@ -46,10 +164,23 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
       'pending',
     ],
     'actors.open': ['run', 'as', 'community', 'headless', 'app'],
+    'actors.ui': [
+      'run',
+      'as',
+      'community',
+      'app',
+      'op',
+      'path',
+      'role',
+      'name',
+      'value',
+      'key',
+      'text',
+    ],
     'actors.close': ['run'],
     'actors.clean': ['run', 'apply'],
     'communities.create': ['run', 'owner', 'slug', 'title'],
-    'articles.create': ['run', 'as', 'community', 'thread', 'key', 'title', 'markdown'],
+    'articles.create': ['run', 'as', 'community', 'thread', 'key', 'title', 'markdown', 'publish'],
   }
   const allowed = commands[`${area}.${action}`]
   if (!allowed) throw new Error(USAGE)
@@ -58,10 +189,11 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
     const key = flags[i]?.slice(2)
     if (!flags[i]?.startsWith('--') || !allowed.includes(key) || Object.hasOwn(options, key))
       throw new Error(USAGE)
-    if (key === 'pending' || key === 'headless' || key === 'apply') options[key] = true
+    if (key === 'pending' || key === 'headless' || key === 'apply' || key === 'publish')
+      options[key] = true
     else {
       const value = flags[++i]
-      if (!value || value.startsWith('--')) throw new Error(USAGE)
+      if (value === undefined || value.startsWith('--')) throw new Error(USAGE)
       options[key] = value
     }
   }
@@ -74,10 +206,21 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
     )
       throw new Error(`Invalid --${key}.`)
   }
-  if (['grant', 'open'].includes(action) && !options.as) throw new Error('--as is required.')
-  if (action === 'open' && !options.community) throw new Error('--community is required for Dash.')
+  if (['grant', 'open', 'ui'].includes(action) && !options.as) throw new Error('--as is required.')
+  if (['open', 'ui'].includes(action) && !options.community)
+    throw new Error('--community is required for Dash.')
+  if (['open', 'ui'].includes(action) && !options.app && action === 'ui')
+    throw new Error('--app is required for actors ui.')
   if (options.app && !['dash', 'community'].includes(String(options.app)))
     throw new Error('--app must be dash or community.')
+  if (action === 'ui') {
+    if (typeof options.op !== 'string') throw new Error('--op is required for actors ui.')
+    if (options.role && !UI_ROLES.includes(options.role as (typeof UI_ROLES)[number]))
+      throw new Error('--role must be an allowed accessible role.')
+    if (options.key && !UI_KEYS.includes(options.key as (typeof UI_KEYS)[number]))
+      throw new Error('--key is not allowed.')
+    parseActorUIOperation(options.op, options)
+  }
   if (area === 'communities' && !options.owner) throw new Error('--owner is required.')
   if (area === 'articles') {
     if (!options.as || !options.community)
@@ -133,7 +276,9 @@ export const runLocalTestCommand = async (
   const required =
     command === 'actor.open' || command === 'article.create'
       ? ['phoenix', 'auth', app]
-      : ['phoenix']
+      : command === 'actor.ui'
+        ? ['phoenix', app]
+        : ['phoenix']
   for (const id of required) {
     if (!status.some((service) => service.id === id && service.status === 'running'))
       throw new Error(`Start ${id} through pnpm devhub start ${id} first.`)
@@ -198,6 +343,19 @@ export const runLocalTestCommand = async (
       app,
       headless: options.headless === true,
     })
+  }
+  if (command === 'actor.ui') {
+    const operation = parseActorUIOperation(String(options.op), options)
+    return runCheckedActorUI(
+      {
+        run: String(options.run),
+        alias: String(options.as),
+        community: String(options.community),
+        app,
+        operation,
+      },
+      call,
+    )
   }
   if (command === 'actor.close') {
     const result = await call({ command })
