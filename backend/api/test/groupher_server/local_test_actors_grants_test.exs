@@ -3,6 +3,7 @@ for file <- [
       "local_test_actors/guard.ex",
       "local_test_actors.ex",
       "local_test_actors/communities.ex",
+      "local_test_actors/articles.ex",
       "local_test_actors/grants.ex",
       "local_test_actors/cleanup.ex"
     ] do
