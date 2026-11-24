@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.SaveQueue do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Saves the supplied working-copy revision into the Queue member through a command receipt."
   def execute(
         %Community{} = community,
         queue_revision,

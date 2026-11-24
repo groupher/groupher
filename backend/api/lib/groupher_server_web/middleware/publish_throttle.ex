@@ -17,6 +17,7 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   alias GroupherServer.{Accounts, CMS, ErrorCat}
   alias GroupherServerWeb.ErrorResponse
 
+  @doc "Applies publishing limits to the current user and reports failures on the field."
   def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
     case GroupherServer.CMS.gate_rate_limit_publish_check(cur_user, opt) do
       {:ok, _} ->

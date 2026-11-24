@@ -119,6 +119,7 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
     |> Map.put(:kanban_bg_colors, kanban_bg_colors_default())
   end
 
+  @doc "Returns the field, type, and default triples for a supported dashboard section schema."
   def macro_schema(:enable) do
     [
       [:post, :boolean, true],
@@ -334,6 +335,7 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
     ]
   end
 
+  @doc "Builds the default wallpaper background map from its shared schema."
   def wallpaper_bg_default do
     macro_schema(:wallpaper_bg)
     |> Enum.reduce(%{}, fn [key, _type, default], acc ->
@@ -341,6 +343,7 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
     end)
   end
 
+  @doc "Returns light and dark wallpaper configurations initialized from the shared background defaults."
   def wallpaper_default do
     bg = wallpaper_bg_default()
 

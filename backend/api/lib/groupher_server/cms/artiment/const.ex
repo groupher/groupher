@@ -35,18 +35,25 @@ defmodule GroupherServer.CMS.Artiment.Const do
     :reject_stale
   ]
 
+  @doc "Returns the supported Article categories."
   @spec cat_values() :: [cat_enum()]
   def cat_values, do: @cats
 
+  @doc "Returns the supported Article workflow statuses."
   @spec status_values() :: [status_enum()]
   def status_values, do: @statuses
 
+  @doc "Returns the Article category identity map used by enum consumers."
   @spec cat_map() :: %{atom() => atom()}
   def cat_map, do: Map.new(@cats, &{&1, &1})
 
+  @doc "Returns the Article status identity map used by enum consumers."
   @spec status_map() :: %{atom() => atom()}
   def status_map, do: Map.new(@statuses, &{&1, &1})
 
+  @doc "Escapes the supported Article categories for use in generated code."
   defmacro cat_values_ast, do: Macro.escape(@cats)
+
+  @doc "Escapes the supported Article workflow statuses for use in generated code."
   defmacro status_values_ast, do: Macro.escape(@statuses)
 end

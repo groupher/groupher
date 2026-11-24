@@ -251,6 +251,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     aggregate_normalized_path_metrics(scoped_pages)
   end
 
+  @doc "Aggregates normalized page rows without applying a community path filter."
   @spec aggregate_path_metrics(list()) :: map()
   def aggregate_path_metrics(rows) when is_list(rows) do
     rows
@@ -315,6 +316,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   end
 
   if Mix.env() == :test do
+    @doc "Runs analytics sections with an explicit timeout for provider tests."
     def run_sections_for_test(sections, timeout \\ @config.timeout + 1_000) do
       run_sections(sections, timeout)
     end

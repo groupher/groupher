@@ -70,6 +70,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.UpdatePermissions do
     end)
   end
 
+  @doc "Replaces a non-lord Admin's permissions when the supplied revision is current."
   def execute(
         %Community{} = community,
         member_id,

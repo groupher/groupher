@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Dequeue do
     present(fn result -> present_result(result, community, actor) end)
   end
 
-  @doc false
+  @doc "Removes Queue members after validating the revision-bound discard confirmation."
   def execute(%Community{} = community, revision, ids, confirmation, %User{} = actor, command_id)
       when is_integer(revision) and revision >= 0 and is_list(ids) and is_binary(command_id) do
     run_receipt(community, revision, ids, confirmation, actor, command_id)

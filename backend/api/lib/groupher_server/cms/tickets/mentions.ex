@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Tickets.Mentions do
   alias CMS.ArtimentMentions
   alias CMS.Model.{Article, ArticlePublic, ArticleSnapshot, Community}
 
+  @doc "Refreshes Mention edges from the currently published Ticket snapshot, or returns a missing-publication error for invalid context."
   def update(article_id, %Community{} = community, operation_ref) when is_binary(operation_ref) do
     with {:ok, %Article{thread: :ticket} = article} <-
            CMS.FrontDesk.article(article_id, mode: :internal),

@@ -49,6 +49,7 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
     end
   end
 
+  @doc "Fetches a Comment with its article-context projection through the internal FrontDesk boundary."
   @spec fetch_full_comment(T.id()) :: T.domain_res(T.article_info())
   def fetch_full_comment(comment_id) do
     FrontDesk.comment(comment_id, mode: :internal, view: :article_context) |> normalize_error()

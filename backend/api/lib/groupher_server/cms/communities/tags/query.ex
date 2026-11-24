@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Query do
     |> Map.new()
   end
 
-  @doc false
+  @doc "Loads a tag by its supported reference through the internal read boundary."
   def tag(id) do
     case Repo.get(CommunityTag, id) do
       %CommunityTag{} = tag -> {:ok, Repo.preload(tag, [:community, :tag_group])}
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Query do
     end
   end
 
-  @doc false
+  @doc "Loads a tag group by its supported reference through the internal read boundary."
   def group(id) do
     case Repo.get(CommunityTagGroup, id) do
       %CommunityTagGroup{} = group ->

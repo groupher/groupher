@@ -90,6 +90,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
     present(fn confirmation -> present_confirmation(confirmation, article, community, actor) end)
   end
 
+  @doc "Creates an independent WorkingCopy from a same-Article Snapshot through an authorized command."
   def execute(
         snapshot_id,
         community,

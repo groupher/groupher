@@ -68,6 +68,7 @@ defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy do
     present(fn confirmation -> present_confirmation(confirmation, article, community, actor) end)
   end
 
+  @doc "Deletes an editable WorkingCopy through Gate admission and a replayable command Receipt."
   def execute(%Article{} = article, %Community{} = community, id, %User{} = actor, command_id)
       when is_binary(id) and is_binary(command_id) do
     with {:ok, _binding} <- CMS.Articles.Bindings.get(article, community) do

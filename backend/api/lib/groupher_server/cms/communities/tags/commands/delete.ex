@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Delete do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Deletes a tag through the retry-safe command pipeline."
   @spec execute(T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(CommunityTag.t())
   def execute(id, %User{} = actor, command_id) do
     target =

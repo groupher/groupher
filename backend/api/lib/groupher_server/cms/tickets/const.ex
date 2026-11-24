@@ -19,5 +19,6 @@ defmodule GroupherServer.CMS.Tickets.Const do
 
   enum(visibility_cause, do: Enum.map(@visibility_causes, &{&1, &1}))
 
+  @doc "Returns the public string representation of a supported visibility cause."
   def cause_value(cause) when cause in @visibility_causes, do: Atom.to_string(cause)
 end

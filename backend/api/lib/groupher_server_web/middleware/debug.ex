@@ -21,6 +21,7 @@ defmodule GroupherServerWeb.Middleware.Debug do
   alias GroupherServer.Accounts
   alias GroupherServerWeb.ErrorResponse
 
+  @doc "Requires the current user to be present before resolving the field."
   def call(%{context: %{cur_user: _}} = resolution, _info), do: resolution
 
   def call(resolution, _) do

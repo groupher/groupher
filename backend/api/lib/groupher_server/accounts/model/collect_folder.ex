@@ -50,7 +50,10 @@ defmodule GroupherServer.Accounts.Model.CollectFolder do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Requires an owner, a title, and embedded per-thread metadata for the folder.
+  An unknown owner is reported as a `:user_id` constraint error.
+  """
   def changeset(%CollectFolder{} = collect_folder, attrs) do
     collect_folder
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -60,7 +63,10 @@ defmodule GroupherServer.Accounts.Model.CollectFolder do
     |> foreign_key_constraint(:user_id)
   end
 
-  @doc false
+  @doc """
+  Casts folder attributes and optional counter metadata without requiring a new title or owner.
+  A changed title must have at least one character, and the owner foreign key still applies.
+  """
   def update_changeset(%CollectFolder{} = collect_folder, attrs) do
     collect_folder
     |> cast(attrs, @optional_fields ++ @required_fields)

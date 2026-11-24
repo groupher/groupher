@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Articles.BindingTrashPersist do
 
   @threads [:post, :blog, :changelog]
 
+  @doc "Creates or returns the Community-local hide fact for an ordinary Article Binding. Requires the caller's transaction and locked Binding."
   def hide(%Article{thread: thread} = article, %Community{} = community, %User{} = actor)
       when thread in @threads do
     with {:ok, binding} <- lock_binding(article, community) do
@@ -53,6 +54,7 @@ defmodule GroupherServer.CMS.Articles.BindingTrashPersist do
   def hide(%Article{}, %Community{}, %User{}), do: {:error, :unsupported_thread}
   def hide(_, _, _), do: {:error, :invalid_article_binding}
 
+  @doc "Removes the matching revision-1 Community hide fact under the caller's transaction."
   def restore(%Article{thread: thread} = article, %Community{} = community, id, "1")
       when thread in @threads and is_binary(id) do
     with {:ok, id} <- Ecto.UUID.cast(id),

@@ -22,30 +22,40 @@ defmodule Helper.Utils do
   alias Helper.{Cache, Utils}
 
   # Map utils
-  @doc "Runs `atom_values_to_upcase` through the public `Utils` boundary."
+  @doc "Uppercases top-level atom values as strings, except booleans and nil; non-maps pass through."
   defdelegate atom_values_to_upcase(map), to: Utils.Map
-  @doc "Runs `map_key_stringify` through the public `Utils` boundary."
+
+  @doc "Converts top-level keys to strings, dropping a struct's type tag and leaving values unchanged."
   defdelegate map_key_stringify(map), to: Utils.Map
-  @doc "Runs `keys_to_atoms` through the public `Utils` boundary."
+
+  @doc "Atomizes keys in maps and map elements of lists. Use trusted keys: unknown strings create atoms."
   defdelegate keys_to_atoms(map), to: Utils.Map
-  @doc "Runs `keys_to_strings` through the public `Utils` boundary."
+
+  @doc "Converts atom keys to strings throughout nested maps and lists, leaving other keys unchanged."
   defdelegate keys_to_strings(map), to: Utils.Map
-  @doc "Runs `camelize_map_key` through the public `Utils` boundary."
+
+  @doc "Camelizes keys in nested maps and formats DateTime values as ISO 8601; lists are unchanged."
   defdelegate camelize_map_key(map), to: Utils.Map
+
+  @doc "Like `camelize_map_key/1`, with `:upcase`, `:downcase`, or `:ignore` for top-level string values."
   defdelegate camelize_map_key(map, opt), to: Utils.Map
-  @doc "Runs `snake_map_key` through the public `Utils` boundary."
+
+  @doc "Converts nested map keys to snake-case strings and DateTime values to ISO 8601; lists pass through."
   defdelegate snake_map_key(map), to: Utils.Map
-  @doc "Runs `deep_merge` through the public `Utils` boundary."
+  @doc "Recursively merges conflicting map values; for other conflicts the right-hand value wins."
   defdelegate deep_merge(left, right), to: Utils.Map
-  @doc "Runs `map_atom_value` through the public `Utils` boundary."
+
+  @doc "With `:string`, lowercases top-level atom values as strings, except booleans; nil becomes an empty string."
   defdelegate map_atom_value(attrs, opt), to: Utils.Map
 
   # String Utils
-  @doc "Runs `stringify` through the public `Utils` boundary."
+  @doc "Converts integers and atoms to strings and returns other values unchanged."
   defdelegate stringify(str), to: Utils.String
-  @doc "Runs `count_words` through the public `Utils` boundary."
+
+  @doc "Counts list elements by their string representation, returning a map of string keys to counts."
   defdelegate count_words(str), to: Utils.String
-  @doc "Runs `str_occurrence` through the public `Utils` boundary."
+
+  @doc "Counts non-overlapping substring matches; returns `\"must be strings\"` for non-binary inputs."
   defdelegate str_occurrence(string, substr), to: Utils.String
 
   @doc "Reads one application configuration key, or an entire section with `:all`."
@@ -90,6 +100,12 @@ defmodule Helper.Utils do
   def done(:ok), do: {:ok, :pass}
   def done([]), do: {:ok, []}
   def done(result), do: {:ok, result}
+
+  @doc """
+  With `:boolean`, returns `{:ok, false}` only for nil. For other options, nil
+  produces a custom error. On tagged results, `with: value` replaces a success
+  value and normalizes errors; `:trans` unwraps success or throws the normalized error tuple.
+  """
   def done(nil, :boolean), do: {:ok, false}
   def done(_, :boolean), do: {:ok, true}
 
@@ -104,6 +120,7 @@ defmodule Helper.Utils do
   def done({:ok, result}, :trans), do: result
   def done({:error, reason}, :trans), do: throw({:error, normalize_error(reason)})
 
+  @doc "Wraps a non-nil lookup result in an ok tuple; for nil, formats a not-found error using the queryable and id."
   def done(nil, queryable, id) do
     {:error,
      ErrorCat.custom(%{
@@ -140,6 +157,7 @@ defmodule Helper.Utils do
     end
   end
 
+  @doc "Caches the successful value from `done/1` using the pool default expiry and returns it in an ok tuple."
   def done_and_cache(result, pool, scope) do
     with {:ok, res} <- done(result) do
       Cache.put(pool, scope, res)
@@ -176,6 +194,7 @@ defmodule Helper.Utils do
     value >= target
   end
 
+  @doc "With `:no_equal`, checks whether an integer or string length is strictly above the target."
   @spec large_than(String.t() | integer(), integer(), :no_equal) :: true | false
   def large_than(value, target, :no_equal) when is_binary(value) and is_integer(target) do
     String.length(value) > target
@@ -185,8 +204,8 @@ defmodule Helper.Utils do
     value > target
   end
 
+  @doc "Checks whether an integer or string length is at most the target."
   @spec less_than(String.t() | integer(), integer()) :: true | false
-  @doc "Runs `less_than` through the public `Utils` boundary."
   def less_than(value, target) when is_binary(value) and is_integer(target) do
     String.length(value) <= target
   end
@@ -195,6 +214,7 @@ defmodule Helper.Utils do
     value <= target
   end
 
+  @doc "With `:no_equal`, checks whether an integer or string length is strictly below the target."
   @spec less_than(String.t() | integer(), integer(), :no_equal) :: true | false
   def less_than(value, target, :no_equal) when is_binary(value) and is_integer(target) do
     String.length(value) < target
@@ -260,12 +280,12 @@ defmodule Helper.Utils do
     _ -> nil
   end
 
-  @doc "Converts the input to upcase at the `Utils` boundary."
+  @doc "Uppercases an atom name or binary string; returns nil for other inputs."
   def to_upcase(v) when is_atom(v), do: v |> to_string |> String.upcase()
   def to_upcase(v) when is_binary(v), do: v |> String.upcase()
   def to_upcase(_), do: nil
 
-  @doc "Runs `uid` through the public `Utils` boundary."
+  @doc "Generates an alphanumeric Nanoid of the requested length (five characters by default)."
   def uid(str_len \\ 5) do
     Nanoid.generate(str_len, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
   end
@@ -280,9 +300,7 @@ defmodule Helper.Utils do
   end
 
   @doc """
-  get host from url for config, like
-  postgres://user:password@example-db-host.aws.neon.tech:5432/example_db?sslmode=require
-  => example-db-host
+  Returns the full host from `URI.parse/1`, or nil if the URL has no host.
   """
   def get_host_from_url(url) do
     URI.parse(url).host
@@ -290,7 +308,7 @@ defmodule Helper.Utils do
 
   # Repo.transaction will rewrite error to {:error, :rollback}, so if we want to return error with
   # details context, need use try catch
-  @doc "Runs `use_transaction` through the public `Utils` boundary."
+  @doc "Runs the callback in a Repo transaction, unwrapping ok values and rolling back on returned error tuples."
   def use_transaction(fun) do
     Repo.transaction(fn ->
       case fun.() do

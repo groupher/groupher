@@ -40,7 +40,9 @@ defmodule GroupherServerWeb.Schema.AlertWall.Mutations do
   end
 
   object :alert_wall_command_result do
+    @desc "Identifies the alert item resolved by the command."
     field(:item_id, non_null(:id))
+    @desc "Contains the resolution recorded for the item."
     field(:resolution, non_null(:string))
   end
 end

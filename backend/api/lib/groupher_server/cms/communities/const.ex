@@ -32,6 +32,7 @@ defmodule GroupherServer.CMS.Communities.Const do
   enum(lifecycle_blocker_end_type, do: [released: :released, terminated: :terminated])
   @pending_states %{normal: 0, applying: 1}
 
+  @doc "Returns the persisted pending-state value for a Community lifecycle state."
   @spec pending_state(:normal | :applying) :: 0 | 1
   def pending_state(state), do: Map.fetch!(@pending_states, state)
 end

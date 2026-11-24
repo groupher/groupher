@@ -47,6 +47,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   alias Accounts.Model.User
   alias CMS.ErrorCat, as: CmsErrorCat
 
+  @doc "Authorizes the configured action and adds a field error when access is denied."
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
   end

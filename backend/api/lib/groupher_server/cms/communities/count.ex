@@ -65,6 +65,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     end
   end
 
+  @doc "Recounts a Community's category-tag total and persists the updated counter."
   @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, :community_tags_count) do
     {:ok, community_tags_count} =
@@ -119,6 +120,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     end
   end
 
+  @doc "Stores the inner resource ID index for a Community thread in its metadata."
   @spec update_inner_id(Community.t(), atom(), map()) :: T.domain_res(Community.t())
   def update_inner_id(
         %Community{meta: community_meta} = community,

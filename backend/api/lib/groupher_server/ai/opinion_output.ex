@@ -27,7 +27,12 @@ defmodule GroupherServer.AI.OpinionOutput do
           provider_request_id: String.t() | nil
         }
 
-  @doc "Validates the complete response and coverage required by the submitted input."
+  @doc """
+  Validates the complete response and coverage required by the submitted input.
+
+  Rejects unknown or missing response keys, unsupported note types, incomplete
+  required modalities, and opinions whose status does not match their evidence.
+  """
   @spec validate(map(), GroupherServer.AI.OpinionInput.t()) ::
           {:ok, t()} | {:error, term()}
   def validate(payload, input) when is_map(payload) do

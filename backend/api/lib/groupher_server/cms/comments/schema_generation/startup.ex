@@ -4,8 +4,10 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration.Startup do
 
       Repo startup -> generation + schema verification -> API / worker admission
   """
+  @doc "Defines the supervisor child that performs the production schema readiness check."
   def child_spec(opts), do: %{id: __MODULE__, start: {__MODULE__, :start_link, [opts]}}
 
+  @doc "Verifies production schema readiness before startup and otherwise declines to start a child."
   def start_link(_opts) do
     if Application.get_env(:groupher_server, :env) == :prod do
       GroupherServer.CMS.Comments.SchemaGeneration.verify_ready!(GroupherServer.Repo)

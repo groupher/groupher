@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Create do
   alias Helper.T
   alias Helper.Validator.Slug
 
+  @doc "Creates a Community category through the retry-safe command pipeline."
   @spec execute(Community.t() | String.t(), map(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Category.t())
   def execute(community_ref, attrs, %User{} = actor, command_id) when is_map(attrs) do

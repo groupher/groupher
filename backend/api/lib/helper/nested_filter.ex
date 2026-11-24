@@ -2,8 +2,8 @@ defmodule Helper.NestedFilter do
   @moduledoc """
   Recursively filters or selects keys and values in nested maps and lists.
 
-  The API is adapted from `treble37/nested_filter`; structs are treated as
-  opaque leaves so filtering does not silently destroy their type identity.
+  Dropping entries preserves list shape and leaves structs intact. Selecting
+  keys instead collects matches from nested maps into a single map.
 
   Business position:
 
@@ -17,7 +17,7 @@ defmodule Helper.NestedFilter do
   @type predicate :: (key, val -> boolean)
 
   # @spec drop_by(struct, predicate) :: struct
-  @doc "Runs `drop_by` through the public `NestedFilter` boundary."
+  @doc "Drops entries when the predicate accepts the key and recursively cleaned value. Traverses lists but leaves structs intact."
   def drop_by(%_{} = struct, _), do: struct
 
   # @spec drop_by(map, predicate) :: map
@@ -62,7 +62,7 @@ defmodule Helper.NestedFilter do
   end
 
   # @spec take_by(map, keys_to_select) :: map
-  @doc "Runs `take_by` through the public `NestedFilter` boundary."
+  @doc "Collects matching keys from nested maps into a flat map. Parent keys win over descendants; lists are not traversed."
   def take_by(map, keys_to_select) when is_map(map) do
     map
     |> Enum.reduce(%{}, fn {_key, val}, acc ->

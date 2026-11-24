@@ -58,6 +58,7 @@ defmodule GroupherServer.Messaging.Model.Notice do
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Casts a grouped Notice and validates either activity-actor or request-event shape."
   def changeset(%Notice{} = mention, attrs) do
     mention
     |> cast(attrs, @optional_fields ++ @required_fields)

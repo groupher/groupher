@@ -396,6 +396,7 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  @doc "Updates an Article category with the caller's explicit command identity."
   @spec set_cat(Ecto.UUID.t(), Const.cat_enum() | nil, User.t(), integer(), Ecto.UUID.t()) ::
           T.domain_res(Article.t())
   def set_cat(article_id, cat, %User{} = actor, community_id, command_id)
@@ -422,6 +423,7 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  @doc "Updates category and assembles the canonical result with a command identity."
   def set_cat_result(article, cat, %User{} = actor, command_id) do
     with %Community{} = community <- Map.get(article, :community),
          {:ok, updated} <- set_cat(article.id, cat, actor, community.id, command_id) do
@@ -456,6 +458,7 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  @doc "Locks comments and builds the canonical result using the command identity."
   def lock_comments_result(article, %User{} = actor, command_id) do
     with {:ok, _command_id} <-
            GroupherServer.CMS.Command.Receipt.validate_command_id(command_id),
@@ -477,6 +480,7 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  @doc "Unlocks comments and builds the canonical result using the command identity."
   def undo_lock_comments_result(article, %User{} = actor, command_id) do
     with {:ok, _command_id} <-
            GroupherServer.CMS.Command.Receipt.validate_command_id(command_id),
@@ -498,6 +502,7 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  @doc "Sinks an Article and builds the canonical result using the command identity."
   def sink_result(article, %User{} = actor, command_id) do
     with {:ok, _command_id} <-
            GroupherServer.CMS.Command.Receipt.validate_command_id(command_id),
@@ -519,6 +524,7 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  @doc "Restores a sunk Article and builds the canonical result using the command identity."
   def undo_sink_result(article, %User{} = actor, command_id) do
     with {:ok, _command_id} <-
            GroupherServer.CMS.Command.Receipt.validate_command_id(command_id),

@@ -15,6 +15,7 @@ defmodule GroupherServer.Support.Factory.Oauth do
   alias GroupherServer.Support
   alias Support.FakeData
 
+  @doc "Injects OAuth profile fixture dispatch into a test factory module."
   defmacro __using__(_opts) do
     quote do
       defp mock_meta(:github_profile), do: unquote(__MODULE__).github_profile_meta()
@@ -24,6 +25,7 @@ defmodule GroupherServer.Support.Factory.Oauth do
     end
   end
 
+  @doc "Builds a unique GitHub-like account metadata map without making a provider request."
   def github_profile_meta do
     unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -44,6 +46,7 @@ defmodule GroupherServer.Support.Factory.Oauth do
     }
   end
 
+  @doc "Builds a normalized OAuth profile and provider-shaped raw payload for fixture tests."
   def oauth_profile(provider \\ "github") when is_binary(provider) do
     unique_num = System.unique_integer([:positive, :monotonic])
 

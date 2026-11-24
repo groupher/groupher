@@ -13,38 +13,45 @@ defmodule GroupherServerWeb.Resolvers.CMS.Interactions do
 
   @viewer_batch_size 100
 
+  @doc "Records the viewer's upvote on the resolved article and returns the command result."
   def upvote_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
     CMS.interactions_upvote_result(article, user, Map.get(args, :command_id))
   end
 
+  @doc "Withdraws the viewer's upvote from the resolved article."
   def undo_upvote_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
     CMS.interactions_undo_upvote_result(article, user, Map.get(args, :command_id))
   end
 
+  @doc "Pages the users who upvoted the resolved article."
   def upvoted_users(_root, %{article: article} = args, _info) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
       CMS.interactions_upvoted_users(article, pagi)
     end
   end
 
+  @doc "Pages the users who collected the resolved article."
   def collected_users(_root, %{article: article} = args, _info) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
       CMS.interactions_collected_users(article, pagi)
     end
   end
 
+  @doc "Records the viewer's selected emotion on the resolved article."
   def emotion_to_article(_root, %{article: article, emotion: emotion} = args, %{
         context: %{cur_user: user}
       }) do
     CMS.interactions_emotion_result(article, emotion, user, Map.get(args, :command_id))
   end
 
+  @doc "Withdraws the viewer's selected emotion from the resolved article."
   def undo_emotion_to_article(_root, %{article: article, emotion: emotion} = args, %{
         context: %{cur_user: user}
       }) do
     CMS.interactions_undo_emotion_result(article, emotion, user, Map.get(args, :command_id))
   end
 
+  @doc "Reads viewer interaction state for up to 100 article paths; anonymous viewers get an empty list."
   def article_interaction_states(_root, %{paths: paths}, info) do
     with {:ok, :pass} <- validate_viewer_batch(paths) do
       case Map.get(info.context, :cur_user) do
@@ -54,6 +61,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Interactions do
     end
   end
 
+  @doc "Formats the parent reaction data using the comment or article emotion definitions."
   def emotions(%{thread: _} = root, _args, _info) do
     {:ok, CMS.format_emotions(root, :comment)}
   end

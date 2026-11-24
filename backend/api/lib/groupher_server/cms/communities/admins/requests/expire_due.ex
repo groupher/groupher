@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.ExpireDue do
   def run(%DateTime{} = now), do: run_with_executor(now, &Expire.execute/2)
   def run(_), do: {:error, :invalid_request_expiration}
 
-  @doc false
+  @doc "Expires due Admin requests through the supplied executor and reports its result."
   def run_with_executor(%DateTime{} = now, expire_fun) when is_function(expire_fun, 2) do
     scan(now, nil, 0, 0, [], expire_fun)
   end

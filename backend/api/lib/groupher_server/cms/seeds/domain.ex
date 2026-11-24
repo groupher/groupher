@@ -52,10 +52,12 @@ defmodule GroupherServer.CMS.Seeds.Domain do
     CommunitySeeds.get(type) |> Enum.each(&community(&1, type)) |> done
   end
 
+  @doc "Seeds one of the built-in home or feedback communities."
   @spec community(atom()) :: T.domain_res(Community.t())
   def community(:home), do: seed_community(:home)
   def community(:feedback), do: seed_community(:feedback)
 
+  @doc "Creates a typed community with seed bot, categories, threads, and tags."
   @spec community(atom(), atom()) :: T.domain_res(Community.t())
   def community(slug, type) when type in @community_types do
     with {:ok, bot} <- seed_bot(),
@@ -72,6 +74,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
     {:error, ErrorCat.custom("unknown community type")}
   end
 
+  @doc "Assigns a persisted category to each named community during domain bootstrap."
   @spec set_category([atom() | String.t()], atom() | String.t()) :: T.domain_res(:ok)
   def set_category(communities_names, cat_name) when is_list(communities_names) do
     {:ok, category} = ORM.find_by(Category, %{slug: cat_name})
@@ -90,9 +93,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   end
 
   # seed community
-  @doc """
-  seed community for home
-  """
+  @doc "Creates one built-in community during the one-time domain bootstrap."
   @spec seed_community(:blackhole | :feedback | :home) :: any
   def seed_community(:home) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "home"}),

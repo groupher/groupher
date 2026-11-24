@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Assets.Commands.Register do
   alias CMS.Assets.{Persist, Query}
   alias CMS.Model.{Community, CommunityAsset}
 
+  @doc "Registers an uploaded asset after community update admission and returns its receipt-backed result."
   @spec execute(Community.t(), map(), User.t() | nil, String.t() | nil) ::
           {:ok, CommunityAsset.t()} | {:error, term()}
   def execute(%Community{} = community, attrs, %User{} = user, command_id) when is_map(attrs) do

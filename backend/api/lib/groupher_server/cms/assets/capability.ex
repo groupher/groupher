@@ -27,6 +27,7 @@ defmodule GroupherServer.CMS.Assets.Capability do
     encoded <> "." <> Base.url_encode64(signature, padding: false)
   end
 
+  @doc "Returns the configured public asset endpoint used to construct canonical URLs."
   @spec public_endpoint() :: String.t()
   def public_endpoint do
     GroupherServer.CMS.Assets.Endpoints.fetch!("ASSETS_PUBLIC_ENDPOINT")

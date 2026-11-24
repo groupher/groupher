@@ -17,6 +17,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMailbox do
 
   @optional_fields ~w(is_empty unread_total_count unread_mentions_count unread_notifications_count)a
 
+  @doc "Returns an empty mailbox status map with zero unread mentions, notifications, and total messages."
   def default_status do
     %{
       is_empty: true,
@@ -33,6 +34,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMailbox do
     field(:unread_notifications_count, :integer, default: 0)
   end
 
+  @doc "Casts the empty flag and unread counters as supplied; it does not recalculate the total."
   def changeset(struct, params) do
     struct |> cast(params, @optional_fields)
   end

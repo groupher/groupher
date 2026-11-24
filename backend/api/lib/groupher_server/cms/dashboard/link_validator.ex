@@ -44,6 +44,7 @@ defmodule GroupherServer.CMS.Dashboard.LinkValidator do
 
   def valid_tree?(_), do: false
 
+  @doc "Returns whether every child is a link with a binary id, title, and URL."
   def valid_children?(links) when is_list(links) do
     Enum.all?(links, fn
       %{id: id, title: title, url: url} ->

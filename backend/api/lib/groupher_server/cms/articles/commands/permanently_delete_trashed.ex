@@ -72,6 +72,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PermanentlyDeleteTrashed do
     end)
   end
 
+  @doc "Permanently deletes an authorized Article Trash entry using its Community scope and command identity."
   @spec execute(
           Ecto.UUID.t() | TrashedArticle.t(),
           User.t() | nil,

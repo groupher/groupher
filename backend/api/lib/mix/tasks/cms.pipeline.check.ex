@@ -31,6 +31,7 @@ defmodule Mix.Tasks.Cms.Pipeline.Check do
   @cms_adapter CMS.CommandPipelineAdapter
 
   @impl true
+  @doc "Compiles the application, validates CMS pipeline contracts, then writes or checks the generated contract manifest."
   def run(args) do
     Mix.Task.run("compile", [])
     {opts, _argv, _invalid} = OptionParser.parse(args, strict: @switches)
@@ -93,7 +94,7 @@ defmodule Mix.Tasks.Cms.Pipeline.Check do
     end)
   end
 
-  @doc false
+  @doc "Rejects CMS-owned pipeline modules that declare an adapter other than the CMS command-pipeline adapter."
   def validate_cms_adapter_ownership!(modules) when is_list(modules) do
     modules
     |> Enum.filter(fn module ->
@@ -141,7 +142,7 @@ defmodule Mix.Tasks.Cms.Pipeline.Check do
     Enum.each(contracts, &ensure_confirmation!/1)
   end
 
-  @doc false
+  @doc "Builds the compiled call graph and raises when a rejection builder is not proven pure."
   def validate_rejection_builders!(contracts) do
     modules = contracts |> Enum.map(& &1.module) |> Enum.uniq()
     graph = GraphAnalyzer.build_modules(modules)

@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Communities.Commands.RequestDestroy do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Requests reversible Community destruction through the command receipt boundary."
   @spec execute(Community.t(), User.t(), keyword()) :: T.domain_res(Community.t())
   def execute(%Community{} = community, %User{} = actor, opts) do
     execute_pipeline(community, actor, opts, Keyword.fetch!(opts, :command_id))

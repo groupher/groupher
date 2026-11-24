@@ -11,11 +11,11 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Support do
   alias CMS.FrontDesk
   alias CMS.Model.{Category, Community}
 
-  @doc false
+  @doc "Resolves a Community reference for an internal category command."
   def community(%Community{} = community), do: {:ok, community}
   def community(ref), do: FrontDesk.community(ref, mode: :internal)
 
-  @doc false
+  @doc "Resolves a category reference and returns a domain error when it is missing."
   def category(id) do
     case CategoriesQuery.get(id) do
       %Category{} = category -> {:ok, category}
@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Support do
     end
   end
 
-  @doc false
+  @doc "Reloads the category represented by a stored command confirmation."
   def category_result(%{data: %{"category_id" => id}}) do
     case CategoriesQuery.get(id) do
       %Category{} = category -> {:ok, category}
@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Support do
 
   def category_result(_), do: {:error, CMS.ErrorCat.command_result_unavailable()}
 
-  @doc false
+  @doc "Reloads the Community represented by a stored command confirmation."
   def community_result(%{data: %{"community_id" => id}}) do
     case FrontDesk.community(id, mode: :internal) do
       {:ok, %Community{} = community} -> {:ok, community}
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Support do
 
   def community_result(_), do: {:error, CMS.ErrorCat.command_result_unavailable()}
 
-  @doc false
+  @doc "Builds a command confirmation carrying the result key and command ID."
   def confirmation(module, key, value, command_id) do
     struct(module, data: %{key => value, "command_id" => command_id})
   end

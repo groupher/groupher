@@ -2,7 +2,14 @@ defmodule GroupherServer.Messaging.Mentions do
   @moduledoc """
   Internal facade for Mention reads and persistence.
 
-      caller -> GroupherServer.Messaging.Mentions -> result
+      Mention producer / inbox resolver
+          -> Messaging.Mentions
+          +--> Query for recipient-scoped pages and unread counts
+          +--> Persist for idempotent target-revision deliveries
+          -> typed query or persistence result
+
+  Transaction ownership and mailbox projection updates remain with the
+  command that invokes persistence.
   """
 
   alias __MODULE__.{Persist, Query}

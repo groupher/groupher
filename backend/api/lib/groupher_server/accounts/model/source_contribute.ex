@@ -30,7 +30,7 @@ defmodule GroupherServer.Accounts.Model.SourceContribute do
     field(:h5, :boolean)
   end
 
-  @doc false
+  @doc "Casts optional boolean flags for web, server, mobile, WeApp, and H5 contribution sources."
   def changeset(%SourceContribute{} = source_contribute, attrs) do
     source_contribute
     |> cast(attrs, @optional_fields)

@@ -22,6 +22,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserContributeRecord do
     field(:date, :date)
   end
 
+  @doc "Casts the optional date and count for one entry in the contribution summary."
   def changeset(struct, params) do
     struct |> cast(params, @optional_fields)
   end

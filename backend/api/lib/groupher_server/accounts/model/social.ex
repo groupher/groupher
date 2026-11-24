@@ -47,7 +47,9 @@ defmodule GroupherServer.Accounts.Model.Social do
     # timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Casts social profile fields and requires an owner. The owner must exist and can have only one social profile.
+  """
   def changeset(%Social{} = social, attrs) do
     social
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -56,7 +58,9 @@ defmodule GroupherServer.Accounts.Model.Social do
     |> unique_constraint(:user, name: :user_socials_user_id_index)
   end
 
-  @doc false
+  @doc """
+  Casts partial social profile changes, including an optional owner change subject to the same foreign key and uniqueness constraints.
+  """
   def update_changeset(%Social{} = social, attrs) do
     social
     |> cast(attrs, @optional_fields ++ @required_fields)

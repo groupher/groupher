@@ -65,10 +65,12 @@ defmodule GroupherServer.CMS.Communities do
   @spec fetch(String.t()) :: T.domain_res(Community.t())
   def fetch(slug), do: fetch(slug, @default_fetch_opts)
 
+  @doc "Fetches a community for an anonymous viewer using the supplied read options."
   @spec fetch(String.t(), keyword() | User.t()) :: T.domain_res(Community.t())
   def fetch(slug, opt) when is_list(opt), do: fetch_for_viewer(slug, nil, opt)
   def fetch(slug, %User{} = user), do: fetch_for_viewer(slug, user, @default_fetch_opts)
 
+  @doc "Fetches a community and decorates it with the signed-in viewer's state."
   @spec fetch(String.t(), User.t(), keyword()) :: T.domain_res(Community.t())
   def fetch(slug, %User{} = user, opt), do: fetch_for_viewer(slug, user, opt)
 
@@ -122,6 +124,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec check_name(term()) :: T.domain_res(map())
   def check_name(slug), do: check_name(slug, [])
 
+  @doc "Checks a community name using the optional normalization and availability settings."
   @spec check_name(term(), keyword()) :: T.domain_res(map())
   def check_name(slug, opts) do
     case NameAvailability.check(slug, opts) do
@@ -145,6 +148,7 @@ defmodule GroupherServer.CMS.Communities do
   # List
   @doc "Pages communities with an explicit Pagi position and optional viewer."
   defdelegate paged(filter, pagi), to: Query, as: :page
+  @doc "Pages communities with an explicit viewer used to resolve viewer-specific fields."
   defdelegate paged(filter, pagi, viewer), to: Query, as: :page
 
   # Write
@@ -268,6 +272,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec create_category(map(), User.t()) :: T.domain_res(Category.t())
   def create_category(_attrs, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Creates a category from its community slug, attributes, actor, and command identity."
   @spec create_category(map(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
   def create_category(%{community: community} = attrs, %User{} = user, command_id) do
     CreateCategoryCommand.execute(community, attrs, user, command_id)
@@ -280,6 +285,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec update_category(String.t(), map()) :: T.domain_res(Category.t())
   def update_category(_community, _attrs), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Updates a category with an actor and command identity."
   @spec update_category(String.t(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
   def update_category(community, attrs, %User{} = user, command_id) do
     UpdateCategoryCommand.execute(community, attrs, user, command_id)
@@ -289,6 +295,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec delete_category(String.t(), T.id()) :: T.domain_res(Category.t())
   def delete_category(_community, _id), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Deletes the selected category using the actor and command identity."
   @spec delete_category(String.t(), T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
   def delete_category(community, id, %User{} = user, command_id) do
     DeleteCategoryCommand.execute(community, id, user, command_id)
@@ -298,6 +305,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec set_category(Community.t(), T.id()) :: T.domain_res(Community.t())
   def set_category(%Community{}, _category_id), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Associates a category with the community using the actor and command identity."
   @spec set_category(Community.t(), T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Community.t())
   def set_category(%Community{} = community, category_id, %User{} = user, command_id) do
@@ -308,6 +316,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec unset_category(Community.t(), T.id()) :: T.domain_res(Community.t())
   def unset_category(%Community{}, _category_id), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Removes the community's category association using the actor and command identity."
   @spec unset_category(Community.t(), T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Community.t())
   def unset_category(%Community{} = community, category_id, %User{} = user, command_id) do
@@ -354,12 +363,13 @@ defmodule GroupherServer.CMS.Communities do
   defp reject_command_id(_community, _user), do: {:error, CMS.ErrorCat.command_id_required()}
 
   # Count
-  @doc "Updates count through the `Communities` write boundary."
+  @doc "Updates one community count for the specified user and count operation."
   @spec update_count(Community.t(), User.t(), atom(), atom()) :: T.domain_res(Community.t())
   def update_count(%Community{} = community, %User{} = user, type, opt) do
     Count.update(community, user, type, opt)
   end
 
+  @doc "Updates a community count either for a single community or for a list of communities."
   @spec update_count(Community.t(), atom()) :: T.domain_res(Community.t())
   def update_count(%Community{} = community, type), do: Count.update(community, type)
 
@@ -384,6 +394,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Creates a community tag from a reference, thread, attributes, actor, and command identity."
   def create_tag(%Community{} = community, thread, attrs, %User{} = user, command_id) do
     Create.execute(community, thread, attrs, user, command_id)
   end
@@ -398,8 +409,10 @@ defmodule GroupherServer.CMS.Communities do
   @spec update_tag(T.id(), map()) :: T.domain_res(CommunityTag.t())
   def update_tag(_id, _attrs), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Rejects a tag update that supplies a command id without an authenticated actor."
   def update_tag(_id, _attrs, _command_id), do: {:error, :command_actor_required}
 
+  @doc "Updates a tag using the actor and command identity."
   def update_tag(id, attrs, %User{} = user, command_id) do
     Update.execute(id, attrs, user, command_id)
   end
@@ -414,6 +427,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Rejects tag-group creation without an authenticated actor."
   def create_tag_group(%Community{}, _thread, _attrs, _command_id) do
     {:error, :command_actor_required}
   end
@@ -423,6 +437,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, :command_actor_required}
   end
 
+  @doc "Creates a tag group with actor and command identity."
   def create_tag_group(%Community{} = community, thread, attrs, %User{} = user, command_id) do
     CreateTagGroup.execute(community, thread, attrs, user, command_id)
   end
@@ -444,6 +459,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Rejects tag-group updates without an authenticated actor."
   def update_tag_group(%Community{}, _thread, _id, _attrs, _command_id) do
     {:error, :command_actor_required}
   end
@@ -453,6 +469,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, :command_actor_required}
   end
 
+  @doc "Updates a tag group with actor and command identity."
   def update_tag_group(%Community{} = community, thread, id, attrs, %User{} = user, command_id) do
     UpdateTagGroup.execute(community, thread, id, attrs, user, command_id)
   end
@@ -473,6 +490,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Rejects tag-group deletion without an authenticated actor."
   def delete_tag_group(%Community{}, _thread, _id, _command_id) do
     {:error, :command_actor_required}
   end
@@ -481,6 +499,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, :command_actor_required}
   end
 
+  @doc "Deletes a tag group with actor and command identity."
   def delete_tag_group(%Community{} = community, thread, id, %User{} = user, command_id) do
     DeleteTagGroup.execute(community, thread, id, user, command_id)
   end
@@ -504,6 +523,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec tag_group_titles([T.id()]) :: map()
   def tag_group_titles(group_ids), do: Tags.group_titles(group_ids)
 
+  @doc "Accepts batch resolver options and returns titles keyed by tag-group id."
   @spec tag_group_titles(keyword(), [T.id()]) :: map()
   def tag_group_titles(_batch_opts, group_ids), do: Tags.group_titles(group_ids)
 
@@ -511,16 +531,20 @@ defmodule GroupherServer.CMS.Communities do
   @spec delete_tag(T.id()) :: T.domain_res(CommunityTag.t())
   def delete_tag(_id), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Rejects tag deletion when a command id is provided without an actor."
   def delete_tag(_id, _command_id), do: {:error, :command_actor_required}
 
+  @doc "Deletes a tag with the signed-in actor and command identity."
   def delete_tag(id, %User{} = user, command_id), do: Delete.execute(id, user, command_id)
 
   @doc "Runs `set_tag` through the public `Communities` boundary."
   @spec set_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
   def set_tag(_article, _id), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Rejects tag association when a command id is provided without an actor."
   def set_tag(_article, _id, _command_id), do: {:error, :command_actor_required}
 
+  @doc "Associates a tag with an Article using actor and command identity."
   def set_tag(article, id, %User{} = user, command_id) do
     CMS.Communities.Tags.Commands.Set.execute(article, id, user, command_id)
   end
@@ -529,8 +553,10 @@ defmodule GroupherServer.CMS.Communities do
   @spec unset_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
   def unset_tag(_article, _id), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Rejects tag removal when a command id is provided without an actor."
   def unset_tag(_article, _id, _command_id), do: {:error, :command_actor_required}
 
+  @doc "Removes a tag association using actor and command identity."
   def unset_tag(article, id, %User{} = user, command_id) do
     CMS.Communities.Tags.Commands.Unset.execute(article, id, user, command_id)
   end
@@ -550,6 +576,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, :command_actor_required}
   end
 
+  @doc "Reorders tags within one group using actor and command identity."
   def reindex_tags_in_group(community, thread, group, tags, %User{} = user, command_id) do
     CMS.Communities.Tags.Commands.ReindexTagsInGroup.execute(
       community,
@@ -561,6 +588,7 @@ defmodule GroupherServer.CMS.Communities do
     )
   end
 
+  @doc "Rejects tag reordering when no command identity is supplied."
   @spec reindex_tags(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
   def reindex_tags(_community, _thread, _tags) do
     {:error, CMS.ErrorCat.command_id_required()}
@@ -571,6 +599,7 @@ defmodule GroupherServer.CMS.Communities do
     {:error, :command_actor_required}
   end
 
+  @doc "Reorders tags across groups using actor and command identity."
   def reindex_tags_across_groups(community, thread, tags, %User{} = user, command_id) do
     CMS.Communities.Tags.Commands.ReindexTagsAcrossGroups.execute(
       community,
@@ -587,10 +616,12 @@ defmodule GroupherServer.CMS.Communities do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Rejects group reordering when a command id is supplied without an actor."
   def reindex_tag_groups(_community, _thread, _groups, _command_id) do
     {:error, :command_actor_required}
   end
 
+  @doc "Reorders tag groups using actor and command identity."
   def reindex_tag_groups(community, thread, groups, %User{} = user, command_id) do
     CMS.Communities.Tags.Commands.ReindexTagGroups.execute(
       community,
@@ -605,6 +636,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec tag_stats(CommunityTag.t() | T.id()) :: T.domain_res(term())
   def tag_stats(tag), do: Stats.get(tag)
 
+  @doc "Reads one tag's statistics by community, thread, and tag slug."
   @spec tag_stats(String.t(), atom(), String.t()) :: T.domain_res(term())
   def tag_stats(community, thread, slug), do: Stats.get(community, thread, slug)
 

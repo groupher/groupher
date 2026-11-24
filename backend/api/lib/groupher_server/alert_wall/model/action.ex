@@ -38,6 +38,7 @@ defmodule GroupherServer.AlertWall.Model.Action do
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Casts and validates an action recorded against an AlertWall item."
   def changeset(action, attrs) do
     action
     |> cast(attrs, [

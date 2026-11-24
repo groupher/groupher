@@ -16,6 +16,7 @@ defmodule GroupherServerWeb.Middleware.ServiceScope do
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
   alias GroupherServerWeb.ErrorResponse
 
+  @doc "Requires an authenticated service caller with the configured audience and scope."
   @impl Absinthe.Middleware
   def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts) do
     reject(

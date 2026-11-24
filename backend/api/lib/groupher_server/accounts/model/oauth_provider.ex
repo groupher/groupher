@@ -48,7 +48,11 @@ defmodule GroupherServer.Accounts.Model.OauthProvider do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Requires a provider, provider ID, and account owner. Casts profile metadata but not `raw`.
+  Maps uniqueness violations for the public reference, the provider identity, and the
+  provider link per user to changeset errors.
+  """
   def changeset(%OauthProvider{} = oauth_provider, attrs) do
     oauth_provider
     |> cast(attrs, @required_fields ++ @optional_fields)

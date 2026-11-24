@@ -164,7 +164,7 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  @doc false
+  @doc "Loads an active asset by community and asset ID, returning a tagged not-found error when absent."
   def active_asset(community_id, asset_id), do: find_active_asset(community_id, asset_id)
 
   @doc """
@@ -713,14 +713,14 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  @doc false
+  @doc "Loads an asset scoped to a community, returning `nil` when no matching row exists."
   def asset(community_id, asset_id) do
     Repo.get_by(CommunityAsset, id: asset_id, community_id: community_id)
   end
 
-  @doc false
+  @doc "Loads an asset by its database ID without applying a community filter."
   def asset(asset_id), do: Repo.get(CommunityAsset, asset_id)
 
-  @doc false
+  @doc "Loads a community by its database ID, returning `nil` when it does not exist."
   def community(id), do: Repo.get(Community, id)
 end

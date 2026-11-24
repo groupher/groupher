@@ -23,13 +23,18 @@ defmodule GroupherServerWeb.Schema.Helper.Metrics do
   end
 
   object :done do
+    @desc "Whether the operation completed."
     field(:done, :boolean)
   end
 
   object :geo_info do
+    @desc "Name of the city represented by this data point."
     field(:city, :string)
+    @desc "Metric value for this city."
     field(:value, :integer)
+    @desc "Longitude of the city."
     field(:long, :float)
+    @desc "Latitude of the city."
     field(:lant, :float)
   end
 

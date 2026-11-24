@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Setup do
   alias CMS.Model.Community
   alias Helper.{ORM, T}
 
+  @doc "Creates the Community subscription and updates its subscriber projection."
   @spec subscribe(Community.t(), User.t()) :: T.domain_res(Community.t())
   def subscribe(%Community{} = community, %User{} = user) do
     result =
@@ -35,6 +36,7 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Setup do
     revalidate_user(result, user)
   end
 
+  @doc "Removes the Community subscription and updates its subscriber projection."
   @spec unsubscribe(Community.t(), User.t()) :: T.domain_res(Community.t())
   def unsubscribe(%Community{} = community, %User{} = user) do
     if community.slug != "home" do
@@ -70,11 +72,13 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Setup do
 
   defp revalidate_user(result, _user), do: result
 
+  @doc "Subscribes the user only when no subscription currently exists."
   @spec subscribe_ifnot(Community.t(), User.t()) :: T.domain_res(term())
   def subscribe_ifnot(%Community{} = community, %User{} = user) do
     if Persist.subscribed?(community, user), do: {:ok, :pass}, else: subscribe(community, user)
   end
 
+  @doc "Ensures the user is subscribed to the default Community."
   @spec subscribe_default_ifnot(User.t()) :: T.domain_res(atom() | Community.t())
   def subscribe_default_ifnot(%User{} = user) do
     with {:ok, community} <- ORM.find_by(Community, slug: "home") do

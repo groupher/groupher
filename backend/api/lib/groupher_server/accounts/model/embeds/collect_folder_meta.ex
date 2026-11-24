@@ -16,6 +16,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta.Macros do
   alias GroupherServer.CMS
   @threads CMS.artiment_config_threads()
 
+  @doc "Declares a `has_<thread>` flag and a `<thread>_count` integer for each configured thread."
   defmacro threads_fields do
     @threads
     |> Enum.map(fn thread ->
@@ -51,6 +52,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta do
   @optional_fields Enum.map(@threads, &:"#{&1}_count") ++
                      Enum.map(@threads, &:"has_#{&1}")
 
+  @doc "Returns the empty folder metadata map: every configured thread has count zero and flag false."
   def default_meta do
     @threads
     |> Enum.reduce([], fn thread, acc -> acc ++ ["#{thread}_count": 0, "has_#{thread}": false] end)
@@ -61,6 +63,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta do
     threads_fields()
   end
 
+  @doc "Casts per-thread counts and presence flags as supplied; it does not derive flags from counts."
   def changeset(struct, params) do
     struct |> cast(params, @optional_fields)
   end

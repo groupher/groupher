@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end
   end
 
-  @doc false
+  @doc "Replaces a Draft-owned asset use as a step of an existing workflow using its persisted operation identity."
   def execute_for_workflow(
         article_or_projection,
         attrs,

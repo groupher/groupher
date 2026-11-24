@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   alias GroupherServer.{CMS, FrontDesk}
   alias CMS.Model.Community
 
+  @doc "Checks reviewer access and lists pending reviews in the selected platform or community scope."
   def pending_artiment_reviews(_parent, %{scope: scope} = args, %{context: %{cur_user: actor}}) do
     with {:ok, normalized, attrs, permission, params} <- resolve_scope(scope),
          {:ok, :pass} <- authorize(actor, permission, params),
@@ -30,6 +31,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc "Returns the current review for an authorized target and scope, or nil if none exists."
   def artiment_review(_parent, %{target: target}, %{context: %{cur_user: actor}}) do
     with {:ok, attrs} <- resolve_target(target, actor),
          {:ok, scope, permission, params} <- target_scope(attrs),
@@ -43,6 +45,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc "Reads the author-facing review notice for the resolved target and actor."
   def artiment_review_notice(_parent, %{target: target}, %{context: %{cur_user: actor}}) do
     with {:ok, attrs} <- resolve_target(target, actor) do
       CMS.review_notice_for_author(attrs, actor)
@@ -53,6 +56,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc "Pages the target's review history after checking the actor's scope-specific read permission."
   def artiment_review_history(_parent, %{target: target} = args, %{
         context: %{cur_user: actor}
       }) do
@@ -73,6 +77,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc "Derives the decision from the GraphQL field and returns the command ID, target, and action."
   def decide_content(_parent, %{target: target, command_id: command_id}, %{
         context: %{cur_user: actor},
         definition: %{name: field_name}
@@ -95,10 +100,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc "Requests a scoped recheck for an article target and returns the command and target identifiers."
   def recheck_article(parent, args, resolution) do
     recheck_target(parent, args, resolution, :article)
   end
 
+  @doc "Requests a scoped recheck for a comment target and returns the command and target identifiers."
   def recheck_comment(parent, args, resolution) do
     recheck_target(parent, args, resolution, :comment)
   end

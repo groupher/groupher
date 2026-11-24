@@ -13,27 +13,28 @@ defmodule GroupherServer.CMS.SearchArtiments do
   alias __MODULE__.{Artiment, Config, Query}
   alias Helper.T
 
-  @doc "Runs `search` through the public `SearchArtiments` boundary."
+  @doc "Searches with a validated SearchArtiments query using the configured platform adapter."
   @spec search(map(), term()) :: T.domain_res(Helper.ORM.Pagi.Page.t())
   def search(%Query{} = query), do: platform().search(query)
 
+  @doc "Builds a validated search query from raw attributes and canonical pagination input, then executes it."
   def search(attrs, pagi) when is_map(attrs) do
     with {:ok, query} <- Query.new(attrs, pagi) do
       search(query)
     end
   end
 
-  @doc "Runs `upsert` through the public `SearchArtiments` boundary."
+  @doc "Upserts canonical Article or Comment search projections through the configured adapter."
   @spec upsert([Artiment.t()], keyword()) :: T.done()
   def upsert(artiments, opts \\ []) when is_list(artiments) do
     platform().upsert(artiments, opts)
   end
 
-  @doc "Runs `delete` through the public `SearchArtiments` boundary."
+  @doc "Deletes search objects by their stable platform references."
   @spec delete([String.t()]) :: T.done()
   def delete(refs) when is_list(refs), do: platform().delete(refs)
 
-  @doc "Updates metrics through the `SearchArtiments` write boundary."
+  @doc "Partially updates ranking metrics for existing search objects without creating them."
   @spec update_metrics([{String.t(), map()}]) :: T.done()
   def update_metrics(updates) when is_list(updates), do: platform().update_metrics(updates)
 

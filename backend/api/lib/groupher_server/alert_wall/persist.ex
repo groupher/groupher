@@ -48,6 +48,15 @@ defmodule GroupherServer.AlertWall.Persist do
     transition(item_id, :resolve, resolution, operation_ref, actor)
   end
 
+  @doc "Resolves an item only when its stored version matches the expected version."
+  @spec resolve_in_transaction(
+          pos_integer(),
+          String.t(),
+          Ecto.UUID.t(),
+          struct() | nil,
+          pos_integer()
+        ) ::
+          {:ok, Item.t()} | {:error, term()}
   def resolve_in_transaction(item_id, resolution, operation_ref, actor, expected_version)
       when is_integer(item_id) and is_binary(resolution) and is_binary(operation_ref) and
              is_integer(expected_version) and expected_version > 0 do

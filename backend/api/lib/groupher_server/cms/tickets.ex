@@ -48,6 +48,7 @@ defmodule GroupherServer.CMS.Tickets do
     Query.grouped_internal(community, actor, pagi)
   end
 
+  @doc "Returns the internal Ticket board with the supplied Ticket filters applied to each column."
   def grouped_internal(%Community{} = community, %User{} = actor, pagi, filter) do
     Query.grouped_internal(community, actor, pagi, filter)
   end
@@ -238,7 +239,7 @@ defmodule GroupherServer.CMS.Tickets do
     Commands.Update.execute(community, ticket_id, attrs, expected_version, actor, command_id)
   end
 
-  @doc "Appends an internal or public progress update."
+  @doc "Appends an internal or public progress update using the expected Ticket version."
   def add_update(
         %Community{} = community,
         ticket_id,
@@ -261,6 +262,7 @@ defmodule GroupherServer.CMS.Tickets do
     )
   end
 
+  @doc "Replaces a prior progress update while checking both lifecycle and workflow versions."
   def add_update(
         %Community{} = community,
         ticket_id,
@@ -285,6 +287,7 @@ defmodule GroupherServer.CMS.Tickets do
     )
   end
 
+  @doc "Replaces a prior progress update using the legacy single-version contract."
   def add_update(
         %Community{} = community,
         ticket_id,

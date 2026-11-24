@@ -127,6 +127,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.CommunityTrash.get/3)
     end
 
+    @desc "Read the approval policy for the community Docs queue."
     field :docs_queue_policy, :json do
       arg(:community, non_null(:string))
       middleware(M.Authorize, :login)
@@ -134,7 +135,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_queue_policy/3)
     end
 
-    @desc "Authorized Docs publication read"
+    @desc "Preview the changes in the current Docs release queue."
     field :docs_queue_preview, :json do
       arg(:community, non_null(:string))
       arg(:article_id, :id)
@@ -144,7 +145,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_queue_preview/3)
     end
 
-    @desc "Authorized Docs publication read"
+    @desc "Compare Docs changes against the selected publication or approval baseline."
     field :docs_approval_diff, :json do
       arg(:community, non_null(:string))
       arg(:article_id, :id)
@@ -155,7 +156,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_approval_diff/3)
     end
 
-    @desc "Authorized Docs publication read"
+    @desc "List previous Docs releases for the community."
     field :docs_release_history, :json do
       arg(:community, non_null(:string))
       arg(:before_id, :integer)
@@ -165,7 +166,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_release_history/3)
     end
 
-    @desc "Authorized Docs publication read"
+    @desc "Read one Docs release by its release ID."
     field :docs_release_detail, :json do
       arg(:community, non_null(:string))
       arg(:release_id, non_null(:integer))
@@ -175,7 +176,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_release_detail/3)
     end
 
-    @desc "Authorized Docs publication read"
+    @desc "List saved snapshots for the specified Doc."
     field :docs_snapshot_history, :json do
       arg(:community, non_null(:string))
       arg(:article_id, non_null(:id))
@@ -186,7 +187,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_snapshot_history/3)
     end
 
-    @desc "Authorized Docs publication read"
+    @desc "List publication notices for the community."
     field :docs_publication_notices, :json do
       arg(:community, non_null(:string))
       middleware(M.Authorize, :login)
@@ -515,7 +516,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(fn _, _, _ -> {:ok, ThirdPartyAnalytics.providers()} end)
     end
 
-    @desc "Authorized branch-free Docs workspace tree"
+    @desc "Read a Doc's editable copy and current public snapshot."
     field :docs_editor, :docs_editor do
       arg(:community, non_null(:string))
       arg(:article_id, non_null(:id))
@@ -524,6 +525,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_editor/3)
     end
 
+    @desc "Read the editable Docs navigation tree and its revisions."
     field :docs_workspace_tree, :docs_workspace_tree do
       arg(:community, non_null(:string))
       middleware(M.Authorize, :login)
@@ -589,7 +591,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.doc_cover/3)
     end
 
-    @desc "spec community info"
+    @desc "Look up a community by slug."
     field :community, :community do
       # arg(:id, non_null(:id))
       # arg(:title, :string)
@@ -711,7 +713,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Communities.community_tag_stats/3)
     end
 
-    @desc "got basic comments state"
+    @desc "Read comment and participant counts for one article."
     field :comments_state, :comments_list_state do
       arg(:article, non_null(:article_path_input))
       arg(:freshkey, :string)
@@ -750,7 +752,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Comments.comment_reconcile_states/3)
     end
 
-    @desc "got spec comment by ref"
+    @desc "Read one comment by its article path and local comment number."
     field :one_comment, :comment do
       arg(:comment, non_null(:comment_path_input))
 

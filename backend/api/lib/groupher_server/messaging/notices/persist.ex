@@ -5,7 +5,19 @@ defmodule GroupherServer.Messaging.Notices.Persist do
   It creates, merges, finds and revokes rows without opening a transaction.
   Commands own transaction scope and mailbox projection synchronization.
 
-      notification facts -> find/create/merge/revoke row
+      Notice command
+          -> validate notification shape
+          -> find or create/merge a grouped Notice row
+          -> synchronize mailbox projection in the caller transaction
+
+      Revoke command
+          -> locate rows containing the actor
+          -> remove that actor or delete the now-empty row
+          -> update mailbox projection before commit
+
+  This module performs persistence primitives only. It does not start a
+  transaction or invalidate account caches; command owners coordinate those
+  boundaries.
   """
 
   import Ecto.Query, warn: false

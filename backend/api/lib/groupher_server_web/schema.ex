@@ -91,14 +91,17 @@ defmodule GroupherServerWeb.Schema do
     import_fields(:alert_wall_mutations)
   end
 
+  @doc "Appends result and error formatting to each field's middleware chain."
   def middleware(middleware, _field, _object) do
     middleware ++ [M.GQLResultFmt, M.ChangesetErrors, M.GeneralError]
   end
 
+  @doc "Enables batched Dataloader resolution alongside Absinthe's default plugins."
   def plugins do
     [Absinthe.Middleware.Dataloader | Absinthe.Plugin.defaults()]
   end
 
+  @doc "Builds a fresh loader with Accounts and CMS sources for one GraphQL request."
   def dataloader do
     alias GroupherServer.{Accounts, CMS}
 
@@ -107,6 +110,7 @@ defmodule GroupherServerWeb.Schema do
     |> Dataloader.add_source(CMS, CMS.dataloader_source())
   end
 
+  @doc "Returns the request context with a fresh Dataloader under `:loader`."
   def context(ctx) do
     ctx |> Map.put(:loader, dataloader())
   end

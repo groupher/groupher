@@ -13,6 +13,12 @@ defmodule GroupherServerWeb.Resolvers.ReviewBot do
   alias GroupherServer.{FrontDesk, ReviewBot}
   alias CMS.Model.Community
 
+  @doc """
+  Returns the community's review policy for the requested subject type.
+
+  Resolves the community slug and checks read access for the current actor.
+  A platform scope or an unrecognized scope returns an invalid configuration error.
+  """
   def review_bot_config(_parent, %{scope: scope, subject_type: subject_type}, %{context: context}) do
     with {:ok, resolved_scope, community_id} <- resolve_scope(scope),
          actor when not is_nil(actor) <- Map.get(context, :cur_user),
@@ -27,6 +33,12 @@ defmodule GroupherServerWeb.Resolvers.ReviewBot do
     end
   end
 
+  @doc """
+  Submits a version-checked policy update on behalf of the signed-in actor.
+
+  Maps GraphQL review settings to the command attributes and forwards the supplied
+  command ID. Returns the command result or a scope or authorization error.
+  """
   def update_review_bot_config(_parent, %{input: input, command_id: command_id}, %{
         context: context
       }) do

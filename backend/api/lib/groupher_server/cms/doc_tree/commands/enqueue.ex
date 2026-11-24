@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Enqueue do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Adds the requested Doc revisions to the Queue under an idempotent command receipt."
   def execute(%Community{} = community, revision, entries, %User{} = actor, command_id)
       when is_integer(revision) and revision >= 0 and is_list(entries) and is_binary(command_id) do
     run_receipt(community, revision, entries, actor, command_id)

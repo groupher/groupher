@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.CreateWorkspaceNode do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Creates a workspace navigation node under the expected tree revision using a command receipt."
   def execute(%Community{} = community, revision, attrs, %User{} = actor, command_id)
       when is_integer(revision) and revision >= 0 and is_map(attrs) and is_binary(command_id) do
     run_receipt(community, revision, attrs, actor, command_id)

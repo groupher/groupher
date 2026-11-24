@@ -238,6 +238,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Query do
     end)
   end
 
+  @doc "Projects a co-author request into the actor-facing request result shape."
   def present_request(%ArticleCoAuthorRequest{} = request) do
     %{
       id: request.id,

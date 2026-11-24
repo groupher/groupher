@@ -14,17 +14,21 @@ defmodule GroupherServer.CMS.SearchArtiments.Disabled do
 
   @behaviour CMS.SearchArtiments.PlatformAdapter
 
+  @doc "Returns an explicit disabled-search error without contacting a provider."
   @impl true
   def search(_query) do
     {:error, ErrorCat.custom("Article search is disabled")}
   end
 
+  @doc "Acknowledges an indexing request as disabled without writing to a provider."
   @impl true
   def upsert(_artiments, _opts), do: {:ok, :pass}
 
+  @doc "Acknowledges a deletion request as disabled without contacting a provider."
   @impl true
   def delete(_refs), do: {:ok, :pass}
 
+  @doc "Acknowledges a metrics update as disabled without contacting a provider."
   @impl true
   def update_metrics(_updates), do: {:ok, :pass}
 end

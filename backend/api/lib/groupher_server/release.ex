@@ -1,17 +1,25 @@
 defmodule GroupherServer.Release do
   @moduledoc """
-  Used for executing DB release tasks when run in production without Mix
-  installed.
+  Runs Ecto migrations and controlled database bootstrap/rollback operations
+  from release commands where Mix tasks are unavailable.
 
   Business position:
 
-      Application caller
+      deployment release command
         -> Release
-        -> domain / infrastructure boundary
+        -> load application configuration
+        -> verify target database and migration preconditions
+        -> run Ecto migrations against configured repos
+
+  Production migration checks bind execution to an explicit database identity,
+  enforce shared-comments schema-generation attestation, and require a separate
+  confirmation before the legacy Mention cutover can drop old tables. Bootstrap
+  is reserved for an explicitly attested empty database.
   """
   @app :groupher_server
   @legacy_mentions_migration 20_261_105_110_000
 
+  @doc "Runs all pending up migrations after validating the target database and production cutover guards."
   def migrate do
     load_app()
 
@@ -38,7 +46,7 @@ defmodule GroupherServer.Release do
     end
   end
 
-  @doc "Attests an empty database; requires explicit deployment manifest coordinates."
+  @doc "Attests the shared-comments generation on an empty database using explicit deployment manifest coordinates."
   def bootstrap_shared_comments do
     load_app()
 
@@ -123,6 +131,7 @@ defmodule GroupherServer.Release do
     {:ok, :verified}
   end
 
+  @doc "Rolls the repo back to a migration version without applying the production migrate preflight."
   def rollback(repo, version) do
     load_app()
     {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :down, to: version))

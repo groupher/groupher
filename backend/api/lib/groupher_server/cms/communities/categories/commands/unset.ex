@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Unset do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Removes a category assignment from a Community content thread."
   @spec execute(Community.t() | String.t(), T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Community.t())
   def execute(community_ref, category_id, %User{} = actor, command_id) do

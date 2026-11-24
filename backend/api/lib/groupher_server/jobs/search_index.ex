@@ -1,13 +1,16 @@
 defmodule GroupherServer.Jobs.SearchIndex do
   @moduledoc """
-  Search Artiments indexing job.
+  Dispatches the closed set of Article search-index maintenance actions to the
+  CMS search indexer. Payload values are converted only from existing atoms,
+  preventing a persisted job from creating arbitrary runtime atoms.
 
   Business position:
 
-      Domain event / scheduler
+      Article write / metrics change
         -> Oban
-        -> SearchIndex
-        -> context / service
+        -> SearchIndex action + thread + article id
+        -> CMS.SearchArtiments.Indexer
+        -> external search index state
   """
 
   use Oban.Worker,

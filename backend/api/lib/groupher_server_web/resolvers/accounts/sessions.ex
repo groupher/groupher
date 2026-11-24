@@ -8,6 +8,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
   alias GroupherServer.Accounts
   alias Accounts.Profiles.ErrorCat
 
+  @doc "Returns authentication errors, bootstraps a signed-in session, or reports an anonymous session as invalid."
   def session_state(_root, _args, %{context: %{auth_failure: code}}) do
     {:error, auth_failure_error(code)}
   end
@@ -35,26 +36,31 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
     end
   end
 
+  @doc "Signs in with the provider identity and optional browser metadata, returning session credentials."
   def signin_oauth(_root, %{provider: provider} = args, _info) do
     Accounts.profiles_signin_oauth(provider, Map.get(args, :browser_session, %{}))
   end
 
+  @doc "Refreshes the access token by session reference and translates session errors for GraphQL."
   def refresh_browser_session(_root, %{browser_session_ref: ref}, _info) do
     ref |> Accounts.profiles_refresh_browser_session() |> browser_session_result()
   end
 
+  @doc "Revokes the session by reference and returns a done flag on success."
   def revoke_browser_session(_root, %{browser_session_ref: ref}, _info) do
     with {:ok, _result} <- Accounts.profiles_revoke_browser_session(ref) do
       {:ok, %{done: true}}
     end
   end
 
+  @doc "Lists the account's sessions using the current session reference and requested pagination."
   def browser_sessions(_root, %{browser_session_ref: ref} = args, _info) do
     ref
     |> Accounts.profiles_browser_sessions_for_ref(Map.get(args, :pagi))
     |> browser_session_result()
   end
 
+  @doc "Revokes another session by public reference in the account identified by the current session."
   def revoke_browser_session_public(
         _root,
         %{browser_session_ref: ref, public_ref: public_ref},
@@ -63,6 +69,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
     ref |> Accounts.profiles_revoke_browser_session_public(public_ref) |> browser_session_result()
   end
 
+  @doc "Revokes the account's other sessions, retaining the one identified by the supplied reference."
   def revoke_other_browser_sessions(_root, %{browser_session_ref: ref}, _info) do
     with {:ok, _result} <-
            ref
@@ -72,14 +79,17 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
     end
   end
 
+  @doc "Lists OAuth bindings for the signed-in user's login."
   def linked_oauth_accounts(_root, _args, %{context: %{cur_user: cur_user}}) do
     Accounts.profiles_linked_oauth_accounts(cur_user.login)
   end
 
+  @doc "Links a verified provider identity to the signed-in account and returns its bindings."
   def link_oauth_identity(_root, %{identity: identity}, %{context: %{cur_user: cur_user}}) do
     Accounts.profiles_link_oauth_identity(cur_user.login, identity)
   end
 
+  @doc "Unlinks the binding identified by public reference from the signed-in account."
   def unlink_oauth_identity(_root, %{public_ref: public_ref}, %{context: %{cur_user: cur_user}}) do
     Accounts.profiles_unlink_oauth_identity(cur_user.login, public_ref)
   end

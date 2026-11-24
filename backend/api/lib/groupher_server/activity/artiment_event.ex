@@ -32,13 +32,25 @@ defmodule GroupherServer.Activity.ArtimentEvent do
       @schema schema
       @stream_field stream_field
 
+      @doc "Returns the persistence schema used by this thread's Activity handler."
       def schema, do: @schema
+
+      @doc "Returns the field that identifies this handler's Activity stream."
       def stream_field, do: @stream_field
+
+      @doc "Returns the Activity resource type handled by this module."
       def resource_type, do: @thread
+
+      @doc "Validates and persists an event through the shared Activity event boundary."
       def log(resource, action, opts), do: Event.log(__MODULE__, resource, action, opts)
+
+      @doc "Projects a persisted event for the requested Activity surface."
       def project(log, surface), do: Event.project(__MODULE__, log, surface)
+
+      @doc "Returns the actions visible on the requested Activity surface."
       def surface_actions(surface), do: Event.surface_actions(__MODULE__, surface)
 
+      @doc "Builds the stream, subject, and optional target attributes for an Activity event."
       def describe(%Comment{thread: @thread} = comment, _action, opts) do
         community_id = Keyword.get(opts, :community_id) || get_in(comment, [:community, :id])
 

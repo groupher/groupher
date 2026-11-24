@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Persist.ArticleHistory do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{Article, ArticleEvent}
 
+  @doc "Appends an immutable Article event with a serialized sequence and previous-event link in the caller transaction."
   def append_article_event_in_transaction(article_id, attrs)
       when is_binary(article_id) and is_map(attrs) do
     with {:ok, :pass} <- require_transaction(),

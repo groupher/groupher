@@ -168,6 +168,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
     }
   end
 
+  @doc "Projects an Admin membership using an already-loaded user record."
   def present_admin(%CommunityAdmin{} = admin, %User{} = user) do
     %{present_admin(admin) | user: user}
   end
@@ -177,6 +178,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
     {:ok, present_request_data(request)}
   end
 
+  @doc "Builds the request projection and loads the subject and requester identities."
   def present_request_data(%CommunityAdminRequest{} = request) do
     %{
       id: request.id,

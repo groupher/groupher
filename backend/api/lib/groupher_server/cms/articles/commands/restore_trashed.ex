@@ -75,6 +75,7 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
     end)
   end
 
+  @doc "Restores an Article Trash membership, using a Receipt when a command ID is supplied."
   @spec execute(
           Ecto.UUID.t() | TrashedArticle.t(),
           User.t() | nil,

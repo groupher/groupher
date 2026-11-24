@@ -11,6 +11,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Wallpaper do
   alias Accounts.Model.User
   alias CMS.Model.Community
 
+  @doc "Publishes the supplied wallpaper configuration for the community on behalf of the signed-in user."
   def publish_wallpaper(
         _root,
         %{community: %Community{} = community, input: input},
@@ -19,6 +20,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Wallpaper do
     CMS.wallpaper_publish(community, input, user)
   end
 
+  @doc "Prepares a wallpaper upload for the community using the actor and submitted upload details."
   def prepare_wallpaper_upload(
         _root,
         %{community: %Community{} = community, input: input},
@@ -27,6 +29,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Wallpaper do
     CMS.wallpaper_prepare_upload(community, input, user)
   end
 
+  @doc "Restores the requested wallpaper snapshot for the community on behalf of the signed-in user."
   def restore_wallpaper_snapshot(
         _root,
         %{community: %Community{} = community, input: input},

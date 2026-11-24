@@ -36,8 +36,10 @@ defmodule GroupherServerWeb.Context do
   alias Helper.Guardian
   alias Helper.Guardian.BrowserAccess
 
+  @doc "Implements the Plug initializer by passing its configuration through unchanged."
   def init(opts), do: opts
 
+  @doc "Builds resolver context for the request and attaches its classified request actor."
   def call(conn, _) do
     conn = fetch_cookies(conn)
     {conn, anonymous_session} = GroupherServer.CMS.view_tracker_anonymous_session_ensure(conn)

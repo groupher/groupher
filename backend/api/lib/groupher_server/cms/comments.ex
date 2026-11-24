@@ -154,17 +154,21 @@ defmodule GroupherServer.CMS.Comments do
   defdelegate paged_published_comments(user, thread, filter, pagi, viewer), to: Query
 
   @doc """
-  Creates a Comment from an already resolved Article and returns the Comment.
+  Creates a Comment from an Article, either already resolved or selected by its
+  Community and public identifier. Calls that omit a command identity return
+  the command-id-required error.
 
   ## Examples
 
       CMS.Comments.create_comment(:post, post, body, actor, command_id)
+      CMS.Comments.create_comment(community, :post, post_ref, body, actor, command_id)
   """
   @spec create_comment(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(Comment.t())
   def create_comment(_thread, _article, _body, %User{}) do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Creates a comment using the article path, body, actor, and command identity."
   @spec create_comment(T.thread(), T.article(), String.t(), User.t(), String.t()) ::
           T.domain_res(Comment.t())
   def create_comment(thread, article, body, %User{} = user, command_id) do
@@ -174,13 +178,6 @@ defmodule GroupherServer.CMS.Comments do
     end
   end
 
-  @doc """
-  Resolves an Article from public identity, creates a Comment and returns it.
-
-  ## Examples
-
-      CMS.Comments.create_comment(community, :post, post_ref, body, actor, command_id)
-  """
   @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
   def create_comment(%Community{}, _thread, _article_id, _body, %User{}) do
@@ -221,6 +218,7 @@ defmodule GroupherServer.CMS.Comments do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Builds the canonical payload for a newly created comment command."
   @spec create_comment_payload(T.thread(), T.article(), map(), User.t(), String.t()) ::
           T.domain_res(map())
   def create_comment_payload(thread, article, body, %User{} = user, command_id) do
@@ -234,6 +232,7 @@ defmodule GroupherServer.CMS.Comments do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Runs comment creation and assembles the canonical result for the article path."
   @spec create_comment_result(T.thread(), T.article(), map(), User.t(), String.t()) ::
           T.domain_res(map())
   def create_comment_result(thread, article, body, %User{} = user, command_id) do
@@ -326,6 +325,7 @@ defmodule GroupherServer.CMS.Comments do
     |> CommandResult.build()
   end
 
+  @doc "Builds the deletion result for the comment in the specified community."
   def delete_comment_result(%Comment{} = comment, %User{} = user, command_id, community_slug)
       when is_binary(community_slug) do
     with {:ok, %Community{} = community} <- FrontDesk.community(community_slug) do
@@ -345,6 +345,7 @@ defmodule GroupherServer.CMS.Comments do
   @spec accept_solution(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
   def accept_solution(_comment_or_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Marks a Comment as the accepted solution, resolving an ID when needed and using the supplied command identity."
   @spec accept_solution(Comment.t() | T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Comment.t())
   def accept_solution(%Comment{} = comment, %User{} = user, command_id) do
@@ -367,6 +368,7 @@ defmodule GroupherServer.CMS.Comments do
   @spec revoke_solution(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
   def revoke_solution(_comment_or_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Revokes the accepted-solution state, resolving a Comment ID when needed and using the supplied command identity."
   @spec revoke_solution(Comment.t() | T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Comment.t())
   def revoke_solution(%Comment{} = comment, %User{} = user, command_id) do
@@ -391,6 +393,7 @@ defmodule GroupherServer.CMS.Comments do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Creates a reply to a comment using actor and command identity."
   @spec reply_comment(Comment.t() | T.id(), String.t(), User.t(), String.t()) ::
           T.domain_res(Comment.t())
   def reply_comment(comment_or_id, body, %User{} = user, command_id) do
@@ -419,6 +422,7 @@ defmodule GroupherServer.CMS.Comments do
     Create.reply(comment, body, user, command_id)
   end
 
+  @doc "Builds the canonical command payload after resolving the parent comment ID."
   def reply_comment_payload(comment_id, body, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       Create.reply(comment, body, user, command_id)
@@ -431,9 +435,9 @@ defmodule GroupherServer.CMS.Comments do
     {:error, CMS.ErrorCat.command_id_required()}
   end
 
+  @doc "Creates a reply and assembles its canonical result from the parent comment."
   @spec reply_comment_result(Comment.t() | T.id(), String.t(), User.t(), String.t()) ::
           T.domain_res(map())
-
   def reply_comment_result(%Comment{} = comment, body, %User{} = user, command_id) do
     comment
     |> Create.reply(body, user, command_id)
@@ -478,6 +482,7 @@ defmodule GroupherServer.CMS.Comments do
   @spec pin_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
   def pin_comment(_comment_or_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Pins the supplied comment using the actor and command identity."
   @spec pin_comment(Comment.t() | T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Comment.t())
   def pin_comment(%Comment{} = comment, %User{} = user, command_id) do
@@ -512,6 +517,7 @@ defmodule GroupherServer.CMS.Comments do
   @spec undo_pin_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_pin_comment(_comment_or_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
+  @doc "Removes the pin from the supplied comment using the command identity."
   @spec undo_pin_comment(Comment.t() | T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Comment.t())
   def undo_pin_comment(%Comment{} = comment, %User{} = user, command_id) do

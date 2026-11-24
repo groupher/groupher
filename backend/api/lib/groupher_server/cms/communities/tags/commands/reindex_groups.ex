@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.ReindexTagGroups do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Reorders Community tag groups through the retry-safe command pipeline."
   @spec execute(Community.t() | String.t(), atom(), list(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(atom())
   def execute(community_ref, thread, groups, %User{} = actor, command_id) do

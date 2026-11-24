@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityHide do
   alias CMS.Articles.Commands.{CommunityTrashConfirmation, CommunityTrashSupport}
   alias CMS.Model.Community
 
+  @doc "Executes or replays a Receipt-protected hide of an ordinary Article in one Community."
   def execute(%Community{} = community, article_id, %User{} = actor, command_id) do
     with {:ok, article} <- CommunityTrashSupport.load_article(article_id) do
       run(article, community, community.id, actor, command_id)

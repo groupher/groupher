@@ -90,7 +90,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
 
   def record(_, _, _, _, _, _, _, _, _), do: {:error, :invalid_docs_release}
 
-  @doc false
+  @doc "Verifies that the release's captured approval matches the Queue policy, plan, and publications."
   def validate_approval(%DocsPublishQueue{approval_required: false}, _plan, _publications, nil) do
     {:ok, :pass}
   end

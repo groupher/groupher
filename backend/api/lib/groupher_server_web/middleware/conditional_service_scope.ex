@@ -15,6 +15,7 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScope do
   alias GroupherServerWeb.ErrorResponse
   alias GroupherServerWeb.Middleware.ServiceScope
 
+  @doc "Checks the audience and scope for service callers and rejects unverified identities."
   @impl Absinthe.Middleware
   def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts) do
     reject(resolution, auth_error(code, "delegated user identity could not be verified"))

@@ -58,6 +58,7 @@ defmodule GroupherServer.CMS.Comments.Query.Mentions do
     {:ok, Enum.flat_map(locators, &List.wrap(Map.get(found, &1)))}
   end
 
+  @doc "Loads candidate Comments together with only their publicly readable parent Article bindings."
   def load(candidates) do
     ids =
       candidates

@@ -16,16 +16,18 @@ defmodule GroupherServer.CMS.Search do
   alias Accounts.Model.User
   alias Helper.T
 
-  @doc "Runs `community` through the public `Search` boundary."
+  @doc "Finds public communities whose title, slug, or alias matches the search text."
   @spec community(String.t()) :: T.domain_res([map()])
   def community(title), do: Community.search(title)
 
+  @doc "Finds matching public communities, with either a viewer for subscription state or a category filter."
   @spec community(String.t(), User.t()) :: T.domain_res([map()])
   def community(title, %User{} = user), do: Community.search(title, user)
 
   @spec community(String.t(), String.t()) :: T.domain_res([map()])
   def community(title, category) when is_binary(category), do: Community.search(title, category)
 
+  @doc "Finds category-matched public communities with viewer-specific subscription state."
   @spec community(String.t(), String.t(), User.t()) :: T.domain_res([map()])
   def community(title, category, %User{} = user) when is_binary(category) do
     Community.search(title, category, user)

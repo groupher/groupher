@@ -1,13 +1,17 @@
 defmodule GroupherServer.Jobs.Config do
   @moduledoc """
-  Shared Oban job policy for Groupher background jobs.
+  Shared queue, retry, uniqueness, and enqueue-suppression policy for selected
+  Groupher background jobs.
 
   Business position:
 
-      Domain event / scheduler
-        -> Oban
-        -> Config
-        -> context / service
+      worker module
+          -> Config.queue/1, max_attempts/1, unique/1
+          -> Oban worker policy
+
+      Workflow enqueue API
+          -> Config.skip_enqueue?/0
+          -> skip in test and seed_prod, enqueue in other configured environments
   """
 
   @type job_name ::

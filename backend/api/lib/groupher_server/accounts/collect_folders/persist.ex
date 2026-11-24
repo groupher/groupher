@@ -143,7 +143,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Persist do
 
   ## Examples
 
-      Accounts.CollectFolders.Persist.remove_in_transaction(folder, :post, binding)
+      Accounts.CollectFolders.Persist.remove_in_transaction(folder, :post, binding, user.id)
   """
   @spec remove_in_transaction(CollectFolder.t(), atom(), ArticleBinding.t(), T.id()) ::
           T.domain_res(map())

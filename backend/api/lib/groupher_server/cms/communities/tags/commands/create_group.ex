@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.CreateTagGroup do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Creates a tag group in a Community thread through the command pipeline."
   @spec execute(Community.t(), atom(), map(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(CommunityTagGroup.t())
   def execute(%Community{} = community, thread, attrs, %User{} = actor, command_id) do

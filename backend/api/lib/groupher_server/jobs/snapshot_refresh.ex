@@ -1,13 +1,15 @@
 defmodule GroupherServer.Jobs.SnapshotRefresh do
   @moduledoc """
-  Snapshot cache refresh job.
+  Normalizes the versioned snapshot-refresh payload and dispatches it to the
+  CMS-owned refresh path for Users, Articles, or Comments.
 
   Business position:
 
-      Domain event / scheduler
+      CMS write / scheduled refresh
         -> Oban
-        -> SnapshotRefresh
-        -> context / service
+        -> SnapshotRefresh versioned refs and options
+        -> CMS.snapshot_perform_refresh/3
+        -> refreshed snapshot cache entries
   """
 
   use Oban.Worker,
