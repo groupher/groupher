@@ -19,9 +19,9 @@ Pagination fixtures run in an automatically rolled-back SQL Sandbox with REPEATA
 
 The mixed-state test intentionally constructs canonical relational facts to isolate reader projection and pagination. It does not claim a browser deletion/Release workflow. The restoration race uses the real Create/Delete/Restore Commands and independent database connections.
 
-## Final combined verification
+## Combined verification before the sandbox correction
 
-The nine files below passed together on fresh database `groupher_d2_verified_20261124_test`:
+At commit `4862039652436923de53b798b89d2b3973ab34bb`, before the SQL Sandbox correction, the nine files below passed together on fresh database `groupher_d2_verified_20261124_test`:
 
 - `test/groupher_server/cms/articles/community_doc_trash_query_test.exs`
 - `test/groupher_server/cms/articles/doc_trash_acceptance_test.exs`
@@ -34,6 +34,8 @@ The nine files below passed together on fresh database `groupher_d2_verified_202
 - `test/groupher_server/cms/review_decision_test.exs`
 
 Result: **85 passed, zero failures**, 36.6 seconds after fresh-database initialization, seed `615008`. `TEST_REF_ISOLATED=1` enabled the real database concurrency tests. The run used an exclusive absolute `MIX_BUILD_PATH`, `MIX_ENV=test` and `TEST_DB_NAME`; no shared application runtime was moved or restarted.
+
+The corrected paging fixtures were subsequently verified separately at commit `405906441454ca808e8369d31982dacabfcdf1ee`: **2 passed**, with zero Communities/Articles left behind. The earlier 85-test run does not certify this later revision as a combined run.
 
 Together these cases cover saved subtree ordering, pending-ancestor/cycle rejection, rollback preservation, protected Binding purge, site-scoped Activity/cache effects, Release/Outbox atomicity, row-local public admission, cross-site mutation rechecks and Doc Comment Mention/Review behavior.
 
