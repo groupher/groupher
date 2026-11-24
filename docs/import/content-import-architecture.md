@@ -400,10 +400,10 @@ staging 是数据库中的临时导入事实，不是 Elixir PayloadStore：
 
 - JobItem 保存 externalRef、selection、typed metadata、sourceHash 和 content status。
 - BodyBag 使用专用 PostgreSQL jsonb staging row，避免塞进无界 preview 字段。
-- staging row 保存 Phoenix 在 `BodyBag.cast` 后对 canonical JSON 重新编码得到的权威 `body_size_bytes`。Node 自己计算未压缩 UTF-8 request bytes 只用于切批，不能把客户端声明的 size 当作数据库可信值。
-- 首期容量常量写死为共享 publisher 已有的 `ARTIMENT_MAX_INPUT_BYTES = 2 MiB`（序列化 Plate value），以及 Bulk transport 的 `MAX_BATCH_COUNT = 4`、`MAX_BATCH_BYTES = 6 MiB`、`MAX_BODY_BAG_BYTES = 5 MiB`。不做运行时 provider 探测、容量协商、按环境自适应或自动放宽。
+- staging row 保存 Phoenix 在 `BodyBag.cast` 后对 canonical JSON 重新编码得到的权威 `body_size_bytes`。Node 自己计算未压缩 UTF-8 request bytes 用于校验单次暂存请求，不能把客户端声明的 size 当作数据库可信值。
+- 首期容量常量写死为共享 publisher 已有的 `ARTIMENT_MAX_INPUT_BYTES = 2 MiB`（序列化 Plate value），以及 Bulk transport 的 `MAX_BATCH_BYTES = 6 MiB`、`MAX_BODY_BAG_BYTES = 5 MiB`。不做运行时 provider 探测、容量协商、按环境自适应或自动放宽。
 - `MAX_BATCH_BYTES` 计算完整 GraphQL request JSON 的未压缩 UTF-8 bytes；HTTP gzip、PostgreSQL TOAST 和 Blob at-rest compression 都不能用于放宽限制。
-- 加入下一篇会超过 4 篇或 6 MiB 时，先提交当前批次；单篇未超过 5 MiB 但放不进当前批次时独立进入下一批。
+- Workflow 准备一次所选文档的标题来源和 Markdown 框架，随后按 sourceRef 直接读取 R2 正文，每个 durable step 提交一个暂存项并读取 Job 状态。
 - 单篇在转换时超过 2 MiB Plate input、生成后超过 5 MiB BodyBag，或触发其他单篇结构限制时，JobItem 记录稳定的 `content_too_large` 并显式跳过该 Page，其他可导入 Page 继续。两个字节上限约束不同阶段，不能只保留较大的 BodyBag 上限。apply 必须从 Review TargetTree 过滤掉被跳过的 Page，再校验树与有效 items 一致；结果返回 skipped count/sourceRef，不能静默遗漏。如果没有任何可导入 Page，则不执行 apply。
 - trusted Node staging contract 允许提交 `{externalRef, bodyBag}` 或 allowlisted `{externalRef, skipped: content_too_large}`；普通转换错误不能伪装成 skip，skipped item 不创建 BodyBag staging row。
 - 同一 `(job_id, external_ref)`、相同 body hash 重试视为成功；不同 hash 视为冲突。

@@ -20,7 +20,6 @@ import {
 } from '../../../groupherGraphql'
 import type { TDocImportPreview, TSourceAnalysis } from '../../threads/docs/contracts'
 
-export const MAX_BATCH_COUNT = 4
 export const MAX_BATCH_BYTES = 6 * 1024 * 1024
 export const MAX_BODY_BAG_BYTES = 5 * 1024 * 1024
 
@@ -101,14 +100,6 @@ export type TDocImportFailed = {
 
 export type TDocImportStageItem = TDocImportBody | TDocImportSkipped | TDocImportFailed
 
-export type TDocImportBodyStageResult = {
-  failedItems: TDocImportIssue[]
-  jobRef: string
-  progress: Record<string, unknown>
-  skipped: TDocImportIssue[]
-  status: string
-}
-
 export type TDocImportApplyResult = {
   counts: Record<string, number>
   firstImportedDocId?: string | null
@@ -179,13 +170,7 @@ const STAGE_DOC_IMPORT_BODIES = `
     $jobRef: ID!
     $items: [ContentImportBodyInput!]!
   ) {
-    stageDocContentImportBodies(community: $community, jobRef: $jobRef, items: $items) {
-      jobRef
-      status
-      progress
-      failedItems
-      skipped
-    }
+    stageDocContentImportBodies(community: $community, jobRef: $jobRef, items: $items) { status }
   }
 `
 
@@ -222,11 +207,11 @@ export const stageDocImportBodies = async (
   jobRef: string,
   items: TDocImportStageItem[],
   options: TRequestOptions & { serviceSubject: string },
-): Promise<TDocImportBodyStageResult> => {
+): Promise<string> => {
   const data = await requestGroupherGraphQL<{
-    stageDocContentImportBodies: TDocImportBodyStageResult
+    stageDocContentImportBodies: { status: string }
   }>(STAGE_DOC_IMPORT_BODIES, { community, items, jobRef }, options)
-  return data.stageDocContentImportBodies
+  return data.stageDocContentImportBodies.status
 }
 
 /** Applies a ready Job atomically after all selected items reach a terminal staging state. */

@@ -43,11 +43,12 @@ const disableUnsupportedConsoleTask = (): void => {
 export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
   async run(event: WorkflowEvent<WorkflowPayload>, step: WorkflowStep): Promise<void> {
     const payload = event.payload
-    if (!payload.jobRef || !payload.sourceRefs) throw new Error('apply_workflow_payload_invalid')
+    const { jobRef, sourceRefs } = payload
+    if (!jobRef || !sourceRefs?.length) throw new Error('apply_workflow_payload_invalid')
     disableUnsupportedConsoleTask()
     const [
       { createR2PreviewStore },
-      { runPreviewDocBulkImport },
+      { prepareDocStaging, stagePreviewDoc },
       { applyDocImport, failDocImport },
     ] = await Promise.all([
       import('./src/lib/content-import/core/preview-store/cloudflare'),
@@ -56,25 +57,25 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
     ])
     try {
       const store = createR2PreviewStore(this.env.ARTIFACTS)
-      for (const [index, sourceRef] of payload.sourceRefs!.entries()) {
-        await step.do(`stage selected Doc ${index + 1}`, async () => {
-          const result = await runPreviewDocBulkImport(
-            payload.community,
-            payload.jobRef!,
-            payload.previewRef,
-            payload.attemptRef,
-            [sourceRef],
+      const { markdownSource, titleSources } = await step.do('prepare selected Doc metadata', () =>
+        prepareDocStaging(store, payload, sourceRefs),
+      )
+      for (const [index, sourceRef] of sourceRefs.entries()) {
+        const status = await step.do(`stage selected Doc ${index + 1}`, () =>
+          stagePreviewDoc(
             store,
-            { apply: false, serviceSubject: 'service:content-import' },
-          )
-          if (result.status.toLowerCase() === 'failed') {
-            throw new Error(`Document staging failed at item ${index + 1}.`)
-          }
-        })
+            { ...payload, jobRef },
+            sourceRef,
+            markdownSource,
+            titleSources[index] ?? null,
+          ),
+        )
+        // Phoenix has already recorded the terminal outcome when no item can be imported.
+        if (status?.toLowerCase() === 'failed') return
       }
       const conflict = await step.do('apply staged Docs', async () => {
         try {
-          await applyDocImport(payload.community, payload.jobRef!, {
+          await applyDocImport(payload.community, jobRef, {
             serviceSubject: 'service:content-import',
           })
           return null
@@ -91,7 +92,7 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
       })
       if (conflict) {
         await step.do('record target revision conflict', () =>
-          failDocImport(payload.community, payload.jobRef!, conflict.code, conflict.message, {
+          failDocImport(payload.community, jobRef, conflict.code, conflict.message, {
             serviceSubject: 'service:content-import',
           }),
         )
@@ -99,13 +100,9 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Docs import workflow failed.'
       await step.do('mark Phoenix import job failed', async () => {
-        await failDocImport(
-          payload.community,
-          payload.jobRef!,
-          'doc_import_workflow_failed',
-          message,
-          { serviceSubject: 'service:content-import' },
-        )
+        await failDocImport(payload.community, jobRef, 'doc_import_workflow_failed', message, {
+          serviceSubject: 'service:content-import',
+        })
       })
       throw cause
     }

@@ -1,19 +1,10 @@
 /**
- * Converts persisted source Markdown into bounded BodyBag batches and applies them.
+ * Prepares title provenance once per Apply Workflow, then publishes and stages
+ * one selected source document per durable step.
  *
- *   PreviewStore Markdown + SourceAnalysis
- *                  |
- *                  v
- *   framework deserialize -> title/H1 normalization -> publish BodyBag
- *                  |
- *                  v
- *   bounded GraphQL batches -> PostgreSQL staging -> one atomic apply
+ *   Analysis -> selected title sources
+ *   R2 Markdown + title source -> BodyBag -> Phoenix staging -> Job status
  *
- * Per-document conversion failures are staged as item results so one bad file
- * does not abort otherwise valid documents. Batch/request failures remain
- * workflow failures.
- *
- * @see docs/import/article-publish-import-refactor.md
  * @see docs/import/markdown-title-normalization.md
  * @see docs/import/import-error-handling.md
  */
@@ -23,28 +14,15 @@ import { DocumentImporterError } from '../../../document-importer/error'
 import { deserializeMarkdown, type TMarkdownSource } from '../../../document-importer/markdown'
 import type { PreviewStore } from '../../core/preview-store'
 import {
-  applyDocImport,
   MAX_BATCH_BYTES,
-  MAX_BATCH_COUNT,
   MAX_BODY_BAG_BYTES,
   stageDocImportBodies,
   stageDocImportRequestBytes,
-  type TDocImportApplyResult,
-  type TDocImportBodyStageResult,
   type TDocImportFailed,
   type TDocImportStageItem,
 } from '../../transport/phoenix/docsImport'
 import { extractDocumentSource } from './analyzer/documentFile'
 import { consumePromotedHeading, type TDocumentTitleSource } from './documentTitle'
-
-type TOptions = {
-  apply?: boolean
-  backendToken?: string
-  fetchImpl?: typeof fetch
-  graphqlEndpoint?: string
-  onProgress?: (completed: number, total: number) => void
-  serviceSubject: string
-}
 
 const MARKDOWN_SOURCE_BY_FRAMEWORK = {
   docusaurus: 'docusaurus',
@@ -59,75 +37,51 @@ const MARKDOWN_SOURCE_BY_FRAMEWORK = {
 const markdownSourceForFramework = (framework: string): TMarkdownSource =>
   MARKDOWN_SOURCE_BY_FRAMEWORK[framework as keyof typeof MARKDOWN_SOURCE_BY_FRAMEWORK] ?? 'groupher'
 
-/** Converts, stages, and atomically applies the selected source documents for one Job. */
-export const runPreviewDocBulkImport = async (
-  community: string,
-  jobRef: string,
-  previewRef: string,
-  attemptRef: string,
-  selectedSourceRefs: string[],
-  store: PreviewStore,
-  options: TOptions,
-): Promise<TDocImportApplyResult | TDocImportBodyStageResult> => {
-  const [storedSourceRefs, dataset, analysis] = await Promise.all([
-    store.listSourceRefs(previewRef, attemptRef),
-    store.getDataset(previewRef, attemptRef),
-    store.getAnalysis(previewRef, attemptRef),
-  ])
-  if (!dataset) throw new Error('Preview dataset is missing.')
+type TPreviewAttempt = { attemptRef: string; previewRef: string }
+
+/** Checkpoints only the codec and ordered title origins needed by subsequent steps. */
+export const prepareDocStaging = async (
+  store: Pick<PreviewStore, 'getAnalysis'>,
+  { previewRef, attemptRef }: TPreviewAttempt,
+  sourceRefs: readonly string[],
+): Promise<{ markdownSource: TMarkdownSource; titleSources: (TDocumentTitleSource | null)[] }> => {
+  const analysis = await store.getAnalysis(previewRef, attemptRef)
   if (!analysis) throw new Error('Preview analysis is missing.')
-
-  const availableSourceRefs = new Set(storedSourceRefs)
-  const documentsBySourceRef = new Map(
-    analysis.documents.map((document) => [document.sourceRef, document]),
-  )
-  const markdownSource = markdownSourceForFramework(dataset.sourceInfo.framework)
-  const sourceRefs = Array.from(new Set(selectedSourceRefs))
-  if (sourceRefs.length === 0) throw new Error('The import contains no documents.')
-
-  let batch: TDocImportStageItem[] = []
-  let completed = 0
-  const state: { latestStage?: TDocImportBodyStageResult } = {}
-
-  const flush = async (): Promise<void> => {
-    if (batch.length === 0) return
-    state.latestStage = await stageDocImportBodies(community, jobRef, batch, options)
-    completed += batch.length
-    options.onProgress?.(completed, sourceRefs.length)
-    batch = []
+  const titles = new Map(analysis.documents.map((doc) => [doc.sourceRef, doc.titleSource]))
+  return {
+    markdownSource: markdownSourceForFramework(analysis.tree.source.framework),
+    titleSources: sourceRefs.map((ref) => titles.get(ref) ?? null),
   }
+}
 
-  for (const sourceRef of sourceRefs) {
-    const source = availableSourceRefs.has(sourceRef)
-      ? await store.getSource(previewRef, attemptRef, sourceRef)
-      : null
-    const document = documentsBySourceRef.get(sourceRef)
-    const item = source
-      ? document
-        ? await publishSource(sourceRef, source.markdown, markdownSource, document.titleSource)
-        : sourceFailure(sourceRef, `Preview metadata ${sourceRef} is missing.`)
-      : sourceFailure(sourceRef, `Preview source ${sourceRef} is missing.`)
-    const candidate = [...batch, item]
-    if (
-      batch.length > 0 &&
-      (candidate.length > MAX_BATCH_COUNT ||
-        stageDocImportRequestBytes(community, jobRef, candidate) > MAX_BATCH_BYTES)
-    ) {
-      await flush()
-    }
-    batch.push(item)
-    if (stageDocImportRequestBytes(community, jobRef, batch) > MAX_BATCH_BYTES) {
-      throw new Error(`Preview source ${sourceRef} exceeds the GraphQL request byte limit.`)
-    }
+/** Reads one source body by key and returns the Job status after staging its outcome. */
+export const stagePreviewDoc = async (
+  store: Pick<PreviewStore, 'getSource'>,
+  {
+    community,
+    jobRef,
+    previewRef,
+    attemptRef,
+  }: TPreviewAttempt & { community: string; jobRef: string },
+  sourceRef: string,
+  markdownSource: TMarkdownSource,
+  titleSource: TDocumentTitleSource | null,
+): Promise<string> => {
+  const source = await store.getSource(previewRef, attemptRef, sourceRef)
+  let item: TDocImportStageItem
+  if (!source) {
+    item = sourceFailure(sourceRef, `Preview source ${sourceRef} is missing.`)
+  } else if (!titleSource) {
+    item = sourceFailure(sourceRef, `Preview metadata ${sourceRef} is missing.`)
+  } else {
+    item = await publishSource(sourceRef, source.markdown, markdownSource, titleSource)
   }
-  await flush()
-
-  if (state.latestStage?.status.toLowerCase() === 'failed') return state.latestStage
-  if (options.apply === false) {
-    if (!state.latestStage) throw new Error('No document staging result was produced.')
-    return state.latestStage
+  if (stageDocImportRequestBytes(community, jobRef, [item]) > MAX_BATCH_BYTES) {
+    throw new Error(`Preview source ${sourceRef} exceeds the GraphQL request byte limit.`)
   }
-  return applyDocImport(community, jobRef, options)
+  return stageDocImportBodies(community, jobRef, [item], {
+    serviceSubject: 'service:content-import',
+  })
 }
 
 const sourceFailure = (externalRef: string, message: string): TDocImportFailed => ({
@@ -171,8 +125,3 @@ const publishSource = async (
     }
   }
 }
-
-export type {
-  TDocImportApplyResult,
-  TDocImportBodyStageResult,
-} from '../../transport/phoenix/docsImport'

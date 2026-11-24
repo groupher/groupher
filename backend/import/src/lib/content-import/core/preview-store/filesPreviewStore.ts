@@ -34,7 +34,6 @@ import {
   decodeApplyRun,
   decodePreviewRecord,
   decodeReadyReceipt,
-  decodeSourceRef,
   encodeSourceRef,
 } from './previewStore'
 
@@ -181,16 +180,6 @@ export default class FilesPreviewStore implements PreviewStore {
       const stored = await this.files.download(file.key)
       return decodePreviewRecord(JSON.parse(await stored.text()) as unknown)
     })
-  }
-
-  /** Lists sourceRefs from body object keys without downloading their contents. */
-  async listSourceRefs(previewRef: string, attemptRef: string): Promise<string[]> {
-    const prefix = `${this.attemptPrefix(previewRef, attemptRef)}/dataset/bodies/`
-    const refs: string[] = []
-    for await (const file of this.files.listAll({ prefix })) {
-      refs.push(decodeSourceRef(file.key.slice(prefix.length)))
-    }
-    return refs.sort()
   }
 
   /** Writes the immutable final receipt after validating its attempt identity. */

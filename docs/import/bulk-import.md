@@ -721,8 +721,8 @@ Content-Type: application/json
 1. 校验 PreviewRecord 所属用户、社区和 TTL，并读取 ready Dataset manifest。
 2. 调用创建正式 Job 的 Phoenix mutation；该 mutation 通过 Passport middleware 再次强制校验 `doc.import`，不依赖之前的 `checkPassport=true`。
 3. 向 Phoenix 发送 bounded import manifest、SourceTree、固定 source revision 和 Review 时的 targetRevision；Phoenix 验证 Review intent 仍有效后创建正式 Job，失败则要求重新 Review。
-4. 从 Private Blob 读取筛选后的来源文档，逐 Page 转换为 BodyBag。Node 使用共享 publisher 已有的 `ARTIMENT_MAX_INPUT_BYTES = 2 MiB`（序列化 Plate value），以及写死的 `MAX_BATCH_COUNT = 4`、`MAX_BATCH_BYTES = 6 MiB`（完整 GraphQL request JSON）和 `MAX_BODY_BAG_BYTES = 5 MiB`（单篇 canonical BodyBag JSON）切批并 stage；大小统一按未压缩 UTF-8 序列化 bytes 计算，不按字符数或压缩后大小计算。
-5. 单篇超过 2 MiB Plate input 或 5 MiB BodyBag 时返回 `content_too_large`，将该 Page 标记为 skipped 并从有效 TargetTree 排除，其他 Page 继续；普通转换失败则停止在 `conversion_failed` 且不调用 apply。所有有效 Page ready 后才调用 atomic apply；全部 Page 均被跳过时不调用 apply。
+4. Workflow 从 SourceAnalysis 一次提取 Markdown 框架和所选文档的标题来源。每个 durable step 按 sourceRef 从 R2 读取一篇正文，转换并暂存一次，仅取回 Job 状态。按未压缩 UTF-8 计量，Plate input 上限为 2 MiB，单篇 BodyBag 为 5 MiB，完整 GraphQL 请求为 6 MiB。
+5. 超出 Plate input 或 BodyBag 容量的页面标为 `content_too_large`。缺失或转换失败的文档保留逐项诊断。所有选中项完成暂存且至少有一个 ready 页面时，Workflow 对有效页面执行一次原子 Apply。
 6. 返回 `jobRef`，后续恢复和进度读取切换到持久化 Job。
 7. apply 完成或失败收尾后清理 Preview objects；正式 Job 和错误摘要继续由 Phoenix 保存。
 
@@ -760,7 +760,7 @@ Dashboard 只接收可展示的安全 DTO：
 2. Cloudflare Workflows 将来源获取、分片分析、持久化和目标验证拆成有界步骤；跨步骤通过 R2 对象引用恢复。
 3. Docusaurus、Fumadocs、MkDocs、Nextra、Rspress、Starlight、VitePress 七类 Node/TS analyzer 继续使用真实仓库形态 fixture；生产路径不再保留 Elixir analyzer fallback。
 4. Files SDK 后的 `PreviewStore` 保存不可变 `PreviewRecord + DocsDataset + Review artifact`，使用固定 `attemptRef`、write-once run association 和 attempt-local ready receipt。
-5. Import Worker 复用 document-importer/content-publisher，把 Markdown 转换为 BodyBag；固定容量为 2 MiB Plate input、每批最多 4 篇、完整 GraphQL request JSON 最多 6 MiB。
+5. Import Worker 复用 document-importer/content-publisher，把 Markdown 转换为 BodyBag；固定容量为 2 MiB Plate input、每个 Workflow step 暂存一篇、完整 GraphQL request JSON 最多 6 MiB。
 6. Phoenix 只保留 ImportJob、JobItem、PostgreSQL BodyBag staging、Docs Validator/Writer 和 ImportSourceMapping。单篇 canonical BodyBag 最多 5 MiB，由 Phoenix 编码并记录权威 `body_size_bytes`。
 7. Writer 在一个数据库事务和 Docs 站点锁内验证 `targetRevision`、过滤 skipped Page、写默认 WorkingCopy、目录与 Mapping，记录带 Job UUID 的创建或编辑历史，完成 Job 并删除 staging。已发布页面从 Public Snapshot 派生可编辑副本。same-hash stage、completed stage/apply 重放均幂等。
 8. 旧 Snapshot/Preparation/Plan/Checkpoints/PayloadStore、Phoenix GitHub/archive/framework 路径、Changelog/AssetStager 半成品和相关旧表已直接移除，不保留兼容读写或数据迁移。
@@ -1008,7 +1008,7 @@ Workflow 负责 durable delivery、Step 重试和基础设施扩缩容，但自�
 - 首版不实现每社区短 TTL lease，也不承诺社区级公平调度；后续只有在指标显示单社区抢占或真实并发冲突时再增加 keyed admission。
 - `previewRef`/服务端 idempotency key 必须阻止相同请求因双击、网络重试或 Workflow start 重试而重复启动。
 - 达到全局上限时由队列等待，或返回 `preview_queue_full`；不能先下载 archive 再拒绝。
-- BodyBag Publisher 使用四个写死的代码常量：`ARTIMENT_MAX_INPUT_BYTES = 2 MiB`（序列化 Plate value）、`MAX_BATCH_COUNT = 4`、`MAX_BATCH_BYTES = 6 MiB`（完整 GraphQL request JSON）和 `MAX_BODY_BAG_BYTES = 5 MiB`（单篇 canonical BodyBag JSON）。加入下一篇会超过 4 篇或 6 MiB 时先发送当前批次；不探测运行环境、不动态改变上限，也不暴露容量配置。
+- BodyBag Publisher 每个 step 发送一篇。序列化 Plate 输入、单篇 canonical BodyBag 和完整 GraphQL 请求的上限分别为 2、5 和 6 MiB。
 - 容量统一按未压缩 UTF-8 序列化 bytes 计算。HTTP gzip、PostgreSQL TOAST 和 Blob at-rest compression 只影响传输/存储，不得放宽上述上限。
 - Phoenix 在 `BodyBag.cast` 后重新 canonical encode，生成并保存权威 `body_size_bytes`；GraphQL input 不接收可信的客户端 size。
 
@@ -1047,7 +1047,7 @@ GitHub/codeload rate limit 只是上游失败保护，不是 admission 或成本
 4. Workflow/Preview tests：用户/社区隔离、TTL、取消、重复 apply、两个 Step 重试复用固定 attemptRef、target validation 失败不重跑 `analyzeSource`、无 ready receipt 的半成品不可见、Workflow run 恢复、Private Blob artifact 完整性、全局并发上限和过期清理。
 5. Permission tests：`checkPassport` 不接受 user/thread、未知 action 报错、无权限返回 false；创建正式 Job 的 mutation 复用 `doc.import`。内部 stage/apply 只能通过 Server Trust 操作已存在且状态合法的 Job。
 6. Integration test：固定公开仓库 → archive → Review DTO → 用户确认 → Phoenix Job → atomic apply。
-7. Capacity tests：固定 2 MiB Plate input/4 篇/6 MiB request/5 MiB BodyBag 的边界值、未压缩 UTF-8 bytes、Phoenix 权威 `body_size_bytes`、跨批 stage、单篇超限跳过、过滤后 TargetTree 和零可导入项不 apply。
+7. Capacity tests：固定 2 MiB Plate input/6 MiB request/5 MiB BodyBag 的边界值、未压缩 UTF-8 bytes、Phoenix 权威 `body_size_bytes`、跨批 stage、单篇超限跳过、过滤后 TargetTree 和零可导入项不 apply。
 8. Browser test：输入 URL、第一步分析子状态、刷新/Function 实例变化恢复、检查树、一次确认 apply、普通 item 转换失败、超大单篇跳过、完成和错误重试。
 9. 新链路验收通过后，直接移除 GitHub Bulk Import 的逐 blob REST 调用和前端旧 `startGithubDocImport` 分析入口；删除旧数据与 payload 文件，不保留迁移或兼容逻辑。
 

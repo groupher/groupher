@@ -124,7 +124,7 @@ groupherChanged = currentGroupherHash != mapping.groupher_hash
 
 ### 0.5 实施任务（已完成）
 
-1. 冻结 `ThreadDataset/DocsDataset/TBadSmell/ImportSourceMapping`、Preview 对象布局、固定 `attemptRef`、ready binding、versioned hash，以及写死的 `2 MiB Plate input / 4 篇 / 6 MiB request / 5 MiB BodyBag` 容量 contract。
+1. 冻结 `ThreadDataset/DocsDataset/TBadSmell/ImportSourceMapping`、Preview 对象布局、固定 `attemptRef`、ready binding、versioned hash，以及写死的 `2 MiB Plate input / 6 MiB request / 5 MiB BodyBag` 容量 contract。
 2. 在现有 `PreviewStore` 后接入 Files SDK：写 immutable attempt-scoped Dataset、write-once `analysis-run.json` 和 attempt-local `ready.json`；不维护 Workflow Session，也不依赖根目录 winner pointer 的 CAS。
 3. 将 Workflow 固定拆为 `analyzeSource` 与 `validateTarget` 两个 Step；target validation/review write 失败只重试后者。若 `analyzeSource` 在最大 archive 下仍超出 Function 边界，再以筛选后的 `SourceWorkspaceRef` 进一步拆分。
 4. 将 Phoenix BodyBag staging 切到 PostgreSQL。Node 只按固定常量和未压缩 UTF-8 bytes 转换/切批；Phoenix canonical encode 后生成权威 `body_size_bytes`。单篇超过 2 MiB Plate input 或 5 MiB BodyBag 时显式跳过并过滤 TargetTree，普通转换错误仍阻止 apply。
@@ -156,7 +156,7 @@ groupherChanged = currentGroupherHash != mapping.groupher_hash
 1. Dashboard 目录已收敛到 `lib/content-import/{core,platforms,threads,transport}` 与 `workflows/content-import/docs`；七类 framework fixture 归 Node analyzer 测试所有，不再依赖 Elixir analyzer 代码。
 2. `PreviewStore` 已切到 Files SDK，使用不可变 `preview-record.json`、write-once `analysis-run.json`、固定 `attemptRef`、attempt-scoped Dataset/Review 与最后写入的 `ready.json`。本地/生产使用 R2 binding，隔离单测使用 fs adapter，不提供生产本地磁盘回退。
 3. Workflow 已固定为 `analyzeSource` 与 `validateTarget` 两个 durable Step；来源正文从 PreviewStore 有界并行读取，目标验证失败不会重新下载和分析仓库。
-4. 共享 Import Content publisher 已落实 `2 MiB Plate input / 4 篇 / 6 MiB request / 5 MiB canonical BodyBag` 固定边界；只有稳定的 `content_too_large` 可以跳过，普通转换错误使 Job 失败。
+4. 共享 Import Content publisher 已落实 `2 MiB Plate input / 6 MiB request / 5 MiB canonical BodyBag` 固定边界；只有稳定的 `content_too_large` 可以跳过，普通转换错误使 Job 失败。
 5. Phoenix 已收缩为 `Jobs`、`Staging`、`Doc.Validator`、`Doc.Writer` 与 `ImportSourceMapping`。BodyBag 分行写入 `content_import_job_bodies`，同 hash batch 和 completed apply 可幂等重放；target revision 冲突在事务内回滚且不消费 staging。
 6. 旧 Snapshot/Preparation/Plan/Checkpoints/PayloadStore、Phoenix 来源解析、Changelog/AssetStager 和旧 schema/test 路径已直接删除；新 migration drop 旧表并创建新的 Job/Item/Body/ImportSourceMapping 表，不 backfill、不 dual read/write，`down` 明确不可逆。
 7. 本地验证已覆盖 Files SDK immutable write、七类 analyzer fixtures、publisher/stage 容量、skip allowlist、Job intent binding、atomic apply、Mapping、completed replay 和 revision conflict。
@@ -220,7 +220,7 @@ groupherChanged = currentGroupherHash != mapping.groupher_hash
 
 - Dashboard 已有 archive downloader、Cloudflare Workflows、七类 framework analyzer 和 BodyBag Publisher；本轮只整理目录与存储边界，不重写已存在的 analyzer。
 - 切换前 `PreviewStore` 使用旧的本地/对象存储 能力并保存可变运行记录；该路径已由 Files SDK 与 immutable `PreviewRecord + analysis-run + attempt-local ready` 布局替代。
-- 切换前 Bulk v1 只做按数量有界的 BodyBag staging；当前已落实每批最多 4 篇、完整 GraphQL request JSON 最多 6 MiB、单篇 canonical BodyBag JSON 最多 5 MiB，并由 Phoenix 生成权威 `body_size_bytes`，不经过 `AssetStager`。
+- 切换前 Bulk v1 只做按数量有界的 BodyBag staging；当前 Workflow 每个 durable step 暂存一篇、完整 GraphQL request JSON 最多 6 MiB、单篇 canonical BodyBag JSON 最多 5 MiB，并由 Phoenix 生成权威 `body_size_bytes`，不经过 `AssetStager`。
 - ContentImport、BodyBag、Comment/Mention 和 Docs template 的 Phase 4 focused suite 当前为 `136 tests, 0 failures`；测试环境已正常加载基础 migration。
 - 这一节的 Files SDK/immutable Preview、PostgreSQL BodyBag staging 与 Phoenix 简化缺口已经完成；仍未完成的是全局活动分析 admission、生产 Private Blob 和真实公开仓库浏览器联调。
 

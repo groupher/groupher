@@ -177,9 +177,10 @@ describe('FilesPreviewStore', () => {
       })
       expect(await store.getDataset(record.previewRef, record.attemptRef)).toEqual(dataset)
       expect(await store.getReview(record.previewRef, record.attemptRef)).toEqual(preview)
-      expect(await store.listSourceRefs(record.previewRef, record.attemptRef)).toEqual([
-        'docs/intro.md',
-      ])
+      expect(await store.getSource(record.previewRef, record.attemptRef, 'docs/intro.md')).toEqual({
+        markdown: '# Intro',
+        sourceRef: 'docs/intro.md',
+      })
       expect(await store.getReady(record.previewRef, record.attemptRef)).toMatchObject({
         datasetRef: dataset.datasetRef,
       })

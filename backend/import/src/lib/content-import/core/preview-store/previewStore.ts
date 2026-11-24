@@ -104,8 +104,6 @@ export interface PreviewStore {
   ): Promise<TPreviewSource | null>
   /** Lists root records for bounded expiry sweeping. */
   listRecords(): Promise<TPreviewRecord[]>
-  /** Lists stored sourceRefs without downloading every source body. */
-  listSourceRefs(previewRef: string, attemptRef: string): Promise<string[]>
   /** Writes the ready marker after all required artifacts exist. */
   markReady(previewRef: string, attemptRef: string, receipt: TReadyReceipt): Promise<void>
   /** Persists the analysis Workflow association exactly once. */
@@ -262,10 +260,6 @@ export const sweepExpiredPreviews = async (
 /** Encodes an arbitrary source path into one safe storage-key segment. */
 export const encodeSourceRef = (sourceRef: string): string =>
   Buffer.from(sourceRef, 'utf8').toString('base64url')
-
-/** Restores the canonical sourceRef from its storage-key segment. */
-export const decodeSourceRef = (encoded: string): string =>
-  Buffer.from(encoded, 'base64url').toString('utf8')
 
 /** Produces the stable artifact hash used by Dataset and ready receipts. */
 export const sha256Json = (value: unknown): string =>
