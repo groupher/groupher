@@ -15,6 +15,8 @@ Use this guide to select checks for a change. Commands are starting points, not 
 
 For Gate or Lifecycle changes, consult `.agents/skills/gate-lifecycle/SKILL.md` for the additional flow and test boundaries. For frontend work, consult `.agents/skills/fe/SKILL.md`.
 
+For repeatable Community browser acceptance, use the [feature map](acceptance/README.md). Its initial journey verifies reading a prepared published Post through the list, preview and detail UI; it does not establish publishing-UI or draft-editing coverage. Record the journey result, evidence and fixture cleanup separately from static checks.
+
 ## Hooks and CI
 
 `pnpm run report:salon-props` is a report-only frontend inventory for direct `useSalon(...)` bindings passed intact as JSX props. Findings are candidates for review and do not fail the command; parse or scan errors do. It does not follow aliases or object spreads and is not a comprehensive data-flow check. It is not currently connected to hooks or CI.
