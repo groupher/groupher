@@ -27,25 +27,25 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1169.0",
-    "@aws-sdk/s3-request-presigner": "^3.1169.0",
+    "@aws-sdk/client-s3": "^3.1176.0",
+    "@aws-sdk/s3-request-presigner": "^3.1176.0",
     "@groupher/contracts": "workspace:*",
     "@groupher/service": "workspace:*",
-    "@hono/node-server": "^2.1.8",
+    "@hono/node-server": "^2.1.11",
     "dotenv": "^18.0.10",
-    "hono": "^4.13.18"
+    "hono": "^4.13.21"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "2.0.0-beta.v.16",
-    "@cloudflare/vitest-plugin": "^1.8.2",
-    "@cloudflare/workers-types": "^5.20261115.1",
+    "@cloudflare/vite-plugin": "2.0.0-rc.4",
+    "@cloudflare/vitest-plugin": "^1.9.1",
+    "@cloudflare/workers-types": "^5.20261123.1",
     "@types/node": "^26.6.6",
-    "cf": "1.0.0-beta.31",
+    "cf": "1.0.0-rc.4",
     "cross-env": "^10.1.0",
     "esbuild": "^0.28.1",
     "rimraf": "^6.1.4",
     "tsx": "^4.23.15",
     "vite": "^8.3.8",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   }
 }

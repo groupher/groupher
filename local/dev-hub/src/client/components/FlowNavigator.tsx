@@ -13,7 +13,7 @@ export function FlowNavigator({ requestPathIds }: TProps) {
   const focusNodes = (ids: string[]) => {
     void fitView({
       nodes: ids.map((id) => ({ id })),
-      padding: 0.16,
+      padding: '6.9%',
       maxZoom: 0.95,
       duration: 320,
     })

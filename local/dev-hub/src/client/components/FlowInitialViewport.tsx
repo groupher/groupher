@@ -1,4 +1,4 @@
-import { useReactFlow, useStore } from '@xyflow/react'
+import { useNodesStore, useReactFlow, useViewportStore } from '@xyflow/react'
 import { useCallback, useLayoutEffect, useRef } from 'react'
 
 import type { TFlowEdge, TFlowNode } from './flow-spec'
@@ -14,7 +14,7 @@ export const FLOW_INITIAL_TOP_INSET = 96
 
 export function FlowInitialViewport({ requestPathIds, onReady }: TProps) {
   const initializedRef = useRef(false)
-  const requestPathNodesInitialized = useStore(
+  const requestPathNodesInitialized = useNodesStore(
     useCallback(
       (state) =>
         requestPathIds.every((id) => {
@@ -24,7 +24,7 @@ export function FlowInitialViewport({ requestPathIds, onReady }: TProps) {
       [requestPathIds],
     ),
   )
-  const viewportWidth = useStore((state) => state.width)
+  const viewportWidth = useViewportStore((state) => state.width)
   const { getNodesBounds, setViewport } = useReactFlow<TFlowNode, TFlowEdge>()
 
   useLayoutEffect(() => {
