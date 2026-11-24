@@ -232,17 +232,25 @@ if config_env() in [:prod, :seed_prod] do
   # mix phx.gen.secret
   # should use RDS 内网地址
   # see https://neon.tech/docs/guides/elixir-ecto for Neon DB connection guidance
-  config :groupher_server, GroupherServer.Repo,
-    adapter: Ecto.Adapters.Postgres,
-    url: System.get_env("DATABASE_URL"),
-    pool_size: String.to_integer(System.get_env("DB_POOL_SIZE") || "20"),
-    ssl: true,
-    ssl_opts: [
-      # server_name_indication: System.get_env("DB_HOST") |> String.to_charlist(),
-      server_name_indication:
-        get_host_from_url(System.get_env("DATABASE_URL")) |> String.to_charlist(),
-      verify: :verify_none
-    ]
+  database_url = System.fetch_env!("DATABASE_URL")
+
+  database_options =
+    case Helper.ORM.ConnectionConfig.from_url(database_url) do
+      {:ok, options} -> options
+      {:error, reason} -> raise "invalid DATABASE_URL connection options: #{reason}"
+    end
+
+  config :groupher_server,
+         GroupherServer.Repo,
+         Keyword.merge(database_options,
+           adapter: Ecto.Adapters.Postgres,
+           pool_size: String.to_integer(System.get_env("DB_POOL_SIZE") || "20"),
+           ssl: true,
+           ssl_opts: [
+             server_name_indication: get_host_from_url(database_url) |> String.to_charlist(),
+             verify: :verify_none
+           ]
+         )
 
   config :groupher_server, :github_oauth,
     client_id: System.get_env("OAUTH_GITHUB_CLIENT_ID"),
