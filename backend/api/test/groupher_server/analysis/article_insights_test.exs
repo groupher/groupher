@@ -24,7 +24,9 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
                occurred_at: bucket
              )
 
-    assert {:ok, 1} = Aggregator.run()
+    assert {:ok, processed} = Aggregator.run()
+    assert processed >= 1
+    assert Repo.get_by!(MetricEvent, article_id: article.id).aggregated_at
     assert {:ok, 0} = Aggregator.run()
 
     assert %ArticleHourlyMetric{
@@ -38,7 +40,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
 
     assert article_id == article.id
     assert binding_id == binding.id
-    assert Repo.aggregate(MetricEvent, :count) == 1
+    assert Repo.aggregate(Ecto.Query.where(MetricEvent, article_id: ^article.id), :count) == 1
 
     assert %{pending: 0, failed: 0, oldest_pending_at: nil, oldest_pending_age_seconds: 0} =
              GroupherServer.Analysis.Maintenance.metrics()
@@ -70,7 +72,9 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     assert {:ok, %{tracked: true}} =
              track_article_view(article, user, read_purpose: :public_read)
 
-    assert {:ok, 1} = Aggregator.run()
+    assert {:ok, processed} = Aggregator.run()
+    assert processed >= 1
+    assert Repo.get_by!(MetricEvent, article_id: article.id).aggregated_at
 
     assert {:ok, result} =
              ArticleInsights.trend(article, user,
@@ -101,7 +105,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     assert [%{metrics: %{article_view: %{value: 1}}}] = path_result.items
   end
 
-  test "Article Insights honors CommunityAdmin grants without CommunityModerator mirrors" do
+  test "Article Insights honors CommunityAdmin grants without CommunityAdmin mirrors" do
     {community, article, _attrs, author} = mock_article(:post)
     {:ok, unrelated} = db_insert(:user)
     inner_id = article_inner_id(article, community)
@@ -191,7 +195,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     {community, article, _attrs, author} = mock_article(:post)
     {:ok, outsider} = db_insert(:user)
 
-    stale_root = %{outsider | cur_passport: %{"global" => %{"god" => true}}}
+    stale_root = Map.put(outsider, :cur_passport, %{"global" => %{"god" => true}})
 
     assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
              CMS.Insights.authorize(article, stale_root, :post, community: community.slug)
@@ -238,7 +242,9 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
                occurred_at: bucket
              )
 
-    assert {:ok, 1} = Aggregator.run()
+    assert {:ok, processed} = Aggregator.run()
+    assert processed >= 1
+    assert Repo.get_by!(MetricEvent, article_id: article.id).aggregated_at
 
     assert {:ok, result} =
              ArticleInsights.trend(article, user,

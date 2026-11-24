@@ -63,6 +63,13 @@ defmodule GroupherServer.CMS.Gate do
           {:ok, term()} | {:error, GroupherServer.CMS.Gate.Decision.t()}
   def access_check(actor, action, resource), do: Access.access_check(actor, action, resource)
 
+  @doc "Checks a Community action using facts from the caller's read-only snapshot."
+  @spec community_snapshot_check(term(), atom(), term()) ::
+          {:ok, term()} | {:error, GroupherServer.CMS.Gate.Decision.t()}
+  def community_snapshot_check(actor, action, community) do
+    Access.community_snapshot_check(actor, action, community)
+  end
+
   @doc """
   Loads and authorizes a resource inside the caller-owned pipeline transaction.
 

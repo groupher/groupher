@@ -3,15 +3,15 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
   Owns the narrow operational initialization of dev/mock/tmp and fixed accounts.
 
       Locked run -> reject unknown collisions -> core Community + Lifecycle setup
-                 -> scoped root/platform passports -> persistent ownership manifest
+                 -> typed GlobalPassport / CommunityAdmin snapshots -> manifest
 
   Public registration and rename retain the normal reserved-name rejection.
   """
   import Ecto.Query
   alias GroupherServer.{Repo, CMS, ReviewBot}
+  alias CMS.ProductionSeed.{Privileges, Run}
   alias GroupherServer.Accounts
   alias Accounts.Model.{User, OauthProvider}
-  alias CMS.ProductionSeed.Run
   alias CMS.Model.{Community, CommunitySlugClaim}
   @report_threshold Application.compile_env(:groupher_server, :cms_review_report_threshold, 3)
   @aliases ~w(author adminDev adminMock platform outsider) ++
@@ -19,6 +19,11 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
 
   @doc "Initializes fixed resources inside the caller's serialized transaction."
   def apply(manifest) do
+    if Map.has_key?(manifest, "passports") and
+         not Map.has_key?(manifest, "globalPassports") do
+      Repo.rollback(:seed_legacy_manifest_requires_p4c)
+    end
+
     users =
       Map.new(@aliases, fn name ->
         login = "ps-" <> String.downcase(name)
@@ -49,22 +54,6 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
         {name, user.id}
       end)
 
-    Enum.each(users, fn {name, id} ->
-      case Repo.get_by(CMS.Model.Passport, user_id: id) do
-        nil ->
-          nil
-
-        passport ->
-          known =
-            Enum.any?(
-              Repo.all(from(r in Run, select: r.manifest)),
-              &(get_in(&1, ["passports", name]) == passport.rules)
-            )
-
-          unless known, do: Repo.rollback(:seed_unexpected_permissions)
-      end
-    end)
-
     communities =
       Map.new(~w(dev mock tmp), fn slug ->
         owner = Repo.get!(User, users[if(slug == "mock", do: "adminMock", else: "adminDev")])
@@ -89,7 +78,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
 
               {:ok, _} = CMS.Communities.Lifecycle.ensure_created(c.id)
               {:ok, _} = ReviewBot.create_default_configs_for_community(c.id)
-              {:ok, _} = CMS.Communities.Moderators.Setup.add_root(c, owner)
+              {:ok, _} = CMS.Communities.Admins.Setup.add_lord(c, owner)
               c
 
             c ->
@@ -100,33 +89,21 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
               c
           end
 
-        {:ok, rules} = Helper.PermissionConfig.default_root_passport(slug)
-        {:ok, _} = CMS.Passport.stamp_passport(rules, owner)
         {slug, community.id}
       end)
 
-    {:ok, _} =
-      CMS.Passport.stamp_passport(
-        %{
-          "global" =>
-            Map.new(
-              ~w(review.platform.read review.platform.decide review.platform.configure),
-              &{&1, true}
-            )
-        },
-        Repo.get!(User, users["platform"])
-      )
+    if Repo.exists?(from(p in CMS.Model.Passport, where: p.user_id in ^Map.values(users))) do
+      Repo.rollback(:seed_legacy_passport_requires_p4c)
+    end
 
-    {:ok, _} =
-      CMS.Passport.stamp_passport(
-        %{
-          "global" =>
-            Map.new(
-              ~w(post.community.mirror post.community.unmirror post.community.move),
-              &{&1, true}
-            )
-        },
-        Repo.get!(User, users["adminDev"])
+    global_passports = Privileges.provision_global_passports!(users, manifest)
+
+    community_admins =
+      Privileges.provision_admins!(
+        users,
+        communities,
+        manifest["communityAdmins"] || %{},
+        Map.values(communities) -- Map.values(manifest["communities"] || %{})
       )
 
     Map.merge(manifest, %{
@@ -135,11 +112,8 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
       "runtimeVersion" => Application.spec(:groupher_server, :vsn) |> to_string(),
       "users" => users,
       "communities" => communities,
-      "passports" =>
-        Map.new(users, fn {name, id} ->
-          {:ok, rules} = CMS.Passport.get_passport(Repo.get!(User, id))
-          {name, rules}
-        end)
+      "globalPassports" => global_passports,
+      "communityAdmins" => community_admins
     })
   end
 

@@ -34,7 +34,7 @@ export const community = graphql(`
       updatedAt
       viewerHasSubscribed @include(if: $userHasLogin)
       contributesDigest
-      moderatorsCount
+      adminsCount
       meta {
         postsCount
         blogsCount

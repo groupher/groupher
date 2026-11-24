@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   alias GroupherServer.CMS
   alias CMS.Communities.Categories.Persist, as: CategoriesPersist
-  alias CMS.Model.{Category, CommunityLifecycle, CommunityModerator, Passport}
+  alias CMS.Model.{Category, CommunityLifecycle, CommunityAdmin, Passport}
 
   setup do
     {:ok, category} = db_insert(:category)
@@ -35,7 +35,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     }
     """
 
-    conn = simu_conn(:user, cms: %{"community.update" => true})
+    conn =
+      simu_conn(:user,
+        passport: %{
+          global: %{is_root: false, permissions: %{"community.update" => true}},
+          communities: %{},
+          community_permissions: %{}
+        }
+      )
 
     variables = %{
       community: community.slug,
@@ -63,7 +70,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     }
     """
 
-    conn = simu_conn(:user, cms: %{"community.update" => true})
+    conn =
+      simu_conn(:user,
+        passport: %{
+          global: %{is_root: false, permissions: %{"community.update" => true}},
+          communities: %{},
+          community_permissions: %{}
+        }
+      )
 
     saved =
       gq_mutation(conn, query, %{
@@ -85,7 +99,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "auth user can create category", ~m(user community)a do
       variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
       variables = Map.put(variables, :command_id, Ecto.UUID.generate())
-      rule_conn = simu_conn(:user, cms: %{"category.create" => true})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"category.create" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       created = rule_conn |> gq_mutation(@create_category_query, variables)
       # author = created["author"]
@@ -96,7 +118,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "auth user can delete category", ~m(community)a do
       {:ok, category} = db_insert(:category)
       {:ok, _} = CategoriesPersist.set_category(community, category)
-      rule_conn = simu_conn(:user, cms: %{"category.delete" => true})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"category.delete" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{community: community.slug, id: category.id, command_id: Ecto.UUID.generate()}
       deleted = rule_conn |> gq_mutation(@delete_category_query, variables)
@@ -107,7 +137,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     @update_category_query S.Category.m(:update_category)
     test "auth user can update  category", ~m(category community)a do
       {:ok, _} = CategoriesPersist.set_category(community, category)
-      rule_conn = simu_conn(:user, cms: %{"category.update" => true})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"category.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -123,7 +161,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "unauth user create category fails", ~m(user user_conn guest_conn community)a do
       variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
       variables = Map.put(variables, :command_id, Ecto.UUID.generate())
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(
@@ -155,7 +201,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
         command_id: Ecto.UUID.generate()
       }
 
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(
@@ -184,7 +237,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
 
-      rule_conn = simu_conn(:user, cms: %{"category.set" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"category.set" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -211,7 +271,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       {:ok, _} = CategoriesPersist.set_category(community, %Category{id: category.id})
 
-      rule_conn = simu_conn(:user, cms: %{"category.unset" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"category.unset" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -237,7 +304,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
       {:ok, category} = db_insert(:category)
 
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -292,7 +366,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   describe "[mutation cms community]" do
     @create_community_query S.Community.m(:create_community)
     test "create community with valid attrs" do
-      rule_conn = simu_conn(:user, cms: %{"community.create" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.create" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       variables = create_community_vars(%{locale: "zh"})
 
       created =
@@ -304,7 +386,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "can create community with some title, different slug" do
-      rule_conn = simu_conn(:user, cms: %{"community.create" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.create" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       variables = create_community_vars(%{title: "elixir", slug: "elixir1"})
       rule_conn |> gq_mutation(@create_community_query, variables)
       variables = create_community_vars(%{title: "elixir", slug: "elixir2"})
@@ -318,7 +408,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "can not create community with some slug" do
-      rule_conn = simu_conn(:user, cms: %{"community.create" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.create" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       variables = create_community_vars(%{title: "elixir1", slug: "elixir"})
 
       first = rule_conn |> gq_mutation(@create_community_query, variables)
@@ -330,7 +428,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     @update_community_query S.Community.m(:update_community)
     test "update community with valid attrs", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -346,7 +451,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "update community with empty attrs return the same", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
 
       updated = rule_conn |> gq_mutation(@update_community_query, variables)
@@ -358,7 +471,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "unauth user create community fails", ~m(user_conn guest_conn)a do
       variables = create_community_vars()
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(
@@ -390,7 +511,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
           desc: community.desc
         })
 
-      rule_conn = simu_conn(:user, cms: %{"community.create" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.create" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert rule_conn
              |> mutation_error?(
@@ -403,7 +531,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     @request_destroy_community_query S.Community.m(:request_destroy_community)
     test "auth user can request community destruction", ~m(community)a do
       variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
-      rule_conn = simu_conn(:user, cms: %{"community.request_destroy" => true})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.request_destroy" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       archived = rule_conn |> gq_mutation(@request_destroy_community_query, variables)
 
@@ -414,7 +550,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "unauth user delete community fails", ~m(user_conn guest_conn)a do
       variables = create_community_vars()
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(
@@ -439,7 +583,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "delete non-exist community fails" do
-      rule_conn = simu_conn(:user, cms: %{"community.request_destroy" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.request_destroy" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert rule_conn
              |> mutation_error?(@request_destroy_community_query, %{community: non_exist_slug()})
@@ -449,199 +600,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   defp create_community_vars(attrs \\ %{}) do
     mock_attrs(:community, attrs)
     |> Map.put(:command_id, Ecto.UUID.generate())
-  end
-
-  describe "[mutation cms moderators]" do
-    @all_rules_query S.Moderation.q(:all_passport_rules)
-    test "can get all passport rules", ~m(user)a do
-      rule_conn = simu_conn(:user, user)
-      result = rule_conn |> gq_query(@all_rules_query)
-
-      assert is_binary(result["root"])
-      assert is_binary(result["moderator"])
-
-      assert is_map(Jason.decode!(result["root"]))
-      assert is_map(Jason.decode!(result["moderator"]))
-    end
-
-    @set_moderator_query S.Moderation.m(:add_moderator)
-    test "auth user can add moderator to community", ~m(user user2 community)a do
-      passport_rules = %{community.slug => %{"root" => true}}
-      rule_conn = simu_conn(:user, user, cms: passport_rules)
-
-      variables = %{
-        user: user2.login,
-        community: community.slug,
-        command_id: Ecto.UUID.generate()
-      }
-
-      result = rule_conn |> gq_mutation(@set_moderator_query, variables)
-
-      assert result["slug"] == community.slug
-    end
-
-    @set_moderators_query S.Moderation.m(:add_moderators)
-    test "auth user can add moderators to community", ~m(user user2 community)a do
-      {:ok, user3} = db_insert(:user)
-
-      passport_rules = %{community.slug => %{"root" => true}}
-      rule_conn = simu_conn(:user, user, cms: passport_rules)
-
-      variables = %{
-        users: [user2.login, user3.login],
-        community: community.slug,
-        command_id: Ecto.UUID.generate()
-      }
-
-      result = rule_conn |> gq_mutation(@set_moderators_query, variables)
-
-      assert result["slug"] == community.slug
-      assert Enum.any?(moderators(community), &(&1["user"]["login"] == user2.login))
-      assert Enum.any?(moderators(community), &(&1["user"]["login"] == user3.login))
-    end
-
-    test "global god can add moderators to community", ~m(user2 community)a do
-      {:ok, user3} = db_insert(:user)
-
-      rule_conn = simu_conn(:user, user2, cms: %{"god" => true})
-
-      variables = %{
-        users: [user3.login],
-        community: community.slug,
-        command_id: Ecto.UUID.generate()
-      }
-
-      result = rule_conn |> gq_mutation(@set_moderators_query, variables)
-
-      assert result["slug"] == community.slug
-      assert Enum.any?(moderators(community), &(&1["user"]["login"] == user3.login))
-    end
-
-    @unset_moderator_query S.Moderation.m(:remove_moderator)
-    test "auth user can unset moderator AND passport from community", ~m(user community user2)a do
-      cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
-
-      assert {:ok, _} =
-               CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
-
-      assert {:ok, _} = Passport |> ORM.find_by(user_id: user2.id)
-
-      passport_rules = %{community.slug => %{"root" => true}}
-      rule_conn = simu_conn(:user, cur_user, cms: passport_rules)
-
-      variables = %{
-        user: user2.login,
-        community: community.slug,
-        command_id: Ecto.UUID.generate()
-      }
-
-      rule_conn |> gq_mutation(@unset_moderator_query, variables)
-
-      assert {:error, _} =
-               CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
-    end
-
-    @update_moderator_query S.Moderation.m(:update_moderator_passport)
-    @tag :skip_ci
-    test "auth user can update moderator to community", ~m(user user2 community)a do
-      cur_user = user
-
-      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
-
-      rule_conn = simu_conn(:user, user2)
-      root_rule_conn = simu_conn(:user, user, cms: %{community.slug => %{"root" => true}})
-
-      new_passport_rules =
-        Jason.encode!(%{
-          "global" => %{},
-          "#{community.slug}" => %{
-            "cms" => %{
-              "post.delete" => false,
-              "post.edit" => true,
-              "post.pin" => true,
-              "post.undo_pin" => true
-            }
-          }
-        })
-
-      variables = %{
-        user: user2.login,
-        community: community.slug,
-        rules: new_passport_rules,
-        command_id: Ecto.UUID.generate()
-      }
-
-      assert rule_conn
-             |> mutation_error?(
-               @update_moderator_query,
-               variables,
-               ErrorCat.code(CommunityErrorCat.community_root_only())
-             )
-
-      result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
-      assert result["slug"] == community.slug
-
-      {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
-      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.edit"])
-
-      moderator = Enum.find(moderators(community), &(&1["user"]["login"] == user2.login))
-      assert moderator["passportItemCount"] == 3
-
-      next_passport_rules =
-        Jason.encode!(%{
-          "global" => %{},
-          "#{community.slug}" => %{
-            "cms" => %{
-              "post.delete" => false,
-              "post.edit" => true,
-              "post.pin" => false,
-              "post.undo_pin" => true
-            }
-          }
-        })
-
-      next_variables = %{variables | rules: next_passport_rules, command_id: Ecto.UUID.generate()}
-      result = root_rule_conn |> gq_mutation(@update_moderator_query, next_variables)
-      assert result["slug"] == community.slug
-
-      {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
-      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.edit"])
-      refute get_in(user2_passport, ["#{community.slug}", "cms", "post.pin"])
-
-      {:ok, persisted_moderator} =
-        CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
-
-      moderator = Enum.find(moderators(community), &(&1["user"]["login"] == user2.login))
-      assert moderator["passportItemCount"] == 2
-      assert persisted_moderator.passport_item_count == 2
-    end
-
-    test "unauth user add moderator fails", ~m(user_conn guest_conn user community)a do
-      variables = %{user: user.login, community: community.slug, command_id: Ecto.UUID.generate()}
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-
-      assert user_conn
-             |> mutation_error?(
-               @set_moderator_query,
-               variables,
-               ErrorCat.code(CommunityErrorCat.community_root_only())
-             )
-
-      assert guest_conn
-             |> mutation_error?(
-               @set_moderator_query,
-               variables,
-               ErrorCat.code(ProfileErrorCat.account_login())
-             )
-
-      assert rule_conn
-             |> mutation_error?(
-               @set_moderator_query,
-               variables,
-               ErrorCat.code(CommunityErrorCat.community_root_only())
-             )
-    end
   end
 
   describe "[mutation cms subscribes]" do
@@ -758,12 +716,5 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
                ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
-  end
-
-  defp moderators(community) do
-    query =
-      "query($community:String!){pagedCommunityModerators(community:$community,pagi:{offset:{page:1,size:100}}){entries{isRoot passportItemCount user{login}}}}"
-
-    gq_query(simu_conn(:guest), query, %{community: community.slug})["entries"]
   end
 end

@@ -549,7 +549,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
   test "article policy enforces Passport actions on direct domain calls" do
     {:ok, author} = db_insert(:user)
-    {:ok, moderator} = db_insert(:user)
+    {:ok, admin} = db_insert(:user)
     {:ok, unrelated} = db_insert(:user)
     {:ok, community} = mock_community(author)
 
@@ -585,13 +585,13 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              ArticlePolicy.check_access(author, :pin, context)
 
-    moderator_context = %{
+    admin_context = %{
       context
       | community_passport_scope:
-          community_passport_scope(moderator, community, %{"post.pin" => true})
+          community_passport_scope(admin, community, %{"post.pin" => true})
     }
 
-    assert {:ok, :pass} = ArticlePolicy.check_access(moderator, :pin, moderator_context)
+    assert {:ok, :pass} = ArticlePolicy.check_access(admin, :pin, admin_context)
 
     read_only_community = %{
       community
@@ -600,10 +600,10 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     assert {:error, %ErrorCat.Error{reason: :ancestor_community_not_writable}} =
              ArticlePolicy.check_access(
-               moderator,
+               admin,
                :pin,
                %{
-                 moderator_context
+                 admin_context
                  | community: read_only_community,
                    community_lifecycle: read_only_community.lifecycle
                }
@@ -812,15 +812,13 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
 
-    actor = %{
-      actor
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{
-            "cms" => %{"community.update" => true}
-          }
+    actor =
+      Map.put(actor, :cur_passport, %{
+        "global" => %{},
+        community.slug => %{
+          "cms" => %{"community.update" => true}
         }
-    }
+      })
 
     assert {:error, %Decision{allowed: false}} = CMS.Gate.access_check(actor, :update, community)
   end
@@ -877,13 +875,11 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
 
-    actor = %{
-      actor
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"community.update" => true}}
-        }
-    }
+    actor =
+      Map.put(actor, :cur_passport, %{
+        "global" => %{},
+        community.slug => %{"cms" => %{"community.update" => true}}
+      })
 
     assert {:error, %Decision{allowed: false}} =
              CMS.Gate.access_check(actor, :update, community)

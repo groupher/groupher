@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
       iex> %__MODULE__{stage: :draft} = draft()
   """
 
-  @modes [:public, :owner, :moderator_management, :operations, :insights_management]
+  @modes [:public, :owner, :admin_management, :operations, :insights_management]
   @enforce_keys [:stage, :policy_mode]
   defstruct [
     :stage,

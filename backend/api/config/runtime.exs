@@ -23,7 +23,7 @@ config :groupher_server, GroupherServerWeb.ServiceAuth.Verifier,
   audiences: [
     "phoenix:assets-api",
     "phoenix:auth-api",
-    "phoenix:content-import-api",
+    "phoenix:import-api",
     "phoenix:content-publisher-api",
     "phoenix:press-api",
     "phoenix:view-api"

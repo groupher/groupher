@@ -3,7 +3,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
   GraphQL mutations for community and taxonomy management.
 
   Includes creating/updating communities, handling apply/approve flows,
-  moderator assignments, and community tag/group maintenance.
+  and community tag/group maintenance. Admin assignments live in CommunityAdmin mutations.
 
   Business position:
 
@@ -238,59 +238,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Passport, action: "category.update")
 
       resolve(&R.CMS.Communities.update_category/3)
-    end
-
-    @desc "add a moderator for a community"
-    field :add_moderator, :community do
-      arg(:command_id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:user, non_null(:string))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.FrontDesk, :user)
-
-      resolve(&R.CMS.Communities.add_moderator/3)
-    end
-
-    @desc "add moderators for a community"
-    field :add_moderators, :community do
-      arg(:command_id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:users, non_null(list_of(non_null(:string))))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.FrontDesk, :users)
-
-      resolve(&R.CMS.Communities.add_moderators/3)
-    end
-
-    @desc "unset a moderator from a community, the user's passport also deleted"
-    field :remove_moderator, :community do
-      arg(:command_id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:user, non_null(:string))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.FrontDesk, :user)
-
-      resolve(&R.CMS.Communities.remove_moderator/3)
-    end
-
-    @desc "update cms moderator's title, passport is not effected"
-    field :update_moderator_passport, :community do
-      arg(:command_id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:user, non_null(:string))
-      arg(:rules, non_null(:json))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.FrontDesk, :user)
-
-      resolve(&R.CMS.Communities.update_moderator_passport/3)
     end
 
     @desc "create a tag"

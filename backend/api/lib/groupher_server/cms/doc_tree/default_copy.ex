@@ -118,6 +118,8 @@ defmodule GroupherServer.CMS.DocTree.DefaultCopy do
            {:ok, :pass} <-
              CMS.DocTree.Commands.QueueAccess.authorize(community, article_id, actor),
            {:ok, state} <- load(community, article_id),
+           {:ok, :pass} <-
+             CMS.Articles.CoAuthors.reject_member_working_copy_access(state.article, actor),
            true <- state.lifecycle.state in [:draft, :published] do
         snapshot = if state.public, do: Repo.get(ArticleSnapshot, state.public.snapshot_id)
         {:ok, %{working_copy: state.work, public_snapshot: snapshot}}

@@ -9,7 +9,7 @@ import { artimentReviewHistory } from './schema'
 
 type TProps = { target: ArtimentReviewTargetInput }
 
-/** Keeps earlier check results visible beside the current moderator task. */
+/** Keeps earlier check results visible beside the current reviewer task. */
 export default function History({ target }: TProps) {
   const { t } = useTrans()
   const [open, setOpen] = useState(false)

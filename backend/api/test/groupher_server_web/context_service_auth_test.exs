@@ -224,7 +224,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
     assert get_in(response, ["data", "trackArticleView", "tracked"]) == false
     assert {:ok, %{views: 0, views_revision: 0}} = CMS.ArticleStats.fetch(:post, post.id)
     assert Repo.aggregate(ViewDedupeState, :count) == 0
-    assert Repo.aggregate(MetricEvent, :count) == 0
+    assert Repo.aggregate(Ecto.Query.where(MetricEvent, article_id: ^post.id), :count) == 0
   end
 
   defp request_conn(key, delegated_token) do

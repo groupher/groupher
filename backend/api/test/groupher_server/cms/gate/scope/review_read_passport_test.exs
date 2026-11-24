@@ -68,13 +68,11 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ReviewReadPassportTest do
     assert article_visible?(root_reader, article_a, community_a)
     assert comment_visible?(root_reader, comment_a, community_a)
 
-    stale_reader = %{
-      reader
-      | cur_passport: %{
-          "global" => %{},
-          community_a.slug => %{"cms" => %{"review.read" => true}}
-        }
-    }
+    stale_reader =
+      Map.put(reader, :cur_passport, %{
+        "global" => %{},
+        community_a.slug => %{"cms" => %{"review.read" => true}}
+      })
 
     grant_review_read(stale_reader, community_b)
 
@@ -96,6 +94,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ReviewReadPassportTest do
 
   test "query review predicates fail closed for malformed Passport rows including lord and root" do
     {community, article, _, author} = mock_article(:doc)
+
     {:ok, comment} =
       CMS.Comments.create_comment(
         community,

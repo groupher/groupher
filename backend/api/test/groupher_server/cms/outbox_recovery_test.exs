@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.CMS.OutboxRecoveryTest do
 
     {:ok, stale_root} = db_insert(:user)
 
-    stale_root = %{stale_root | cur_passport: %{"global" => %{"god" => true}}}
+    stale_root = Map.put(stale_root, :cur_passport, %{"global" => %{"god" => true}})
 
     assert {:error, :permission_denied} =
              CMS.retry_outbox_event(event.id, 1, stale_root, "retry after investigation")

@@ -9,6 +9,32 @@
 > OCR, uploaded HTML conversion, and HTML conversion for online URLs are out of
 > scope. Online URL import accepts Markdown only.
 
+## Import resource rollout — pending deployment
+
+Runtime code uses only the canonical `import` identity, `groupher-import` R2
+binding, `import/previews/` object prefix and `IMPORT_*` environment keys.
+Auth, Phoenix and Dev Hub use `import:internal-api`, `phoenix:import-api`,
+`import:write`, `service:import` and `https://api.groupher.com/import` consistently.
+The Dash proxy continues to request the distinct `docs:import:proxy` capability.
+
+This delivery does not preserve old preview objects, old workflow instances or
+old authorization configuration. There is no dual read, alias audience or old
+object-prefix fallback. Historical deployment evidence below describes the
+previous release, not proof that these new resources are configured.
+
+Before deploying the new revision:
+
+1. Provision the private `groupher-import` bucket and its temporary-artifact TTL.
+2. Configure `IMPORT_PREVIEW_SECRET` and the new Import service credential;
+   register the canonical resource/audience/scope mappings in Auth and Phoenix.
+3. Stop admitting work on the old deployment, then deploy the new Worker and
+   verify token issuance, preview creation, cancellation, Apply and readback.
+4. Retire the old deployment/configuration and temporary resources through the
+   operator's explicit release plan. Do not copy or silently revive old previews.
+
+A failed fresh deployment remains a failed deployment; do not restore old
+configuration aliases in the new source as a workaround.
+
 ## Target architecture and behavior
 
 - Cloudflare Worker resource names and production hostnames are `converter`

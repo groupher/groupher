@@ -784,54 +784,6 @@
     },
     {
       "access": "user",
-      "arity": 6,
-      "confirmation": "GroupherServer.CMS.Communities.Moderators.Commands.Confirmation",
-      "module": "GroupherServer.CMS.Communities.Moderators.Commands.Add",
-      "name": "execute_pipeline",
-      "operation": "moderator_add",
-      "pipeline": "receipt_pipeline",
-      "stages": ["gate", "change", "confirm", "present"],
-      "steps": [],
-      "target": "community"
-    },
-    {
-      "access": "user",
-      "arity": 6,
-      "confirmation": "GroupherServer.CMS.Communities.Moderators.Commands.Confirmation",
-      "module": "GroupherServer.CMS.Communities.Moderators.Commands.AddMany",
-      "name": "execute_pipeline",
-      "operation": "moderator_add_many",
-      "pipeline": "receipt_pipeline",
-      "stages": ["gate", "change", "confirm", "present"],
-      "steps": [],
-      "target": "community"
-    },
-    {
-      "access": "user",
-      "arity": 6,
-      "confirmation": "GroupherServer.CMS.Communities.Moderators.Commands.Confirmation",
-      "module": "GroupherServer.CMS.Communities.Moderators.Commands.Remove",
-      "name": "execute_pipeline",
-      "operation": "moderator_remove",
-      "pipeline": "receipt_pipeline",
-      "stages": ["gate", "change", "confirm", "present"],
-      "steps": [],
-      "target": "community"
-    },
-    {
-      "access": "user",
-      "arity": 7,
-      "confirmation": "GroupherServer.CMS.Communities.Moderators.Commands.Confirmation",
-      "module": "GroupherServer.CMS.Communities.Moderators.Commands.UpdatePassport",
-      "name": "execute_pipeline",
-      "operation": "moderator_update",
-      "pipeline": "receipt_pipeline",
-      "stages": ["gate", "change", "confirm", "present"],
-      "steps": [],
-      "target": "community"
-    },
-    {
-      "access": "user",
       "arity": 4,
       "confirmation": "GroupherServer.CMS.Communities.Subscriptions.Confirmation",
       "module": "GroupherServer.CMS.Communities.Subscriptions.Commands.Subscribe",
@@ -1373,7 +1325,7 @@
     },
     {
       "access": "user",
-      "arity": 8,
+      "arity": 9,
       "confirmation": "GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNodeConfirmation",
       "module": "GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNode",
       "name": "run_receipt",

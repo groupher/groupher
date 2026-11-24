@@ -13,7 +13,7 @@ type TMeta = {
   changelogsCount?: number
 }
 
-export type TModerator = {
+export type TAdmin = {
   memberId: string
   revision: number
   isLord: boolean
@@ -34,7 +34,7 @@ export type TCommunity = {
   articlesCount?: number
   viewerHasSubscribed?: boolean
   contributesDigest?: readonly number[]
-  moderatorsCount?: number
+  adminsCount?: number
   desc?: string
   meta?: TMeta
   threads?: readonly TCommunityThread[]

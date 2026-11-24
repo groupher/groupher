@@ -50,7 +50,13 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
     guest_conn = simu_conn(:guest)
 
     internal_conn =
-      simu_conn(:user, actor, cms: %{community.slug => grants})
+      simu_conn(:user, actor,
+        passport: %{
+          global: %{is_root: false, permissions: %{}},
+          communities: %{},
+          community_permissions: %{}
+        }
+      )
 
     {:ok, ~m(community post published_ticket actor guest_conn internal_conn)a}
   end

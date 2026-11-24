@@ -163,6 +163,6 @@ Docs 的版本历史、单版本读取和 diff 统一先按 canonical branch/com
 
 ## 8. 管理员与分类边界
 
-管理员列表按 CommunityModerator membership 分页（offset/cursor），批量 preload User/Passport，返回 isRoot 与权限摘要；Common Community 不再嵌入全量 moderators，详情与 mutation 不再整体 preload。About 页和 Dash 管理页分别拥有分页位置。权限编辑器只按选中的 login 加载权限，当前操作者身份判断来自 Account Passport；新增/移除/权限更新失效对应账号、社区的管理员 Page。候选搜索为有界 picker，必须在 limit 前排除现有成员。
+社区管理员公开目录与 Dash 管理列表都按 CommunityAdmin membership 分页（offset/cursor），只返回各自需要的用户字段与权限摘要；Community 不嵌入 Admin 列表，详情与 mutation 不整体 preload。About 页和 Dash 管理页分别拥有分页位置。权限编辑器只按选中的 login 加载权限，当前操作者身份判断来自 Account Passport；新增/移除/权限更新失效对应账号、社区的 Admin Page。候选搜索为有界 picker，必须在 limit 前排除现有 Admin 和待处理请求。
 
 Category 的数据库关联保持；无消费者的 GraphQL Category.communities 删除。未来分类社区列表复用 pagedCommunities 的 category filter，不另造未分页数组入口。

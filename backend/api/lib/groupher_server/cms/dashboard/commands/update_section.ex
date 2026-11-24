@@ -31,7 +31,10 @@ defmodule GroupherServer.CMS.Dashboard.Commands.UpdateSection do
             operation_ref: :command_id,
             target: :community
   direct_pipeline execute(community, key, args, actor, command_id) do
-    gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :update, candidate) end)
+    gate(fn candidate ->
+      action = if key == :rss, do: :dashboard_rss_update, else: :update
+      CMS.Gate.check_in_transaction(actor, action, candidate)
+    end)
 
     change(fn canonical, operation_ref ->
       args = if is_map(args), do: Map.delete(args, :command_id), else: args

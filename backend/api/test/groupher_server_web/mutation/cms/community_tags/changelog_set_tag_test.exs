@@ -30,12 +30,12 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
         )
 
       passport_rules = %{
-        community.title => %{
-          "community_tag.set" => true
-        }
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.title => %{permissions: %{"community_tag.set" => true}}},
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       variables = %{
         article: %{
@@ -76,12 +76,12 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       {:ok, _} = CMS.Communities.set_tag(changelog, community_tag2.id, user, Ecto.UUID.generate())
 
       passport_rules = %{
-        community.title => %{
-          "community_tag.unset" => true
-        }
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.title => %{permissions: %{"community_tag.unset" => true}}},
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       variables = %{
         article: %{

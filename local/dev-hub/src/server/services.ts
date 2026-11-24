@@ -54,6 +54,7 @@ export type TServiceDefinition = {
   localEnvironment?: {
     env?: Record<string, string>
     secrets?: Record<string, string>
+    editableEnvKeys?: readonly string[]
     externalEnvKeys?: readonly string[]
     authResources?: Record<string, string>
     serviceAuth?: {
@@ -194,6 +195,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.auth.start.managed'],
     localEnvironment: {
+      externalEnvKeys: ['AUTH_GITHUB_ID', 'AUTH_GITHUB_SECRET'],
       env: {
         PORT: '3004',
         AUTH_URL: 'https://auth.groupher.localhost',
@@ -207,11 +209,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
       authResources: {
         'https://api.groupher.com/auth': 'phoenix:auth-api',
         'https://api.groupher.com/assets': 'phoenix:assets-api',
-        'https://api.groupher.com/content-import': 'phoenix:content-import-api',
+        'https://api.groupher.com/import': 'phoenix:import-api',
         'https://assets.groupher.com/internal': 'assets-hub:internal-api',
         'https://api.groupher.com/content-publisher': 'phoenix:content-publisher-api',
         'https://api.groupher.com/press': 'phoenix:press-api',
-        'https://import.groupher.com/internal': 'content-import:internal-api',
+        'https://import.groupher.com/internal': 'import:internal-api',
       },
       serviceAuth: {
         allowedAudiences: ['phoenix:auth-api'],
@@ -324,6 +326,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['fe.dev.dash.managed'],
     localEnvironment: {
+      editableEnvKeys: ['DASH_DEFAULT_COMMUNITY'],
       env: {
         PORT: '3005',
         NEXT_PUBLIC_SITE_URL: 'https://dash.groupher.localhost',
@@ -331,13 +334,13 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
         GRAPHQL_ENDPOINT: LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
         NEXT_PUBLIC_ASSETS_HUB_ENDPOINT: 'https://assets-hub.groupher.localhost',
         NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT: 'https://assets.groupher.localhost',
-        CONTENT_IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.import,
+        IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.import,
         SERVICE_AUTH_ISSUER: LOCAL_SERVICE_AUTH_ISSUER,
         SERVICE_AUTH_JWKS_URL: `${LOCAL_SERVICE_ENDPOINTS.auth}/.well-known/jwks.json`,
         SERVICE_AUTH_TOKEN_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/oauth2/token`,
       },
       serviceAuth: {
-        allowedAudiences: ['phoenix:content-publisher-api', 'content-import:internal-api'],
+        allowedAudiences: ['phoenix:content-publisher-api', 'import:internal-api'],
         allowedScopes: [
           'content:article:write',
           'content:comment:write',
@@ -457,7 +460,31 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.start.managed'],
     localEnvironment: {
+      editableEnvKeys: [
+        'DB_NAME',
+        'DB_HOST',
+        'DB_PORT',
+        'DB_USERNAME',
+        'DB_PASSWORD',
+        'DB_POOL_SIZE',
+        'MIX_DEPS_PATH',
+        'MIX_BUILD_PATH',
+      ],
+      externalEnvKeys: [
+        'OAUTH_GITHUB_CLIENT_ID',
+        'OAUTH_GITHUB_CLIENT_SECRET',
+        'ALGOLIA_APPLICATION_ID',
+        'ALGOLIA_SEARCH_API_KEY',
+        'ALGOLIA_ADMIN_API_KEY',
+        'ALGOLIA_INDEX_NAME',
+      ],
       env: {
+        DB_NAME: 'groupher_server_dev',
+        DB_HOST: 'localhost',
+        DB_PORT: '5432',
+        DB_USERNAME: 'postgres',
+        DB_PASSWORD: 'postgres',
+        DB_POOL_SIZE: '50',
         ASSETS_HUB_BATCH_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
         ASSETS_HUB_DELETE_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
         ASSETS_PUBLIC_ENDPOINT: 'https://assets.groupher.localhost',
@@ -499,6 +526,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     },
     command: 'make',
     args: ['be.import.start.managed'],
+    workerEnvFile: true,
     localEnvironment: {
       env: {
         DOCUMENT_CONVERTER_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.converter,
@@ -507,16 +535,16 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
         SERVICE_AUTH_ISSUER: LOCAL_SERVICE_AUTH_ISSUER,
         SERVICE_AUTH_JWKS_URL: `${LOCAL_SERVICE_ENDPOINTS.auth}/.well-known/jwks.json`,
         SERVICE_AUTH_TOKEN_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/oauth2/token`,
-        CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE: 'content-import:internal-api',
-        SERVICE_AUTH_PHOENIX_RESOURCE: 'https://api.groupher.com/content-import',
+        IMPORT_SERVICE_AUTH_AUDIENCE: 'import:internal-api',
+        SERVICE_AUTH_PHOENIX_RESOURCE: 'https://api.groupher.com/import',
       },
-      secrets: { CONTENT_IMPORT_PREVIEW_SECRET: 'import:preview-secret' },
+      secrets: { IMPORT_PREVIEW_SECRET: 'import:preview-secret' },
       serviceAuth: {
-        allowedAudiences: ['phoenix:content-import-api'],
-        allowedScopes: ['content-import:write'],
-        clientId: 'content-import-development',
-        clientRef: 'client_local_content_import',
-        serviceName: 'content-import',
+        allowedAudiences: ['phoenix:import-api'],
+        allowedScopes: ['import:write'],
+        clientId: 'import-development',
+        clientRef: 'client_local_import',
+        serviceName: 'import',
       },
     },
     port: 8001,
@@ -541,6 +569,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.press.start.managed'],
     localEnvironment: {
+      editableEnvKeys: ['DB_NAME', 'DB_HOST', 'DB_PORT', 'DB_USERNAME', 'DB_PASSWORD'],
       env: {
         DB_HOST: 'localhost',
         DB_NAME: 'groupher_server_dev',

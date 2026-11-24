@@ -18,7 +18,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
   describe "[mutation cms community]" do
     @update_content_shadow_query S.Dsb.m(:update_dashboard_content_shadow)
     test "updates content shadow through the ordinary dashboard field path", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       result =
         gq_mutation(rule_conn, @update_content_shadow_query, %{
@@ -35,7 +42,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @prepare_wallpaper_upload_query S.Dsb.m(:prepare_wallpaper_upload)
     test "prepares a Wallpaper upload from typed profile input", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       checksum = Base.encode64(:binary.copy(<<0>>, 32))
 
       images =
@@ -83,7 +98,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     test "returns the public field-level error contract for invalid Wallpaper image metadata",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"community.update" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       checksum = Base.encode64(:binary.copy(<<0>>, 32))
 
       images =
@@ -143,7 +166,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_info_query S.Dsb.m(:update_dashboard_base_info)
     test "update community dashboard base info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -192,7 +222,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_seo_query S.Dsb.m(:update_dashboard_seo)
     test "update community dashboard seo info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       variables = %{community: community.slug, ogTitle: "new title", seoEnable: false}
 
       updated = rule_conn |> gq_mutation(@update_seo_query, variables)
@@ -207,7 +245,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_enable_query S.Dsb.m(:update_dashboard_enable)
     test "update community dashboard enable info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       variables = %{community: community.slug, post: false, changelog: true}
 
       rule_conn |> gq_mutation(@update_enable_query, variables)
@@ -220,7 +266,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_thread_emotions_query S.Dsb.m(:update_dashboard_thread_emotions)
     test "update community dashboard thread emotion info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -239,7 +292,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_layout_query S.Dsb.m(:update_dashboard_layout)
     test "update community dashboard layout info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -286,7 +346,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     test "update community dashboard layout should not overwrite existing settings",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -317,7 +384,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     test "update community dashboard layout rejects unsupported kanban board",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -329,7 +403,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     test "update community dashboard layout rejects duplicate kanban boards",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -343,9 +424,10 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     test "update community dashboard rss info", ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.rss.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.rss.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -366,7 +448,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_alias_query S.Dsb.m(:update_dashboard_name_alias)
     test "update community dashboard name alias info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -394,7 +483,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_header_links_query S.Dsb.m(:update_dashboard_header_links)
     test "update community dashboard header links info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -441,7 +537,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_footer_links_query S.Dsb.m(:update_dashboard_footer_links)
     test "update community dashboard footer links info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -471,7 +574,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     test "reject invalid dashboard links without clearing existing footer links",
          ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       valid_variables = %{
         community: community.slug,
@@ -500,7 +610,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_footer_oneline_links_query S.Dsb.m(:update_dashboard_footer_oneline_links)
     test "update community dashboard footer oneline links independently", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       grouped_variables = %{
         community: community.slug,
@@ -537,7 +654,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_social_links_query S.Dsb.m(:update_dashboard_social_links)
     test "update community dashboard social links info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -563,7 +687,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_media_reports_query S.Dsb.m(:update_dashboard_media_reports)
     test "update community dashboard media reports info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,
@@ -590,7 +721,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
     @update_doc_faq_query S.Dsb.m(:update_dashboard_doc_faq)
     test "update community dashboard docs FAQ info", ~m(community)a do
-      rule_conn = simu_conn(:user, cms: %{"global" => %{"community.update" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       variables = %{
         community: community.slug,

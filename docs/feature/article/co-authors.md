@@ -1,6 +1,6 @@
 # Article Co-Authors 与权限授权
 
-> 状态：后端实现与 focused 验收已通过；多人编辑尚未正式启用或发布。C0 Passport 成员目录与授权、C1 请求/成员 Receipt Command、授权事件、Notice Outbox、GraphQL 读写字段，以及 C2 普通 Article `edit_article` 准入、历史贡献者归因和 Review 自审保护均已实现。独立测试用户已通过 GraphQL 邀请/接受，并实际保存 WorkingCopy；移除后写入被拒绝。Dash 的 Post / Changelog 列表已接入 Article 协作者管理面板；Docs 编辑器接线与双账号浏览器验收仍待完成。后端按 Article 和测试账号可闭环验收，不等待邀请 UI、P3、M2 或 Dev Hub 改造。
+> 状态：后端实现与 focused 验收已通过；多人编辑尚未正式启用或发布。C0 Passport 成员目录与授权、C1 请求/成员 Receipt Command、授权事件、Notice Outbox、GraphQL 读写字段，以及 C2 普通 Article `edit_article` 准入、历史贡献者归因和 Review 自审保护均已实现。独立测试用户已通过 GraphQL 邀请/接受，并实际保存 WorkingCopy；移除后写入被拒绝。Dash 的 Post / Changelog 列表已接入 Article 协作者管理面板；Docs 编辑器已接入同一面板，普通 Post 的双账号保存验收已通过。后端按 Article 和测试账号可闭环验收，不等待邀请 UI、P3、M2 或 Dev Hub 改造。
 >
 > Co-Authors 使用 [Passport](../../migrations/passport-permissions-refactor.md) 的 Article 权限合同。正文联调可用测试成员独立开展，启用时验证编辑入口实际使用的 [历史与归因能力](./edit-history-diff.md)。[Docs Mirror Fix](../../migrations/docs-mirror-fix.md) 的 D1 消费本批交付的 Article 授权。
 >
@@ -24,7 +24,7 @@ Article history -> actor / time / before / after
 - 成员可持有空 permissions。关系在所有 Binding 上共享，不复制到用户 Passport JSON 或站点。
 - Community Admin / lord 不自动获得 Article 正文编辑、历史、发布权限。
 - 移除成员直接删除当前关系行；请求、授权事件、贡献者及修改历史独立保留。再次加入走新请求。写入必须匹配 memberId，不能因新成员 revision 再次从 1 开始而误用旧操作。
-- owner 离职、封禁或其他不可用情况暂不纳入本期；不新增系统 root 接管邀请、维护者恢复或所有权转移入口，也不作为 C3 / D1 放行前置。后续按独立所有权转移方案处理，Community lord 本期不自动获得 Article 正文权限。
+- owner 离职、封禁或其他不可用情况暂不纳入本期；不新增系统 root 接管邀请、维护者恢复或所有权转移入口，也不构成本功能或 Queue-preserving D1 的准入前置。后续按独立所有权转移方案处理，Community lord 本期不自动获得 Article 正文权限。
 - 不实现实时光标 / 字符级协同，继续使用 WorkingCopy revision 检测并发覆盖。[co-edit POC](../../architecture/co-edit.md) 是独立未启用计划，不作为本批前置。
 
 ## 2. 数据合同
@@ -100,9 +100,9 @@ INDEX(expires_at, id) WHERE status = 'pending'
 | article.history.read    | 历史列表、Snapshot 与 Diff                                                                               | 无                                                              |
 | article.history.restore | 历史恢复为新修改                                                                                         | article.history.read + article.update + article.read_draft      |
 
-article.publish 的权限依赖不是完整发布前置：既有发布入口仍须加载实际 Community / Binding、校验资源可写、预期 Public head、内容完整性及 Review 等对应规则。D1 只解除正文发布与站点 Queue 的耦合，不增加零站点入口发布；缺少有效产品入口应拒绝，不能因拥有 permission 就自动创建公开入口。
+`article.publish` 的权限依赖不是完整发布前置：普通 Article 既有发布入口仍须加载实际 Community / Binding、校验资源可写、预期 Public head、内容完整性及 Review 等对应规则。Docs D1 保留 Queue 正文副本与 Queue Approval / Release；共同作者只通过 Article `read_draft` + `update` 读取和保存当前 Community 该 Doc 已有的 Queue member，不走通用 default WorkingCopy / fork / restore 或 Article publish 路径，也不因此获得 Queue 编排或发布权限。
 
-“打开编辑器但只读”只需 read_draft；从 Public 新建 WorkingCopy、fork 或写入需要 update，读取来源历史 Snapshot 另需 history.read。放弃副本执行其现有生命周期保护，不表示可删除共享 Article 或 Public。
+“打开编辑器但只读”只需 read_draft；普通 Article 从 Public 新建 WorkingCopy、fork 或写入需要 update，读取来源历史 Snapshot 另需 history.read。Docs co-author D1 不因此创建 default copy，编辑目标必须是现存 Queue WorkingCopy。放弃副本执行其现有生命周期保护，不表示可删除 Article 或 Public。
 
 缺依赖报 permission_dependency_missing，界面展示缺少项，不隐式加权。revoke 必须一并撤销依赖它的权限，确认页展示完整集合。首版不拆 asset / cover / tag 权限，上传仍执行资产域准入。
 
@@ -165,7 +165,7 @@ AcceptRequest / Receipt commandId
 
 ## 5. Review、GraphQL 与 Dash
 
-正文 Review 接入归 C2。目标正文不自审规则覆盖 owner、当前 co-author 和被审版本的实际历史贡献者；历史读取按目标发布 Snapshot 的同 Article lineage 判断，已退出的成员仍按其实际贡献判断。Docs 站点审批按目录贡献者判断，由 D1 负责。
+普通 Article 正文 Review 接入归 C2。目标正文不自审规则覆盖 owner、当前 co-author 和被审版本的实际历史贡献者；历史读取按目标发布 Snapshot 的同 Article lineage 判断，已退出的成员仍按其实际贡献判断。Docs 正文副本、Save / Merge、Approval 与 Release 继续归 Queue；D1 只接入共同作者对单篇现存 Queue member 的 Article 准入，不重新定义 Docs 站点审批或目录贡献者合同。
 
 ### 5.1 读取及请求处理权限
 
@@ -188,23 +188,23 @@ article.author.manage 明确包含完整成员 / 请求管理读取、邀请、a
 
 decide 接收 decision，apply accept 带 approvedPermissions，invite accept 使用持久化提议。响应含 requestId / revision / decision 及当前 member 身份 / revision，不以收到通知推断成功。
 
-Dash 的 Post / Changelog 列表已接入协作者管理面板，支持 Article 管理者搜索邀请、查看与调整成员权限、移除成员，并支持请求处理；Docs 编辑器入口仍待接线。C2 后端已按当前 Article scope 准入 `edit_article` 并执行历史贡献者和 Review 自审检查；当前用户权限 GraphQL 字段已提供。Dash 编辑器接线仍需保留本地脏内容和 revision 冲突提示。后端按当前 Article ID 校验成员与历史访问权限，发布仍需有效产品入口。
+Dash 的 Post / Changelog 列表已接入协作者管理面板，支持 Article 管理者搜索邀请、查看与调整成员权限、移除成员，并支持请求处理；Docs 编辑器复用同一面板。C2 后端已按当前 Article scope 准入 `edit_article` 并执行历史贡献者和 Review 自审检查；当前用户权限 GraphQL 字段已提供。Dash 编辑器接线仍需保留本地脏内容和 revision 冲突提示。后端按当前 Article ID 校验成员与历史访问权限，发布仍需有效产品入口。
 
 ## 6. 实施与验收
 
-| 批次 | 交付                                                                      | 独立验收                                                                                                                                                                                                                                                                                                                                                        |
-| ---- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C0   | Article 成员 / 请求数据、Passport scope 及 Article grant/revoke facade    | schema、permission contract、grant/revoke 和 fail-closed 范围检查已落地，co-author Passport/Gate focused tests 通过                                                                                                                                                                                                                                             |
-| C1   | 请求 / 成员 Command、Receipt、授权事件、Outbox 意图及 GraphQL / Dash      | GraphQL invite→subject read→accept、currentMember、成员/请求隐私、命令/事件/Notice 去重与并发 focused suite 通过（15 passed、2 skipped）。Post / Changelog 列表已接入管理面板；Docs 编辑器与双账号浏览器验收待完成。共用基础设施见 [Messaging Notices 与 Inbox 收口](../../migrations/messaging-notices-refactor.md)，不要求 Passport P3 或 Messaging M2 已验收 |
-| C2   | 普通 Article 的多人读取草稿、保存、发布、Review 和编辑器联调              | 双用户通过真实 co-author 授权保存 WorkingCopy，移除后写入拒绝；Article Gate 3 例、历史/Review 2 例及 Docs fixture 2 例通过。Dash 编辑器接线与双账号浏览器验收仍待完成                                                                                                                                                                                           |
-| C3   | 正式切换普通 Article 授权入口并退役旧动作，交付供 D1 复用的 Passport 判断 | 用正式入口通过 C1、C2 的相关场景，旧社区正文权限退役，Doc 写入继续由 D1 切换                                                                                                                                                                                                                                                                                    |
+| 批次 | 交付                                                                      | 独立验收                                                                                                                                                                                                                                                                                                                                                                          |
+| ---- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C0   | Article 成员 / 请求数据、Passport scope 及 Article grant/revoke facade    | schema、permission contract、grant/revoke 和 fail-closed 范围检查已落地，co-author Passport/Gate focused tests 通过                                                                                                                                                                                                                                                               |
+| C1   | 请求 / 成员 Command、Receipt、授权事件、Outbox 意图及 GraphQL / Dash      | GraphQL invite→subject read→accept、currentMember、成员/请求隐私、命令/事件/Notice 去重与并发 focused suite 通过（15 passed、2 skipped）。Post / Changelog 列表已接入管理面板；Docs 编辑器已接入；owner 邀请与成员移除已在浏览器验证。共用基础设施见 [Messaging Notices 与 Inbox 收口](../../migrations/messaging-notices-refactor.md)，不要求 Passport P3 或 Messaging M2 已验收 |
+| C2   | 普通 Article 的多人读取草稿、保存、发布、Review 和编辑器联调              | 双用户通过真实 co-author 授权保存 WorkingCopy，移除后写入拒绝；Article Gate 3 例、历史/Review 2 例及 Docs fixture 2 例通过。普通 Post 的浏览器正文保存验收已通过                                                                                                                                                                                                                  |
+| C3   | 正式切换普通 Article 授权入口并退役旧动作，交付供 D1 复用的 Passport 判断 | 用正式入口通过 C1、C2 的相关场景，旧社区正文权限退役，Doc 写入继续由 D1 切换                                                                                                                                                                                                                                                                                                      |
 
 ### 6.1 开发与联调
 
 - C1 采用 Passport 共享锁序和请求状态约定。用命令响应和请求查询验证状态，事务内验证授权事件和 Outbox 意图；GraphQL execution 验证字段与 resolver。Article 请求事件与 producer 的事件语义、接收方和实际投递归 C1；复用独立验收的 Messaging M1 / M2 Notice / Dedup 基础设施。Article 通知验收不阻塞 Passport P3。
 - C2 已在隔离测试环境用两个不同测试账号从邀请 / 接受建立成员关系，再通过真实 `save_working_copy` 验证编辑和移除后的失权；不需要先完成邀请 UI、Dev Hub 或其他模块。浏览器验收可后续按产品界面单独推进。夹具及替身仅限测试。
-- C1、C2 的开发、后端验收和管理 UI 可分别交付，不等待 Passport P4 或 Docs D1–D3。C3 是普通 Article 正式授权入口切换，完成自身 C2 / H3 验收后即可独立交付；它是 Docs D1 的输入，不要求等待 D1–D3。Passport P4 的全局残留检查与最终切换是后续汇总门槛，不把其未完成状态反向作为 C 批次的开发阻塞。
-- History 按自身批次交付和验收。C2 用真实保存和发布生成的事件验收本文要求的 actor、版本来源、授权读取和 Review 归因。H3 的完整界面验收按 History 计划推进。
+- C1、C2 的开发、后端验收和管理 UI 可分别交付，不等待 Passport P4 或 Docs D1–D3。C3 的普通 Article 授权入口切换在 C2 的 Article 准入、历史归因和 Review 定向检查通过后即可独立交付给 D1，不等待完整 History H3 界面或 D1–D3。Co-Authors 产品启用仍由本功能自己的双账号浏览器验收把关；Passport P4 的全局残留检查与最终切换不阻塞 C 批次开发或局部交付。
+- History 按自身批次交付和验收。C2 用真实保存和发布生成的事件验收本文实际依赖的 actor、版本来源、授权读取和 Review 归因；这些领域合同不要求等待完整历史列表 / Diff 界面。H3 的完整界面与端到端验收按 History 计划独立推进。
 
 ### 6.2 正式启用
 
@@ -221,12 +221,18 @@ Dash 的 Post / Changelog 列表已接入协作者管理面板，支持 Article 
 7. 请求 ID / Article / subject 串用拒绝，旧通知不能授权，非公开邀请接受前不暴露正文。
 8. 历史记录和读取不依赖当前 Binding；不新增无站点入口继续发布的产品功能。公开 Doc 仍按站点可见性过滤。
 
-C3 退役旧社区正文 Action / grant，不把它们的持有者自动转成 co-author 或授予 article.update。post.set_category 保留为 Community 分类管理，不能作为正文准入；Doc 的对应正文切换由 D1 处理。
+C3 退役普通 Article 的旧社区正文 Action / grant，不把它们的持有者自动转成 co-author 或授予 article.update。post.set_category 保留为 Community 分类管理，不能作为正文准入；Doc 的 `doc.queue.write` / Queue 命令继续保留各自边界，D1 只增加基于 Article `read_draft` / `update` 的现存 Queue member 编辑入口。
 
-C3 修改共用 Scope / Access helper 时必须明确普通 Article 与 Doc 分支：普通 Article 在 C3 切换，Doc 继续保持原已保护路径，直到 D1 同时切换其正文入口与准入；不得因修改 Post / Doc 共用函数提前放开旧 Doc Queue 写入。
+C3 修改共用 Scope / Access helper 时必须明确普通 Article 与 Doc 分支：普通 Article 在 C3 切换，Doc 的 Queue 正文、tree、Approval 与 Release 语义保持原状，D1 仅切换共同作者的单 Doc Queue member 准入；不得因修改 Post / Doc 共用函数提前放开 Doc Queue 的站点编排或发布权限。
 
 新增 / 迁移账号、首次受邀且尚无 Author、删除成员后保留具体 member_id 历史也是 C1 必验场景。
 
 按交付范围执行定向验证。C1 跑请求、成员、Receipt 和 Outbox 事务测试，实际投递接入时跑 Article 请求的 Messaging 测试。C2 跑 Passport / Gate、WorkingCopy、History 和 Review 的相关测试，并在 `/home/xx` 用测试成员走真实双账号浏览器流程。C3 用正式入口复验本节的启用条件。后端变更执行 `mix compile --warnings-as-errors`，Gate 合同变更执行 `generate:gate`、`generate:gate:check` 及 parity，GraphQL 变更执行 `make be.gen.schema`、`pnpm graphql:codegen`、`pnpm contract:graphql:generated` 和受影响前端的 type-check。
 
 共用 Gate / Scope 或全局永久删除改动影响本站 Trash 时，按 Passport §4.4.2 验证其合同。在 packages/contracts 执行 pnpm run generate:community-article-trash、pnpm run generate:community-article-trash:check 和 pnpm test，在根目录执行 pnpm run contract:community-article-trash，在 backend/api 执行 mix test test/groupher_server/cms/articles/community_article_trash_contract_test.exs。涉及 GraphQL 字段时执行 pnpm graphql:codegen 和 pnpm contract:graphql:generated。
+
+### 2026-11-24 普通 Post 正文验收
+
+在本地社区 `coauthor-final24`，owner 通过 Dash 邀请 editor，editor 通过 fixture 的正式命令接受邀请，仅获 `article.read_draft` 和 `article.update`。editor 从独立 Community 会话打开 Post 设置，插入提示块并保存。owner 复查同一 WorkingCopy 的 revision 从 1 增至 2，公开 Snapshot 保持 `b010f7ac-f159-4c1f-9483-22154c775c3e`。owner 在 Dash 确认请求已处理并移除了该成员。
+
+2026-11-24 收尾清理通过 Dev Hub fixture 工具完成。预览无 blocker，apply 返回 cleaned、errors 为空，Admin、Global grant、co-author 和 pending request 均为 0。随后 close 返回 closed、actors 为 2。测试社区已归档，账号、Article、Snapshot 和审计历史按现有保留合同留存。

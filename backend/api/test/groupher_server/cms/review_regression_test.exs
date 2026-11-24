@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     end
   end
 
-  test "Doc Comment author notices include current checks and branch Community holds" do
+  test "Doc Comment author notices include current checks and platform holds" do
     {community, _doc, author, comment} = doc_comment()
     target = %{type: :comment, comment_id: comment.id, community_id: community.id}
     operation_ref = Ecto.UUID.generate()
@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     assert {:ok, _hold} =
              Repo.transact_result(fn ->
                CMS.Review.Restrictions.apply(lifecycle, %{
-                 scope_key: "community:#{community.id}",
+                 scope_key: "platform",
                  type: :report_threshold_hold,
                  source: :domain,
                  source_ref: "report_threshold:notice",
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     assert {:ok, %{status: "waiting_human"}} = CMS.Review.Notice.for_author(target, author)
   end
 
-  test "Doc Comment report resolver uses the same branch Community for its Item and threshold hold" do
+  test "Doc Comment report resolver retains the entry Community but creates a platform hold" do
     {community, doc, _author, comment} = doc_comment()
 
     path = %{
@@ -123,7 +123,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     assert Enum.all?(reports, &(&1.item_id == item_id))
     assert Repo.get!(AlertWall.Model.Item, item_id).community_id == community.id
     hold = Repo.get_by!(CMS.Model.CommentReviewBlock, comment_id: comment.id)
-    assert hold.community_id == community.id
+    assert is_nil(hold.community_id)
     assert hold.type == :report_threshold_hold
     assert hold.source_ref == "report_threshold:item:#{item_id}"
   end

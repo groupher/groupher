@@ -2,13 +2,13 @@
 
 > 状态：共享 Import Content 重构与 `import` / `converter` 的 Cloudflare 迁移已完成；性能与容量验证是后续独立工作
 >
-> 本文是 Import Content/Publisher 的实施历史与拆分条件记录。较早的 Phase 状态与格式清单是历史快照。当前跨 Dash、Content Import、API 与
+> 本文是 Import Content/Publisher 的实施历史与拆分条件记录。较早的 Phase 状态与格式清单是历史快照。 文中的 `ContentImport` / `content_import` 仅指历史实现。当前跨 Dash、Import、API 与
 > Agent 的正文写入合同以 [`../architecture/content-publisher.md`](../architecture/content-publisher.md)
 > 为准；两者冲突时不得从本文恢复旧 package、route 或 BodyBag 边界。
 >
 > 范围：单文档导入、Article 正文发布链路、Elixir 内容转换清理
 >
-> Source of truth：本文负责共享 Import Content、Rich Editor codec、content-publisher 和 BodyBag。批量/多来源编排以 [`content_import_architecture.md`](./content-import-architecture.md) 为准；GitHub Docs 产品流程以 [`bulk_import.md`](./bulk-import.md) 为准；Files SDK/staging 以 [`import_file_sdk.md`](./import-file-sdk.md) 为准；实施清单以 [`content_import_refactor_plan.md`](./content-import-refactor-plan.md) 为准；联调错误和恢复边界见 [`import_error_handling.md`](./import-error-handling.md)。
+> Source of truth：本文负责共享 Import Content、Rich Editor codec、content-publisher 和 BodyBag。批量/多来源编排以 [`import-architecture.md`](./import-architecture.md) 为准；GitHub Docs 产品流程以 [`bulk-import.md`](./bulk-import.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；实施清单以 [`import-refactor-plan.md`](./import-refactor-plan.md) 为准；联调错误和恢复边界见 [`import-error-handling.md`](./import-error-handling.md)。
 >
 > 更新：2026-10-24（补充 Cloudflare 迁移与当前单文档格式范围）
 >
@@ -576,7 +576,7 @@ TArtimentBodyBag -> ContentImport apply / GraphQL
 
 GitHub Docs Bulk Import 直接复用上述 Node codec/publisher：Node 从 `DocsDataset` 读取 selected Markdown/MDX，对每个 item 调用同一个 Import Content server function，再把 BodyBag 有界分批发送给 Phoenix。不能在 `threads/docs` 或 Bulk workflow 下新增第二套 Markdown/BodyBag converter，也不应通过 HTTP 调用 Dashboard 自己的 `/api/artiment/import`。
 
-Content Import 的 Phoenix Snapshot/Preparation/Plan/PayloadStore 不再是目标基础设施；最新边界见 [`content_import_architecture.md`](./content-import-architecture.md) 和 [`content_import_refactor_plan.md`](./content-import-refactor-plan.md) 第零章。
+Content Import 的 Phoenix Snapshot/Preparation/Plan/PayloadStore 不再是目标基础设施；最新边界见 [`import-architecture.md`](./import-architecture.md) 和 [`import-refactor-plan.md`](./import-refactor-plan.md) 第零章。
 
 ### 8.4 Comment 与 Mention
 
@@ -622,7 +622,7 @@ Comment 暂不迁移，因此 Article cutover 后采用以下边界：
 - 已实现 `content-publisher` 核心：稳定 Plate JSON、Markdown、sanitized HTML、TOC、plain text、digest、`bodyHash` 和 `schemaVersion`。
 - 持久化 JSON 保留节点 `id/_id`；`bodyHash` 单独使用 `canonicalizeValue()`，忽略临时身份字段。
 - 已实现 2 MiB、20,000 nodes、64 层深度限制，以及未知/transient node 的结构化拒绝。
-- 2 MiB 指序列化 Plate value 的未压缩 UTF-8 bytes，是共享 Import Content/publisher 的固定输入上限。Bulk Docs 复用同一 publisher，因此单篇在这里触发 `payload_too_large` 时由 Bulk 编排映射为可展示的 `content_too_large` 并跳过；Bulk 另有 5 MiB canonical BodyBag 和 6 MiB 完整 GraphQL request JSON 上限，详见 [`import_file_sdk.md`](./import-file-sdk.md)。
+- 2 MiB 指序列化 Plate value 的未压缩 UTF-8 bytes，是共享 Import Content/publisher 的固定输入上限。Bulk Docs 复用同一 publisher，因此单篇在这里触发 `payload_too_large` 时由 Bulk 编排映射为可展示的 `content_too_large` 并跳过；Bulk 另有 5 MiB canonical BodyBag 和 6 MiB 完整 GraphQL request JSON 上限，详见 [`import-file-sdk.md`](./import-file-sdk.md)。
 - 已建立需要 Groupher session 的 `POST /api/content/publish`；Phase 2 初始只返回 BodyBag，Phase 3 已扩展为携带用户 token 与 publisher proof 调用 GraphQL。
 - 当前 Route Handler 的 action allowlist 仅包含 `updateDocDraft`，服务于 Docs autosave；Post/Blog/Changelog 后端 mutation 已完成 BodyBag cutover，但尚无对应 DSB publisher transport action。
 - 15 项 focused tests、Dashboard lint、type-check 和带 mock GraphQL 的 Turbopack production build 通过。

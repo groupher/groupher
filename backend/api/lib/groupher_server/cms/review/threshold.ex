@@ -32,21 +32,7 @@ defmodule GroupherServer.CMS.Review.Threshold do
   defp load_context(%{target_type: :comment} = report, _report_community_scope) do
     with {:ok, context} <- CMS.Review.load_for_update("comment:#{report.target_id}", "platform"),
          true <- context.target.thread in [:post, :blog, :changelog, :doc] do
-      scope_key =
-        if context.target.thread == :doc and is_integer(report.community_id) do
-          "community:#{report.community_id}"
-        else
-          "platform"
-        end
-
-      if scope_key == "platform" do
-        {:ok, %{context | scope_key: scope_key}}
-      else
-        with {:ok, context} <-
-               CMS.Review.load_for_update("comment:#{report.target_id}", scope_key) do
-          {:ok, %{context | scope_key: scope_key}}
-        end
-      end
+      {:ok, %{context | scope_key: "platform"}}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end

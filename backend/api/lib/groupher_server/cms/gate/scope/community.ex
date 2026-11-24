@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
 
   Public reads include active and read-only lifecycle states, with the legacy
   `pending` field used only when a lifecycle row does not yet exist. Restricted
-  reads require an explicit owner, moderator, or operations policy mode; an
+  reads require an explicit owner, Admin, or operations policy mode; an
   actor never upgrades the public mode implicitly.
 
   Business position:
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
 
   alias CMS.Communities
   alias CMS.Gate.{ErrorCat, Scope.Policy}
-  alias CMS.Model.{CommunityLifecycle, CommunityModerator}
+  alias CMS.Model.{CommunityLifecycle, CommunityAdmin}
 
   @behaviour Policy
 
@@ -102,28 +102,28 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
         lifecycle.state in ^management_states and
           (community.user_id == ^actor_id or
              exists(
-               from(moderator in CommunityModerator,
+               from(admin in CommunityAdmin,
                  where:
-                   moderator.community_id == parent_as(:gate_community).id and
-                     moderator.user_id == ^actor_id,
+                   admin.community_id == parent_as(:gate_community).id and
+                     admin.user_id == ^actor_id,
                  select: 1
                )
              ))
     )
   end
 
-  defp apply_read_policy(query, %{id: actor_id}, :moderator_management)
+  defp apply_read_policy(query, %{id: actor_id}, :admin_management)
        when is_integer(actor_id) do
-    management_states = Communities.Lifecycle.readable_states(:moderator_management)
+    management_states = Communities.Lifecycle.readable_states(:admin_management)
 
     from([gate_community: community, gate_lifecycle: lifecycle] in query,
       where:
         lifecycle.state in ^management_states and
           exists(
-            from(moderator in CommunityModerator,
+            from(admin in CommunityAdmin,
               where:
-                moderator.community_id == parent_as(:gate_community).id and
-                  moderator.user_id == ^actor_id,
+                admin.community_id == parent_as(:gate_community).id and
+                  admin.user_id == ^actor_id,
               select: 1
             )
           )
@@ -155,7 +155,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
   end
 
   defp validate_actor(mode, %{id: actor_id})
-       when mode in [:admin, :owner, :moderator_management] and
+       when mode in [:admin, :owner, :admin_management] and
               is_integer(actor_id) do
     {:ok, :pass}
   end

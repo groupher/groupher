@@ -7,9 +7,16 @@ defmodule GroupherServer.Test.CMS.DocTree.HistoryPurgeTest do
     ArticleBody,
     ArticlePublic,
     ArticleSnapshot,
+    ArticleWorkingCopy,
     CommunityLifecycle,
-    ArticleHistoryOwner
+    ArticleHistoryOwner,
+    DocsPublishQueue,
+    DocsQueueArticle
   }
+
+  alias CMS.DocTree.WorkspaceTrashPurge
+  alias CMS.DocTree.Commands.{BeginEdit, Enqueue}
+  alias CMS.DocTree.Publish.Queue
 
   test "a failed history deletion rolls back Community destroy and every content change" do
     {community, doc, _, user} = mock_article(:doc)
@@ -70,5 +77,56 @@ defmodule GroupherServer.Test.CMS.DocTree.HistoryPurgeTest do
     assert Repo.get!(Article, ordinary.id)
     refute Repo.get_by(ArticleHistoryOwner, article_id: ordinary.id, community_id: community.id)
     assert Repo.get!(Article, other.id)
+  end
+
+  test "Community destroy removes Queue members before purging their body history" do
+    {community, public, _, actor} = mock_article(:doc)
+    doc = Repo.get!(Article, public.id)
+
+    assert {:ok, opened} =
+             BeginEdit.execute(community, doc.id, public.snapshot_id, actor, Ecto.UUID.generate())
+
+    work = Repo.get!(ArticleWorkingCopy, opened.working_copy_id)
+    assert {:ok, queue} = Queue.read(community)
+
+    assert {:ok, _} =
+             Enqueue.execute(
+               community,
+               queue.queue_revision,
+               [%{article_id: doc.id, default_revision: work.revision}],
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, queue} = Queue.read(community)
+    member = Repo.get_by!(DocsQueueArticle, queue_id: queue.id, article_id: doc.id)
+    queue_work = Repo.get!(ArticleWorkingCopy, member.working_copy_id)
+    assert queue_work.id != work.id
+
+    assert WorkspaceTrashPurge.legacy_queue_references?(queue.id, [doc.id])
+
+    assert {:ok, _} =
+             CMS.Communities.Lifecycle.request_destroy(community.id,
+               recover_until: DateTime.add(DateTime.utc_now(:second), -1, :second),
+               operation_ref: Ecto.UUID.generate()
+             )
+
+    assert {:ok, _} =
+             CMS.Communities.Lifecycle.schedule_destroy(community.id,
+               operation_ref: Ecto.UUID.generate()
+             )
+
+    assert {:ok, %{state: :destroy}} =
+             CMS.Communities.Lifecycle.destroy(community.id,
+               operation_ref: Ecto.UUID.generate()
+             )
+
+    refute Repo.get_by(DocsQueueArticle, queue_id: queue.id, article_id: doc.id)
+    refute Repo.get(ArticleWorkingCopy, work.id)
+    refute Repo.get(ArticleWorkingCopy, queue_work.id)
+    refute Repo.get(ArticleSnapshot, public.snapshot_id)
+    refute Repo.get(Article, doc.id)
+    refute Repo.get(DocsPublishQueue, queue.id)
+    assert Repo.get_by!(CommunityLifecycle, community_id: community.id).state == :destroy
   end
 end

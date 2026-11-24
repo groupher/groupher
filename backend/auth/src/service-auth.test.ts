@@ -123,19 +123,19 @@ describe('service identity issuer', () => {
   })
 
   it('adds separately configured clients without replacing the base registry', async () => {
-    const addedClientSecret = 'content-import-secret'
+    const addedClientSecret = 'import-secret'
     const addedEnvironment = {
       ...environment,
       SERVICE_AUTH_CLIENTS_JSON_ADDITIONS: JSON.stringify([
         {
           allowedAudiences: ['phoenix:press-api'],
           allowedScopes: ['press:article:read'],
-          clientId: 'content-import-test-addition',
-          clientRef: 'client_test_content_import',
+          clientId: 'import-test-addition',
+          clientRef: 'client_test_import',
           credentialHashes: [
             `sha256:${createHash('sha256').update(addedClientSecret).digest('hex')}`,
           ],
-          serviceName: 'content-import',
+          serviceName: 'import',
           status: 'active',
         },
       ]),
@@ -143,7 +143,7 @@ describe('service identity issuer', () => {
     const request = tokenRequest()
     request.headers.set(
       'authorization',
-      `Basic ${Buffer.from(`content-import-test-addition:${addedClientSecret}`).toString('base64')}`,
+      `Basic ${Buffer.from(`import-test-addition:${addedClientSecret}`).toString('base64')}`,
     )
 
     await expect(issueServiceToken(request, addedEnvironment)).resolves.toMatchObject({
@@ -157,19 +157,19 @@ describe('service identity issuer', () => {
   })
 
   it('merges the extra registry without replacing either existing registry', async () => {
-    const extraClientSecret = 'content-import-cloudflare-secret'
+    const extraClientSecret = 'import-cloudflare-secret'
     const extraEnvironment = {
       ...environment,
       SERVICE_AUTH_CLIENTS_JSON_ADDITIONS: JSON.stringify([
         {
           allowedAudiences: ['phoenix:press-api'],
           allowedScopes: ['press:article:read'],
-          clientId: 'content-import-existing',
+          clientId: 'import-existing',
           clientRef: 'client_test_existing',
           credentialHashes: [
             `sha256:${createHash('sha256').update('existing-secret').digest('hex')}`,
           ],
-          serviceName: 'content-import',
+          serviceName: 'import',
           status: 'active',
         },
       ]),
@@ -177,12 +177,12 @@ describe('service identity issuer', () => {
         {
           allowedAudiences: ['phoenix:press-api'],
           allowedScopes: ['press:article:read'],
-          clientId: 'content-import-cloudflare',
+          clientId: 'import-cloudflare',
           clientRef: 'client_test_cloudflare',
           credentialHashes: [
             `sha256:${createHash('sha256').update(extraClientSecret).digest('hex')}`,
           ],
-          serviceName: 'content-import',
+          serviceName: 'import',
           status: 'active',
         },
       ]),
@@ -190,7 +190,7 @@ describe('service identity issuer', () => {
     const request = tokenRequest()
     request.headers.set(
       'authorization',
-      `Basic ${Buffer.from(`content-import-cloudflare:${extraClientSecret}`).toString('base64')}`,
+      `Basic ${Buffer.from(`import-cloudflare:${extraClientSecret}`).toString('base64')}`,
     )
 
     await expect(issueServiceToken(request, extraEnvironment)).resolves.toMatchObject({

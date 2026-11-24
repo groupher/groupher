@@ -3,11 +3,30 @@ defmodule GroupherServer.TestWeb.ErrorResponse do
 
   use GroupherServer.TestMate, async: true
 
-  alias GroupherServer.{CMS, ErrorCat, Pagi}
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Pagi}
   alias CMS.Gate.Decision
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias Pagi.ErrorCat, as: PagiErrorCat
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias GroupherServerWeb.ErrorResponse
+
+  test "exposes the login reason used by current Passport fact readers" do
+    error = ProfileErrorCat.account_login()
+
+    assert {:error, [message: _, extensions: %{code: 4301, reasonCode: "ACCOUNT_LOGIN"}]} =
+             ErrorResponse.format_error(error)
+  end
+
+  test "exposes stable import conflict reason codes through GraphQL" do
+    for reason <- [:target_revision_conflict, :import_intent_conflict] do
+      error = apply(GroupherServer.CMS.ErrorCat, reason, [])
+
+      assert {:error, [message: _, extensions: %{reasonCode: code}]} =
+               ErrorResponse.format_error(error)
+
+      assert code == Atom.to_string(reason)
+    end
+  end
 
   test "AlertWall and AI errors survive the GraphQL boundary with declared codes" do
     for catalog <- [GroupherServer.AlertWall.ErrorCat, GroupherServer.AI.ErrorCat],

@@ -1,7 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
-export const ContentImportJobFields = graphql(`
-  fragment ContentImportJobFields on ContentImportJob {
+export const ImportJobFields = graphql(`
+  fragment ImportJobFields on ImportJob {
     id
     status
     progress

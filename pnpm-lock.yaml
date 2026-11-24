@@ -216,6 +216,9 @@ importers:
       '@graphql-codegen/client-preset':
         specifier: 7.0.0
         version: 7.0.0(graphql@17.1.0)
+      '@graphql-codegen/typescript':
+        specifier: 7.0.1
+        version: 7.0.1(graphql@17.1.0)
       '@graphql-tools/mock':
         specifier: ^10.1.4
         version: 10.1.4(graphql@17.1.0)

@@ -628,9 +628,11 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
   end
 
   defp grant_post_pin(user, community) do
-    Map.put(user, :cur_passport, %{
-      "global" => %{},
-      community.slug => %{"cms" => %{"post.pin" => true}}
-    })
+    {:ok, _} =
+      GroupherServer.Test.PassportFixture.grant_community(user, community.slug, %{
+        "post.pin" => true
+      })
+
+    user
   end
 end

@@ -1,12 +1,16 @@
-import { type FC, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { type FC, useEffect, useState } from 'react'
 
 import TYPE from '~/const/type'
 import { browserGraphQLRequest, GraphQLRequestError } from '~/graphql/client'
+import usePagiPosition from '~/hooks/usePagiPosition'
 import useTrans from '~/hooks/useTrans'
 import CloseLightSVG from '~/icons/CloseLight'
 import FileTextSVG from '~/icons/FileText'
 import RotateSVG from '~/icons/Rotate'
+import { graphqlQueryOptions } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
+import type { TPagiRequest } from '~/spec'
 import BaseDrawer from '~/ui/Drawer'
 import Pagi from '~/ui/Pagi'
 import { toast } from '~/ui/Toaster'
@@ -17,7 +21,12 @@ import ConfirmDeleteModal from './ConfirmDeleteModal'
 import { SIDE_TREE_NODE_TYPE } from './constant'
 import { formatMutationError } from './helper'
 import useSalon from './salon/trashDrawer'
-import type { TDocTreeTrashItem, TSideTreeGroup, TSideTreeTab } from './spec'
+import type {
+  TDocTreeTrashItem,
+  TDocTreeTrashMembersData,
+  TSideTreeGroup,
+  TSideTreeTab,
+} from './spec'
 
 type TProps = {
   pageInfo?: import('~/spec').TGraphQLPagiPageInfo
@@ -40,6 +49,16 @@ export type TRestoreParentOption = {
   title: string
   type: 'tab' | typeof SIDE_TREE_NODE_TYPE.GROUP
   depth: number
+}
+
+/** Pins later member pages to the first detail response until stale data is refreshed. */
+export const trashMembersRevisionForRequest = (
+  request: TPagiRequest,
+  recordRevision: string | null,
+): string | null => {
+  const afterFirstPage = request.api === 'offset' ? request.page > 1 : Boolean(request.after)
+
+  return afterFirstPage ? recordRevision : null
 }
 
 const appendGroupOptions = (
@@ -132,6 +151,53 @@ const TrashDrawer: FC<TProps> = ({
   } | null>(null)
   const [parentRequiredId, setParentRequiredId] = useState<string | null>(null)
   const [selectedParentByItem, setSelectedParentByItem] = useState<Record<string, string>>({})
+  const [expandedTrashId, setExpandedTrashId] = useState<string | null>(null)
+  const [memberRecordRevision, setMemberRecordRevision] = useState<string | null>(null)
+  const memberPosition = usePagiPosition(
+    `${community}:doc-trash-members:${expandedTrashId ?? 'closed'}`,
+  )
+  const memberPageNumber = memberPosition.request.api === 'offset' ? memberPosition.request.page : 1
+  const memberRevisionForRequest = trashMembersRevisionForRequest(
+    memberPosition.request,
+    memberRecordRevision,
+  )
+  const membersQuery = useQuery({
+    ...graphqlQueryOptions<TDocTreeTrashMembersData>(S.communityDocTrashMembers, {
+      communityRef: community,
+      thread: 'DOC',
+      id: expandedTrashId ?? '',
+      pagi: memberPosition.input,
+      recordRevision: memberRevisionForRequest,
+    }),
+    enabled: show && expandedTrashId !== null,
+  })
+  const memberDetail = membersQuery.data?.communityArticleTrash
+  const pagedMembers = memberDetail?.pagedMembers
+
+  useEffect(() => {
+    if (memberDetail?.id === expandedTrashId && memberDetail.recordRevision) {
+      setMemberRecordRevision(memberDetail.recordRevision)
+    }
+  }, [expandedTrashId, memberDetail?.id, memberDetail?.recordRevision])
+
+  const toggleMembers = (itemId: string): void => {
+    if (expandedTrashId === itemId) {
+      setExpandedTrashId(null)
+      setMemberRecordRevision(null)
+      return
+    }
+
+    setExpandedTrashId(itemId)
+    setMemberRecordRevision(null)
+    memberPosition.reset()
+  }
+
+  const refreshMembers = (): void => {
+    setMemberRecordRevision(null)
+    onReload()
+    if (memberPageNumber === 1) void membersQuery.refetch()
+    else memberPosition.reset()
+  }
 
   const restoreItem = async (
     item: TDocTreeTrashItem,
@@ -156,6 +222,7 @@ const TrashDrawer: FC<TProps> = ({
         variables: {
           community,
           trashActionId: item.id,
+          recordRevision: item.recordRevision,
           treeRevision: baseRevision,
           queueRevision,
           targetParentNodeId,
@@ -167,6 +234,8 @@ const TrashDrawer: FC<TProps> = ({
       reloadDocsPublishQueue()
       onReload()
       onRestored()
+      setExpandedTrashId(null)
+      setMemberRecordRevision(null)
       setParentRequiredId(null)
       toast('Restored')
     } catch (err) {
@@ -180,7 +249,8 @@ const TrashDrawer: FC<TProps> = ({
       } else {
         toast(message, 'error')
       }
-      onReload()
+      if (expandedTrashId === item.id) refreshMembers()
+      else onReload()
     } finally {
       setRestoringId(null)
     }
@@ -202,6 +272,8 @@ const TrashDrawer: FC<TProps> = ({
         variables: { community, queueRevision: revision, trashActionId: item.id },
       })
       if (!data?.purgeDocsWorkspaceTrash?.done) throw new Error('Unable to delete item')
+      setExpandedTrashId(null)
+      setMemberRecordRevision(null)
       onReload()
     } catch (err) {
       const message = formatMutationError(err)
@@ -209,7 +281,8 @@ const TrashDrawer: FC<TProps> = ({
         err instanceof GraphQLRequestError &&
         err.errors.some((error) => String(error.extensions?.code) === '4574')
       toast(inUse ? t('dsb.doc.queue.purge_in_use') : message, 'error')
-      onReload()
+      if (expandedTrashId === item.id) refreshMembers()
+      else onReload()
       onRestored()
     } finally {
       setPurgingId(null)
@@ -277,8 +350,14 @@ const TrashDrawer: FC<TProps> = ({
                         <div className={s.itemTitle}>{item.title || item.nodeId}</div>
                         <div className={s.itemMeta}>
                           {itemTypeLabel(item.type)}
-                          {formatDeletedAt(item.deletedAt)
-                            ? ` - ${formatDeletedAt(item.deletedAt)}`
+                          {formatDeletedAt(item.createdAt)
+                            ? ` - ${formatDeletedAt(item.createdAt)}`
+                            : ''}
+                          {item.pendingMemberCount > 0
+                            ? ` · ${item.pendingMemberCount} pending release`
+                            : ''}
+                          {item.removedMemberCount > 0
+                            ? ` · ${item.removedMemberCount} removed`
                             : ''}
                         </div>
                       </div>
@@ -301,6 +380,14 @@ const TrashDrawer: FC<TProps> = ({
                       <button
                         type='button'
                         className={s.restoreButton}
+                        aria-expanded={expandedTrashId === item.id}
+                        onClick={() => toggleMembers(item.id)}
+                      >
+                        {expandedTrashId === item.id ? 'Hide pages' : 'Show pages'}
+                      </button>
+                      <button
+                        type='button'
+                        className={s.restoreButton}
                         disabled={
                           queueRevision === null || restoringId !== null || purgingId !== null
                         }
@@ -313,6 +400,36 @@ const TrashDrawer: FC<TProps> = ({
                         {t('dsb.doc.queue.purge')}
                       </button>
                     </div>
+                    {expandedTrashId === item.id && (
+                      <div className={s.restoreTarget}>
+                        {membersQuery.error ? (
+                          <div role='alert'>
+                            Unable to load this Trash page list. The Trash state may have changed.
+                            <button type='button' onClick={refreshMembers}>
+                              Refresh pages
+                            </button>
+                          </div>
+                        ) : membersQuery.isFetching ? (
+                          <div role='status'>Loading pages</div>
+                        ) : (
+                          <>
+                            <ul>
+                              {pagedMembers?.entries.map((member) => (
+                                <li key={member.id}>
+                                  {member.title || member.id} ·{' '}
+                                  {member.deletionStatus.toLowerCase()}
+                                  {member.removedFromPublic ? ' · removed from public' : ''}
+                                </li>
+                              ))}
+                            </ul>
+                            <Pagi
+                              pageInfo={pagedMembers?.pageInfo}
+                              onChange={memberPosition.setPage}
+                            />
+                          </>
+                        )}
+                      </div>
+                    )}
                     {parentRequired && (
                       <div className={s.restoreTarget}>
                         <label

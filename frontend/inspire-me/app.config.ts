@@ -15,6 +15,8 @@ const port = Number.parseInt(process.env.PORT || '3010', 10)
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 export default defineConfig({
+  // Managed local runs consume Hub-injected values, not project dotenv files.
+  envDir: process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' ? false : undefined,
   base: process.env.NODE_ENV === 'production' ? 'https://inspire-me.groupher.com/' : '/',
   publicDir: path.join(appRoot, 'public'),
   resolve: {

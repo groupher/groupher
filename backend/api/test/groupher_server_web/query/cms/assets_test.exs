@@ -9,7 +9,15 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
   setup do
     {community, post, _attrs, user} = mock_article(:post)
-    asset_conn = simu_conn(:user, user, cms: %{community.slug => %{"asset.upload" => true}})
+
+    asset_conn =
+      simu_conn(:user, user,
+        passport: %{
+          global: %{is_root: false, permissions: %{}},
+          communities: %{community.slug => %{permissions: %{"asset.upload" => true}}},
+          community_permissions: %{}
+        }
+      )
 
     server_conn =
       :guest

@@ -13,6 +13,8 @@ const applyRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.join(applyRoot, '../..')
 
 export default defineConfig({
+  // Managed local runs consume Hub-injected values, not project dotenv files.
+  envDir: process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' ? false : undefined,
   base: process.env.NODE_ENV === 'production' ? 'https://apply.groupher.com/' : '/',
   define: {
     'process.env.NEXT_PUBLIC_AUTH_ENDPOINT': JSON.stringify(process.env.NEXT_PUBLIC_AUTH_ENDPOINT),

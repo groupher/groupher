@@ -10,10 +10,8 @@ defmodule GroupherServer.Test.CMS.Passport.Authorization do
   test "passport check accepts a stored global reviewer grant and rejects the normalized legacy projection" do
     {:ok, user} = db_insert(:user)
 
-    reviewer = %{
-      user
-      | cur_passport: %{"global" => %{"community.application.review" => true}}
-    }
+    reviewer =
+      Map.put(user, :cur_passport, %{"global" => %{"community.application.review" => true}})
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              Authorization.check(reviewer, "community.application.review", %{})
@@ -40,6 +38,13 @@ defmodule GroupherServer.Test.CMS.Passport.Authorization do
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              Authorization.check(reviewer, "community.application.review", %{})
+  end
+
+  test "passport check rejects unknown actions even when legacy actor rules contain them" do
+    reviewer = %{cur_passport: %{"global" => %{"unknown.action" => true}}}
+
+    assert {:error, %ErrorCat.Error{reason: :unknown_passport_action}} =
+             Authorization.check(reviewer, "unknown.action", %{})
   end
 
   test "authorize returns a review denial for an unprivileged passport" do

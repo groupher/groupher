@@ -432,7 +432,7 @@ const checkElixirSharedFunctions = () => {
     'backend/api/lib/groupher_server/cms/communities/lifecycle.ex',
     'backend/api/lib/groupher_server/cms/doc_tree/publish/lifecycle.ex',
     'backend/api/lib/groupher_server/cms/passport/authorization.ex',
-    'backend/api/lib/groupher_server/cms/passport/registry.ex',
+    'backend/api/lib/groupher_server/cms/passport/catalog.ex',
     'backend/api/lib/groupher_server/cms/outbox/workflow.ex',
     ...walk(path.join(root, 'backend/api/lib/groupher_server/cms/outbox/workflow'), (file) =>
       file.endsWith('.ex'),

@@ -294,8 +294,8 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
 
     assert_request_generation_behavior(
       lifecycle,
-      "community:#{community.id}",
-      %{target_type: :comment, comment_id: comment.id, community_id: community.id}
+      "platform",
+      %{target_type: :comment, comment_id: comment.id}
     )
   end
 
@@ -642,15 +642,15 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
                )
              end)
 
-    {:ok, moderator} = db_insert(:user)
+    {:ok, admin} = db_insert(:user)
 
     member =
-      Repo.get_by(CommunityAdmin, user_id: moderator.id, community_id: community.id) ||
+      Repo.get_by(CommunityAdmin, user_id: admin.id, community_id: community.id) ||
         %CommunityAdmin{}
 
     member
     |> CommunityAdmin.changeset(%{
-      user_id: moderator.id,
+      user_id: admin.id,
       community_id: community.id,
       permissions: Map.put(member.permissions || %{}, "review.decide", true)
     })
@@ -661,7 +661,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
                "comment:#{comment.id}",
                "community:#{community.id}",
                :reject,
-               moderator,
+               admin,
                Ecto.UUID.generate()
              )
 

@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 
+import { viewerQueryKeys } from '~/query/key'
+
 import useAdmins from './useAdmins'
 
 const state = vi.hoisted(() => ({
@@ -13,13 +15,11 @@ const state = vi.hoisted(() => ({
   refresh: vi.fn(),
 }))
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: state.request }))
-vi.mock('~/query', () => ({ viewerQueryKeys: { all: ['viewer'] } }))
-vi.mock('~/query/invalidation', () => ({ invalidatePrefix: vi.fn() }))
 vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ slug: state.slug, ref: state.ref }),
 }))
 vi.mock('~/stores/dsbShell/editor', () => ({
-  useAdminEditor: () => ({ activeModerator: null, setActiveModerator: state.patch }),
+  useAdminEditor: () => ({ activeAdmin: null, setActiveAdmin: state.patch }),
 }))
 vi.mock('~/stores/account/hooks', () => ({
   default: () => ({
@@ -135,4 +135,24 @@ it('resets position and isolates a late response after changing the community', 
   })
   expect(result.current.admins[0]?.user.login).toBe('second-1')
   expect(state.request.mock.calls[1][1].pagi).toEqual({ offset: { page: 1, size: 20 } })
+})
+
+it('invalidates current membership, Gate facts and both request views after an Admin change', async () => {
+  const facts = viewerQueryKeys.communityGateFacts('owner', 'first')
+  const membership = viewerQueryKeys.communityAdmin('owner', 'first')
+  const publicRequests = ['community-admin-requests', 'first', 'owner']
+  const otherCommunity = viewerQueryKeys.communityGateFacts('owner', 'second')
+  for (const key of [facts, membership, publicRequests, otherCommunity])
+    client.setQueryData(key, {})
+  const { result } = renderHook(() => useAdmins(), { wrapper })
+  await waitFor(() => expect(result.current.admins[0]).toBeDefined())
+  state.request.mockImplementation((_doc, args) =>
+    args?.memberId
+      ? Promise.resolve({ removeCommunityAdmin: true })
+      : Promise.resolve({ pagedCommunityAdmins: page('first-1') }),
+  )
+  await act(async () => result.current.removeAdmin('member-1', 3))
+  for (const key of [facts, membership, publicRequests])
+    expect(client.getQueryState(key)?.isInvalidated).toBe(true)
+  expect(client.getQueryState(otherCommunity)?.isInvalidated).toBe(false)
 })

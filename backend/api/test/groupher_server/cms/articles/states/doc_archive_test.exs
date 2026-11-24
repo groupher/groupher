@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
                inner_id: doc.inner_id
              })
 
-    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    actor = user
 
     assert {:error, _} =
              CMS.DocTree.Commands.BeginEdit.execute(

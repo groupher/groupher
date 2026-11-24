@@ -1,14 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
+import { chmod, copyFile, lstat, mkdir, readFile, realpath, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import {
-  chmod,
-  copyFile,
-  lstat,
-  mkdir,
-  readFile,
-  realpath,
-  writeFile,
-} from 'node:fs/promises'
 import path from 'node:path'
 
 import {
@@ -52,12 +44,16 @@ const parseDotenv = async (repoRoot: string, file: string): Promise<Record<strin
   const absolutePath = path.join(repoRoot, file)
   try {
     const requireFromAuth = createRequire(path.join(REPO_ROOT, 'backend/auth/package.json'))
-    const dotenv = requireFromAuth('dotenv') as { parse: (source: string | Buffer) => Record<string, string> }
+    const dotenv = requireFromAuth('dotenv') as {
+      parse: (source: string | Buffer) => Record<string, string>
+    }
     return dotenv.parse(await readFile(absolutePath))
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {}
     if ((error as NodeJS.ErrnoException).code === 'MODULE_NOT_FOUND') {
-      throw new LocalEnvironmentError('The Auth dotenv parser is unavailable; install repository dependencies before migration.')
+      throw new LocalEnvironmentError(
+        'The Auth dotenv parser is unavailable; install repository dependencies before migration.',
+      )
     }
     throw error
   }
@@ -96,7 +92,11 @@ const readRegistrations = (environment: Record<string, string>, conflicts: strin
       continue
     }
     for (const value of values) {
-      if (!value || typeof value !== 'object' || typeof (value as Record<string, unknown>).clientId !== 'string') {
+      if (
+        !value ||
+        typeof value !== 'object' ||
+        typeof (value as Record<string, unknown>).clientId !== 'string'
+      ) {
         conflicts.push(`${key} contains an invalid client registration`)
         continue
       }
@@ -117,20 +117,23 @@ const hasMigrationInputs = async (repoRoot: string): Promise<boolean> => {
   ])
   return Boolean(
     auth.SERVICE_AUTH_SIGNING_JWK ||
-      auth.SERVICE_AUTH_RESOURCES_JSON ||
-      REGISTRY_KEYS.some((key) => auth[key]),
+    auth.SERVICE_AUTH_RESOURCES_JSON ||
+    REGISTRY_KEYS.some((key) => auth[key]),
   )
 }
 
-const createMigrationCandidate = async (
-  repoRoot: string,
-): Promise<TMigrationCandidate> => {
+const createMigrationCandidate = async (repoRoot: string): Promise<TMigrationCandidate> => {
   const files: string[] = []
   for (const file of LOCAL_ENVIRONMENT_MIGRATION_INPUT_FILES) {
     try {
       const metadata = await lstat(path.join(repoRoot, file))
       if (metadata.isSymbolicLink() || !metadata.isFile()) {
-        return { conflicts: [`${file} is not a regular file`], files, importedServiceIds: [], state: null }
+        return {
+          conflicts: [`${file} is not a regular file`],
+          files,
+          importedServiceIds: [],
+          state: null,
+        }
       }
       files.push(file)
     } catch (error) {
@@ -138,7 +141,8 @@ const createMigrationCandidate = async (
     }
   }
 
-  if (!(await hasMigrationInputs(repoRoot))) return { conflicts: [], files, importedServiceIds: [], state: null }
+  if (!(await hasMigrationInputs(repoRoot)))
+    return { conflicts: [], files, importedServiceIds: [], state: null }
 
   const conflicts: string[] = []
   const authEnvironment = await readInputEnvironment(repoRoot, [
@@ -151,7 +155,10 @@ const createMigrationCandidate = async (
   const expectedResources = authDefinition?.localEnvironment?.authResources || {}
   let oldResources: Record<string, string> = {}
   try {
-    oldResources = JSON.parse(authEnvironment.SERVICE_AUTH_RESOURCES_JSON || '{}') as Record<string, string>
+    oldResources = JSON.parse(authEnvironment.SERVICE_AUTH_RESOURCES_JSON || '{}') as Record<
+      string,
+      string
+    >
   } catch {
     conflicts.push('SERVICE_AUTH_RESOURCES_JSON is not valid JSON')
   }
@@ -163,8 +170,12 @@ const createMigrationCandidate = async (
 
   const serviceCredentials: Record<string, TLocalServiceCredential> = {}
   const importedServiceIds: string[] = []
-  const requiredAuthServices = SERVICE_DEFINITIONS.filter((item) => item.localEnvironment?.serviceAuth)
-  const knownClientIds = new Set(requiredAuthServices.map((item) => item.localEnvironment!.serviceAuth!.clientId))
+  const requiredAuthServices = SERVICE_DEFINITIONS.filter(
+    (item) => item.localEnvironment?.serviceAuth,
+  )
+  const knownClientIds = new Set(
+    requiredAuthServices.map((item) => item.localEnvironment!.serviceAuth!.clientId),
+  )
 
   for (const definition of requiredAuthServices) {
     const requirement = definition.localEnvironment!.serviceAuth!
@@ -180,12 +191,19 @@ const createMigrationCandidate = async (
       }
       continue
     }
-    if (registration.serviceName !== requirement.serviceName || registration.clientRef !== requirement.clientRef) {
+    if (
+      registration.serviceName !== requirement.serviceName ||
+      registration.clientRef !== requirement.clientRef
+    ) {
       conflicts.push(`Auth registration identity conflicts for ${requirement.clientId}`)
       continue
     }
-    const registeredAudiences = Array.isArray(registration.allowedAudiences) ? registration.allowedAudiences : []
-    const registeredScopes = Array.isArray(registration.allowedScopes) ? registration.allowedScopes : []
+    const registeredAudiences = Array.isArray(registration.allowedAudiences)
+      ? registration.allowedAudiences
+      : []
+    const registeredScopes = Array.isArray(registration.allowedScopes)
+      ? registration.allowedScopes
+      : []
     if (!requirement.allowedAudiences.every((value) => registeredAudiences.includes(value))) {
       conflicts.push(`Auth registration is missing a required audience for ${requirement.clientId}`)
       continue
@@ -199,7 +217,11 @@ const createMigrationCandidate = async (
     const sourceEnvironment = sourceFile ? await parseDotenv(repoRoot, sourceFile) : {}
     const secret = sourceEnvironment.SERVICE_AUTH_CLIENT_SECRET?.trim()
     const clientId = sourceEnvironment.SERVICE_AUTH_CLIENT_ID?.trim()
-    if (!secret || clientId !== requirement.clientId || !isCredentialHashMatch(secret, registration.credentialHashes)) {
+    if (
+      !secret ||
+      clientId !== requirement.clientId ||
+      !isCredentialHashMatch(secret, registration.credentialHashes)
+    ) {
       conflicts.push(`Cannot verify the existing plaintext credential for ${requirement.clientId}`)
       continue
     }
@@ -237,7 +259,9 @@ const createMigrationCandidate = async (
     dash.SERVICE_AUTH_CLIENT_ID &&
     (dash.SERVICE_AUTH_CLIENT_ID !== 'dash-development' || !serviceCredentials.dash)
   ) {
-    conflicts.push('Dash identity is not the expected dash-development / dev-hub-local-dash registration')
+    conflicts.push(
+      'Dash identity is not the expected dash-development / dev-hub-local-dash registration',
+    )
   }
 
   if (conflicts.length > 0) return { conflicts, files, importedServiceIds, state: null }
@@ -254,10 +278,14 @@ const createMigrationCandidate = async (
   const secrets: Record<string, string> = {
     'auth:service-signing-jwk': signingJwk!,
     'auth:session-secret': authSecret || randomBytes(32).toString('base64url'),
-    'assets-hub:capability-secret': assetsEnvironment.ASSETS_HUB_CAPABILITY_SECRET || randomBytes(32).toString('base64url'),
-    'import:preview-secret': importEnvironment.CONTENT_IMPORT_PREVIEW_SECRET || randomBytes(32).toString('base64url'),
-    'phoenix:jwt-secret': phoenixEnvironment.PHX_JWT_SECRET || randomBytes(32).toString('base64url'),
-    'press:metric-ip-salt': pressEnvironment.METRIC_IP_SALT || randomBytes(32).toString('base64url'),
+    'assets-hub:capability-secret':
+      assetsEnvironment.ASSETS_HUB_CAPABILITY_SECRET || randomBytes(32).toString('base64url'),
+    'import:preview-secret':
+      importEnvironment.IMPORT_PREVIEW_SECRET || randomBytes(32).toString('base64url'),
+    'phoenix:jwt-secret':
+      phoenixEnvironment.PHX_JWT_SECRET || randomBytes(32).toString('base64url'),
+    'press:metric-ip-salt':
+      pressEnvironment.METRIC_IP_SALT || randomBytes(32).toString('base64url'),
   }
   const state: TLocalEnvironmentState = {
     formatVersion: 1,
@@ -268,12 +296,13 @@ const createMigrationCandidate = async (
   return { conflicts, files, importedServiceIds, state }
 }
 
-const serviceCredentialSource = (serviceId: string): string | null => ({
-  auth: 'backend/auth/.env.local',
-  'assets-hub': 'backend/assets-hub/.env',
-  phoenix: 'backend/api/.env.local',
-  dash: 'frontend/dash/.env.local',
-}[serviceId] || null)
+const serviceCredentialSource = (serviceId: string): string | null =>
+  ({
+    auth: 'backend/auth/.env.local',
+    'assets-hub': 'backend/assets-hub/.env',
+    phoenix: 'backend/api/.env.local',
+    dash: 'frontend/dash/.env.local',
+  })[serviceId] || null
 
 const writeBackup = async (
   repoRoot: string,
@@ -283,7 +312,9 @@ const writeBackup = async (
   const backupRoot = path.join(paths.directory, 'backup')
   try {
     await lstat(backupRoot)
-    throw new LocalEnvironmentError(`Migration backup already exists: ${backupRoot}. Review it manually before retrying.`)
+    throw new LocalEnvironmentError(
+      `Migration backup already exists: ${backupRoot}. Review it manually before retrying.`,
+    )
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
   }
@@ -336,10 +367,21 @@ export const migrateLocalEnvironment = async (
   try {
     const current = JSON.parse(await readFile(paths.state, 'utf8')) as TLocalEnvironmentState
     validateLocalEnvironmentState(current, realRepoRoot, paths.state)
-    if (await matchesExistingMigration(current, candidate.state, candidate.importedServiceIds, realRepoRoot)) {
+    if (
+      await matchesExistingMigration(
+        current,
+        candidate.state,
+        candidate.importedServiceIds,
+        realRepoRoot,
+      )
+    ) {
       return { conflicts: [], files: candidate.files, status: 'no-op' }
     }
-    return { conflicts: ['state.json already exists and differs from the migration candidate'], files: candidate.files, status: 'conflict' }
+    return {
+      conflicts: ['state.json already exists and differs from the migration candidate'],
+      files: candidate.files,
+      status: 'conflict',
+    }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
   }
@@ -348,12 +390,25 @@ export const migrateLocalEnvironment = async (
 
   return withLocalEnvironmentLock(realRepoRoot, async (lockedPaths, lockedRoot) => {
     try {
-      const current = JSON.parse(await readFile(lockedPaths.state, 'utf8')) as TLocalEnvironmentState
+      const current = JSON.parse(
+        await readFile(lockedPaths.state, 'utf8'),
+      ) as TLocalEnvironmentState
       validateLocalEnvironmentState(current, lockedRoot, lockedPaths.state)
-      if (await matchesExistingMigration(current, candidate.state!, candidate.importedServiceIds, lockedRoot)) {
+      if (
+        await matchesExistingMigration(
+          current,
+          candidate.state!,
+          candidate.importedServiceIds,
+          lockedRoot,
+        )
+      ) {
         return { conflicts: [], files: candidate.files, status: 'no-op' }
       }
-      return { conflicts: ['state.json was created by another writer and differs from the candidate'], files: candidate.files, status: 'conflict' }
+      return {
+        conflicts: ['state.json was created by another writer and differs from the candidate'],
+        files: candidate.files,
+        status: 'conflict',
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     }
@@ -375,7 +430,8 @@ const matchesExistingMigration = async (
     current.formatVersion !== candidate.formatVersion ||
     current.repoRoot !== candidate.repoRoot ||
     current.secrets['auth:service-signing-jwk'] !== candidate.secrets['auth:service-signing-jwk']
-  ) return false
+  )
+    return false
 
   for (const serviceId of importedServiceIds) {
     const credential = candidate.serviceCredentials[serviceId]
@@ -386,7 +442,8 @@ const matchesExistingMigration = async (
       existing.clientId !== credential.clientId ||
       existing.clientRef !== credential.clientRef ||
       existing.secret !== credential.secret
-    ) return false
+    )
+      return false
   }
 
   const auth = await readInputEnvironment(repoRoot, [
@@ -404,11 +461,16 @@ const matchesExistingMigration = async (
   const importedValues: Record<string, string | undefined> = {
     'auth:session-secret': auth.NEXTAUTH_SECRET,
     'assets-hub:capability-secret': assets.ASSETS_HUB_CAPABILITY_SECRET,
-    'import:preview-secret': importer.CONTENT_IMPORT_PREVIEW_SECRET,
+    'import:preview-secret': importer.IMPORT_PREVIEW_SECRET,
     'phoenix:jwt-secret': phoenix.PHX_JWT_SECRET,
   }
-  return Object.entries(importedValues).every(([key, value]) => value === undefined || current.secrets[key] === value) &&
-    Object.keys(current.serviceCredentials).length === Object.keys(candidate.serviceCredentials).length
+  return (
+    Object.entries(importedValues).every(
+      ([key, value]) => value === undefined || current.secrets[key] === value,
+    ) &&
+    Object.keys(current.serviceCredentials).length ===
+      Object.keys(candidate.serviceCredentials).length
+  )
 }
 
 const main = async () => {
@@ -423,12 +485,18 @@ const main = async () => {
   for (const file of result.files) console.log(`- source: ${file}`)
   for (const conflict of result.conflicts) console.error(`- conflict: ${conflict}`)
   if (result.status === 'conflict') process.exitCode = 1
-  if (result.status === 'no-migration-needed') console.log('No legacy Auth service identity was found; no files were written.')
-  if (result.status === 'ready') console.log('Check passed; apply can import the legacy identities.')
-  if (result.status === 'applied') console.log('Migration state committed. Source files remain unchanged.')
+  if (result.status === 'no-migration-needed')
+    console.log('No legacy Auth service identity was found; no files were written.')
+  if (result.status === 'ready')
+    console.log('Check passed; apply can import the legacy identities.')
+  if (result.status === 'applied')
+    console.log('Migration state committed. Source files remain unchanged.')
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)
+) {
   void main().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : 'Local environment migration failed.')
     process.exitCode = 1

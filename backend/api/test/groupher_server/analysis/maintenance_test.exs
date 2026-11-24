@@ -27,6 +27,7 @@ defmodule GroupherServer.Test.Analysis.MaintenanceTest do
   end
 
   test "deletes within a row budget and reports remaining work" do
+    baseline = Maintenance.metrics()
     {community, article, _attrs, _user} = mock_article(:post)
     binding = Repo.get_by!(GroupherServer.CMS.Model.ArticleBinding, article_id: article.id)
     now = DateTime.utc_now(:second)
@@ -77,10 +78,14 @@ defmodule GroupherServer.Test.Analysis.MaintenanceTest do
       aggregated_at: nil
     })
 
-    assert %{pending: 1, failed: 0} = Maintenance.metrics()
+    assert %{pending: pending, failed: failed} = Maintenance.metrics()
+    assert pending == baseline.pending + 1
+    assert failed == baseline.failed
     assert %{metric_events: 1, hourly_metrics: 1, more?: true} = Maintenance.delete_expired()
     assert %{metric_events: 1, hourly_metrics: 1, more?: false} = Maintenance.delete_expired()
-    assert Repo.aggregate(MetricEvent, :count) == 1
-    assert Repo.aggregate(ArticleHourlyMetric, :count) == 0
+    assert Repo.aggregate(Ecto.Query.where(MetricEvent, article_id: ^article.id), :count) == 1
+
+    assert Repo.aggregate(Ecto.Query.where(ArticleHourlyMetric, article_id: ^article.id), :count) ==
+             0
   end
 end

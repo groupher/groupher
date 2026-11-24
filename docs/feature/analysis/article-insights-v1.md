@@ -295,7 +295,7 @@ Gate 实施范围必须包括：
 3. `Gate.Const.passport_action` 注册
    `article_insights_read: "article.insights.read"`，不与 Moderation review 权限共用；
 4. `Helper.PermissionConfig.cms_grants/0` 增加 `"article.insights.read"`，使 Passport 写入校验和
-   `PermissionRegistry.all_rules(:cms)` / Dashboard 授权目录可以识别它；
+   `CMS.Passport.Catalog.list(:community)` / Dashboard 授权目录可以识别它；
 5. `Helper.PermissionConfig.action_requirements/0` 注册
    `"article.insights.read" => %{scope: :context, context: :cms, grant: "article.insights.read"}`，不复用
    `community.update`；
@@ -307,7 +307,7 @@ Gate 实施范围必须包括：
    `:owner_management` 的 management-readable Community lifecycle 状态集合；因此 suspended/archived
    Community 中，author/owner 仍可读取其有权 Article 的 Insights，moderator 仍需 membership 与
    `article.insights.read`，普通用户不可读；
-9. 增加 grant 的 `valid_permission?`、`all_rules(:cms)`、Community 隔离和 root/god 测试；
+9. 增加 grant 的 `Catalog.validate_permissions/2`、目录 parity、Community 隔离和 root/lord 测试；
 10. 覆盖 active/suspended/archived Community，确保 `:insights_management` 不落入
     `unknown_policy_mode`；
 11. 增加每类 actor allow/deny、跨 Community 隔离、作者仅可读自己 Article、moderator 有无 Passport，

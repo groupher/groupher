@@ -12,10 +12,9 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{Community, CommunityAdmin, Passport}
-  alias CMS.Passport.Catalog
-  alias Helper.PermissionConfig
+  alias CMS.Passport.{Catalog, LegacyVocabulary}
 
-  # Verified: PermissionConfig and the Community creation middleware both use
+  # Verified: LegacyVocabulary and the Community creation middleware both use
   # the Global community.create grant for the same creation operation.
   @verified_same_scope [{:global, "community.create"}]
 
@@ -23,32 +22,66 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
   def report(user_id) when is_integer(user_id) do
     rules =
       case Repo.get_by(Passport, user_id: user_id) do
-        nil -> %{}
+        nil -> nil
         %Passport{rules: rules} -> rules
       end
 
-    memberships =
-      Repo.all(
-        from(member in CommunityAdmin,
-          join: community in Community,
-          on: community.id == member.community_id,
-          where: member.user_id == ^user_id,
-          select: {community.slug, community.id, member.id}
+    with {:ok, rules} <- normalize_legacy_rules(rules) do
+      memberships =
+        Repo.all(
+          from(member in CommunityAdmin,
+            join: community in Community,
+            on: community.id == member.community_id,
+            where: member.user_id == ^user_id,
+            select: {community.slug, community.id, member.id}
+          )
         )
-      )
-      |> Enum.group_by(fn {slug, _, _} -> slug end)
-      |> Map.new(fn
-        {slug, [{_, community_id, member_id}]} ->
-          {slug, %{community_id: community_id, member_id: member_id}}
+        |> Enum.group_by(fn {slug, _, _} -> slug end)
+        |> Map.new(fn
+          {slug, [{_, community_id, member_id}]} ->
+            {slug, %{community_id: community_id, member_id: member_id}}
 
-        {slug, _duplicates} ->
-          {slug, :ambiguous}
-      end)
+          {slug, _duplicates} ->
+            {slug, :ambiguous}
+        end)
 
-    build(rules, memberships)
+      build(rules, memberships)
+    end
   end
 
   def report(_), do: {:error, :invalid_user}
+
+  @doc false
+  def normalize_legacy_rules(nil), do: {:ok, %{"global" => %{}}}
+
+  def normalize_legacy_rules(%{"global" => global, "cms" => cms} = rules)
+      when is_map(global) and is_map(cms) do
+    if community_rule_shape?(cms) do
+      {:ok, rules}
+    else
+      communities =
+        Enum.reduce(cms, Map.drop(rules, ["cms"]), fn {slug, grants}, acc ->
+          Map.update(acc, slug, %{"cms" => grants}, fn existing ->
+            %{"legacy_scope_collision" => [existing, grants]}
+          end)
+        end)
+
+      {:ok, communities}
+    end
+  end
+
+  def normalize_legacy_rules(%{"global" => global} = rules) when is_map(global) do
+    {:ok, rules}
+  end
+
+  def normalize_legacy_rules(_), do: {:error, :invalid_legacy_rules}
+
+  defp community_rule_shape?(rules) do
+    Enum.any?(rules, fn
+      {"root", value} -> is_boolean(value)
+      {key, value} -> key in LegacyVocabulary.contexts() and is_map(value)
+    end)
+  end
 
   @doc "Plans one user's legacy rules against a unique slug-to-member map."
   def build(rules, memberships) when is_map(rules) and is_map(memberships) do
@@ -116,8 +149,8 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
   defp grant(key, enabled, scope, acc, target) when is_binary(key) and is_boolean(enabled) do
     old_grants =
       if scope == :global,
-        do: PermissionConfig.global_grants(),
-        else: PermissionConfig.cms_grants()
+        do: LegacyVocabulary.global_grants(),
+        else: LegacyVocabulary.cms_grants()
 
     result =
       cond do

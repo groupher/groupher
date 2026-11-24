@@ -20,29 +20,33 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
                           &{&1, true}
                         )
 
-  def provision_platform!(users, manifest) do
+  def provision_global_passports!(users, manifest) do
     unless Repo.in_transaction?(), do: raise("seed privilege transaction required")
     lock_users!(Map.values(users))
     expected = manifest["globalPassports"] || %{}
     ensure_owned!(users, expected)
-    user_id = Map.fetch!(users, "platform")
+    roles = %{"platform" => @platform_permissions}
 
-    row =
-      case Repo.get_by(GlobalPassport, user_id: user_id) do
-        nil ->
-          %GlobalPassport{}
-          |> GlobalPassport.changeset(%{user_id: user_id, permissions: @platform_permissions})
-          |> Repo.insert!()
+    Map.new(roles, fn {name, permissions} ->
+      user_id = Map.fetch!(users, name)
 
-        row ->
-          unless row.permissions == @platform_permissions and not row.is_root do
-            Repo.rollback(:seed_unexpected_permissions)
-          end
+      row =
+        case Repo.get_by(GlobalPassport, user_id: user_id) do
+          nil ->
+            %GlobalPassport{}
+            |> GlobalPassport.changeset(%{user_id: user_id, permissions: permissions})
+            |> Repo.insert!()
 
-          row
-      end
+          row ->
+            unless row.permissions == permissions and not row.is_root do
+              Repo.rollback(:seed_unexpected_permissions)
+            end
 
-    %{"platform" => snapshot(row)}
+            row
+        end
+
+      {name, snapshot(row)}
+    end)
   end
 
   def ensure_owned!(users, expected) do
@@ -78,6 +82,23 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
     {:ok, :pass}
   end
 
+  def lock_admins!(users, communities) do
+    rows =
+      Repo.all(
+        from(a in CMS.Model.CommunityAdmin,
+          where: a.user_id in ^Map.values(users) and a.community_id in ^Map.values(communities),
+          order_by: [a.user_id, a.community_id],
+          lock: "FOR UPDATE"
+        )
+      )
+
+    {:ok, rows}
+  end
+
+  def globals_cleaned?(users) do
+    not Repo.exists?(from(p in GlobalPassport, where: p.user_id in ^Map.values(users)))
+  end
+
   def delete_owned!(users, expected) do
     ensure_owned!(users, expected)
     ids = expected |> Map.values() |> Enum.map(&Map.fetch!(&1, "id"))
@@ -86,7 +107,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
     {:ok, :pass}
   end
 
-  def provision_admins!(users, communities, expected) do
+  def provision_admins!(users, communities, expected, created_community_ids) do
     communities
     |> Enum.sort_by(fn {_slug, id} -> id end)
     |> Enum.into(%{}, fn {slug, community_id} ->
@@ -113,14 +134,20 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
 
       case recorded do
         nil ->
-          if admin.is_lord or admin.permissions != %{} do
-            Repo.rollback(:seed_unexpected_permissions)
-          end
-
           admin =
-            admin
-            |> Ecto.Changeset.change(is_lord: true, revision: admin.revision + 1)
-            |> Repo.update!()
+            cond do
+              admin.permissions == %{} and admin.is_lord and
+                  community_id in created_community_ids ->
+                admin
+
+              cleaned_owned_admin?(admin, slug) ->
+                admin
+                |> Ecto.Changeset.change(is_lord: true, revision: admin.revision + 1)
+                |> Repo.update!()
+
+              true ->
+                Repo.rollback(:seed_unexpected_permissions)
+            end
 
           {slug, admin_snapshot(admin)}
 
@@ -132,6 +159,24 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
           {slug, recorded}
       end
     end)
+  end
+
+  defp cleaned_owned_admin?(admin, slug) do
+    current = admin_snapshot(admin)
+
+    admin.permissions == %{} and not admin.is_lord and
+      Enum.any?(Repo.all(CMS.ProductionSeed.Run), fn run ->
+        recorded = get_in(run.manifest, ["communityAdmins", slug])
+
+        run.status == "closed" and run.manifest["cleanupMode"] in ["retain", "purge"] and
+          is_map(recorded) and
+          current ==
+            Map.merge(recorded, %{
+              "isLord" => false,
+              "permissions" => %{},
+              "revision" => recorded["revision"] + 1
+            })
+      end)
   end
 
   def admins_valid?(users, communities, expected, cleaned?) when is_map(expected) do

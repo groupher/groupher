@@ -12,14 +12,14 @@ import { decodeLinkState, MemoryLinkIntentStore } from './link-intent'
 
 describe('Auth Hono application', () => {
   it('keeps local login routes unregistered unless the Node server injects local handlers', async () => {
-    vi.stubEnv('AUTH_LOCAL_LOGIN_ENABLED', 'true')
+    vi.stubEnv('LOCAL_TEST_ACTORS_SECRET', 'stale-flag-must-not-register-a-route')
     const headers = {
       origin: 'https://dash.groupher.localhost',
       [GROUPHER_AUTH_CSRF_HEADER]: GROUPHER_AUTH_CSRF_VALUE,
     }
 
     const ordinary = await createApp().request(AUTH_ROUTE.TEST_LOGIN, { method: 'POST', headers })
-    const admin = await createApp().request(AUTH_ROUTE.TEST_ADMIN_LOGIN, {
+    const admin = await createApp().request('/api/auth/test-admin-login', {
       method: 'POST',
       headers,
     })
@@ -29,8 +29,7 @@ describe('Auth Hono application', () => {
 
   it('registers injected local login routes behind the existing Origin and CSRF guard', async () => {
     const testLogin = vi.fn(async () => new Response(null, { status: 204 }))
-    const testAdminLogin = vi.fn(async () => new Response(null, { status: 204 }))
-    const app = createApp({ testLogin, testAdminLogin })
+    const app = createApp({ testLogin })
 
     const ordinary = await app.request(AUTH_ROUTE.TEST_LOGIN, {
       method: 'POST',
@@ -39,7 +38,7 @@ describe('Auth Hono application', () => {
         [GROUPHER_AUTH_CSRF_HEADER]: GROUPHER_AUTH_CSRF_VALUE,
       },
     })
-    const admin = await app.request(AUTH_ROUTE.TEST_ADMIN_LOGIN, {
+    const admin = await app.request('/api/auth/test-admin-login', {
       method: 'POST',
       headers: {
         origin: 'https://dash.groupher.localhost',
@@ -55,10 +54,9 @@ describe('Auth Hono application', () => {
     })
 
     expect(ordinary.status).toBe(204)
-    expect(admin.status).toBe(204)
+    expect(admin.status).toBe(404)
     expect(invalidOrigin.status).toBe(400)
     expect(testLogin).toHaveBeenCalledOnce()
-    expect(testAdminLogin).toHaveBeenCalledOnce()
   })
 
   it.each(['/api/auth/production-seed/redeem', '/api/auth/unknown'])(

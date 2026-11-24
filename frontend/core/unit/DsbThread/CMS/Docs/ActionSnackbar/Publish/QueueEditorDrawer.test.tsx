@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import QueueEditorDrawer from './QueueEditorDrawer'
 
 const mocks = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), close: vi.fn(), saved: vi.fn() }))
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: 'actor:editor' }) }))
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: mocks.read }))
 vi.mock('~/lib/artimentPublisher', () => ({ saveDocQueueCopy: mocks.save }))
 vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }) }))
@@ -36,18 +37,12 @@ describe('QueueEditorDrawer', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.read.mockResolvedValue({
-      articleWorkingCopies: [
-        {
-          id: 'default',
-          scopeType: 'default',
-          title: 'Default',
-          bodyJson: '[]',
-          articleId: 'doc',
-          revision: 3,
-        },
-        {
+      docsQueueMember: {
+        queueRevision: 5,
+        workingCopy: {
           id: 'queued',
           scopeType: 'workspace',
+          scopeId: 'queue-1',
           title: 'Queued',
           subtitle: '',
           slug: 'queued',
@@ -55,21 +50,13 @@ describe('QueueEditorDrawer', () => {
           articleId: 'doc',
           revision: 2,
         },
-      ],
+      },
     })
     mocks.save.mockResolvedValue({ queueRevision: 6, workingCopyRevision: 3 })
   })
 
   const open = () =>
-    render(
-      <QueueEditorDrawer
-        articleId='doc'
-        workingCopyId='queued'
-        queueRevision={5}
-        onClose={mocks.close}
-        onSaved={mocks.saved}
-      />,
-    )
+    render(<QueueEditorDrawer articleId='doc' onClose={mocks.close} onSaved={mocks.saved} />)
 
   it('edits the queued copy with both checked revisions', async () => {
     open()

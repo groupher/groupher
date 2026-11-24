@@ -3,9 +3,10 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServerWeb.Schema
   alias CMS.Model.CommunitySubscriber
-  alias Helper.Guardian.BrowserAccess
+  alias Accounts.Profiles.BrowserSessions
 
   @default_subscribed_communities GroupherServer.Accounts.Config.default_subscribed_communities()
 
@@ -40,18 +41,11 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     end
 
     test "browser access cookie resolves the current user", ~m(user)a do
-      session_expires_at = DateTime.add(DateTime.utc_now(), 3600, :second)
-
-      {:ok, token, _claims} =
-        BrowserAccess.encode(
-          user,
-          Ecto.UUID.generate(),
-          session_expires_at
-        )
+      {:ok, session} = BrowserSessions.create(user)
 
       results =
         simu_conn(:guest)
-        |> Plug.Test.put_req_cookie("groupher-auth.token", token)
+        |> Plug.Test.put_req_cookie("groupher-auth.token", session.access_token)
         |> gq_query(@query, %{})
 
       assert results["login"] == user.login
@@ -72,7 +66,6 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["nickname"] == user.nickname
       assert results["social"]["github"] == nil
       assert results["social"]["douban"] == nil
-      assert results["passport"] == nil
 
       assert results["subscribedCommunitiesCount"] == 0
       assert results["followersCount"] == 0
@@ -113,38 +106,22 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert target_user.views == 0
     end
 
-    test "login newbie user can get own empty passport", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-      variables = %{login: user.login}
-      results = user_conn |> gq_query(@query, variables)
+    test "User GraphQL type no longer exposes embedded Passport projections" do
+      assert {:ok, %{data: %{"__type" => user_type}}} =
+               Absinthe.run(
+                 """
+                 {
+                   __type(name: "User") {
+                     fields { name }
+                   }
+                 }
+                 """,
+                 Schema
+               )
 
-      assert results["passport"] == %{"global" => %{}}
-      assert Jason.decode!(results["passportString"]) == %{"global" => %{}}
-    end
-
-    @valid_rules %{
-      "global" => %{},
-      "javascript" => %{"cms" => %{"post.trash" => true, "post.edit" => true}}
-    }
-
-    test "login user can get own passport and passport_string", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-
-      {:ok, _} = CMS.Communities.stamp_passport(@valid_rules, user)
-
-      results = user_conn |> gq_query(@query, %{login: user.login})
-
-      assert Map.equal?(results["passport"], @valid_rules)
-      assert Map.equal?(Jason.decode!(results["passportString"]), @valid_rules)
-    end
-
-    test "login user can get empty if passport not exist", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-
-      results = user_conn |> gq_query(@query, %{login: user.login})
-
-      assert %{"global" => %{}} == results["passport"]
-      assert Jason.decode!(results["passportString"]) == %{"global" => %{}}
+      field_names = Enum.map(user_type["fields"], & &1["name"])
+      refute "passport" in field_names
+      refute "passportString" in field_names
     end
 
     @query S.Account.q(:paged_users)
@@ -176,20 +153,6 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
       user2 = Enum.find(entries, &(&1["login"] == user2.login))
       assert user2["viewerHasFollowed"]
-    end
-  end
-
-  describe "[account passport] test" do
-    @query S.Moderation.q(:all_passport_rules_string)
-    test "can get all cms rules with valid structure", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-      variables = %{}
-      results = user_conn |> gq_query(@query, variables)
-
-      assert results |> Map.has_key?("cms")
-      cms_rules = results["cms"]
-      assert cms_rules |> Map.has_key?("general")
-      assert cms_rules |> Map.has_key?("community")
     end
   end
 

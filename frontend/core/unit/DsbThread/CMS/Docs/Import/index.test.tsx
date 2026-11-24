@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PHASE } from './constant'
 import DocumentImport from './index'
-import type { TContentImportJob } from './spec'
+import type { TImportJob } from './spec'
 
 const mocks = vi.hoisted(() => ({
   logic: {} as Record<string, unknown>,
@@ -26,7 +26,7 @@ vi.mock('./useLogic', () => ({
   default: () => mocks.logic,
 }))
 
-vi.mock('../../ContentImport/ProcessLog', () => ({
+vi.mock('../../Import/ProcessLog', () => ({
   default: ({ process }: { process: { progress?: { completed: number; total?: number } } }) => (
     <div>
       {process.progress
@@ -100,7 +100,7 @@ describe('DocumentImport importing state', () => {
   it('shows persisted job progress once polling returns the job', () => {
     mocks.logic = {
       ...mocks.logic,
-      job: { failedItems: [], skipped: [] } as unknown as TContentImportJob,
+      job: { failedItems: [], skipped: [] } as unknown as TImportJob,
       process: runningProcess,
     }
 

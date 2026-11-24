@@ -22,9 +22,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     test "save custom theme preset stores fork base and overwrite", ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -121,7 +122,14 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
         themeOverwrite: Jason.encode!(%{"light" => %{"gaussBlur" => 70}})
       }
 
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"what.ever" => true}})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{community.slug => %{permissions: %{}}},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(
@@ -148,9 +156,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     test "save custom theme preset rejects non-custom preset saves", ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -167,9 +176,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     test "save custom theme preset rejects custom as fork base", ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -187,9 +197,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
          ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -227,9 +238,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
          ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -262,9 +274,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
          ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -305,9 +318,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     test "save custom theme preset resets custom base with empty overwrite", ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -348,9 +362,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
          ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -382,9 +397,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
          ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -417,9 +433,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
          ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -453,9 +470,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     test "select theme preset preserves saved custom preset overwrite", ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -509,9 +527,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     test "select custom preset after readonly selection reuses saved overwrite", ~m(community)a do
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            "global" => %{"community.update" => true},
-            community.slug => %{"dashboard.theme.update" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.update" => true}},
+            communities: %{community.slug => %{permissions: %{"dashboard.theme.update" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -549,7 +568,15 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     test "select theme preset requires community update permission",
          ~m(user_conn guest_conn community)a do
       variables = %{community: community.slug, themePreset: "HN"}
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"what.ever" => true}})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{community.slug => %{permissions: %{}}},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(

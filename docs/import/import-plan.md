@@ -1,4 +1,4 @@
-# Content Import：不可变 ImportPlan
+# ImportPlan：不可变导入执行计划
 
 > 状态：目标方案。
 >
@@ -9,7 +9,7 @@
 > 前置：现有 `PreviewRecord`、versioned `DocsDataset`、SourceTree、Target Preview、ImportJob、
 > JobItem、BodyBag staging、`ImportSourceMapping` 和 Process projection 均视为已经实现。
 >
-> Source of truth：总体 ownership 仍以 [`content-import-architecture.md`](./content-import-architecture.md)
+> Source of truth：总体 ownership 仍以 [`import-architecture.md`](./import-architecture.md)
 > 为准；产品步骤以 [`bulk-import.md`](./bulk-import.md) 为准；临时对象与 staging 以
 > [`import-file-sdk.md`](./import-file-sdk.md) 为准。本文新增的是 Review 与 Apply 之间的不可变执行契约。
 
@@ -344,11 +344,11 @@ lock Job + target Draft/Tree
 
 ## 10. 与 `CMS.Command` 的关系
 
-`ApplyImportPlan` 是具体 Domain Command；`CMS.Command` 不是每个 ImportPlan 或 transport 的专属模块：
+`CMS.DocTree.Workflows.Import` 是当前原子导入工作流；`CMS.Command` 不是每个 ImportPlan 或 transport 的专属模块：
 
 ```text
 GraphQL apply mutation
-  -> ContentImport.ApplyPlan domain command
+  -> CMS.DocTree.Workflows.Import
        -> Gate / Plan validation / Job creation
        -> CMS.Command shared execution boundary
             -> transaction / command receipt / retry recovery

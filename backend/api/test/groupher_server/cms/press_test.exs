@@ -141,7 +141,7 @@ defmodule GroupherServer.Test.CMS.Press do
   test "Doc manifest keeps the public slug in its canonical URL",
        ~m(community user)a do
     {_, doc, _, _} = mock_article(:doc, community, user)
-    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    actor = user
 
     assert {:ok, _} =
              CMS.Seeds.Docs.update(

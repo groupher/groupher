@@ -28,11 +28,11 @@ export const MANAGED_ENV_KEYS = new Set([
   'API_SITE',
   'APPLY_SITE',
   'AUTH_SITE',
-  'CONTENT_IMPORT_APP_ENDPOINT',
-  'CONTENT_IMPORT_PREVIEW_SECRET',
-  'CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE',
-  'CONTENT_IMPORT_SERVICE_AUTH_RESOURCE',
-  'CONTENT_IMPORT_SERVICE_AUTH_SCOPES',
+  'IMPORT_APP_ENDPOINT',
+  'IMPORT_PREVIEW_SECRET',
+  'IMPORT_SERVICE_AUTH_AUDIENCE',
+  'IMPORT_SERVICE_AUTH_RESOURCE',
+  'IMPORT_SERVICE_AUTH_SCOPES',
   'DATABASE_URL',
   'DASH_DEFAULT_COMMUNITY',
   'DASH_SITE',
@@ -51,6 +51,7 @@ export const MANAGED_ENV_KEYS = new Set([
   'GRAPHQL_ENDPOINT',
   'LANDING_SITE',
   'METRIC_IP_SALT',
+  'LOCAL_TEST_ACTORS_SECRET',
   'MOCK_GRAPHQL_PORT',
   'NEXT_PUBLIC_ASSETS_HUB_ENDPOINT',
   'NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT',
@@ -88,6 +89,15 @@ const KNOWN_CREDENTIAL_KEYS = new Set([
   'GITHUB_TOKEN',
   'OPENAI_API_KEY',
 ])
+
+// Per-service settings must not leak from the Hub's parent shell into other services.
+for (const definition of SERVICE_DEFINITIONS) {
+  for (const key of [
+    ...(definition.localEnvironment?.editableEnvKeys || []),
+    ...(definition.localEnvironment?.externalEnvKeys || []),
+  ])
+    MANAGED_ENV_KEYS.add(key)
+}
 
 export const LOCAL_ENVIRONMENT_STATE_RELATIVE_PATH =
   'local/dev-hub/.data/local-environment/state.json'
@@ -330,40 +340,20 @@ export const resolveLocalEnvironment = (
     )
     env.SERVICE_AUTH_RESOURCES_JSON = JSON.stringify(authResources)
     env.NEXTAUTH_SECRET = state.secrets['auth:session-secret']
-    env.AUTH_LOCAL_LOGIN_ENABLED = 'true'
-    env.AUTH_LOCAL_ADMIN_LOGIN_ENABLED =
-      environment.DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED?.trim() === 'true' ? 'true' : 'false'
+  }
+
+  if (serviceId === 'auth' || serviceId === 'phoenix') {
+    env.LOCAL_TEST_ACTORS_SECRET = localTestActorsSecret(state)
   }
 
   return { env }
 }
 
-export const resolveExternalEnvironment = async (
-  definition: TServiceDefinition,
-): Promise<Record<string, string>> => {
-  const keys = definition.localEnvironment?.externalEnvKeys || []
-  if (keys.length === 0 || definition.config?.kind !== 'env-files') return {}
-  const result: Record<string, string> = {}
-  const files = [
-    path.join(definition.config.root, '.env.development.local'),
-    path.join(definition.config.root, '.env.local'),
-    path.join(definition.config.root, '.env.development'),
-    path.join(definition.config.root, '.env'),
-  ]
-  for (const file of files) {
-    let parsed: NodeJS.Dict<string>
-    try {
-      parsed = parseEnv(await readFile(file, 'utf8'))
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue
-      throw error
-    }
-    for (const key of keys) {
-      if (result[key] === undefined && parsed[key] !== undefined) result[key] = parsed[key]
-    }
-  }
-  return result
-}
+/** Purpose-separated key, shared only by the local CLI, development Auth and Phoenix. */
+export const localTestActorsSecret = (state: TLocalEnvironmentState): string =>
+  createHmac('sha256', state.secrets['auth:session-secret'])
+    .update('dev-hub:local-test-actors:v1')
+    .digest('base64url')
 
 export const createSpawnEnvironment = (
   definition: TServiceDefinition,

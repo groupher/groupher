@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Review.Requests do
       })
       when is_integer(community_id) do
     case Repo.get(Comment, comment_id) do
-      %Comment{thread: thread} when thread in [:post, :blog, :changelog] -> true
+      %Comment{thread: thread} when thread in [:post, :blog, :changelog, :doc] -> true
       _ -> false
     end
   end

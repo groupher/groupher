@@ -149,11 +149,6 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     asset_register: {:fields, %{"attrs" => :digest_each}},
     asset_archive: {:fields, %{"community_id" => :raw}},
     asset_restore: {:fields, %{"community_id" => :raw}},
-    moderator_add: {:fields, %{"community_id" => :raw, "target_user_id" => :raw}},
-    moderator_add_many: {:fields, %{"community_id" => :raw, "target_user_ids" => :digest}},
-    moderator_remove: {:fields, %{"community_id" => :raw, "target_user_id" => :raw}},
-    moderator_update:
-      {:fields, %{"community_id" => :raw, "target_user_id" => :raw, "rules" => :digest}},
     tag_create: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
     tag_update: :digest_each,
     tag_delete: :empty,
@@ -285,6 +280,7 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
          "tree_revision" => :raw,
          "queue_revision" => :raw,
          "action_id" => :raw,
+         "record_revision" => :raw,
          "target_parent" => :raw,
          "target_index" => :raw
        }},

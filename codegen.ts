@@ -4,6 +4,7 @@ const config: CodegenConfig = {
   schema: 'backend/api/schema.graphql',
   documents: [
     'frontend/core/schemas/pages/user.ts',
+    'frontend/core/schemas/pages/passport.ts',
     'frontend/core/schemas/pages/user.fragments.ts',
     'frontend/core/schemas/pages/article.fragments.ts',
     'frontend/core/schemas/pages/articleStats.ts',
@@ -33,8 +34,10 @@ const config: CodegenConfig = {
     'frontend/core/unit/DsbThread/schema/content.ts',
     'frontend/core/unit/KanbanThread/schema.ts',
     'frontend/core/unit/KanbanThread/fragments.ts',
+    'frontend/core/unit/DocThread/schema.ts',
     'frontend/core/unit/DocCovers/schema.ts',
     'frontend/core/unit/DocCovers/fragments.ts',
+    'frontend/core/unit/DocThread/schema.ts',
     'frontend/core/unit/AlertWall/schema.ts',
     'frontend/core/unit/ReviewBot/schema.ts',
     'frontend/core/unit/CMSReview/schema.ts',

@@ -3,8 +3,12 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
 
   use GroupherServer.TestMate
 
-  @follow_weight GroupherServer.Accounts.Config.achieve_follow_weight()
-  @collect_weight GroupherServer.Accounts.Config.achieve_collect_weight()
+  alias GroupherServer
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.Model.CommunityAdmin
+
+  @follow_weight Accounts.Config.achieve_follow_weight()
+  @collect_weight Accounts.Config.achieve_collect_weight()
   # @upvote_weight GroupherServer.Accounts.Config.achieve_upvote_weight()
 
   setup do
@@ -28,7 +32,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
   end
 
   describe "[account editable-communities]" do
-    @query S.Account.q(:moderatorable_communities)
+    @query S.Account.q(:administered_communities)
     test "can get user's empty editable communities list", ~m(guest_conn user)a do
       variables = %{login: user.login, pagi: %{offset: %{page: 1, size: 20}}}
       results = guest_conn |> gq_query(@query, variables)
@@ -45,8 +49,8 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       community_attrs2 = mock_attrs(:community)
       {:ok, community2} = CMS.Communities.create(community_attrs2, user2, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.Communities.add_moderator(community, user3, user, Ecto.UUID.generate())
-      {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2, Ecto.UUID.generate())
+      Repo.insert!(%CommunityAdmin{community_id: community.id, user_id: user3.id})
+      Repo.insert!(%CommunityAdmin{community_id: community2.id, user_id: user3.id})
 
       variables = %{login: user3.login, pagi: %{offset: %{page: 1, size: 20}}}
       results = guest_conn |> gq_query(@query, variables)

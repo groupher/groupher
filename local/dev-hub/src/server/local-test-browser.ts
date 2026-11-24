@@ -1,0 +1,519 @@
+/** Owns persistent, separate browser profiles for local synthetic identities. No HTTP listener. */
+import { fork } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
+import { mkdir, readFile, readdir, realpath, rename, rm, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import path from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
+import { fileURLToPath } from 'node:url'
+
+import { REPO_ROOT } from './services.ts'
+
+type TOpen = {
+  run: string
+  alias: string
+  community: string
+  login: string
+  headless: boolean
+  app: 'dash' | 'community'
+}
+export const ACTOR_UI_ROLES = [
+  'button',
+  'link',
+  'textbox',
+  'checkbox',
+  'radio',
+  'combobox',
+  'menuitem',
+  'tab',
+] as const
+export type TActorUIRole = (typeof ACTOR_UI_ROLES)[number]
+export const ACTOR_UI_KEYS = [
+  'Enter',
+  'Tab',
+  'Escape',
+  'ArrowDown',
+  'ArrowUp',
+  'ArrowLeft',
+  'ArrowRight',
+  'Backspace',
+  'Delete',
+  'Home',
+  'End',
+] as const
+export type TActorUIKey = (typeof ACTOR_UI_KEYS)[number]
+export type TActorUIOperation =
+  | { op: 'snapshot' }
+  | { op: 'navigate'; path: string }
+  | { op: 'click'; role: TActorUIRole; name: string }
+  | { op: 'fill'; role: 'textbox' | 'combobox'; name: string; value: string }
+  | { op: 'press'; key: TActorUIKey }
+  | { op: 'assert-text'; text: string }
+type TRequest = {
+  id: string
+  action: 'open' | 'close' | 'ui'
+  actor?: TOpen
+  operation?: TActorUIOperation
+}
+const root = path.join(REPO_ROOT, 'local/dev-hub/.data/test-actors/browsers')
+const NAME = /^[a-z][a-z0-9-]{0,39}$/
+const read = async (file: string) => JSON.parse(await readFile(file, 'utf8').catch(() => 'null'))
+const write = async (file: string, value: unknown) => {
+  const temporary = `${file}.${randomUUID()}.tmp`
+  await writeFile(temporary, JSON.stringify(value), { mode: 0o600 })
+  await rename(temporary, file)
+}
+
+const requestBrowser = async (profile: string, request: TRequest) => {
+  await write(path.join(profile, 'request.json'), request)
+  for (let i = 0; i < 240; i++) {
+    const result = await read(path.join(profile, 'result.json'))
+    if (result?.id === request.id) {
+      if (result.error) throw new Error(result.error)
+      return result.data
+    }
+    await delay(250)
+  }
+  throw new Error(
+    'Browser did not become ready within 60 seconds. Inspect the local services and retry.',
+  )
+}
+
+export const openActorBrowser = async (actor: TOpen) => {
+  if (![actor.run, actor.alias].every((v) => NAME.test(v)))
+    throw new Error('Invalid browser profile identity.')
+  const profile = path.join(root, actor.run, actor.alias)
+  await mkdir(profile, { recursive: true, mode: 0o700 })
+  const state = await read(path.join(profile, 'worker.json'))
+  let alive = false
+  if (state?.pid) {
+    try {
+      process.kill(state.pid, 0)
+      alive = true
+    } catch {}
+  }
+  if (!alive) {
+    const env = Object.fromEntries(
+      ['PATH', 'HOME', 'TMPDIR', 'LANG', 'DISPLAY', 'XAUTHORITY', 'SystemRoot'].flatMap((key) =>
+        process.env[key] ? [[key, process.env[key]!]] : [],
+      ),
+    )
+    const child = fork(
+      fileURLToPath(import.meta.url),
+      ['--worker', profile, actor.headless ? 'headless' : 'headed'],
+      {
+        detached: true,
+        stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+        env,
+      },
+    )
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(
+        () =>
+          reject(
+            new Error('Local browser failed to start. Check that Chrome/Chromium is installed.'),
+          ),
+        30_000,
+      )
+      child.once('error', reject)
+      child.once('exit', () => {
+        clearTimeout(timer)
+        reject(new Error('Local browser worker exited before startup.'))
+      })
+      child.once('message', (message: any) => {
+        clearTimeout(timer)
+        if (message.error) reject(new Error(message.error))
+        else resolve()
+      })
+    })
+    child.disconnect()
+    child.unref()
+  }
+  return requestBrowser(profile, { id: randomUUID(), action: 'open', actor })
+}
+
+export const assertActorUIPath = (
+  pathname: string,
+  community: string,
+  app: TOpen['app'],
+): string => {
+  if (
+    typeof pathname !== 'string' ||
+    pathname.length > 512 ||
+    !pathname.startsWith('/') ||
+    pathname.startsWith('//') ||
+    /[\\?#\u0000-\u001f]/.test(pathname)
+  )
+    throw new Error('UI navigation requires a local app path.')
+
+  let decodedSegments: string[]
+  try {
+    decodedSegments = pathname
+      .split('/')
+      .slice(1)
+      .map((segment) => decodeURIComponent(segment))
+  } catch {
+    throw new Error('UI navigation path is invalid.')
+  }
+  if (decodedSegments.at(-1) === '') decodedSegments.pop()
+  if (
+    decodedSegments.some(
+      (segment) =>
+        !segment ||
+        segment === '.' ||
+        segment === '..' ||
+        segment.includes('/') ||
+        segment.includes('\\'),
+    ) ||
+    ![community, 'home'].includes(decodedSegments[0] || '')
+  )
+    throw new Error('UI navigation is limited to the actor community or /home.')
+
+  const origin = `https://${app}.groupher.localhost`
+  const target = new URL(pathname, origin)
+  if (target.origin !== origin || target.pathname !== pathname || target.search || target.hash)
+    throw new Error('UI navigation is limited to the actor app origin and path.')
+  return target.href
+}
+
+export const assertActorUILinkHref = (
+  href: string | null,
+  community: string,
+  app: TOpen['app'],
+): string => {
+  if (!href || href.length > 512) throw new Error('UI links require a bounded local href.')
+  const origin = `https://${app}.groupher.localhost`
+  const target = new URL(href, origin)
+  if (target.search || target.hash || target.origin !== origin)
+    throw new Error('UI links are limited to an allowed local app route.')
+  assertActorUIPath(target.pathname, community, app)
+  return target.href
+}
+
+export const assertActorUIPageLocation = (
+  pageUrl: string,
+  community: string,
+  app: TOpen['app'],
+): void => {
+  const current = new URL(pageUrl)
+  const origin = `https://${app}.groupher.localhost`
+  if (current.origin !== origin || current.search || current.hash)
+    throw new Error('Actor browser is outside its allowed application route.')
+  assertActorUIPath(current.pathname, community, app)
+}
+
+export const validateActorUIOperation = (operation: TActorUIOperation): void => {
+  if (!operation || typeof operation !== 'object' || !('op' in operation))
+    throw new Error('Invalid actor UI operation.')
+  if (operation.op === 'navigate') {
+    if (typeof operation.path !== 'string' || operation.path.length > 512)
+      throw new Error('UI navigation requires a local app path.')
+  } else if (operation.op === 'click') {
+    if (
+      !ACTOR_UI_ROLES.includes(operation.role) ||
+      typeof operation.name !== 'string' ||
+      operation.name.length === 0 ||
+      operation.name.length > 120
+    )
+      throw new Error('UI click requires an allowed accessible role and name.')
+  } else if (operation.op === 'fill') {
+    if (
+      !['textbox', 'combobox'].includes(operation.role) ||
+      typeof operation.name !== 'string' ||
+      operation.name.length > 120 ||
+      typeof operation.value !== 'string' ||
+      operation.value.length > 1000
+    )
+      throw new Error('UI fill requires a textbox or combobox role, name and bounded value.')
+  } else if (operation.op === 'press') {
+    if (!ACTOR_UI_KEYS.includes(operation.key)) throw new Error('UI key is not allowed.')
+  } else if (operation.op === 'assert-text') {
+    if (
+      typeof operation.text !== 'string' ||
+      operation.text.length === 0 ||
+      operation.text.length > 250
+    )
+      throw new Error('UI text assertion requires bounded visible text.')
+  } else if (operation.op !== 'snapshot') {
+    throw new Error('Unsupported actor UI operation.')
+  }
+}
+
+export const operateActorBrowser = async (actor: TOpen, operation: TActorUIOperation) => {
+  if (![actor.run, actor.alias].every((value) => NAME.test(value)))
+    throw new Error('Invalid browser profile identity.')
+  validateActorUIOperation(operation)
+
+  const profile = path.join(root, actor.run, actor.alias)
+  const actual = await realpath(profile).catch(() => null)
+  if (!actual || actual !== path.join(await realpath(root), actor.run, actor.alias))
+    throw new Error('Actor browser profile is unavailable.')
+  const state = await read(path.join(profile, 'worker.json'))
+  if (!Number.isSafeInteger(state?.pid)) throw new Error('Actor browser is not open.')
+  try {
+    process.kill(state.pid, 0)
+  } catch {
+    throw new Error('Actor browser is not open.')
+  }
+
+  return requestBrowser(profile, { id: randomUUID(), action: 'ui', actor, operation })
+}
+
+export const closeActorBrowsers = async (run: string) => {
+  if (!NAME.test(run)) throw new Error('Invalid run.')
+  const runRoot = path.join(root, run)
+  for (const alias of await readdir(runRoot).catch(() => [])) {
+    if (!NAME.test(alias)) continue
+    const profile = path.join(runRoot, alias)
+    const state = await read(path.join(profile, 'worker.json'))
+    if (!state?.pid) continue
+    try {
+      process.kill(state.pid, 0)
+    } catch {
+      continue
+    }
+    await requestBrowser(profile, { id: randomUUID(), action: 'close' })
+    for (let i = 0; i < 40; i++) {
+      if (!(await read(path.join(profile, 'worker.json')))?.pid) break
+      if (i === 39)
+        throw new Error('Browser is still closing; retry clean before deleting its profile.')
+      await delay(250)
+    }
+  }
+}
+
+/** Deletes only a validated run's private profiles, after its workers have stopped. */
+export const cleanActorBrowsers = async (run: string) => {
+  if (!NAME.test(run)) throw new Error('Invalid run.')
+  await closeActorBrowsers(run)
+  const runRoot = path.join(root, run)
+  const actual = await realpath(runRoot).catch(() => null)
+  if (!actual) return
+  if (actual !== path.join(await realpath(root), run))
+    throw new Error('Refusing to clean a symlinked browser run.')
+  await rm(runRoot, { recursive: true })
+}
+
+async function worker(profile: string, headless: boolean) {
+  const require = createRequire(path.join(REPO_ROOT, 'package.json'))
+  const { chromium } = require('@playwright/test') as typeof import('@playwright/test')
+  const context = await chromium.launchPersistentContext(path.join(profile, 'chrome'), {
+    channel: 'chrome',
+    headless,
+    viewport: { width: 1440, height: 1000 },
+  })
+  await write(path.join(profile, 'worker.json'), { pid: process.pid })
+  context.once('close', () => {
+    void write(path.join(profile, 'worker.json'), { pid: null }).finally(() => process.exit())
+  })
+  process.on('SIGTERM', () => {
+    void context.close()
+  })
+  const page = context.pages()[0] || (await context.newPage())
+  let previous = ''
+  let busy = false
+  const poll = setInterval(async () => {
+    if (busy) return
+    busy = true
+    const request = (await read(path.join(profile, 'request.json'))) as TRequest | null
+    try {
+      if (!request || request.id === previous) return
+      previous = request.id
+      if (request.action === 'close') {
+        await write(path.join(profile, 'result.json'), { id: request.id, data: { closed: true } })
+        clearInterval(poll)
+        await context.close()
+        return
+      }
+      const actor = request.actor!
+      if (
+        !actor ||
+        ![actor.run, actor.alias].every((v) => NAME.test(v)) ||
+        path.join(root, actor.run, actor.alias) !== profile
+      )
+        throw new Error('Browser identity does not match the owned profile.')
+      if (!['dash', 'community'].includes(actor.app)) throw new Error('Invalid local application.')
+      if (request.action === 'ui') {
+        if (!request.operation) throw new Error('Actor UI operation is missing.')
+        validateActorUIOperation(request.operation)
+        assertActorUIPageLocation(page.url(), actor.community, actor.app)
+
+        if (request.operation.op === 'navigate') {
+          await page.goto(assertActorUIPath(request.operation.path, actor.community, actor.app), {
+            waitUntil: 'networkidle',
+            timeout: 45_000,
+          })
+          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          await write(path.join(profile, 'result.json'), {
+            id: request.id,
+            data: { url: page.url(), title: await page.title() },
+          })
+          return
+        }
+
+        if (request.operation.op === 'snapshot') {
+          const visibleText = (await page.locator('body').innerText()).slice(0, 4_000)
+          const controlSnapshots: string[] = []
+          for (const role of [
+            'button',
+            'link',
+            'textbox',
+            'checkbox',
+            'radio',
+            'combobox',
+            'menuitem',
+            'tab',
+          ] as const) {
+            const controls = await page.getByRole(role).all()
+            for (const control of controls.slice(0, 40)) {
+              controlSnapshots.push(await control.ariaSnapshot())
+            }
+            if (controlSnapshots.length >= 100) break
+          }
+          await write(path.join(profile, 'result.json'), {
+            id: request.id,
+            data: {
+              url: page.url(),
+              title: await page.title(),
+              visibleText,
+              controls: controlSnapshots.join('\n').slice(0, 4_000),
+            },
+          })
+          return
+        }
+
+        if (request.operation.op === 'assert-text') {
+          const visibleText = await page.locator('body').innerText()
+          const matched = visibleText.includes(request.operation.text)
+          if (!matched) throw new Error('Expected visible text was not found.')
+          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          await write(path.join(profile, 'result.json'), { id: request.id, data: { matched } })
+          return
+        }
+
+        if (request.operation.op === 'press') {
+          await page.keyboard.press(request.operation.key)
+          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          await write(path.join(profile, 'result.json'), {
+            id: request.id,
+            data: { pressed: true },
+          })
+          return
+        }
+
+        const locator = page.getByRole(request.operation.role, {
+          name: request.operation.name,
+          exact: true,
+        })
+        const count = await locator.count()
+        if (count !== 1)
+          throw new Error(
+            `Expected exactly one accessible ${request.operation.role}; found ${count}.`,
+          )
+        if (request.operation.op === 'click') {
+          if (request.operation.role === 'link') {
+            const href = assertActorUILinkHref(
+              await locator.getAttribute('href'),
+              actor.community,
+              actor.app,
+            )
+            const target = await locator.getAttribute('target')
+            if (target && target !== '_self')
+              throw new Error('UI links cannot open another browsing context.')
+            if (new URL(href).origin !== new URL(page.url()).origin)
+              throw new Error('UI links must stay on the current actor app origin.')
+          }
+          await locator.click()
+          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          await write(path.join(profile, 'result.json'), {
+            id: request.id,
+            data: { clicked: true },
+          })
+          return
+        }
+        if (request.operation.op === 'fill') {
+          if ((await locator.getAttribute("contenteditable")) === "true") {
+            await locator.click()
+            await locator.press(process.platform === "darwin" ? "Meta+a" : "Control+a")
+            await locator.press("Backspace")
+            await locator.pressSequentially(request.operation.value)
+          } else {
+            await locator.fill(request.operation.value)
+          }
+          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          await write(path.join(profile, 'result.json'), { id: request.id, data: { filled: true } })
+          return
+        }
+        throw new Error('Unsupported actor UI operation.')
+      }
+      const url = `https://${actor.app}.groupher.localhost/${encodeURIComponent(actor.community)}/${actor.app === 'dash' ? 'overview' : 'post'}`
+      await page.goto(`https://${actor.app}.groupher.localhost/health`, {
+        waitUntil: 'domcontentloaded',
+      })
+      const status = await page.evaluate(async (actor) => {
+        const response = await fetch('https://auth.groupher.localhost/api/auth/test-login', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
+          body: JSON.stringify({
+            localActor: {
+              run: actor.run,
+              alias: actor.alias,
+              community: actor.community,
+              app: actor.app,
+            },
+          }),
+        })
+        return response.status
+      }, actor)
+      if (status !== 204)
+        throw new Error(
+          `Local Auth rejected the account (${status}). Restart Auth/Phoenix through Dev Hub if configuration changed.`,
+        )
+      await page.goto(url, { waitUntil: 'networkidle', timeout: 45_000 })
+      const viewer = await page.evaluate(async () => {
+        const response = await fetch('/api/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
+          body: JSON.stringify({ query: '{ sessionState { isValid user { login } } }' }),
+        })
+        const result = await response.json()
+        return result.data?.sessionState
+      })
+      if (!viewer?.isValid || viewer.user?.login !== actor.login)
+        throw new Error('Dash viewer did not match the selected account.')
+      const text = await page.locator('body').innerText()
+      if (/Sign in required|Sign in to continue|Internal Server Error/.test(text))
+        throw new Error('Dash did not render the authenticated community page.')
+      const screenshots = path.join(REPO_ROOT, '.playwright')
+      await mkdir(screenshots, { recursive: true })
+      const screenshot = path.join(screenshots, `local-test-${actor.run}-${actor.alias}.png`)
+      await page.screenshot({ path: screenshot })
+      await write(path.join(profile, 'result.json'), {
+        id: request.id,
+        data: {
+          login: actor.login,
+          community: actor.community,
+          url: page.url(),
+          title: await page.title(),
+          screenshot,
+        },
+      })
+    } catch (error) {
+      await write(path.join(profile, 'result.json'), {
+        id: request?.id,
+        error: error instanceof Error ? error.message : 'Browser operation failed.',
+      })
+    } finally {
+      busy = false
+    }
+  }, 250)
+  process.send?.({ ready: true })
+}
+
+if (process.argv[2] === '--worker') {
+  worker(process.argv[3], process.argv[4] === 'headless').catch((error) => {
+    process.send?.({ error: error instanceof Error ? error.message : 'Browser failed.' })
+    process.exitCode = 1
+  })
+}

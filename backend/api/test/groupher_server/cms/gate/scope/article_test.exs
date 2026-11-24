@@ -124,7 +124,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert sql =~ "article_review_blocks"
   end
 
-  test "Article Insights scope combines author, owner, and scoped moderator access" do
+  test "Article Insights scope combines author, owner, and scoped admin access" do
     {:ok, actor} = db_insert(:user)
 
     query =

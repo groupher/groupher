@@ -14,12 +14,20 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNode do
   @pipeline operation: :docs_restore_workspace_node,
             confirmation: Confirmation,
             target: :community,
-            params: [:tree_revision, :queue_revision, :action_id, :target_parent, :target_index]
+            params: [
+              :tree_revision,
+              :queue_revision,
+              :action_id,
+              :record_revision,
+              :target_parent,
+              :target_index
+            ]
   receipt_pipeline run_receipt(
                      community,
                      tree_revision,
                      queue_revision,
                      action_id,
+                     record_revision,
                      target_parent,
                      target_index,
                      actor,
@@ -29,17 +37,25 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNode do
 
     change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical) do
-        WorkspaceRestore.run(
-          canonical,
-          queue,
-          tree_revision,
-          queue_revision,
-          action_id,
-          target_parent,
-          target_index,
-          actor,
-          operation_ref
-        )
+        with {:ok, :pass} <-
+               CMS.DocTree.CommunityTrashQuery.validate_revision(
+                 canonical,
+                 action_id,
+                 record_revision,
+                 queue
+               ) do
+          WorkspaceRestore.run(
+            canonical,
+            queue,
+            tree_revision,
+            queue_revision,
+            action_id,
+            target_parent,
+            target_index,
+            actor,
+            operation_ref
+          )
+        end
       end
     end)
 
@@ -64,20 +80,25 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNode do
         tree_revision,
         queue_revision,
         action_id,
+        record_revision,
         target_parent,
         target_index,
         %User{} = actor,
         command_id
       )
       when is_integer(tree_revision) and tree_revision >= 0 and is_integer(queue_revision) and
-             queue_revision >= 0 and is_binary(action_id) and is_binary(command_id) and
-             (is_nil(target_parent) or is_binary(target_parent)) and
-             (is_nil(target_index) or (is_integer(target_index) and target_index >= 0)) do
+             queue_revision >= 0 and is_binary(action_id) and is_binary(record_revision) and
+             is_binary(command_id) and
+             (is_nil(target_parent) or is_binary(target_parent) or
+                target_parent == :restore_original) and
+             (is_nil(target_index) or (is_integer(target_index) and target_index >= 0)) and
+             (target_parent != :restore_original or is_nil(target_index)) do
     run_receipt(
       community,
       tree_revision,
       queue_revision,
       action_id,
+      record_revision,
       target_parent,
       target_index,
       actor,
@@ -85,7 +106,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreWorkspaceNode do
     )
   end
 
-  def execute(_, _, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
+  def execute(_, _, _, _, _, _, _, _, _), do: {:error, :invalid_tree_input}
 
   defp present_result(
          %Confirmation{data: %{"community_id" => id} = data},

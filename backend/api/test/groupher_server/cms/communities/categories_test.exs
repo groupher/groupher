@@ -18,9 +18,20 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
   describe "[cms category]" do
     test "public category facade routes command-aware writes through the receipt pipeline",
          ~m(user community)a do
+      Repo.insert!(
+        CMS.Model.GlobalPassport.changeset(%CMS.Model.GlobalPassport{}, %{
+          user_id: user.id,
+          permissions: %{"category.create" => true}
+        })
+      )
+
       assert {:ok, category} =
                CMS.Communities.create_category(
-                 %{title: "Workflow category", slug: "workflow-category", community: community.slug},
+                 %{
+                   title: "Workflow category",
+                   slug: "workflow-category",
+                   community: community.slug
+                 },
                  user,
                  Ecto.UUID.generate()
                )

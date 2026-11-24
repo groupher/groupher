@@ -56,7 +56,12 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
 
   @doc "Checks Community preview admission inside a read-only repeatable-read transaction."
   def community_snapshot(actor, action, %Community{} = community)
-      when action in [:docs_queue_preview, :docs_history_read, :docs_queue_configure] do
+      when action in [
+             :docs_queue_preview,
+             :docs_history_read,
+             :docs_queue_configure,
+             :community_article_trash_read
+           ] do
     with {:ok, :pass} <- snapshot_transaction(),
          {:ok, context} <- Load.community_snapshot(actor, community),
          %Decision{allowed: true} <-

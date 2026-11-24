@@ -125,8 +125,6 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
     {community, public, _, actor} = mock_article(:post)
     article = Repo.get!(Article, public.id)
 
-    passport = Repo.get_by!(GlobalPassport, user_id: actor.id)
-
     actor.id
     |> then(&Repo.get_by!(GlobalPassport, user_id: &1))
     |> Ecto.Changeset.change(permissions: %{"unknown.action" => true})
@@ -254,7 +252,7 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
              Passport.grant_in_transaction(subject, scope, [], member.revision)
   end
 
-  test "Gate Community context loads only the current actor's scoped Admin facts" do
+  test "Gate Community context loads only the current actor's scoped admin facts" do
     {:ok, owner} = db_insert(:user)
     {:ok, subject} = db_insert(:user)
     {:ok, outsider} = db_insert(:user)

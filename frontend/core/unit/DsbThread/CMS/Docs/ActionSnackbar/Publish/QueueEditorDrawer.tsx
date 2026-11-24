@@ -7,9 +7,10 @@ import useTrans from '~/hooks/useTrans'
 import { saveDocQueueCopy, type TSaveDocQueueCopyInput } from '~/lib/artimentPublisher'
 import { slugify } from '~/lib/slug'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
+import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import BaseDrawer from '~/ui/Drawer'
-import S from '~/unit/DsbThread/schema/docs'
+import { queueMemberEditor } from '~/unit/DocThread/schema'
 
 import Body from '../../Editor/Article/Body'
 import { parseEditorValue } from '../../Editor/Article/helper'
@@ -20,8 +21,6 @@ import useSalon from './salon/queue_editor'
 
 type TProps = {
   articleId: string
-  workingCopyId: string
-  queueRevision: number
   onClose: () => void
   onSaved: () => void
 }
@@ -29,19 +28,15 @@ type TProps = {
 type TDraft = { title: string; subtitle: string; slug: string; body: TRichEditorValue }
 const signature = (draft: TDraft): string => JSON.stringify(draft)
 
-const QueueEditorDrawer: FC<TProps> = ({
-  articleId,
-  workingCopyId,
-  queueRevision,
-  onClose,
-  onSaved,
-}) => {
+const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const { accountScope } = useAccount()
   const { slug: community } = useCommunity()
   const [draft, setDraft] = useState<TDraft | null>(null)
   const [baseline, setBaseline] = useState('')
-  const [expectedQueueRevision, setExpectedQueueRevision] = useState(queueRevision)
+  const [expectedQueueRevision, setExpectedQueueRevision] = useState<number | null>(null)
+  const [workingCopyId, setWorkingCopyId] = useState<string | null>(null)
   const [workRevision, setWorkRevision] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -50,16 +45,28 @@ const QueueEditorDrawer: FC<TProps> = ({
 
   useEffect(() => {
     let cancelled = false
-    browserGraphQLRequest<{ articleWorkingCopies: TDocWorkingCopy[] }>(S.docsWorkingCopies, {
+    setDraft(null)
+    setBaseline('')
+    setWorkingCopyId(null)
+    setWorkRevision(null)
+    setExpectedQueueRevision(null)
+    setError(null)
+    if (!accountScope) return
+    browserGraphQLRequest<{
+      docsQueueMember: {
+        queueRevision: number
+        workingCopy: TDocWorkingCopy
+      } | null
+    }>(queueMemberEditor, {
       community,
       articleId,
     })
       .then((data) => {
         if (cancelled) return
-        const copy = data.articleWorkingCopies.find(
-          (item) => item.id === workingCopyId && item.scopeType === 'workspace',
-        )
-        if (!copy) throw new Error('Queue copy not found')
+        const member = data.docsQueueMember
+        if (!member || member.workingCopy.scopeType !== 'workspace')
+          throw new Error('Queue copy not found')
+        const copy = member.workingCopy
         const loaded = {
           title: copy.title,
           subtitle: copy.threadFields?.subtitle ?? '',
@@ -68,7 +75,9 @@ const QueueEditorDrawer: FC<TProps> = ({
         }
         setDraft(loaded)
         setBaseline(signature(loaded))
+        setWorkingCopyId(copy.id)
         setWorkRevision(copy.revision)
+        setExpectedQueueRevision(member.queueRevision)
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err))
@@ -76,7 +85,7 @@ const QueueEditorDrawer: FC<TProps> = ({
     return () => {
       cancelled = true
     }
-  }, [articleId, community, workingCopyId])
+  }, [accountScope, articleId, community])
 
   useEffect(() => {
     if (!dirty) return
@@ -95,7 +104,15 @@ const QueueEditorDrawer: FC<TProps> = ({
   }
 
   const save = async (): Promise<void> => {
-    if (!draft || !workRevision || !dirty || !draft.title.trim() || saving) return
+    if (
+      !draft ||
+      !workRevision ||
+      expectedQueueRevision === null ||
+      !dirty ||
+      !draft.title.trim() ||
+      saving
+    )
+      return
     const started = draft
     setSaving(true)
     setError(null)
@@ -183,7 +200,7 @@ const QueueEditorDrawer: FC<TProps> = ({
                 onChange={(event) => setDraft({ ...draft, slug: event.target.value })}
               />
               <Body
-                editorKey={workingCopyId}
+                editorKey={workingCopyId ?? articleId}
                 value={draft.body}
                 mode={DOC_EDITOR_MODE.EDIT}
                 onChange={(body) =>

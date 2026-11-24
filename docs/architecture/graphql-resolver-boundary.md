@@ -61,7 +61,7 @@ binding/database lookup 由 root `GroupherServer.FrontDesk` 经 `GroupherServer.
 数量和行数只描述审计快照，不是架构判定标准。一个较长的纯 adapter 可以合法存在；一个只有数行、但决定 replay 或授权策略的函数仍然越界。
 
 整改完成后的 Web 层由 20 个 `Resolvers.CMS.*`、5 个 `Resolvers.Accounts.*` 与独立的
-`Resolvers.ContentImport` 组成；原 `cms_resolver.ex`、`accounts_resolver.ex` 和两个无调用方
+`Resolvers.CMS.Import` 组成；原 `cms_resolver.ex`、`accounts_resolver.ex` 和两个无调用方
 payload helper 均已删除。
 
 ## 3. Resolver 允许与禁止的职责
@@ -163,7 +163,7 @@ P1 不一定立即导致错误，但边界已经含有领域策略、内部存�
 
 以下问题不需要先阻塞边界迁移，但应在后续 schema 版本中处理：
 
-- `get_passport_string/3`、`all_passport_rules/3` 使用 `Jason.encode!` 将结构塞进 GraphQL String；长期应改为 typed object 或明确 JSON scalar；
+- Passport 字符串投影已退役，当前 Global / Community Admin 权限通过 typed facts 对象查询；
 - `comment_reconcile_states/3` 当前构造 `comments_count`，但 `comment_mutation_article` GraphQL type 只暴露 `inner_id` 和 `comments_revision`；该字段只在直接调用 resolver 的测试中可见；
 - 审计时 `cms_resolver.ex` 同时覆盖多个领域；R4 已按映射表拆分并删除该文件。
 
@@ -344,16 +344,16 @@ Accounts resolver 函数拆入 `Profiles`、`Sessions`、`Relationships`、`Mail
 | browser session、OAuth identity                                                                       | `Resolvers.Accounts.Sessions`                                |
 | fans、collect folders/entries                                                                         | `Resolvers.Accounts.Relationships`                           |
 | mailbox                                                                                               | `Resolvers.Accounts.Mailbox`                                 |
-| `get_passport`、`get_passport_string`、`get_all_rules`                                                | `Resolvers.Accounts.Passport`                                |
-| `all_passport_rules`                                                                                  | `Resolvers.CMS.Passport`                                     |
-| Content Import，包括其 scoped Passport check                                                          | `Resolvers.ContentImport`                                    |
+| `current_global_passport`                                                                             | `Resolvers.CMS.Passport`                                     |
+| Import，包括 canImportDocs 能力查询                                                                   | `Resolvers.CMS.Import`                                       |
 | `command_id` 等通用 command payload field                                                             | `Resolvers.CMS.CommandPayload`                               |
 | Article logs、Community Activity                                                                      | `Resolvers.CMS.Activity`                                     |
 | Article Insights、Web Analysis                                                                        | `Resolvers.CMS.Analysis`                                     |
 | ArticleStats fields/read                                                                              | `Resolvers.CMS.ArticleStats`                                 |
 | `track_article_view`、`article_viewer_states`                                                         | `Resolvers.CMS.ViewTracker`                                  |
 | Community Application query/mutation/field                                                            | `Resolvers.CMS.CommunityApplications`                        |
-| Community core、moderator、subscription、Category、Tag                                                | `Resolvers.CMS.Communities`                                  |
+| Community core、subscription、Category、Tag                                                           | `Resolvers.CMS.Communities`                                  |
+| Community Admin membership / requests                                                                 | `Resolvers.CMS.CommunityAdmins`                              |
 | Asset                                                                                                 | `Resolvers.CMS.Assets`                                       |
 | Dashboard config/theme                                                                                | `Resolvers.CMS.Dashboard`                                    |
 | Wallpaper                                                                                             | `Resolvers.CMS.Wallpaper`                                    |

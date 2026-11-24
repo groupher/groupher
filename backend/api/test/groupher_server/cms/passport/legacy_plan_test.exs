@@ -4,6 +4,39 @@ defmodule GroupherServer.Test.CMS.Passport.LegacyPlanTest do
   alias GroupherServer.CMS
   alias CMS.Passport.LegacyPlan
 
+  test "normalization preserves mixed top-level scopes and reports collisions" do
+    rules = %{
+      "global" => %{},
+      "first" => %{"root" => true},
+      "cms" => %{"second" => %{"post.pin" => true}}
+    }
+
+    assert {:ok, normalized} =
+             GroupherServer.CMS.Passport.LegacyPlan.normalize_legacy_rules(rules)
+
+    assert normalized["first"] == %{"root" => true}
+    assert normalized["second"] == %{"cms" => %{"post.pin" => true}}
+
+    assert {:ok, collision} =
+             GroupherServer.CMS.Passport.LegacyPlan.normalize_legacy_rules(%{
+               rules
+               | "cms" => %{"first" => %{"post.pin" => true}}
+             })
+
+    assert Map.has_key?(collision["first"], "legacy_scope_collision")
+  end
+
+  test "a community named root is not mistaken for a boolean lord flag" do
+    assert {:ok, normalized} =
+             GroupherServer.CMS.Passport.LegacyPlan.normalize_legacy_rules(%{
+               "global" => %{},
+               "cms" => %{"root" => %{"post.pin" => true}}
+             })
+
+    assert normalized["root"] == %{"cms" => %{"post.pin" => true}}
+    refute Map.has_key?(normalized, "cms")
+  end
+
   test "reports unsafe scoped conversions without widening thread grants" do
     rules = %{
       "global" => %{
@@ -47,5 +80,53 @@ defmodule GroupherServer.Test.CMS.Passport.LegacyPlanTest do
              :invalid_boolean,
              :missing_or_ambiguous_membership
            ]
+  end
+
+  test "normalizes legacy global and cms wrapper without changing the planned scopes" do
+    global = %{"god" => true, "community.create" => true}
+
+    canonical = %{
+      "global" => global,
+      "alpha" => %{"cms" => %{"doc.queue.write" => true}}
+    }
+
+    legacy = %{
+      "global" => global,
+      "cms" => %{"alpha" => %{"doc.queue.write" => true}}
+    }
+
+    assert {:ok, canonical_rules} = LegacyPlan.normalize_legacy_rules(canonical)
+    assert {:ok, legacy_rules} = LegacyPlan.normalize_legacy_rules(legacy)
+    assert legacy_rules == canonical_rules
+
+    membership = %{"alpha" => %{community_id: 7, member_id: 8}}
+    assert {:ok, canonical_plan} = LegacyPlan.build(canonical_rules, membership)
+    assert {:ok, legacy_plan} = LegacyPlan.build(legacy_rules, membership)
+    assert legacy_plan == canonical_plan
+    assert legacy_plan.is_root
+    assert legacy_plan.global == %{"community.create" => true}
+    assert legacy_plan.communities["alpha"].permissions == %{"doc.queue.write" => true}
+
+    assert Enum.any?(legacy_plan.exceptions, fn exception ->
+             exception.reason == :requires_semantic_review and
+               exception.key == "alpha.doc.queue.write"
+           end)
+  end
+
+  test "malformed legacy rule shapes and values fail closed" do
+    assert {:ok, %{"global" => %{}}} = LegacyPlan.normalize_legacy_rules(nil)
+    assert {:error, :invalid_legacy_rules} = LegacyPlan.normalize_legacy_rules(%{"alpha" => %{}})
+
+    assert {:ok, malformed} =
+             LegacyPlan.normalize_legacy_rules(%{
+               "global" => %{"god" => "yes"},
+               "cms" => "not-a-map"
+             })
+
+    assert {:ok, plan} = LegacyPlan.build(malformed, %{})
+    assert plan.global == %{}
+    refute plan.is_root
+    assert Enum.any?(plan.exceptions, &(&1.reason == :invalid_boolean))
+    assert Enum.any?(plan.exceptions, &(&1.reason == :invalid_community_scope))
   end
 end

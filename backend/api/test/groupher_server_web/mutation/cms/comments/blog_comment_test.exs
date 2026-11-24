@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(CMS.Passport.ErrorCat.permission_denied())
+               ErrorCat.code(CMS.Gate.ErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(CMS.Passport.ErrorCat.permission_denied())
+               ErrorCat.code(CMS.Gate.ErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -334,8 +334,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
         }
       }
 
-      passport_rules = %{community.slug => %{"blog.lock_comment" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.slug => %{permissions: %{"blog.lock_comment" => true}}},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:lock_comment, :blog), variables)
 
@@ -377,8 +382,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
         }
       }
 
-      passport_rules = %{community.slug => %{"blog.undo_lock_comment" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.slug => %{permissions: %{"blog.undo_lock_comment" => true}}},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:unlock_comment, :blog), variables)
 

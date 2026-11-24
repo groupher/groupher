@@ -38,18 +38,21 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   end
 
   defp grant_binding_actions(user, communities) do
-    grants =
-      Enum.into(communities, %{}, fn community ->
-        {community.slug, %{"cms" => %{"post.pin" => true}}}
-      end)
+    for community <- communities do
+      {:ok, _} =
+        GroupherServer.Test.PassportFixture.grant_community(
+          user,
+          community.slug,
+          %{
+            "article.mirror" => true,
+            "article.move" => true,
+            "article.unmirror" => true,
+            "post.pin" => true
+          }
+        )
+    end
 
-    global = %{
-      "post.community.mirror" => true,
-      "post.community.move" => true,
-      "post.community.unmirror" => true
-    }
-
-    Map.put(user, :cur_passport, Map.merge(%{"global" => global}, grants))
+    user
   end
 
   test "all/1 returns every binding without selecting one implicitly",
@@ -269,20 +272,12 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
   test "a Post with a Draft Ticket link cannot move or unmirror after source review hiding",
        ~m(community destination post user)a do
-    passport = user.cur_passport
-    community_grants = get_in(passport, [community.slug, "cms"])
-
-    community_grants =
-      Map.merge(community_grants, %{
-        "ticket.create" => true,
-        "ticket.link_source" => true,
-        "ticket.read_internal" => true
-      })
-
-    user = %{
-      user
-      | cur_passport: put_in(user.cur_passport, [community.slug, "cms"], community_grants)
-    }
+    {:ok, _} =
+      GroupherServer.Test.PassportFixture.grant_community(
+        user,
+        community.slug,
+        %{"ticket.create" => true, "ticket.link_source" => true, "ticket.read_internal" => true}
+      )
 
     {:ok, ticket} =
       CMS.Tickets.create_from_post(

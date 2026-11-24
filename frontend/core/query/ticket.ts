@@ -193,21 +193,17 @@ const searchInternal = (
     enabled: !!community && query.trim().length > 0,
   })
 
-const assigneeCandidates = (community: string) =>
+const assigneeCandidates = (communityRef: string) =>
   queryOptions({
-    queryKey: ticketQueryKeys.assigneeCandidates(community),
+    queryKey: ticketQueryKeys.assigneeCandidates(communityRef),
     queryFn: async () => {
       const data = await browserGraphQLRequest(ticketAssigneeCandidates, {
-        community,
+        communityRef,
         pagi: toPagiGraphQLInput({ api: 'offset', page: 1, size: 100 }),
       })
-      return (data.pagedCommunityModerators?.entries || []).map(({ userId, user }) => ({
-        id: String(userId),
-        login: user.login,
-        nickname: user.nickname,
-      }))
+      return (data.pagedCommunityAdminMembers?.entries || []).map(({ user }) => user)
     },
-    enabled: !!community,
+    enabled: !!communityRef,
     staleTime: 60_000,
   })
 

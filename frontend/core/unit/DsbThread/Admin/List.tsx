@@ -8,16 +8,8 @@ import UserItem from './UserItem'
 
 export default function List() {
   const s = useSalon()
-  const {
-    admins,
-    activeModerator,
-    setActiveSettingAdmin,
-    pageInfo,
-    setPage,
-    loading,
-    error,
-    retry,
-  } = useAdmins()
+  const { admins, activeAdmin, setActiveSettingAdmin, pageInfo, setPage, loading, error, retry } =
+    useAdmins()
 
   return (
     <div className={s.wrapper}>
@@ -27,7 +19,7 @@ export default function List() {
         const { user } = item
         if (!user?.login) return []
 
-        const active = user.login === activeModerator?.user.login
+        const active = user.login === activeAdmin?.user.login
 
         return [
           <UserItem

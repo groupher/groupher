@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { TModerator } from '~/spec'
+import type { TAdmin } from '~/spec'
 import Button from '~/ui/Buttons/Button'
 import Drawer from '~/ui/Drawer'
 import { toast } from '~/ui/Toaster'
@@ -9,7 +9,7 @@ import { expandAdminPermissions } from '../logic/adminPermissions'
 import useAdmins from '../logic/useAdmins'
 import PermissionChecklist from './PermissionChecklist'
 
-type TProps = { item: TModerator; onClose: () => void }
+type TProps = { item: TAdmin; onClose: () => void }
 
 export default function PermissionEditor({ item, onClose }: TProps) {
   const { grantablePermissions, updatePermissions, removeAdmin } = useAdmins()

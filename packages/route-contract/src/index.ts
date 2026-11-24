@@ -58,7 +58,6 @@ export const AUTH_ROUTE = {
   SESSION_REVOKE_OTHERS: `${API_ROUTE.AUTH}/sessions/revoke-others`,
   LOGOUT: `${API_ROUTE.AUTH}/logout`,
   TEST_LOGIN: `${API_ROUTE.AUTH}/test-login`,
-  TEST_ADMIN_LOGIN: `${API_ROUTE.AUTH}/test-admin-login`,
   ACCOUNTS: `${API_ROUTE.AUTH}/accounts`,
   ACCOUNT_LINK: `${API_ROUTE.AUTH}/accounts/:provider/link`,
   ACCOUNT_CALLBACK: `${API_ROUTE.AUTH}/accounts/:provider/callback`,

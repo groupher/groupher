@@ -26,17 +26,11 @@ defmodule GroupherServer.CMS.DocTree.Commands.MergeQueue do
                      actor,
                      command_id
                    ) do
-    gate(fn candidate ->
-      with {:ok, canonical} <- CMS.Gate.check_in_transaction(actor, :docs_queue_write, candidate),
-           {:ok, canonical} <-
-             CMS.Gate.check_in_transaction(actor, :docs_queue_preview, canonical) do
-        {:ok, canonical}
-      end
-    end)
+    gate(fn candidate -> QueueAccess.authorize_body_write(candidate, article_id, actor) end)
 
     change(fn canonical, operation_ref ->
       with {:ok, queue} <- Queue.lock_or_create(canonical),
-           {:ok, :pass} <- QueueAccess.authorize(canonical, article_id, actor) do
+           {:ok, :pass} <- QueueAccess.authorize_body_edit(canonical, article_id, actor) do
         Queue.merge(
           canonical,
           queue,
@@ -107,9 +101,8 @@ defmodule GroupherServer.CMS.DocTree.Commands.MergeQueue do
          %Community{id: id} = community,
          actor
        ) do
-    with {:ok, _} <- CMS.Gate.access_check(actor, :docs_queue_write, community),
-         {:ok, _} <- CMS.Gate.access_check(actor, :docs_queue_preview, community),
-         {:ok, :pass} <- QueueAccess.authorize_after_commit(community, article_id, actor) do
+    with {:ok, _} <-
+           QueueAccess.authorize_body_write_after_commit(community, article_id, actor) do
       {:ok, %{queue_revision: revision, working_copy_revision: work_revision}}
     end
   end

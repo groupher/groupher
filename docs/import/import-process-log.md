@@ -1,10 +1,10 @@
-# Content Import Process 与 Process Log
+# Import Process 与 Process Log
 
 > 状态：v1 已实现。Preview 采用 Node 派生投影，Job 采用 Phoenix 持久事实投影，Browser 统一轮询快照。
 >
-> 范围：定义 Content Import 在 Preview 与 Job 两个执行阶段中，如何生成、保存、投影和轮询用户可见的过程信息，以及前端 `ImportProcessLog` 的通用边界。
+> 范围：定义 Import 在 Preview 与 Job 两个执行阶段中，如何生成、保存、投影和轮询用户可见的过程信息，以及前端 `ImportProcessLog` 的通用边界。
 >
-> 关联文档：[`content_import_architecture.md`](./content-import-architecture.md) 负责跨来源总体架构；[`bulk_import.md`](./bulk-import.md) 负责 GitHub Docs 产品流程；[`import_file_sdk.md`](./import-file-sdk.md) 负责 PreviewStore、Files SDK 与 PostgreSQL staging；[`import_error_handling.md`](./import-error-handling.md) 记录错误透传、Back/reset 与联调复盘。
+> 关联文档：[`import-architecture.md`](./import-architecture.md) 负责跨来源总体架构；[`bulk-import.md`](./bulk-import.md) 负责 GitHub Docs 产品流程；[`import-file-sdk.md`](./import-file-sdk.md) 负责 PreviewStore、Files SDK 与 PostgreSQL staging；[`import-error-handling.md`](./import-error-handling.md) 记录错误透传、Back/reset 与联调复盘。
 >
 > 本文不改变 `Platform -> Source -> ThreadDataset -> Thread -> ImportSourceMapping` 总体边界，也不把 Preview 与 ImportJob 合并成一个新的 Workflow Session。
 
@@ -13,7 +13,7 @@
 统一能力采用以下命名：
 
 ```text
-领域模型 / 投影模块   ContentImport.Process
+领域模型 / 投影模块   Import.Process
 前端公共类型          TImportProcess
 API / GraphQL 字段    process
 前端展示组件          ImportProcessLog
@@ -34,7 +34,7 @@ Browser：──────────────────── poll Proc
 完整关系如下：
 
 ```text
-                        Content Import
+                        Import
                               │
              ┌────────────────┴────────────────┐
              │                                 │
@@ -60,7 +60,7 @@ Browser：──────────────────── poll Proc
 
 ### 2.1 `Process`
 
-`ContentImport.Process` 表示当前可展示的执行过程，包含：
+`Import.Process` 表示当前可展示的执行过程，包含：
 
 - 当前执行状态。
 - 当前阶段。
@@ -182,7 +182,7 @@ Job：    preparing -> applying
               └────────── Read + Project ──────┘
                                │
                                ▼
-                    ContentImport.Process
+                    Import.Process
                            Projector
                                │
                                │ API Snapshot
@@ -321,7 +321,7 @@ Node Publisher
       │
       │ 完成一个有界批次
       ▼
-stageContentImportBodies
+stageDocImportBodies
       │
       ├── 更新 JobItem 状态
       ├── 更新 completed / total
@@ -356,7 +356,7 @@ staging 每批本来就会刷新一次 Job progress，因此增加 `recentBatch`
 
 刷新 progress 时需要保留非 bodies 字段，不能用新的计数 map 意外覆盖 `recentBatch` 或其他 Process 信息。
 
-`ContentImport.Process` 读取并投影：
+`Import.Process` 读取并投影：
 
 ```text
 ImportJob.status
@@ -558,14 +558,14 @@ ImportProcessLog
 v1 实现目录：
 
 ```text
-backend/api/lib/groupher_server/cms/content_import/
+backend/api/lib/groupher_server/cms/import/
 `-- process.ex
 
-backend/import/src/lib/content-import/core/process/
+backend/import/src/lib/import/core/process/
 |-- contract.ts
 `-- previewProjector.ts
 
-frontend/core/unit/DashboardThread/CMS/ContentImport/ProcessLog/
+frontend/core/unit/DsbThread/CMS/Import/ProcessLog/
 |-- index.tsx
 |-- decoder.ts
 |-- ProcessStep.tsx

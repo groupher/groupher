@@ -3,9 +3,12 @@ import { type FC, useEffect, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
+import { viewerQueryKeys } from '~/query/key'
+import useAccount from '~/stores/account/hooks'
 import Input from '~/ui/Input'
 import { toast } from '~/ui/Toaster'
 
+import { isWorkingCopyRevisionConflict } from '../helper'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
@@ -17,13 +20,23 @@ type TProps = {
 
 const TitleSetting: FC<TProps> = ({ onBack }) => {
   const s = useSalon()
+  const { accountScope } = useAccount()
 
   const { article, articlePath } = useViewingArticle()
   const [title, setTitle] = useState(article.title ?? '')
+  const [revisionConflict, setRevisionConflict] = useState(false)
+  const [conflictRefresh, setConflictRefresh] = useState<{
+    baselineUpdatedAt: number
+    succeeded: boolean
+  } | null>(null)
   const { touched, setTouched, resetTouched } = useTouched()
   const workingCopiesQuery = useQuery({
-    queryKey: ['article-working-copies', article.id, articlePath?.community],
-    enabled: Boolean(article.id && articlePath?.community),
+    queryKey: viewerQueryKeys.articleWorkingCopies(
+      accountScope || 'anonymous',
+      String(article.id ?? ''),
+      articlePath?.community ?? '',
+    ),
+    enabled: Boolean(accountScope && article.id && articlePath?.community),
     queryFn: () => {
       if (!article.id || !articlePath?.community)
         throw new Error('Article identity is unavailable.')
@@ -37,6 +50,13 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
     (candidate) => candidate.scopeType === 'default',
   )
   const [result, saveWorkingCopy] = useArticleSettingMutation(S.saveWorkingCopy)
+
+  useEffect(() => {
+    setTitle(article.title ?? '')
+    resetTouched()
+    setRevisionConflict(false)
+    setConflictRefresh(null)
+  }, [accountScope, article.id])
 
   useEffect(() => {
     if (workingCopy && !touched) setTitle(workingCopy.title)
@@ -59,9 +79,24 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
 
     saveWorkingCopy(params).then(async (result) => {
       if (result.error) {
-        toast('修改失败', 'error')
+        if (isWorkingCopyRevisionConflict(result.error)) {
+          setRevisionConflict(true)
+          setConflictRefresh({
+            baselineUpdatedAt: workingCopiesQuery.dataUpdatedAt,
+            succeeded: false,
+          })
+          const refreshed = await workingCopiesQuery.refetch()
+          setConflictRefresh((current) =>
+            current ? { ...current, succeeded: refreshed.isSuccess } : current,
+          )
+          toast('检测到协作者已保存新版本。你的标题修改已保留，请核对后再保存。', 'error')
+        } else {
+          toast('修改失败', 'error')
+        }
       } else if (result.data?.saveWorkingCopy?.title !== undefined) {
         toast('已保存到默认编辑副本；公开版本未变')
+        setRevisionConflict(false)
+        setConflictRefresh(null)
         const newTitle = result.data.saveWorkingCopy.title
         setTitle(newTitle)
         await workingCopiesQuery.refetch()
@@ -83,11 +118,22 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
       <div className={s.note}>
         标题保存到默认编辑副本；公开版本保持不变，需发布新 Snapshot 后才会更新。
       </div>
+      {revisionConflict ? (
+        <div role='alert' className='text-digest mt-2 text-xs'>
+          最新服务端标题：
+          {conflictRefresh &&
+          (conflictRefresh.succeeded ||
+            workingCopiesQuery.dataUpdatedAt > conflictRefresh.baselineUpdatedAt)
+            ? (workingCopy?.title ?? '暂不可用')
+            : '暂不可用'}
+          。输入框中的本地标题仍保留；请先核对差异，再确认是否保存。
+        </div>
+      ) : null}
       <Footer
         onBack={onBack}
-        disabled={!touched || !workingCopy}
+        disabled={!touched || !workingCopy || workingCopiesQuery.isFetching}
         top={10}
-        loading={result.fetching}
+        loading={result.fetching || workingCopiesQuery.isFetching}
         onConfirm={() => handleUpdate()}
       />
     </div>

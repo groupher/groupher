@@ -113,7 +113,7 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
         Ecto.UUID.generate()
       )
 
-    actor = %{ctx.author | cur_passport: %{"global" => %{"god" => true}}}
+    actor = ctx.author
     assert {:ok, _} = CMS.Seeds.Docs.delete(ctx.community, ctx.doc.id, actor)
 
     assert Repo.get!(Article, ctx.doc.id)

@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     assert result.article_stats.views_revision == 1
     assert result.viewer_state.viewer_has_viewed
     assert Repo.get_by!(ViewerState, thread: :post, article_id: post.id, user_id: user.id)
-    assert Repo.get_by!(MetricEvent, metric: :article_view)
+    assert Repo.get_by!(MetricEvent, metric: :article_view, article_id: post.id)
   end
 
   test "an immediate retry is accepted without increasing views twice" do
@@ -115,7 +115,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
              track_article_view(post, user, read_purpose: :public_read)
 
     assert Repo.aggregate(ViewDedupeState, :count) == 1
-    assert Repo.aggregate(MetricEvent, :count) == 1
+
+    assert Repo.aggregate(from(event in MetricEvent, where: event.article_id == ^post.id), :count) ==
+             1
   end
 
   test "concurrent requests for one actor and Article increase views at most once" do
@@ -131,7 +133,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     assert Enum.all?(results, &match?({:ok, %{tracked: true}}, &1))
     assert {:ok, %{views: 1, views_revision: 1}} = CMS.ArticleStats.fetch(:post, post.id)
     assert Repo.aggregate(ViewDedupeState, :count) == 1
-    assert Repo.aggregate(MetricEvent, :count) == 1
+
+    assert Repo.aggregate(from(event in MetricEvent, where: event.article_id == ^post.id), :count) ==
+             1
   end
 
   test "a request counts again after its actor window has elapsed" do
@@ -196,7 +200,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
              track_article_view(post, user, read_purpose: :author_preview)
 
     assert Repo.aggregate(ViewDedupeState, :count) == 0
-    assert Repo.aggregate(MetricEvent, :count) == 0
+
+    assert Repo.aggregate(from(event in MetricEvent, where: event.article_id == ^post.id), :count) ==
+             0
   end
 
   test "verified agent reads count without creating human ViewerState" do

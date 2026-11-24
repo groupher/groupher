@@ -64,10 +64,19 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
         %{context: %{cur_user: user}}
       ) do
     with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
-         {:ok, canonical} <-
-           CMS.articles_working_copy_access_check(user, :edit, article, community),
+         {:ok, canonical} <- working_copy_read_access(user, article, community),
          {:ok, rows} <- CMS.articles_working_copies(canonical, community) do
       {:ok, rows}
+    end
+  end
+
+  defp working_copy_read_access(user, article, community) do
+    action = if article.thread == :doc, do: :manage_coauthors, else: :edit
+
+    with {:ok, :pass} <- CMS.articles_co_authors_reject_working_copy_access(article, user),
+         {:ok, canonical} <-
+           CMS.articles_working_copy_access_check(user, action, article, community) do
+      {:ok, canonical}
     end
   end
 
@@ -351,21 +360,21 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
   def trashed_articles(
         _root,
         %{community: %Community{} = community, thread: thread} = args,
-        _info
+        %{context: %{cur_user: actor}}
       ) do
     filter = (Map.get(args, :filter) || %{}) |> Map.put(:thread, thread)
 
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.articles_list_trashed(community, filter, pagi)
+      CMS.articles_list_trashed(community, filter, pagi, actor)
     end
   end
 
   def trashed_article(
         _root,
         %{id: id, community: %Community{} = community, thread: thread},
-        _info
+        %{context: %{cur_user: actor}}
       ) do
-    CMS.articles_get_trashed(id, community, thread)
+    CMS.articles_get_trashed(id, community, thread, actor)
   end
 
   def pin_article(_root, ~m(article article_path command_id)a, %{context: %{cur_user: user}}) do

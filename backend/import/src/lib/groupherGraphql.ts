@@ -1,10 +1,10 @@
 /**
- * Implements the Src Lib GroupherGraphql boundary inside Content Import.
+ * Implements the Src Lib GroupherGraphql boundary inside Import.
  *
  * Business position:
  *
  *   Dash proxy / Phoenix import job
- *     -> Content Import module
+ *     -> Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary
  */
@@ -12,7 +12,7 @@
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
 import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 
-type TGraphQLError = { code?: unknown; message?: unknown }
+type TGraphQLError = { code?: unknown; extensions?: { reasonCode?: string }; message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
 
 export class GroupherGraphQLError extends Error {
@@ -33,7 +33,7 @@ export type TGroupherGraphQLOptions = {
   serviceScope?: string
 }
 
-/** Resolves delegation subject without leaking content import routing details to callers. */
+/** Resolves delegation subject without leaking import routing details to callers. */
 export const resolveDelegationSubject = async (backendToken: string): Promise<string | null> => {
   const data = await requestGroupherGraphQL<{
     sessionState?: { delegationSubject?: string | null; isValid?: boolean | null } | null
@@ -48,8 +48,8 @@ query ResolveDelegationSubject {
     {},
     {
       backendToken,
-      serviceSubject: 'service:content-import',
-      serviceScope: 'content-import:write',
+      serviceSubject: 'service:import',
+      serviceScope: 'import:write',
     },
   )
 
@@ -91,7 +91,7 @@ const formatGraphQLErrorMessage = (value: unknown): string | null => {
   return value == null ? null : String(value)
 }
 
-/** Runs the request groupher graph ql operation at the content import boundary. */
+/** Runs the request groupher graph ql operation at the import boundary. */
 export const requestGroupherGraphQL = async <T>(
   query: string,
   variables: Record<string, unknown>,
@@ -101,9 +101,8 @@ export const requestGroupherGraphQL = async <T>(
   if (options.serviceSubject) {
     serviceTokenProvider ??= createServiceAuthClientFromEnv()
     const token = await serviceTokenProvider.getToken({
-      resource:
-        process.env.SERVICE_AUTH_PHOENIX_RESOURCE || 'https://api.groupher.com/content-import',
-      scopes: [options.serviceScope || 'content-import:write'],
+      resource: process.env.SERVICE_AUTH_PHOENIX_RESOURCE || 'https://api.groupher.com/import',
+      scopes: [options.serviceScope || 'import:write'],
     })
     headers.Authorization = `Bearer ${token}`
   }
@@ -123,7 +122,7 @@ export const requestGroupherGraphQL = async <T>(
   const payload = (await response.json()) as TGraphQLPayload<T>
   const error = payload.errors
     ?.map((item) => ({
-      code: typeof item.code === 'string' ? item.code : undefined,
+      code: item.extensions?.reasonCode ?? (typeof item.code === 'string' ? item.code : undefined),
       message: formatGraphQLErrorMessage(item.message),
     }))
     .find((item) => item.message)

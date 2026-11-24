@@ -7,7 +7,7 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
 
   test "registered Global actions use stored grants and ignore stale god passport data" do
     {:ok, user} = db_insert(:user)
-    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    actor = Map.put(user, :cur_passport, %{"global" => %{"god" => true}})
 
     assert_denied(call_middleware("community.create", actor, %{}))
 
@@ -33,16 +33,14 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
     {community, _article, _attrs, _owner} = mock_article(:post)
     {:ok, user} = db_insert(:user)
 
-    actor = %{
-      user
-      | cur_passport: %{
-          "global" => %{"god" => true},
-          community.slug => %{
-            "root" => true,
-            "cms" => %{"review.read" => true}
-          }
+    actor =
+      Map.put(user, :cur_passport, %{
+        "global" => %{"god" => true},
+        community.slug => %{
+          "root" => true,
+          "cms" => %{"review.read" => true}
         }
-    }
+      })
 
     arguments = %{community: community.slug}
     assert_denied(call_middleware("review.read", actor, arguments))
@@ -101,18 +99,19 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
              get_in(resolution.arguments, [:passport_scopes, :community])
   end
 
-  test "actions in an unmigrated scope retain their Registry fallback" do
+  test "retired ordinary Article actions reject stale legacy Passport grants" do
     {community, _article, _attrs, user} = mock_article(:post)
 
-    actor = %{
-      user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"post.edit" => true}}
-        }
-    }
+    actor =
+      Map.put(user, :cur_passport, %{
+        "global" => %{},
+        community.slug => %{"cms" => %{"post.edit" => true}}
+      })
 
-    assert call_middleware("post.update", actor, %{community: community.slug}).errors == []
+    assert_denied(
+      call_middleware("post.update", actor, %{community: community.slug}),
+      4352
+    )
   end
 
   defp call_middleware(action, actor, arguments, opts \\ []) do
@@ -126,7 +125,7 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
     Passport.call(resolution, Keyword.merge([action: action], opts))
   end
 
-  defp assert_denied(%Absinthe.Resolution{} = resolution) do
-    assert [%ErrorCat.Error{namespace: {:cms, :passport}, code: 4353}] = resolution.errors
+  defp assert_denied(%Absinthe.Resolution{} = resolution, code \\ 4353) do
+    assert [%ErrorCat.Error{namespace: {:cms, :passport}, code: ^code}] = resolution.errors
   end
 end

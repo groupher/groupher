@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
   use GroupherServer.TestMate
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   defp emotion_entry(emotions, type) do
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(PassportErrorCat.permission_denied())
+               ErrorCat.code(GateErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -200,7 +200,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(PassportErrorCat.permission_denied())
+               ErrorCat.code(GateErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -479,8 +479,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         }
       }
 
-      passport_rules = %{community.slug => %{"post.lock_comment" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.slug => %{permissions: %{"post.lock_comment" => true}}},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:lock_comment, :post), variables)
 
@@ -522,8 +527,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         }
       }
 
-      passport_rules = %{community.slug => %{"post.undo_lock_comment" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.slug => %{permissions: %{"post.undo_lock_comment" => true}}},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:unlock_comment, :post), variables)
 

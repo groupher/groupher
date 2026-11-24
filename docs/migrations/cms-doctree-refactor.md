@@ -1,6 +1,8 @@
-# CMS DocTree / ContentImport：现状审计与独立重构计划
+# CMS DocTree / ContentImport：历史审计与独立重构计划
 
-> 阅读边界（2026-11-12）：本文保留旧 DocTree / ContentImport 重构阶段的入口与职责盘点。新的 Docs D/Q、队列、目录、审批、Release 和去 Branch 状态以 [Docs 发布队列合同](./docs-publish-queue-refactor.md)为准；下文的“当前”“已落地”指各自记录阶段，不证明旧 Branch 或 Import apply 已按新合同改接。ContentImport 的 Job / staging / apply 边界仍供依赖核对，外部 Git source branch 不属于 Docs 目标 branch 的退役范围。
+> 阅读边界（2026-11-24）：下文旧模块、GraphQL 名称与文件路径保留其历史语境，不是当前调用合同。当前 Import 入口为 `Schema.CMS.Import` / `Resolvers.CMS.Import`，原子 apply 为 `CMS.DocTree.Workflows.Import`；当前实现以 [Import 架构](../import/import-architecture.md) 为准。
+>
+> 原记录（2026-11-12）：本文保留旧 DocTree / ContentImport 重构阶段的入口与职责盘点。新的 Docs D/Q、队列、目录、审批、Release 和去 Branch 状态以 [Docs 发布队列合同](./docs-publish-queue-refactor.md)为准；下文的“当前”“已落地”指各自记录阶段，不证明旧 Branch 或 Import apply 已按新合同改接。ContentImport 的 Job / staging / apply 边界仍供依赖核对，外部 Git source branch 不属于 Docs 目标 branch 的退役范围。
 
 > 本文把 DocTree 与 Docs ContentImport 从 CMS Phase 5 总文档中单独拆出，记录当前真实功能、对外入口、Gate、lifecycle/version authority、identity、事务 owner、Receipt/workflow 边界和目录职责，并持续记录已落地的重构批次。
 >
@@ -430,7 +432,7 @@ fail/cancel           -> workflow terminal transition
 3. 保持 `stage` 的 batch 上限、BodyBag canonical hash/size、ready/skip/fail 单向状态和 `(job_ref, external_ref)` 幂等；覆盖相同 bytes 重放、不同 bytes 冲突和 completed Job 重放。
 4. 保持 `apply` 单事务：Job lock、intent revalidation、trashed target restore、Docs Draft、`DocTree.Import`、`ImportSourceMapping`、staging cleanup、Job result 必须一起提交或一起回滚。
 5. 记录 apply 的结果投影和失败摘要；response loss 通过 `job_ref` 或相同 `preview_ref` 重发恢复，不依赖内存 worker 状态。
-6. Node PreviewStore、Dataset/BodyBag、Files SDK 和生产 Blob 的架构以 [`docs/import/content-import-architecture.md`](../import/content-import-architecture.md) 为准；本文只负责 Phoenix 当前实现的 CMS 边界，不再创建第三套导入架构。
+6. Node PreviewStore、Dataset/BodyBag、Files SDK 和生产 Blob 的架构以 [`docs/import/import-architecture.md`](../import/import-architecture.md) 为准；本文只负责 Phoenix 当前实现的 CMS 边界，不再创建第三套导入架构。
 
 ### 8.5 物理目录迁移（已完成）
 
@@ -499,8 +501,8 @@ fail/cancel           -> workflow terminal transition
 
 配套领域文档：
 
-- [`Content Import 总体架构`](../import/content-import-architecture.md)
-- [`Content Import 重构与落地计划`](../import/content-import-refactor-plan.md)
+- [`Content Import 总体架构`](../import/import-architecture.md)
+- [`Content Import 重构与落地计划`](../import/import-refactor-plan.md)
 - [`Content Import 产品流程`](../import/bulk-import.md)
 - [`CMS Command Phase 5 主迁移记录`](./cms-command-phase-5-legacy-workflows.md)
 

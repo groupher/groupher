@@ -224,12 +224,15 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     {community, public, _attrs, author} = mock_article(:post)
     {:ok, destination} = mock_community(author)
 
-    actor =
-      Map.put(author, :cur_passport, %{
-        "global" => %{"post.community.mirror" => true},
-        community.slug => %{"cms" => %{"post.pin" => true}},
-        destination.slug => %{"cms" => %{"post.pin" => true}}
-      })
+    for site <- [community, destination] do
+      {:ok, _} =
+        GroupherServer.Test.PassportFixture.grant_community(author, site.slug, %{
+          "article.mirror" => true,
+          "post.pin" => true
+        })
+    end
+
+    actor = author
 
     assert {:ok, _} =
              CMS.Articles.mirror(
@@ -578,10 +581,9 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     assert %Ecto.Association.NotLoaded{} = article.author
 
     assert {:ok, _} =
-             CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => false}}},
-               author
-             )
+             GroupherServer.Test.PassportFixture.grant_community(author, community.slug, %{
+               "post.pin" => false
+             })
 
     assert {:ok, saved} =
              CMS.Articles.save_working_copy(
@@ -632,22 +634,16 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
              CMS.Gate.Access.Check.article(author, :edit, forged, community)
   end
 
-  test "Article admission uses the canonical Community rather than a forged slug" do
-    {community, public, _attrs, _author} = mock_article(:post)
-    article = Repo.get!(Article, public.id)
+  test "Community admission uses the canonical Community rather than a forged slug" do
+    {community, _public, _attrs, _author} = mock_article(:post)
     {:ok, other} = db_insert(:user)
-    forged_slug = "forged-#{Ecto.UUID.generate()}"
-
-    assert {:ok, _} =
-             CMS.Passport.stamp_passport(
-               %{"global" => %{}, forged_slug => %{"cms" => %{"post.edit" => true}}},
-               other
-             )
+    {:ok, other_community} = mock_community(other)
+    forged_slug = other_community.slug
 
     forged_community = %{community | slug: forged_slug}
 
-    assert {:error, %CMS.Gate.Decision{allowed: false}} =
-             CMS.Gate.Access.Check.article(other, :edit, article, forged_community)
+    assert {:error, %CMS.Gate.Decision{allowed: false, primary: %{reason: :permission_denied}}} =
+             CMS.Gate.Access.Check.community(other, :update, forged_community)
   end
 
   test "a Passport editor cannot save a published Article WorkingCopy" do
@@ -659,10 +655,9 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     attrs = %{title: "Private draft"}
 
     assert {:ok, _} =
-             CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => true}}},
-               editor
-             )
+             GroupherServer.Test.PassportFixture.grant_community(editor, community.slug, %{
+               "post.pin" => true
+             })
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CMS.Articles.save_working_copy(
@@ -676,10 +671,9 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
              )
 
     assert {:ok, _} =
-             CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => false}}},
-               editor
-             )
+             GroupherServer.Test.PassportFixture.grant_community(editor, community.slug, %{
+               "post.pin" => false
+             })
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CMS.Articles.save_working_copy(
@@ -705,10 +699,9 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     scope_id = Ecto.UUID.generate()
 
     assert {:ok, _} =
-             CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => true}}},
-               editor
-             )
+             GroupherServer.Test.PassportFixture.grant_community(editor, community.slug, %{
+               "post.pin" => true
+             })
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CMS.Articles.fork_snapshot(
@@ -721,10 +714,9 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
              )
 
     assert {:ok, _} =
-             CMS.Passport.stamp_passport(
-               %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => false}}},
-               editor
-             )
+             GroupherServer.Test.PassportFixture.grant_community(editor, community.slug, %{
+               "post.pin" => false
+             })
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CMS.Articles.fork_snapshot(

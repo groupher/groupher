@@ -13,9 +13,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
         -> allow / deny
         -> domain context
 
-  Moderator management uses the dedicated `:manage_moderators` action. Root and
-  global-god admission stays here; moderator persistence never re-checks actor
-  policy.
+  Root and global-god admission stays here; Admin persistence never re-checks
+  actor policy.
 
   Example contract:
 
@@ -37,7 +36,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   alias CMS.Passport
 
   @read_actions [:read, :list]
-  @docs_read_actions [:docs_queue_preview, :docs_history_read, :docs_trash_read]
+  @docs_read_actions [
+    :docs_queue_preview,
+    :docs_history_read,
+    :community_article_trash_read
+  ]
   @docs_write_actions [
     :docs_queue_write,
     :docs_queue_approve,
@@ -47,6 +50,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   ]
   @command_actions [
     :update,
+    :dashboard_theme_update,
+    :dashboard_rss_update,
     :category_create,
     :category_update,
     :category_delete,
@@ -110,17 +115,6 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       when action in @command_actions do
     with {:ok, true} <- lifecycle_allowed(community, :command, context) do
       relation_allowed(command_binding_allowed?(user, community, action, context))
-    end
-  end
-
-  def check_access(
-        user,
-        :manage_moderators,
-        %Community{} = community,
-        %CommunityContext{} = context
-      ) do
-    with {:ok, true} <- lifecycle_allowed(community, :command, context) do
-      moderator_management_access(user, community, context)
     end
   end
 
@@ -287,6 +281,14 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       )
   end
 
+  defp command_binding_allowed?(user, community, :dashboard_theme_update, context) do
+    passport_allowed?(user, community, CMS.GateAction.dashboard_theme_update(), context, nil)
+  end
+
+  defp command_binding_allowed?(user, community, :dashboard_rss_update, context) do
+    passport_allowed?(user, community, CMS.GateAction.dashboard_rss_update(), context, nil)
+  end
+
   defp command_binding_allowed?(user, community, :import_docs, context) do
     passport_allowed?(user, community, CMS.GateAction.doc_import(), context, nil)
   end
@@ -312,8 +314,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
               :category_set,
               :category_unset
             ] do
-    base_command_binding_allowed?(user, community, context) or
-      passport_allowed?(user, community, category_passport_action(action), context, nil)
+    passport_allowed?(user, community, category_passport_action(action), context, nil)
   end
 
   defp command_binding_allowed?(user, community, action, context)
@@ -359,7 +360,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp docs_passport_action(:docs_queue_configure), do: CMS.GateAction.doc_queue_configure()
   defp docs_passport_action(:docs_queue_publish), do: CMS.GateAction.doc_queue_publish()
   defp docs_passport_action(:docs_history_read), do: CMS.GateAction.doc_history_read()
-  defp docs_passport_action(:docs_trash_read), do: "doc.trash"
+
+  defp docs_passport_action(:community_article_trash_read) do
+    CMS.GateAction.community_article_trash_read()
+  end
+
   defp docs_passport_action(:docs_trash_purge), do: "doc.permanent_delete"
 
   defp ticket_passport_action(:ticket_create), do: CMS.GateAction.ticket_create()
@@ -377,7 +382,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp management_binding_allowed?(%{type: :operations}, _community, _context), do: true
 
   defp management_binding_allowed?(%User{} = user, community, context) do
-    owner?(user, community) or moderator?(user, community) or god?(context) or
+    owner?(user, community) or admin?(user, community, context) or god?(context) or
       root?(community, context) or docs_member?(user, community)
   end
 
@@ -389,39 +394,32 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp docs_member?(_, _), do: false
 
   defp base_command_binding_allowed?(%User{} = user, community, context) do
-    owner?(user, community) or moderator?(user, community) or god?(context) or
+    owner?(user, community) or admin?(user, community, context) or god?(context) or
       root?(community, context)
   end
 
   defp base_command_binding_allowed?(_user, _community, _context), do: false
 
-  defp moderator_management_access(user, community, context) do
-    relation_allowed(moderator_management_binding_allowed?(user, community, context))
-  end
-
-  defp moderator_management_binding_allowed?(:operations, _community, _context), do: true
-  defp moderator_management_binding_allowed?(%{type: :operations}, _community, _context), do: true
-
-  defp moderator_management_binding_allowed?(%User{}, community, context) do
-    god?(context) or root?(community, context)
-  end
-
-  defp moderator_management_binding_allowed?(_user, _community, _context), do: false
-
   defp owner?(%User{id: user_id}, %Community{user_id: user_id}), do: true
   defp owner?(_, _), do: false
 
-  defp moderator?(%User{id: user_id}, %Community{moderators: moderators})
-       when is_list(moderators) do
-    Enum.any?(moderators, &(&1.user_id == user_id))
+  # Membership mirrors are display projections; only canonical Passport facts authorize.
+  defp admin?(
+         %User{id: user_id},
+         %Community{id: community_id},
+         %CommunityContext{
+           community_passport_scope: %Passport.Scope.Community{
+             actor_id: user_id,
+             community_id: community_id,
+             community: %{member_id: member_id}
+           }
+         }
+       )
+       when not is_nil(member_id) do
+    true
   end
 
-  defp moderator?(%User{id: user_id}, %Community{meta: %{moderators_ids: ids}})
-       when is_list(ids) do
-    user_id in ids
-  end
-
-  defp moderator?(_, _), do: false
+  defp admin?(_, _, _), do: false
 
   defp root?(_community, %CommunityContext{
          community_passport_scope: %Passport.Scope.Community{community: %{is_lord: true}}

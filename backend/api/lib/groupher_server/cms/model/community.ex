@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Model.Community do
   Ecto schema for communities.
 
   A community is the main CMS container for threads, dashboard settings, tags,
-  subscribers, moderators, and public navigation identity.
+  subscribers, Admin members, and public navigation identity.
 
   Business position:
 
@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Model.Community do
     CommunityCategory,
     CommunityDashboard,
     CommunityLifecycle,
-    CommunityModerator,
+    CommunityAdmin,
     CommunitySubscriber,
     CommunityTagGroup,
     Embeds,
@@ -53,7 +53,7 @@ defmodule GroupherServer.CMS.Model.Community do
 
   @required_fields ~w(title desc user_id logo slug)a
   # @required_fields ~w(title desc user_id)a
-  @optional_fields ~w(favicon label index aka contributes_digest pending locale homepage articles_count moderators_count subscribers_count)a
+  @optional_fields ~w(favicon label index aka contributes_digest pending locale homepage articles_count admins_count subscribers_count)a
 
   @doc "Returns the maximum number of pinned articles per thread in a community."
   def max_pinned_article_count_per_thread, do: @max_pinned_article_count_per_thread
@@ -78,8 +78,7 @@ defmodule GroupherServer.CMS.Model.Community do
 
     has_many(:subscribers, {"communities_subscribers", CommunitySubscriber})
 
-    # this field will be rewrite as virtual for GQ workflow
-    has_many(:moderators, {"communities_admins", CommunityModerator})
+    has_many(:admins, {"communities_admins", CommunityAdmin})
 
     has_one(:dashboard, CommunityDashboard)
     has_one(:lifecycle, CommunityLifecycle)
@@ -88,17 +87,17 @@ defmodule GroupherServer.CMS.Model.Community do
     has_many(:assets, CommunityAsset)
 
     field(:articles_count, :integer, default: 0)
-    field(:moderators_count, :integer, default: 0)
+    field(:admins_count, :integer, default: 0)
     field(:subscribers_count, :integer, default: 0)
     field(:community_tags_count, :integer, default: 0)
 
     field(:pending, :integer, default: 0)
 
     field(:command_id, Ecto.UUID, virtual: true)
-    field(:moderator_results, :map, virtual: true)
+    field(:admin_results, :map, virtual: true)
 
     field(:viewer_has_subscribed, :boolean, default: false, virtual: true)
-    field(:viewer_is_moderator, :boolean, default: false, virtual: true)
+    field(:viewer_is_admin, :boolean, default: false, virtual: true)
     field(:contributes_digest, {:array, :integer}, default: [])
 
     many_to_many(
