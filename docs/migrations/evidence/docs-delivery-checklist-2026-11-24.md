@@ -51,3 +51,11 @@ D1 browser and scoped backend acceptance are complete. D2 coverage gaps and D3/P
 The two remaining accessibility changes from the accepted UI were committed to #615 as abdd92bc2 and merged into the #616 branch as 49021b9be. The body editor implementation and its existing focused tests were already present. The earlier ordinary Post two-account acceptance and coauthor-final24 cleanup are recorded in the active branch co-authors document, committed as e8b04e5e3. Browser acceptance used the active main worktree with its recorded local source integration.
 
 PR #615 also includes Admin, Import and Docs changes across 421 files. PR #616 is stacked on that branch. Merging those PRs deploys the combined scope through the existing dev workflow. Independent Post/D1 acceptance does not narrow the existing PR scope.
+
+## Unified current-branch delivery
+
+The current `doc-redesign` branch now contains both PR histories through merge commit `81c6228af`, preserving the five subsequent Import fixes (`512311a2c`, `a47f4040c`, `d8da3cdea`, `26567c451`, `309ff4d3b`) and the existing Landing change. The unified branch passed 34 focused backend Import/Queue tests and 18 frontend tests; Import passed 148 tests with one skipped. Core/Dash/Community/Import types, generated GraphQL contracts, documentation checks and backend style passed.
+
+The full backend run completed in 755.5 seconds: 2963 passed, eight failed, one skipped and eight excluded. The failures all assumed globally empty/exact Analysis event counts. Each affected file passed on its own fresh database (37 tests total). Commit `0032ade9e` scopes event assertions to the fixture Article and measures aggregate maintenance counts relative to their baseline. All 37 tests then passed against the previously failing database. A final full rerun was started on another fresh isolated database.
+
+D2 and D3 acceptance gaps remain as listed above; consolidation is not evidence that those checks passed.
