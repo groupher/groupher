@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
     DocsTreeNode,
     DocsTrashedArticle,
     DocsTrashedTreeNode,
+    ArticleBindingTrash,
     TrashAction
   }
 
@@ -75,7 +76,9 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
          {:ok, articles} <- authorize(community, docs, actor),
          {:ok, :pass} <- unreferenced(community, queue, action, nodes, docs),
          {:ok, :pass} <- purge_documents(community, docs, articles, command_id),
-         {:ok, :pass} <- remove_trash(action, nodes, docs) do
+         {:ok, :pass} <- remove_trash(action, nodes, docs),
+         {:ok, _event} <- log_purge_activity(community, action, docs, actor, command_id),
+         {:ok, :pass} <- CMS.DocTree.Effects.enqueue_invalidation(community, command_id) do
       {:ok, %{trash_action_id: action.hash_id}}
     else
       :error -> {:error, :invalid_trash_action}
@@ -129,6 +132,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
           )
         ) or
         Repo.exists?(from(p in ArticlePublic, where: p.article_id in ^doc_ids)) or
+        binding_trash_references?(community.id, doc_ids) or
         legacy_queue_references?(queue.id, doc_ids) or
         Repo.exists?(
           from(c in DocsQueueTreeChange,
@@ -147,6 +151,16 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
   def legacy_queue_references?(queue_id, doc_ids) do
     Repo.exists?(
       from(m in DocsQueueArticle, where: m.queue_id == ^queue_id and m.article_id in ^doc_ids)
+    )
+  end
+
+  defp binding_trash_references?(_community_id, []), do: false
+
+  defp binding_trash_references?(community_id, doc_ids) do
+    Repo.exists?(
+      from(t in ArticleBindingTrash,
+        where: t.community_id == ^community_id and t.article_id in ^doc_ids
+      )
     )
   end
 
@@ -216,6 +230,20 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
 
   defp delete_optional_default(article, work) do
     Deleter.delete_docs_aggregate_in_transaction(article, work)
+  end
+
+  defp log_purge_activity(community, action, docs, actor, operation_ref) do
+    CMS.DocTree.Effects.activity(
+      %{
+        activity_type: :doc_tree,
+        community_id: community.id,
+        ref: action.hash_id
+      },
+      :permanently_deleted,
+      actor: if(actor == :operations, do: :system, else: actor),
+      operation_ref: operation_ref,
+      metadata: %{doc_count: length(docs)}
+    )
   end
 
   defp remove_trash(action, nodes, docs) do
