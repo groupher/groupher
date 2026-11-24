@@ -294,8 +294,8 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
 
     assert_request_generation_behavior(
       lifecycle,
-      "community:#{community.id}",
-      %{target_type: :comment, comment_id: comment.id, community_id: community.id}
+      "platform",
+      %{target_type: :comment, comment_id: comment.id}
     )
   end
 

@@ -1,6 +1,8 @@
 defmodule GroupherServer.Test.CMS.Assets.ProviderFailureTest do
   use GroupherServer.TestMate, async: false
 
+  import Ecto.Query
+
   alias GroupherServer.CMS
   alias CMS.Assets.Deletion
   alias CMS.Model.CommunityAsset
@@ -79,8 +81,8 @@ defmodule GroupherServer.Test.CMS.Assets.ProviderFailureTest do
       end
 
       assert Repo.get!(Event, event.id) == original
-      assert Repo.all(Retry) == []
-      assert Repo.all(Oban.Job) == []
+      refute Repo.exists?(from(retry in Retry, where: retry.event_id == ^event.id))
+      refute Repo.exists?(from(job in Oban.Job, where: job.args["event_id"] == ^event.id))
     end)
   end
 

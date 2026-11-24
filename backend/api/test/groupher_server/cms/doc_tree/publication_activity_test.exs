@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.CMS.DocTree.PublicationActivityTest do
   test "each Docs publication records the selected Snapshot and stable Article identity" do
     {community, doc, _attrs, user} = mock_article(:doc)
     first = Repo.get!(ArticlePublic, doc.id)
-    actor = Map.put(user, :cur_passport, %{"global" => %{"god" => true}})
+    actor = user
     command_id = Ecto.UUID.generate()
 
     assert {:ok, _} =

@@ -222,7 +222,11 @@ defmodule MentionsPerf.Dataset do
 
   defp ticket(post, user) do
     grants = Map.new(~w(ticket.create ticket.read_internal ticket.manage_visibility), &{&1, true})
-    actor = %{user | cur_passport: %{"global" => %{}, post.community.slug => %{"cms" => grants}}}
+
+    {:ok, _} =
+      GroupherServer.Test.PassportFixture.grant_community(user, post.community.slug, grants)
+
+    actor = user
 
     {:ok, ticket} =
       CMS.Tickets.create_from_post(

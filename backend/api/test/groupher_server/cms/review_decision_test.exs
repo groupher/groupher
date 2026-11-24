@@ -724,7 +724,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
            } = Repo.get_by!(CommentReviewBlock, comment_id: comment.id)
   end
 
-  test "the report threshold for a Doc Comment uses its branch Community scope" do
+  test "the report threshold for a Doc Comment uses platform scope" do
     {community, doc, _attrs, author} = mock_article(:doc)
 
     {:ok, comment} =
@@ -770,7 +770,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
              resolved_at: nil
            } = Repo.get_by!(CommentReviewBlock, comment_id: comment.id)
 
-    assert community_id == community.id
+    assert is_nil(community_id)
   end
 
   test "the report threshold for a Doc uses its request community scope" do

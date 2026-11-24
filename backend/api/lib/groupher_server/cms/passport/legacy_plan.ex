@@ -12,8 +12,7 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{Community, CommunityAdmin, Passport}
-  alias CMS.Passport.Catalog
-  alias CMS.Passport.LegacyVocabulary
+  alias CMS.Passport.{Catalog, LegacyVocabulary}
 
   # Verified: LegacyVocabulary and the Community creation middleware both use
   # the Global community.create grant for the same creation operation.

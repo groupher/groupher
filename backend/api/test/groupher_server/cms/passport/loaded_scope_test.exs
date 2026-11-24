@@ -125,8 +125,6 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
     {community, public, _, actor} = mock_article(:post)
     article = Repo.get!(Article, public.id)
 
-    passport = Repo.get_by!(GlobalPassport, user_id: actor.id)
-
     actor.id
     |> then(&Repo.get_by!(GlobalPassport, user_id: &1))
     |> Ecto.Changeset.change(permissions: %{"unknown.action" => true})

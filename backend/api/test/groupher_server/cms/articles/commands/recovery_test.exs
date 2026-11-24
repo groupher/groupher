@@ -224,12 +224,15 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     {community, public, _attrs, author} = mock_article(:post)
     {:ok, destination} = mock_community(author)
 
-    actor =
-      Map.put(author, :cur_passport, %{
-        "global" => %{"post.community.mirror" => true},
-        community.slug => %{"cms" => %{"post.pin" => true}},
-        destination.slug => %{"cms" => %{"post.pin" => true}}
-      })
+    for site <- [community, destination] do
+      {:ok, _} =
+        GroupherServer.Test.PassportFixture.grant_community(author, site.slug, %{
+          "article.mirror" => true,
+          "post.pin" => true
+        })
+    end
+
+    actor = author
 
     assert {:ok, _} =
              CMS.Articles.mirror(

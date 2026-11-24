@@ -4,22 +4,13 @@ defmodule GroupherServer.CMS.Passport.LegacyVocabulary do
 
   This module is not an authorization registry or a runtime permission contract.
   Runtime authorization uses CMS.Passport.Catalog exclusively.
+
+      offline legacy report -> frozen vocabulary -> conversion classification
   """
 
   alias GroupherServer.CMS
   alias CMS.Artiment.Config
   @contexts ["cms"]
-  @article_ops [
-    "pin",
-    "undo_pin",
-    "sink",
-    "undo_sink",
-    "trash",
-    "restore",
-    "permanent_delete",
-    "lock_comment",
-    "undo_lock_comment"
-  ]
 
   @doc """
   Returns supported passport contexts.

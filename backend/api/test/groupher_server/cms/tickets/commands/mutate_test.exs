@@ -1344,9 +1344,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                binding
              end)
 
-    actor = grant_community_permissions(community, actor, ~w(post.restore post.permanent_delete))
     actor = grant_community_permissions(other, actor, ticket_permissions())
-    actor = grant_community_permissions(other, actor, ~w(post.restore post.permanent_delete))
 
     second = create_and_publish_ticket(other, post, actor)
     assert second.publication_state == :published

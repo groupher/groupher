@@ -181,8 +181,10 @@ defmodule GroupherServer.CMS.ProductionSeed.PrivilegesConcurrencyTest do
         ~w(ticket.create ticket.link_source ticket.update ticket.transition ticket.assign ticket.manage_case ticket.manage_visibility ticket.read_internal)
         |> Map.new(&{&1, true})
 
-      ticket_actor =
-        Map.put(actor, :cur_passport, %{"global" => %{}, community.slug => %{"cms" => grants}})
+      {:ok, _} =
+        GroupherServer.Test.PassportFixture.grant_community(actor, community.slug, grants)
+
+      ticket_actor = actor
 
       {:ok, ticket} =
         CMS.Tickets.create_from_post(

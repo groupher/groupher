@@ -3,14 +3,15 @@ defmodule GroupherServer.TestWeb.ErrorResponse do
 
   use GroupherServer.TestMate, async: true
 
-  alias GroupherServer.{CMS, ErrorCat, Pagi}
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Pagi}
   alias CMS.Gate.Decision
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias Pagi.ErrorCat, as: PagiErrorCat
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias GroupherServerWeb.ErrorResponse
 
   test "exposes the login reason used by current Passport fact readers" do
-    error = GroupherServer.Accounts.Profiles.ErrorCat.account_login()
+    error = ProfileErrorCat.account_login()
 
     assert {:error, [message: _, extensions: %{code: 4301, reasonCode: "ACCOUNT_LOGIN"}]} =
              ErrorResponse.format_error(error)

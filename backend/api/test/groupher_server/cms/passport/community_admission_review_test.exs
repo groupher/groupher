@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityAdmissionReviewTest do
           end,
           fn -> CMS.Dashboard.update(community, :rss, %{}, actor, Ecto.UUID.generate()) end
         ] do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}} = call.()
+      assert {:error, %ErrorCat.Error{reason: :permission_denied}} = call.()
     end
 
     member

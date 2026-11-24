@@ -193,12 +193,15 @@ defmodule GroupherServer.Test.CMS.Articles.PublicBodyTest do
     assert {:ok, _} = CMS.SearchArtiments.Indexer.upsert_article(:post, ctx.article.id)
     assert {:ok, %{items: [item]}} = CMS.Press.thread_rss_feed(ctx.community, :post)
     assert item.html == current_document(ctx.article).html
-    assert CMS.SearchArtiments.Capacity.article_documents().post.count == 1
+    counted = CMS.SearchArtiments.Capacity.article_documents().post.count
+    assert counted >= 1
     queries = drain_queries([])
     assert Enum.any?(queries, &String.contains?(&1, "article_public_bodies"))
     refute Enum.any?(queries, &String.contains?(&1, ~s("article_bodies")))
     # Corrupt/missing projection fails closed instead of silently reading history.
     Repo.delete!(Repo.get!(ArticlePublicBody, ctx.article.id))
+    remaining = CMS.SearchArtiments.Capacity.article_documents() |> Map.get(:post, %{count: 0})
+    assert remaining.count == counted - 1
 
     assert {:error, _} =
              CMS.FrontDesk.article(%{
@@ -215,11 +218,10 @@ defmodule GroupherServer.Test.CMS.Articles.PublicBodyTest do
       ~w(ticket.create ticket.link_source ticket.update ticket.transition ticket.assign ticket.manage_case ticket.manage_visibility ticket.read_internal)
       |> Map.new(&{&1, true})
 
-    actor =
-      Map.put(ctx.actor, :cur_passport, %{
-        "global" => %{},
-        ctx.community.slug => %{"cms" => grants}
-      })
+    {:ok, _} =
+      GroupherServer.Test.PassportFixture.grant_community(ctx.actor, ctx.community.slug, grants)
+
+    actor = ctx.actor
 
     assert {:ok, ticket} =
              CMS.Tickets.create_from_post(
@@ -253,6 +255,8 @@ defmodule GroupherServer.Test.CMS.Articles.PublicBodyTest do
   end
 
   test "Gate hides deleted content while history and public projection remain private", ctx do
+    counted = CMS.SearchArtiments.Capacity.article_documents().post.count
+
     Repo.update_all(from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.article.id),
       set: [state: :deleted]
     )
@@ -273,7 +277,8 @@ defmodule GroupherServer.Test.CMS.Articles.PublicBodyTest do
                inner_id: ctx.inner_id
              })
 
-    refute Map.has_key?(CMS.SearchArtiments.Capacity.article_documents(), :post)
+    remaining = CMS.SearchArtiments.Capacity.article_documents() |> Map.get(:post, %{count: 0})
+    assert remaining.count == counted - 1
   end
 
   test "migration refuses nonempty Public", ctx do

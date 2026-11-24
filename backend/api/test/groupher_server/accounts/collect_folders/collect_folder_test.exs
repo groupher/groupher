@@ -393,11 +393,20 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
   end
 
   defp grant_binding_actions(user, communities) do
-    grants =
-      Enum.into(communities, %{}, fn community ->
-        {community.slug, %{"cms" => %{"post.pin" => true}}}
-      end)
+    for community <- communities do
+      {:ok, _} =
+        GroupherServer.Test.PassportFixture.grant_community(
+          user,
+          community.slug,
+          %{
+            "article.mirror" => true,
+            "article.move" => true,
+            "article.unmirror" => true,
+            "post.pin" => true
+          }
+        )
+    end
 
-    Map.put(user, :cur_passport, Map.merge(%{"global" => %{"post.community.mirror" => true}}, grants))
+    user
   end
 end

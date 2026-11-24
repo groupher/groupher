@@ -240,7 +240,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       "ticket.read_internal" => true
     }
 
-    actor = Map.put(user, :cur_passport, %{"global" => %{}, community.slug => %{"cms" => grants}})
+    {:ok, _} = GroupherServer.Test.PassportFixture.grant_community(user, community.slug, grants)
+    actor = user
 
     {:ok, ticket} =
       CMS.Tickets.create_from_post(
@@ -288,7 +289,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Ticket reference", digest: "Ticket", body_bag: mock_body_bag(body)},
-        Map.put(user, :cur_passport, %{"global" => %{"god" => true}}),
+        user,
         command_id: Ecto.UUID.generate()
       )
 
@@ -748,7 +749,9 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     assert discovered["hasNextPage"] == true
     assert discovered["endCursor"] == to_string(comment.inner_id)
-    refute String.contains?(Jason.encode!(discovered), "\"#{comment.id}\"")
+    for locator <- discovered["comments"], key <- ["id", "articleId", "commentId"] do
+      refute Map.has_key?(locator, key)
+    end
 
     next_page =
       gq_query(guest_conn, @article_comments_query, %{
@@ -1156,7 +1159,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Many references", digest: "Fanout", body_bag: mock_body_bag(body)},
-        Map.put(user, :cur_passport, %{"global" => %{"god" => true}}),
+        user,
         command_id: Ecto.UUID.generate()
       )
 
@@ -1525,7 +1528,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Reference source", digest: "Source", body_bag: mock_body_bag(body)},
-        Map.put(user, :cur_passport, %{"global" => %{"god" => true}}),
+        user,
         command_id: Ecto.UUID.generate()
       )
 

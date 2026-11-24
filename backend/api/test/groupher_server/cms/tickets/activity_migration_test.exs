@@ -17,10 +17,10 @@ defmodule GroupherServer.Test.CMS.Tickets.ActivityMigrationTest do
   setup do
     {community, post, _attrs, actor} = mock_article(:post)
 
-    actor =
-      Map.put(actor, :cur_passport, %{
-        "global" => %{},
-        community.slug => %{"cms" => %{"ticket.create" => true, "ticket.read_internal" => true}}
+    {:ok, _} =
+      GroupherServer.Test.PassportFixture.grant_community(actor, community.slug, %{
+        "ticket.create" => true,
+        "ticket.read_internal" => true
       })
 
     {:ok, ticket} =
