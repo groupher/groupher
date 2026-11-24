@@ -45,3 +45,9 @@ The complete LegacyPlan application report and all three successful mappings are
 - Fixture tooling needed exact empty-name textbox matching and real keyboard input events for contenteditable controls. The local CLI and browser worker changes passed 11 focused tooling tests. The worker lifecycle was restarted only for this owned run.
 
 D1 browser and scoped backend acceptance are complete. D2 coverage gaps and D3/P4c open items above remain independent delivery requirements.
+
+## Ordinary Post delivery alignment
+
+The two remaining accessibility changes from the accepted UI were committed to #615 as abdd92bc2 and merged into the #616 branch as 49021b9be. The body editor implementation and its existing focused tests were already present. The earlier ordinary Post two-account acceptance and coauthor-final24 cleanup are recorded in the active branch co-authors document, committed as e8b04e5e3. Browser acceptance used the active main worktree with its recorded local source integration.
+
+PR #615 also includes Admin, Import and Docs changes across 421 files. PR #616 is stacked on that branch. Merging those PRs deploys the combined scope through the existing dev workflow. Independent Post/D1 acceptance does not narrow the existing PR scope.

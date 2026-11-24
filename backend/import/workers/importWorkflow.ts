@@ -13,32 +13,32 @@ import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloud
 import { NonRetryableError } from 'cloudflare:workflows'
 import tar from 'tar-stream'
 
-import { createR2PreviewStore } from '../src/lib/content-import/core/preview-store/cloudflare'
+import { createR2PreviewStore } from '../src/lib/import/core/preview-store/cloudflare'
 import {
   READY_RECEIPT_SCHEMA_VERSION,
   sha256Json,
-} from '../src/lib/content-import/core/preview-store/previewStore'
-import { isCandidateSourceFile } from '../src/lib/content-import/platforms/github/repo/workspace/candidateFilter'
+} from '../src/lib/import/core/preview-store/previewStore'
+import { isCandidateSourceFile } from '../src/lib/import/platforms/github/repo/workspace/candidateFilter'
 import {
   parseDocument,
   toDocumentTreeMetadata,
   type TDocumentTreeMetadata,
-} from '../src/lib/content-import/threads/docs/analyzer/documentFile'
+} from '../src/lib/import/threads/docs/analyzer/documentFile'
 import type {
   TDocsDataset,
   TDocImportPreview,
   TDocImportSourceInfo,
   TSourceAnalysis,
   TSourceDocument,
-} from '../src/lib/content-import/threads/docs/contracts'
+} from '../src/lib/import/threads/docs/contracts'
 import type {
   TSourceFile,
   TSourceWorkspace,
-} from '../src/lib/content-import/threads/docs/contracts'
+} from '../src/lib/import/threads/docs/contracts'
 import {
   previewDocImportTarget,
   type TSourceInfo,
-} from '../src/lib/content-import/transport/phoenix/docsImport'
+} from '../src/lib/import/transport/phoenix/docsImport'
 
 type TWorkflowPayload = {
   attemptRef: string
@@ -479,7 +479,7 @@ const putUnknownLengthArchive = async (
     }
     if (pendingBytes > 0) await sendPart()
     await upload.complete(parts)
-    console.log('[content-import] multipart upload complete', {
+    console.log('[import] multipart upload complete', {
       bytes: totalBytes,
       parts: parts.length,
     })
@@ -505,7 +505,7 @@ export class ImportWorkflow extends WorkflowEntrypoint<Env, TWorkflowPayload> {
     ) {
       throw new NonRetryableError('docs_import_workflow_payload_invalid')
     }
-    const artifactRoot = `content-import/previews/${previewRef}/attempts/${attemptRef}/workflow/${event.instanceId}`
+    const artifactRoot = `import/previews/${previewRef}/attempts/${attemptRef}/workflow/${event.instanceId}`
     const source = await step.do(
       'resolve and persist public GitHub archive',
       {
@@ -520,7 +520,7 @@ export class ImportWorkflow extends WorkflowEntrypoint<Env, TWorkflowPayload> {
             this.env.ARTIFACTS,
           )
         } catch (error) {
-          console.warn('[content-import] GitHub source fetch failed', {
+          console.warn('[import] GitHub source fetch failed', {
             message: error instanceof Error ? error.message : String(error),
           })
           throw error
@@ -565,7 +565,7 @@ export class ImportWorkflow extends WorkflowEntrypoint<Env, TWorkflowPayload> {
         return artifact.text()
       },
     }
-    const { analyzeSourceTree } = await import('../src/lib/content-import/threads/docs/analyzer')
+    const { analyzeSourceTree } = await import('../src/lib/import/threads/docs/analyzer')
     if (
       workspace.files.some(
         (file) => isAnalyzerConfig(file.path) && file.sizeBytes > MAX_ANALYZER_SOURCE_FILE_BYTES,
@@ -725,7 +725,7 @@ export class ImportWorkflow extends WorkflowEntrypoint<Env, TWorkflowPayload> {
       }
       const sourceInfo = dataset.sourceInfo as TSourceInfo
       const target = await previewDocImportTarget(community, sourceInfo, analysis, {
-        serviceSubject: 'service:content-import',
+        serviceSubject: 'service:import',
       })
       const preview: TDocImportPreview = {
         badSmells: analysis.badSmells,

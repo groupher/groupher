@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
         -> CMS.Command receipt claim
         -> caller-owned transaction
         -> CreationPersist core row
-        -> Lifecycle + root moderator
+        -> Lifecycle + lord Admin
         -> presentation and analysis Outbox intents
         -> Confirmation / canonical Community recovery
   """
@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
   alias GroupherServer.{Accounts, CMS, FrontDesk, ReviewBot}
   alias Accounts.Model.User
   alias CMS.Communities.{CreationPersist, Lifecycle}
-  alias CMS.Communities.Moderators.Setup, as: ModeratorSetup
+  alias CMS.Communities.Admins.Setup, as: AdminSetup
   alias CMS.Communities.Commands.CreateConfirmation
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.T
@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
          {:ok, _lifecycle} <- Lifecycle.ensure_created(community.id),
          {:ok, _review_bot_configs} <-
            ReviewBot.create_default_configs_for_community(community.id),
-         {:ok, _moderator} <- ModeratorSetup.add_root(community, user),
+         {:ok, _admin} <- AdminSetup.add_lord(community, user),
          {:ok, canonical} <- FrontDesk.community(community.slug, mode: :internal),
          {:ok, _event} <-
            CMS.Dashboard.Effects.enqueue_presentation_changed(canonical, operation_ref),

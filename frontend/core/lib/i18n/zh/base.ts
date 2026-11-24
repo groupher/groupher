@@ -194,7 +194,6 @@ export default {
   'account.menu.shortcuts': '快捷键',
   'account.menu.create_community': '创建社区',
   'account.menu.logout': '登出',
-  'community.add_moderator': '添加社区管理员',
   'post.community_tag.create': '创建帖子标签',
   'post.community_tag.edit': '编辑帖子标签',
   'post.trash': '将帖子移入回收站',

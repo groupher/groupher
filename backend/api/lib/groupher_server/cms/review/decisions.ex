@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
   alias CMS.Review.Const
 
   @actions Const.decision_actions()
+  @shared_comment_threads [:post, :blog, :changelog, :doc]
 
   @doc "Applies one human decision for a single CMS target scope in the caller transaction."
   @spec apply_in_transaction(String.t(), String.t(), atom(), struct(), Ecto.UUID.t()) ::
@@ -56,7 +57,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
          %{type: :comment, target: %{thread: thread}},
          scope_key
        )
-       when thread in [:post, :blog, :changelog] and scope_key != "platform" do
+       when thread in @shared_comment_threads and scope_key != "platform" do
     {:error, CMS.Passport.ErrorCat.permission_denied()}
   end
 
@@ -203,7 +204,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
   end
 
   defp restriction_scope(%{type: :comment, target: %{thread: thread}})
-       when thread in [:post, :blog, :changelog] do
+       when thread in @shared_comment_threads do
     "platform"
   end
 

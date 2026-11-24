@@ -5,7 +5,7 @@ import type {
   TDsbFieldMap,
   TNameAlias,
   TTag,
-  TModerator,
+  TAdmin,
 } from '~/spec'
 
 export type TDsbEditableFields = TDsbFieldMap
@@ -31,13 +31,13 @@ export type TDsbShellStore = TDsbEditableFields & {
   settingTag: TTag | null
   editingAlias: TNameAlias | null
   docFaqSaveZone: TDocFaqSaveZone
-  activeModerator: TModerator | null
+  activeAdmin: TAdmin | null
   setEditingTag: (tag: TTag | null) => void
   setSettingTag: (tag: TTag | null) => void
   setTag: (mode: TChangeTagMode, tag: TTag | null) => void
   setEditingAlias: (alias: TNameAlias | null) => void
   setDocFaqSaveZone: (zone: TDocFaqSaveZone) => void
-  setActiveModerator: (admin: TModerator | null) => void
+  setActiveAdmin: (admin: TAdmin | null) => void
   resetEditor: () => void
 
   edit: <K extends TDsbEditableFieldKey>(field: K, value: TDsbEditableFields[K]) => void

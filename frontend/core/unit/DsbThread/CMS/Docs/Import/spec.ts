@@ -1,4 +1,4 @@
-import type { TImportProcess } from '../../ContentImport/ProcessLog/spec'
+import type { TImportProcess } from '../../Import/ProcessLog/spec'
 import type { PHASE } from './constant'
 
 export type TImportPhase = (typeof PHASE)[keyof typeof PHASE]
@@ -61,7 +61,7 @@ export type TDocImportBadSmell = {
   sourceRef?: string
 }
 
-export type TContentImportIssue = {
+export type TImportIssue = {
   code: string
   externalRef: string
   message: string
@@ -81,7 +81,7 @@ export type TDocImportPreview = {
   tree: { navigation: TImportSourceNode[] }
 }
 
-export type TContentImportJob = {
+export type TImportJob = {
   id: string
   status: 'ready' | 'applying' | 'completed' | 'failed' | string
   progress: {
@@ -115,11 +115,11 @@ export type TContentImportJob = {
   tree: { tabs: TImportTreeTab[] }
   badSmells: Array<{ code?: string; level?: string; message?: string }>
   firstImportedDocId?: string | null
-  failedItems: TContentImportIssue[]
-  skipped: TContentImportIssue[]
+  failedItems: TImportIssue[]
+  skipped: TImportIssue[]
 }
 
-export type { TImportProcess } from '../../ContentImport/ProcessLog/spec'
+export type { TImportProcess } from '../../Import/ProcessLog/spec'
 
 export type TImportApplyResult = {
   jobRef: string

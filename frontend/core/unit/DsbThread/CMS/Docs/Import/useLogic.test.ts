@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PHASE } from './constant'
-import type { TContentImportJob, TDocImportPreview } from './spec'
+import type { TImportJob, TDocImportPreview } from './spec'
 import useLogic from './useLogic'
 
 const mocks = vi.hoisted(() => ({
@@ -52,7 +52,7 @@ const job = {
     updatedAt: '2026-07-22T08:00:00.000Z',
   },
   status: 'ready',
-} as unknown as TContentImportJob
+} as unknown as TImportJob
 
 describe('useLogic apply', () => {
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe('useLogic apply', () => {
     vi.stubGlobal('fetch', mocks.fetch)
     mocks.fetch.mockReset()
     mocks.query.mockReset()
-    mocks.query.mockResolvedValue({ contentImportJob: job })
+    mocks.query.mockResolvedValue({ importJob: job })
   })
 
   afterEach(() => {

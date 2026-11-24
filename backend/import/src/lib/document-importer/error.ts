@@ -1,10 +1,10 @@
 /**
- * Implements the Src Lib Document Importer Error boundary inside Content Import.
+ * Implements the Src Lib Document Importer Error boundary inside Import.
  *
  * Business position:
  *
  *   Dash proxy / Phoenix import job
- *     -> Content Import module
+ *     -> Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary
  */

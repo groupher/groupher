@@ -90,6 +90,40 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     assert Repo.get_by!(TicketTag, ticket_id: ctx.ticket.id).community_tag_id == tag.id
   end
 
+  test "set_assignees accepts Community Admin logins and exposes the shared user shape", ctx do
+    {:ok, assignee} = db_insert(:user)
+    grant_community_permissions(ctx.community, assignee, ticket_permissions())
+
+    assert {:ok, %{assignees: [%{user: %{login: login}}]}} =
+             CMS.Tickets.set_assignees(
+               ctx.community,
+               ctx.ticket.id,
+               [assignee.login],
+               ctx.ticket.workflow_version,
+               ctx.actor,
+               Ecto.UUID.generate()
+             )
+
+    assert login == assignee.login
+
+    assert {:ok, %{entries: [filtered_ticket]}} =
+             CMS.Tickets.Query.page_internal(ctx.community, ctx.actor, %{
+               assignee_login: assignee.login
+             })
+
+    assert filtered_ticket.id == ctx.ticket.id
+
+    assert {:error, _reason} =
+             CMS.Tickets.set_assignees(
+               ctx.community,
+               ctx.ticket.id,
+               ["missing-admin"],
+               ctx.ticket.workflow_version + 1,
+               ctx.actor,
+               Ecto.UUID.generate()
+             )
+  end
+
   test "add_case_worker links only a member-owned Worker and replays once", ctx do
     %{community: community, actor: actor, ticket: ticket} = ctx
 
@@ -1327,12 +1361,12 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
         do: assert(Repo.get_by!(ArticleLifecycle, article_id: id).state == :draft)
 
     assert {:ok, item} = CMS.Articles.trash(post, actor, community: community)
+
     assert {:error, %{reason: :article_history_protected}} =
-             CMS.Articles.permanently_delete_trashed(item.hash_id, actor,
-               community: community
-             )
+             CMS.Articles.permanently_delete_trashed(item.hash_id, actor, community: community)
 
     assert Repo.get(Article, post.id)
+
     assert Repo.exists?(
              from(binding in CMS.Model.ArticleBinding,
                where: binding.article_id == ^post.id and binding.community_id == ^other.id
@@ -1487,6 +1521,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
 
     superseded =
       Repo.get_by!(TicketLog, article_id: ticket.id, operation_ref: superseded_operation_ref)
+
     assert superseded.action == :public_update_superseded
     assert superseded.payload == %{"update_id" => correction.id, "supersedes_id" => original.id}
     assert superseded.actor_ref == actor.login

@@ -43,7 +43,7 @@ const blockBalance = (line) =>
 
 const nonPaginationWorkflowSources = new Set([
   'backend/api/lib/groupher_server/cms/communities/tags/stats.ex',
-  'backend/api/lib/groupher_server/cms/content_import/staging.ex',
+  'backend/api/lib/groupher_server/cms/import/staging.ex',
   'backend/api/lib/groupher_server/cms/doc_cover/persist.ex',
   'backend/api/lib/groupher_server/cms/doc_publish_release/workflow.ex',
   'backend/api/lib/groupher_server/cms/doc_tree/publish/checklist.ex',

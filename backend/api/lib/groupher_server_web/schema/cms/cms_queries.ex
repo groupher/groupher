@@ -38,6 +38,15 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.CommunityAdmins.admins/3)
     end
 
+    @desc "Paged public Admin identities for a readable Community"
+    field :paged_community_admin_members, non_null(:community_admin_directory_page) do
+      arg(:community_ref, non_null(:string))
+      arg(:filter, :user_list_filter)
+      arg(:pagi, :pagi_input)
+
+      resolve(&R.CMS.CommunityAdmins.members/3)
+    end
+
     @desc "Paged Admin requests visible to the current user"
     field :paged_community_admin_requests, non_null(:community_admin_request_page) do
       arg(:community_ref, non_null(:string))
@@ -572,17 +581,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_workspace_delete_preview/3)
     end
 
-    @desc "dashboard docs trash items"
-    field :doc_tree_trash_items, non_null(:doc_tree_trash_page) do
-      arg(:community, non_null(:string))
-      arg(:pagi, :pagi_input)
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.Docs.doc_tree_trash_items/3)
-    end
-
     @desc "public community docs cover"
     field :doc_cover, :doc_cover do
       arg(:community, non_null(:string))
@@ -668,30 +666,12 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Assets.wallpaper_batch_published/3)
     end
 
-    @desc "Get all passport rules available to the current user."
-    field :all_passport_rules, :all_rules do
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.Passport.all_passport_rules/3)
-    end
-
     @desc "Check whether a community name is available."
     field :check_community_name, :community_name_check do
       arg(:slug, non_null(:string))
 
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Communities.check_community_name/3)
-    end
-
-    @desc "Bounded user picker excluding current moderators"
-    field :moderator_candidates, non_null(list_of(non_null(:user))) do
-      arg(:community, non_null(:string))
-      arg(:name, non_null(:string))
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-
-      resolve(fn _, %{community: community, name: name}, _ ->
-        CMS.communities_moderator_candidates(community, name)
-      end)
     end
 
     @desc "communities with pagination info"
@@ -709,15 +689,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:pagi, :pagi_input)
 
       resolve(&R.CMS.Communities.paged_community_subscribers/3)
-    end
-
-    @desc "paged subscribers of a community"
-    field :paged_community_moderators, :community_moderator_page do
-      arg(:community, non_null(:string))
-      arg(:filter, :user_list_filter)
-      arg(:pagi, :pagi_input)
-
-      resolve(&R.CMS.Communities.paged_community_moderators/3)
     end
 
     @desc "get all categories"

@@ -50,8 +50,6 @@ defmodule GroupherServer.Test.Helper.Schema.Account do
               publishedBlogsCount
             }
             views
-            passport
-            passportString
             subscribedCommunitiesCount
             followersCount
             followingsCount
@@ -148,10 +146,10 @@ defmodule GroupherServer.Test.Helper.Schema.Account do
     """
   end
 
-  def q(:moderatorable_communities) do
+  def q(:administered_communities) do
     """
     query($login: String, $pagi: PagiInput) {
-          moderatorableCommunities(login: $login, pagi: $pagi) {
+          administeredCommunities(login: $login, pagi: $pagi) {
             entries {
               logo
               title

@@ -33,8 +33,8 @@ const toBoundary = (value: string, endOfDay = false): string | undefined =>
 export default function TicketFilters({ value, onChange }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
-  const { slug } = useCommunity()
-  const assignees = useQuery(ticketQueries.assigneeCandidates(slug))
+  const { slug, ref: communityRef = '' } = useCommunity()
+  const assignees = useQuery(ticketQueries.assigneeCandidates(communityRef))
   const tagGroups = useQuery(ticketQueries.tagGroups(slug))
   const tags = (tagGroups.data || [])
     .flatMap((group) => group?.tags || [])
@@ -73,14 +73,12 @@ export default function TicketFilters({ value, onChange }: TProps) {
         {t('ticket.filter.assignee')}
         <select
           className={s.control}
-          value={value.assigneeId ?? ''}
-          onChange={(event) =>
-            update('assigneeId', event.target.value ? Number(event.target.value) : undefined)
-          }
+          value={value.assigneeLogin ?? ''}
+          onChange={(event) => update('assigneeLogin', event.target.value || undefined)}
         >
           <option value=''>{t('ticket.filter.any')}</option>
           {(assignees.data || []).map((user) => (
-            <option key={user.id} value={user.id}>
+            <option key={user.login} value={user.login}>
               {user.nickname || user.login}
             </option>
           ))}

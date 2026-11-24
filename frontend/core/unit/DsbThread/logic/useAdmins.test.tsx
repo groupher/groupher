@@ -19,7 +19,7 @@ vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ slug: state.slug, ref: state.ref }),
 }))
 vi.mock('~/stores/dsbShell/editor', () => ({
-  useAdminEditor: () => ({ activeModerator: null, setActiveModerator: state.patch }),
+  useAdminEditor: () => ({ activeAdmin: null, setActiveAdmin: state.patch }),
 }))
 vi.mock('~/stores/account/hooks', () => ({
   default: () => ({

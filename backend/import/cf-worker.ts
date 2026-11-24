@@ -1,5 +1,5 @@
 /**
- * Cloudflare Worker entrypoint for Content Import.
+ * Cloudflare Worker entrypoint for Import.
  *
  * HTTP request -> import routes -> Phoenix and Cloudflare bindings
  */
@@ -7,7 +7,7 @@ import type { R2Bucket, Workflow } from '@cloudflare/workers-types'
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers'
 
 import { createApp } from './src/app'
-import type { TContentImportRuntime } from './src/lib/content-import/http'
+import type { TImportRuntime } from './src/lib/import/http'
 import { ImportWorkflow } from './workers/importWorkflow'
 
 type WorkflowPayload = {
@@ -23,13 +23,13 @@ type Env = {
   ARTIFACTS: R2Bucket
   ANALYSIS_WORKFLOW: Workflow<WorkflowPayload>
   APPLY_WORKFLOW: Workflow<WorkflowPayload>
-  CONTENT_IMPORT_PREVIEW_SECRET: string
+  IMPORT_PREVIEW_SECRET: string
   ENVIRONMENT: string
   PHOENIX_GRAPHQL_ENDPOINT: string
   SERVICE_AUTH_ISSUER: string
   SERVICE_AUTH_JWKS_URL: string
   DOCUMENT_CONVERTER_APP_ENDPOINT: string
-  CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE: string
+  IMPORT_SERVICE_AUTH_AUDIENCE: string
 }
 
 const disableUnsupportedConsoleTask = (): void => {
@@ -51,9 +51,9 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
       { prepareDocStaging, stagePreviewDoc },
       { applyDocImport, failDocImport },
     ] = await Promise.all([
-      import('./src/lib/content-import/core/preview-store/cloudflare'),
-      import('./src/lib/content-import/threads/docs/publisher'),
-      import('./src/lib/content-import/transport/phoenix/docsImport'),
+      import('./src/lib/import/core/preview-store/cloudflare'),
+      import('./src/lib/import/threads/docs/publisher'),
+      import('./src/lib/import/transport/phoenix/docsImport'),
     ])
     try {
       const store = createR2PreviewStore(this.env.ARTIFACTS)
@@ -76,7 +76,7 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
       const conflict = await step.do('apply staged Docs', async () => {
         try {
           await applyDocImport(payload.community, jobRef, {
-            serviceSubject: 'service:content-import',
+            serviceSubject: 'service:import',
           })
           return null
         } catch (error) {
@@ -93,7 +93,7 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
       if (conflict) {
         await step.do('record target revision conflict', () =>
           failDocImport(payload.community, jobRef, conflict.code, conflict.message, {
-            serviceSubject: 'service:content-import',
+            serviceSubject: 'service:import',
           }),
         )
       }
@@ -101,7 +101,7 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
       const message = cause instanceof Error ? cause.message : 'Docs import workflow failed.'
       await step.do('mark Phoenix import job failed', async () => {
         await failDocImport(payload.community, jobRef, 'doc_import_workflow_failed', message, {
-          serviceSubject: 'service:content-import',
+          serviceSubject: 'service:import',
         })
       })
       throw cause
@@ -109,9 +109,9 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
   }
 }
 
-const workflowRuntime = async (env: Env): Promise<TContentImportRuntime> => {
+const workflowRuntime = async (env: Env): Promise<TImportRuntime> => {
   const { createR2PreviewStore } =
-    await import('./src/lib/content-import/core/preview-store/cloudflare')
+    await import('./src/lib/import/core/preview-store/cloudflare')
   const workflowStatus = async (binding: Workflow<WorkflowPayload>, id: string) => {
     const status = await (await binding.get(id)).status()
     if (status.status === 'errored') {
@@ -165,7 +165,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     disableUnsupportedConsoleTask()
     const [handlers, runtime, documentImporter, workerPlatform] = await Promise.all([
-      import('./src/lib/content-import/http'),
+      import('./src/lib/import/http'),
       workflowRuntime(env),
       import('./src/lib/document-importer/http'),
       import('./src/lib/document-importer/workerPlatform'),
@@ -173,7 +173,7 @@ export default {
     const app = createApp({
       environment: {
         ...process.env,
-        CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE: env.CONTENT_IMPORT_SERVICE_AUTH_AUDIENCE,
+        IMPORT_SERVICE_AUTH_AUDIENCE: env.IMPORT_SERVICE_AUTH_AUDIENCE,
         ENVIRONMENT: env.ENVIRONMENT,
       },
       handlers: {

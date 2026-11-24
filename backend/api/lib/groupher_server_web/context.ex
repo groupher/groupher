@@ -27,9 +27,7 @@ defmodule GroupherServerWeb.Context do
   import Plug.Conn
   # import Ecto.Query, only: [first: 1]
 
-  alias GroupherServer.{Accounts, CMS, FrontDesk, RequestActor}
-
-  alias Accounts.Model.User
+  alias GroupherServer.{Accounts, FrontDesk, RequestActor}
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
 
@@ -250,17 +248,10 @@ defmodule GroupherServerWeb.Context do
   defp load_user(%{id: id}) when is_integer(id) do
     case FrontDesk.fresh_user(id) do
       {:ok, user} ->
-        check_passport(user)
+        {:ok, user}
 
       {:error, _} ->
         {:error, "user is not exist, try revoke token, or if you in dev env run the seeds first."}
-    end
-  end
-
-  defp check_passport(%User{} = user) do
-    case CMS.communities_get_passport(%User{id: user.id}) do
-      {:ok, passport} -> {:ok, Map.put(user, :cur_passport, passport)}
-      {:error, _} -> {:ok, user}
     end
   end
 end

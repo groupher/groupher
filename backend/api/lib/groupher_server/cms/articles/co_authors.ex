@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Articles.CoAuthors.Query
+
   alias CMS.Articles.CoAuthors.Commands.{
     CancelRequest,
     CreateRequest,
@@ -16,6 +17,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
     RemoveMember,
     UpdatePermissions
   }
+
   alias CMS.Model.{ArticleCoAuthor, ArticleCoAuthorRequest}
 
   @doc "Pages the current Article co-author roster for an authorized Article manager."
@@ -64,7 +66,14 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
   end
 
   @doc "Decides a revisioned Article co-author request and presents its current membership."
-  def decide_request(request_id, revision, decision, approved_permissions, %User{} = actor, command_id) do
+  def decide_request(
+        request_id,
+        revision,
+        decision,
+        approved_permissions,
+        %User{} = actor,
+        command_id
+      ) do
     with {:ok, request} <- Query.load_request(request_id),
          {:ok, article} <- Query.load_article(request.article_id),
          {:ok, approved} <- approved_permissions(request, decision, approved_permissions),
@@ -98,7 +107,14 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
   end
 
   @doc "Replaces a co-author's grantable permissions at its current membership revision."
-  def update_permissions(article_id, member_id, revision, permissions, %User{} = actor, command_id) do
+  def update_permissions(
+        article_id,
+        member_id,
+        revision,
+        permissions,
+        %User{} = actor,
+        command_id
+      ) do
     with {:ok, article} <- Query.load_article(article_id),
          {:ok, member} <-
            UpdatePermissions.execute(article, member_id, revision, permissions, actor, command_id) do

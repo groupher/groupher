@@ -430,7 +430,7 @@ fail/cancel           -> workflow terminal transition
 3. 保持 `stage` 的 batch 上限、BodyBag canonical hash/size、ready/skip/fail 单向状态和 `(job_ref, external_ref)` 幂等；覆盖相同 bytes 重放、不同 bytes 冲突和 completed Job 重放。
 4. 保持 `apply` 单事务：Job lock、intent revalidation、trashed target restore、Docs Draft、`DocTree.Import`、`ImportSourceMapping`、staging cleanup、Job result 必须一起提交或一起回滚。
 5. 记录 apply 的结果投影和失败摘要；response loss 通过 `job_ref` 或相同 `preview_ref` 重发恢复，不依赖内存 worker 状态。
-6. Node PreviewStore、Dataset/BodyBag、Files SDK 和生产 Blob 的架构以 [`docs/import/content-import-architecture.md`](../import/content-import-architecture.md) 为准；本文只负责 Phoenix 当前实现的 CMS 边界，不再创建第三套导入架构。
+6. Node PreviewStore、Dataset/BodyBag、Files SDK 和生产 Blob 的架构以 [`docs/import/import-architecture.md`](../import/import-architecture.md) 为准；本文只负责 Phoenix 当前实现的 CMS 边界，不再创建第三套导入架构。
 
 ### 8.5 物理目录迁移（已完成）
 
@@ -499,8 +499,8 @@ fail/cancel           -> workflow terminal transition
 
 配套领域文档：
 
-- [`Content Import 总体架构`](../import/content-import-architecture.md)
-- [`Content Import 重构与落地计划`](../import/content-import-refactor-plan.md)
+- [`Content Import 总体架构`](../import/import-architecture.md)
+- [`Content Import 重构与落地计划`](../import/import-refactor-plan.md)
 - [`Content Import 产品流程`](../import/bulk-import.md)
 - [`CMS Command Phase 5 主迁移记录`](./cms-command-phase-5-legacy-workflows.md)
 

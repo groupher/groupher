@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Passport.Assignment do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Passport.Assignment
+  alias CMS.Passport, as: Assignment
 
   setup do
     {:ok, [user, user2]} = db_insert_multi(:user, 2)
@@ -13,11 +13,11 @@ defmodule GroupherServer.Test.CMS.Passport.Assignment do
 
   @valid_passport_rules %{
     "global" => %{},
-    "javascript" => %{"cms" => %{"post.trash" => true, "post.edit" => true}}
+    "javascript" => %{"cms" => %{"post.trash" => true, "post.set_category" => true}}
   }
   @valid_passport_rules2 %{
     "global" => %{},
-    "javascript" => %{"cms" => %{"post.pin" => true, "post.edit" => true}}
+    "javascript" => %{"cms" => %{"post.pin" => true, "post.set_category" => true}}
   }
 
   test "can insert valid nested passport structure", ~m(user)a do
@@ -25,25 +25,25 @@ defmodule GroupherServer.Test.CMS.Passport.Assignment do
 
     assert passport.user_id == user.id
     assert passport.rules |> get_in(["javascript", "cms", "post.trash"]) == true
-    assert passport.rules |> get_in(["javascript", "cms", "post.edit"]) == true
+    assert passport.rules |> get_in(["javascript", "cms", "post.set_category"]) == true
   end
 
   test "false rules will not be delete from current passport", ~m(user)a do
     {:ok, passport} = Assignment.stamp_passport(@valid_passport_rules, user)
 
     assert passport.rules |> get_in(["javascript", "cms", "post.trash"]) == true
-    assert passport.rules |> get_in(["javascript", "cms", "post.edit"]) == true
+    assert passport.rules |> get_in(["javascript", "cms", "post.set_category"]) == true
 
     valid_passport2 = %{
       "global" => %{},
-      "javascript" => %{"cms" => %{"post.edit" => false}}
+      "javascript" => %{"cms" => %{"post.set_category" => false}}
     }
 
     {:ok, updated_passport} = Assignment.stamp_passport(valid_passport2, user)
 
     assert updated_passport.user_id == user.id
     assert updated_passport.rules |> get_in(["javascript", "cms", "post.trash"]) == true
-    assert updated_passport.rules |> get_in(["javascript", "cms", "post.edit"]) == nil
+    assert updated_passport.rules |> get_in(["javascript", "cms", "post.set_category"]) == nil
   end
 
   test "get a user's passport", ~m(user)a do
@@ -93,13 +93,13 @@ defmodule GroupherServer.Test.CMS.Passport.Assignment do
       "javascript" => %{
         "cms" => %{
           "post.trash" => true,
-          "post.edit" => true
+          "post.set_category" => true
         }
       },
       "elixir" => %{
         "cms" => %{
           "post.trash" => true,
-          "post.edit" => true
+          "post.set_category" => true
         }
       }
     }
@@ -111,7 +111,7 @@ defmodule GroupherServer.Test.CMS.Passport.Assignment do
 
     assert passport_after.rules == %{
              "global" => %{},
-             "elixir" => %{"cms" => %{"post.trash" => true, "post.edit" => true}}
+             "elixir" => %{"cms" => %{"post.trash" => true, "post.set_category" => true}}
            }
   end
 

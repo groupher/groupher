@@ -1,10 +1,10 @@
-# Docs Mirror Fix：正文共享与站点编排分离
+# Docs Mirror Fix：Queue 正文与站点 Mirror
 
-> 状态：目标合同已确认，工作区存在局部实现；完整发布 / 审批拆分与端到端验收未完成。2026-11-16，按后续确认更新。
+> 状态：当前 Docs 正文仍由 Queue 管理。此前 D1 tree-only 正文切换未获授权，其 runtime、API、UI、Publisher 与 Seeds 改动已恢复；本文件中描述该切换的目标和批次暂不作为当前实现合同。D0 只读盘点仅覆盖本地 dev，D3 生产数据处置与演练未通过，不能据此放行生产或删除旧数据。2026-11-22 更新。
 >
-> 前置：Passport / Admin 改造（待独立合入：`docs/migrations/passport-permissions-refactor.md`） → 修改历史 / Diff 基座（待独立合入：`docs/feature/article/edit-history-diff.md`） → Co-authors（待独立合入：`docs/feature/article/co-authors.md`） → 本文。
+> 合同来源：Passport / Admin、Article History / Diff 与 Co-authors（分别见 `docs/migrations/passport-permissions-refactor.md`、`docs/feature/article/edit-history-diff.md`、`docs/feature/article/co-authors.md`）。这些链接说明本文消费的领域合同，不代表各计划必须整体验收后才能开工；批次的实际并行与切换依赖见 §6。
 >
-> 本文拥有本轮 Docs 目标行为；它明确替代 [旧发布队列合同](./docs-publish-queue-refactor.md) 中站点 Q 正文副本、正文审批基线、Release 选择正文、正文 stale / rebase 及站点删除共享 Public 的目标语义。旧文的目录版本、站点锁、结构化 tree plan、审批策略版本、不可变 Release 树及历史保护仍复用。不能同时按两个冲突合同实现。
+> 当前 Docs 继续遵循 [旧发布队列合同](./docs-publish-queue-refactor.md) 的正文 Queue、Queue WorkingCopy、Approval 与 Release 所有权。本文只维护仍需实施的 Mirror、Gate / Scope、Trash 与数据验收边界；曾提出的 tree-only 正文迁移已撤回，作为历史提案保留在 §5 / §7，不是现行目标。
 >
 > 文档交付边界：本文与公共读取专项文档同步合入。Passport / History / Co-authors 三份前置合同不属于本次提交，以下保留待独立合入的路径引用；依赖关系不因移除未落地链接而改变。
 >
@@ -12,95 +12,90 @@
 >
 > 公共读取子批次 R0–R3 已完成本地实施与专项验收：17 文件 173 项通过，实际 HTTP / 页面及计数刷新 / 独立诊断已验证，见 [实施记录](./docs-public-read-scope-implementation.md)。现有 dev/test 未改动、未部署；用户确认无已知外部 cursor 消费者、保留 Y 的状态卡展示。目标环境刷新 / 外部缓存仍须在发布时核验，不代表 D2 整体完成。
 
-## 1. 唯一权威与变化范围
+## 1. 当前权威与变化范围
 
 ```text
-Article
- +-- owner / co-authors / Article permissions
- +-- default WorkingCopy + Snapshot + ArticleEvent
- +-- ArticlePublic + PublicBody
- +-- ArticleLifecycle / Review / Mention / stats
+Article identity / owner / co-authors / Passport permissions
+ +-- ArticleEvent / Snapshot history and Review attribution
+ +-- Public identity / binding and cross-community visibility
  |
- +-- Binding X -> X 的 tree / queue / release
- +-- Binding Y -> Y 的 tree / queue / release
+ +-- Community X -> Docs Queue + Queue WorkingCopy + Approval + Release
+ +-- Community Y -> Docs Queue + Queue WorkingCopy + Approval + Release
 ```
 
-正文是 Article 级唯一共享事实，站点只编排页面。Community Admin / lord 的目录权限不等于正文编辑权；co-author 不自动获得任何站点管理权。没有独立 Site Admin 领域角色。
+Docs Queue 持有正文 WorkingCopy，并负责正文保存、合并、审批及 Release；Article history / Gate / Co-Author 提供 Article 身份、归因与准入消费。Article 的稳定身份和历史归属不因此复制；每个 Community 的 Queue、目录计划、Approval 与 Release 仍是各自的站点事实。共同作者只凭当前 Article 的明确 grant 编辑其已有 Queue member，不因此获得 Queue tree、Enqueue、Approval 或 Release 权限。
 
-以下是已确定迁移任务，不是需要重新选择的产品规则：正文实时共享，只有 author / co-authors（及系统特权）按 Article 权限修改；镜像社区只决定本站编排。
+本文件当前负责 D1 Queue-preserving co-author 接入，以及 D2 的站点 Binding、公共读取、Trash 和多站点消费方整改。不得把 Article history / permission 共用解释为 Queue 正文副本或 Queue Release owner 的迁移。
 
-当前需切换的具体入口包括 DocTree.Commands.QueueAccess、Publish.QueueRelease / Release / Lifecycle、PostPublishConflictRead、WorkspaceTrashPurge、Articles.Query.Locator / FrontDesk.Article，以及 DocTree.Publication 的预览 / diff / snapshots / notifications 与前端 Docs Publication。工作区已有共享 Lifecycle / history owner 改动不能当作本文全部已完成，实施先按当时工作区核对清单。
+当前具体入口包括 `DocTree.Commands.QueueAccess` 的单 Doc Article 授权、Queue member reader / Save / Merge，及 D2 的 `Publish.QueueRelease / Release / Lifecycle`、`PostPublishConflictRead`、`WorkspaceTrashPurge`、`Articles.Query.Locator / FrontDesk.Article`、DocTree.Publication 读写和前端消费者。D1 不切换 Queue 正文保存、审批或 Release 所有权。
 
 ### 1.1 工作区基线与未完成项
 
-| 路径                                     | 当前代码已有局部行为                                     | 本轮仍须完成                                                                |
-| ---------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------- |
-| QueueAccess                              | 已有主作者限制                                           | 替换为统一 Passport co-author 判断，退出旧 Q 正文入口                       |
-| Publish.Lifecycle / QueueRelease         | 已共享 ArticleLifecycle；部分删除路径不再删除共享 Public | Release 仍可能固定 / 选择正文，尚非 tree-only；站点不再迁移全局正文生命周期 |
-| WorkspaceTrashPurge                      | 当前清理本站 conflict / Binding，未见删除评论操作        | 统一 Binding 未引用检查，校正文档注释，不以局部修复宣称整个 Trash 已验收    |
-| Locator / FrontDesk / Pagination / Press | 本地已统一到 Gate Scope，专项回归通过                    | 发布时目标环境核验；本项完成不代表其他 D2 写入合同完成                      |
-| Comments.Mentions                        | 仍用唯一 ArticleHistoryOwner 推断 Community              | 改为请求入口事实，支持多 Binding；评论身份始终归 Article                    |
+| 路径                                     | 当前代码 / 合同                                                       | 本轮仍须完成                                                             |
+| ---------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| QueueAccess / Queue member read / Save   | Queue 保留正文副本；当前需接入 Article co-author 的单 Doc read/update | 仅访问当前 Community 已有 member；挡住 legacy default-copy 绕行          |
+| Queue Release / Approval / Lifecycle     | Queue 负责正文与目录审批 / Release                                    | 保留当前语义；D2 另行闭合本站 Binding 与 Trash 同事务边界                |
+| WorkspaceTrashPurge                      | 当前清理本站 conflict / Binding，未见删除评论操作                     | 统一 Binding 未引用检查，校正文档注释，不以局部修复宣称整个 Trash 已验收 |
+| Locator / FrontDesk / Pagination / Press | 本地已统一到 Gate Scope，专项回归通过                                 | 发布时目标环境核验；本项完成不代表其他 D2 写入合同完成                   |
+| Comments.Mentions                        | 仍用唯一 ArticleHistoryOwner 推断 Community                           | 改为请求入口事实，支持多 Binding；评论身份始终归 Article                 |
 
 上表仅为本地源码核对，不是运行验收或生产状态。既有 Comment 通过 article_id 关联 Article，并未按 Community 各复制一套；本次未在 Release / WorkspaceTrashPurge 路径发现删除评论操作。整改的是仍假设唯一社区的消费者，不能把目标保护规则写成已确认发生误删。
 
 owner 不可用的恢复、root 接管邀请及所有权转移均推迟到独立方案；不是本次 co-authors / D1 的前置，也不临时赋予镜像 Community lord 正文权限。
 
-## 2. 正文发布与站点 Release
+## 2. Queue 正文与站点 Release
 
-### 2.0 为什么正文与站点审批必须分开
+### 2.0 当前责任边界
 
-例：X / Y 两站都展示同一篇安装说明。Y 管理员提交“把安装说明移动到入门目录”，审批人批准时正文是 S1。随后作者发布修正后的 S2。目标是两站立刻读 S2，Y 已批准的移动仍能发布。
+Queue WorkingCopy 是 Docs 正文的编辑副本。Queue 对正文保存、合并、审批基线与 Release 负责；Article Snapshot / Event 提供正文版本及贡献归因，Article Gate / Co-Author grant 为相关用户路径提供准入。站点目录 / Queue revision 仍是本站状态，不可把 Article 权限转成目录、Enqueue、Approval 或 Release 权限。
 
-旧实现会固定 Y 队列正文，并要求审批 / Release 中的 Snapshot 与当前 Public 对得上；正文变成 S2 后，目录发布可能因正文来源不匹配失败，或旧路径选择队列里的 S1 再次公开。冲突发生在旧实现把“批准移动目录”和“批准 / 发布正文”绑在一起，并非 Snapshot 本身不能用于历史。
+Co-author 编辑入口只面向单篇 Doc：后端同时检查该 Article 的 `article.read_draft` 和 `article.update`，仅返回当前 Community 中已存在的 Queue member WorkingCopy，保存与合并调用现有 Queue 命令并检查 Queue / WorkingCopy revision。Queue member 不存在时不创建 default copy，也不自动 Enqueue。
 
-站点发布仍可读取当前 Public，验证新增页面已有可公开正文，也可记录观察到的 Snapshot。禁止的是以正文版本决定目录批准是否有效，以及由站点 Release 修改 ArticlePublic。观察值不作为审批凭据，不要求永远等于以后最新 Public。
+Queue 保持原有正文与站点 Release 合同。当前 D1 不改变 Queue 正文来源、冲突 / merge、Approval 或 Release 选取逻辑；D2 处理 Gate / Scope、Binding、Trash 与公共读取消费者，不以 Article Public 读取模型替换 Queue WorkingCopy。
 
 ### 2.1 正文
 
 ```text
-Article scope / article.update
-  -> 保存 WorkingCopy + 不可变内容状态 + edit event
-Article scope / article.publish
-  -> 选择 Snapshot -> Public + PublicBody + publish event
-  -> 共享 Review / Mention / Search / Press / cache effects
+Community Docs Queue
+  -> 已有 Queue member + Queue WorkingCopy
+  -> Save / Merge + Queue revision + Article history / contribution attribution
+  -> Queue Approval / Release
+Article Passport
+  -> 共同作者 Article read_draft / update 准入
 ```
 
-Doc 的共享正文允许通过 Article 发布入口执行，删除现有 generic_snapshot_mutation 对所有 Doc 一刀切拒绝；保留对已退役站点副本的写入拒绝。不串联站点 Queue，不要求任何 Release。正文发布不改目录及 Queue revision，所有仍有公开页面入口的站点读新 Public。
+对共同作者开放的只是在 Queue 已有成员上的正文编辑；不通过通用 Article default WorkingCopy 的 read / save / create / fork / restore 路径绕过 Queue。owner 和当前非共同作者的既有 Docs 编辑行为由原合同管理，不随 D1 准入变化。
 
-新建 Doc 的完整流程：拥有本站目录写权限者创建 Article 与工作区节点，Article.author_id 是实际创建者对应 Author；新 Article 直接赋予创建者 owner 默认正文权限，不伪造 co-author。已有 Article 被其他 Admin 放入目录不会转移 owner 或自动加共同作者。正文未公开可在授权编辑区保存；首次正文 publish 后，目录成员才能通过站点 Release 公开。任一步都不得要求先有 Public 才能创建自己的新正文。
+Queue 的 BeginEdit、Enqueue、Dequeue、Save、Merge、Approval、Release 继续使用各自现存的 Gate / command 合同。D1 不借共同作者的 Article grant 开放这些站点编排与发布操作。
 
 ### 2.2 站点
 
 ```text
 Community scope / doc.queue.write
-  -> tree / page membership plan
+  -> tree / page membership plan + Queue body operations
 Community scope / doc.queue.approve / doc.queue.publish
-  -> 验证 tree plan / queue revision / policy revision
+  -> 验证 Queue body / tree plan / queue revision / policy revision
   -> Release + current public tree + Binding 删除 + 本站 cache effects
 ```
 
-Release 记录树、页面成员 Article 身份、树操作、发布者、时间、Queue / policy revision。发布时可记录观察到的 Public Snapshot，作为只读历史事实，不作为当前正文指针或审批基线。
+Release 保留现行 Queue 正文、Approval、tree 与 policy revision 语义及既有发布记录。D2 按同一 Release 事务验证其负责的当前树、Binding 与本站失效效果；不以 D1 变更重定义 Release。
 
-- 新增公开页面必须存在可公开的 shared Public；缺失或 Lifecycle / Review 不允许公开时拒绝新增该页面。
-- 已存在页面正文临时被全局限制时，由公共读取过滤处理；无关目录调整不要求发布者拥有正文权限，不以正文变更使 tree approval stale。
-- 站点审批只冻结目录计划、成员变化、Queue / policy revision；不读取 / 批准草稿正文。
-- allow_self_approval 继续控制站点目录贡献者能否自批；正文 co-author 名单不自动参与这个判断。
-- 正文变化不需要重发站点、不改变 tree 审批、不 rebase / 合入 Q 正文；站点发布不得覆盖 Shared Public。
+- 新增公开页面、已发布页面的公共读取和 Review / Lifecycle 规则沿用当前 Docs / Gate 合同，并由 D2 对应读消费者验收。
+- Queue Approval 对 Queue 当前合同负责；正文共同作者名单不自动成为站点 Admin 或 Release actor。
+- `allow_self_approval`、Queue revision、正文 merge / conflict 与 Release 的关系沿用现行 Queue 合同。
+- 共同作者的正文更新仍须通过当前 Doc 对应 Queue member，不绕过站点 Queue 直接写 Article Public。
 
 ### 2.3 Release / Approval 字段去留与校验
 
-| 数据 / 执行步骤                                                  | 新合同                                                                                                                                                                | sealed / 存量处理                                                                                                                                                                                                                                                                                                                           |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| QueueArticle.working_copy_id / source_snapshot_id                | 新活动 Queue 不持有正文副本；退役列及正文命令                                                                                                                         | 先固定并处置独有编辑，解除活动引用后删副本 / 列                                                                                                                                                                                                                                                                                             |
-| ApprovalArticle.snapshot_id / matches_sources?                   | 不再冻结或比较正文来源                                                                                                                                                | 旧 sealed 内容审批仅作历史，不原地改写为新审批                                                                                                                                                                                                                                                                                              |
-| Approval.tree_plan / queue_revision / policy_revision            | 保留，只冻结 tree / page membership                                                                                                                                   | 旧正文审批不直接继承有效性；新 tree-only 计划重新审批                                                                                                                                                                                                                                                                                       |
-| Approval contributors                                            | 只保留本次目录计划的实际贡献者                                                                                                                                        | 新审批名单唯一读取 DocsQueueTreeContributor；继续向同一张 DocsQueueTreeContributor 表写入，每次目录 / 页面成员计划有实际变更时记录真实操作者，纯正文编辑不登记。旧 QueueArticleContributor 的纯正文贡献者不迁入新批准；迁移前遗漏的页面成员计划操作者必须从真实操作证据补齐，无法还原则由重新提交该计划记录，不猜测作者。co-author 名单无关 |
-| ReleaseArticle.snapshot_id                                       | 确定保留为 observed_snapshot_id uuid NULL，复合 FK(article_id, observed_snapshot_id) → article_snapshots(article_id, id) RESTRICT；只表示发布时观察值，删除成员可为空 | 直接 rename 旧 snapshot_id 列，保留原值 / 同 Article FK，按新删除记录语义允许 NULL；依赖索引 / constraint / schema 同批改名，不新增双列。旧记录不改写观察正文，不与以后 Public head 比较                                                                                                                                                    |
-| Release.tree snapshot / page members / publisher / time          | 保留且不可变                                                                                                                                                          | 旧 Release 保留，本次当前树建立明确新基线                                                                                                                                                                                                                                                                                                   |
-| QueueRelease Freeze / SelectPublic / global Lifecycle transition | 从站点发布退出                                                                                                                                                        | 新正文入口承担；站点仅验证新增页面当前 Public 可公开                                                                                                                                                                                                                                                                                        |
-| Release 的 public head == observed snapshot 检查                 | 删除此持续相等条件                                                                                                                                                    | 观察记录只校验属于同 Article、引用存在；新增页面可公开性在本次 Release 事务核对                                                                                                                                                                                                                                                             |
+| 数据 / 执行步骤                                      | 当前合同                                                      | 处理边界                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| DocsQueueArticle.working_copy_id / Queue WorkingCopy | 活跃正文副本身份；Queue Save / Merge / Dequeue / Release 使用 | 保留现有引用及约束；D0 / D3 盘点实际数据，不按 tree-only 提案删除                                  |
+| DocsPublishApprovalArticle 正文 / Queue revision     | 当前 Queue Approval 基线与正文来源合同                        | 保留审批记录及运行规则；不得改写 sealed approval 或转换为 tree-only 审批                           |
+| QueueArticleContributor / TreeContributor            | 正文贡献和目录计划贡献按现有 Queue 模型记录                   | ArticleEvent / History 为正文历史归因提供 Article 层消费；不替换 Queue Approval 的贡献者事实       |
+| DocsPublishReleaseArticle.snapshot / Queue body      | Queue Release 对正文与站点发布负责                            | 保留当前 Queue Release 语义与历史；不迁移列、不改名、不批量删除                                    |
+| Article Snapshot / Event / Review                    | Article 身份下的历史与准入消费，不是 Queue 正文 owner         | Co-author / Gate / History 依 D1 当前合同消费；不能据此移交 Queue WorkingCopy / Approval / Release |
 
-正文更新不修改 Queue revision / 目录批准。站点可以读当前 Public 做存在性检查或观察记录，但不修改 Public。Release / 当前树 / 必要 Binding 删除 / 本站失效意图同事务；故障重试不能回放旧正文选择步骤。
+Queue 正文更新、审批和 Release 按现行合同推进 Queue revision 并执行既有冲突处理。D2 对 Release 涉及的本站树、Binding 与 cache effects 保持原事务边界；故障重试不得绕过命令 Receipt 或回放不匹配的已确认结果。
 
 ## 3. Mirror、删除与重新加入
 
@@ -170,72 +165,83 @@ Doc 的本站 Trash 不是只有 pending tree deletion：组合视图以 TrashAc
 - 站点删除或社区销毁不级联共享正文历史；最后入口消失不置 global deleted。全局 article.trash / restore / permanent_delete 遵循 Diff 基座 §6.1（待独立合入：`docs/feature/article/edit-history-diff.md#61-删除范围与历史结果`），不新增 delete / destroy 同义动作；本站目录命令不能触发全局永久删除。
 - 内容恢复只生成新 WorkingCopy 修改和 restore event，不回滚整个站点 Release；目录恢复不回滚正文。
 
-## 5. 旧 Q 正文语义退出与数据处置
+## 5. 先前提出的 Q 正文退出方案（未获授权，当前不执行）
 
-退役对象：DocsQueueArticle.working_copy_id / source_snapshot_id、Q 正文保存 / 合入 / 正文 diff、DocsPublishApprovalArticle 的正文审批事实、站点正文 conflict / stale / rebase 和 Release 选择正文的路径。
+先前提案拟退役 DocsQueueArticle.working_copy_id / source_snapshot_id 正文来源、Q 正文保存 / 合入 / 正文 diff、DocsPublishApprovalArticle 正文审批事实、站点正文 conflict / stale / rebase 和 Release 选择正文的路径。该切换未获授权且已撤回。当前 Enqueue / Save / Merge / Dequeue、DequeuePreview、Queue body Approval / Release、对应 GraphQL / CMS / 前端与 Content Publisher 入口均保留；正文 preview/diff 继续读取 Queue 副本。Article Snapshot / ArticleEvent history 不替代 Queue 正文所有权。
 
-保留 tree change、tree / queue / policy revision、结构化目录 plan、目录贡献者 / approval、Release 不可变树和页面历史。保留旧审批 / Release 的真实历史证据，不让它们参与新运行时选择 Public。
+Queue 正文成员、正文贡献者、Approval 和 Release 发布合同属于当前实现。结构化 tree change、queue / policy revision、tree contributor、不可变 Release 树及 Article 页面历史继续并存。DocsQueueArticle 与 DocsQueueArticleContributor 是活跃运行时数据，不应仅凭 D0 盘点将其视为退役历史行。D0 / D3 仍须确认数据保留和清理边界，不能批量删除，也不能把当前本地保护视为克隆 / 生产放行。
 
 切换前 report-only 盘点 Article、站点、Q WorkingCopy revision、独有修改、Snapshot / assets / approval / Release 引用，生成可逐项处置的清单。未发布 Q 内容不得静默丢弃或覆盖 Shared Public：有独有编辑则固定完整 Snapshot、保存可追溯来源并交 owner / 有权共同作者处理；可由其显式 fork 为独立 WorkingCopy，或明确批准丢弃。无实际变更的副本可在引用解除后清理。
 
+本地 `groupher_server_dev` 的只读 D0 结果为零条 Queue 正文 / Approval / Release 记录，见 [本地盘点报告](./evidence/docs-q-d0-local-inventory-20261122.md) 和 [可重跑的 report-only SQL](./evidence/docs-q-d0-inventory.sql)。该结果不代表生产或克隆环境为空，也不放行 DDL。
+
+Co-Authors / Passport / Docs Queue 本轮遇到的过期测试夹具、由此发现的真实生命周期缺陷及验证结果，记录于 [测试清理与回归记录](./evidence/test-cleanup-findings-2026-11-23.md)。该记录区分已通过的本地测试与尚待完成的浏览器 / D3 验收。
+
 不自动合并多个 Q，不把旧 Q Snapshot 伪造为新 Public 基线。新内容历史从实际切换点记录，不伪造过去作者。历史引用保留期间不得删除其 Body / Cover / assets。
 
-发布暂停相关旧入口与 consumer，备份、完成清单处置、转换 tree-only queue / approval；旧包含正文的有效审批不直接复用为新 tree-only 批准，统一重新确认。保留旧 Release 历史，当前树转为明确新基线。新服务直切后移除旧 mutation / Publisher action / 前端 UI / worker / 表列和死代码，无兼容读取或双写。DDL 先解除旧活动引用再删除，历史所需数据先归档到现有 Snapshot / Release 权威并验证；禁止 CASCADE 绕过保护。
+如果将来重新批准 tree-only 迁移，必须先完成 D0 逐行处置、备份和克隆库演练，再明确正文、审批与 Release 的兼容边界。当前恢复的 Queue body API 与 consumer 继续运行；WorkspaceDelete 按原 Queue Dequeue / confirmation / remove 流程处理成员。WorkspaceTrashPurge 与 HistoryPurge 对尚未解除的历史 Queue 引用保留独立保护，D0 / D3 未通过前不得清除这些引用或历史数据。
 
-## 6. 实施批次与依赖
+## 6. 当前实施批次与依赖
+
+当前合同保留 Queue 对 Docs 正文副本、保存 / 合并、Approval 与 Release 的所有权。D1 只接入 Article co-author 对现存 Queue member 的单 Doc 正文读取与保存准入，不切换正文所有权、不退役 Queue 正文入口，也不增加 co-author 的目录、Enqueue、Approval 或 Release 权限。
 
 ```text
 P: Passport / Admin / ref / Community Admin 请求 producer
   -> H: 不可变修改历史 / Diff
   -> C: Co-authors + 普通 Article 授权入口
-  -> D0: Q 数据盘点和处置
-  -> D1: Doc 正文发布独立 + tree-only plan / approval / Release
-  -> D2: Binding / 公网读取 / Trash / 搜索缓存
-  -> D3: 全消费面直切 + 旧 Q 退役 + 生产演练及验收
+  -> D0: Q 数据只读盘点
+  -> C3: 普通 Article 授权入口切换
+  -> D1: 单 Doc existing Queue member Article auth
+  -> D2: Gate / Scope 公共读取入口与 Trash 等消费方
+  -> D3: 生产 / 迁移演练及全消费面验收
 
 M: Messaging Notice / Dedup / Inbox 通用基础设施（与主链并行、独立验收）
+P4a: Passport 消费方盘点（可与 C1/C2、D1 并行）
+P4b: 各领域按自身边界清理旧入口（可并行）
+P4c: Passport 全局收尾验收（等待相关消费方切换及 D3 验收）
 ```
 
 D0 可只读提前进行。D2 的公共读取子批次是可提前发布的明确例外：按 [专项步骤及退出条件](./docs-public-read-scope-fix.md#5-实施顺序) 完成 R0–R3，保持管理 / insights、现有写入保护及非 Doc 行为后，可独立于 Passport / co-authors / D1 上线。R1 / R2 必须同一可发布变更完成，且 R2 发布前必须确认实际 Doc cursor 消费者收到 GraphQL errors[].extensions.code = 4203（服务端 reason: cursor_query_mismatch）时会清除旧 cursor 并从第 1 页重取，缺失时在同一变更中补齐并验证，不能推迟到 R3。R1 / R2 是原子实施单元，R3 是首次发布前最终专项验收，全部相关退出条件满足后才可放行。无 feature flag、无 DDL；回滚 revert 整个读取变更并记录原缺口恢复风险。本地验收时用户确认无已知外部 Doc cursor 消费者，仓库无运行时 Doc cursor UI；已验证两个 API 的 4203 响应及无 after 首屏重取，没有新增无调用方的 UI 恢复分支。后续接入实际客户端仍须满足恢复合同。该放行不包含 Binding 清理、Trash、多站点互动或搜索缓存架构，不代表 D2 完成。
 
-其余 D1 / D2 可以在隔离开发中拆分；涉及新写入合同、schema 及其对应公共路由的完整直切仍须同批放行，不使用读取子批次的 revert 规则替代 §6.2 数据切换回退方案。不得以局部安全修复宣称整项完成。
+D1 和 D2 的实现可在隔离开发中拆分并行准备；由于共用 Gate / Scope 与路由入口，正式切换按 C3 → D1 → D2 顺序合入并验证。D1 的 co-author 准入以当前 Article 的 `article.read_draft` + `article.update` 为准，只查询本站该 Doc 已有 Queue member，并保存到该 Queue WorkingCopy；不创建或读取 default WorkingCopy。局部交付不代表 D2 或 D3 完成。
 
-本节的 D0 → D1 → D2 → D3 描述 Docs 自身的依赖顺序和放行边界，不是所有任务的统一开工顺序。D0 盘点、D1 / D2 各自不触碰未稳定合同的实现、以及 Passport P4a 消费者清单可以并行推进；D1 正式切换依赖 C3、H3、P2 和 D0 必要处置，D2 对应读写合同按自身子批次验收。只有 D3 的全消费面切换、旧 Q 退役和迁移演练必须等待 D1 / D2 的目标消费者完成。Passport P4 的最终汇总验收可在 D3 后进行，但不阻塞 C3、D1 或 D2 的独立开发和局部交付。
+本节描述 Docs 的实施顺序，不是所有任务的统一开工顺序。D0 只读盘点、Passport P4a 消费方清单、P4b 各领域自有清理，以及不触碰不稳定 Gate / Scope 合同的 D1 / D2 开发可并行。D1 正式切换依赖 C3 的 Article 授权合同及 D1 实际消费的 History 数据 / 接口合同验收，不等待完整 H3 UI / E2E。D2 按其自身读写合同和专项验收推进。D3 的生产 / 迁移演练必须等待相关消费者完成切换和验收；P4c 全局收尾也等待这些消费方与 D3 验收，不阻塞 C1/C2 或 D1 的独立开发。
 
 public_binding_ids 虽被 BindingPersist 的最后一个公开 Binding 删除保护使用，但其 unmirror 入口只允许 post / blog / changelog，Doc 返回 unsupported_for_doc。本子批次只收紧 Doc Scope，须验证普通 Article 的删除保护不变，不为不可达的 Doc 分支分离保护查询或新增产品决策门槛。Doc Binding 清理仍归本 D2 的 DocTree 发布 / Trash 引用合同，不能由 BindingPersist 的普通 Article 规则推导。
 
 D2 保留 DocTree.Publish.PublicTree.validate_pages 的候选页面与提交完整性验收：目前业务校验只查询 Article / 本站 Binding / ArticlePublic，但 R0 已确认迁移及兼容参考库存在 Public / PublicBody 双向延迟复合 FK，正常提交会拒绝缺 Body 或版本不匹配，不能将未显式 join Body 当成已确定的永久坏节点发布漏洞。须区分事务内暂态、旧库缺约束及其他不可读原因；读侧过滤不替代提交约束，也不证明发布闭环。D2 保持约束与事务边界，是否需要业务层提前报错按真实用例确定，不强制新增重复检查。候选页面验证不能要求节点已存在于公开树，也不能恢复正文版本绑定目录审批的旧语义。
 
-D1 从命令、Gate、Lifecycle、Snapshot / Public、tree plan、Receipt、Outbox 至 schema / Publisher / Dash 一次打通。D2 将本站公开树及 Binding 更新纳入同一 Release 事务，统一采用 Passport 共享锁序，不在本节另定锁序；所有读消费者使用相同可组合 Scope，无逐行 Gate。D3 依实际 FK 次序准备可审阅 SQL、克隆演练及回退备份，本文不授权生产执行。
+D1 从单 Doc Queue member reader、Article draft-read / update 准入、现有 Queue Save / Merge Receipt 到单篇 Doc 编辑 affordance 打通。Queue WorkingCopy、Queue revision、保存 / 合并语义、Approval / Release owner 保持原状；拒绝 co-author 经 legacy default WorkingCopy 读取、保存、创建、fork 或恢复入口绕过 Queue。D2 将其 own Gate / Scope 和 Binding / Trash 消费者按已核定合同逐项切换，统一采用 Passport 共享锁序，不在本节另定锁序。D3 只在批准的目标环境执行数据盘点、克隆演练、备份与回退准备；本文不授权生产执行。
 
 ### 6.1 唯一入口归属与放行
 
-| 入口 / 数据                                                                   | 唯一负责批次                  | 其他批次提供什么                                                                                                                    |
-| ----------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 非 Doc 本站下线 / 恢复 / Trash 及消费者切换                                   | P2B                           | D 不拥有 Posts / Blogs 的实现；P4 退役旧入口前必须验收，不以 Docs Tree 替代                                                         |
-| Permission 合同 / 生成器、Admin / Global 授权、ref、Community 管理 Gate       | P1 / P2                       | C / D 只消费 Passport，不重新定义目录                                                                                               |
-| Notices / Dedup / Inbox 通用基础设施                                          | Messaging M1 / M2             | Passport P3 与 Co-authors C1 各自实现并验收领域 producer；边界见 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md) |
-| Community Admin / Article 请求通知 producer                                   | Passport P3 / Co-authors C1   | 复用 Messaging M1 / M2 合同；两领域的事件语义、接收方和资源授权分别归各自文档                                                       |
-| Snapshot 前后固定、article_events、Diff / history 接口及编辑器历史            | H1–H3                         | C 必须等 H3 完整验收后启用多人编辑；D 复用                                                                                          |
-| Article co-author 关系、请求、普通 Article read_draft / update / publish 授权 | C0–C3                         | P 提供公共权限接口；H 提供历史                                                                                                      |
-| Doc 新正文发布入口及旧 Q 正文保存 / 发布 / owner-only Gate 退出               | D1                            | C 提供已验证的 Article 授权判断；H 提供历史记录，C 不提前放开旧 Doc 发布                                                            |
-| tree-only plan / approval / Release、目录贡献者                               | D1                            | 不再由 P / C 各自改一部分发布规则                                                                                                   |
-| Gate Scope Doc 公共查询、移除 FrontDesk / Locator / 分页 / Press 重复过滤     | D2 公共读取子批次；可提前发布 | 实施步骤及专项验收唯一见 [公共读取 Scope 收口](./docs-public-read-scope-fix.md)；FrontDesk 保持外部入口，本文只跟踪 D2 整体状态     |
-| Binding 清理、Trash、共享评论 / Mention / reaction 的多站点入口               | D2                            | 事件 / 通知归公共基座，不复制 Article 互动                                                                                          |
-| Q 历史归档与列 / FK / mutation / consumer 退役、目标环境切换                  | D0 / D3                       | Passport P4 只退役权限 / Admin 旧层；Messaging 清理按独立文档；不声称退役 Docs Q                                                    |
+| 入口 / 数据                                                                   | 唯一负责批次                  | 其他批次提供什么                                                                                                                                                                          |
+| ----------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 非 Doc 本站下线 / 恢复 / Trash 及消费者切换                                   | P2B                           | D 不拥有 Posts / Blogs 的实现；P4 退役旧入口前必须验收，不以 Docs Tree 替代                                                                                                               |
+| Permission 合同 / 生成器、Admin / Global 授权、ref、Community 管理 Gate       | P1 / P2                       | C / D 只消费 Passport，不重新定义目录                                                                                                                                                     |
+| Notices / Dedup / Inbox 通用基础设施                                          | Messaging M1 / M2             | Passport P3 与 Co-authors C1 各自实现并验收领域 producer；边界见 [Messaging Notices 与 Inbox 收口](./messaging-notices-refactor.md)                                                       |
+| Community Admin / Article 请求通知 producer                                   | Passport P3 / Co-authors C1   | 复用 Messaging M1 / M2 合同；两领域的事件语义、接收方和资源授权分别归各自文档                                                                                                             |
+| Snapshot 前后固定、article_events、Diff / history 接口及编辑器历史            | H1–H3                         | C 按 Co-authors 合同验收自身准入、归因、Review 与双账号流程；D1 验证其实际消费的事件 / Snapshot / 授权 / 贡献者接口。完整 H3 UI / E2E 只门控 History 自身交付，不作为 C3 或 D1 的整体前置 |
+| Article co-author 关系、请求、普通 Article read_draft / update / publish 授权 | C0–C3                         | P 提供公共权限接口；H 提供历史                                                                                                                                                            |
+| Article co-author 对单 Doc 现存 Queue member 的正文读取 / 保存准入            | D1                            | C3 提供 Article `read_draft` / `update` 授权判断；Queue 保留正文、Save / Merge、Approval / Release 所有权；co-author 不获得 Queue tree / Enqueue / Approval / Release 权限                |
+| Docs Queue 正文副本、正文审批基线、Release 正文选择与正文 stale / merge       | 当前 Queue 合同               | D1 仅调整 co-author 对单篇现存 member 的准入，不退役或重分配这些 Queue 入口                                                                                                               |
+| Gate Scope Doc 公共查询、移除 FrontDesk / Locator / 分页 / Press 重复过滤     | D2 公共读取子批次；可提前发布 | 实施步骤及专项验收唯一见 [公共读取 Scope 收口](./docs-public-read-scope-fix.md)；FrontDesk 保持外部入口，本文只跟踪 D2 整体状态                                                           |
+| Binding 清理、Trash、共享评论 / Mention / reaction 的多站点入口               | D2                            | 事件 / 通知归公共基座，不复制 Article 互动                                                                                                                                                |
+| Q 运行数据盘点、生产 / 迁移演练、目标环境验收                                 | D0 / D3                       | D0 仅报告数据，不处置；D3 按审批后的演练合同准备备份 / 回退，不以此退役当前 Queue 正文能力                                                                                                |
 
-### 6.2 DDL / 发布顺序与回退点
+### 6.2 Queue-preserving D1 局部交付
 
-1. D0 停写前报告 Q 独有修改、sealed Approval / Release 及所有 FK / Asset 引用，形成逐项处置清单和备份。
-2. 停写 / 暂停旧 worker 后固定需保留的 Q 内容；验证已有 Snapshot / Body / Cover / assets 完整。没有处置结论不得继续。
-3. 添加新 tree-only 结构，rename snapshot_id → observed_snapshot_id 并调整可空 / FK / 索引，转换历史记录；保留 sealed 历史，旧有效批准重新确认，不改历史为“已批准新模型”。这是部署前可用备份回退点。
-4. 解除旧活动 Queue / conflict / approval 指针，按真实 FK 顺序删除旧副本及待退役 FK / 索引 / 列；保留指向历史内容的引用，不能 CASCADE 丢历史。
-5. 新 schema / Publisher / Phoenix / Dash / Community / consumers 同批直切，恢复新 worker。新写入开始后不能运行旧服务；故障停写并恢复匹配整套数据 / 服务备份，不提供双写或 alias 回滚。
-6. 逐项验证新发布、删除、恢复、评论 / Mention 与投影重试，记录环境证据；旧代码删除和实际生产放行分开报告。
+1. 单 Doc 页面先查询 Article `read_draft` + `update`，再请求只返回该 Community 中该 Doc 现存 Queue member 的 reader；无 member 返回空，不调用默认副本创建入口。
+2. 已有 Queue member 时复用 Queue WorkingCopy 编辑器；读取、保存、合并始终携带 Queue revision 与 WorkingCopy revision，调用原 Queue Save / Merge 命令。
+3. 后端仅在当前 Article `update` 授权允许 co-author 对该现存 Queue member 保存；无 `read_draft`、无 `update`、其他 Doc、非本 Community、member 移除或不存在均拒绝或不返回内容。
+4. 正反例覆盖 Queue member 可读 / 保存、另一个 Doc 与移除后失权、co-author 不能经 default WorkingCopy read / save / create / fork / restore 绕开 Queue，也不能 Enqueue、改树、Approval 或 Release。
+5. D1 不增加 DDL，不改变 Queue owner、正文副本、revision / merge / approval / release 语义；D2 / D3 另按各自验收和批准执行。
+
+WorkspaceDelete 维持原有队列生命周期：先检查 Q-only 编辑及其 confirmation，再通过 `Queue.remove_many` 清理该操作拥有的队列成员，随后写入 Trash 与树变更。WorkspaceTrashPurge 与 HistoryPurge 分别保留对尚存 Queue 引用的保护；D0 / D3 仍负责判定历史数据最终处置，不能将合法活动成员一概视为删除 blocker，也不能级联清理历史正文。
 
 外键顺序按真实引用确认：旧 docs_queue_articles(article_id, source_snapshot_id) 引用 article_snapshots(article_id, id)，不引用 ReleaseArticle.snapshot_id。Release 列 rename 本身不要求先删除 Queue FK，PostgreSQL 会保留列身份及关联约束；真正删除旧 Queue 副本 / Snapshot / Body 前，必须先清理或迁移所有引用，并先证明历史保留引用仍完整。D0 输出依赖清单，D3 在克隆数据库验证该顺序，禁止为消除 FK 报错 CASCADE 删除历史。
 
-## 7. 验收矩阵
+## 7. 先前切换提案的验收矩阵（当前未执行）
 
 本节验收 Mirror Fix 整体目标。公共读取子批次的文件级测试、双社区 fixture、count / indexer / comments / Mention endpoint / status / 导航 / summaries / Binding 删除保护、管理 / insights、非 Doc 指纹兼容、Doc 4203 cursor_query_mismatch 及客户端重置验证与缓存残留窗口统一按 [专项验收矩阵](./docs-public-read-scope-fix.md#6-验收矩阵) 执行并引用记录，不另建一套读取退出标准。提前发布通过不代表下列完整发布 / 删除 / 恢复闭环已通过。
 
@@ -262,7 +268,7 @@ D1 从命令、Gate、Lifecycle、Snapshot / Public、tree plan、Receipt、Outb
 
 组合视图的 publicVisible 必须按 Passport §4.4.2 在同一 entries SQL 中批量投影；Doc group 用 Gate 公开 Scope 组合的 EXISTS 判任一页面，不逐条加载或调用 Gate，不跨请求缓存。D2 验收多 group / 多成员下查询次数不随条目增长；P2B 验收非 Doc 恒 false、固定 "1" token 与重新下线新 id 的保护。查询的 thread 入参及 item 均使用四值 CommunityArticleTrashThread，同源生成与 adapter 映射一致。其合同独立归 packages/contracts/community-article-trash.contract.json，不加入 Gate 权限目录。Doc item.id 为 TrashAction.hash_id，详情 / restore / purge 同义，恢复复用 WorkspaceRestore.run/8 的 action_id，内部 groupKey 与该公开 id 一致且不单独公开。D2 另验混合 subtree：一页已 Release、一页 pending 时 status=effective、removedMemberCount=1、pendingMemberCount=1，与详情成员状态一致；publicVisible 单独按公开条件计算，UI 显示“部分已下线、1 项待 Release”。D2 另验多页 group 在 entries 恰好一行、按 TrashAction 单元顺序分页无重复 / 无遗漏；禁止展开页面 join 改变条目数。
 
-D2 的恢复目标和读事务合同统一见 Passport §4.4.2：缺省恢复到回收快照的原父 / 原顺序，原父缺失返回现有 docs_restore_parent_missing，父仅移动且仍合法不拒绝；显式 targetParentNodeId / targetIndex 支持用户选位，未提供与显式 NULL 选根必须区分，失败整笔回滚并保留 action。组合视图读不获取 docs_site advisory lock 或行写锁，需要同响应跨查询一致时使用同连接只读 REPEATABLE READ；读写并发验收不因站点锁互相等待，不把恢复写命令也改成无锁。
+D2 的恢复目标和读事务合同统一见 Passport §4.4.2：缺省恢复到回收快照的原父 / 原顺序，原父缺失返回现有 docs_restore_parent_missing，父仅移动且仍合法不拒绝；显式 targetParentNodeId / targetIndex 支持用户选位，未提供与显式 NULL 选根必须区分，失败整笔回滚并保留 action。组合视图读不获取 docs_site advisory lock 或行写锁，需要同响应跨查询一致时使用同连接只读 REPEATABLE READ；读写并发验收不因站点锁互相等待，不把恢复写命令也改成无锁。当前分支已本地接线并定向验收“缺省 vs 显式 null / root / index-only 拒绝”这一 adapter 子合同，边界和剩余验收见 [D2 Restore Target Adapter 本地验收记录](./evidence/docs-d2-restore-target-acceptance-20261122.md)；这不代表 D2 整体完成。
 
 D2 补充目标父验收：默认 / 显式目标父及全部祖先都不能位于任何有效 pending deletion 子树中，亦不能位于本次恢复 subtree 内形成环；在恢复写锁内重查，失败保留完整 action，默认不可用目标沿用 docs_restore_parent_missing。详情打开后 Queue / Release 变化，分页成员按不透明 recordRevision 校验，旧版本刷新整个详情及游标，不混合旧计数和新成员页；action 已恢复 / purge 则结束操作并刷新列表。Doc token 服务端生成 / 校验，客户端只原样传回，独立 tree / Queue 版本检查继续执行。D2 另验 A 节点生成详情 token、B 节点处理 pagedMembers / restore 时可无状态校验；全节点协调轮换密钥后旧 token 返回冲突并要求刷新，不自动重试写入，具体派生合同见 Passport §4.4.2。
 

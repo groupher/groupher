@@ -75,7 +75,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Commands.Remove do
            CMS.Communities.Count.update(
              locked.community,
              Enum.find(locked.users, &(&1.id == member.user_id)),
-             :moderators_count,
+             :admins_count,
              :dec
            ),
          {:ok, _} <-

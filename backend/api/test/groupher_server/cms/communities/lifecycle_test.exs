@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
         :archived,
         :pending_destroy
       ],
-      moderator_management: [
+      admin_management: [
         :setting_up,
         :setup_failed,
         :active,

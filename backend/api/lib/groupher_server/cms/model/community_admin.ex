@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Model.CommunityAdmin do
     |> cast(attrs, [:user_id, :community_id, :is_lord, :permissions, :revision, :joined_at])
     |> validate_required([:user_id, :community_id, :permissions, :revision])
     |> validate_number(:revision, greater_than: 0)
-    |> unique_constraint(:user_id, name: :communities_editors_user_id_community_id_index)
+    |> unique_constraint(:user_id, name: :communities_admins_user_id_community_id_index)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)
     |> check_constraint(:revision, name: :communities_admins_revision_check)

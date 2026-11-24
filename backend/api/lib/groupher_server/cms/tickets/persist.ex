@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     ArticleReviewBlock,
     Author,
     Community,
-    CommunityModerator,
+    CommunityAdmin,
     CommunityTag,
     TicketCaseMember,
     TicketCaseWorker,
@@ -588,10 +588,10 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   @doc false
-  def set_assignees(community, ticket_id, user_ids, expected_version, _context) do
+  def set_assignees(community, ticket_id, user_logins, expected_version, _context) do
     with {:ok, state, _article, _binding} <- lock_state(community, ticket_id),
          {:ok, :pass} <- Lifecycle.ensure_version(state, expected_version),
-         {:ok, changed?} <- replace_assignees(state.article_id, community.id, user_ids),
+         {:ok, changed?} <- replace_assignees(state.article_id, community.id, user_logins),
          {:ok, _state} <- maybe_increment_version(state, changed?) do
       {:ok, ticket_id}
     end
@@ -1623,15 +1623,25 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     end
   end
 
-  defp replace_assignees(ticket_id, community_id, user_ids) do
-    user_ids = Enum.uniq(user_ids)
+  defp replace_assignees(ticket_id, community_id, user_logins) do
+    user_logins = Enum.uniq(user_logins)
 
-    if Enum.any?(user_ids, &(not is_integer(&1) or &1 <= 0)) do
+    if Enum.any?(user_logins, &(not is_binary(&1) or String.trim(&1) == "")) do
       {:error, ErrorCat.assignee_not_member()}
     else
+      users =
+        Repo.all(
+          from(user in GroupherServer.Accounts.Model.User,
+            where: user.login in ^user_logins,
+            select: {user.id, user.login}
+          )
+        )
+
+      user_ids = Enum.map(users, &elem(&1, 0))
+
       eligible_count =
         Repo.aggregate(
-          from(member in CommunityModerator,
+          from(member in CommunityAdmin,
             where: member.community_id == ^community_id and member.user_id in ^user_ids
           ),
           :count
@@ -1648,6 +1658,9 @@ defmodule GroupherServer.CMS.Tickets.Persist do
       next_ids = Enum.sort(user_ids)
 
       cond do
+        length(users) != length(user_logins) ->
+          {:error, ErrorCat.assignee_not_member()}
+
         eligible_count != length(next_ids) ->
           {:error, ErrorCat.assignee_not_member()}
 

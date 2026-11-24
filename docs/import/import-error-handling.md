@@ -1,10 +1,10 @@
-# Content Import 错误处理复盘
+# Import 错误处理复盘
 
 > 状态：记录 2026-07-22 公开 GitHub Repo → Groupher Docs 联调期间已定位、已修复和仍待产品闭环的问题。
 >
 > 范围：Preview 分析、Workflow 错误投影、Back/reset 清理、重复来源覆盖、Docs Writer 与 archive 下载/解压。不重新定义总体架构。
 >
-> 关联文档：产品流程见 [`bulk_import.md`](./bulk-import.md)；总体边界见 [`content_import_architecture.md`](./content-import-architecture.md)；过程投影见 [`import_process_log.md`](./import-process-log.md)；Files SDK 与临时对象生命周期见 [`import_file_sdk.md`](./import-file-sdk.md)。
+> 关联文档：产品流程见 [`bulk-import.md`](./bulk-import.md)；总体边界见 [`import-architecture.md`](./import-architecture.md)；过程投影见 [`import-process-log.md`](./import-process-log.md)；Files SDK 与临时对象生命周期见 [`import-file-sdk.md`](./import-file-sdk.md)。
 
 ## 1. 结论
 
@@ -25,20 +25,20 @@
 
 ## 2. 本轮问题总览
 
-| 现象                                                                                               | 根因                                                                                                                 | 处理                                                                                                                  | 防回归重点                                                                   |
-| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `[GraphQL] Cannot return null for non-nullable field`，路径落在 `contentImportJob.sourceInfo.repo` | Job 内部 `source_info` 与 GraphQL `sourceInfo` DTO 的字段投影不完整/不稳定                                           | Job 查询统一投影公开的 repo、repo URL、branch、commit、framework、config paths、content root                          | GraphQL Job 查询覆盖全部 non-null 字段                                       |
-| Back 后重新导入出现旧 Preview/旧任务影响                                                           | Back 只离开页面，没有完成服务端 Preview 删除和客户端引用重置                                                         | Back 注册异步清理；DELETE Preview 成功后才离开，并重置 URL、状态和 idempotency key                                    | 清理失败阻止离开；in-flight apply 先收敛再删除                               |
-| Apply 报 `article_hash_id: 已经存在了`                                                             | Mapping 指向的 Doc 已进入 Trash；Draft 读不到它，Writer 误走 create，撞上物理 Article 唯一键                         | Writer 先按 mapped target ref 找到并恢复完整 Trash action，再对同一 `article_hash_id` 做 source-wins update           | 已映射 Doc 被删除后再次导入的集成测试                                        |
-| 合法仓库被报 archive 含不支持 entry                                                                | GitHub archive 中存在合法 symlink/hardlink，但导入器把所有 link 当危险 entry                                         | link 不解析、不落盘，直接跳过并计入文件数上限；路径穿越、device、FIFO 和未知 entry 仍阻断                             | link 目标不物化；link storm 不能绕过文件数限制                               |
-| 活跃下载超过总时长后被报“archive invalid”                                                          | fetch timeout 在返回 headers 后仍绑定 response body，流式下载被总时长中止；extractor 又把中止包装成 archive 格式错误 | headers 使用可取消 timeout；body 使用每个 chunk 的 idle timeout，不限制持续有进度的总下载时长；流中断保留下载错误语义 | 多 chunk 总耗时超过 timeout 仍成功；单个 chunk stall 返回 retryable 下载错误 |
-| UI 只显示 `Repository analysis failed.`                                                            | 确定性错误被 Workflow 重试并包上 Step 前缀，Preview 投影没有读取最终 cause                                           | 非 retryable `DocsImportError` 转为 `FatalError`；投影读取 `WorkflowRunFailedError.cause` 并去除 Workflow 包装前缀    | 原始安全 message 能通过轮询 API 到达 UI                                      |
+| 现象                                                                                        | 根因                                                                                                                 | 处理                                                                                                                  | 防回归重点                                                                   |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `[GraphQL] Cannot return null for non-nullable field`，路径落在 `importJob.sourceInfo.repo` | Job 内部 `source_info` 与 GraphQL `sourceInfo` DTO 的字段投影不完整/不稳定                                           | Job 查询统一投影公开的 repo、repo URL、branch、commit、framework、config paths、content root                          | GraphQL Job 查询覆盖全部 non-null 字段                                       |
+| Back 后重新导入出现旧 Preview/旧任务影响                                                    | Back 只离开页面，没有完成服务端 Preview 删除和客户端引用重置                                                         | Back 注册异步清理；DELETE Preview 成功后才离开，并重置 URL、状态和 idempotency key                                    | 清理失败阻止离开；in-flight apply 先收敛再删除                               |
+| Apply 报 `article_hash_id: 已经存在了`                                                      | Mapping 指向的 Doc 已进入 Trash；Draft 读不到它，Writer 误走 create，撞上物理 Article 唯一键                         | Writer 先按 mapped target ref 找到并恢复完整 Trash action，再对同一 `article_hash_id` 做 source-wins update           | 已映射 Doc 被删除后再次导入的集成测试                                        |
+| 合法仓库被报 archive 含不支持 entry                                                         | GitHub archive 中存在合法 symlink/hardlink，但导入器把所有 link 当危险 entry                                         | link 不解析、不落盘，直接跳过并计入文件数上限；路径穿越、device、FIFO 和未知 entry 仍阻断                             | link 目标不物化；link storm 不能绕过文件数限制                               |
+| 活跃下载超过总时长后被报“archive invalid”                                                   | fetch timeout 在返回 headers 后仍绑定 response body，流式下载被总时长中止；extractor 又把中止包装成 archive 格式错误 | headers 使用可取消 timeout；body 使用每个 chunk 的 idle timeout，不限制持续有进度的总下载时长；流中断保留下载错误语义 | 多 chunk 总耗时超过 timeout 仍成功；单个 chunk stall 返回 retryable 下载错误 |
+| UI 只显示 `Repository analysis failed.`                                                     | 确定性错误被 Workflow 重试并包上 Step 前缀，Preview 投影没有读取最终 cause                                           | 非 retryable `DocsImportError` 转为 `FatalError`；投影读取 `WorkflowRunFailedError.cause` 并去除 Workflow 包装前缀    | 原始安全 message 能通过轮询 API 到达 UI                                      |
 
 ## 3. 详细处理
 
 ### 3.1 GraphQL sourceInfo non-null
 
-`ImportJob.source_info` 是 Phoenix 内部持久结构，允许使用数据库/Elixir 习惯的字段形态；`contentImportJob.sourceInfo` 是 GraphQL 公共 DTO，不能把内部 map 原样交给 Absinthe 猜字段。
+`ImportJob.source_info` 是 Phoenix 内部持久结构，允许使用数据库/Elixir 习惯的字段形态；`importJob.sourceInfo` 是 GraphQL 公共 DTO，不能把内部 map 原样交给 Absinthe 猜字段。
 
 查询投影必须显式生成：
 
@@ -159,7 +159,7 @@ Review 显示选中覆盖的页面数。用户勾选确认后，Worker 校验 `a
 
 ## 6. 回归测试清单
 
-- GraphQL：`contentImportJob.sourceInfo` 所有 non-null 字段可读。
+- GraphQL：`importJob.sourceInfo` 所有 non-null 字段可读。
 - Back：cleanup 成功才允许离开；失败阻止离开；URL 与新 idempotency key 已重置。
 - 重复来源：同 Repo/branch 第二次 Preview 复用 mapped target refs；Apply 不创建第二套 Docs。
 - 覆盖确认：选中映射页面时显示覆盖数量，勾选后携带逐项 acknowledgement，并成功 Apply 到原 mapped Docs。

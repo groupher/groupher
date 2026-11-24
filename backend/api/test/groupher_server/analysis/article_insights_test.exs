@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     assert [%{metrics: %{article_view: %{value: 1}}}] = path_result.items
   end
 
-  test "Article Insights honors CommunityAdmin grants without CommunityModerator mirrors" do
+  test "Article Insights honors CommunityAdmin grants without CommunityAdmin mirrors" do
     {community, article, _attrs, author} = mock_article(:post)
     {:ok, unrelated} = db_insert(:user)
     inner_id = article_inner_id(article, community)

@@ -3,7 +3,7 @@ import Button from '~/ui/Buttons/Button'
 
 import ImportIssues from './ImportIssues'
 import useSalon from './salon/completed_step'
-import type { TContentImportJob } from './spec'
+import type { TImportJob } from './spec'
 
 /** Renders the terminal Job summary and navigation to the first imported Doc. */
 export default function CompletedStep({
@@ -12,7 +12,7 @@ export default function CompletedStep({
   reset,
 }: {
   community: string
-  job: TContentImportJob
+  job: TImportJob
   reset: () => Promise<boolean>
 }) {
   const s = useSalon()

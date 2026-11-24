@@ -274,7 +274,7 @@ defmodule GroupherServer.LocalTestActors.Cleanup do
 
         current ->
           with {:ok, _} <- Repo.delete(current),
-               {:ok, _} <- CMS.Communities.Count.update(community, user, :moderators_count, :dec),
+               {:ok, _} <- CMS.Communities.Count.update(community, user, :admins_count, :dec),
                {:ok, _} <-
                  CMS.Communities.Admins.Effects.activity(
                    community,

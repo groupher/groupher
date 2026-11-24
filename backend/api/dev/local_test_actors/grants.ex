@@ -188,7 +188,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
                  permissions: %{}
                })
                |> Repo.insert(),
-             {:ok, _} <- CMS.Communities.Count.update(community, user, :moderators_count, :inc) do
+             {:ok, _} <- CMS.Communities.Count.update(community, user, :admins_count, :inc) do
           {:ok, {member, true}}
         end
 

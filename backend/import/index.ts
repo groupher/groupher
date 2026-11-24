@@ -1,10 +1,10 @@
 /**
- * Publishes the . boundary used by Content Import.
+ * Publishes the . boundary used by Import.
  *
  * Business position:
  *
  *   Dash proxy / Phoenix import job
- *     -> Content Import module
+ *     -> Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary
  */

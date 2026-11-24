@@ -36,12 +36,10 @@ vi.mock('~/query/mutation/optimistic/execute', () => ({
 vi.mock('@tanstack/react-query', async () => ({
   ...(await vi.importActual('@tanstack/react-query')),
   useQuery: () => {
-    const slot = mocks.queryCallCount++ % 3
+    const slot = mocks.queryCallCount++ % 2
     if (slot === 1)
-      return { data: { docsPublishQueue: { revision: 0, articles: [] } }, refetch: mocks.reload }
-    if (slot === 2)
       return {
-        data: { docTreeTrashItems: { entries: [], pageInfo: null } },
+        data: { communityArticleTrashItems: { entries: [], pageInfo: null } },
         isFetching: false,
         refetch: mocks.reloadTrash,
       }

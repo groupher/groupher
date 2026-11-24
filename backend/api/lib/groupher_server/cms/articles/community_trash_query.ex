@@ -13,6 +13,10 @@ defmodule GroupherServer.CMS.Articles.CommunityTrashQuery do
 
   @ordinary [:post, :blog, :changelog]
 
+  def page(%Community{} = community, actor, :doc, pagi) do
+    CMS.DocTree.CommunityTrashQuery.page(community, actor, pagi)
+  end
+
   def page(%Community{} = community, actor, thread, pagi) when thread in @ordinary do
     with {:ok, :pass} <- authorize(community, actor, thread),
          {:ok, page} <-
@@ -58,11 +62,19 @@ defmodule GroupherServer.CMS.Articles.CommunityTrashQuery do
     end
   end
 
+  def get(%Community{} = community, actor, :doc, id) when is_binary(id) do
+    CMS.DocTree.CommunityTrashQuery.get(community, actor, id)
+  end
+
   def get(%Community{}, _actor, _thread, _id) do
     {:error, ErrorCat.unsupported_community_trash_thread()}
   end
 
   def get(_, _, _, _), do: {:error, ErrorCat.unsupported_community_trash_thread()}
+
+  def doc_members(%Community{} = community, actor, hash_id, revision, pagi) do
+    CMS.DocTree.CommunityTrashQuery.members(community, actor, hash_id, revision, pagi)
+  end
 
   def authorize(%Community{} = community, actor, thread) when thread in @ordinary do
     with {:ok, scope} <- CMS.Passport.load_community_scope(actor, community),

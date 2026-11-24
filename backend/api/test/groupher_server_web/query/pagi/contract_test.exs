@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.PagiContractTest do
   use ExUnit.Case, async: true
   alias GroupherServerWeb.Schema
 
-  @pages ~w(community_moderator_page user_page community_page collect_folder_page article_collection_page comment_collection_page comment_page post_page blog_page changelog_page doc_page paged_mailbox_mentions paged_mailbox_notifications community_asset_page article_asset_ref_page trash_page artiment_mention_page article_log_page community_activity_page community_application_page community_application_event_page search_artiment_page doc_tree_trash_page browser_session_page)a
+  @pages ~w(community_admin_directory_page community_admin_page user_page community_page collect_folder_page article_collection_page comment_collection_page post_page blog_page changelog_page doc_page paged_mailbox_mentions paged_mailbox_notifications community_asset_page article_asset_ref_page trash_page artiment_mention_page article_log_page community_activity_page community_application_page community_application_event_page search_artiment_page community_article_trash_page browser_session_page)a
 
   test "every paginated resource exposes entries and the single PageInfo union" do
     for name <- @pages do
@@ -60,7 +60,7 @@ defmodule GroupherServerWeb.PagiContractTest do
     assert Map.has_key?(dashboard.fields, :pagi_mode)
     assert Map.has_key?(dashboard.fields, :pagi_revision)
     refute Map.has_key?(dashboard.fields, :pagination)
-    refute Map.has_key?(Absinthe.Schema.lookup_type(Schema, :community).fields, :moderators)
+    refute Map.has_key?(Absinthe.Schema.lookup_type(Schema, :community).fields, :admins)
     refute Map.has_key?(Absinthe.Schema.lookup_type(Schema, :category).fields, :communities)
   end
 

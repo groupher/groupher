@@ -223,9 +223,7 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
   end
 
   defp actor(id) do
-    user = Repo.get!(User, id)
-    {:ok, rules} = CMS.Passport.get_passport(user)
-    %{user | cur_passport: rules}
+    Repo.get!(User, id)
   end
 
   defp command!({:ok, value}), do: value

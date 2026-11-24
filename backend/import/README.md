@@ -8,7 +8,7 @@ persisted import jobs, and final publication state.
 ## Position in the system
 
 ```text
-Browser -> Dash server proxy -> Content Import service
+Browser -> Dash server proxy -> Import service
                                       |
                       +---------------+---------------+
                       |                               |
@@ -33,9 +33,9 @@ consumes canonical files, tree nodes, diagnostics, and stable source IDs.
 - `cf-worker.ts`: production HTTP composition and Apply Workflow.
 - `workers/importWorkflow.ts`: durable repository analysis using R2 artifacts.
 - `cloudflare.config.ts`: Worker, Workflow, R2 and custom-domain bindings.
-- `src/lib/content-import`: import orchestration and shared contracts.
-- `src/lib/content-import/threads/docs/analyzer`: framework/source adapters.
-- `src/lib/content-import/threads/docs/apply`: canonical apply planning and
+- `src/lib/import`: import orchestration and shared contracts.
+- `src/lib/import/threads/docs/analyzer`: framework/source adapters.
+- `src/lib/import/threads/docs/apply`: canonical apply planning and
   Phoenix-facing batches.
 - `test/fixtures/frameworks`: checked-in miniature documentation repositories
   and expected trees used by analyzer contract tests. These are backend test
@@ -86,5 +86,5 @@ pnpm --filter @groupher/import run deploy
 
 - [`docs/import/app-boundary.md`](../../docs/import/app-boundary.md)
 - [`docs/import/README.md`](../../docs/import/README.md)
-- [`docs/import/content-import-architecture.md`](../../docs/import/content-import-architecture.md)
+- [`docs/import/import-architecture.md`](../../docs/import/import-architecture.md)
 - [`docs/import/import-error-handling.md`](../../docs/import/import-error-handling.md)

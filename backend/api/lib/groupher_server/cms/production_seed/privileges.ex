@@ -20,29 +20,33 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
                           &{&1, true}
                         )
 
-  def provision_platform!(users, manifest) do
+  def provision_global_passports!(users, manifest) do
     unless Repo.in_transaction?(), do: raise("seed privilege transaction required")
     lock_users!(Map.values(users))
     expected = manifest["globalPassports"] || %{}
     ensure_owned!(users, expected)
-    user_id = Map.fetch!(users, "platform")
+    roles = %{"platform" => @platform_permissions}
 
-    row =
-      case Repo.get_by(GlobalPassport, user_id: user_id) do
-        nil ->
-          %GlobalPassport{}
-          |> GlobalPassport.changeset(%{user_id: user_id, permissions: @platform_permissions})
-          |> Repo.insert!()
+    Map.new(roles, fn {name, permissions} ->
+      user_id = Map.fetch!(users, name)
 
-        row ->
-          unless row.permissions == @platform_permissions and not row.is_root do
-            Repo.rollback(:seed_unexpected_permissions)
-          end
+      row =
+        case Repo.get_by(GlobalPassport, user_id: user_id) do
+          nil ->
+            %GlobalPassport{}
+            |> GlobalPassport.changeset(%{user_id: user_id, permissions: permissions})
+            |> Repo.insert!()
 
-          row
-      end
+          row ->
+            unless row.permissions == permissions and not row.is_root do
+              Repo.rollback(:seed_unexpected_permissions)
+            end
 
-    %{"platform" => snapshot(row)}
+            row
+        end
+
+      {name, snapshot(row)}
+    end)
   end
 
   def ensure_owned!(users, expected) do
@@ -76,6 +80,23 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
     )
 
     {:ok, :pass}
+  end
+
+  def lock_admins!(users, communities) do
+    rows =
+      Repo.all(
+        from(a in CMS.Model.CommunityAdmin,
+          where: a.user_id in ^Map.values(users) and a.community_id in ^Map.values(communities),
+          order_by: [a.user_id, a.community_id],
+          lock: "FOR UPDATE"
+        )
+      )
+
+    {:ok, rows}
+  end
+
+  def globals_cleaned?(users) do
+    not Repo.exists?(from(p in GlobalPassport, where: p.user_id in ^Map.values(users)))
   end
 
   def delete_owned!(users, expected) do
@@ -113,14 +134,18 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
 
       case recorded do
         nil ->
-          if admin.is_lord or admin.permissions != %{} do
+          if admin.permissions != %{} do
             Repo.rollback(:seed_unexpected_permissions)
           end
 
           admin =
-            admin
-            |> Ecto.Changeset.change(is_lord: true, revision: admin.revision + 1)
-            |> Repo.update!()
+            if admin.is_lord do
+              admin
+            else
+              admin
+              |> Ecto.Changeset.change(is_lord: true, revision: admin.revision + 1)
+              |> Repo.update!()
+            end
 
           {slug, admin_snapshot(admin)}
 

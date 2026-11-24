@@ -11,7 +11,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
       GraphQL field
           -> middleware(M.Passport, action: "...")
           -> CMS.Passport.Catalog scope dispatch
-          -> Global / Community Passport Store or unmigrated legacy requirement
+          -> Global / Community Passport Store or fail closed
 
   Registered Global action example (`community.create`):
 
@@ -26,9 +26,6 @@ defmodule GroupherServerWeb.Middleware.Passport do
           -> load actor-bound Community Passport scope
           -> check `review.read` against current stored facts
 
-  Article actions whose consumer has not migrated yet keep the legacy
-  Registry requirement path until their assigned C3 / D1 migration.
-
   Notes:
 
   - `community_slug` comes from request arguments, then selects one community whitelist bucket.
@@ -36,22 +33,19 @@ defmodule GroupherServerWeb.Middleware.Passport do
   - Article mutations parse `arguments.article` into `arguments.article_path` here, but the
     article is still loaded later by the `FrontDesk` article middleware. If an earlier
     `article_editor` middleware already supplied a struct, Passport preserves it.
-  - Registered Global / Community actions use current Store facts for root admission;
-    unmigrated Article actions retain their legacy fallback until C3 / D1.
+  - Registered Global / Community actions use current Store facts for root admission.
+  - Unknown, Article-scope, and non-grantable actions fail closed.
   """
 
   @behaviour Absinthe.Middleware
 
   require GroupherServer.CMS.ErrorCat
-  require GroupherServer.CMS.Passport.ErrorCat
 
   alias GroupherServer.{Accounts, CMS, FrontDesk}
   alias GroupherServerWeb.ErrorResponse
 
   alias Accounts.Model.User
   alias CMS.ErrorCat, as: CmsErrorCat
-  alias CMS.Model.Comment
-  alias CMS.Passport.ErrorCat, as: PassportErrorCat
 
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
@@ -80,26 +74,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
         end
 
       _ ->
-        authorize_legacy_action(resolution, action, opts)
-    end
-  end
-
-  defp authorize_legacy_action(resolution, action, opts) do
-    case GroupherServer.CMS.passport_registry_requirement(action) do
-      {:ok, requirement} ->
-        case maybe_put_article_path(resolution, opts) do
-          {:ok, resolution} ->
-            check_legacy_requirement(resolution, requirement)
-
-          {:error, CmsErrorCat.error_pattern(reason: :invalid_article_path)} ->
-            invalid_article_path(resolution)
-        end
-
-      {:error, PassportErrorCat.error_pattern(reason: :unknown_action)} ->
-        ErrorResponse.put_error(
-          resolution,
-          CMS.passport_error_cat_unknown_action("PassportError: unknown action #{action}.")
-        )
+        unknown_action(resolution, action)
     end
   end
 
@@ -136,23 +111,6 @@ defmodule GroupherServerWeb.Middleware.Passport do
       %{resolution | arguments: arguments}
     else
       resolution
-    end
-  end
-
-  defp check_legacy_requirement(resolution, requirement) do
-    if owner_pass?(resolution, requirement) do
-      resolution
-    else
-      with {:ok, cur_passport} <- fetch_cur_passport(resolution),
-           true <- has_permission?(cur_passport, resolution, requirement) do
-        resolution
-      else
-        {:error, CmsErrorCat.error_pattern(reason: :missing_passport)} ->
-          passport_denied(resolution)
-
-        false ->
-          passport_denied(resolution)
-      end
     end
   end
 
@@ -204,64 +162,15 @@ defmodule GroupherServerWeb.Middleware.Passport do
     )
   end
 
-  defp owner_pass?(%{arguments: %{passport_is_owner: true}}, %{owner_fallback: true}), do: true
-  defp owner_pass?(resolution, %{owner_fallback: true}), do: infer_owner?(resolution)
-  defp owner_pass?(_, _), do: false
-
-  defp fetch_cur_passport(%{context: %{cur_user: %{cur_passport: cur_passport}}})
-       when is_map(cur_passport) do
-    {:ok, cur_passport}
+  defp unknown_action(resolution, action) do
+    ErrorResponse.put_error(
+      resolution,
+      CMS.passport_error_cat_unknown_action("PassportError: unknown action #{action}.")
+    )
   end
-
-  defp fetch_cur_passport(_), do: {:error, GroupherServer.CMS.error_cat_missing_passport()}
 
   defp current_user(%{context: %{cur_user: %User{} = user}}), do: user
   defp current_user(_), do: nil
-
-  defp has_permission?(cur_passport, resolution, requirement) do
-    normalized_passport = GroupherServer.CMS.passport_registry_normalize_rules(cur_passport)
-
-    has_god_permission?(normalized_passport) or
-      check_scope_permission(normalized_passport, resolution, requirement)
-  end
-
-  defp check_scope_permission(
-         passport,
-         resolution,
-         %{scope: :context, context: context} = requirement
-       ) do
-    with {:ok, community} <- fetch_community_slug(resolution),
-         {:ok, grant} <- resolve_grant(requirement, resolution) do
-      get_in(passport, [community, "root"]) == true or
-        get_in(passport, [community, to_string(context), grant]) == true
-    else
-      _ -> false
-    end
-  end
-
-  defp check_scope_permission(passport, resolution, %{scope: :global} = requirement) do
-    case resolve_grant(requirement, resolution) do
-      {:ok, grant} -> has_global_permission?(passport, grant)
-      _ -> false
-    end
-  end
-
-  defp check_scope_permission(_passport, _resolution, %{owner_fallback: true, grant: nil}) do
-    false
-  end
-
-  defp check_scope_permission(_passport, _resolution, %{owner_fallback: true}), do: false
-  defp check_scope_permission(_passport, _resolution, _), do: false
-
-  defp resolve_grant(%{grant: grant}, _resolution) when is_binary(grant), do: {:ok, grant}
-
-  defp resolve_grant(%{grant_by_thread: suffix}, resolution) do
-    with {:ok, thread} <- fetch_thread(resolution) do
-      {:ok, "#{thread}.#{suffix}"}
-    end
-  end
-
-  defp resolve_grant(_, _), do: {:error, GroupherServer.CMS.error_cat_invalid_requirement()}
 
   defp passport_thread(resolution, opts) do
     Keyword.get(opts, :thread) ||
@@ -306,54 +215,4 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   defp fetch_community_slug(_), do: {:error, GroupherServer.CMS.error_cat_missing_community()}
-
-  defp has_global_permission?(passport, permission) do
-    get_in(passport, ["global", permission]) == true
-  end
-
-  defp has_god_permission?(passport) do
-    has_global_permission?(passport, "god")
-  end
-
-  defp infer_owner?(%{
-         context: %{cur_user: cur_user},
-         arguments: %{article_path: %{community: community, thread: thread, inner_id: inner_id}}
-       })
-       when not is_nil(cur_user) do
-    article_path = %{
-      community: community_slug(community),
-      thread: thread,
-      inner_id: inner_id
-    }
-
-    case FrontDesk.article(article_path, cur_user) do
-      {:ok, %{author: %User{id: author_id}}} -> author_id == cur_user.id
-      {:ok, article} -> article.author.user.id == cur_user.id
-      _ -> false
-    end
-  end
-
-  defp infer_owner?(%{
-         context: %{cur_user: cur_user},
-         arguments: %{comment: %Comment{author: %User{id: author_id}}}
-       })
-       when not is_nil(cur_user) do
-    author_id == cur_user.id
-  end
-
-  defp infer_owner?(%{arguments: %{comment: %Comment{}}}), do: false
-
-  defp infer_owner?(%{context: %{cur_user: cur_user}, arguments: %{comment: comment_path}})
-       when not is_nil(cur_user) and is_map(comment_path) do
-    case FrontDesk.comment(comment_path) do
-      {:ok, %Comment{author: %User{id: author_id}}} -> author_id == cur_user.id
-      _ -> false
-    end
-  end
-
-  defp infer_owner?(_), do: false
-
-  defp community_slug(%{slug: slug}) when is_binary(slug), do: slug
-  defp community_slug(community) when is_binary(community), do: community
-  defp community_slug(_), do: nil
 end
