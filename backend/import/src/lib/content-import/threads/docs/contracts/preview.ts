@@ -78,7 +78,7 @@ export const decodeDocImportPreview = (value: unknown): TDocImportPreview => {
       repo: string(sourceInfo.repo, 'preview.sourceInfo.repo', 512),
       repoUrl: string(sourceInfo.repoUrl, 'preview.sourceInfo.repoUrl', 2_048),
     },
-    targetRevision: string(input.targetRevision, 'preview.targetRevision', 512),
+    targetRevision: string(input.targetRevision, 'preview.targetRevision', 2_000_000),
     targetTree: record(input.targetTree, 'preview.targetTree'),
     tree: decodeSourceTree(input.tree, PREVIEW_TREE_LIMITS),
   }

@@ -56,123 +56,142 @@ describe('FilesPreviewStore', () => {
     await fsPromises.rm(directory, { force: true, recursive: true })
   })
 
-  it('persists immutable attempt-scoped dataset, review, and ready artifacts', async () => {
-    const record = createPreviewRecord(
-      {
-        community: 'home',
-        commandId: 'request-1',
-        previewRef: 'prv_123456',
-        repoUrl: 'https://github.com/acme/docs',
-        userRef: 'user-1',
-      },
-      new Date('2026-07-22T00:00:00Z'),
-    )
-    await store.create(record)
-    expect(await files.exists(`_preview-records/v1/${record.previewRef}.json`)).toBe(true)
-    expect(await files.exists(`${record.previewRef}/preview-record.json`)).toBe(false)
-    await store.putAnalysisRun(record.previewRef, {
-      attemptRef: record.attemptRef,
-      createdAt: record.createdAt,
-      previewRef: record.previewRef,
-      schemaVersion: ANALYSIS_RUN_SCHEMA_VERSION,
-      workflowRunRef: 'wrun_123',
-    })
-    await store.putApplyRun(record.previewRef, {
-      attemptRef: record.attemptRef,
-      createdAt: record.createdAt,
-      jobRef: 'job-123',
-      previewRef: record.previewRef,
-      schemaVersion: APPLY_RUN_SCHEMA_VERSION,
-      workflowRunRef: 'wrun_apply_123',
-    })
-    await store.putDataset(record.previewRef, record.attemptRef, analysis, [
-      { markdown: '# Intro', sourceRef: 'docs/intro.md' },
-    ])
+  it.each([0, 6])(
+    'round-trips a structured Review revision with %i existing Docs',
+    async (count) => {
+      const record = createPreviewRecord(
+        {
+          community: 'home',
+          commandId: 'request-1',
+          previewRef: 'prv_123456',
+          repoUrl: 'https://github.com/acme/docs',
+          userRef: 'user-1',
+        },
+        new Date('2026-07-22T00:00:00Z'),
+      )
+      await store.create(record)
+      expect(await files.exists(`_preview-records/v1/${record.previewRef}.json`)).toBe(true)
+      expect(await files.exists(`${record.previewRef}/preview-record.json`)).toBe(false)
+      await store.putAnalysisRun(record.previewRef, {
+        attemptRef: record.attemptRef,
+        createdAt: record.createdAt,
+        previewRef: record.previewRef,
+        schemaVersion: ANALYSIS_RUN_SCHEMA_VERSION,
+        workflowRunRef: 'wrun_123',
+      })
+      await store.putApplyRun(record.previewRef, {
+        attemptRef: record.attemptRef,
+        createdAt: record.createdAt,
+        jobRef: 'job-123',
+        previewRef: record.previewRef,
+        schemaVersion: APPLY_RUN_SCHEMA_VERSION,
+        workflowRunRef: 'wrun_apply_123',
+      })
+      await store.putDataset(record.previewRef, record.attemptRef, analysis, [
+        { markdown: '# Intro', sourceRef: 'docs/intro.md' },
+      ])
 
-    const dataset: TDocsDataset = {
-      analysisRef: 'dataset/analysis.json',
-      badSmellsRef: 'dataset/bad-smells.json',
-      bodiesRef: 'dataset/bodies/',
-      capabilities: {
-        actors: false,
-        assets: false,
-        comments: false,
-        reactions: false,
-        replies: false,
-      },
-      datasetRef: 'dset_123',
-      schemaVersion: 1,
-      source: {
-        type: 'repo',
-        platform: 'github',
-        revision: 'a'.repeat(40),
-        scopeRef: 'acme/docs',
-      },
-      sourceInfo: {
-        branch: 'main',
-        commit: 'a'.repeat(40),
-        configPaths: [],
-        contentRoot: 'docs',
-        framework: 'vitepress',
-        repo: 'acme/docs',
-        repoUrl: 'https://github.com/acme/docs',
-      },
-      thread: 'doc',
-      treeRef: 'dataset/tree.json',
-    }
-    await store.putManifest(record.previewRef, record.attemptRef, dataset)
+      const dataset: TDocsDataset = {
+        analysisRef: 'dataset/analysis.json',
+        badSmellsRef: 'dataset/bad-smells.json',
+        bodiesRef: 'dataset/bodies/',
+        capabilities: {
+          actors: false,
+          assets: false,
+          comments: false,
+          reactions: false,
+          replies: false,
+        },
+        datasetRef: 'dset_123',
+        schemaVersion: 1,
+        source: {
+          type: 'repo',
+          platform: 'github',
+          revision: 'a'.repeat(40),
+          scopeRef: 'acme/docs',
+        },
+        sourceInfo: {
+          branch: 'main',
+          commit: 'a'.repeat(40),
+          configPaths: [],
+          contentRoot: 'docs',
+          framework: 'vitepress',
+          repo: 'acme/docs',
+          repoUrl: 'https://github.com/acme/docs',
+        },
+        thread: 'doc',
+        treeRef: 'dataset/tree.json',
+      }
+      await store.putManifest(record.previewRef, record.attemptRef, dataset)
 
-    const preview = {
-      badSmells: [],
-      conflicts: [],
-      counts: { assets: 0, groups: 0, links: 0, pages: 1, tabs: 0 },
-      expiresAt: record.expiresAt,
-      previewRef: record.previewRef,
-      schemaVersion: 1 as const,
-      sourceInfo: {
-        branch: 'main',
-        commit: 'a'.repeat(40),
-        configPaths: [],
-        contentRoot: 'docs',
-        framework: 'vitepress',
-        repo: 'acme/docs',
-        repoUrl: 'https://github.com/acme/docs',
-      },
-      targetRevision: 'doc:target:absent',
-      targetTree: {},
-      tree: analysis.tree,
-    }
-    await store.putReview(record.previewRef, record.attemptRef, preview)
-    await store.markReady(record.previewRef, record.attemptRef, {
-      attemptRef: record.attemptRef,
-      datasetManifestHash: sha256Json(dataset),
-      datasetRef: dataset.datasetRef,
-      schemaVersion: READY_RECEIPT_SCHEMA_VERSION,
-      targetPreviewHash: sha256Json(preview),
-      targetRevision: preview.targetRevision,
-    })
+      const preview = {
+        badSmells: [],
+        conflicts: [],
+        counts: { assets: 0, groups: 0, links: 0, pages: 1, tabs: 0 },
+        expiresAt: record.expiresAt,
+        previewRef: record.previewRef,
+        schemaVersion: 1 as const,
+        sourceInfo: {
+          branch: 'main',
+          commit: 'a'.repeat(40),
+          configPaths: [],
+          contentRoot: 'docs',
+          framework: 'vitepress',
+          repo: 'acme/docs',
+          repoUrl: 'https://github.com/acme/docs',
+        },
+        targetRevision: JSON.stringify([
+          0,
+          0,
+          Array.from({ length: count }, () => [
+            crypto.randomUUID(),
+            1,
+            crypto.randomUUID(),
+            1,
+            null,
+          ]),
+        ]),
+        targetTree: {},
+        tree: analysis.tree,
+      }
+      await expect(
+        store.putReview(record.previewRef, record.attemptRef, {
+          ...preview,
+          targetRevision: 'x'.repeat(2_000_001),
+        }),
+      ).rejects.toThrow('exceeds 2000000 characters')
+      await store.putReview(record.previewRef, record.attemptRef, preview)
+      await store.markReady(record.previewRef, record.attemptRef, {
+        attemptRef: record.attemptRef,
+        datasetManifestHash: sha256Json(dataset),
+        datasetRef: dataset.datasetRef,
+        schemaVersion: READY_RECEIPT_SCHEMA_VERSION,
+        targetPreviewHash: sha256Json(preview),
+        targetRevision: preview.targetRevision,
+      })
 
-    expect(await store.getRecord(record.previewRef)).toEqual(record)
-    expect(await store.getApplyRun(record.previewRef)).toMatchObject({
-      jobRef: 'job-123',
-      workflowRunRef: 'wrun_apply_123',
-    })
-    expect(await store.getDataset(record.previewRef, record.attemptRef)).toEqual(dataset)
-    expect(await store.getReview(record.previewRef, record.attemptRef)).toEqual(preview)
-    expect(await store.listSourceRefs(record.previewRef, record.attemptRef)).toEqual([
-      'docs/intro.md',
-    ])
-    expect(await store.getReady(record.previewRef, record.attemptRef)).toMatchObject({
-      datasetRef: dataset.datasetRef,
-    })
+      expect(await store.getRecord(record.previewRef)).toEqual(record)
+      expect(await store.getApplyRun(record.previewRef)).toMatchObject({
+        jobRef: 'job-123',
+        workflowRunRef: 'wrun_apply_123',
+      })
+      expect(await store.getDataset(record.previewRef, record.attemptRef)).toEqual(dataset)
+      expect(await store.getReview(record.previewRef, record.attemptRef)).toEqual(preview)
+      expect(await store.listSourceRefs(record.previewRef, record.attemptRef)).toEqual([
+        'docs/intro.md',
+      ])
+      expect(await store.getReady(record.previewRef, record.attemptRef)).toMatchObject({
+        datasetRef: dataset.datasetRef,
+      })
 
-    await expect(
-      store.putReview(record.previewRef, record.attemptRef, {
-        ...preview,
-        targetRevision: 'changed',
-      }),
-    ).rejects.toThrow('Immutable Preview object changed')
-  })
+      await expect(
+        store.putReview(record.previewRef, record.attemptRef, {
+          ...preview,
+          targetRevision: 'changed',
+        }),
+      ).rejects.toThrow('Immutable Preview object changed')
+    },
+  )
 
   it('deletes one preview prefix idempotently', async () => {
     const record = createPreviewRecord({
