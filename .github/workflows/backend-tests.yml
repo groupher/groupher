@@ -39,24 +39,24 @@ jobs:
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '29.0.6'
-          elixir-version: '1.20.4'
+          otp-version: '29.1.2'
+          elixir-version: '1.20.5'
 
       - name: Cache deps
         uses: actions/cache@v4
         with:
           path: backend/api/deps
-          key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-otp29-elixir20-mix-
+            ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-mix-
 
       - name: Cache build
         uses: actions/cache@v4
         with:
           path: backend/api/_build
-          key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-otp29-elixir20-build-
+            ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-build-
 
       - name: Install dependencies
         run: mix deps.get
@@ -76,24 +76,24 @@ jobs:
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '29.0.6'
-          elixir-version: '1.20.4'
+          otp-version: '29.1.2'
+          elixir-version: '1.20.5'
 
       - name: Restore cached deps
         uses: actions/cache@v4
         with:
           path: backend/api/deps
-          key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-otp29-elixir20-mix-
+            ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-mix-
 
       - name: Restore cached build
         uses: actions/cache@v4
         with:
           path: backend/api/_build
-          key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-otp29-elixir20-build-
+            ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-build-
 
       - name: Ensure dependencies are synced
         run: mix deps.get
@@ -161,24 +161,24 @@ jobs:
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '29.0.6'
-          elixir-version: '1.20.4'
+          otp-version: '29.1.2'
+          elixir-version: '1.20.5'
 
       - name: Restore cached deps
         uses: actions/cache@v4
         with:
           path: backend/api/deps
-          key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-otp29-elixir20-mix-
+            ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-mix-
 
       - name: Restore cached build
         uses: actions/cache@v4
         with:
           path: backend/api/_build
-          key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
+          key: ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
-            ${{ runner.OS }}-otp29-elixir20-build-
+            ${{ runner.OS }}-${{ hashFiles('backend/api/.tool-versions') }}-build-
 
       - name: Ensure dependencies are synced
         run: mix deps.get

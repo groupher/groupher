@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
-import { createVgpuWgslVitePlugin } from './config/vgpuVitePlugin.mts'
+import { createVgpuWgslVitePlugin } from './config/vgpuVitePlugin.mjs'
 
 // This config is shared by frontend apps and Hono backend apps.
 // Run with: `vitest --config frontend/core/vitest.config.mts`

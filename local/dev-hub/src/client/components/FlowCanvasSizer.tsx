@@ -1,4 +1,4 @@
-import { useStore } from '@xyflow/react'
+import { useNodesStore } from '@xyflow/react'
 import { useCallback, useLayoutEffect } from 'react'
 
 import { FLOW_INITIAL_TOP_INSET } from './FlowInitialViewport'
@@ -11,7 +11,7 @@ type TProps = {
 const FLOW_BOTTOM_INSET = 96
 
 export function FlowCanvasSizer({ requestPathIds, onHeightChange }: TProps) {
-  const requestPathHeight = useStore(
+  const requestPathHeight = useNodesStore(
     useCallback(
       (state) => {
         let top = Number.POSITIVE_INFINITY

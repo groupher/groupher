@@ -10,6 +10,8 @@ packages:
 # only its declared dependencies.
 nodeLinker: isolated
 injectWorkspacePackages: true
+syncInjectedDepsAfterScripts:
+  - graphql:codegen
 strictDepBuilds: true
 
 # pnpm 12 is provisioned explicitly by pnpm/setup, Docker, and local setup
@@ -19,8 +21,8 @@ pmOnFail: ignore
 # Keep shared TanStack runtime packages singular across every workspace and
 # override transitive ranges that would otherwise resolve independently.
 overrides:
-  '@tanstack/query-core': 5.107.1
-  '@tanstack/react-query': 5.107.1
+  '@tanstack/query-core': 5.108.4
+  '@tanstack/react-query': 5.108.4
   '@tanstack/router-ssr-query-core': 1.169.3
 
 # graphql-http@1.23.1 declares `graphql <=17`, which excludes the current
@@ -44,58 +46,82 @@ allowBuilds:
 minimumReleaseAgeExclude:
   # Native toolchain artifacts, reviewed prereleases, and explicit latest pins
   # are pinned exactly; see docs/deploy/cloudflare.md for the Cloudflare
-  # beta decision and rollback.
-  - '@oxfmt/binding-android-arm-eabi@0.78.0'
-  - '@oxfmt/binding-android-arm64@0.78.0'
-  - '@oxfmt/binding-darwin-arm64@0.78.0'
-  - '@oxfmt/binding-darwin-x64@0.78.0'
-  - '@oxfmt/binding-freebsd-x64@0.78.0'
-  - '@oxfmt/binding-linux-arm-gnueabihf@0.78.0'
-  - '@oxfmt/binding-linux-arm-musleabihf@0.78.0'
-  - '@oxfmt/binding-linux-arm64-gnu@0.78.0'
-  - '@oxfmt/binding-linux-arm64-musl@0.78.0'
-  - '@oxfmt/binding-linux-ppc64-gnu@0.78.0'
-  - '@oxfmt/binding-linux-riscv64-gnu@0.78.0'
-  - '@oxfmt/binding-linux-riscv64-musl@0.78.0'
-  - '@oxfmt/binding-linux-s390x-gnu@0.78.0'
-  - '@oxfmt/binding-linux-x64-gnu@0.78.0'
-  - '@oxfmt/binding-linux-x64-musl@0.78.0'
-  - '@oxfmt/binding-openharmony-arm64@0.78.0'
-  - '@oxfmt/binding-win32-arm64-msvc@0.78.0'
-  - '@oxfmt/binding-win32-ia32-msvc@0.78.0'
-  - '@oxfmt/binding-win32-x64-msvc@0.78.0'
-  - '@oxlint/binding-android-arm-eabi@1.93.0'
-  - '@oxlint/binding-android-arm64@1.93.0'
-  - '@oxlint/binding-darwin-arm64@1.93.0'
-  - '@oxlint/binding-darwin-x64@1.93.0'
-  - '@oxlint/binding-freebsd-x64@1.93.0'
-  - '@oxlint/binding-linux-arm-gnueabihf@1.93.0'
-  - '@oxlint/binding-linux-arm-musleabihf@1.93.0'
-  - '@oxlint/binding-linux-arm64-gnu@1.93.0'
-  - '@oxlint/binding-linux-arm64-musl@1.93.0'
-  - '@oxlint/binding-linux-ppc64-gnu@1.93.0'
-  - '@oxlint/binding-linux-riscv64-gnu@1.93.0'
-  - '@oxlint/binding-linux-riscv64-musl@1.93.0'
-  - '@oxlint/binding-linux-s390x-gnu@1.93.0'
-  - '@oxlint/binding-linux-x64-gnu@1.93.0'
-  - '@oxlint/binding-linux-x64-musl@1.93.0'
-  - '@oxlint/binding-openharmony-arm64@1.93.0'
-  - '@oxlint/binding-win32-arm64-msvc@1.93.0'
-  - '@oxlint/binding-win32-ia32-msvc@1.93.0'
-  - '@oxlint/binding-win32-x64-msvc@1.93.0'
-  - oxfmt@0.78.0
-  - oxlint@1.93.0
+  # release-candidate validation and rollback.
+  - '@oxfmt/binding-android-arm-eabi@0.80.0'
+  - '@oxfmt/binding-android-arm64@0.80.0'
+  - '@oxfmt/binding-darwin-arm64@0.80.0'
+  - '@oxfmt/binding-darwin-x64@0.80.0'
+  - '@oxfmt/binding-freebsd-x64@0.80.0'
+  - '@oxfmt/binding-linux-arm-gnueabihf@0.80.0'
+  - '@oxfmt/binding-linux-arm-musleabihf@0.80.0'
+  - '@oxfmt/binding-linux-arm64-gnu@0.80.0'
+  - '@oxfmt/binding-linux-arm64-musl@0.80.0'
+  - '@oxfmt/binding-linux-ppc64-gnu@0.80.0'
+  - '@oxfmt/binding-linux-riscv64-gnu@0.80.0'
+  - '@oxfmt/binding-linux-riscv64-musl@0.80.0'
+  - '@oxfmt/binding-linux-s390x-gnu@0.80.0'
+  - '@oxfmt/binding-linux-x64-gnu@0.80.0'
+  - '@oxfmt/binding-linux-x64-musl@0.80.0'
+  - '@oxfmt/binding-openharmony-arm64@0.80.0'
+  - '@oxfmt/binding-win32-arm64-msvc@0.80.0'
+  - '@oxfmt/binding-win32-ia32-msvc@0.80.0'
+  - '@oxfmt/binding-win32-x64-msvc@0.80.0'
+  - '@oxlint/binding-android-arm-eabi@1.95.0'
+  - '@oxlint/binding-android-arm64@1.95.0'
+  - '@oxlint/binding-darwin-arm64@1.95.0'
+  - '@oxlint/binding-darwin-x64@1.95.0'
+  - '@oxlint/binding-freebsd-x64@1.95.0'
+  - '@oxlint/binding-linux-arm-gnueabihf@1.95.0'
+  - '@oxlint/binding-linux-arm-musleabihf@1.95.0'
+  - '@oxlint/binding-linux-arm64-gnu@1.95.0'
+  - '@oxlint/binding-linux-arm64-musl@1.95.0'
+  - '@oxlint/binding-linux-ppc64-gnu@1.95.0'
+  - '@oxlint/binding-linux-riscv64-gnu@1.95.0'
+  - '@oxlint/binding-linux-riscv64-musl@1.95.0'
+  - '@oxlint/binding-linux-s390x-gnu@1.95.0'
+  - '@oxlint/binding-linux-x64-gnu@1.95.0'
+  - '@oxlint/binding-linux-x64-musl@1.95.0'
+  - '@oxlint/binding-openharmony-arm64@1.95.0'
+  - '@oxlint/binding-win32-arm64-msvc@1.95.0'
+  - '@oxlint/binding-win32-ia32-msvc@1.95.0'
+  - '@oxlint/binding-win32-x64-msvc@1.95.0'
+  - oxfmt@0.80.0
+  - oxlint@1.95.0
   - '@cloudflare/codemods@0.2.1'
-  - '@cloudflare/vite-plugin@2.0.0-beta.v.16'
-  - '@cloudflare/vitest-plugin@1.8.2'
-  - '@cloudflare/workers-types@5.20261115.1'
-  - cf@1.0.0-beta.31
-  - wrangler@4.162.0
+  - '@cloudflare/vite-plugin@2.0.0-rc.4'
+  - '@cloudflare/vitest-plugin@1.9.1'
+  - '@cloudflare/workers-types@5.20261123.1'
+  - cf@1.0.0-rc.4
+  - wrangler@4.167.0
   # Reviewed security update for sanitize-html XSS/allowlist bypasses.
   - sanitize-html@2.18.2
-  - files-sdk@3.2.0
+  - files-sdk@3.2.1
   - devalue@6.0.3
   # Reviewed Redact runtime used by all TanStack apps in this PR.
   - '@tanstack/redact@0.3.1'
+  - '@aws-sdk/client-s3@3.1176.0'
+  - '@aws-sdk/s3-request-presigner@3.1176.0'
+  - '@cloudflare/build-output-utils@1.0.0-rc.4'
+  - '@cloudflare/config@1.0.0-rc.4'
+  - '@cloudflare/runtime-types@0.1.33'
+  - '@cloudflare/workerd-darwin-64@1.20261123.1'
+  - '@cloudflare/workerd-darwin-arm64@1.20261123.1'
+  - '@cloudflare/workerd-linux-64@1.20261123.1'
+  - '@cloudflare/workerd-linux-arm64@1.20261123.1'
+  - '@cloudflare/workerd-windows-64@1.20261123.1'
+  - '@cloudflare/workers-utils@0.57.0'
+  - '@formkit/auto-animate@0.11.0'
+  - '@tanstack/query-core@5.108.4'
+  - '@tanstack/react-query@5.108.4'
+  - '@xyflow/react@13.0.3'
+  - '@xyflow/system@1.0.1'
+  - hono@4.13.21
+  - lucide-react@1.78.0
+  - lucide-static@1.78.0
+  - markdown-to-jsx@9.11.0
+  - miniflare@5.20261123.0-beta
+  - recharts@3.11.1
+  - tar-stream@3.3.0
+  - workerd@1.20261123.1
 patchedDependencies:
   pinyin-pro@3.29.5: patches/pinyin-pro@3.29.5.patch
