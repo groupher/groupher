@@ -105,7 +105,8 @@ const readRegistrations = (environment: Record<string, string>, conflicts: strin
       const registration = value as Record<string, unknown>
       const clientId = registration.clientId as string
       if (registrations.has(clientId)) {
-        if (!overlayIds.has(clientId)) conflicts.push(`duplicate Auth registration for ${clientId}`)
+        if (key === 'SERVICE_AUTH_CLIENTS_JSON_IMPORT' || !overlayIds.has(clientId))
+          conflicts.push(`duplicate Auth registration for ${clientId}`)
       } else registrations.set(clientId, registration)
       if (key === 'SERVICE_AUTH_CLIENTS_JSON_IMPORT') overlayIds.add(clientId)
     }

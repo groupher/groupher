@@ -169,3 +169,33 @@ test('a failed migration write leaves old state absent and old inputs unchanged'
     0o700,
   )
 })
+
+test('Import registry takes precedence over base clients and rejects duplicate overlay entries', async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'local-environment-import-overlay-'))
+  t.after(async () => rm(root, { recursive: true, force: true }))
+  const { authFile, serviceSecrets } = await makeLegacyFixture(root)
+  const original = await readFile(authFile, 'utf8')
+  const requirement = SERVICE_DEFINITIONS.find((entry) => entry.id === 'dash')!.localEnvironment!
+    .serviceAuth!
+  const registration = {
+    ...requirement,
+    credentialHashes: [hash(serviceSecrets.dash)],
+    status: 'active',
+  }
+  await writeFile(
+    authFile,
+    original + `SERVICE_AUTH_CLIENTS_JSON_IMPORT=${quote(JSON.stringify([registration]))}\n`,
+  )
+  const result = await migrateLocalEnvironment(root, 'check')
+  assert.equal(result.status, 'ready')
+  assert.deepEqual(result.conflicts, [])
+
+  await writeFile(
+    authFile,
+    original +
+      `SERVICE_AUTH_CLIENTS_JSON_IMPORT=${quote(JSON.stringify([registration, registration]))}\n`,
+  )
+  const duplicate = await migrateLocalEnvironment(root, 'check')
+  assert.equal(duplicate.status, 'conflict')
+  assert.match(duplicate.conflicts.join('\n'), /duplicate Auth registration/)
+})
