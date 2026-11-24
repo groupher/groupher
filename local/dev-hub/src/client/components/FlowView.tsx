@@ -1,4 +1,4 @@
-import '@xyflow/react/dist/style.css'
+import '@xyflow/react/style.css'
 import type {
   TPublicService,
   TServiceMetricsSnapshot,
@@ -351,6 +351,7 @@ export function FlowView({
           edges={edges}
           nodeTypes={NODE_TYPES}
           edgeTypes={EDGE_TYPES}
+          forceColorMode='light'
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}

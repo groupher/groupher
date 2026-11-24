@@ -7,14 +7,14 @@
 # This file is based on these images:
 #
 #   - https://hub.docker.com/r/hexpm/elixir/tags - for the build image
-#   - https://hub.docker.com/_/ubuntu?tab=tags&page=1&name=noble-20260810 - for the release image
+#   - https://hub.docker.com/_/ubuntu?tab=tags&page=1&name=noble-20261110.1 - for the release image
 #   - https://pkgs.org/ - resource for finding needed packages
-#   - Ex: hexpm/elixir:1.20.4-erlang-29.0.6-ubuntu-noble-20260810
+#   - Ex: hexpm/elixir:1.20.5-erlang-29.1.2-ubuntu-noble-20261110.1
 #
-ARG ELIXIR_VERSION=1.20.4
-ARG OTP_VERSION=29.0.6
-ARG BUILDER_OS_VERSION=ubuntu-noble-20260810
-ARG RUNNER_OS_VERSION=noble-20260810
+ARG ELIXIR_VERSION=1.20.5
+ARG OTP_VERSION=29.1.2
+ARG BUILDER_OS_VERSION=ubuntu-noble-20261110.1
+ARG RUNNER_OS_VERSION=noble-20261110.1
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-${BUILDER_OS_VERSION}"
 ARG RUNNER_IMAGE="ubuntu:${RUNNER_OS_VERSION}"

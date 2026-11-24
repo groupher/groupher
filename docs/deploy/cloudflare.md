@@ -330,28 +330,24 @@ smoke；不能同时配置同 hostname 的 Worker Route 与 Custom Domain。
 - `previewUrls: true`，preview URL 通过 Cloudflare Access 或同等措施保护。
 - `cf deploy --mode production` 负责构建并部署；`cf deploy --dry-run --mode production` 用于 CI 校验。
 
-### Beta 采用与回滚
+### CLI 与 Vite 插件版本验证和回滚
 
-当前生产构建链有意精确锁定 `cf@1.0.0-beta.31` 和
-`@cloudflare/vite-plugin@2.0.0-beta.v.16`。这是基于现有 Worker、Static Assets、
-Service Binding、Durable Object、Queue、R2、路由和类型生成能力均已完成 dry-run 与构建验证后的
-主动选择，不是允许自动漂移的宽松 beta 范围。两项版本及其平台 binding 被列入
-`minimumReleaseAgeExclude`，只用于放行这组已审查的精确版本；升级到后续 beta、SHA 或 stable
-版本时必须同步更新排除项并重跑全套构建、Worker 测试和各项目部署 dry-run。
+当前分支的候选组合精确锁定 `cf@1.0.0-rc.4` 和
+`@cloudflare/vite-plugin@2.0.0-rc.4`。两项版本及其平台 binding 被列入
+`minimumReleaseAgeExclude`，只放行这一组经验证的发布候选版本。合并前必须通过全套 Worker
+构建、测试和各项目部署 dry-run。
 
-升级到该组合时有一条硬约束：`cf` 会拒绝
-SHA 构建的插件（提示 it is not compatible with cf's local runtime），因此插件必须跟随 beta 版本号。
-更新的 `cf@1.0.0-beta.32` + `@cloudflare/vite-plugin@2.0.0-beta.v.17` 在生成 Worker 运行时类型时崩溃
-（`CAPNP-TS024 Attempted to convert pointer ... to a 1 type`，栈落在 `@cloudflare/runtime-types` 的
-`generateRuntimeTypes`），与排除项配置无关，属上游缺陷，暂不采用。因此各 Worker 的 Vite 插件显式设置
-`types: { includeRuntime: false }`：所有 Worker tsconfig 已经通过 `@cloudflare/workers-types` v5 声明运行时
-全局类型，`.cloudflare/types/index.d.ts` 只需要配置里的绑定类型；上游修复后再评估恢复 `includeRuntime`。
+此前的生产构建链使用 `cf@1.0.0-beta.31` 和
+`@cloudflare/vite-plugin@2.0.0-beta.v.16`。当时 `cf` 要求插件跟随同编号的 beta 版本，
+不接受 SHA 构建的插件。升级的 `beta.32` / `beta.v.17` 在 Worker 运行时类型生成阶段触发
+`CAPNP-TS024 Attempted to convert pointer ... to a 1 type`。因此各 Worker 的 Vite 插件继续设置
+`types: { includeRuntime: false }`。所有 Worker tsconfig 通过 `@cloudflare/workers-types` v5
+声明运行时全局类型，`.cloudflare/types/index.d.ts` 只需要配置中的绑定类型。
 
-迁移期间不并行维护两套配置源，避免 `cloudflare.config.ts` 与 Wrangler 配置产生资源漂移。
-如果 beta 阻断生产发布，回滚路径是将本次 `cf` 迁移提交整体 revert，恢复迁移前的 Wrangler
-配置、脚本、直接依赖和锁文件，然后执行 frozen install、全部 Wrangler dry-run 与 Service
-Binding smoke；若新版已经部署，则再把 Cloudflare deployment 切回上一已验证 Worker version。
-不得只回退 CLI 而继续读取新的 TypeScript 配置。
+如果发布候选版本未能通过验收，回滚时将 `cf`、Vite 插件、相关平台 binding 和锁文件整体恢复到
+上一组已验证版本，然后执行 frozen install、全部 Wrangler dry-run 和 Service Binding smoke。
+若新版已经部署，再将 Cloudflare deployment 切回上一已验证 Worker version。不得只回退 CLI
+而继续读取新的 TypeScript 配置。
 
 ## Community 运行状态
 
