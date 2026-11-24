@@ -221,7 +221,13 @@ export default function ArticleCoAuthors({ article }: TProps) {
 
   return (
     <>
-      <Button size='small' soft disabled={!articleId} onClick={() => setShow(true)}>
+      <Button
+        size='small'
+        soft
+        ariaLabel={`${t('dsb.cms.coauthors.action')} · ${article.title}`}
+        disabled={!articleId}
+        onClick={() => setShow(true)}
+      >
         {t('dsb.cms.coauthors.action')}
       </Button>
       <Modal show={show} width='680px' onClose={() => setShow(false)} showCloseBtn>
