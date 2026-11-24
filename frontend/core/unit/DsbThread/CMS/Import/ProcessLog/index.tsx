@@ -22,14 +22,8 @@ const STAGE_DETAILS: Record<TImportProcessStage, TTransKey[]> = {
     'dsb.import.process.analyzing_detect',
     'dsb.import.process.analyzing_parse',
   ],
-  APPLYING: [
-    'dsb.import.process.applying_write',
-    'dsb.import.process.applying_finalize',
-  ],
-  BUILDING_PREVIEW: [
-    'dsb.import.process.preview_validate',
-    'dsb.import.process.preview_assemble',
-  ],
+  APPLYING: ['dsb.import.process.applying_write', 'dsb.import.process.applying_finalize'],
+  BUILDING_PREVIEW: ['dsb.import.process.preview_validate', 'dsb.import.process.preview_assemble'],
   PREPARING: [
     'dsb.import.process.preparing_convert',
     'dsb.import.process.preparing_stage',

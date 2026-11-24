@@ -367,10 +367,7 @@ test('dash bulk import routes through the standalone content import service', ()
     dash?.localEnvironment?.env?.NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT,
     'https://assets.groupher.localhost',
   )
-  assert.equal(
-    dash?.localEnvironment?.env?.CONTENT_IMPORT_APP_ENDPOINT,
-    LOCAL_SERVICE_ENDPOINTS.import,
-  )
+  assert.equal(dash?.localEnvironment?.env?.IMPORT_APP_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.import)
   assert.equal(
     contentImport?.localEnvironment?.env?.PHOENIX_GRAPHQL_ENDPOINT,
     LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
@@ -560,4 +557,23 @@ test('public development entrypoints route through Dev Hub and service commands 
     assert.notEqual(makeTarget(managedTarget).trim(), '', `${service.id} internal target exists`)
     assert.doesNotMatch(makeTarget(managedTarget), /pnpm devhub/, `${service.id} cannot recurse`)
   }
+})
+
+test('Import identity and environment contracts agree across managed services', () => {
+  const importer = SERVICE_DEFINITIONS.find((definition) => definition.id === 'import')
+  const auth = SERVICE_DEFINITIONS.find((definition) => definition.id === 'auth')
+  const env = importer?.localEnvironment?.env ?? {}
+  assert.equal(env.IMPORT_SERVICE_AUTH_AUDIENCE, 'import:internal-api')
+  assert.equal(env.SERVICE_AUTH_PHOENIX_RESOURCE, 'https://api.groupher.com/import')
+  assert.deepEqual(importer?.localEnvironment?.serviceAuth?.allowedAudiences, [
+    'phoenix:import-api',
+  ])
+  assert.deepEqual(importer?.localEnvironment?.serviceAuth?.allowedScopes, ['import:write'])
+  assert.equal(importer?.localEnvironment?.serviceAuth?.serviceName, 'import')
+  assert.equal(importer?.localEnvironment?.secrets?.IMPORT_PREVIEW_SECRET, 'import:preview-secret')
+  const resources = auth?.localEnvironment?.authResources ?? {}
+  assert.equal(resources['https://api.groupher.com/import'], 'phoenix:import-api')
+  assert.equal(resources['https://import.groupher.com/internal'], 'import:internal-api')
+  assert.equal(resources['https://api.groupher.com/content-import'], undefined)
+  assert.ok(Object.keys(env).every((key) => !key.startsWith('CONTENT_IMPORT_')))
 })

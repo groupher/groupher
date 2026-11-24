@@ -62,7 +62,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
   def authorize_body_write_after_commit(community, article_id, actor) do
     case site_queue_write_after_commit(community, actor) do
       {:ok, canonical} ->
-        {:ok, canonical}
+        with {:ok, :pass} <- authorize_after_commit(canonical, article_id, actor) do
+          {:ok, canonical}
+        end
 
       {:error, %Decision{} = decision} = error ->
         if permission_denied?(decision) do
@@ -102,7 +104,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
       with {:ok, article_id} <- Ecto.UUID.cast(article_id),
            %Article{thread: :doc} = article <-
              Repo.get(Article, article_id) |> Repo.preload(:author),
-           {:ok, :pass} <- authorize_member_read(community, article, actor) do
+           {:ok, :pass} <- authorize_body_read(community, article, actor) do
         community_id = community.id
 
         member_query =
@@ -130,6 +132,21 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
         {:error, _} = error -> error
       end
     end)
+  end
+
+  defp authorize_body_read(community, article, actor) do
+    case site_queue_write_after_commit(community, actor) do
+      {:ok, _canonical} ->
+        authorize_after_commit(community, article.id, actor)
+
+      {:error, %Decision{} = decision} = error ->
+        if permission_denied?(decision),
+          do: authorize_member_read(community, article, actor),
+          else: error
+
+      error ->
+        error
+    end
   end
 
   defp authorize_member_read(community, article, actor) do

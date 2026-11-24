@@ -119,6 +119,9 @@ defmodule GroupherServerWeb.ErrorResponse do
     session_unavailable = GroupherServer.Auth.contract_session_unavailable()
 
     case reason do
+      :account_login ->
+        %{code: error.code, reasonCode: "ACCOUNT_LOGIN"}
+
       reason when reason in [:invalid_browser_access_claims, :invalid_legacy_access_claims] ->
         %{code: token_invalid}
 

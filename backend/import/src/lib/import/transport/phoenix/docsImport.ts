@@ -24,18 +24,18 @@ export const MAX_BATCH_BYTES = 6 * 1024 * 1024
 export const MAX_BODY_BAG_BYTES = 5 * 1024 * 1024
 
 /** Checks the community-scoped `doc.import` permission before creating a Preview. */
-export const checkDocImportPassport = async (
+export const canImportDocs = async (
   community: string,
   options: TRequestOptions & { backendToken: string },
 ): Promise<boolean> => {
-  const data = await requestGroupherGraphQL<{ checkPassport: boolean }>(
-    `query CheckDocImportPassport($community: String!, $action: String!) {
-      checkPassport(community: $community, action: $action)
+  const data = await requestGroupherGraphQL<{ canImportDocs: boolean }>(
+    `query CanImportDocs($community: String!) {
+      canImportDocs(community: $community)
     }`,
-    { action: 'doc.import', community },
+    { community },
     options,
   )
-  return data.checkPassport
+  return data.canImportDocs
 }
 
 export type TTargetPreview = {

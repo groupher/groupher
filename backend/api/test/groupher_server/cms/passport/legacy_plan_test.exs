@@ -4,6 +4,39 @@ defmodule GroupherServer.Test.CMS.Passport.LegacyPlanTest do
   alias GroupherServer.CMS
   alias CMS.Passport.LegacyPlan
 
+  test "normalization preserves mixed top-level scopes and reports collisions" do
+    rules = %{
+      "global" => %{},
+      "first" => %{"root" => true},
+      "cms" => %{"second" => %{"post.pin" => true}}
+    }
+
+    assert {:ok, normalized} =
+             GroupherServer.CMS.Passport.LegacyPlan.normalize_legacy_rules(rules)
+
+    assert normalized["first"] == %{"root" => true}
+    assert normalized["second"] == %{"cms" => %{"post.pin" => true}}
+
+    assert {:ok, collision} =
+             GroupherServer.CMS.Passport.LegacyPlan.normalize_legacy_rules(%{
+               rules
+               | "cms" => %{"first" => %{"post.pin" => true}}
+             })
+
+    assert Map.has_key?(collision["first"], "legacy_scope_collision")
+  end
+
+  test "a community named root is not mistaken for a boolean lord flag" do
+    assert {:ok, normalized} =
+             GroupherServer.CMS.Passport.LegacyPlan.normalize_legacy_rules(%{
+               "global" => %{},
+               "cms" => %{"root" => %{"post.pin" => true}}
+             })
+
+    assert normalized["root"] == %{"cms" => %{"post.pin" => true}}
+    refute Map.has_key?(normalized, "cms")
+  end
+
   test "reports unsafe scoped conversions without widening thread grants" do
     rules = %{
       "global" => %{

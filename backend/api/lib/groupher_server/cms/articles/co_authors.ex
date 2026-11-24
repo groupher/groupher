@@ -48,7 +48,7 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
     end
   end
 
-  @doc "Prevents current co-authors from using legacy Article WorkingCopy paths."
+  @doc "Prevents Doc co-authors from bypassing the Queue through default WorkingCopy paths."
   def reject_member_working_copy_access(%CMS.Model.Article{} = article, %User{} = actor) do
     Query.reject_member_working_copy_access(article, actor)
   end

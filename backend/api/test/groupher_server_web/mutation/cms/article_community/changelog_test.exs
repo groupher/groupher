@@ -23,14 +23,20 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Changelog do
     test "auth user can mirror a changelog to other community",
          ~m(community community2 changelog)a do
       passport_rules = %{
-        community.slug => %{
-          "article.mirror" => true,
-          "article.unmirror" => true,
-          "article.move" => true
-        }
+        global: %{is_root: false, permissions: %{}},
+        communities: %{
+          community.slug => %{
+            permissions: %{
+              "article.mirror" => true,
+              "article.move" => true,
+              "article.unmirror" => true
+            }
+          }
+        },
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       variables = %{
         article: %{
@@ -57,7 +63,14 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Changelog do
         targetCommunity: community2.slug
       }
 
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(
@@ -84,14 +97,20 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Changelog do
     test "auth user can mirror multi changelog to other communities",
          ~m(community community2 community3 changelog)a do
       passport_rules = %{
-        community.slug => %{
-          "article.mirror" => true,
-          "article.unmirror" => true,
-          "article.move" => true
-        }
+        global: %{is_root: false, permissions: %{}},
+        communities: %{
+          community.slug => %{
+            permissions: %{
+              "article.mirror" => true,
+              "article.move" => true,
+              "article.unmirror" => true
+            }
+          }
+        },
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       variables = %{
         article: %{
@@ -123,14 +142,20 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Changelog do
     test "auth user can unmirror changelog to a community",
          ~m(community community2 community3 changelog)a do
       passport_rules = %{
-        community.slug => %{
-          "article.mirror" => true,
-          "article.unmirror" => true,
-          "article.move" => true
-        }
+        global: %{is_root: false, permissions: %{}},
+        communities: %{
+          community.slug => %{
+            permissions: %{
+              "article.mirror" => true,
+              "article.move" => true,
+              "article.unmirror" => true
+            }
+          }
+        },
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       variables = %{
         article: %{
@@ -158,9 +183,13 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Changelog do
       assert community.id in assoc_communities
       assert community2.id in assoc_communities
 
-      passport_rules = %{"article.unmirror" => true}
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{},
+        community_permissions: %{"article.unmirror" => true}
+      }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       rule_conn |> gq_mutation(S.Article.m(:unmirror_article), variables)
       assoc_communities = binding_communities(changelog) |> Enum.map(& &1.id)
@@ -171,14 +200,20 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Changelog do
     test "auth user can move changelog to other community",
          ~m(community community2 changelog user)a do
       passport_rules = %{
-        community.slug => %{
-          "article.mirror" => true,
-          "article.unmirror" => true,
-          "article.move" => true
-        }
+        global: %{is_root: false, permissions: %{}},
+        communities: %{
+          community.slug => %{
+            permissions: %{
+              "article.mirror" => true,
+              "article.move" => true,
+              "article.unmirror" => true
+            }
+          }
+        },
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       variables = %{
         article: %{
@@ -196,14 +231,20 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Changelog do
       assert community.id in assoc_communities
 
       passport_rules = %{
-        community.slug => %{
-          "article.mirror" => true,
-          "article.unmirror" => true,
-          "article.move" => true
-        }
+        global: %{is_root: false, permissions: %{}},
+        communities: %{
+          community.slug => %{
+            permissions: %{
+              "article.mirror" => true,
+              "article.move" => true,
+              "article.unmirror" => true
+            }
+          }
+        },
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       pre_community_id = community.id
 

@@ -237,10 +237,10 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     reviewer = grant_community_permissions(community, reviewer, %{"review.read" => true})
     {:ok, legacy_user} = db_insert(:user)
 
-    legacy_reviewer = %{
-      legacy_user
-      | cur_passport: %{community.slug => %{"cms" => %{"review.read" => true}}}
-    }
+    legacy_reviewer =
+      Map.put(legacy_user, :cur_passport, %{
+        community.slug => %{"cms" => %{"review.read" => true}}
+      })
 
     assert {:ok, {:ok, report}} =
              Repo.transaction(fn ->
@@ -339,10 +339,10 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
 
     {:ok, legacy_reviewer} = db_insert(:user)
 
-    legacy_reviewer = %{
-      legacy_reviewer
-      | cur_passport: %{community.slug => %{"cms" => %{"review.decide" => true}}}
-    }
+    legacy_reviewer =
+      Map.put(legacy_reviewer, :cur_passport, %{
+        community.slug => %{"cms" => %{"review.decide" => true}}
+      })
 
     assert {:ok, {:ok, pending_item}} =
              Repo.transaction(fn ->

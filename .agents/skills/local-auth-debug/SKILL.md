@@ -1,11 +1,11 @@
 ---
 name: local-auth-debug
-description: Diagnose local Groupher Auth, browser session, cookie and Dash service-identity failures. Use local-test-actors for creating or opening test identities; excludes production auth.
+description: Diagnose local Groupher Auth, browser session, cookie and Dash service-identity failures. Use local-test-fixtures for creating or opening test identities; excludes production auth.
 ---
 
 # Local Auth Debug
 
-Use [dev-hub](../dev-hub/SKILL.md) for read-only status, logs and runtime recovery. Use [local-test-actors](../local-test-actors/SKILL.md) to create or sign in a synthetic identity when that state change is authorized. The fixed local-debug/local-passport-admin logins and their flags have been removed.
+Use [Dev Hub guide](../../../docs/architecture/dev-hub-local-environment.md) for read-only status, logs and runtime recovery. Use [local-test-fixtures](../local-test-fixtures/SKILL.md) to create or sign in a synthetic identity when that state change is authorized. The fixed local-debug/local-passport-admin logins and their flags have been removed.
 
 Read [the local identity runbook](../../../docs/auth/local-test-actors.md). Diagnose by boundary:
 

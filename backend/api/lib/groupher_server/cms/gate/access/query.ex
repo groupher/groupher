@@ -103,7 +103,8 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     Check.community_snapshot(actor, action, community)
   end
 
-  def community_snapshot_check(_, _, _), do: {:error, ErrorCat.unsupported_resource()}
+  def community_snapshot_check(_, _, _),
+    do: {:error, Decision.deny(ErrorCat.unsupported_resource())}
 
   @doc """
   Loads and authorizes a resource while joining the caller-owned transaction.

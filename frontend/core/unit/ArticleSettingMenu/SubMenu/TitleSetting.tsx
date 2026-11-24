@@ -3,6 +3,8 @@ import { type FC, useEffect, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
+import { viewerQueryKeys } from '~/query/key'
+import useAccount from '~/stores/account/hooks'
 import Input from '~/ui/Input'
 import { toast } from '~/ui/Toaster'
 
@@ -18,6 +20,7 @@ type TProps = {
 
 const TitleSetting: FC<TProps> = ({ onBack }) => {
   const s = useSalon()
+  const { accountScope } = useAccount()
 
   const { article, articlePath } = useViewingArticle()
   const [title, setTitle] = useState(article.title ?? '')
@@ -28,8 +31,12 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
   } | null>(null)
   const { touched, setTouched, resetTouched } = useTouched()
   const workingCopiesQuery = useQuery({
-    queryKey: ['article-working-copies', article.id, articlePath?.community],
-    enabled: Boolean(article.id && articlePath?.community),
+    queryKey: viewerQueryKeys.articleWorkingCopies(
+      accountScope || 'anonymous',
+      String(article.id ?? ''),
+      articlePath?.community ?? '',
+    ),
+    enabled: Boolean(accountScope && article.id && articlePath?.community),
     queryFn: () => {
       if (!article.id || !articlePath?.community)
         throw new Error('Article identity is unavailable.')
@@ -43,6 +50,13 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
     (candidate) => candidate.scopeType === 'default',
   )
   const [result, saveWorkingCopy] = useArticleSettingMutation(S.saveWorkingCopy)
+
+  useEffect(() => {
+    setTitle(article.title ?? '')
+    resetTouched()
+    setRevisionConflict(false)
+    setConflictRefresh(null)
+  }, [accountScope, article.id])
 
   useEffect(() => {
     if (workingCopy && !touched) setTitle(workingCopy.title)

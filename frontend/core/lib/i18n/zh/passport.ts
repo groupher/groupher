@@ -24,7 +24,6 @@ export default {
   'passport.rule.god': '系统 God',
   'passport.rule.root': '社区 Root',
   'passport.rule.system_notification.publish': '发布系统通知',
-  'passport.rule.stamp_passport': '授予权限',
   'passport.rule.community.create': '创建社区',
   'passport.rule.community.update': '更新社区',
   'passport.rule.community.delete': '删除社区',

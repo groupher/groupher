@@ -105,7 +105,7 @@ defmodule GroupherServer.CMS.Passport.Authorization do
   Checks a global reviewer action through the current Global Passport row and
   maps any denial to the review permission error.
 
-  This legacy helper has no Community context; resource-specific authorization
+  This Global review helper has no Community context; resource-specific authorization
   belongs to Gate Policy, which combines Passport facts with Lifecycle state.
 
   ## Examples

@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import usePagiPosition from '~/hooks/usePagiPosition'
-import { viewerQueryKeys } from '~/query'
 import { invalidatePrefix } from '~/query/invalidation'
+import { viewerQueryKeys } from '~/query/key'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TAdmin, TUser, TUserSearchResult } from '~/spec'
 import useAccount from '~/stores/account/hooks'
@@ -63,6 +63,12 @@ export default function useAdmins() {
   const invalidate = async (): Promise<void> => {
     await Promise.all([
       invalidatePrefix(client, prefix),
+      invalidatePrefix(client, viewerQueryKeys.communityAdmin(accountScope || 'anonymous', slug)),
+      invalidatePrefix(
+        client,
+        viewerQueryKeys.communityGateFacts(accountScope || 'anonymous', slug),
+      ),
+      invalidatePrefix(client, ['community-admin-requests', slug, accountScope]),
       invalidatePrefix(client, [
         ...viewerQueryKeys.all,
         accountScope,

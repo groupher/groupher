@@ -1,5 +1,7 @@
 # Passport P4a：消费者归属与独立批次
 
+> 2026-11-24 PR #619 review 更新：旧 JSON CRUD、Registry、Assignment、User Passport 虚拟字段和旧连接器形状已退出当前代码。运行时只使用 Catalog / Store 与 scoped rows；旧词表隔离到 `CMS.Passport.LegacyVocabulary`，仅供显式的一次性转换报告。五个旧 Docs 验证脚本和旧 JSON 重写脚本已退役；当前验证使用 Passport、Trash、Queue、Dashboard 的自动化用例。以下 owner map 是历史实施记录，保留当时状态，不作为当前保留旧 helper 的依据。
+
 > 状态：P4a 本地活跃源码的 owner map 与逐入口复核已完成；仍在运行的 legacy consumer 已明确归属其独立领域批次，P4a 不要求等待这些批次完成。P4c 只保留全局无残留与最终迁移验收。源码基线见 [P0 调用方清单](./passport-p0-consumers.md) 和 [Action 对照表](./passport-p0-action-mapping.md)。
 
 ## P4a 首轮 owner map

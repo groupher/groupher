@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.CMS.Gate.RateLimit.Publish do
 
   test "only the current Global Passport root fact bypasses publish limits" do
     {:ok, user} = db_insert(:user)
-    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    actor = Map.put(user, :cur_passport, %{"global" => %{"god" => true}})
     assert {:ok, _record} = CMS.Gate.RateLimit.Publish.record(user)
 
     assert {:error, _reason} = CMS.Gate.RateLimit.Publish.check(actor, hour_limit: 0)

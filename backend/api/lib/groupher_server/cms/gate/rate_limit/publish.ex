@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
 
   Examples:
 
-      iex> {:ok, :publish} = check(%{id: 1, cur_passport: %{}})
+      iex> {:ok, :publish} = check(%{id: 1})
       iex> {:ok, _record} = record(%GroupherServer.Accounts.Model.User{id: 1})
   """
 

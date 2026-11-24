@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Communities do
 
   alias GroupherServer.{Accounts, CMS, ErrorCat}
   alias Accounts.Model.User
-  alias CMS.{Passport, FrontDesk}
+  alias CMS.FrontDesk
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Communities.Lifecycle
   alias CMS.Communities.Categories.Commands.Create, as: CreateCategoryCommand
@@ -313,31 +313,6 @@ defmodule GroupherServer.CMS.Communities do
   def unset_category(%Community{} = community, category_id, %User{} = user, command_id) do
     UnsetCategoryCommand.execute(community, category_id, user, command_id)
   end
-
-  # Passport
-  @doc "Returns passport through the `Communities` boundary."
-  @spec get_passport(User.t()) :: T.domain_res(map())
-  def get_passport(%User{} = user), do: Passport.get_passport(user)
-
-  def get_passport(%{id: user_id}) when is_integer(user_id) do
-    Passport.get_passport(%User{id: user_id})
-  end
-
-  @doc "Runs `stamp_passport` through the public `Communities` boundary."
-  @spec stamp_passport(map(), User.t()) :: T.domain_res(map())
-  def stamp_passport(rules, %User{} = user), do: Passport.stamp_passport(rules, user)
-
-  @doc "Runs `erase_passport` through the public `Communities` boundary."
-  @spec erase_passport(list(), User.t()) :: T.domain_res(map())
-  def erase_passport(rules, %User{} = user), do: Passport.erase_passport(rules, user)
-
-  @doc "Removes passport through the `Communities` boundary."
-  @spec delete_passport(User.t()) :: T.domain_res(map())
-  def delete_passport(%User{} = user), do: Passport.delete_passport(user)
-
-  @doc "Returns paged passports from the `Communities` read boundary."
-  @spec paged_passports(String.t(), String.t()) :: T.domain_res(list())
-  def paged_passports(community, key), do: Passport.paged_passports(community, key)
 
   # Subscribe
   @doc "Rejects the legacy user-mutation arity; callers must provide command_id."

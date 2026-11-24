@@ -23,10 +23,10 @@ defmodule GroupherServer.Test.ReviewBot.AuthorizationTest do
 
     {:ok, legacy_reviewer} = db_insert(:user)
 
-    legacy_reviewer = %{
-      legacy_reviewer
-      | cur_passport: %{community.slug => %{"cms" => %{"review.configure" => true}}}
-    }
+    legacy_reviewer =
+      Map.put(legacy_reviewer, :cur_passport, %{
+        community.slug => %{"cms" => %{"review.configure" => true}}
+      })
 
     assert {:error, _reason} =
              ReviewBot.Authorization.authorize(scope, :configure, legacy_reviewer)

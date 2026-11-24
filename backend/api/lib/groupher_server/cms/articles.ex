@@ -356,21 +356,17 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @doc "Lists current Article Trash memberships for a Community."
-  @spec list_trashed(Community.t(), map(), GroupherServer.Pagi.Params.t() | nil) ::
+  @spec list_trashed(Community.t(), map(), GroupherServer.Pagi.Params.t() | nil, term()) ::
           T.domain_res(map())
-  def list_trashed(%Community{} = community, filter, pagi) do
-    Trash.list(community, filter, pagi)
+  def list_trashed(%Community{} = community, filter, pagi, actor) do
+    Trash.list(community, filter, pagi, actor)
   end
 
-  @doc "Gets one current Article Trash membership by its opaque Trash id."
-  @spec get_trashed(Ecto.UUID.t()) :: T.domain_res(CMS.Model.TrashedArticle.t())
-  def get_trashed(ref), do: Trash.get(ref)
-
   @doc "Gets one current Trash membership inside its public Community/thread scope."
-  @spec get_trashed(Ecto.UUID.t(), Community.t(), atom()) ::
+  @spec get_trashed(Ecto.UUID.t(), Community.t(), atom(), term()) ::
           T.domain_res(CMS.Model.TrashedArticle.t())
-  def get_trashed(ref, %Community{id: community_id}, thread) do
-    Trash.get_in_scope(ref, community_id, thread)
+  def get_trashed(ref, %Community{id: community_id}, thread, actor) do
+    Trash.get_in_scope(ref, community_id, thread, actor)
   end
 
   @doc "Sinks one stable Article through the shared Gate and aggregate lock."

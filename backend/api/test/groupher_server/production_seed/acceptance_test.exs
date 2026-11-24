@@ -43,6 +43,24 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     refute Repo.exists?(Run)
   end
 
+  test "bootstrap refuses an unrecorded lord on a previously owned Community", %{database: db} do
+    assert {:ok, manifest} = ProductionSeed.bootstrap("first", db)
+    run = Repo.get_by!(Run, run_id: "first")
+
+    run
+    |> Ecto.Changeset.change(manifest: Map.delete(manifest, "communityAdmins"))
+    |> Repo.update!()
+
+    assert {:error, :seed_unexpected_permissions} = ProductionSeed.bootstrap("first", db)
+  end
+
+  test "legacy manifests fail closed before changing scoped authorization rows" do
+    assert {:error, :seed_legacy_manifest_requires_p4c} =
+             Repo.transaction(fn ->
+               ProductionSeed.Bootstrap.apply(%{"passports" => %{}})
+             end)
+  end
+
   test "bootstrap is idempotent and isolates community/platform roles", %{database: db} do
     assert {:ok, manifest} = ProductionSeed.bootstrap("first", db)
     assert {:ok, ^manifest} = ProductionSeed.bootstrap("first", db)

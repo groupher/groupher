@@ -344,11 +344,11 @@ lock Job + target Draft/Tree
 
 ## 10. 与 `CMS.Command` 的关系
 
-`ApplyImportPlan` 是具体 Domain Command；`CMS.Command` 不是每个 ImportPlan 或 transport 的专属模块：
+`CMS.DocTree.Workflows.Import` 是当前原子导入工作流；`CMS.Command` 不是每个 ImportPlan 或 transport 的专属模块：
 
 ```text
 GraphQL apply mutation
-  -> Import.ApplyPlan domain command
+  -> CMS.DocTree.Workflows.Import
        -> Gate / Plan validation / Job creation
        -> CMS.Command shared execution boundary
             -> transaction / command receipt / retry recovery

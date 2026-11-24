@@ -322,8 +322,13 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         }
       }
 
-      passport_rules = %{community.slug => %{"changelog.lock_comment" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.slug => %{permissions: %{"changelog.lock_comment" => true}}},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:lock_comment, :changelog), variables)
 
@@ -368,8 +373,13 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         }
       }
 
-      passport_rules = %{community.slug => %{"changelog.undo_lock_comment" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.slug => %{permissions: %{"changelog.undo_lock_comment" => true}}},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:unlock_comment, :changelog), variables)
 

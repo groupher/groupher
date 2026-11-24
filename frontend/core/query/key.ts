@@ -194,6 +194,10 @@ export const viewerQueryKeys = {
     [...viewerQueryKeys.all, accountScope, 'community-admin', communitySlug] as const,
   communityGateFacts: (accountScope: string, communitySlug: string) =>
     [...viewerQueryKeys.all, accountScope, 'community-gate-facts', communitySlug] as const,
+  articleWorkingCopiesPrefix: (accountScope: string, articleId: string) =>
+    [...viewerQueryKeys.all, accountScope, 'article-working-copies', articleId] as const,
+  articleWorkingCopies: (accountScope: string, articleId: string, community: string) =>
+    [...viewerQueryKeys.articleWorkingCopiesPrefix(accountScope, articleId), community] as const,
   articleStatePrefix: (accountScope: string) =>
     [...viewerQueryKeys.all, accountScope, 'article-state'] as const,
   articleStates: (accountScope: string, articlePathKeys: readonly string[]) =>

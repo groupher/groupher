@@ -1,6 +1,8 @@
-# CMS DocTree / ContentImport：现状审计与独立重构计划
+# CMS DocTree / ContentImport：历史审计与独立重构计划
 
-> 阅读边界（2026-11-12）：本文保留旧 DocTree / ContentImport 重构阶段的入口与职责盘点。新的 Docs D/Q、队列、目录、审批、Release 和去 Branch 状态以 [Docs 发布队列合同](./docs-publish-queue-refactor.md)为准；下文的“当前”“已落地”指各自记录阶段，不证明旧 Branch 或 Import apply 已按新合同改接。ContentImport 的 Job / staging / apply 边界仍供依赖核对，外部 Git source branch 不属于 Docs 目标 branch 的退役范围。
+> 阅读边界（2026-11-24）：下文旧模块、GraphQL 名称与文件路径保留其历史语境，不是当前调用合同。当前 Import 入口为 `Schema.CMS.Import` / `Resolvers.CMS.Import`，原子 apply 为 `CMS.DocTree.Workflows.Import`；当前实现以 [Import 架构](../import/import-architecture.md) 为准。
+>
+> 原记录（2026-11-12）：本文保留旧 DocTree / ContentImport 重构阶段的入口与职责盘点。新的 Docs D/Q、队列、目录、审批、Release 和去 Branch 状态以 [Docs 发布队列合同](./docs-publish-queue-refactor.md)为准；下文的“当前”“已落地”指各自记录阶段，不证明旧 Branch 或 Import apply 已按新合同改接。ContentImport 的 Job / staging / apply 边界仍供依赖核对，外部 Git source branch 不属于 Docs 目标 branch 的退役范围。
 
 > 本文把 DocTree 与 Docs ContentImport 从 CMS Phase 5 总文档中单独拆出，记录当前真实功能、对外入口、Gate、lifecycle/version authority、identity、事务 owner、Receipt/workflow 边界和目录职责，并持续记录已落地的重构批次。
 >

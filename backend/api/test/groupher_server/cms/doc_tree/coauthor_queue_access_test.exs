@@ -30,6 +30,42 @@ defmodule GroupherServer.Test.CMS.DocTree.CoauthorQueueAccessTest do
 
   @permissions %{"article.read_draft" => true, "article.update" => true}
 
+  test "a site Queue editor can read and save another author's existing Queue member" do
+    fixture = doc_with_queue_member()
+    {:ok, editor} = db_insert(:user)
+
+    member =
+      Repo.insert!(
+        CMS.Model.CommunityAdmin.changeset(%CMS.Model.CommunityAdmin{}, %{
+          community_id: fixture.community.id,
+          user_id: editor.id,
+          permissions: %{"doc.queue.write" => true, "doc.queue.preview" => true}
+        })
+      )
+
+    assert {:ok, %{working_copy: work, queue_revision: revision}} =
+             QueueAccess.read_member(fixture.community, fixture.article_id, editor)
+
+    assert work.id == fixture.member.working_copy_id
+
+    assert {:ok, _} =
+             SaveQueue.execute(
+               fixture.community,
+               revision,
+               fixture.article_id,
+               work.revision,
+               %{title: "Site editor change"},
+               editor,
+               Ecto.UUID.generate()
+             )
+
+    member
+    |> CMS.Model.CommunityAdmin.changeset(%{permissions: %{"doc.queue.preview" => true}})
+    |> Repo.update!()
+
+    assert {:error, _} = QueueAccess.read_member(fixture.community, fixture.article_id, editor)
+  end
+
   test "co-author reads and saves only the existing Queue copy for the granted Doc" do
     fixture = doc_with_queue_member()
     {coauthor, _member} = grant_coauthor(fixture)

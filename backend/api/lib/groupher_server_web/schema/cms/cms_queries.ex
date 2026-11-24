@@ -382,7 +382,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :trash_filter)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "article.trash.read")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Articles.trashed_articles/3)
     end
@@ -394,7 +393,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:thread, non_null(:thread))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "article.trash.read")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Articles.trashed_article/3)
     end

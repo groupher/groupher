@@ -19,8 +19,13 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
     test "god can move a post into Trash", ~m(community post)a do
       variables = %{article: article_path(community, post, :post)}
 
-      passport_rules = %{"god" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: true, permissions: %{}},
+        communities: %{},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       trashed = rule_conn |> gq_mutation(S.Article.m(:trash_article), variables)
 
@@ -29,8 +34,13 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
     end
 
     test "god can permanently delete a trashed post", ~m(community post)a do
-      passport_rules = %{"god" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: true, permissions: %{}},
+        communities: %{},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       variables = %{article: article_path(community, post, :post)}
       trashed = rule_conn |> gq_mutation(S.Article.m(:trash_article), variables)

@@ -32,6 +32,8 @@ defmodule GroupherServer.CMS.Gate.Const do
       list: :list,
       read_insights: :read_insights,
       update: :update,
+      dashboard_theme_update: :dashboard_theme_update,
+      dashboard_rss_update: :dashboard_rss_update,
       category_create: :category_create,
       category_update: :category_update,
       category_delete: :category_delete,

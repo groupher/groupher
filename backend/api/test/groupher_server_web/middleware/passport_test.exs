@@ -7,7 +7,7 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
 
   test "registered Global actions use stored grants and ignore stale god passport data" do
     {:ok, user} = db_insert(:user)
-    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    actor = Map.put(user, :cur_passport, %{"global" => %{"god" => true}})
 
     assert_denied(call_middleware("community.create", actor, %{}))
 
@@ -33,16 +33,14 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
     {community, _article, _attrs, _owner} = mock_article(:post)
     {:ok, user} = db_insert(:user)
 
-    actor = %{
-      user
-      | cur_passport: %{
-          "global" => %{"god" => true},
-          community.slug => %{
-            "root" => true,
-            "cms" => %{"review.read" => true}
-          }
+    actor =
+      Map.put(user, :cur_passport, %{
+        "global" => %{"god" => true},
+        community.slug => %{
+          "root" => true,
+          "cms" => %{"review.read" => true}
         }
-    }
+      })
 
     arguments = %{community: community.slug}
     assert_denied(call_middleware("review.read", actor, arguments))
@@ -104,13 +102,11 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
   test "retired ordinary Article actions reject stale legacy Passport grants" do
     {community, _article, _attrs, user} = mock_article(:post)
 
-    actor = %{
-      user
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"post.edit" => true}}
-        }
-    }
+    actor =
+      Map.put(user, :cur_passport, %{
+        "global" => %{},
+        community.slug => %{"cms" => %{"post.edit" => true}}
+      })
 
     assert_denied(
       call_middleware("post.update", actor, %{community: community.slug}),

@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { GraphQLRequestError } from '~/graphql/client'
+import { viewerQueryKeys } from '~/query/key'
 
 import TitleSetting from './TitleSetting'
 
@@ -111,7 +112,7 @@ describe('TitleSetting', () => {
 
     act(() => {
       queryClient.setQueryData(
-        ['article-working-copies', 'article-id', 'community'],
+        viewerQueryKeys.articleWorkingCopies('actor:editor', 'article-id', 'community'),
         workingCopy(2, 'Refreshed server title'),
       )
     })
@@ -120,3 +121,5 @@ describe('TitleSetting', () => {
     )
   })
 })
+
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: 'actor:editor' }) }))

@@ -9,31 +9,31 @@
 > OCR, uploaded HTML conversion, and HTML conversion for online URLs are out of
 > scope. Online URL import accepts Markdown only.
 
-## Import resource rename rollout — pending
+## Import resource rollout — pending deployment
 
-The runtime source now uses the `import` name, `groupher-import` R2 binding, and
-`import/previews/` object prefix. Auth and Phoenix source contracts now use
-`import:internal-api`, `phoenix:import-api`, `import:write`, and
-`docs:import:proxy`. Production still has the previously provisioned
-`groupher-content-import` bucket and `content-import/` objects; the source/config
-rename is not production storage migration evidence.
+Runtime code uses only the canonical `import` identity, `groupher-import` R2
+binding, `import/previews/` object prefix and `IMPORT_*` environment keys.
+Auth, Phoenix and Dev Hub use `import:internal-api`, `phoenix:import-api`,
+`import:write`, `service:import` and `https://api.groupher.com/import` consistently.
+The Dash proxy continues to request the distinct `docs:import:proxy` capability.
 
-Complete the resource cutover in this order:
+This delivery does not preserve old preview objects, old workflow instances or
+old authorization configuration. There is no dual read, alias audience or old
+object-prefix fallback. Historical deployment evidence below describes the
+previous release, not proof that these new resources are configured.
 
-1. Provision the private `groupher-import` bucket and configure the three-day
-   lifecycle for temporary Import preview artifacts.
-2. Inventory unexpired objects under `content-import/` in
-   `groupher-content-import`; copy them to the corresponding keys under
-   `import/previews/` in the new bucket and compare object counts, sizes, and
-   checksums.
-3. Deploy the Worker with the new R2 binding. Verify preview creation, read,
-   cancellation cleanup, Apply, and GraphQL readback against the new bucket.
-4. Keep the old bucket available during the rollback window. After no active
-   Workflow or Dash request reads it and the three-day TTL has elapsed, remove
-   the old prefix and bucket.
+Before deploying the new revision:
 
-If provisioning or copy verification fails, restore the old binding before
-retrying the cutover.
+1. Provision the private `groupher-import` bucket and its temporary-artifact TTL.
+2. Configure `IMPORT_PREVIEW_SECRET` and the new Import service credential;
+   register the canonical resource/audience/scope mappings in Auth and Phoenix.
+3. Stop admitting work on the old deployment, then deploy the new Worker and
+   verify token issuance, preview creation, cancellation, Apply and readback.
+4. Retire the old deployment/configuration and temporary resources through the
+   operator's explicit release plan. Do not copy or silently revive old previews.
+
+A failed fresh deployment remains a failed deployment; do not restore old
+configuration aliases in the new source as a workaround.
 
 ## Target architecture and behavior
 
@@ -232,7 +232,7 @@ purge request returned Cloudflare `success: true`. No secret values are stored
 in this repository.
 
 The previous Dashboard release also queried the removed
-`Community.admins` field. Dashboard was rebuilt from the same checkout as
+`Community.moderators` field. Dashboard was rebuilt from the same checkout as
 Phoenix and deployed to its original custom domain. Its Import service client
 was missing a secret; a distinct `serviceName: dash` client was registered with
 only audience `content-import:internal-api` and scope `docs:import:proxy`, and

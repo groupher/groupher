@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ContentPublishError } from '~/lib/contentPublisher'
@@ -7,6 +7,7 @@ import { ContentPublishError } from '~/lib/contentPublisher'
 import BodySetting from './BodySetting'
 
 const mocks = vi.hoisted(() => ({
+  accountScope: 'actor:editor',
   browserGraphQLRequest: vi.fn(),
   saveArticleBodyWorkingCopy: vi.fn(),
   toast: vi.fn(),
@@ -22,7 +23,7 @@ vi.mock('~/hooks/useViewingArticle', () => ({
 vi.mock('~/lib/artimentPublisher', () => ({
   saveArticleBodyWorkingCopy: mocks.saveArticleBodyWorkingCopy,
 }))
-vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: 'actor:editor' }) }))
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: mocks.accountScope }) }))
 vi.mock('~/ui/Toaster', () => ({ toast: mocks.toast }))
 vi.mock('~/unit/RichEditor', () => ({
   default: ({
@@ -35,7 +36,9 @@ vi.mock('~/unit/RichEditor', () => ({
     <textarea
       aria-label='正文'
       defaultValue={JSON.stringify(defaultValue)}
-      onChange={() => onChange([{ type: 'p', children: [{ text: 'Updated body' }] }])}
+      onChange={(event) =>
+        onChange([{ type: 'p', children: [{ text: event.currentTarget.value }] }])
+      }
     />
   ),
 }))
@@ -65,6 +68,7 @@ const workingCopy = {
 }
 
 beforeEach(() => {
+  mocks.accountScope = 'actor:editor'
   mocks.browserGraphQLRequest.mockReset().mockResolvedValue(workingCopy)
   mocks.saveArticleBodyWorkingCopy.mockReset().mockResolvedValue({ revision: 4 })
   mocks.toast.mockReset()
@@ -98,6 +102,57 @@ describe('BodySetting', () => {
       }),
     )
     expect(mocks.toast).toHaveBeenCalledWith('正文已保存到默认编辑副本；公开版本未变')
+  })
+
+  it('preserves edits typed after the submitted body while a save is pending', async () => {
+    let finish!: () => void
+    mocks.saveArticleBodyWorkingCopy.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve
+        }),
+    )
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BodySetting onBack={vi.fn()} />
+      </QueryClientProvider>,
+    )
+    fireEvent.change(await screen.findByRole('textbox', { name: '正文' }), {
+      target: { value: 'Submitted body' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '保存正文' }))
+    await waitFor(() => expect(mocks.saveArticleBodyWorkingCopy).toHaveBeenCalledOnce())
+    fireEvent.change(screen.getByRole('textbox', { name: '正文' }), {
+      target: { value: 'Newer local body' },
+    })
+    await act(async () => finish())
+    await waitFor(() =>
+      expect(mocks.toast).toHaveBeenCalledWith('正文已保存到默认编辑副本；公开版本未变'),
+    )
+    expect(screen.getByRole('textbox', { name: '正文' })).toHaveValue(
+      JSON.stringify([{ type: 'p', children: [{ text: 'Newer local body' }] }]),
+    )
+    expect(screen.getByRole('button', { name: '保存正文' })).toBeEnabled()
+  })
+
+  it('does not reuse the previous account draft after an account switch', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const view = () => (
+      <QueryClientProvider client={queryClient}>
+        <BodySetting onBack={vi.fn()} />
+      </QueryClientProvider>
+    )
+    const { rerender } = render(view())
+    expect(await screen.findByRole('textbox', { name: '正文' })).toBeInTheDocument()
+    mocks.accountScope = 'actor:outsider'
+    mocks.browserGraphQLRequest.mockRejectedValue(new Error('Permission denied'))
+    rerender(view())
+    await waitFor(() =>
+      expect(screen.queryByRole('textbox', { name: '正文' })).not.toBeInTheDocument(),
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent('默认编辑副本不可用')
+    expect(mocks.browserGraphQLRequest).toHaveBeenCalledTimes(2)
   })
 
   it('refreshes the revision after a conflict while preserving the local body', async () => {

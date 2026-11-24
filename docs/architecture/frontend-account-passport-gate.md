@@ -37,7 +37,7 @@ Gate          某项操作是否允许
 
 ### AccountStore
 
-AccountStore 拥有当前用户、当前用户的 Passport、登录状态和恢复中的状态，以及登录、注销或
+AccountStore 拥有当前用户、登录状态和恢复中的状态，以及登录、注销或
 Session 失效后的统一刷新结果。
 
 Header、AccountUnit、路由边界和业务组件只能订阅 AccountStore。它们不得重新解析 Cookie，
@@ -45,8 +45,10 @@ Header、AccountUnit、路由边界和业务组件只能订阅 AccountStore。�
 
 ### Passport
 
-Passport 是 Phoenix 返回的业务权限数据。`CMS.Passport.Registry` 定义合法规则和要求，
-`CMS.Passport.Assignment` 负责保存，`CMS.Passport.Authorization` 负责后端判断。
+Passport 权限目录由 `packages/contracts/gate.contract.json` 唯一定义，生成前后端合同。
+`CMS.Passport.Catalog` 校验 scope、可授予集合与依赖，`Store` 读写 GlobalPassport、CommunityAdmin 和 ArticleCoAuthor 的当前权限事实；Gate 组合资源与 Lifecycle 后作最终准入。
+前端 `useGate` 通过 `currentGlobalPassport` / `currentCommunityAdmin` 查询当前事实，不读取 User 上的 Passport JSON。Article 的 owner/co-author 权限使用 Article 专用查询。
+旧 Registry、Assignment、JSON CRUD 和 User Passport 投影均已退役；迁移报告的旧词表只存在于离线 LegacyVocabulary。
 
 Admin 中现有 PassportEditor 是 Passport 的管理入口，不是另一套权限系统：
 

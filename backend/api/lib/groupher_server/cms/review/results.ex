@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Review.Results do
   defp lock_target(%ArtimentReview{target_type: :comment} = request) do
     scope =
       case Repo.get(CMS.Model.Comment, request.comment_id) do
-        %CMS.Model.Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
+        %CMS.Model.Comment{thread: thread} when thread in [:post, :blog, :changelog, :doc] ->
           "platform"
 
         _ ->

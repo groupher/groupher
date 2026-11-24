@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import QueueEditorDrawer from './QueueEditorDrawer'
 
 const mocks = vi.hoisted(() => ({ read: vi.fn(), save: vi.fn(), close: vi.fn(), saved: vi.fn() }))
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: 'actor:editor' }) }))
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: mocks.read }))
 vi.mock('~/lib/artimentPublisher', () => ({ saveDocQueueCopy: mocks.save }))
 vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }) }))

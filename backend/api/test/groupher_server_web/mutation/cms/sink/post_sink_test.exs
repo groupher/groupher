@@ -24,8 +24,13 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
         }
       }
 
-      passport_rules = %{community.slug => %{"post.sink" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.slug => %{permissions: %{"post.sink" => true}}},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:sink_article, :post), variables)
       assert result["innerId"] == to_string(article_inner_id(post, community))
@@ -63,8 +68,13 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
         }
       }
 
-      passport_rules = %{community.slug => %{"post.undo_sink" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      passport_rules = %{
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.slug => %{permissions: %{"post.undo_sink" => true}}},
+        community_permissions: %{}
+      }
+
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       {:ok, _} = CMS.Articles.sink(post.id, user, community: community)
 

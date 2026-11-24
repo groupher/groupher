@@ -13,9 +13,9 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{Community, CommunityAdmin, Passport}
   alias CMS.Passport.Catalog
-  alias Helper.PermissionConfig
+  alias CMS.Passport.LegacyVocabulary
 
-  # Verified: PermissionConfig and the Community creation middleware both use
+  # Verified: LegacyVocabulary and the Community creation middleware both use
   # the Global community.create grant for the same creation operation.
   @verified_same_scope [{:global, "community.create"}]
 
@@ -61,8 +61,10 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
       {:ok, rules}
     else
       communities =
-        Enum.reduce(cms, %{"global" => global}, fn {slug, grants}, acc ->
-          Map.put(acc, slug, %{"cms" => grants})
+        Enum.reduce(cms, Map.drop(rules, ["cms"]), fn {slug, grants}, acc ->
+          Map.update(acc, slug, %{"cms" => grants}, fn existing ->
+            %{"legacy_scope_collision" => [existing, grants]}
+          end)
         end)
 
       {:ok, communities}
@@ -76,7 +78,10 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
   def normalize_legacy_rules(_), do: {:error, :invalid_legacy_rules}
 
   defp community_rule_shape?(rules) do
-    Enum.any?(Map.keys(rules), fn key -> key == "root" or key in PermissionConfig.contexts() end)
+    Enum.any?(rules, fn
+      {"root", value} -> is_boolean(value)
+      {key, value} -> key in LegacyVocabulary.contexts() and is_map(value)
+    end)
   end
 
   @doc "Plans one user's legacy rules against a unique slug-to-member map."
@@ -145,8 +150,8 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
   defp grant(key, enabled, scope, acc, target) when is_binary(key) and is_boolean(enabled) do
     old_grants =
       if scope == :global,
-        do: PermissionConfig.global_grants(),
-        else: PermissionConfig.cms_grants()
+        do: LegacyVocabulary.global_grants(),
+        else: LegacyVocabulary.cms_grants()
 
     result =
       cond do

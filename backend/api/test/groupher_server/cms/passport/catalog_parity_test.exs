@@ -8,14 +8,9 @@ defmodule GroupherServer.Test.CMS.Passport.CatalogParityTest do
     runtime = CMS.Artiment.Config.threads() |> Enum.map(&to_string/1) |> Enum.sort()
     assert Enum.sort(GateAction.threads()) == runtime
 
-    schema = File.read!(Path.expand("schema.graphql", File.cwd!()))
-    [_, values] = Regex.run(~r/enum ArticleThread\s*\{([^}]*)\}/, schema)
-
-    graphql =
-      values
-      |> String.split(~r/\s+/, trim: true)
-      |> Enum.map(&String.downcase/1)
-      |> Enum.sort()
+    enum = Absinthe.Schema.lookup_type(GroupherServerWeb.Schema, :article_thread)
+    assert %Absinthe.Type.Enum{} = enum
+    graphql = enum.values |> Map.values() |> Enum.map(&to_string(&1.value)) |> Enum.sort()
 
     assert graphql == runtime
   end

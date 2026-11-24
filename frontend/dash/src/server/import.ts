@@ -44,8 +44,7 @@ export const proxyImportRequest = async (
   let token: string
   try {
     token = await client.getToken({
-      resource:
-        process.env.IMPORT_SERVICE_AUTH_RESOURCE || 'https://import.groupher.com/internal',
+      resource: process.env.IMPORT_SERVICE_AUTH_RESOURCE || 'https://import.groupher.com/internal',
       scopes: (process.env.IMPORT_SERVICE_AUTH_SCOPES || 'docs:import:proxy')
         .split(/\s+/u)
         .filter(Boolean),

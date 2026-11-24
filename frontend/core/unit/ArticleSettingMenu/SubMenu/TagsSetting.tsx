@@ -7,8 +7,10 @@ import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { Q } from '~/query'
+import { viewerQueryKeys } from '~/query/key'
 import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'
 import type { TColorName, TID, TTag } from '~/spec'
+import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import Checker from '~/ui/Checker'
 import TagNode from '~/ui/TagNode'
@@ -26,6 +28,7 @@ type TProps = {
 
 const TagSetting: FC<TProps> = ({ onBack }) => {
   const s = useSalon()
+  const { accountScope } = useAccount()
 
   const [checked, setChecked] = useState<TID[]>([])
   const [revisionConflict, setRevisionConflict] = useState(false)
@@ -36,8 +39,12 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
 
   const result = useQuery(Q.article.tagGroups(community, THREAD.POST))
   const workingCopiesQuery = useQuery({
-    queryKey: ['article-working-copies', article.id, community],
-    enabled: Boolean(article.id && community),
+    queryKey: viewerQueryKeys.articleWorkingCopies(
+      accountScope || 'anonymous',
+      String(article.id ?? ''),
+      community,
+    ),
+    enabled: Boolean(accountScope && article.id && community),
     queryFn: () => {
       if (!article.id || !community) throw new Error('Article identity is unavailable.')
       return browserGraphQLRequest(S.articleWorkingCopies, {
@@ -56,6 +63,12 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
     .filter((tag) => tag.id !== undefined && workingCopy?.tagIds?.includes(tag.id as TID))
     .map((tag) => tag.title)
     .join('、')
+
+  useEffect(() => {
+    setChecked([])
+    resetTouched()
+    setRevisionConflict(false)
+  }, [accountScope, article.id])
 
   useEffect(() => {
     if (!touched) setChecked((workingCopy?.tagIds || []) as TID[])

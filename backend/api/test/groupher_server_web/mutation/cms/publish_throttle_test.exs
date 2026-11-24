@@ -53,8 +53,14 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
   test "god create multi content with invalid interval time success", ~m(community)a do
     {:ok, user} = db_insert(:user)
-    passport_rules = %{"god" => true}
-    rule_conn = simu_conn(:user, cms: passport_rules)
+
+    passport_rules = %{
+      global: %{is_root: true, permissions: %{}},
+      communities: %{},
+      community_permissions: %{}
+    }
+
+    rule_conn = simu_conn(:user, passport: passport_rules)
     variables = publish_variables(community)
 
     created = rule_conn |> gq_mutation(S.Article.m(:create_and_publish_article), variables)

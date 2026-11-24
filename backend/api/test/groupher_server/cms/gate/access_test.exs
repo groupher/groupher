@@ -812,15 +812,13 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
 
-    actor = %{
-      actor
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{
-            "cms" => %{"community.update" => true}
-          }
+    actor =
+      Map.put(actor, :cur_passport, %{
+        "global" => %{},
+        community.slug => %{
+          "cms" => %{"community.update" => true}
         }
-    }
+      })
 
     assert {:error, %Decision{allowed: false}} = CMS.Gate.access_check(actor, :update, community)
   end
@@ -877,13 +875,11 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(owner)
 
-    actor = %{
-      actor
-      | cur_passport: %{
-          "global" => %{},
-          community.slug => %{"cms" => %{"community.update" => true}}
-        }
-    }
+    actor =
+      Map.put(actor, :cur_passport, %{
+        "global" => %{},
+        community.slug => %{"cms" => %{"community.update" => true}}
+      })
 
     assert {:error, %Decision{allowed: false}} =
              CMS.Gate.access_check(actor, :update, community)

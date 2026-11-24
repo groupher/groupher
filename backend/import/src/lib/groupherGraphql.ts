@@ -101,8 +101,7 @@ export const requestGroupherGraphQL = async <T>(
   if (options.serviceSubject) {
     serviceTokenProvider ??= createServiceAuthClientFromEnv()
     const token = await serviceTokenProvider.getToken({
-      resource:
-        process.env.SERVICE_AUTH_PHOENIX_RESOURCE || 'https://api.groupher.com/import',
+      resource: process.env.SERVICE_AUTH_PHOENIX_RESOURCE || 'https://api.groupher.com/import',
       scopes: [options.serviceScope || 'import:write'],
     })
     headers.Authorization = `Bearer ${token}`

@@ -195,7 +195,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     {community, article, _attrs, author} = mock_article(:post)
     {:ok, outsider} = db_insert(:user)
 
-    stale_root = %{outsider | cur_passport: %{"global" => %{"god" => true}}}
+    stale_root = Map.put(outsider, :cur_passport, %{"global" => %{"god" => true}})
 
     assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
              CMS.Insights.authorize(article, stale_root, :post, community: community.slug)

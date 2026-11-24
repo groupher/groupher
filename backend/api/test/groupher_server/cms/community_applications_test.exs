@@ -668,14 +668,19 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
   defp reviewer(user) do
     _conn =
       simu_conn(:user, user,
-        cms: %{
-          "global" => %{
-            "community.application.review" => true,
-            "community.application.approve" => true,
-            "community.application.reject" => true,
-            "community.application.retry_creation" => true,
-            "community.application.retry_setup" => true
-          }
+        passport: %{
+          global: %{
+            is_root: false,
+            permissions: %{
+              "community.application.approve" => true,
+              "community.application.reject" => true,
+              "community.application.retry_creation" => true,
+              "community.application.retry_setup" => true,
+              "community.application.review" => true
+            }
+          },
+          communities: %{},
+          community_permissions: %{}
         }
       )
 

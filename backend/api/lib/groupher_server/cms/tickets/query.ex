@@ -1027,17 +1027,23 @@ defmodule GroupherServer.CMS.Tickets.Query do
   defp maybe_filter_priority(query, _priority), do: query
 
   defp maybe_filter_assignee(query, assignee_login) when is_binary(assignee_login) do
-    assignee_query =
-      from(assignee in TicketAssignee,
-        join: user in GroupherServer.Accounts.Model.User,
-        on: user.id == assignee.user_id,
-        where:
-          assignee.ticket_id == parent_as(:ticket_state).article_id and
-            user.login == ^assignee_login,
-        select: 1
-      )
+    assignee_login = String.trim(assignee_login)
 
-    where(query, [ticket_state: _state], exists(subquery(assignee_query)))
+    if assignee_login == "" do
+      query
+    else
+      assignee_query =
+        from(assignee in TicketAssignee,
+          join: user in GroupherServer.Accounts.Model.User,
+          on: user.id == assignee.user_id,
+          where:
+            assignee.ticket_id == parent_as(:ticket_state).article_id and
+              user.login == ^assignee_login,
+          select: 1
+        )
+
+      where(query, [ticket_state: _state], exists(subquery(assignee_query)))
+    end
   end
 
   defp maybe_filter_assignee(query, _assignee_login), do: query

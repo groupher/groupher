@@ -7,6 +7,7 @@ import useTrans from '~/hooks/useTrans'
 import { saveDocQueueCopy, type TSaveDocQueueCopyInput } from '~/lib/artimentPublisher'
 import { slugify } from '~/lib/slug'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
+import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import BaseDrawer from '~/ui/Drawer'
 import { queueMemberEditor } from '~/unit/DocThread/schema'
@@ -30,6 +31,7 @@ const signature = (draft: TDraft): string => JSON.stringify(draft)
 const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const { accountScope } = useAccount()
   const { slug: community } = useCommunity()
   const [draft, setDraft] = useState<TDraft | null>(null)
   const [baseline, setBaseline] = useState('')
@@ -43,6 +45,13 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
 
   useEffect(() => {
     let cancelled = false
+    setDraft(null)
+    setBaseline('')
+    setWorkingCopyId(null)
+    setWorkRevision(null)
+    setExpectedQueueRevision(null)
+    setError(null)
+    if (!accountScope) return
     browserGraphQLRequest<{
       docsQueueMember: {
         queueRevision: number
@@ -76,7 +85,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
     return () => {
       cancelled = true
     }
-  }, [articleId, community])
+  }, [accountScope, articleId, community])
 
   useEffect(() => {
     if (!dirty) return

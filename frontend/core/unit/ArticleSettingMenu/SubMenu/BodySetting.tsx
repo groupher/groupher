@@ -1,12 +1,13 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { type FC, useRef, useState } from 'react'
+import { type FC, useEffect, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { saveArticleBodyWorkingCopy } from '~/lib/artimentPublisher'
 import { ContentPublishError } from '~/lib/contentPublisher'
 import { invalidatePrefix } from '~/query/invalidation'
+import { viewerQueryKeys } from '~/query/key'
 import { createCommandHandle } from '~/query/mutation/optimistic/execute'
 import useAccount from '~/stores/account/hooks'
 import Button from '~/ui/Buttons/Button'
@@ -39,7 +40,11 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
   const { accountScope } = useAccount()
   const articleId = article.id ? String(article.id) : ''
   const community = articlePath?.community ?? ''
-  const queryKey = ['article-working-copies', articleId, community]
+  const queryKey = viewerQueryKeys.articleWorkingCopies(
+    accountScope || 'anonymous',
+    articleId,
+    community,
+  )
   const workingCopiesQuery = useQuery({
     queryKey,
     queryFn: () => {
@@ -57,6 +62,12 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
   const [saveError, setSaveError] = useState<string | null>(null)
   const commandRef = useRef<ReturnType<typeof createCommandHandle> | null>(null)
 
+  useEffect(() => {
+    setEditedValue(null)
+    setSaveError(null)
+    commandRef.current = null
+  }, [accountScope, articleId, community])
+
   const value = editedValue ?? (workingCopy ? parseBodyValue(workingCopy.bodyJson) : null)
   const hasChanges =
     editedValue !== null &&
@@ -64,6 +75,7 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
     JSON.stringify(editedValue) !== JSON.stringify(parseBodyValue(workingCopy.bodyJson))
 
   const save = async () => {
+    if (saving) return
     if (!workingCopy || !value || !community || !articleId) {
       toast('默认编辑副本尚未加载', 'error')
       return
@@ -84,9 +96,14 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
         commandId: command.commandId,
       })
       await workingCopiesQuery.refetch()
-      setEditedValue(null)
+      setEditedValue((current) =>
+        current !== null && JSON.stringify(current) !== JSON.stringify(value) ? current : null,
+      )
       setEditorKey((current) => current + 1)
-      await invalidatePrefix(queryClient, ['article-working-copies', articleId])
+      await invalidatePrefix(
+        queryClient,
+        viewerQueryKeys.articleWorkingCopiesPrefix(accountScope || 'anonymous', articleId),
+      )
       commandRef.current = null
       toast('正文已保存到默认编辑副本；公开版本未变')
     } catch (error) {
@@ -142,7 +159,7 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
         <Button
           size='small'
           loading={saving || workingCopiesQuery.isFetching}
-          disabled={!hasChanges || !workingCopy || workingCopiesQuery.isFetching}
+          disabled={saving || !hasChanges || !workingCopy || workingCopiesQuery.isFetching}
           onClick={save}
           space={3}
         >

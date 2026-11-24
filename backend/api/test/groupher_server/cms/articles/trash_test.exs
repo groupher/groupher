@@ -53,7 +53,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              CMS.Articles.list_trashed(
                community,
                %{thread: :post},
-               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20},
+               user
              )
 
     assert trash_ref == item.hash_id
@@ -211,7 +212,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              CMS.Articles.list_trashed(
                community,
                %{thread: :post},
-               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20},
+               user
              )
   end
 
@@ -224,7 +226,9 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert collected_folder.meta.post_count == 1
 
     assert {:ok, trash_item} = CMS.Articles.trash(post, user)
-    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
+
+    assert {:ok, %{done: true}} =
+             CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
     deleted_folder = Repo.get!(CollectFolder, folder.id)
     assert deleted_folder.total_count == 0
@@ -571,7 +575,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              CMS.Articles.list_trashed(
                community,
                %{thread: :post},
-               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
+               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20},
+               user
              )
 
     assert {:ok, _} = CMS.Articles.restore_trashed(item.hash_id, user)

@@ -92,10 +92,19 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
         {slug, community.id}
       end)
 
+    if Repo.exists?(from(p in CMS.Model.Passport, where: p.user_id in ^Map.values(users))) do
+      Repo.rollback(:seed_legacy_passport_requires_p4c)
+    end
+
     global_passports = Privileges.provision_global_passports!(users, manifest)
 
     community_admins =
-      Privileges.provision_admins!(users, communities, manifest["communityAdmins"] || %{})
+      Privileges.provision_admins!(
+        users,
+        communities,
+        manifest["communityAdmins"] || %{},
+        Map.values(communities) -- Map.values(manifest["communities"] || %{})
+      )
 
     Map.merge(manifest, %{
       "schemaVersion" => 1,

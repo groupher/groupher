@@ -65,12 +65,12 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogReindexTag do
         )
 
       passport_rules = %{
-        community.title => %{
-          "community_tag.reindex" => true
-        }
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.title => %{permissions: %{"community_tag.reindex" => true}}},
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       variables = %{
         community: community.slug,

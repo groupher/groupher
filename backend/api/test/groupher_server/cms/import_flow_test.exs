@@ -775,7 +775,14 @@ defmodule GroupherServer.CMS.ImportFlowTest do
     %{actor: actor, community: community, job: job} =
       create_job([document("docs/start.md", "/start")])
 
-    conn = simu_conn(:user, actor, cms: %{community.slug => %{"doc.import" => true}})
+    conn =
+      simu_conn(:user, actor,
+        passport: %{
+          global: %{is_root: false, permissions: %{}},
+          communities: %{community.slug => %{permissions: %{"doc.import" => true}}},
+          community_permissions: %{}
+        }
+      )
 
     queried =
       gq_query(conn, @job_query, %{community: community.slug, jobRef: job.job_ref})
@@ -1091,14 +1098,20 @@ defmodule GroupherServer.CMS.ImportFlowTest do
 
     _conn =
       simu_conn(:user, actor,
-        cms: %{
-          community.slug => %{
-            "doc.import" => true,
-            "doc.queue.write" => true,
-            "doc.queue.publish" => true,
-            "doc.restore" => true,
-            "community.article.trash.read" => true
-          }
+        passport: %{
+          global: %{is_root: false, permissions: %{}},
+          communities: %{
+            community.slug => %{
+              permissions: %{
+                "community.article.trash.read" => true,
+                "doc.import" => true,
+                "doc.queue.publish" => true,
+                "doc.queue.write" => true,
+                "doc.restore" => true
+              }
+            }
+          },
+          community_permissions: %{}
         }
       )
 

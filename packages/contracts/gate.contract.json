@@ -191,14 +191,6 @@
       "requires_thread": {}
     },
     {
-      "action": "blog.permanent_delete",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "blog.pin",
       "scope": "community",
       "grantable": true,
@@ -207,23 +199,7 @@
       "requires_thread": {}
     },
     {
-      "action": "blog.restore",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "blog.sink",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "blog.trash",
       "scope": "community",
       "grantable": true,
       "owner_only": false,
@@ -303,14 +279,6 @@
       "requires_thread": {}
     },
     {
-      "action": "changelog.permanent_delete",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "changelog.pin",
       "scope": "community",
       "grantable": true,
@@ -319,23 +287,7 @@
       "requires_thread": {}
     },
     {
-      "action": "changelog.restore",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "changelog.sink",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "changelog.trash",
       "scope": "community",
       "grantable": true,
       "owner_only": false,
@@ -683,23 +635,7 @@
       "requires_thread": {}
     },
     {
-      "action": "post.permanent_delete",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
       "action": "post.pin",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "post.restore",
       "scope": "community",
       "grantable": true,
       "owner_only": false,
@@ -716,14 +652,6 @@
     },
     {
       "action": "post.sink",
-      "scope": "community",
-      "grantable": true,
-      "owner_only": false,
-      "requires": [],
-      "requires_thread": {}
-    },
-    {
-      "action": "post.trash",
       "scope": "community",
       "grantable": true,
       "owner_only": false,

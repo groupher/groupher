@@ -240,7 +240,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       "ticket.read_internal" => true
     }
 
-    actor = %{user | cur_passport: %{"global" => %{}, community.slug => %{"cms" => grants}}}
+    actor = Map.put(user, :cur_passport, %{"global" => %{}, community.slug => %{"cms" => grants}})
 
     {:ok, ticket} =
       CMS.Tickets.create_from_post(
@@ -288,7 +288,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Ticket reference", digest: "Ticket", body_bag: mock_body_bag(body)},
-        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        Map.put(user, :cur_passport, %{"global" => %{"god" => true}}),
         command_id: Ecto.UUID.generate()
       )
 
@@ -672,10 +672,15 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       set: [state: :draft]
     )
 
-    assert query_error?(guest_conn, @mentioned_comment_query, %{
-             community: community.slug,
-             locator: selected_locator
-           }, 4412)
+    assert query_error?(
+             guest_conn,
+             @mentioned_comment_query,
+             %{
+               community: community.slug,
+               locator: selected_locator
+             },
+             4412
+           )
 
     Repo.update_all(
       from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^post.id),
@@ -1151,7 +1156,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Many references", digest: "Fanout", body_bag: mock_body_bag(body)},
-        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        Map.put(user, :cur_passport, %{"global" => %{"god" => true}}),
         command_id: Ecto.UUID.generate()
       )
 
@@ -1520,7 +1525,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Reference source", digest: "Source", body_bag: mock_body_bag(body)},
-        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        Map.put(user, :cur_passport, %{"global" => %{"god" => true}}),
         command_id: Ecto.UUID.generate()
       )
 

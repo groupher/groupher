@@ -6,7 +6,7 @@ import type { PreviewStore, TPreviewRecord } from './core/preview-store'
 const mocks = vi.hoisted(() => ({
   cancel: vi.fn(),
   cancelJob: vi.fn(),
-  checkPassport: vi.fn(),
+  canImportDocs: vi.fn(),
   create: vi.fn(),
   delete: vi.fn(),
   getAnalysis: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('./transport/phoenix/docsImport', async (importOriginal) => {
     ...actual,
     cancelDocImport: mocks.cancelJob,
     startDocImport: mocks.startJob,
-    checkDocImportPassport: mocks.checkPassport,
+    canImportDocs: mocks.canImportDocs,
   }
 })
 
@@ -98,7 +98,7 @@ describe('docs import preview dispatch', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.cancel.mockResolvedValue(undefined)
-    mocks.checkPassport.mockResolvedValue(true)
+    mocks.canImportDocs.mockResolvedValue(true)
     mocks.create.mockResolvedValue(undefined)
     mocks.delete.mockResolvedValue(undefined)
     mocks.getRecord.mockResolvedValue(null)

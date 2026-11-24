@@ -360,21 +360,21 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
   def trashed_articles(
         _root,
         %{community: %Community{} = community, thread: thread} = args,
-        _info
+        %{context: %{cur_user: actor}}
       ) do
     filter = (Map.get(args, :filter) || %{}) |> Map.put(:thread, thread)
 
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.articles_list_trashed(community, filter, pagi)
+      CMS.articles_list_trashed(community, filter, pagi, actor)
     end
   end
 
   def trashed_article(
         _root,
         %{id: id, community: %Community{} = community, thread: thread},
-        _info
+        %{context: %{cur_user: actor}}
       ) do
-    CMS.articles_get_trashed(id, community, thread)
+    CMS.articles_get_trashed(id, community, thread, actor)
   end
 
   def pin_article(_root, ~m(article article_path command_id)a, %{context: %{cur_user: user}}) do

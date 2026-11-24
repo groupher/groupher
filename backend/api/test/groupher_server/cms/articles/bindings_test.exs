@@ -279,10 +279,12 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
         "ticket.read_internal" => true
       })
 
-    user = %{
-      user
-      | cur_passport: put_in(user.cur_passport, [community.slug, "cms"], community_grants)
-    }
+    user =
+      Map.put(
+        user,
+        :cur_passport,
+        put_in(user.cur_passport, [community.slug, "cms"], community_grants)
+      )
 
     {:ok, ticket} =
       CMS.Tickets.create_from_post(

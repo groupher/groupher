@@ -477,7 +477,7 @@ pnpm --filter @groupher/local-dev-hub run test:local-environment
 
 ### 7.3 浏览器闭环
 
-使用 canonical HTTPS 和 `/home/xx` 社区。普通登录 flag 由本地环境模块设置；有权写入
+使用 canonical HTTPS 和 `/home/xx` 社区。浏览器身份通过 Dev Hub 注册的合成账号与独立 profile 建立；有权写入
 的测试账户/成员关系需显式准备，不自动授予未声明的管理权限。测试内容使用唯一
 `local-runtime:<run-id>` 标记，结果记录内容 id、receipt/operation id，截图放 `.playwright/`。
 

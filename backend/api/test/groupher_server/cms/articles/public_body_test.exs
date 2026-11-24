@@ -215,10 +215,11 @@ defmodule GroupherServer.Test.CMS.Articles.PublicBodyTest do
       ~w(ticket.create ticket.link_source ticket.update ticket.transition ticket.assign ticket.manage_case ticket.manage_visibility ticket.read_internal)
       |> Map.new(&{&1, true})
 
-    actor = %{
-      ctx.actor
-      | cur_passport: %{"global" => %{}, ctx.community.slug => %{"cms" => grants}}
-    }
+    actor =
+      Map.put(ctx.actor, :cur_passport, %{
+        "global" => %{},
+        ctx.community.slug => %{"cms" => grants}
+      })
 
     assert {:ok, ticket} =
              CMS.Tickets.create_from_post(

@@ -3,7 +3,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
   GraphQL mutations for community and taxonomy management.
 
   Includes creating/updating communities, handling apply/approve flows,
-  Admin assignments, and community tag/group maintenance.
+  and community tag/group maintenance. Admin assignments live in CommunityAdmin mutations.
 
   Business position:
 

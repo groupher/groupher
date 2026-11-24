@@ -26,14 +26,12 @@ defmodule GroupherServer.TestWeb.CommunityAdmissionConflictTest do
       work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
       parent = self()
 
-      actor = %{
-        author
-        | cur_passport: %{
-            "global" => %{"post.community.mirror" => true},
-            community.slug => %{"cms" => %{"post.pin" => true}},
-            destination.slug => %{"cms" => %{"post.pin" => true}}
-          }
-      }
+      actor =
+        Map.put(author, :cur_passport, %{
+          "global" => %{"post.community.mirror" => true},
+          community.slug => %{"cms" => %{"post.pin" => true}},
+          destination.slug => %{"cms" => %{"post.pin" => true}}
+        })
 
       variables = %{
         articleId: article.id,

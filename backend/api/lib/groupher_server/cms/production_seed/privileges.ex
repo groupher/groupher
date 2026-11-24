@@ -107,7 +107,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
     {:ok, :pass}
   end
 
-  def provision_admins!(users, communities, expected) do
+  def provision_admins!(users, communities, expected, created_community_ids) do
     communities
     |> Enum.sort_by(fn {_slug, id} -> id end)
     |> Enum.into(%{}, fn {slug, community_id} ->
@@ -134,17 +134,19 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
 
       case recorded do
         nil ->
-          if admin.permissions != %{} do
-            Repo.rollback(:seed_unexpected_permissions)
-          end
-
           admin =
-            if admin.is_lord do
-              admin
-            else
-              admin
-              |> Ecto.Changeset.change(is_lord: true, revision: admin.revision + 1)
-              |> Repo.update!()
+            cond do
+              admin.permissions == %{} and admin.is_lord and
+                  community_id in created_community_ids ->
+                admin
+
+              cleaned_owned_admin?(admin, slug) ->
+                admin
+                |> Ecto.Changeset.change(is_lord: true, revision: admin.revision + 1)
+                |> Repo.update!()
+
+              true ->
+                Repo.rollback(:seed_unexpected_permissions)
             end
 
           {slug, admin_snapshot(admin)}
@@ -157,6 +159,24 @@ defmodule GroupherServer.CMS.ProductionSeed.Privileges do
           {slug, recorded}
       end
     end)
+  end
+
+  defp cleaned_owned_admin?(admin, slug) do
+    current = admin_snapshot(admin)
+
+    admin.permissions == %{} and not admin.is_lord and
+      Enum.any?(Repo.all(CMS.ProductionSeed.Run), fn run ->
+        recorded = get_in(run.manifest, ["communityAdmins", slug])
+
+        run.status == "closed" and run.manifest["cleanupMode"] in ["retain", "purge"] and
+          is_map(recorded) and
+          current ==
+            Map.merge(recorded, %{
+              "isLord" => false,
+              "permissions" => %{},
+              "revision" => recorded["revision"] + 1
+            })
+      end)
   end
 
   def admins_valid?(users, communities, expected, cleaned?) when is_map(expected) do

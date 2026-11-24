@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.DocMeta do
     article = Repo.get!(CMS.Model.Article, doc.id)
     refute article.is_edited
     refute article.comments_locked
-    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    actor = Map.put(user, :cur_passport, %{"global" => %{"god" => true}})
 
     assert {:ok, _} =
              CMS.Seeds.Docs.update(

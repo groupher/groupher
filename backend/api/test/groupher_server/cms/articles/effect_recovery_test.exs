@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.CMS.Articles.EffectRecoveryTest do
     old = effect(ctx.article, "article.projections") |> fail()
     next_publish(ctx)
     {:ok, stranger} = db_insert(:user)
-    stranger = %{stranger | cur_passport: %{"global" => %{"god" => true}}}
+    stranger = Map.put(stranger, :cur_passport, %{"global" => %{"god" => true}})
     assert {:error, :permission_denied} = CMS.diagnose_outbox_failures(stranger)
 
     assert {:error, :permission_denied} =

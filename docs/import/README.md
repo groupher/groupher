@@ -16,4 +16,4 @@
 | [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) | 共享 Import Content、Rich Editor codec、publisher 与 BodyBag   |
 | [`import-error-handling.md`](./import-error-handling.md)                     | 联调错误复盘、Back/reset、重复来源覆盖与回归清单               |
 
-阅读顺序建议：先看总体架构和产品流程；实施时再进入 Files SDK、Process、publisher 和 refactor plan；排查异常时从错误处理复盘进入对应边界。
+阅读顺序建议：先看总体架构和产品流程；实施时再进入 Files SDK、Process 和 publisher；历史 refactor plan 仅供追溯，不作为当前实现入口；排查异常时从错误处理复盘进入对应边界。

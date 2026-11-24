@@ -34,11 +34,7 @@ import {
 } from './core/preview-store/previewStore'
 import { projectPreviewProcess } from './core/process/previewProjector'
 import { selectSourceAnalysis } from './threads/docs/selection'
-import {
-  cancelDocImport,
-  checkDocImportPassport,
-  startDocImport,
-} from './transport/phoenix/docsImport'
+import { cancelDocImport, canImportDocs, startDocImport } from './transport/phoenix/docsImport'
 
 type TAuthenticatedOptions = {
   backendToken: string
@@ -77,9 +73,7 @@ export type TImportRuntime = {
   workflows: TImportWorkflowRuntime
 }
 
-const resolveRuntime = async (
-  runtime: TImportRuntime | undefined,
-): Promise<TImportRuntime> => {
+const resolveRuntime = async (runtime: TImportRuntime | undefined): Promise<TImportRuntime> => {
   if (!runtime) throw new Error('Cloudflare import runtime is not configured.')
   return runtime
 }
@@ -226,7 +220,7 @@ export const handleCreateDocImportPreview = async (
       typeof input.commandId === 'string' && input.commandId.length <= 128
         ? input.commandId
         : randomUUID()
-    if (!(await checkDocImportPassport(community, options))) {
+    if (!(await canImportDocs(community, options))) {
       return json(
         { error: { code: 'forbidden', message: 'doc.import permission is required.' }, ok: false },
         403,

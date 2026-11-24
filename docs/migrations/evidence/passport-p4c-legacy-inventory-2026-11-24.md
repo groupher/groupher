@@ -25,15 +25,15 @@ On the rehearsal clone's `neondb`:
 
 These checks establish only JSON shape and membership cardinality. They do not determine whether each legacy permission is still known, grantable, same-scope, semantically equivalent, retired, or requires manual mapping. Those classifications require the application `Catalog` and a complete `LegacyPlan.report`.
 
-## Application report attempt and decision
+## Earlier application report attempt (superseded by the completed report below)
 
 - The target worktree has no completed `MIX_ENV=prod` build. A private cold build was interrupted during dependency/application compilation; no `deps.get`, migration, or database write occurred. No Mix/Elixir report process remains active.
-- Direct read-only SQL connectivity to the Neon clone was verified. An application-level read-only `LegacyPlan.report` attempt did not complete across all Passport rows, so no application report result is claimed.
+- Direct read-only SQL connectivity to the Neon clone was verified. An application-level read-only `LegacyPlan.report` attempt did not complete across all Passport rows, so that interrupted attempt produced no complete application report; the later completed run is recorded below.
 - **Decision:** do not apply migrations or cut over based on this rehearsal. Reconcile the three applied versions absent from the local migration files against the full target history, then run and review the complete report using the target's supported build/runtime. Any report exceptions remain a blocker to applying legacy grants.
 
 ## Completed application report on 2026-11-24
 
-Normal target-source compilation with warnings as errors completed before this report. Source was 1267e055e with validation-only local edits, including multiline block style in LegacyPlan.
+Normal target-source compilation with warnings as errors completed before this report. The recorded baseline was 1267e055e plus uncommitted validation-only edits, including multiline block style in LegacyPlan. The exact dirty source blob was not recorded, so this historical report is not a reproducible acceptance result for the current PR head. Current Catalog/LegacyPlan behavior must be checked against its committed source and tests; D3 release rehearsal remains separate.
 
 Clone identity was rechecked against project summer-union-85679467, branch br-wandering-mouse-a13jlyqy, parent br-falling-silence-a1eslt2n and parent LSN 0/59DB3D18. Only Repo was started. The session used default_transaction_read_only=on and the report ran in a REPEATABLE READ READ ONLY transaction. Observed database was neondb and transaction_read_only was on. All three distinct Passport users were passed through the target LegacyPlan.report/1 and Catalog.
 

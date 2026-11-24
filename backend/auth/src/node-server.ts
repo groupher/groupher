@@ -18,13 +18,17 @@ export const startAuthServer = (app: ReturnType<typeof createApp>, bind?: { host
   const server = serve({ fetch: app.fetch, hostname, port }, (info) => {
     console.log(`Auth is ready at http://${hostname}:${info.port}`)
   })
-  const shutdown = () =>
+  let shuttingDown = false
+  const shutdown = () => {
+    if (shuttingDown) return
+    shuttingDown = true
     server.close((error) => {
       if (error) {
         console.error(error)
         process.exitCode = 1
       }
     })
+  }
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)
 }

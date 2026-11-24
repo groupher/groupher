@@ -35,7 +35,7 @@ consumes canonical files, tree nodes, diagnostics, and stable source IDs.
 - `cloudflare.config.ts`: Worker, Workflow, R2 and custom-domain bindings.
 - `src/lib/import`: import orchestration and shared contracts.
 - `src/lib/import/threads/docs/analyzer`: framework/source adapters.
-- `src/lib/import/threads/docs/apply`: canonical apply planning and
+- `src/lib/import/threads/docs/publisher.ts`: canonical apply planning and
   Phoenix-facing batches.
 - `test/fixtures/frameworks`: checked-in miniature documentation repositories
   and expected trees used by analyzer contract tests. These are backend test

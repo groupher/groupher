@@ -33,7 +33,14 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   describe "community checks" do
     @check_community_name_query S.Community.q(:check_community_name)
     test "checks community name availability", ~m(user)a do
-      rule_conn = simu_conn(:user, cms: %{"community.create" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.create" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       check = rule_conn |> gq_query(@check_community_name_query, %{slug: "Elixir"})
 
@@ -53,7 +60,15 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       do: assert_name_unavailable("home", "reserved_slug")
 
     defp assert_name_unavailable(slug, reason) do
-      rule_conn = simu_conn(:user, cms: %{"community.create" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{"community.create" => true}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
+
       check = rule_conn |> gq_query(@check_community_name_query, %{slug: slug})
 
       refute check["available"]
@@ -365,7 +380,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "guest can page the public admin directory", ~m(guest_conn community)a do
       lifecycle = Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
       Repo.update!(Ecto.Changeset.change(lifecycle, state: :active))
-      assert {:ok, _community} = CMS.FrontDesk.community({:ref, community.ref}, nil, mode: :public)
+
+      assert {:ok, _community} =
+               CMS.FrontDesk.community({:ref, community.ref}, nil, mode: :public)
 
       query = """
       query($communityRef: String!, $pagi: PagiInput) {
@@ -375,6 +392,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
         }
       }
       """
+
       variables = %{communityRef: community.ref, pagi: %{offset: %{page: 1, size: 10}}}
       results = guest_conn |> gq_query(query, variables)
 

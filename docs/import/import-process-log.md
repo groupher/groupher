@@ -565,7 +565,7 @@ backend/import/src/lib/import/core/process/
 |-- contract.ts
 `-- previewProjector.ts
 
-frontend/core/unit/DashboardThread/CMS/Import/ProcessLog/
+frontend/core/unit/DsbThread/CMS/Import/ProcessLog/
 |-- index.tsx
 |-- decoder.ts
 |-- ProcessStep.tsx

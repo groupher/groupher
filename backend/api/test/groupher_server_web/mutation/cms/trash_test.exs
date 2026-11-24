@@ -68,7 +68,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
              ErrorCat.code(ProfileErrorCat.account_login())
            )
 
-    unrelated = simu_conn(:user, cms: %{community.slug => %{"post.pin" => true}})
+    unrelated =
+      simu_conn(:user,
+        passport: %{
+          global: %{is_root: false, permissions: %{}},
+          communities: %{community.slug => %{permissions: %{"post.pin" => true}}},
+          community_permissions: %{}
+        }
+      )
 
     assert unrelated
            |> mutation_error?(
@@ -78,7 +85,20 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            )
 
     admin =
-      simu_conn(:user, cms: %{community.slug => %{"community.article.hide" => true}})
+      simu_conn(:user,
+        passport: %{
+          global: %{is_root: false, permissions: %{}},
+          communities: %{
+            community.slug => %{
+              permissions: %{
+                "community.article.hide" => true,
+                "community.article.trash.read" => true
+              }
+            }
+          },
+          community_permissions: %{}
+        }
+      )
 
     assert admin
            |> mutation_error?(
@@ -106,7 +126,22 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         owner
       )
 
-    conn = simu_conn(:user, cms: %{community_a.slug => %{"community.article.hide" => true}})
+    conn =
+      simu_conn(:user,
+        passport: %{
+          global: %{is_root: false, permissions: %{}},
+          communities: %{
+            community_a.slug => %{
+              permissions: %{
+                "community.article.hide" => true,
+                "community.article.trash.read" => true
+              }
+            }
+          },
+          community_permissions: %{}
+        }
+      )
+
     variables = %{article: article_path(community_b, post_b, :post)}
 
     assert conn
@@ -133,7 +168,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         article: article_path(community, post, :post)
       })
 
-    {:ok, listed} = CMS.articles_list_trashed(community, %{thread: :post}, nil)
+    {:ok, listed} = CMS.articles_list_trashed(community, %{thread: :post}, nil, owner)
 
     assert listed.total_count == 1
     assert hd(listed.entries).article.inner_id == article_inner_id(post, community)
@@ -147,7 +182,20 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            }
 
     permanent_conn =
-      simu_conn(:user, owner, cms: %{community.slug => %{"post.permanent_delete" => true}})
+      simu_conn(:user, owner,
+        passport: %{
+          global: %{is_root: false, permissions: %{}},
+          communities: %{
+            community.slug => %{
+              permissions: %{
+                "community.article.hide" => true,
+                "community.article.trash.read" => true
+              }
+            }
+          },
+          community_permissions: %{}
+        }
+      )
 
     command_id = Ecto.UUID.generate()
 

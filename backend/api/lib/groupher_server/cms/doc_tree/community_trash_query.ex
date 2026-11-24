@@ -341,6 +341,7 @@ defmodule GroupherServer.CMS.DocTree.CommunityTrashQuery do
             __typename: "CommunityDocTreeTrashItem",
             id: action.hash_id,
             community_id: community.id,
+            community: community,
             thread: :doc,
             status: status,
             public_visible: Enum.any?(page_nodes, &MapSet.member?(public_ids, &1.doc_id)),
@@ -403,9 +404,9 @@ defmodule GroupherServer.CMS.DocTree.CommunityTrashQuery do
       )
 
     key =
-      GroupherServerWeb.Endpoint
-      |> Application.get_env(:secret_key_base)
-      |> to_string()
+      :groupher_server
+      |> Application.fetch_env!(GroupherServerWeb.Endpoint)
+      |> Keyword.fetch!(:secret_key_base)
 
     signature = :crypto.mac(:hmac, :sha256, key, payload)
     Base.url_encode64(signature, padding: false)

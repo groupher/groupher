@@ -751,16 +751,13 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles.WorkingCopy,
     as: :snapshot_tag_ids
 
-  @doc "Delegates GroupherServer.CMS.Articles.get_trashed/1 through the CMS Context boundary."
-  defdelegate articles_get_trashed(arg1), to: GroupherServer.CMS.Articles, as: :get_trashed
-
-  @doc "Delegates GroupherServer.CMS.Articles.get_trashed/3 through the CMS Context boundary."
-  defdelegate articles_get_trashed(arg1, arg2, arg3),
+  @doc "Delegates GroupherServer.CMS.Articles.get_trashed/4 through the CMS Context boundary."
+  defdelegate articles_get_trashed(arg1, arg2, arg3, actor),
     to: GroupherServer.CMS.Articles,
     as: :get_trashed
 
   @doc "Pages current Trash memberships through the CMS Context boundary."
-  defdelegate articles_list_trashed(community, filter, pagi),
+  defdelegate articles_list_trashed(community, filter, pagi, actor),
     to: GroupherServer.CMS.Articles,
     as: :list_trashed
 
@@ -1566,11 +1563,6 @@ defmodule GroupherServer.CMS do
   @doc "Delegates GroupherServer.CMS.Communities.fetch/3 through the CMS Context boundary."
   defdelegate communities_fetch(arg1, arg2, arg3), to: GroupherServer.CMS.Communities, as: :fetch
 
-  @doc "Delegates GroupherServer.CMS.Communities.get_passport/1 through the CMS Context boundary."
-  defdelegate communities_get_passport(arg1),
-    to: GroupherServer.CMS.Communities,
-    as: :get_passport
-
   @doc "Delegates GroupherServer.CMS.Communities.Lifecycle.ensure_created/1 through the CMS Context boundary."
   defdelegate communities_lifecycle_ensure_created(arg1),
     to: GroupherServer.CMS.Communities.Lifecycle,
@@ -1689,11 +1681,6 @@ defmodule GroupherServer.CMS do
   defdelegate communities_set_tag(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :set_tag
-
-  @doc "Delegates GroupherServer.CMS.Communities.stamp_passport/2 through the CMS Context boundary."
-  defdelegate communities_stamp_passport(arg1, arg2),
-    to: GroupherServer.CMS.Communities,
-    as: :stamp_passport
 
   @doc "Delegates GroupherServer.CMS.Communities.subscribe_default_ifnot/1 through the CMS Context boundary."
   defdelegate communities_subscribe_default_ifnot(arg1),

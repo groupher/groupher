@@ -33,11 +33,8 @@ defmodule GroupherServer.CMS.GateAction do
     "asset.upload",
     "audit.read",
     "blog.lock_comment",
-    "blog.permanent_delete",
     "blog.pin",
-    "blog.restore",
     "blog.sink",
-    "blog.trash",
     "blog.undo_lock_comment",
     "blog.undo_pin",
     "blog.undo_sink",
@@ -47,11 +44,8 @@ defmodule GroupherServer.CMS.GateAction do
     "category.unset",
     "category.update",
     "changelog.lock_comment",
-    "changelog.permanent_delete",
     "changelog.pin",
-    "changelog.restore",
     "changelog.sink",
-    "changelog.trash",
     "changelog.undo_lock_comment",
     "changelog.undo_pin",
     "changelog.undo_sink",
@@ -94,12 +88,9 @@ defmodule GroupherServer.CMS.GateAction do
     "doc.undo_pin",
     "doc.undo_sink",
     "post.lock_comment",
-    "post.permanent_delete",
     "post.pin",
-    "post.restore",
     "post.set_category",
     "post.sink",
-    "post.trash",
     "post.undo_lock_comment",
     "post.undo_pin",
     "post.undo_sink",
@@ -291,13 +282,6 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
-    "blog.permanent_delete" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
     "blog.pin" => %{
       scope: :community,
       grantable: true,
@@ -305,21 +289,7 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
-    "blog.restore" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
     "blog.sink" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
-    "blog.trash" => %{
       scope: :community,
       grantable: true,
       owner_only: false,
@@ -389,13 +359,6 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
-    "changelog.permanent_delete" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
     "changelog.pin" => %{
       scope: :community,
       grantable: true,
@@ -403,21 +366,7 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
-    "changelog.restore" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
     "changelog.sink" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
-    "changelog.trash" => %{
       scope: :community,
       grantable: true,
       owner_only: false,
@@ -718,21 +667,7 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
-    "post.permanent_delete" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
     "post.pin" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
-    "post.restore" => %{
       scope: :community,
       grantable: true,
       owner_only: false,
@@ -747,13 +682,6 @@ defmodule GroupherServer.CMS.GateAction do
       requires_thread: %{}
     },
     "post.sink" => %{
-      scope: :community,
-      grantable: true,
-      owner_only: false,
-      requires: [],
-      requires_thread: %{}
-    },
-    "post.trash" => %{
       scope: :community,
       grantable: true,
       owner_only: false,
@@ -1011,25 +939,13 @@ defmodule GroupherServer.CMS.GateAction do
   @spec blog_lock_comment() :: String.t()
   def blog_lock_comment, do: "blog.lock_comment"
 
-  @doc "Returns the stable `blog.permanent_delete` Gate action name."
-  @spec blog_permanent_delete() :: String.t()
-  def blog_permanent_delete, do: "blog.permanent_delete"
-
   @doc "Returns the stable `blog.pin` Gate action name."
   @spec blog_pin() :: String.t()
   def blog_pin, do: "blog.pin"
 
-  @doc "Returns the stable `blog.restore` Gate action name."
-  @spec blog_restore() :: String.t()
-  def blog_restore, do: "blog.restore"
-
   @doc "Returns the stable `blog.sink` Gate action name."
   @spec blog_sink() :: String.t()
   def blog_sink, do: "blog.sink"
-
-  @doc "Returns the stable `blog.trash` Gate action name."
-  @spec blog_trash() :: String.t()
-  def blog_trash, do: "blog.trash"
 
   @doc "Returns the stable `blog.undo_lock_comment` Gate action name."
   @spec blog_undo_lock_comment() :: String.t()
@@ -1067,25 +983,13 @@ defmodule GroupherServer.CMS.GateAction do
   @spec changelog_lock_comment() :: String.t()
   def changelog_lock_comment, do: "changelog.lock_comment"
 
-  @doc "Returns the stable `changelog.permanent_delete` Gate action name."
-  @spec changelog_permanent_delete() :: String.t()
-  def changelog_permanent_delete, do: "changelog.permanent_delete"
-
   @doc "Returns the stable `changelog.pin` Gate action name."
   @spec changelog_pin() :: String.t()
   def changelog_pin, do: "changelog.pin"
 
-  @doc "Returns the stable `changelog.restore` Gate action name."
-  @spec changelog_restore() :: String.t()
-  def changelog_restore, do: "changelog.restore"
-
   @doc "Returns the stable `changelog.sink` Gate action name."
   @spec changelog_sink() :: String.t()
   def changelog_sink, do: "changelog.sink"
-
-  @doc "Returns the stable `changelog.trash` Gate action name."
-  @spec changelog_trash() :: String.t()
-  def changelog_trash, do: "changelog.trash"
 
   @doc "Returns the stable `changelog.undo_lock_comment` Gate action name."
   @spec changelog_undo_lock_comment() :: String.t()
@@ -1255,17 +1159,9 @@ defmodule GroupherServer.CMS.GateAction do
   @spec post_lock_comment() :: String.t()
   def post_lock_comment, do: "post.lock_comment"
 
-  @doc "Returns the stable `post.permanent_delete` Gate action name."
-  @spec post_permanent_delete() :: String.t()
-  def post_permanent_delete, do: "post.permanent_delete"
-
   @doc "Returns the stable `post.pin` Gate action name."
   @spec post_pin() :: String.t()
   def post_pin, do: "post.pin"
-
-  @doc "Returns the stable `post.restore` Gate action name."
-  @spec post_restore() :: String.t()
-  def post_restore, do: "post.restore"
 
   @doc "Returns the stable `post.set_category` Gate action name."
   @spec post_set_category() :: String.t()
@@ -1274,10 +1170,6 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `post.sink` Gate action name."
   @spec post_sink() :: String.t()
   def post_sink, do: "post.sink"
-
-  @doc "Returns the stable `post.trash` Gate action name."
-  @spec post_trash() :: String.t()
-  def post_trash, do: "post.trash"
 
   @doc "Returns the stable `post.undo_lock_comment` Gate action name."
   @spec post_undo_lock_comment() :: String.t()

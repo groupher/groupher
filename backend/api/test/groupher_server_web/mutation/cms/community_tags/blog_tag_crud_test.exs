@@ -45,10 +45,12 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
       }
 
       passport_rules = %{
-        community.title => %{"community_tag.create" => true}
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.title => %{permissions: %{"community_tag.create" => true}}},
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
 
@@ -84,10 +86,12 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
       }
 
       passport_rules = %{
-        community.title => %{"community_tag.create" => true}
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.title => %{permissions: %{"community_tag.create" => true}}},
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
 
@@ -113,7 +117,14 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
         groupId: group.id
       }
 
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(
@@ -160,10 +171,12 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
       }
 
       passport_rules = %{
-        community.title => %{"community_tag.update" => true}
+        global: %{is_root: false, permissions: %{}},
+        communities: %{community.title => %{permissions: %{"community_tag.update" => true}}},
+        community_permissions: %{}
       }
 
-      rule_conn = simu_conn(:user, cms: passport_rules)
+      rule_conn = simu_conn(:user, passport: passport_rules)
 
       updated = rule_conn |> gq_mutation(@update_tag_query, variables)
 
@@ -195,8 +208,10 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
 
       rule_conn =
         simu_conn(:user,
-          cms: %{
-            community.title => %{"community_tag.delete" => true}
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{community.title => %{permissions: %{"community_tag.delete" => true}}},
+            community_permissions: %{}
           }
         )
 
@@ -217,7 +232,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
         )
 
       variables = %{id: community_tag.id, community: community.slug}
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+
+      rule_conn =
+        simu_conn(:user,
+          passport: %{
+            global: %{is_root: false, permissions: %{}},
+            communities: %{},
+            community_permissions: %{}
+          }
+        )
 
       assert user_conn
              |> mutation_error?(

@@ -138,3 +138,5 @@ describe('TagsSetting', () => {
     expect(screen.getAllByTestId('checker')[1]).toHaveAttribute('data-checked', 'false')
   })
 })
+
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: 'actor:editor' }) }))

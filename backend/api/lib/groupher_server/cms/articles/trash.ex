@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   alias CMS.Model.{
     Article,
+    Author,
     ArticleBinding,
     ArticleBindingTag,
     ArticlePublic,
@@ -369,10 +370,30 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   @doc "Gets one Trash membership and verifies its public Community/thread scope."
-  @spec get_in_scope(Ecto.UUID.t(), pos_integer(), atom()) ::
+  @spec get_in_scope(Ecto.UUID.t(), pos_integer(), atom(), term()) ::
           {:ok, TrashedArticle.t()} | {:error, term()}
-  def get_in_scope(hash_id, community_id, thread)
+  def get_in_scope(hash_id, community_id, thread, actor)
       when is_integer(community_id) and is_atom(thread) do
+    with {:ok, hash_id} <- Ecto.UUID.cast(hash_id),
+         {:ok, scope} <- CMS.Passport.load_global_scope(actor),
+         %TrashedArticle{} <-
+           Repo.one(
+             owned_query(TrashedArticle, actor, scope)
+             |> where(
+               [item],
+               item.hash_id == ^hash_id and item.community_id == ^community_id and
+                 item.thread == ^thread
+             )
+           ),
+         {:ok, item} <- get(hash_id) do
+      {:ok, item}
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
+    end
+  end
+
+  @doc "Loads a scoped Trash record for a Command that performs its own Gate admission."
+  def load_in_scope(hash_id, community_id, thread) do
     with {:ok, item} <- get(hash_id),
          true <- item.community_id == community_id and item.thread == thread do
       {:ok, item}
@@ -382,10 +403,17 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   @doc "Lists ordinary stable Article Trash memberships for one Community."
-  @spec list(Community.t(), map(), Params.t() | nil) :: {:ok, map()}
-  def list(%Community{} = community, filter, pagi) do
+  @spec list(Community.t(), map(), Params.t() | nil, term()) :: {:ok, map()}
+  def list(%Community{} = community, filter, pagi, actor) do
+    with {:ok, scope} <- CMS.Passport.load_global_scope(actor) do
+      list_owned(community, filter, pagi, actor, scope)
+    end
+  end
+
+  defp list_owned(community, filter, pagi, actor, scope) do
     query =
       TrashedArticle
+      |> owned_query(actor, scope)
       |> join(:inner, [item], article in Article, on: article.id == item.article_id)
       |> join(:inner, [_item, article], community in Community, on: community.id == ^community.id)
       |> join(:left, [item, _article, _community], public in ArticlePublic,
@@ -422,7 +450,10 @@ defmodule GroupherServer.CMS.Articles.Trash do
              for: TrashedArticle,
              surface: "articles.trash",
              query_fingerprint:
-               :erlang.term_to_binary({community.id, Map.get(filter, :thread)}) |> Base.encode64(),
+               :erlang.term_to_binary(
+                 {community.id, Map.get(filter, :thread), scope.actor_id, scope.global.is_root}
+               )
+               |> Base.encode64(),
              cursor_value_func: fn row, fields -> row |> elem(0) |> Map.take(fields) end,
              order: %Order{
                fields: [:deleted_at, :id],
@@ -434,6 +465,20 @@ defmodule GroupherServer.CMS.Articles.Trash do
        paged
        |> Map.update!(:entries, &hydrate_page_items/1)}
     end
+  end
+
+  defp owned_query(query, _actor, %{global: %{is_root: true}}), do: query
+
+  defp owned_query(query, %{id: user_id}, %{actor_id: user_id}) do
+    owned =
+      from(article in Article,
+        join: author in Author,
+        on: author.id == article.author_id,
+        where: author.user_id == ^user_id,
+        select: article.id
+      )
+
+    from(item in query, where: item.article_id in subquery(owned))
   end
 
   defp hydrate_page_items(entries) do
@@ -457,8 +502,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
     stats = Repo.get_by(ArticleStats, article_id: article.id, thread: article.thread)
     community = Repo.get!(Community, item.community_id)
 
-    {:ok, %{inner_id: inner_id}} =
-      Bindings.get(%{article_id: article.id}, community)
+    inner_id =
+      case Bindings.get(%{article_id: article.id}, community) do
+        {:ok, %{inner_id: inner_id}} -> inner_id
+        _ -> nil
+      end
 
     projection =
       article

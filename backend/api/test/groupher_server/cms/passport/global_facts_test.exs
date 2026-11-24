@@ -41,15 +41,13 @@ defmodule GroupherServer.Test.CMS.Passport.GlobalFactsTest do
   test "registered Global authorization uses stored grants and ignores stale cur_passport" do
     {:ok, user} = db_insert(:user)
 
-    legacy_user = %{
-      user
-      | cur_passport: %{
-          "global" => %{
-            "review.platform.read" => true,
-            "review.platform.decide" => true
-          }
+    legacy_user =
+      Map.put(user, :cur_passport, %{
+        "global" => %{
+          "review.platform.read" => true,
+          "review.platform.decide" => true
         }
-    }
+      })
 
     assert {:error, _reason} =
              Passport.Authorization.check(legacy_user, "review.platform.read")
@@ -81,10 +79,8 @@ defmodule GroupherServer.Test.CMS.Passport.GlobalFactsTest do
     {:ok, community} = mock_community()
     {:ok, user} = db_insert(:user)
 
-    legacy_user = %{
-      user
-      | cur_passport: %{community.slug => %{"cms" => %{"review.read" => true}}}
-    }
+    legacy_user =
+      Map.put(user, :cur_passport, %{community.slug => %{"cms" => %{"review.read" => true}}})
 
     assert {:error, _reason} =
              Passport.Authorization.check(

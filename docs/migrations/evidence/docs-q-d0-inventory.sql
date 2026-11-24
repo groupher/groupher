@@ -1,7 +1,7 @@
 -- D0 report-only inventory for the Docs Queue body cutover.
 -- Run against an explicitly selected development or rehearsal database only.
 -- This script must stay read-only and must not be used against production.
-BEGIN READ ONLY;
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY;
 SET LOCAL statement_timeout = '30s';
 
 SELECT current_database() AS database,

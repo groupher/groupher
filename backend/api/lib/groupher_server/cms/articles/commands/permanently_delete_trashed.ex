@@ -155,7 +155,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PermanentlyDeleteTrashed do
         end
 
       {:ok, community_id, thread} ->
-        TrashAgg.get_in_scope(item_id, community_id, thread)
+        TrashAgg.load_in_scope(item_id, community_id, thread)
 
       {:error, _reason} = error ->
         error

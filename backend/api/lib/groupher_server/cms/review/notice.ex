@@ -52,11 +52,8 @@ defmodule GroupherServer.CMS.Review.Notice do
   defp target_query(%{type: :comment, comment_id: id, community_id: community_id})
        when is_integer(id) and is_integer(community_id) do
     case Repo.get(Comment, id) do
-      %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
+      %Comment{thread: thread} when thread in [:post, :blog, :changelog, :doc] ->
         {:ok, CommentReviewBlock, :comment_id, id, :all}
-
-      %Comment{thread: :doc} ->
-        {:ok, CommentReviewBlock, :comment_id, id, community_id}
 
       _ ->
         {:error, CMS.ErrorCat.invalid_review_block()}
@@ -66,7 +63,7 @@ defmodule GroupherServer.CMS.Review.Notice do
   defp target_query(%{type: :comment, comment_id: id})
        when is_integer(id) do
     case Repo.get(Comment, id) do
-      %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
+      %Comment{thread: thread} when thread in [:post, :blog, :changelog, :doc] ->
         {:ok, CommentReviewBlock, :comment_id, id, :all}
 
       _ ->

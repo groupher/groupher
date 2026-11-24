@@ -162,7 +162,7 @@ fragment PagedCommunitiesPageInfo on CommunityPage {
 | `TicketPage`                              | `PagedTickets`                 |
 | `TicketPageInternal`                      | `PagedTicketsInternal`         |
 | `DashboardAdminDirectoryPage`             | `PagedCommunityAdminMembers`   |
-| `DashboardAdminPage`                      | `PagedCommunityAdmins`         |
+| `DashboardPagedCommunityAdmins`           | `PagedCommunityAdmins`         |
 | `ArticleLogsPage`                         | `PagedArticleLogs`             |
 | `MentionsGraphPage`                       | `PagedMentionsGraph`           |
 | `CommentPagiInfo`                         | `CommentPageInfo`              |

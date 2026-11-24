@@ -5,6 +5,11 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityAdmissionReviewTest do
   alias GroupherServer.CMS
   alias CMS.Model.CommunityAdmin
 
+  test "unsupported snapshot resources keep the Gate Decision error protocol" do
+    assert {:error, %CMS.Gate.Decision{allowed: false}} =
+             CMS.Gate.community_snapshot_check(nil, :read, nil)
+  end
+
   test "a stale Admin identity projection cannot authorize a removed member" do
     {:ok, owner} = db_insert(:user)
     {:ok, actor} = db_insert(:user)
@@ -105,7 +110,7 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityAdmissionReviewTest do
           end,
           fn -> CMS.Dashboard.update(community, :rss, %{}, actor, Ecto.UUID.generate()) end
         ] do
-      assert {:error, %CMS.Gate.Decision{primary: %{reason: :permission_denied}}} = call.()
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}} = call.()
     end
 
     member
@@ -134,7 +139,9 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityAdmissionReviewTest do
     assert {:error, %CMS.Gate.Decision{allowed: false}} =
              CMS.Gate.access_check(actor, :dashboard_theme_update, other_community)
 
-    member |> CommunityAdmin.changeset(%{permissions: %{}}) |> Repo.update!()
+    Repo.get!(CommunityAdmin, member.id)
+    |> CommunityAdmin.changeset(%{permissions: %{}})
+    |> Repo.update!()
 
     assert {:error, %CMS.Gate.Decision{allowed: false}} =
              CMS.Gate.access_check(actor, :dashboard_theme_update, community)
