@@ -37,6 +37,11 @@ defmodule GroupherServer.CMS.Communities do
   alias CMS.Communities.Subscriptions.Commands.Subscribe, as: SubscribeCommand
   alias CMS.Communities.Subscriptions.Commands.Unsubscribe, as: UnsubscribeCommand
   alias CMS.Communities.Subscriptions.Setup, as: SubscriptionsSetup
+  alias CMS.Communities.Moderators.Commands.Add, as: AddModeratorCommand
+  alias CMS.Communities.Moderators.Commands.AddMany, as: AddManyModeratorsCommand
+  alias CMS.Communities.Moderators.Commands.Remove, as: RemoveModeratorCommand
+  alias CMS.Communities.Moderators.Commands.UpdatePassport, as: UpdateModeratorPassportCommand
+  alias CMS.Communities.Moderators.Query, as: ModeratorsQuery
   alias CMS.Communities.Subscribers.Query, as: SubscribersQuery
   alias CMS.Communities.Tags.Query, as: Tags
   alias CMS.Communities.Tags.Stats, as: Stats
@@ -88,7 +93,7 @@ defmodule GroupherServer.CMS.Communities do
       :public -> {:ok, :public}
       :admin -> {:ok, :admin}
       :owner -> {:ok, :owner}
-      :admin_management -> {:ok, :admin}
+      :moderator_management -> {:ok, :admin}
       :operations -> {:ok, :internal}
       _ -> {:error, CMS.Gate.ErrorCat.unknown_policy_mode()}
     end
@@ -103,7 +108,7 @@ defmodule GroupherServer.CMS.Communities do
     {:ok,
      Map.merge(community, %{
        viewer_has_subscribed: user_id in Map.get(meta, :subscribed_user_ids, []),
-       viewer_is_admin: user_id in Map.get(meta, :admins_ids, [])
+       viewer_is_moderator: user_id in Map.get(meta, :moderators_ids, [])
      })}
   end
 
@@ -244,20 +249,23 @@ defmodule GroupherServer.CMS.Communities do
   @spec release_expired_slug_claims(DateTime.t()) :: {:ok, non_neg_integer()} | {:error, term()}
   def release_expired_slug_claims(now), do: SlugClaims.release_expired(now)
 
+  @doc "Returns bounded moderator candidates excluding existing memberships."
+  def moderator_candidates(community, name), do: ModeratorsQuery.candidates(community, name)
+
   # Members
   @doc "Pages community members with an explicit Pagi position and optional viewer."
   def members(type, community, filter, pagi, viewer \\ nil)
+
+  def members(:moderators, %Community{} = community, filter, pagi, viewer) do
+    ModeratorsQuery.page(community, filter, pagi, viewer)
+  end
 
   def members(:subscribers, %Community{} = community, filter, pagi, viewer) do
     SubscribersQuery.page(community, filter, pagi, viewer)
   end
 
-  def members(:admins, %Community{} = community, filter, pagi, _viewer) do
-    CMS.Communities.Admins.Query.page(community, filter, pagi)
-  end
-
   def members(type, community_ref, filter, pagi, viewer)
-      when type == :subscribers do
+      when type in [:moderators, :subscribers] do
     with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
       members(type, community, filter, pagi, viewer)
     end
@@ -338,6 +346,82 @@ defmodule GroupherServer.CMS.Communities do
   @doc "Returns paged passports from the `Communities` read boundary."
   @spec paged_passports(String.t(), String.t()) :: T.domain_res(list())
   def paged_passports(community, key), do: Passport.paged_passports(community, key)
+
+  @doc "Runs `all_passport_rules` through the public `Communities` boundary."
+  @spec all_passport_rules() :: T.domain_res(map())
+  def all_passport_rules, do: Passport.all_passport_rules()
+
+  # Moderator
+  @doc "Runs `add_moderator` through the public `Communities` boundary."
+  @spec add_moderator(Community.t(), User.t(), User.t()) :: T.domain_res(Community.t())
+  def add_moderator(%Community{}, %User{}, %User{}) do
+    {:error, CMS.ErrorCat.command_id_required()}
+  end
+
+  @spec add_moderator(Community.t(), User.t(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def add_moderator(
+        %Community{} = community,
+        %User{} = target_user,
+        %User{} = cur_user,
+        command_id
+      ) do
+    AddModeratorCommand.execute(community, target_user, cur_user, command_id)
+  end
+
+  @doc "Runs `add_moderators` through the public `Communities` boundary."
+  @spec add_moderators(Community.t(), list(User.t()), User.t()) :: T.domain_res(Community.t())
+  def add_moderators(%Community{}, _target_users, %User{}) do
+    {:error, CMS.ErrorCat.command_id_required()}
+  end
+
+  @spec add_moderators(Community.t(), list(User.t()), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def add_moderators(%Community{} = community, target_users, %User{} = cur_user, command_id)
+      when is_list(target_users) do
+    AddManyModeratorsCommand.execute(community, target_users, cur_user, command_id)
+  end
+
+  @doc "Removes moderator through the `Communities` boundary."
+  @spec remove_moderator(String.t() | Community.t(), User.t(), User.t()) ::
+          T.domain_res(Community.t())
+  def remove_moderator(community, %User{} = target_user, %User{} = cur_user) do
+    _ = {community, target_user, cur_user}
+    {:error, CMS.ErrorCat.command_id_required()}
+  end
+
+  def remove_moderator(
+        %Community{} = community,
+        %User{} = target_user,
+        %User{} = cur_user,
+        command_id
+      ) do
+    RemoveModeratorCommand.execute(community, target_user, cur_user, command_id)
+  end
+
+  @doc "Updates moderator passport through the `Communities` write boundary."
+  @spec update_moderator_passport(String.t() | Community.t(), map(), User.t(), User.t()) ::
+          T.domain_res(Community.t())
+  def update_moderator_passport(community, rules, %User{} = target_user, %User{} = cur_user) do
+    _ = {community, rules, target_user, cur_user}
+    {:error, CMS.ErrorCat.command_id_required()}
+  end
+
+  def update_moderator_passport(
+        %Community{} = community,
+        rules,
+        %User{} = target_user,
+        %User{} = cur_user,
+        command_id
+      ) do
+    UpdateModeratorPassportCommand.execute(
+      community,
+      rules,
+      target_user,
+      cur_user,
+      command_id
+    )
+  end
 
   # Subscribe
   @doc "Rejects the legacy user-mutation arity; callers must provide command_id."

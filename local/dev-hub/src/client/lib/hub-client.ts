@@ -10,7 +10,6 @@ import type {
   TPublicService,
   TServiceConfigContent,
   TServiceConfigManifest,
-  TServiceEnvironment,
   TServiceLog,
   TServiceMetricsSnapshot,
   TServiceStartMode,
@@ -66,28 +65,6 @@ export async function fetchServiceConfig(
   const payload = (await response.json().catch(() => null)) as TServiceConfigManifest | null
   if (!payload) throw new Error(`Could not load configuration for ${id}.`)
   return payload
-}
-
-export async function fetchServiceEnvironment(
-  id: string,
-  signal?: AbortSignal,
-): Promise<TServiceEnvironment> {
-  const response = await fetch(`/api/services/${encodeURIComponent(id)}/environment`, { signal })
-  if (!response.ok) throw await readResponseError(response, 'Could not load local environment.')
-  return response.json() as Promise<TServiceEnvironment>
-}
-
-export async function saveServiceEnvironment(
-  id: string,
-  changes: Record<string, string | null>,
-): Promise<TServiceEnvironment> {
-  const response = await fetch(`/api/services/${encodeURIComponent(id)}/environment`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ changes }),
-  })
-  if (!response.ok) throw await readResponseError(response, 'Could not save local environment.')
-  return response.json() as Promise<TServiceEnvironment>
 }
 
 export async function fetchServiceConfigContent(

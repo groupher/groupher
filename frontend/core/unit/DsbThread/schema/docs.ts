@@ -328,7 +328,6 @@ export const restoreDocsWorkspaceNode = graphql(`
     $treeRevision: Int!
     $queueRevision: Int!
     $trashActionId: ID!
-    $recordRevision: String!
     $targetParentNodeId: ID
     $targetIndex: Int
   ) {
@@ -338,7 +337,6 @@ export const restoreDocsWorkspaceNode = graphql(`
       treeRevision: $treeRevision
       queueRevision: $queueRevision
       trashActionId: $trashActionId
-      recordRevision: $recordRevision
       targetParentNodeId: $targetParentNodeId
       targetIndex: $targetIndex
     ) {
@@ -457,34 +455,19 @@ export const releaseDocsQueue = graphql(`
   }
 `)
 
-export const communityDocTrashItems = graphql(`
-  query PagedCommunityArticleTrash(
-    $communityRef: String!
-    $thread: CommunityArticleTrashThread!
-    $pagi: PagiInput
-  ) {
-    communityArticleTrashItems(communityRef: $communityRef, thread: $thread, pagi: $pagi) {
+export const docTreeTrashItems = graphql(`
+  query docTreeTrashItems($community: String!, $pagi: PagiInput) {
+    docTreeTrashItems(community: $community, pagi: $pagi) {
       entries {
         id
-        thread
-        status
-        publicVisible
-        recordRevision
-        createdAt
-        ... on CommunityDocTreeTrashItem {
-          treePath {
-            nodeId
-            title
-          }
-          pendingMemberCount
-          removedMemberCount
-          title
-          nodeId
-          docId
-          type
-          deletedFromParentNodeId
-          deletedFromIndex
-        }
+        nodeId
+        docId
+        type
+        title
+        deletedFromParentNodeId
+        deletedFromIndex
+        deletedAt
+        restoredAt
       }
       pageInfo {
         __typename
@@ -499,46 +482,6 @@ export const communityDocTrashItems = graphql(`
         ... on CursorPageInfo {
           startCursor
           endCursor
-        }
-      }
-    }
-  }
-`)
-
-export const communityDocTrashMembers = graphql(`
-  query PagedCommunityDocTrashMembers(
-    $communityRef: String!
-    $thread: CommunityArticleTrashThread!
-    $id: ID!
-    $pagi: PagiInput
-    $recordRevision: String
-  ) {
-    communityArticleTrash(communityRef: $communityRef, thread: $thread, id: $id) {
-      id
-      recordRevision
-      ... on CommunityDocTreeTrashItem {
-        pagedMembers(pagi: $pagi, recordRevision: $recordRevision) {
-          entries {
-            id
-            title
-            deletionStatus
-            removedFromPublic
-          }
-          pageInfo {
-            __typename
-            hasNextPage
-            hasPreviousPage
-            ... on OffsetPageInfo {
-              page
-              size
-              totalCount
-              totalPages
-            }
-            ... on CursorPageInfo {
-              startCursor
-              endCursor
-            }
-          }
         }
       }
     }
@@ -659,8 +602,7 @@ export default {
   dequeueDocs,
   docsPublishQueue,
   releaseDocsQueue,
-  communityDocTrashItems,
-  communityDocTrashMembers,
+  docTreeTrashItems,
   addDocCoverCard,
   removeDocCoverCard,
   reorderDocCoverCards,

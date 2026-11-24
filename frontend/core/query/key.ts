@@ -188,12 +188,6 @@ export const commentKeys = {
 export const viewerQueryKeys = {
   all: ['viewer'] as const,
   session: () => [...viewerQueryKeys.all, 'session'] as const,
-  globalPassport: (accountScope: string) =>
-    [...viewerQueryKeys.all, accountScope, 'global-passport'] as const,
-  communityAdmin: (accountScope: string, communitySlug: string) =>
-    [...viewerQueryKeys.all, accountScope, 'community-admin', communitySlug] as const,
-  communityGateFacts: (accountScope: string, communitySlug: string) =>
-    [...viewerQueryKeys.all, accountScope, 'community-gate-facts', communitySlug] as const,
   articleStatePrefix: (accountScope: string) =>
     [...viewerQueryKeys.all, accountScope, 'article-state'] as const,
   articleStates: (accountScope: string, articlePathKeys: readonly string[]) =>

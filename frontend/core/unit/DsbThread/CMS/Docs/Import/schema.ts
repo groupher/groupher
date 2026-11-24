@@ -1,9 +1,9 @@
 import { graphql } from '~/graphql/authoring'
 
 const job = graphql(`
-  query ImportJob($community: String!, $jobRef: ID!) {
-    importJob(community: $community, jobRef: $jobRef) {
-      ...ImportJobFields
+  query ContentImportJob($community: String!, $jobRef: ID!) {
+    contentImportJob(community: $community, jobRef: $jobRef) {
+      ...ContentImportJobFields
     }
   }
 `)

@@ -23,61 +23,32 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
   def report(user_id) when is_integer(user_id) do
     rules =
       case Repo.get_by(Passport, user_id: user_id) do
-        nil -> nil
+        nil -> %{}
         %Passport{rules: rules} -> rules
       end
 
-    with {:ok, rules} <- normalize_legacy_rules(rules) do
-      memberships =
-        Repo.all(
-          from(member in CommunityAdmin,
-            join: community in Community,
-            on: community.id == member.community_id,
-            where: member.user_id == ^user_id,
-            select: {community.slug, community.id, member.id}
-          )
+    memberships =
+      Repo.all(
+        from(member in CommunityAdmin,
+          join: community in Community,
+          on: community.id == member.community_id,
+          where: member.user_id == ^user_id,
+          select: {community.slug, community.id, member.id}
         )
-        |> Enum.group_by(fn {slug, _, _} -> slug end)
-        |> Map.new(fn
-          {slug, [{_, community_id, member_id}]} ->
-            {slug, %{community_id: community_id, member_id: member_id}}
+      )
+      |> Enum.group_by(fn {slug, _, _} -> slug end)
+      |> Map.new(fn
+        {slug, [{_, community_id, member_id}]} ->
+          {slug, %{community_id: community_id, member_id: member_id}}
 
-          {slug, _duplicates} ->
-            {slug, :ambiguous}
-        end)
+        {slug, _duplicates} ->
+          {slug, :ambiguous}
+      end)
 
-      build(rules, memberships)
-    end
+    build(rules, memberships)
   end
 
   def report(_), do: {:error, :invalid_user}
-
-  @doc false
-  def normalize_legacy_rules(nil), do: {:ok, %{"global" => %{}}}
-
-  def normalize_legacy_rules(%{"global" => global, "cms" => cms} = rules)
-      when is_map(global) and is_map(cms) do
-    if community_rule_shape?(cms) do
-      {:ok, rules}
-    else
-      communities =
-        Enum.reduce(cms, %{"global" => global}, fn {slug, grants}, acc ->
-          Map.put(acc, slug, %{"cms" => grants})
-        end)
-
-      {:ok, communities}
-    end
-  end
-
-  def normalize_legacy_rules(%{"global" => global} = rules) when is_map(global) do
-    {:ok, rules}
-  end
-
-  def normalize_legacy_rules(_), do: {:error, :invalid_legacy_rules}
-
-  defp community_rule_shape?(rules) do
-    Enum.any?(Map.keys(rules), fn key -> key == "root" or key in PermissionConfig.contexts() end)
-  end
 
   @doc "Plans one user's legacy rules against a unique slug-to-member map."
   def build(rules, memberships) when is_map(rules) and is_map(memberships) do

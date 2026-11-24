@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Articles.CommunityArticleTrashContractTest do
-  use GroupherServer.TestMate, async: false
+  use ExUnit.Case, async: true
 
-  alias Ecto.Adapters.SQL.Sandbox
+  alias GroupherServer.CMS
   alias CMS.{Articles.CommunityTrashQuery, CommunityArticleTrashContract, Model.Community}
   alias GroupherServerWeb.Schema
 
@@ -23,17 +23,9 @@ defmodule GroupherServer.Test.CMS.Articles.CommunityArticleTrashContractTest do
                CommunityTrashQuery.page(%Community{}, nil, thread, nil)
     end
 
-    for thread <- [:ticket] do
+    for thread <- [:doc, :ticket] do
       assert {:error, %{reason: :unsupported_community_trash_thread}} =
                CommunityTrashQuery.page(%Community{}, nil, thread, nil)
     end
-
-    Sandbox.unboxed_run(Repo, fn ->
-      {:ok, owner} = db_insert(:user)
-      {:ok, community} = mock_community(owner)
-
-      assert {:error, %{reason: :permission_denied}} =
-               CommunityTrashQuery.page(community, nil, :doc, nil)
-    end)
   end
 end

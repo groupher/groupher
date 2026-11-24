@@ -15,18 +15,14 @@ import AdminMember from './AdminMember'
 import useSalon, { cn } from './salon'
 
 const Members = () => {
-  const { slug, ref: communityRef = '' } = useCommunity()
+  const { slug } = useCommunity()
   const position = usePagiPosition(slug)
   const query = useQuery({
-    queryKey: ['community', slug, 'admins', position.input],
+    queryKey: ['community', slug, 'moderators', position.input],
     queryFn: async () =>
-      (
-        await browserGraphQLRequest(S.adminDirectoryPage, {
-          communityRef,
-          pagi: position.input,
-        })
-      ).pagedCommunityAdminMembers,
-    enabled: !!communityRef,
+      (await browserGraphQLRequest(S.moderatorPage, { community: slug, pagi: position.input }))
+        .pagedCommunityModerators,
+    enabled: !!slug,
     meta: { hydration: 'public' },
   })
   const s = useSalon()
@@ -38,9 +34,9 @@ const Members = () => {
           <h3 className={s.title}>社区管理员</h3>
         </div>
         <div className={s.adminsRow}>
-          {(query.data?.entries ?? []).map((admin) => (
-            <div key={admin.user.login} className={s.admin}>
-              <AdminMember user={admin.user} />
+          {(query.data?.entries ?? []).map((moderator) => (
+            <div key={moderator.user.login} className={s.admin}>
+              <AdminMember user={moderator.user} />
             </div>
           ))}
         </div>

@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from 'react'
 import SIZE from '~/const/size'
 import useTrans from '~/hooks/useTrans'
 import Button from '~/ui/Buttons/Button'
-import Checker from '~/ui/Checker'
 import { MARKDOWN_PLATFORMS } from '~/unit/DsbThread/CMS/Docs/markdown_platforms'
 
 import useSalon from './salon/review_step'
@@ -17,7 +16,7 @@ export default function ReviewStep({
   preview,
   reset,
 }: {
-  apply: (selectedSourceIds: string[], overwriteSourceIds: string[]) => Promise<void>
+  apply: (selectedSourceIds: string[]) => Promise<void>
   preview: TDocImportPreview
   reset: () => Promise<boolean>
 }) {
@@ -48,24 +47,6 @@ export default function ReviewStep({
   const [selectedSourceIds, setSelectedSourceIds] = useState<Set<string>>(
     () => new Set(allPageIds.filter((sourceId) => !pageMeta.get(sourceId)?.draft)),
   )
-
-  const conflictIds = useMemo(
-    () => new Set(preview.conflicts.map(({ sourceId }) => sourceId)),
-    [preview.conflicts],
-  )
-  const overwriteIds = useMemo(
-    () => pageIdsFromTabs(preview.targetTree.tabs, 'overwrite'),
-    [preview.targetTree.tabs],
-  )
-  const selectedOverwrites = overwriteIds.filter((id) => selectedSourceIds.has(id))
-  const needsNewReview = selectedOverwrites.length > 0 && !preview.attemptRef
-  const hasConflict = Array.from(selectedSourceIds).some((id) => conflictIds.has(id))
-  const [confirmation, setConfirmation] = useState<{
-    selection: Set<string>
-    preview: TDocImportPreview
-  } | null>(null)
-  const confirmed =
-    confirmation?.selection === selectedSourceIds && confirmation.preview === preview
 
   const toggleSelection = useCallback((sourceIds: string[], checked: boolean): void => {
     setSelectedSourceIds((current) => {
@@ -162,7 +143,6 @@ export default function ReviewStep({
           </div>
         </div>
         <SourceTree
-          conflictIds={conflictIds}
           pageMeta={pageMeta}
           selectedSourceIds={selectedSourceIds}
           tabs={preview.targetTree.tabs || []}
@@ -171,34 +151,13 @@ export default function ReviewStep({
         {selectedSourceIds.size === 0 ? (
           <p className={s.selectionError}>{t('dsb.doc.bulk_import.review.selection_required')}</p>
         ) : null}
-        {hasConflict && (
-          <p className={s.selectionError}>{t('dsb.doc.bulk_import.review.resolve_conflict')}</p>
-        )}
-        {needsNewReview && (
-          <p className={s.selectionError}>{t('dsb.doc.bulk_import.review.preview_changed')}</p>
-        )}
-        {selectedOverwrites.length > 0 && !needsNewReview && (
-          <Checker
-            checked={confirmed}
-            onChange={(checked) =>
-              setConfirmation(checked ? { selection: selectedSourceIds, preview } : null)
-            }
-          >
-            {t('dsb.doc.bulk_import.review.confirm_overwrite')} ({selectedOverwrites.length})
-          </Checker>
-        )}
         <div className={s.actions}>
           <Button ghost noBorder loading={resetting} onClick={() => void restart()}>
             {t('dsb.doc.bulk_import.review.restart')}
           </Button>
           <Button
-            disabled={
-              selectedSourceIds.size === 0 ||
-              hasConflict ||
-              needsNewReview ||
-              (selectedOverwrites.length > 0 && !confirmed)
-            }
-            onClick={() => void apply(Array.from(selectedSourceIds), selectedOverwrites)}
+            disabled={selectedSourceIds.size === 0}
+            onClick={() => void apply(Array.from(selectedSourceIds))}
           >
             {t('dsb.doc.bulk_import.review.confirm')} ({selectedSourceIds.size})
           </Button>

@@ -36,10 +36,9 @@ export const ticketFields = graphql(`
     createdAt
     updatedAt
     assignees {
-      user {
-        login
-        nickname
-      }
+      id
+      login
+      nickname
     }
     tags {
       id
@@ -294,10 +293,11 @@ export const postTicketProgress = graphql(`
 `)
 
 export const ticketAssigneeCandidates = graphql(`
-  "Paged Community Admin identities for Ticket assignment"
-  query TicketAssigneeCandidates($communityRef: String!, $pagi: PagiInput) {
-    pagedCommunityAdminMembers(communityRef: $communityRef, pagi: $pagi) {
+  "Paged subscribers of a community"
+  query TicketAssigneeCandidates($community: String!, $pagi: PagiInput) {
+    pagedCommunityModerators(community: $community, pagi: $pagi) {
       entries {
+        userId
         user {
           login
           nickname
@@ -661,19 +661,19 @@ export const addTicketCaseWorker = graphql(`
 `)
 
 export const setTicketAssignees = graphql(`
-  "Replace assigned Community Admins on a Ticket"
+  "Replace assigned Community moderators on a Ticket"
   mutation SetTicketAssignees(
     $commandId: ID!
     $community: String!
     $ticketId: ID!
-    $assigneeLogins: [String!]!
+    $assigneeIds: [Int!]!
     $expectedWorkflowVersion: Int!
   ) {
     setTicketAssignees(
       commandId: $commandId
       community: $community
       ticketId: $ticketId
-      assigneeLogins: $assigneeLogins
+      assigneeIds: $assigneeIds
       expectedWorkflowVersion: $expectedWorkflowVersion
     ) {
       ...TicketFields

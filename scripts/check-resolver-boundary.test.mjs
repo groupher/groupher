@@ -19,7 +19,7 @@ test('rejects persistence-shape mapping and partial schemas', () => {
   const source = `
     Map.from_struct(draft)
     CMS.Communities.set_category(community, %Category{id: category_id})
-    CMS.Communities.members(:admins, %Community{slug: slug}, filter)
+    CMS.Communities.members(:moderators, %Community{slug: slug}, filter)
   `
 
   assert.equal(resolverBoundaryFindings(source).length, 3)

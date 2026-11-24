@@ -9,15 +9,15 @@ defmodule GroupherServer.CMS.Tickets.Commands.SetAssignees do
   alias CMS.Tickets.Commands.MutationConfirmation, as: Confirmation
 
   @doc "Executes the set_assignees command through the canonical receipt boundary."
-  def execute(community, ticket_id, user_logins, expected_version, actor, command_id) do
+  def execute(community, ticket_id, user_ids, expected_version, actor, command_id) do
     command_params = %{
       "type" => "set_assignees",
       "ticket_id" => ticket_id,
-      "user_logins" => user_logins,
+      "user_ids" => user_ids,
       "expected_version" => expected_version
     }
 
-    run(community, ticket_id, user_logins, expected_version, actor, command_id, command_params)
+    run(community, ticket_id, user_ids, expected_version, actor, command_id, command_params)
   end
 
   @pipeline operation: :ticket_set_assignees,
@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Tickets.Commands.SetAssignees do
   receipt_pipeline run(
                      community,
                      ticket_id,
-                     user_logins,
+                     user_ids,
                      expected_version,
                      actor,
                      command_id,
@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Tickets.Commands.SetAssignees do
     end)
 
     change(fn canonical, operation_ref ->
-      CMS.Tickets.Persist.set_assignees(canonical, ticket_id, user_logins, expected_version, %{
+      CMS.Tickets.Persist.set_assignees(canonical, ticket_id, user_ids, expected_version, %{
         actor: actor,
         command_id: command_id,
         operation_ref: operation_ref

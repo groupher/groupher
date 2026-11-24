@@ -246,12 +246,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Ticket do
       resolve(&R.CMS.Tickets.add_case_worker/3)
     end
 
-    @desc "Replace assigned Community Admins on a Ticket"
+    @desc "Replace assigned Community moderators on a Ticket"
     field :set_ticket_assignees, :ticket do
       arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:ticket_id, non_null(:id))
-      arg(:assignee_logins, non_null(list_of(non_null(:string))))
+      arg(:assignee_ids, non_null(list_of(non_null(:integer))))
       arg(:expected_workflow_version, non_null(:integer))
 
       middleware(M.Authorize, :login)

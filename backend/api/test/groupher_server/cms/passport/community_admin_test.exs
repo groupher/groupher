@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.Passport.CommunityAdminTest do
   alias CMS.Passport
   alias CMS.Passport.Store
 
-  test "Community destroy removes current admin membership atomically" do
+  test "Community destroy removes current Admin membership atomically" do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
     member = Repo.get_by!(CommunityAdmin, community_id: community.id, user_id: user.id)

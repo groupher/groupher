@@ -3,17 +3,8 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
 
   import Ecto.Query
 
-  alias Ecto.Adapters.SQL.Sandbox
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
-
-  alias CMS.DocTree.Commands.{
-    CreateWorkspaceNode,
-    DeleteWorkspaceNode,
-    Enqueue,
-    ReleaseQueue,
-    RestoreWorkspaceNode
-  }
-
+  alias CMS.DocTree.Commands.{CreateWorkspaceNode, DeleteWorkspaceNode, Enqueue, ReleaseQueue}
   alias CMS.DocTree.Publish.Queue
 
   alias CMS.Model.{
@@ -1006,100 +997,6 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
 
     assert repeated.id == event.id
     assert_unchanged(before)
-  end
-
-  test "a restored draft with prior publication history can publish a new public head" do
-    Sandbox.unboxed_run(Repo, fn ->
-      f = prepare_release(:publication)
-      publish_pending(f)
-
-      original_lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: f.article.id)
-      assert original_lifecycle.state == :published
-      assert %DateTime{} = original_lifecycle.first_published_at
-
-      {:ok, queue} = Queue.read(f.community)
-
-      assert {:ok, deleted} =
-               DeleteWorkspaceNode.execute(
-                 f.community,
-                 queue.tree_lock_version,
-                 queue.queue_revision,
-                 f.node_id,
-                 nil,
-                 f.actor,
-                 Ecto.UUID.generate()
-               )
-
-      {:ok, queue} = Queue.read(f.community)
-
-      assert {:ok, _} =
-               ReleaseQueue.execute(
-                 f.community,
-                 queue.queue_revision,
-                 f.actor,
-                 Ecto.UUID.generate()
-               )
-
-      refute Repo.get(CMS.Model.ArticlePublic, f.article.id)
-      deleted_lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: f.article.id)
-      assert deleted_lifecycle.state == :deleted
-      assert deleted_lifecycle.first_published_at == original_lifecycle.first_published_at
-
-      {:ok, trash_item} =
-        CMS.Articles.CommunityTrashQuery.get(f.community, f.actor, :doc, deleted.trash_action_id)
-
-      {:ok, queue} = Queue.read(f.community)
-
-      assert {:ok, _restored} =
-               RestoreWorkspaceNode.execute(
-                 f.community,
-                 queue.tree_lock_version,
-                 queue.queue_revision,
-                 deleted.trash_action_id,
-                 trash_item.record_revision,
-                 :restore_original,
-                 nil,
-                 f.actor,
-                 Ecto.UUID.generate()
-               )
-
-      restored_lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: f.article.id)
-      assert restored_lifecycle.state == :draft
-      assert restored_lifecycle.first_published_at == original_lifecycle.first_published_at
-
-      recovery =
-        Repo.get_by!(CMS.Model.ArticleWorkingCopy,
-          article_id: f.article.id,
-          scope_type: :default,
-          scope_id: f.article.id
-        )
-
-      {:ok, queue} = Queue.read(f.community)
-
-      assert {:ok, _} =
-               Enqueue.execute(
-                 f.community,
-                 queue.queue_revision,
-                 [%{article_id: f.article.id, default_revision: recovery.revision}],
-                 f.actor,
-                 Ecto.UUID.generate()
-               )
-
-      {:ok, queue} = Queue.read(f.community)
-
-      assert {:ok, _} =
-               ReleaseQueue.execute(
-                 f.community,
-                 queue.queue_revision,
-                 f.actor,
-                 Ecto.UUID.generate()
-               )
-
-      published_lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: f.article.id)
-      assert published_lifecycle.state == :published
-      assert published_lifecycle.first_published_at == original_lifecycle.first_published_at
-      assert Repo.get(CMS.Model.ArticlePublic, f.article.id)
-    end)
   end
 
   defp publication_event(f, command_id) do

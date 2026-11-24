@@ -6,7 +6,6 @@ import test from 'node:test'
 
 import { localWorkerEnvironmentPaths } from './local-environment.ts'
 import { ServiceManager, ServiceManagerError } from './process-manager.ts'
-import { ServiceEnvironmentStore } from './service-environment.ts'
 import type { TServiceDefinition } from './services.ts'
 
 const FIXTURE_SERVICE: TServiceDefinition = {
@@ -214,48 +213,6 @@ test('managed spawn filters parent values and resolves authoritative local envir
     output,
     /"parent":"parent","orchestrator":"orchestrator","login":"true","clientSecret":null/,
   )
-})
-
-test('saved local configuration reaches the next real managed process and Worker projection', async (t) => {
-  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'groupher-saved-env-'))
-  const definition: TServiceDefinition = {
-    ...FIXTURE_SERVICE,
-    id: 'saved-env-fixture',
-    workerEnvFile: true,
-    localEnvironment: { env: { DB_NAME: 'default_db' }, editableEnvKeys: ['DB_NAME'] },
-    args: ['-e', 'console.log(process.env.DB_NAME); setInterval(() => {}, 1000)'],
-  }
-  const store = new ServiceEnvironmentStore([definition], fixtureRoot)
-  const manager = new ServiceManager(
-    [definition],
-    null,
-    undefined,
-    undefined,
-    undefined,
-    async () => ({ formatVersion: 1, repoRoot: fixtureRoot, secrets: {}, serviceCredentials: {} }),
-  )
-  t.after(async () => {
-    await manager.shutdown()
-    await rm(fixtureRoot, { force: true, recursive: true })
-  })
-  await store.update(definition.id, { DB_NAME: 'saved_before_start' })
-  const started = await manager.start(definition.id)
-  await waitForLog(manager, definition.id, 'saved_before_start')
-  await store.update(definition.id, { DB_NAME: 'saved_for_next_start' })
-  assert.equal(
-    manager.listServices().find((service) => service.id === definition.id)?.pid,
-    started.pid,
-  )
-  await manager.stop(definition.id)
-  await manager.start(definition.id)
-  await waitForLog(manager, definition.id, 'saved_for_next_start')
-  const { readFile } = await import('node:fs/promises')
-  const { parseEnv } = await import('node:util')
-  const projection = await readFile(
-    localWorkerEnvironmentPaths(definition.id, fixtureRoot).envFile,
-    'utf8',
-  )
-  assert.equal(parseEnv(projection).DB_NAME, 'saved_for_next_start')
 })
 
 test('managed Worker receives its private persistent state directory', async (t) => {

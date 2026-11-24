@@ -23,7 +23,7 @@ export function useServiceConfig(serviceId: string) {
     void fetchServiceConfig(serviceId, controller.signal)
       .then((nextManifest) => {
         setManifest(nextManifest)
-        setSelectedFileId('local-dev.env')
+        setSelectedFileId(nextManifest.files[0]?.id || null)
       })
       .catch((cause: unknown) => {
         if (!controller.signal.aborted) {
@@ -38,7 +38,7 @@ export function useServiceConfig(serviceId: string) {
   }, [requestVersion, serviceId])
 
   useEffect(() => {
-    if (!selectedFileId || selectedFileId === 'local-dev.env') {
+    if (!selectedFileId) {
       setContent(null)
       setContentLoading(false)
       setContentError(null)

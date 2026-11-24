@@ -20,7 +20,7 @@ import type {
   TLinkItem,
   TLocale,
   TMediaReport,
-  TAdmin,
+  TModerator,
   TNameAlias,
   TNavActiveLayout,
   TPostLayout,

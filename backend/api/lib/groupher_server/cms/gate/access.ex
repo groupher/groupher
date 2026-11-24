@@ -8,10 +8,6 @@ defmodule GroupherServer.CMS.Gate.Access do
   @doc "Delegates access_check/3 to the owning implementation."
   defdelegate access_check(arg1, arg2, arg3), to: GroupherServer.CMS.Gate.Access.Query
 
-  @doc "Checks Community admission against facts in a read-only snapshot."
-  defdelegate community_snapshot_check(actor, action, community),
-    to: GroupherServer.CMS.Gate.Access.Query
-
   @doc "Delegates check_in_transaction/3 to the owning implementation."
   defdelegate check_in_transaction(arg1, arg2, arg3), to: GroupherServer.CMS.Gate.Access.Query
 

@@ -1,10 +1,10 @@
 /**
- * Implements the Vitest.config boundary inside Import.
+ * Implements the Vitest.config boundary inside Content Import.
  *
  * Business position:
  *
  *   Dash proxy / Phoenix import job
- *     -> Import module
+ *     -> Content Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary
  */

@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   @moduledoc """
   Starts a fresh AI check for the current public content in one review scope.
 
-      reviewer command
+      moderator command
         -> lock current public target
         -> read current public content and policy
         -> register a recheck request through CMS Review

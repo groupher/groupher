@@ -138,7 +138,7 @@ test('one managed-key set covers every service resolved environment', () => {
   }
 })
 
-test('the removed local Admin opt-in cannot enable a fixed account; fixture keys stay managed', () => {
+test('the local Admin opt-in is consumed by Auth and never passed to child processes', () => {
   const auth = SERVICE_DEFINITIONS.find((service) => service.id === 'auth')!
   const state = {
     formatVersion: 1 as const,
@@ -159,14 +159,12 @@ test('the removed local Admin opt-in cannot enable a fixed account; fixture keys
     resolved,
   )
 
-  assert.equal(resolved.env.AUTH_LOCAL_ADMIN_LOGIN_ENABLED, undefined)
-  assert.equal(childEnvironment.AUTH_LOCAL_ADMIN_LOGIN_ENABLED, undefined)
-  assert.ok(resolved.env.LOCAL_TEST_ACTORS_SECRET.length >= 32)
-  assert.equal(childEnvironment.LOCAL_TEST_ACTORS_SECRET, resolved.env.LOCAL_TEST_ACTORS_SECRET)
+  assert.equal(resolved.env.AUTH_LOCAL_ADMIN_LOGIN_ENABLED, 'true')
+  assert.equal(childEnvironment.AUTH_LOCAL_ADMIN_LOGIN_ENABLED, 'true')
   assert.equal(childEnvironment.DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED, undefined)
   assert.equal(
     resolveLocalEnvironment(auth.id, state, auth, {}).env.AUTH_LOCAL_ADMIN_LOGIN_ENABLED,
-    undefined,
+    'false',
   )
 })
 

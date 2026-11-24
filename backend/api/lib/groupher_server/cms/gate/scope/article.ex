@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   @actions [:read, :read_draft, :list, :read_insights]
   @management_policy_modes [
     :owner,
-    :admin_management,
+    :moderator_management,
     :operations,
     :insights_management
   ]
@@ -355,7 +355,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   end
 
   defp apply_actor_policy(query, actor, policy_mode, _context)
-       when policy_mode in [:owner, :admin_management, :operations] do
+       when policy_mode in [:owner, :moderator_management, :operations] do
     case CommunityChain.community_actor(query, policy_mode, actor) do
       %Ecto.Query{} = scoped -> {:ok, scoped}
       {:error, reason} -> {:error, reason}

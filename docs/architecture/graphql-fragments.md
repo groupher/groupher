@@ -268,7 +268,7 @@ size of the old registry. The domain schema modules under
 
 The parent community route owns only shared shell data. Child route loaders and
 hooks own their route-specific queries; entering an appearance or docs route
-must not implicitly load unrelated assets, Admin memberships, or publishing data. Each
+must not implicitly load unrelated assets, moderators, or publishing data. Each
 domain module is now an independent source of operation definitions; it can
 be migrated to static typed documents without a central Dashboard registry.
 
@@ -611,7 +611,6 @@ using only `graphql` and Vitest:
 
 ```ts
 import { readFileSync } from 'node:fs'
-
 import { buildSchema, parse, validate } from 'graphql'
 
 const schema = buildSchema(readFileSync('backend/api/schema.graphql', 'utf8'))

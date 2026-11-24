@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --dir ../.. devhub start auth",
-    "dev:managed": "tsx watch src/dev-server.ts",
+    "dev:managed": "tsx watch src/server.ts",
     "test": "pnpm exec vitest --root ../.. --config frontend/core/vitest.config.mts run backend/auth",
     "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.json",
     "build": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --external:@auth/core --external:'@auth/core/*' --external:@hono/node-server --external:dotenv --external:hono --external:'hono/*' --outfile=dist/server.js",

@@ -101,7 +101,7 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
              get_in(resolution.arguments, [:passport_scopes, :community])
   end
 
-  test "retired ordinary Article actions reject stale legacy Passport grants" do
+  test "actions in an unmigrated scope retain their Registry fallback" do
     {community, _article, _attrs, user} = mock_article(:post)
 
     actor = %{
@@ -112,10 +112,7 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
         }
     }
 
-    assert_denied(
-      call_middleware("post.update", actor, %{community: community.slug}),
-      4352
-    )
+    assert call_middleware("post.update", actor, %{community: community.slug}).errors == []
   end
 
   defp call_middleware(action, actor, arguments, opts \\ []) do
@@ -129,7 +126,7 @@ defmodule GroupherServerWeb.Middleware.PassportTest do
     Passport.call(resolution, Keyword.merge([action: action], opts))
   end
 
-  defp assert_denied(%Absinthe.Resolution{} = resolution, code \\ 4353) do
-    assert [%ErrorCat.Error{namespace: {:cms, :passport}, code: ^code}] = resolution.errors
+  defp assert_denied(%Absinthe.Resolution{} = resolution) do
+    assert [%ErrorCat.Error{namespace: {:cms, :passport}, code: 4353}] = resolution.errors
   end
 end

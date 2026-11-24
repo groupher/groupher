@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Review.Commands.Decide do
 
   Business position:
 
-      GraphQL reviewer decision
+      GraphQL moderator decision
         -> Decide CommandPipeline + Receipt
           -> CMS Gate
             -> CMS.Review.Decisions

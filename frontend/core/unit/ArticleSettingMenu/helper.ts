@@ -1,4 +1,3 @@
-import { GraphQLRequestError } from '~/lib/graphql/client'
 import type { ArticlePathInput } from '~/lib/graphql/generated/graphql'
 import type { TArticle } from '~/spec'
 
@@ -12,16 +11,3 @@ export const getArticlePath = (article: TArticle): ArticlePathInput | null => {
     thread: article.meta.thread,
   }
 }
-
-/** Identifies the canonical stale WorkingCopy revision response. */
-export const isWorkingCopyRevisionConflict = (error: unknown): boolean =>
-  error instanceof GraphQLRequestError &&
-  error.errors.some(({ extensions }) => {
-    const code = extensions?.code
-    const reason = extensions?.reason ?? extensions?.reasonCode
-    return (
-      String(code) === '4561' ||
-      reason === 'revision_conflict' ||
-      reason === 'article_working_copy_revision_conflict'
-    )
-  })

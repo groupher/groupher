@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(CMS.Gate.ErrorCat.permission_denied())
+               ErrorCat.code(CMS.Passport.ErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(CMS.Gate.ErrorCat.permission_denied())
+               ErrorCat.code(CMS.Passport.ErrorCat.permission_denied())
              )
 
       assert guest_conn

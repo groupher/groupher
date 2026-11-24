@@ -254,7 +254,7 @@ defmodule GroupherServer.Test.CMS.Passport.LoadedScopeTest do
              Passport.grant_in_transaction(subject, scope, [], member.revision)
   end
 
-  test "Gate Community context loads only the current actor's scoped admin facts" do
+  test "Gate Community context loads only the current actor's scoped Admin facts" do
     {:ok, owner} = db_insert(:user)
     {:ok, subject} = db_insert(:user)
     {:ok, outsider} = db_insert(:user)

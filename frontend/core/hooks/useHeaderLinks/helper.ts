@@ -147,12 +147,12 @@ export const shouldFoldAboutToMore = (links: readonly TLinkItem[]): boolean =>
  *
  * Dashboard stores only user-authored links. This resolver removes fixed About /
  * Dashboard duplicates, folds those fixed entries into a synthetic More group
- * when custom links exist, and adds the Dashboard link only for Community Admins.
+ * when custom links exist, and adds the Dashboard link only for moderators.
  */
 export const resolveHeaderLinks = (
   links: readonly TLinkItem[],
   community: string,
-  isAdmin = false,
+  isModerator = false,
 ): readonly TResolvedHeaderLinkItem[] => {
   const customLinks = normalizeHeaderLinks(links, community)
   const customMore = customLinks.find(
@@ -167,7 +167,7 @@ export const resolveHeaderLinks = (
     )
   }
 
-  if (isAdmin) {
+  if (isModerator) {
     moreTabLinks.push(
       asMoreTabLink(
         MORE_TAB.DASHBOARD_ID,

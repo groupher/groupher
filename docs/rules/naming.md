@@ -161,8 +161,7 @@ fragment PagedCommunitiesPageInfo on CommunityPage {
 | `CommentReplyPage`                        | `PagedCommentReplies`          |
 | `TicketPage`                              | `PagedTickets`                 |
 | `TicketPageInternal`                      | `PagedTicketsInternal`         |
-| `DashboardAdminDirectoryPage`             | `PagedCommunityAdminMembers`   |
-| `DashboardAdminPage`                      | `PagedCommunityAdmins`         |
+| `DashboardModeratorPage`                  | `PagedCommunityModerators`     |
 | `ArticleLogsPage`                         | `PagedArticleLogs`             |
 | `MentionsGraphPage`                       | `PagedMentionsGraph`           |
 | `CommentPagiInfo`                         | `CommentPageInfo`              |

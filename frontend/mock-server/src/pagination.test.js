@@ -73,17 +73,17 @@ test('mock session pages preserve current identity across continuation and exclu
   assert.equal(next.data.browserSessions.pageInfo.hasNextPage, false)
 })
 
-test('community bootstrap exposes layout preferences and Admins have their own directory', async () => {
+test('community bootstrap exposes both layout preferences and moderators have their own Page', async () => {
   const result = await graphql({
     schema,
-    source: `{community(slug:"home"){slug dashboard{pagiMode pagiMobileMode pagiRevision}} pagedCommunityAdminMembers(communityRef:"home",pagi:{cursor:{first:1}}){entries{memberId isLord user{login}} pageInfo{__typename hasNextPage}}}`,
+    source: `{community(slug:"home"){slug dashboard{pagiMode pagiMobileMode pagiRevision}} pagedCommunityModerators(community:"home",pagi:{cursor:{first:1}}){entries{id isRoot passportItemCount user{login}} pageInfo{__typename hasNextPage}}}`,
   })
   assert.equal(result.errors, undefined)
   assert.equal(result.data.community.dashboard.pagiMode, 'PAGE')
   assert.equal(result.data.community.dashboard.pagiMobileMode, 'INFINITE_SCROLL')
   assert.equal(result.data.community.dashboard.pagiRevision, 0)
-  assert.equal(result.data.pagedCommunityAdminMembers.pageInfo.__typename, 'CursorPageInfo')
-  assert.equal(result.data.pagedCommunityAdminMembers.entries[0].isLord, true)
-  assert.equal(schema.getType('Community').getFields().admins, undefined)
+  assert.equal(result.data.pagedCommunityModerators.pageInfo.__typename, 'CursorPageInfo')
+  assert.equal(result.data.pagedCommunityModerators.entries[0].isRoot, true)
+  assert.equal(schema.getType('Community').getFields().moderators, undefined)
   assert.equal(schema.getType('Category').getFields().communities, undefined)
 })

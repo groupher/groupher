@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.ArticleContentFixture do
   @moduledoc """
   Sets up content tests independently of retired Docs Branch initialization.
 
-      Community core + lifecycle + lord admin -> real Article commands -> content fixture
+      Community core + lifecycle + root moderator -> real Article commands -> content fixture
 
   This is not an acceptance fixture for the production Community create workflow.
   """
@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.ArticleContentFixture do
       with {:ok, community} <- CMS.Communities.CreationPersist.create_core(values, actor),
            {:ok, _} <- CMS.Communities.Lifecycle.ensure_created(community.id),
            {:ok, _} <- ReviewBot.create_default_configs_for_community(community.id),
-           {:ok, _} <- CMS.Communities.Admins.Setup.add_lord(community, actor) do
+           {:ok, _} <- CMS.Communities.Moderators.Setup.add_root(community, actor) do
         {:ok, community}
       end
     end)

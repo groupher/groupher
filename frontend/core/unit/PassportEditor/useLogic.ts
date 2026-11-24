@@ -11,31 +11,31 @@ import useAdmins from '../DsbThread/logic/useAdmins'
 
 /** Owns a revision-bound permission draft for the selected Admin membership. */
 export default function useLogic() {
-  const { slug, ref } = useCommunity()
-  const { can } = useGate({ community: { slug, ref: ref ?? '' } })
-  const { activeAdmin, updatePermissions, removeAdmin } = useAdmins()
+  const { slug } = useCommunity()
+  const { can } = useGate()
+  const { activeModerator, updatePermissions, removeAdmin } = useAdmins()
   const [draft, setDraft] = useState<{ memberId: string; permissions: string[] } | null>(null)
   const [saving, setSaving] = useState(false)
   const selectedPermissions =
-    draft && draft.memberId === activeAdmin?.memberId
+    draft && draft.memberId === activeModerator?.memberId
       ? draft.permissions
-      : (activeAdmin?.permissions ?? [])
+      : (activeModerator?.permissions ?? [])
   const canManage = can(GATE_ACTION.ADMIN_PERMISSIONS_UPDATE, {
     scope: 'community',
     community: slug,
   })
-  const isReadonly = !canManage || !activeAdmin || activeAdmin.isLord
+  const isReadonly = !canManage || !activeModerator || activeModerator.isLord
 
   const run = async (remove: boolean): Promise<void> => {
-    if (!activeAdmin || isReadonly) return
+    if (!activeModerator || isReadonly) return
     setSaving(true)
     try {
       if (remove) {
-        await removeAdmin(activeAdmin.memberId, activeAdmin.revision)
+        await removeAdmin(activeModerator.memberId, activeModerator.revision)
       } else {
         await updatePermissions(
-          activeAdmin.memberId,
-          activeAdmin.revision,
+          activeModerator.memberId,
+          activeModerator.revision,
           expandAdminPermissions(selectedPermissions),
         )
       }
@@ -48,23 +48,23 @@ export default function useLogic() {
   }
 
   return {
-    activeAdmin,
+    activeModerator,
     selectedPermissions,
     grantablePermissions: Object.entries(GATE_PERMISSION)
       .filter(([, permission]) => permission.scope === 'community' && permission.grantable)
       .map(([action]) => action),
     toggleCheck: (permission: string, checked: boolean): void => {
-      if (!activeAdmin) return
+      if (!activeModerator) return
       setDraft({
-        memberId: activeAdmin.memberId,
+        memberId: activeModerator.memberId,
         permissions: checked
           ? [...new Set([...selectedPermissions, permission])]
           : selectedPermissions.filter((item) => item !== permission),
       })
     },
     updatePassport: () => void run(false),
-    deleteAdmin: () => void run(true),
-    isActiveAdminLord: activeAdmin?.isLord === true,
+    deleteModerator: () => void run(true),
+    isActiveModeratorRoot: activeModerator?.isLord === true,
     isReadonly,
     saving,
   }

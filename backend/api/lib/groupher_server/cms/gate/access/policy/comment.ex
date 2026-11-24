@@ -3,9 +3,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   Effective mutation admission for a loaded Comment.
 
   A Comment inherits the write capability of its parent Article and Community;
-  neither ancestor state is copied into the Comment Lifecycle row. Current
-  Article Passport facts and Comment-owner fallback are checked here. Commands
-  invoke this policy inside their transaction, independent of the transport.
+  neither ancestor state is copied into the Comment Lifecycle row. Passport
+  action and Comment-owner fallback are checked here so direct Commands cannot
+  bypass the GraphQL middleware check.
 
   Business position:
 

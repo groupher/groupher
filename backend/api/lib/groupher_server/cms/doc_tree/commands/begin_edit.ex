@@ -22,8 +22,6 @@ defmodule GroupherServer.CMS.DocTree.Commands.BeginEdit do
       with {:ok, :acquired} <- SiteLock.acquire(canonical),
            {:ok, :pass} <- QueueAccess.authorize(canonical, article_id, actor),
            {:ok, state} <- DefaultCopy.load(canonical, article_id),
-           {:ok, :pass} <-
-             CMS.Articles.CoAuthors.reject_member_working_copy_access(state.article, actor),
            true <- state.lifecycle.state == :published do
         DefaultCopy.ensure(canonical, article_id, public_snapshot_id, actor)
       else

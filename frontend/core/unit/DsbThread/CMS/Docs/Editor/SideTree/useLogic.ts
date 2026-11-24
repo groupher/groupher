@@ -123,6 +123,11 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       }
     }>(S.docsWorkspaceTree, { community }),
   )
+  const { data: queueData } = useQuery(
+    graphqlQueryOptions<{
+      docsPublishQueue?: { revision: number; articles: { articleId: string }[] } | null
+    }>(S.docsPublishQueue, { community }),
+  )
   const trashPosition = usePagiPosition(`${community}:doc-trash`)
   const {
     data: trashData,
@@ -130,13 +135,12 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     isFetching: trashLoading,
     refetch: reloadTrash,
   } = useQuery(
-    graphqlQueryOptions<TDocTreeTrashData>(S.communityDocTrashItems, {
-      communityRef: community,
-      thread: 'DOC',
+    graphqlQueryOptions<TDocTreeTrashData>(S.docTreeTrashItems, {
+      community,
       pagi: trashPosition.input,
     }),
   )
-  const trashItems = trashData?.communityArticleTrashItems?.entries ?? []
+  const trashItems = trashData?.docTreeTrashItems?.entries ?? []
   const initialTabs = useMemo(() => initialData?.tabs.map(mapTab) ?? [], [initialData])
   const initialActiveTab = findTabByDocId(initialTabs, currentDocId) ?? initialTabs[0] ?? null
   const [tabs, setTabs] = useState<TSideTreeTab[]>(initialTabs)
@@ -251,7 +255,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       const refreshed = await reload()
       const freshNodes = refreshed?.data?.docsWorkspaceTree?.nodes
       if (freshNodes && currentDocIdRef.current) {
-        const freshTabs = workspaceTabs(freshNodes)
+        const freshTabs = workspaceTabs(freshNodes, new Set())
         if (!findTabByDocId(freshTabs, currentDocIdRef.current)) {
           syncDocIdToUrl(getDocIdFromPage(findFirstPage(freshTabs[0]?.groups ?? [])))
         }
@@ -353,7 +357,10 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     if (hasLocalNode(groupsRef.current, pinsRef.current)) return
 
-    const nextTabs = workspaceTabs(data.docsWorkspaceTree.nodes)
+    const queuedIds = new Set(
+      queueData?.docsPublishQueue?.articles.map((article) => article.articleId) ?? [],
+    )
+    const nextTabs = workspaceTabs(data.docsWorkspaceTree.nodes, queuedIds)
     const nextActiveTab =
       findTabByDocId(nextTabs, currentDocIdRef.current) ??
       nextTabs.find((tab) => tab.id === activeTabId) ??
@@ -367,7 +374,16 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     setPins(nextPins)
     commitGroups(nextGroups)
     syncActiveIdFromUrl(nextGroups)
-  }, [commitGroups, data, syncActiveIdFromUrl])
+  }, [commitGroups, data, queueData, syncActiveIdFromUrl])
+
+  useEffect(() => {
+    if (queueData?.docsPublishQueue) {
+      queueRevisionRef.current = Math.max(
+        queueRevisionRef.current ?? 0,
+        queueData.docsPublishQueue.revision,
+      )
+    }
+  }, [queueData])
 
   useEffect(() => {
     syncActiveIdFromUrl(groupsRef.current)
@@ -1122,10 +1138,12 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     groups,
     treeState,
     workspaceRevision: data?.docsWorkspaceTree?.treeRevision ?? initialData?.revision ?? null,
-    queueRevision: data?.docsWorkspaceTree?.queueRevision ?? null,
+    queueRevision: data?.docsWorkspaceTree
+      ? Math.max(data.docsWorkspaceTree.queueRevision, queueData?.docsPublishQueue?.revision ?? 0)
+      : (queueData?.docsPublishQueue?.revision ?? null),
     stagedEvents,
     trashItems,
-    trashPageInfo: trashData?.communityArticleTrashItems?.pageInfo,
+    trashPageInfo: trashData?.docTreeTrashItems?.pageInfo,
     setTrashPage: trashPosition.setPage,
     trashError: trashError ? String(trashError) : null,
     trashLoading,

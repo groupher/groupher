@@ -85,6 +85,16 @@ defmodule GroupherServerWeb.Schema.Account.Spec do
       middleware(M.AchievementProof)
     end
 
+    field(:passport_string, :string) do
+      middleware(M.Authorize, :login)
+      resolve(&R.Accounts.Passport.get_passport_string/3)
+    end
+
+    field(:passport, :json) do
+      middleware(M.Authorize, :login)
+      resolve(&R.Accounts.Passport.get_passport/3)
+    end
+
     field(:subscribed_communities_count, :integer)
 
     @desc "get follower users count"
@@ -260,6 +270,10 @@ defmodule GroupherServerWeb.Schema.Account.Spec do
     field(:created_country, :string)
     field(:created_region, :string)
     field(:created_city, :string)
+  end
+
+  object :rules do
+    field(:cms, :json)
   end
 
   object :user_page do

@@ -6,7 +6,6 @@ import QuestionSVG from '~/icons/Question'
 
 export enum SUB_MENU {
   EDIT = 'edit',
-  BODY = 'body',
   SLUG = 'slug',
   CATEGORY = 'category',
   TAGS = 'tags',

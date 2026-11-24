@@ -16,9 +16,7 @@ import { toast } from '~/ui/Toaster'
 
 import * as S from '../schema/coAuthors'
 
-type TProps = {
-  article: Pick<TArticle, 'id' | 'title'> & Partial<Pick<TArticle, 'innerId'>>
-}
+type TProps = { article: TArticle }
 type TPermission = keyof typeof GATE_PERMISSION & string
 
 const grantablePermissions = Object.entries(GATE_PERMISSION)
@@ -93,12 +91,10 @@ export default function ArticleCoAuthors({ article }: TProps) {
   })
 
   const refresh = async () => invalidatePrefix(queryClient, queryPrefix)
-  const run = async (key: string, action: () => Promise<unknown>): Promise<boolean> => {
+  const run = async (key: string, action: () => Promise<unknown>) => {
     setPendingKey(key)
-    let succeeded = false
     try {
       await action()
-      succeeded = true
       await refresh()
     } catch (error) {
       toast(
@@ -108,12 +104,10 @@ export default function ArticleCoAuthors({ article }: TProps) {
     } finally {
       setPendingKey(null)
     }
-
-    return succeeded
   }
 
   const invite = async (subjectLogin: string) => {
-    const succeeded = await run(`invite:${subjectLogin}`, () =>
+    await run(`invite:${subjectLogin}`, () =>
       executeCommand({
         request: (variables) => browserGraphQLRequest(S.createArticleCoAuthorRequest, variables),
         variables: {
@@ -124,7 +118,7 @@ export default function ArticleCoAuthors({ article }: TProps) {
         },
       }),
     )
-    if (succeeded) setSearch('')
+    setSearch('')
   }
 
   const decide = (
@@ -221,19 +215,13 @@ export default function ArticleCoAuthors({ article }: TProps) {
 
   return (
     <>
-      <Button
-        size='small'
-        soft
-        ariaLabel={`${t('dsb.cms.coauthors.action')} · ${article.title}`}
-        disabled={!articleId}
-        onClick={() => setShow(true)}
-      >
+      <Button size='small' soft disabled={!articleId} onClick={() => setShow(true)}>
         {t('dsb.cms.coauthors.action')}
       </Button>
       <Modal show={show} width='680px' onClose={() => setShow(false)} showCloseBtn>
         <div className='space-y-5 p-6'>
           <header>
-            {article.innerId ? <p className='text-digest text-xs'>#{article.innerId}</p> : null}
+            <p className='text-digest text-xs'>#{article.innerId}</p>
             <h2 className='mt-1 text-xl font-semibold'>{t('dsb.cms.coauthors.title')}</h2>
             <p className='text-digest mt-1 truncate text-sm'>{article.title}</p>
           </header>

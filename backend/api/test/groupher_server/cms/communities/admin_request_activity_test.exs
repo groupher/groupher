@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestActivityTest do
 
   alias GroupherServer.Activity
 
-  test "admin request Activity retains its identities and permissions" do
+  test "Admin request Activity retains its identities and permissions" do
     {:ok, actor} = db_insert(:user)
     {:ok, subject} = db_insert(:user)
     {:ok, community} = mock_community(actor)
@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestActivityTest do
     assert log.metadata["proposed_permissions"] == %{"doc.queue.write" => true}
   end
 
-  test "admin membership Activity accepts the metadata produced by both decision paths" do
+  test "Admin membership Activity accepts the metadata produced by both decision paths" do
     {:ok, actor} = db_insert(:user)
     {:ok, subject} = db_insert(:user)
     {:ok, community} = mock_community(actor)
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.Communities.AdminRequestActivityTest do
     assert removed.action == :admin_removed
   end
 
-  test "private admin events are filtered from list, stats, detail and export" do
+  test "private Admin events are filtered from list, stats, detail and export" do
     {:ok, owner} = db_insert(:user)
     {:ok, outsider} = db_insert(:user)
     {:ok, community} = mock_community(owner)

@@ -353,7 +353,7 @@ Accounts resolver 函数拆入 `Profiles`、`Sessions`、`Relationships`、`Mail
 | ArticleStats fields/read                                                                              | `Resolvers.CMS.ArticleStats`                                 |
 | `track_article_view`、`article_viewer_states`                                                         | `Resolvers.CMS.ViewTracker`                                  |
 | Community Application query/mutation/field                                                            | `Resolvers.CMS.CommunityApplications`                        |
-| Community core、Admin、subscription、Category、Tag                                                    | `Resolvers.CMS.Communities`                                  |
+| Community core、moderator、subscription、Category、Tag                                                | `Resolvers.CMS.Communities`                                  |
 | Asset                                                                                                 | `Resolvers.CMS.Assets`                                       |
 | Dashboard config/theme                                                                                | `Resolvers.CMS.Dashboard`                                    |
 | Wallpaper                                                                                             | `Resolvers.CMS.Wallpaper`                                    |

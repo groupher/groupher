@@ -27,7 +27,9 @@ defmodule GroupherServerWeb.Context do
   import Plug.Conn
   # import Ecto.Query, only: [first: 1]
 
-  alias GroupherServer.{Accounts, FrontDesk, RequestActor}
+  alias GroupherServer.{Accounts, CMS, FrontDesk, RequestActor}
+
+  alias Accounts.Model.User
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
 
@@ -156,7 +158,7 @@ defmodule GroupherServerWeb.Context do
         context
 
       ["Bearer " <> token] ->
-        case authorize_browser_token(token) do
+        case authorize_delegated_browser_token(token) do
           {:ok, cur_user} ->
             context
             |> Map.put(:cur_user, cur_user)
@@ -166,7 +168,7 @@ defmodule GroupherServerWeb.Context do
             })
 
           {:error, reason} ->
-            Map.put(context, :delegation_auth_failure, browser_auth_failure_code(reason))
+            Map.put(context, :delegation_auth_failure, delegation_auth_failure_code(reason))
         end
 
       _malformed ->
@@ -174,7 +176,7 @@ defmodule GroupherServerWeb.Context do
     end
   end
 
-  defp authorize_browser_token(token) do
+  defp authorize_delegated_browser_token(token) do
     with {:ok, claims} <- BrowserAccess.decode_claims(token),
          {:ok, cur_user} <- load_user(%{id: claims["sub"]}),
          true <-
@@ -198,20 +200,25 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp maybe_put_browser_auth_failure(context, {:browser, _token}, reason) do
-    Map.put(context, :auth_failure, browser_auth_failure_code(reason))
+    code =
+      if reason == :token_expired,
+        do: GroupherServer.Auth.contract_token_expired(),
+        else: GroupherServer.Auth.contract_token_invalid()
+
+    Map.put(context, :auth_failure, code)
   end
 
   defp maybe_put_browser_auth_failure(context, _token, _reason), do: context
 
-  defp browser_auth_failure_code(:token_expired) do
+  defp delegation_auth_failure_code(:token_expired) do
     GroupherServer.Auth.contract_token_expired()
   end
 
-  defp browser_auth_failure_code(ProfileErrorCat.error_pattern(reason: :session_revoked)) do
+  defp delegation_auth_failure_code(ProfileErrorCat.error_pattern(reason: :session_revoked)) do
     GroupherServer.Auth.contract_session_revoked()
   end
 
-  defp browser_auth_failure_code(_reason), do: GroupherServer.Auth.contract_token_invalid()
+  defp delegation_auth_failure_code(_reason), do: GroupherServer.Auth.contract_token_invalid()
 
   # --------------------------------------------------
   # Browser cookies must satisfy the V1 issuer/audience/type/session claims.
@@ -229,7 +236,12 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp authorize({:browser, token}) do
-    authorize_browser_token(token)
+    with {:ok, claims} <- BrowserAccess.decode_claims(token),
+         {:ok, resource} <- BrowserAccess.resource_from_claims(claims) do
+      load_user(resource)
+    else
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp authorize({:bearer, token}) do
@@ -248,10 +260,17 @@ defmodule GroupherServerWeb.Context do
   defp load_user(%{id: id}) when is_integer(id) do
     case FrontDesk.fresh_user(id) do
       {:ok, user} ->
-        {:ok, user}
+        check_passport(user)
 
       {:error, _} ->
         {:error, "user is not exist, try revoke token, or if you in dev env run the seeds first."}
+    end
+  end
+
+  defp check_passport(%User{} = user) do
+    case CMS.communities_get_passport(%User{id: user.id}) do
+      {:ok, passport} -> {:ok, Map.put(user, :cur_passport, passport)}
+      {:error, _} -> {:ok, user}
     end
   end
 end

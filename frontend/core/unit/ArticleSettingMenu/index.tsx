@@ -48,7 +48,6 @@ const ArticleSettingMenu: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       <Tooltip
-        accessibleContent
         visible={visible}
         content={
           <Menu onSubMenuToggle={(open) => (subMenuOpenRef.current = open)} onClose={doClose} />

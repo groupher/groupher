@@ -23,19 +23,19 @@ const PassportEditor: FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const {
-    activeAdmin,
+    activeModerator,
     grantablePermissions,
     selectedPermissions,
     updatePassport,
-    deleteAdmin,
-    isActiveAdminLord,
+    deleteModerator,
+    isActiveModeratorRoot,
     isReadonly,
     saving,
     toggleCheck,
   } = useLogic()
 
-  if (!activeAdmin) return null
-  const { user } = activeAdmin
+  if (!activeModerator) return null
+  const { user } = activeModerator
 
   return (
     <div className={s.wrapper}>
@@ -50,7 +50,7 @@ const PassportEditor: FC = () => {
           <div className={s.profileHeader}>
             <div className={s.nickname}>{user.nickname}</div>
             <div className={s.login}>@{user.login}</div>
-            {isActiveAdminLord ? <div className={s.rootSign}>Lord</div> : null}
+            {isActiveModeratorRoot ? <div className={s.rootSign}>Lord</div> : null}
           </div>
           {user.bio ? <p className={s.bio}>{user.bio}</p> : null}
         </div>
@@ -85,7 +85,7 @@ const PassportEditor: FC = () => {
           <div className={s.deleteBox}>
             <AdminUserItem
               item={{
-                ...activeAdmin,
+                ...activeModerator,
               }}
               readonly
             />
@@ -100,7 +100,7 @@ const PassportEditor: FC = () => {
               loading={saving}
               onClick={() => {
                 setShowDeleteConfirm(false)
-                deleteAdmin()
+                deleteModerator()
               }}
             >
               {t('passport.action.delete')}

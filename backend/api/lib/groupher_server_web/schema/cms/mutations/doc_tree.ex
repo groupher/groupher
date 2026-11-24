@@ -132,7 +132,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:tree_revision, non_null(:integer))
       arg(:queue_revision, non_null(:integer))
       arg(:trash_action_id, non_null(:id))
-      arg(:record_revision, non_null(:string))
       arg(:target_parent_node_id, :id)
       arg(:target_index, :integer)
       middleware(M.Authorize, :login)

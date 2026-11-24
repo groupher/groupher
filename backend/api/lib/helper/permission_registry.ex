@@ -18,7 +18,7 @@ defmodule Helper.PermissionRegistry do
         "<community_slug>" => %{
           "root" => true,
           "cms" => %{
-            "post.pin" => true,
+            "post.edit" => true,
             "thread.set" => true
           }
         }
@@ -27,7 +27,7 @@ defmodule Helper.PermissionRegistry do
   Requirement structure:
 
       %{scope: :global, grant: "community.create"}
-      %{scope: :context, context: :cms, grant: "post.pin"}
+      %{scope: :context, context: :cms, grant: "post.edit"}
       %{scope: :global, grant_by_thread: "community.unmirror"}
 
   Canonical passport shape:
@@ -51,6 +51,7 @@ defmodule Helper.PermissionRegistry do
   alias CMS.Passport.ErrorCat
   alias Helper.PermissionConfig
 
+  @root_passport_item_count 10_000
   @contexts PermissionConfig.contexts()
   @action_requirements PermissionConfig.action_requirements()
 
@@ -139,6 +140,47 @@ defmodule Helper.PermissionRegistry do
   end
 
   defp allowed_without_god?(_rules, _community, _requirement), do: {:ok, false}
+
+  @doc """
+  Returns supported moderator titles.
+  """
+  def moderator_titles(:cms), do: ["root", "moderator"]
+
+  @doc """
+  Returns sentinel passport item count for root moderators.
+  """
+  def root_passport_item_count, do: @root_passport_item_count
+
+  @doc """
+  Returns default passport rule examples for compatibility APIs.
+  """
+  def all_passport_rules do
+    PermissionConfig.passport_rule_examples()
+  end
+
+  @doc """
+  Returns all known grants for CMS split by global and context scopes.
+  TODO: refactor later
+  """
+  def all_rules(:cms) do
+    %{
+      general: PermissionConfig.grants_for("global"),
+      community: PermissionConfig.grants_for("cms")
+    }
+  end
+
+  @doc """
+  Returns all known grants encoded as JSON maps with false defaults.
+  """
+  def all_rules(:cms, :stringify) do
+    rules = all_rules(:cms)
+
+    %{
+      general: rules.general |> Enum.map(fn x -> {x, false} end) |> Map.new() |> Jason.encode!(),
+      community:
+        rules.community |> Enum.map(fn x -> {x, false} end) |> Map.new() |> Jason.encode!()
+    }
+  end
 
   @doc """
   Returns canonical empty passport rules.

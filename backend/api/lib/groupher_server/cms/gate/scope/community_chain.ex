@@ -29,8 +29,9 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     ArticleBinding,
     CommentLifecycle,
     Community,
-    CommunityLifecycle,
     CommunityAdmin,
+    CommunityLifecycle,
+    CommunityModerator,
     Author
   }
 
@@ -123,14 +124,14 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     from([gate_community: community] in query, where: community.user_id == ^actor_id)
   end
 
-  def community_actor(query, :admin_management, %{id: actor_id}) when is_integer(actor_id) do
+  def community_actor(query, :moderator_management, %{id: actor_id}) when is_integer(actor_id) do
     from([gate_community: community] in query,
       where:
         exists(
-          from(admin in CommunityAdmin,
+          from(moderator in CommunityModerator,
             where:
-              admin.community_id == parent_as(:gate_community).id and
-                admin.user_id == ^actor_id,
+              moderator.community_id == parent_as(:gate_community).id and
+                moderator.user_id == ^actor_id,
             select: 1
           )
         )
@@ -195,7 +196,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   defp apply_community_lifecycle(query, policy_mode)
        when policy_mode in [
               :owner,
-              :admin_management,
+              :moderator_management,
               :operations,
               :insights_management
             ] do

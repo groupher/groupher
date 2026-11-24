@@ -16,8 +16,6 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 const eagerlyLoadedRouteIds = new Set(['/$community', '/$community/post/_layout'])
 
 export default defineConfig({
-  // Managed local runs consume Hub-injected values, not project dotenv files.
-  envDir: process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' ? false : undefined,
   base: process.env.NODE_ENV === 'production' ? 'https://community.groupher.com/' : '/',
   define: {
     'process.env.NEXT_PUBLIC_AUTH_ENDPOINT': JSON.stringify(process.env.NEXT_PUBLIC_AUTH_ENDPOINT),

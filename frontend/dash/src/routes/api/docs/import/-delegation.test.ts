@@ -1,4 +1,4 @@
-import { proxyImportRequest } from '@dash/server/import'
+import { proxyContentImportRequest } from '@dash/server/content-import'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { readPhoenixTokenCookie } from '~/app/phoenix-token'
@@ -12,7 +12,7 @@ vi.mock('@tanstack/react-router', () => ({
   createFileRoute: () => (configuration: unknown) => configuration,
 }))
 vi.mock('~/app/phoenix-token', () => ({ readPhoenixTokenCookie: vi.fn() }))
-vi.mock('@dash/server/import', () => ({ proxyImportRequest: vi.fn() }))
+vi.mock('@dash/server/content-import', () => ({ proxyContentImportRequest: vi.fn() }))
 
 type RouteHandlers = {
   server: {
@@ -30,7 +30,7 @@ const routes = [
 describe('Import routes delegate user verification to Phoenix', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(proxyImportRequest).mockResolvedValue(new Response(null, { status: 200 }))
+    vi.mocked(proxyContentImportRequest).mockResolvedValue(new Response(null, { status: 200 }))
   })
 
   for (const [name, route] of routes) {
@@ -43,7 +43,7 @@ describe('Import routes delegate user verification to Phoenix', () => {
           method,
         })
         expect((await handler({ request })).status).toBe(200)
-        expect(proxyImportRequest).toHaveBeenCalledWith(request, {
+        expect(proxyContentImportRequest).toHaveBeenCalledWith(request, {
           backendToken: 'opaque-user-token',
         })
       })
@@ -54,7 +54,7 @@ describe('Import routes delegate user verification to Phoenix', () => {
           method,
         })
         expect((await handler({ request })).status).toBe(401)
-        expect(proxyImportRequest).not.toHaveBeenCalled()
+        expect(proxyContentImportRequest).not.toHaveBeenCalled()
       })
     }
   }

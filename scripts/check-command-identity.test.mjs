@@ -6,7 +6,7 @@ import { hasDerivedCommandIdentity, hasDirectPersistCall, isPersistFile } from '
 test('scans every CMS persist filename, including BindingPersist', () => {
   assert.equal(isPersistFile('backend/api/lib/groupher_server/cms/articles/binding_persist.ex'), true)
   assert.equal(isPersistFile('backend/api/lib/groupher_server/cms/pin_persist.ex'), true)
-  assert.equal(isPersistFile('backend/api/lib/groupher_server/cms/import/persistence/job.ex'), false)
+  assert.equal(isPersistFile('backend/api/lib/groupher_server/cms/content_import/persistence/job.ex'), false)
 })
 
 test('detects bare and aliased Persist calls in executable source', () => {

@@ -13,6 +13,7 @@ export type TSideTreeNodeType = (typeof SIDE_TREE_NODE_TYPE)[keyof typeof SIDE_T
 export type TSideTreeChildType = typeof SIDE_TREE_NODE_TYPE.PAGE | typeof SIDE_TREE_NODE_TYPE.LINK
 
 export type TDocTreeNodePublishState = {
+  queued?: boolean
   status?: TArticleStage | null
   published: boolean
   publishedBefore?: boolean | null
@@ -235,39 +236,18 @@ export type TDocTreeMutationData = Record<string, TDocTreeMutationPayload | null
 
 export type TDocTreeTrashItem = {
   id: string
-  thread: 'DOC'
-  status: 'PENDING' | 'EFFECTIVE'
-  publicVisible: boolean
-  recordRevision: string
-  createdAt: string
-  treePath: { nodeId: string; title: string }[]
-  pendingMemberCount: number
-  removedMemberCount: number
-  nodeId?: string | null
+  nodeId: string
   docId?: string | null
   type?: string | null
   title?: string | null
   deletedFromParentNodeId?: string | null
   deletedFromIndex?: number | null
-}
-
-export type TDocTreeTrashMember = {
-  id: string
-  title?: string | null
-  deletionStatus: 'PENDING' | 'EFFECTIVE'
-  removedFromPublic: boolean
-}
-
-export type TDocTreeTrashMembersData = {
-  communityArticleTrash?: {
-    id: string
-    recordRevision: string
-    pagedMembers?: import('~/spec').TPagiPage<TDocTreeTrashMember> | null
-  } | null
+  deletedAt?: string | null
+  restoredAt?: string | null
 }
 
 export type TDocTreeTrashData = {
-  communityArticleTrashItems?: import('~/spec').TPagiPage<TDocTreeTrashItem> | null
+  docTreeTrashItems?: import('~/spec').TPagiPage<TDocTreeTrashItem> | null
 }
 
 export type TDocTreeInitialData = {

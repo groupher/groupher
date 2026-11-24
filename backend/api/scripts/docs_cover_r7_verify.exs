@@ -71,7 +71,7 @@ alias CMS.Model.ArticlePublic
       site.slug => %{
         "cms" => %{
           "doc.restore" => true,
-          "community.article.trash.read" => true,
+          "doc.trash" => true,
           "doc.permanent_delete" => true,
           "doc.queue.write" => true,
           "doc.queue.publish" => true,

@@ -1,22 +1,19 @@
 import { GATE_ACTION, type TGateAction } from '@groupher/contracts/gate'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
-import { browserGraphQLRequest } from '~/graphql/client'
 import AccountStoreProvider from '~/stores/account/provider'
 
 import useGate from '.'
 
-vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: vi.fn() }))
-
-const request = vi.mocked(browserGraphQLRequest)
-
-const wrapperFor = () => {
+const wrapperFor = (passport?: Record<string, unknown>) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
-      <AccountStoreProvider initData={{ loading: false, user: { login: 'alice' } }}>
+      <AccountStoreProvider
+        initData={{ loading: false, user: { login: 'alice', passport: passport as never } }}
+      >
         {children}
       </AccountStoreProvider>
     </QueryClientProvider>
@@ -24,86 +21,74 @@ const wrapperFor = () => {
 }
 
 describe('useGate', () => {
-  beforeEach(() => request.mockReset())
+  it('allows a generated global Passport action', () => {
+    const { result } = renderHook(() => useGate(), {
+      wrapper: wrapperFor({ global: { [GATE_ACTION.COMMUNITY_APPLICATION_REVIEW]: true } }),
+    })
 
-  it('denies while Passport facts are loading, then uses server-owned Global facts', async () => {
-    request.mockResolvedValue({
-      currentGlobalPassport: {
-        isRoot: false,
-        permissions: ['COMMUNITY_APPLICATION_REVIEW'],
-      },
-    } as never)
-    const { result } = renderHook(() => useGate(), { wrapper: wrapperFor() })
-
-    expect(result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_REVIEW)).toBe(false)
-    await waitFor(() =>
-      expect(result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_REVIEW)).toBe(true),
-    )
+    expect(result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_REVIEW)).toBe(true)
     expect(result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_APPROVE)).toBe(false)
   })
 
-  it('uses current Community Admin permission facts', async () => {
-    request
-      .mockImplementationOnce(
-        () =>
-          Promise.resolve({ currentGlobalPassport: { isRoot: false, permissions: [] } }) as never,
-      )
-      .mockImplementationOnce(
-        () =>
-          Promise.resolve({
-            currentCommunityAdmin: {
-              isLord: false,
-              permissions: ['DOC_QUEUE_PUBLISH'],
-            },
-          }) as never,
-      )
-    const context = { scope: 'community' as const, community: 'home' }
-    const { result } = renderHook(
-      () => useGate({ community: { slug: 'home', ref: 'community-ref' } }),
-      { wrapper: wrapperFor() },
-    )
+  it('allows a system root and a Community lord only in their Passport scopes', () => {
+    const root = renderHook(() => useGate(), {
+      wrapper: wrapperFor({ global: { is_root: true } }),
+    })
+    const lord = renderHook(() => useGate(), {
+      wrapper: wrapperFor({ global: {}, home: { is_lord: true } }),
+    })
 
-    await waitFor(() =>
-      expect(result.current.can(GATE_ACTION.DOC_QUEUE_PUBLISH, context)).toBe(true),
-    )
-    expect(result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_APPROVE, context)).toBe(false)
+    expect(root.result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_APPROVE)).toBe(true)
+    expect(
+      root.result.current.can(GATE_ACTION.DOC_QUEUE_PUBLISH, {
+        scope: 'community',
+        community: 'docs',
+      }),
+    ).toBe(true)
+    expect(
+      lord.result.current.can(GATE_ACTION.DOC_QUEUE_PUBLISH, {
+        scope: 'community',
+        community: 'home',
+      }),
+    ).toBe(true)
+    expect(lord.result.current.can(GATE_ACTION.COMMUNITY_APPLICATION_APPROVE)).toBe(false)
   })
 
-  it('lets the current Global root act in a Community scope', async () => {
-    request
-      .mockImplementationOnce(
-        () =>
-          Promise.resolve({ currentGlobalPassport: { isRoot: true, permissions: [] } }) as never,
-      )
-      .mockImplementationOnce(() => Promise.resolve({ currentCommunityAdmin: null }) as never)
-    const { result } = renderHook(
-      () => useGate({ community: { slug: 'home', ref: 'community-ref' } }),
-      { wrapper: wrapperFor() },
-    )
-
-    await waitFor(() =>
-      expect(
-        result.current.can(GATE_ACTION.DOC_QUEUE_PUBLISH, {
-          scope: 'community',
-          community: 'home',
-        }),
-      ).toBe(true),
-    )
-  })
-
-  it('uses generated permission keys, thread requirements, and Article context facts', async () => {
-    request.mockResolvedValue({
-      currentGlobalPassport: { isRoot: false, permissions: [] },
-    } as never)
-    const { result } = renderHook(() => useGate(), { wrapper: wrapperFor() })
-    const reviewer = {
-      scope: 'community' as const,
-      community: 'home',
-      thread: 'post' as const,
-    }
+  it('uses canonical permission keys and requirements for the actual resource thread', () => {
+    const moderator = renderHook(() => useGate(), {
+      wrapper: wrapperFor({
+        global: {},
+        home: {
+          cms: {
+            [GATE_ACTION.COMMUNITY_ARTICLE_HIDE]: true,
+            [GATE_ACTION.COMMUNITY_ARTICLE_TRASH_READ]: true,
+          },
+        },
+      }),
+    })
 
     expect(
-      result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
+      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+        scope: 'community',
+        community: 'home',
+        thread: 'post',
+      }),
+    ).toBe(true)
+    expect(
+      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+        scope: 'community',
+        community: 'home',
+        thread: 'doc',
+      }),
+    ).toBe(false)
+    expect(
+      moderator.result.current.can(GATE_ACTION.COMMUNITY_ARTICLE_HIDE, {
+        scope: 'community',
+        community: 'home',
+      }),
+    ).toBe(false)
+    expect(
+      moderator.result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
         scope: 'article',
         article: {
           permissions: {
@@ -114,11 +99,11 @@ describe('useGate', () => {
       }),
     ).toBe(true)
     expect(
-      result.current.can('bad.action' as TGateAction, {
+      moderator.result.current.can(GATE_ACTION.ARTICLE_UPDATE, {
         scope: 'article',
         article: { permissions: {} },
       }),
     ).toBe(false)
-    expect(result.current.can(GATE_ACTION.DOC_QUEUE_PUBLISH, reviewer)).toBe(false)
+    expect(moderator.result.current.can('bad.action' as TGateAction)).toBe(false)
   })
 })

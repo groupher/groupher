@@ -18,7 +18,7 @@ export default function createCommunityStore(init: TInit = { slug: 'home' }): TS
     subscribersCount: init.subscribersCount || 0,
     articlesCount: init.articlesCount || 0,
     contributesDigest: init.contributesDigest || [],
-    adminsCount: init.adminsCount || 0,
+    moderatorsCount: init.moderatorsCount || 0,
     desc: init.desc || '',
     meta: init.meta || {},
     threads: init.threads || [...COMMUNITY_THREADS],

@@ -5,7 +5,7 @@
  *
  * @see docs/import/bulk-import.md
  */
-import type { TImportSourceNode, TImportTreeLeaf, TImportTreeNode, TImportTreeTab } from './spec'
+import type { TImportSourceNode, TImportTreeNode, TImportTreeTab } from './spec'
 
 export type TImportPageMeta = {
   draft: boolean
@@ -34,15 +34,11 @@ export const pageMetaFromSourceTree = (
 }
 
 /** Collects unique page sourceIds from the Phoenix-planned TargetTree tabs. */
-export const pageIdsFromNodes = (
-  nodes: readonly TImportTreeNode[],
-  disposition?: TImportTreeLeaf['disposition'],
-): string[] => {
+export const pageIdsFromNodes = (nodes: readonly TImportTreeNode[]): string[] => {
   const ids = new Set<string>()
 
   const visit = (node: TImportTreeNode): void => {
-    if (node.type === 'page' && (!disposition || node.disposition === disposition))
-      ids.add(node.sourceId)
+    if (node.type === 'page') ids.add(node.sourceId)
     if (node.type === 'group') {
       for (const child of node.pages) visit(child)
     }
@@ -52,15 +48,14 @@ export const pageIdsFromNodes = (
   return Array.from(ids)
 }
 
-/** Collects the selectable pages across tabs, optionally restricted to one Review disposition. */
-export const pageIdsFromTabs = (
-  tabs: TImportTreeTab[],
-  disposition?: TImportTreeLeaf['disposition'],
-): string[] =>
-  pageIdsFromNodes(
-    tabs.flatMap((tab) => tab.groups),
-    disposition,
-  )
+/** Runs the page ids from tabs operation at the frontend shared boundary. */
+export const pageIdsFromTabs = (tabs: TImportTreeTab[]): string[] => {
+  const ids = new Set<string>()
+  for (const tab of tabs) {
+    for (const sourceId of pageIdsFromNodes(tab.groups)) ids.add(sourceId)
+  }
+  return Array.from(ids)
+}
 
 /** Sums known selected source sizes, or returns null when any size is unavailable. */
 export const totalPageSize = (

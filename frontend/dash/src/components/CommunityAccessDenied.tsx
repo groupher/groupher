@@ -8,8 +8,8 @@ export default function CommunityAccessDenied() {
           You do not have access to this community
         </h1>
         <p className='mt-2 text-sm leading-6 text-pretty text-neutral-500 dark:text-neutral-400'>
-          Ask a community administrator to add you as an Admin, or switch to an account that already
-          has dashboard access.
+          Ask a community administrator to add you as a moderator, or switch to an account that
+          already has dashboard access.
         </p>
         <Link
           to='/$community/dash'

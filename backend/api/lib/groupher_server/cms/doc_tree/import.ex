@@ -48,30 +48,22 @@ defmodule GroupherServer.CMS.DocTree.Import do
   @doc "Projects confirmed source navigation into the workspace without changing Queue membership or navigation."
   def apply(%Community{} = community, tree, items_by_target, actor, operation_ref)
       when is_map(tree) and is_map(items_by_target) and is_binary(operation_ref) do
-    with {:ok, %{nodes: nodes, conflicting_doc_ids: []}} <- plan(community, tree, items_by_target) do
-      WorkspaceUpdate.import_nodes(community, nodes, actor, operation_ref)
+    with namespace when is_binary(namespace) and namespace != "" <- Map.get(tree, "namespace"),
+         {:ok, attrs} <-
+           flatten_tabs(community, namespace, Map.get(tree, "tabs", []), items_by_target),
+         attrs <- reuse_existing_node_ids(attrs),
+         {:ok, result} <- WorkspaceUpdate.import_nodes(community, attrs, actor, operation_ref) do
+      {:ok, result}
     else
-      {:ok, %{conflicting_doc_ids: [_ | _]}} -> {:error, :duplicate_tree_identity}
-      {:error, _} = error -> error
+      namespace when namespace in [nil, ""] ->
+        {:error, ErrorCat.custom("imported Doc tree namespace is required")}
+
+      {:error, _} = error ->
+        error
     end
   end
 
   def apply(_, _, _, _, _), do: {:error, :invalid_import_tree}
-
-  @doc "Resolves stable workspace identities and reports the affected page IDs for Review."
-  def plan(community, %{"namespace" => namespace, "tabs" => tabs}, targets)
-      when is_binary(namespace) and namespace != "" do
-    with {:ok, nodes} <- flatten_tabs(community, namespace, tabs, targets) do
-      rows =
-        Repo.all(
-          from(n in DocsTreeNode, where: n.community_id == ^community.id and n.stage == :draft)
-        )
-
-      resolve_nodes(nodes, rows)
-    end
-  end
-
-  def plan(_, _, _), do: {:error, ErrorCat.custom("invalid imported Doc tree")}
 
   defp flatten_tabs(community, namespace, tabs, items_by_target) when is_list(tabs) do
     tabs
@@ -232,49 +224,86 @@ defmodule GroupherServer.CMS.DocTree.Import do
     }
   end
 
-  defp resolve_nodes(nodes, existing) do
-    by_id = Map.new(existing, &{&1.node_id, &1})
-    by_doc = Map.new(Enum.filter(existing, & &1.doc_id), &{&1.doc_id, &1.node_id})
+  # Import namespaces used to include the source revision. Reuse structural
+  # identities from an earlier imported tree so a repeat import can update it
+  # in place instead of colliding on root/sibling slugs or page doc_id.
+  defp reuse_existing_node_ids([]), do: []
 
-    by_title =
-      Map.new(
-        Enum.reject(existing, &(&1.type == :pin)),
-        &{{&1.parent_node_id, &1.title}, &1.node_id}
+  defp reuse_existing_node_ids([first | _] = attrs) do
+    existing =
+      DocsTreeNode
+      |> where(
+        [node],
+        node.community_id == ^first.community_id and node.stage == ^first.stage
       )
+      |> Repo.all()
+      |> existing_node_indexes()
 
-    resolved =
-      Enum.map(nodes, fn
-        %{type: :page, doc_id: id} = page -> %{page | node_id: Map.get(by_doc, id, page.node_id)}
-        node -> node
-      end)
+    attrs
+    |> Enum.map_reduce(%{}, fn attrs, replacements ->
+      original_node_id = attrs.node_id
 
-    conflicts =
-      Enum.reduce(resolved, MapSet.new(), fn node, blocked ->
-        owner = by_id[node.node_id]
-        title_owner = by_title[{node.parent_node_id, node.title}]
+      attrs =
+        attrs
+        |> replace_parent_id(:parent_node_id, replacements)
 
-        if (owner && (owner.type != node.type or owner.doc_id != node.doc_id)) ||
-             (node.type != :pin and title_owner != nil and title_owner != node.node_id) do
-          # Links accompany the selected pages in their group.
-          key = if node.type in [:link, :pin], do: node.parent_node_id, else: node.node_id
-          MapSet.put(blocked, key)
-        else
-          blocked
-        end
-      end)
+      node_id = existing_node_id(existing, attrs) || original_node_id
+      {Map.put(attrs, :node_id, node_id), Map.put(replacements, original_node_id, node_id)}
+    end)
+    |> elem(0)
+  end
 
-    # flatten_tabs emits parents before children, so a conflicting ancestor
-    # affects exactly the pages below it.
-    {_, ids} =
-      Enum.reduce(resolved, {conflicts, []}, fn node, {blocked, ids} ->
-        if MapSet.member?(blocked, node.node_id) or MapSet.member?(blocked, node.parent_node_id) do
-          {MapSet.put(blocked, node.node_id), if(node.doc_id, do: [node.doc_id | ids], else: ids)}
-        else
-          {blocked, ids}
-        end
-      end)
+  defp existing_node_indexes(nodes) do
+    %{
+      by_doc_id: index_by(nodes, & &1.doc_id),
+      by_parent_title: index_by(nodes, &{&1.parent_node_id, &1.type, &1.title}),
+      by_node_id: Map.new(nodes, &{&1.node_id, &1.node_id}),
+      by_root_title: index_by(nodes, &{&1.type, &1.title})
+    }
+  end
 
-    {:ok, %{nodes: resolved, conflicting_doc_ids: Enum.reverse(ids)}}
+  defp index_by(nodes, key_fun) do
+    nodes
+    |> Enum.reject(&(key_fun.(&1) |> empty_index_key?()))
+    |> Map.new(&{key_fun.(&1), &1.node_id})
+  end
+
+  defp empty_index_key?(nil), do: true
+
+  defp empty_index_key?(key) when is_tuple(key) do
+    key |> Tuple.to_list() |> Enum.any?(&is_nil/1)
+  end
+
+  defp empty_index_key?(_key), do: false
+
+  defp replace_parent_id(attrs, field, replacements) do
+    case Map.get(attrs, field) do
+      nil -> attrs
+      parent_id -> Map.put(attrs, field, Map.get(replacements, parent_id, parent_id))
+    end
+  end
+
+  defp existing_node_id(indexes, %{node_id: node_id} = attrs) do
+    indexes.by_node_id[node_id] || existing_structural_node_id(indexes, attrs)
+  end
+
+  defp existing_structural_node_id(indexes, %{type: :tab} = attrs) do
+    indexes.by_root_title[{:tab, attrs.title}]
+  end
+
+  defp existing_structural_node_id(indexes, %{type: :page, doc_id: doc_id} = attrs) do
+    indexes.by_doc_id[doc_id] || existing_child_id(indexes, attrs)
+  end
+
+  defp existing_structural_node_id(indexes, %{type: type} = attrs)
+       when type in [:group, :link, :pin] do
+    existing_child_id(indexes, attrs)
+  end
+
+  defp existing_structural_node_id(_indexes, _attrs), do: nil
+
+  defp existing_child_id(indexes, attrs) do
+    indexes.by_parent_title[{attrs.parent_node_id, attrs.type, attrs.title}]
   end
 
   defp reverse_attrs({:ok, attrs}), do: {:ok, Enum.reverse(attrs)}

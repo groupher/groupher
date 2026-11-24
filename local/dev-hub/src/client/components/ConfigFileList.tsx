@@ -9,7 +9,7 @@ type TProps = {
 
 const GROUPS: Array<{ id: TServiceConfigFileGroup; label: string }> = [
   { id: 'active', label: 'Active' },
-  { id: 'other', label: 'Reference files' },
+  { id: 'other', label: 'Other environments' },
   { id: 'template', label: 'Templates' },
 ]
 

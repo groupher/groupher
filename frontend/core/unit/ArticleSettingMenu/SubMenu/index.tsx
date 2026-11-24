@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ComponentType, type FC } from 'react'
+import type { ComponentType, FC } from 'react'
 
 import { SUB_MENU } from '../constant'
 import type { TSubMenu } from '../spec'
@@ -9,8 +9,6 @@ import useSalon from './salon'
 import SlugSetting from './SlugSetting'
 import TagsSetting from './TagsSetting'
 import TitleSetting from './TitleSetting'
-
-const BodySetting = lazy(() => import('./BodySetting'))
 
 type TProps = {
   closeSubMenu: () => void
@@ -29,11 +27,6 @@ const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
   switch (subMenuType) {
     case SUB_MENU.EDIT: {
       Content = TitleSetting
-      break
-    }
-
-    case SUB_MENU.BODY: {
-      Content = BodySetting
       break
     }
 
@@ -68,9 +61,7 @@ const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
   return (
     <div className={s.wrapper}>
       <Header type={subMenuType} />
-      <Suspense fallback={<div className='px-2 py-3 text-sm'>正在加载正文编辑器…</div>}>
-        <Content onBack={closeSubMenu} />
-      </Suspense>
+      <Content onBack={closeSubMenu} />
     </div>
   )
 }

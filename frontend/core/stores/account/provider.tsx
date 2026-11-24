@@ -76,6 +76,7 @@ export default function Provider({ children, initData }: TProps) {
       session?.isValid && session.user
         ? ({
             ...session.user,
+            passport: session.user.passport as TUser['passport'],
           } as TAuthenticatedUser)
         : null,
     [session],
@@ -146,7 +147,7 @@ export default function Provider({ children, initData }: TProps) {
         ...user,
         isLogin: Boolean(user),
         isValidSession: Boolean(session?.isValid),
-        isAdmin: false,
+        isModerator: false,
       },
     }),
     [accountScope, query.isPending, refreshSession, session, user],

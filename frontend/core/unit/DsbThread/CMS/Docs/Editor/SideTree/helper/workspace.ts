@@ -4,7 +4,10 @@ import { SIDE_TREE_NODE_TYPE } from '../constant'
 import type { TSideTreeGroup, TSideTreeNavigationNode, TSideTreeTab, TWorkspaceNode } from '../spec'
 
 /** Projects the flat workspace directory into the editor's nested navigation. */
-export const workspaceTabs = (nodes: readonly TWorkspaceNode[]): TSideTreeTab[] => {
+export const workspaceTabs = (
+  nodes: readonly TWorkspaceNode[],
+  queuedIds: ReadonlySet<string> = new Set(),
+): TSideTreeTab[] => {
   const byParent = new Map<string | null, TWorkspaceNode[]>()
   for (const node of nodes) {
     const parent = node.parentNodeId ?? null
@@ -41,6 +44,7 @@ export const workspaceTabs = (nodes: readonly TWorkspaceNode[]): TSideTreeTab[] 
       workingCopyId: node.workingCopyId,
       workingCopyRevision: node.workingCopyRevision,
       publishState: {
+        queued: !!node.docId && queuedIds.has(node.docId),
         published: node.published,
         hasDraft: !node.published,
         status: node.published ? ARTICLE_STAGE.PUBLIC : ARTICLE_STAGE.DRAFT,

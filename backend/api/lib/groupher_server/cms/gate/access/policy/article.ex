@@ -369,10 +369,6 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:ok, CMS.GateAction.article_update()}
   end
 
-  defp passport_action(:edit_article, %{thread: :doc}, _context) do
-    {:ok, CMS.GateAction.article_update()}
-  end
-
   defp passport_action(:manage_coauthors, _article, _context) do
     {:ok, CMS.GateAction.article_author_manage()}
   end
@@ -391,10 +387,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:ok, CMS.GateAction.article_update()}
   end
 
-  defp passport_action(:delete, %{thread: :doc}, _context) do
-    {:error, ErrorCat.unknown_action()}
-  end
-
+  defp passport_action(:delete, %{thread: :doc}, _context), do: {:ok, CMS.GateAction.doc_trash()}
   defp passport_action(:delete, _article, _context), do: {:ok, CMS.GateAction.article_trash()}
 
   defp passport_action(:permanently_delete, %{thread: :doc}, _context) do

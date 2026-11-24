@@ -32,6 +32,8 @@ defmodule GroupherServer.CMS.GateAction do
     "article.update",
     "asset.upload",
     "audit.read",
+    "blog.draft.publish",
+    "blog.draft.update",
     "blog.lock_comment",
     "blog.permanent_delete",
     "blog.pin",
@@ -41,11 +43,14 @@ defmodule GroupherServer.CMS.GateAction do
     "blog.undo_lock_comment",
     "blog.undo_pin",
     "blog.undo_sink",
+    "blog.update",
     "category.create",
     "category.delete",
     "category.set",
     "category.unset",
     "category.update",
+    "changelog.draft.publish",
+    "changelog.draft.update",
     "changelog.lock_comment",
     "changelog.permanent_delete",
     "changelog.pin",
@@ -55,6 +60,7 @@ defmodule GroupherServer.CMS.GateAction do
     "changelog.undo_lock_comment",
     "changelog.undo_pin",
     "changelog.undo_sink",
+    "changelog.update",
     "comment.delete",
     "comment.pin",
     "comment.undo_pin",
@@ -90,9 +96,15 @@ defmodule GroupherServer.CMS.GateAction do
     "doc.queue.write",
     "doc.restore",
     "doc.sink",
+    "doc.trash",
     "doc.undo_lock_comment",
     "doc.undo_pin",
     "doc.undo_sink",
+    "moderator.set",
+    "moderator.unset",
+    "moderator.update",
+    "post.draft.publish",
+    "post.draft.update",
     "post.lock_comment",
     "post.permanent_delete",
     "post.pin",
@@ -103,6 +115,7 @@ defmodule GroupherServer.CMS.GateAction do
     "post.undo_lock_comment",
     "post.undo_pin",
     "post.undo_sink",
+    "post.update",
     "review.configure",
     "review.decide",
     "review.platform.configure",
@@ -284,6 +297,20 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
+    "blog.draft.publish" => %{
+      scope: :article,
+      grantable: false,
+      owner_only: true,
+      requires: [],
+      requires_thread: %{}
+    },
+    "blog.draft.update" => %{
+      scope: :article,
+      grantable: false,
+      owner_only: true,
+      requires: [],
+      requires_thread: %{}
+    },
     "blog.lock_comment" => %{
       scope: :community,
       grantable: true,
@@ -347,6 +374,13 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
+    "blog.update" => %{
+      scope: :community,
+      grantable: false,
+      owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
     "category.create" => %{
       scope: :global,
       grantable: true,
@@ -379,6 +413,20 @@ defmodule GroupherServer.CMS.GateAction do
       scope: :global,
       grantable: true,
       owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
+    "changelog.draft.publish" => %{
+      scope: :article,
+      grantable: false,
+      owner_only: true,
+      requires: [],
+      requires_thread: %{}
+    },
+    "changelog.draft.update" => %{
+      scope: :article,
+      grantable: false,
+      owner_only: true,
       requires: [],
       requires_thread: %{}
     },
@@ -441,6 +489,13 @@ defmodule GroupherServer.CMS.GateAction do
     "changelog.undo_sink" => %{
       scope: :community,
       grantable: true,
+      owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
+    "changelog.update" => %{
+      scope: :community,
+      grantable: false,
       owner_only: false,
       requires: [],
       requires_thread: %{}
@@ -690,6 +745,13 @@ defmodule GroupherServer.CMS.GateAction do
       requires: [],
       requires_thread: %{}
     },
+    "doc.trash" => %{
+      scope: :community,
+      grantable: true,
+      owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
     "doc.undo_lock_comment" => %{
       scope: :community,
       grantable: true,
@@ -708,6 +770,41 @@ defmodule GroupherServer.CMS.GateAction do
       scope: :community,
       grantable: true,
       owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
+    "moderator.set" => %{
+      scope: :community,
+      grantable: false,
+      owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
+    "moderator.unset" => %{
+      scope: :community,
+      grantable: false,
+      owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
+    "moderator.update" => %{
+      scope: :community,
+      grantable: false,
+      owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
+    "post.draft.publish" => %{
+      scope: :article,
+      grantable: false,
+      owner_only: true,
+      requires: [],
+      requires_thread: %{}
+    },
+    "post.draft.update" => %{
+      scope: :article,
+      grantable: false,
+      owner_only: true,
       requires: [],
       requires_thread: %{}
     },
@@ -777,6 +874,13 @@ defmodule GroupherServer.CMS.GateAction do
     "post.undo_sink" => %{
       scope: :community,
       grantable: true,
+      owner_only: false,
+      requires: [],
+      requires_thread: %{}
+    },
+    "post.update" => %{
+      scope: :community,
+      grantable: false,
       owner_only: false,
       requires: [],
       requires_thread: %{}
@@ -1007,6 +1111,14 @@ defmodule GroupherServer.CMS.GateAction do
   @spec audit_read() :: String.t()
   def audit_read, do: "audit.read"
 
+  @doc "Returns the stable `blog.draft.publish` Gate action name."
+  @spec blog_draft_publish() :: String.t()
+  def blog_draft_publish, do: "blog.draft.publish"
+
+  @doc "Returns the stable `blog.draft.update` Gate action name."
+  @spec blog_draft_update() :: String.t()
+  def blog_draft_update, do: "blog.draft.update"
+
   @doc "Returns the stable `blog.lock_comment` Gate action name."
   @spec blog_lock_comment() :: String.t()
   def blog_lock_comment, do: "blog.lock_comment"
@@ -1043,6 +1155,10 @@ defmodule GroupherServer.CMS.GateAction do
   @spec blog_undo_sink() :: String.t()
   def blog_undo_sink, do: "blog.undo_sink"
 
+  @doc "Returns the stable `blog.update` Gate action name."
+  @spec blog_update() :: String.t()
+  def blog_update, do: "blog.update"
+
   @doc "Returns the stable `category.create` Gate action name."
   @spec category_create() :: String.t()
   def category_create, do: "category.create"
@@ -1062,6 +1178,14 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `category.update` Gate action name."
   @spec category_update() :: String.t()
   def category_update, do: "category.update"
+
+  @doc "Returns the stable `changelog.draft.publish` Gate action name."
+  @spec changelog_draft_publish() :: String.t()
+  def changelog_draft_publish, do: "changelog.draft.publish"
+
+  @doc "Returns the stable `changelog.draft.update` Gate action name."
+  @spec changelog_draft_update() :: String.t()
+  def changelog_draft_update, do: "changelog.draft.update"
 
   @doc "Returns the stable `changelog.lock_comment` Gate action name."
   @spec changelog_lock_comment() :: String.t()
@@ -1098,6 +1222,10 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `changelog.undo_sink` Gate action name."
   @spec changelog_undo_sink() :: String.t()
   def changelog_undo_sink, do: "changelog.undo_sink"
+
+  @doc "Returns the stable `changelog.update` Gate action name."
+  @spec changelog_update() :: String.t()
+  def changelog_update, do: "changelog.update"
 
   @doc "Returns the stable `comment.delete` Gate action name."
   @spec comment_delete() :: String.t()
@@ -1239,6 +1367,10 @@ defmodule GroupherServer.CMS.GateAction do
   @spec doc_sink() :: String.t()
   def doc_sink, do: "doc.sink"
 
+  @doc "Returns the stable `doc.trash` Gate action name."
+  @spec doc_trash() :: String.t()
+  def doc_trash, do: "doc.trash"
+
   @doc "Returns the stable `doc.undo_lock_comment` Gate action name."
   @spec doc_undo_lock_comment() :: String.t()
   def doc_undo_lock_comment, do: "doc.undo_lock_comment"
@@ -1250,6 +1382,26 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `doc.undo_sink` Gate action name."
   @spec doc_undo_sink() :: String.t()
   def doc_undo_sink, do: "doc.undo_sink"
+
+  @doc "Returns the stable `moderator.set` Gate action name."
+  @spec moderator_set() :: String.t()
+  def moderator_set, do: "moderator.set"
+
+  @doc "Returns the stable `moderator.unset` Gate action name."
+  @spec moderator_unset() :: String.t()
+  def moderator_unset, do: "moderator.unset"
+
+  @doc "Returns the stable `moderator.update` Gate action name."
+  @spec moderator_update() :: String.t()
+  def moderator_update, do: "moderator.update"
+
+  @doc "Returns the stable `post.draft.publish` Gate action name."
+  @spec post_draft_publish() :: String.t()
+  def post_draft_publish, do: "post.draft.publish"
+
+  @doc "Returns the stable `post.draft.update` Gate action name."
+  @spec post_draft_update() :: String.t()
+  def post_draft_update, do: "post.draft.update"
 
   @doc "Returns the stable `post.lock_comment` Gate action name."
   @spec post_lock_comment() :: String.t()
@@ -1290,6 +1442,10 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `post.undo_sink` Gate action name."
   @spec post_undo_sink() :: String.t()
   def post_undo_sink, do: "post.undo_sink"
+
+  @doc "Returns the stable `post.update` Gate action name."
+  @spec post_update() :: String.t()
+  def post_update, do: "post.update"
 
   @doc "Returns the stable `review.configure` Gate action name."
   @spec review_configure() :: String.t()

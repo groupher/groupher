@@ -51,8 +51,6 @@ const wireRuntimeAssetIntoLoader = (): Plugin => ({
 })
 
 export default defineConfig(({ command }) => ({
-  // Managed local runs consume Hub-injected values, not project dotenv files.
-  envDir: process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' ? false : undefined,
   root: widgetRoot,
   server: {
     cors: true,

@@ -1,4 +1,4 @@
-import { createDevelopmentLoginResponse } from '../development-session'
+import { createDevelopmentLoginResponse } from '../local-dev-login'
 
 /** Creates the requested synthetic E2E identity on the isolated E2E server. */
 export const testLogin = async (request: Request): Promise<Response> => {

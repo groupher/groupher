@@ -8,8 +8,6 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
 
   alias CMS.Model.{
     Article,
-    ArticleBinding,
-    ArticleHistoryOwner,
     ArticlePublic,
     ArticleWorkingCopy,
     CommentBody,
@@ -94,52 +92,6 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
            |> Enum.map(&{&1.edge_key, &1.mentioned_at})
            |> Enum.sort() ==
              original_edges |> Enum.map(&{&1.edge_key, &1.mentioned_at}) |> Enum.sort()
-  end
-
-  test "Doc Comment mention capture uses the request Community with multiple history owners",
-       ctx do
-    {request_community, _, _, _} = mock_article(:post)
-
-    assert {:ok, _binding} =
-             Repo.insert(
-               ArticleBinding.changeset(%ArticleBinding{}, %{
-                 article_id: ctx.doc.id,
-                 community_id: request_community.id
-               }),
-               mode: :savepoint
-             )
-
-    assert Repo.aggregate(
-             from(owner in ArticleHistoryOwner, where: owner.article_id == ^ctx.doc.id),
-             :count
-           ) == 2
-
-    assert {:ok, %{comment: comment}} =
-             CMS.Comments.Commands.Create.create(
-               :doc,
-               %{id: ctx.doc.id, community: ctx.community},
-               bag(ctx),
-               ctx.author,
-               Ecto.UUID.generate()
-             )
-
-    operation_ref = Ecto.UUID.generate()
-
-    assert {:ok, {:ok, _captured}} =
-             Repo.transaction(fn ->
-               CMS.Comments.Mentions.update(comment, operation_ref, request_community.id)
-             end)
-
-    endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
-
-    assert %Event{data: %{"community_id" => community_id}} =
-             Repo.get_by!(Event,
-               event: "mention.notify",
-               resource_id: endpoint.id,
-               operation_ref: operation_ref
-             )
-
-    assert community_id == request_community.id
   end
 
   test "Article Snapshot publication delivers its User mention once", ctx do

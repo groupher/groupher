@@ -239,7 +239,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Requests.Commands.Decide do
            %CommunityAdmin{}
            |> CommunityAdmin.changeset(%{community_id: community.id, user_id: subject.id})
            |> Repo.insert(),
-         {:ok, _} <- Count.update(community, subject, :admins_count, :inc) do
+         {:ok, _} <- Count.update(community, subject, :moderators_count, :inc) do
       {:ok, member}
     end
   end

@@ -18,7 +18,7 @@ export type TAccountContext = {
   accountInfo: Partial<TUser> & {
     isLogin: boolean
     isValidSession: boolean
-    isAdmin: boolean
+    isModerator: boolean
   }
 }
 

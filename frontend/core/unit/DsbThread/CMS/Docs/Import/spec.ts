@@ -1,11 +1,10 @@
-import type { TImportProcess } from '../../Import/ProcessLog/spec'
+import type { TImportProcess } from '../../ContentImport/ProcessLog/spec'
 import type { PHASE } from './constant'
 
 export type TImportPhase = (typeof PHASE)[keyof typeof PHASE]
 
 export type TImportTreeLeaf = {
   sourceId: string
-  disposition?: 'create' | 'overwrite'
   sourcePath?: string
   title: string
   type: 'link' | 'page'
@@ -61,7 +60,7 @@ export type TDocImportBadSmell = {
   sourceRef?: string
 }
 
-export type TImportIssue = {
+export type TContentImportIssue = {
   code: string
   externalRef: string
   message: string
@@ -69,8 +68,7 @@ export type TImportIssue = {
 }
 
 export type TDocImportPreview = {
-  attemptRef?: string
-  conflicts: Array<{ sourceId: string; code: string }>
+  conflicts: Array<Record<string, unknown>>
   counts: TDocImportCounts
   badSmells: TDocImportBadSmell[]
   expiresAt: string
@@ -81,7 +79,7 @@ export type TDocImportPreview = {
   tree: { navigation: TImportSourceNode[] }
 }
 
-export type TImportJob = {
+export type TContentImportJob = {
   id: string
   status: 'ready' | 'applying' | 'completed' | 'failed' | string
   progress: {
@@ -115,11 +113,11 @@ export type TImportJob = {
   tree: { tabs: TImportTreeTab[] }
   badSmells: Array<{ code?: string; level?: string; message?: string }>
   firstImportedDocId?: string | null
-  failedItems: TImportIssue[]
-  skipped: TImportIssue[]
+  failedItems: TContentImportIssue[]
+  skipped: TContentImportIssue[]
 }
 
-export type { TImportProcess } from '../../Import/ProcessLog/spec'
+export type { TImportProcess } from '../../ContentImport/ProcessLog/spec'
 
 export type TImportApplyResult = {
   jobRef: string

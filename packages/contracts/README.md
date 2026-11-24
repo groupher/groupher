@@ -19,7 +19,7 @@ Next.js, filesystem code, or product business logic.
 - Hono handlers or middleware.
 - Fetch clients with runtime behavior.
 - GraphQL queries or mutations.
-- Dashboard, import, or Phoenix business logic.
+- Dashboard, content-import, or Phoenix business logic.
 - Frontend hooks, components, styles, or stores.
 
 If a contract needs runtime dependencies or side effects, put the protocol type

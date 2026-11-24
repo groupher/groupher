@@ -16,14 +16,14 @@ const state = vi.hoisted(() => ({
 }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
 vi.mock('~/stores/dsbShell/editor', () => ({
-  useAdminEditor: () => ({ activeAdmin: state.activeAdmin }),
+  useAdminEditor: () => ({ activeModerator: state.activeAdmin }),
 }))
 vi.mock('~/hooks/useGate', () => ({
   default: () => ({ can: () => state.canManage }),
 }))
 vi.mock('../DsbThread/logic/useAdmins', () => ({
   default: () => ({
-    activeAdmin: state.activeAdmin,
+    activeModerator: state.activeAdmin,
     updatePermissions: state.updatePermissions,
     removeAdmin: state.removeAdmin,
   }),

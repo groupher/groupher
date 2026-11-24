@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
   alias CMS.Gate.Config
 
   @threads Config.ordinary_article_threads()
-  @modes [:public, :owner, :admin_management, :operations, :insights_management]
+  @modes [:public, :owner, :moderator_management, :operations, :insights_management]
   @enforce_keys [:thread, :stage, :policy_mode]
   defstruct [
     :thread,

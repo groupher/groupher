@@ -3,30 +3,65 @@ defmodule GroupherServer.CMS.Passport.Authorization do
   Actor-facing Passport authorization seam.
 
   It routes registered Global and Community actions to current Passport Store
-  facts. Unknown or unsupported actions fail closed instead of reading the
-  legacy actor projection. It does not decide resource Lifecycle or Gate
-  admission.
+  facts and keeps unconverted scopes on the legacy Registry path. It does not
+  decide resource Lifecycle or Gate admission.
 
       Gate policy -> CMS.Passport.Authorization -> allow or deny
   """
 
+  require GroupherServer.CMS.Passport.ErrorCat
+
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.Passport.{Catalog, ErrorCat, Store}
+  alias CMS.Passport.{Catalog, ErrorCat, Registry, Store}
   alias CMS.Model.Community
   alias Accounts.Model.User
+
+  @doc """
+  Asks whether one normalized passport grants an action in a community.
+
+  The decision is delegated to `Passport.Registry`. Actions outside the
+  registered catalog resolve to an `ErrorCat.Error` with reason `:unknown_action`.
+
+  ## Examples
+
+      Authorization.allowed?(passport, "community-slug", "post.edit")
+      #=> {:ok, true}
+
+      Authorization.allowed?(passport, "community-slug", "unknown.action")
+      #=> {:error, ErrorCat.error_pattern(reason: :unknown_action)}
+
+  """
+  def allowed?(passport, community, action) do
+    Registry.allowed?(passport, community, action)
+  end
+
+  @doc """
+  Asks whether one normalized passport grants an action scoped to a thread.
+
+  This remains a Passport fact lookup. Gate must still combine the result with
+  resource Lifecycle and ancestor admission.
+
+  ## Examples
+
+      Authorization.allowed?(passport, community_slug, "post.edit", :post)
+  """
+  def allowed?(passport, community, action, thread) do
+    Registry.allowed?(passport, community, action, thread)
+  end
 
   @doc """
   Checks an action for one user inside an optional context map.
 
   Registered Global and Community actions use current Passport Store rows.
-  Unknown actions and scopes that do not belong to this API fail closed.
+  Other actions retain the legacy `cur_passport` lookup for their remaining
+  migration batches. Denied and unknown actions map to domain errors.
 
   ## Examples
 
-      Authorization.check(user, "post.pin", %{community: %{slug: "elixir"}})
+      Authorization.check(user, "post.edit", %{community: %{slug: "elixir"}})
       #=> {:ok, true}
 
-      Authorization.check(user_without_permission, "post.pin", %{community: %{slug: "elixir"}})
+      Authorization.check(user, "post.edit", %{community: %{slug: "elixir"}})
       #=> {:error, ErrorCat.error_pattern(reason: :permission_denied)}
 
       Authorization.check(user, "unknown.action", %{})
@@ -35,9 +70,9 @@ defmodule GroupherServer.CMS.Passport.Authorization do
   """
   def check(user, action, context \\ %{}) when is_map(context) do
     case Catalog.get(action) do
-      {:ok, %{scope: :global}} -> check_global(user, action, context)
-      {:ok, %{scope: :community}} -> check_community(user, action, context)
-      _ -> {:error, ErrorCat.unknown_passport_action()}
+      {:ok, %{scope: :global, grantable: true}} -> check_global(user, action, context)
+      {:ok, %{scope: :community, grantable: true}} -> check_community(user, action, context)
+      _ -> check_legacy(user, action, context)
     end
   end
 
@@ -101,6 +136,25 @@ defmodule GroupherServer.CMS.Passport.Authorization do
     end
   end
 
+  defp check_legacy(user, action, context) do
+    passport = Map.get(user, :cur_passport) || Map.get(user, "cur_passport")
+    community = context |> Map.get(:community, Map.get(context, "community")) |> community_slug()
+
+    case allowed?(passport, community, action) do
+      {:ok, true} ->
+        {:ok, true}
+
+      {:ok, false} ->
+        {:error, ErrorCat.permission_denied()}
+
+      {:error, ErrorCat.error_pattern(reason: :unknown_action)} ->
+        {:error, ErrorCat.unknown_passport_action()}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   @doc """
   Checks a global reviewer action through the current Global Passport row and
   maps any denial to the review permission error.
@@ -120,4 +174,8 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
+
+  defp community_slug(%{slug: slug}) when is_binary(slug), do: slug
+  defp community_slug(slug) when is_binary(slug), do: slug
+  defp community_slug(_), do: nil
 end

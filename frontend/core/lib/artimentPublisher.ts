@@ -20,15 +20,6 @@ export type TSaveDocQueueCopyInput = Omit<TSaveDocWorkingCopyInput, 'workingCopy
   queueRevision: number
 }
 
-export type TSaveArticleBodyWorkingCopyInput = {
-  value: TRichEditorValue
-  community: string
-  articleId: string
-  workingCopyId: string
-  revision: number
-  commandId: string
-}
-
 /** Saves a queued Doc copy through the trusted content publisher. */
 export const saveDocQueueCopy = async <TResult>({
   value,
@@ -66,23 +57,6 @@ export const saveDocWorkingCopy = async <TWorkingCopy>({
     action: CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY,
     target: { community, articleId, workingCopyId },
     payload: { content: { format: CONTENT_SOURCE_FORMAT.PLATE, value }, slug, subtitle, title },
-    revision,
-    commandId,
-  })
-
-/** Saves only the rich body of an ordinary Article default WorkingCopy. */
-export const saveArticleBodyWorkingCopy = async <TWorkingCopy>({
-  value,
-  community,
-  articleId,
-  workingCopyId,
-  revision,
-  commandId,
-}: TSaveArticleBodyWorkingCopyInput): Promise<TWorkingCopy> =>
-  publishContentCommand<TWorkingCopy>({
-    action: CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY,
-    target: { community, articleId, workingCopyId },
-    payload: { content: { format: CONTENT_SOURCE_FORMAT.PLATE, value } },
     revision,
     commandId,
   })

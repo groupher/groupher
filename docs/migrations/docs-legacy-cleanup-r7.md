@@ -4,7 +4,7 @@
 
 2026-11-12 后续复核：原有 20 项失败包含旧物理删除断言、直接删除 Community / Article 的旧清理路径，以及清理失败污染的全局统计。正式清理改接 Lifecycle；临时 Seed 删除和完整社区种子删除共用社区销毁流程，避免跨社区 Article 被直接删除。新增普通 Article 历史归属迁移 `20261112234000`；`article_history_owners` 对 Article / Community 均使用 RESTRICT，并在 Binding INSERT 或跨社区 UPDATE 时登记归属，归属在 Community destroy 前不可删除。新空隔离库 `groupher_docs_history_full_20261112` 的并行全量结果为 2,573 通过、1 项 Press 100 篇分页用例超时、1 排除；该用例单独重跑 10.1 秒通过，同库单并发全量为 2,574 通过、0 失败、1 排除，耗时 695.6 秒。并行套件当时卡在发布更新社区计数的数据库读取，尚未单独定位锁持有者；不能将它描述成已修复的性能问题。
 
-本批按最新 Article / Docs 合同执行：不转换历史数据，不保留旧 Branch / Draft / Revision 兼容接口；外部 Git source branch 不属于删除范围。Docs Queue 仍负责正文的 Enqueue、Save、Merge、Dequeue、Release 与 Approval；D0 盘点只用于识别历史 Queue 正文及其引用，不能据此认定 Queue 正文已退役。
+本批按最新 Article / Docs 合同执行：不转换历史数据，不保留旧 Branch / Draft / Revision 兼容接口；外部 Git source branch 不属于删除范围。
 
 ## 已改接的路径
 

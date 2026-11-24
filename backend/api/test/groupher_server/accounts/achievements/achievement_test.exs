@@ -4,7 +4,6 @@ defmodule GroupherServer.Test.Accounts.Achievement do
 
   alias GroupherServer.Accounts
   alias Accounts.Model.Achievement
-  alias CMS.Model.CommunityAdmin
 
   @follow_weight GroupherServer.Accounts.Config.achieve_follow_weight()
   @collect_weight GroupherServer.Accounts.Config.achieve_collect_weight()
@@ -22,7 +21,7 @@ defmodule GroupherServer.Test.Accounts.Achievement do
   describe "[Accounts Achievement communities]" do
     test "normal user should have a empty editable communities list", ~m(user)a do
       {:ok, results} =
-        Accounts.Achievements.paged_administered_communities(
+        Accounts.Achievements.paged_moderatorable_communities(
           user,
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
@@ -31,7 +30,7 @@ defmodule GroupherServer.Test.Accounts.Achievement do
       assert results.total_count == 0
     end
 
-    test "community admin should get a editable community list",
+    test "community moderator should get a editable community list",
          ~m(user user2 user3)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
@@ -39,19 +38,19 @@ defmodule GroupherServer.Test.Accounts.Achievement do
       community_attrs = mock_attrs(:community)
       {:ok, community2} = CMS.Communities.create(community_attrs, user2, Ecto.UUID.generate())
 
-      Repo.insert!(%CommunityAdmin{community_id: community.id, user_id: user3.id})
-      Repo.insert!(%CommunityAdmin{community_id: community2.id, user_id: user3.id})
-      Repo.insert!(%CommunityAdmin{community_id: community.id, user_id: user2.id})
+      {:ok, _} = CMS.Communities.add_moderator(community, user3, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, user, Ecto.UUID.generate())
 
-      {:ok, administered_communities} =
-        Accounts.Achievements.paged_administered_communities(
+      {:ok, moderatorable_communities} =
+        Accounts.Achievements.paged_moderatorable_communities(
           user3,
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
 
-      assert administered_communities.total_count == 2
-      assert administered_communities.entries |> Enum.any?(&(&1.id == community.id))
-      assert administered_communities.entries |> Enum.any?(&(&1.id == community2.id))
+      assert moderatorable_communities.total_count == 2
+      assert moderatorable_communities.entries |> Enum.any?(&(&1.id == community.id))
+      assert moderatorable_communities.entries |> Enum.any?(&(&1.id == community2.id))
     end
   end
 

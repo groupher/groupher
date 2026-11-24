@@ -34,8 +34,6 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreSnapshot do
       with {:ok, :acquired} <- Publish.SiteLock.acquire(canonical),
            {:ok, :pass} <- QueueAccess.authorize(canonical, article_id, actor),
            {:ok, state} <- DefaultCopy.load(canonical, article_id),
-           {:ok, :pass} <-
-             CMS.Articles.CoAuthors.reject_member_working_copy_access(state.article, actor),
            true <- state.lifecycle.state in [:draft, :published],
            {:ok, context} <- CMS.Gate.Access.Load.community(actor, canonical),
            visible <- CMS.Gate.Scope.DocsContent.query(actor, context, :history),

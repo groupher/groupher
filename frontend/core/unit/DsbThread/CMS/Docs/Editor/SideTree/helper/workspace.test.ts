@@ -56,8 +56,9 @@ describe('workspace navigation', () => {
       { id: 'page', type: 'page', docId: 'doc', workingCopyId: 'copy', workingCopyRevision: 3 },
     ])
 
-    expect(tab.groups[0].pages[1]).toMatchObject({
-      publishState: { published: false },
+    const [queuedTab] = workspaceTabs(nodes, new Set(['doc']))
+    expect(queuedTab.groups[0].pages[1]).toMatchObject({
+      publishState: { queued: true, published: false },
     })
   })
 })

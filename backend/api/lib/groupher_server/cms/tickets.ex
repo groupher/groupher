@@ -162,7 +162,7 @@ defmodule GroupherServer.CMS.Tickets do
   def set_assignees(
         %Community{} = community,
         ticket_id,
-        user_logins,
+        user_ids,
         expected_version,
         %User{} = actor,
         command_id
@@ -170,7 +170,7 @@ defmodule GroupherServer.CMS.Tickets do
     Commands.SetAssignees.execute(
       community,
       ticket_id,
-      user_logins,
+      user_ids,
       expected_version,
       actor,
       command_id

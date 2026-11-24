@@ -12,7 +12,7 @@ Admin -> Gateway -> Dash/TanStack Start
                        +-> Core TanStack Router navigation
                        +-> Auth Session contract
                        +-> Phoenix GraphQL
-                       +-> Import server proxy
+                       +-> Content Import server proxy
 ```
 
 Dash owns its native file routes, SSR loaders, request-scoped setup,
@@ -24,7 +24,7 @@ Docs bulk import remains same-origin in the browser. TanStack server routes unde
 service identity, and proxy to `backend/import`. Production must provide
 `PHX_JWT_SECRET` for browser-token verification plus `SERVICE_AUTH_CLIENT_ID` and
 `SERVICE_AUTH_CLIENT_SECRET` for a registered `service:dash` client with
-`import:internal-api` access.
+`content-import:internal-api` access.
 
 ## Local development and validation
 

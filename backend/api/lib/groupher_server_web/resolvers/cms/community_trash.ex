@@ -18,26 +18,9 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityTrash do
 
   def get(_root, %{community_ref: ref, thread: thread, id: id}, %{context: %{cur_user: actor}}) do
     with {:ok, community} <- community(ref, actor) do
-      case CommunityTrashQuery.get(community, actor, thread, id) do
-        {:ok, %{thread: :doc} = item} -> {:ok, Map.put(item, :community, community)}
-        result -> result
-      end
+      CommunityTrashQuery.get(community, actor, thread, id)
     end
   end
-
-  def doc_members(
-        %{community: %CMS.Model.Community{} = community, id: id, record_revision: revision},
-        args,
-        %{context: %{cur_user: actor}}
-      ) do
-    revision = Map.get(args, :record_revision) || revision
-
-    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CommunityTrashQuery.doc_members(community, actor, id, revision, pagi)
-    end
-  end
-
-  def doc_members(_, _, _), do: {:error, CMS.gate_error_cat_resource_not_found()}
 
   def hide(
         _root,

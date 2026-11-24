@@ -29,7 +29,11 @@ const QueueActions: FC<TProps> = ({ queue }) => {
   const { docDraftInfo, publishView } = useDocsEditor()
   const [show, setShow] = useState(false)
   const [publication, setPublication] = useState(false)
-  const [editing, setEditing] = useState<{ articleId: string } | null>(null)
+  const [editing, setEditing] = useState<{
+    articleId: string
+    workingCopyId: string
+    queueRevision: number
+  } | null>(null)
   const [choices, setChoices] = useState<Partial<Record<DocsMergeField, DocsMergeSide>>>({})
   const blocked = queue.busy || publishView.isDirty || publishView.isSaving || !!queue.error
   const close = () => {
@@ -173,6 +177,8 @@ const QueueActions: FC<TProps> = ({ queue }) => {
                     onClick={() =>
                       setEditing({
                         articleId: article.articleId,
+                        workingCopyId: article.workingCopyId,
+                        queueRevision: queue.queue!.revision,
                       })
                     }
                   >

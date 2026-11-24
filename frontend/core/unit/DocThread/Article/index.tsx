@@ -8,7 +8,6 @@ import useArticle from '~/stores/article/hooks'
 import FeedbackFooter from '../FeedbackFooter'
 import Body from './Body'
 import Header from './Header'
-import QueueEditorAction from './QueueEditorAction'
 import useSalon from './salon'
 
 type TProps = {
@@ -26,7 +25,6 @@ export default function Article({ tree, community = '', innerId = 0 }: TProps) {
   return (
     <article ref={wrapperRef} className={s.wrapper}>
       <Header tree={tree} />
-      {doc?.id && <QueueEditorAction articleId={doc.id} />}
       <Body />
       <FeedbackFooter top={16} offsetRight={0} />
     </article>

@@ -20,11 +20,6 @@ defmodule GroupherServerWeb.Router do
 
   use GroupherServerWeb, :router
 
-  # Neither the route nor its implementation exists in a production release.
-  if Application.compile_env(:groupher_server, :env) == :dev do
-    post("/__local-test/actors", GroupherServer.LocalTestActors.Controller, :execute, log: false)
-  end
-
   pipeline :browser do
     plug(:accepts, ["html"])
     plug(:fetch_session)

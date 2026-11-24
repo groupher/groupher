@@ -5,7 +5,6 @@ import type { useServiceConfig } from '@/hooks/useServiceConfig'
 
 import { ConfigFileList } from './ConfigFileList'
 import { ConfigFileView } from './ConfigFileView'
-import { ServiceEnvironmentEditor } from './ServiceEnvironmentEditor'
 
 type TProps = {
   manifest: TServiceConfigManifest | null
@@ -29,7 +28,7 @@ export function ConfigDrawerBody({ manifest, config }: TProps) {
     )
   }
 
-  if (!manifest) {
+  if (!manifest || manifest.files.length === 0) {
     return (
       <div className='config-drawer-state'>
         <div>
@@ -43,14 +42,6 @@ export function ConfigDrawerBody({ manifest, config }: TProps) {
   return (
     <div className='config-drawer-content'>
       <aside className='config-drawer-sidebar'>
-        <button
-          type='button'
-          className='config-environment-tab'
-          aria-pressed={config.selectedFileId === 'local-dev.env'}
-          onClick={() => config.selectFile('local-dev.env')}
-        >
-          local-dev.env
-        </button>
         <ConfigFileList
           files={manifest.files}
           selectedFileId={config.selectedFileId}
@@ -67,9 +58,7 @@ export function ConfigDrawerBody({ manifest, config }: TProps) {
           </section>
         ) : null}
       </aside>
-      {config.selectedFileId === 'local-dev.env' ? (
-        <ServiceEnvironmentEditor key={manifest.serviceId} serviceId={manifest.serviceId} />
-      ) : config.selectedFile ? (
+      {config.selectedFile ? (
         <ConfigFileView
           file={config.selectedFile}
           content={config.content}

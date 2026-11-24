@@ -198,6 +198,24 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     end
   end
 
+  def doc_tree_trash_items(
+        _root,
+        %{community: %Community{} = community} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.docs_workspace_trash_read(community, Map.get(args, :pagi), user)
+  end
+
+  def doc_tree_trash_items(
+        _root,
+        %{community: community} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, community} <- CMS.communities_fetch(community, inc_views: false) do
+      CMS.docs_workspace_trash_read(community, Map.get(args, :pagi), user)
+    end
+  end
+
   def doc_cover(
         _root,
         %{community: %Community{} = community} = args,
@@ -218,12 +236,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
 
   def docs_publish_queue(_root, %{community: community}, %{context: %{cur_user: actor}}) do
     CMS.docs_publish_queue(community, actor)
-  end
-
-  def docs_queue_member(_root, %{community: community, article_id: article_id}, %{
-        context: %{cur_user: actor}
-      }) do
-    CMS.docs_queue_member_read(community, article_id, actor)
   end
 
   def docs_workspace_tree(_root, %{community: community}, %{context: %{cur_user: actor}}) do
@@ -286,43 +298,22 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
           tree_revision: tree_revision,
           queue_revision: queue_revision,
           trash_action_id: action_id,
-          record_revision: record_revision,
           command_id: command_id,
           cur_user: actor
         } = args,
         _info
       ) do
-    with {:ok, target_parent, target_index} <- restore_target_fields(args) do
-      CMS.docs_workspace_restore(
-        community,
-        tree_revision,
-        queue_revision,
-        action_id,
-        record_revision,
-        target_parent,
-        target_index,
-        actor,
-        command_id
-      )
-      |> workspace_result()
-    end
-  end
-
-  @doc false
-  def restore_target_fields(args) when is_map(args) do
-    parent_provided? = Map.has_key?(args, :target_parent_node_id)
-    index_provided? = Map.has_key?(args, :target_index)
-
-    cond do
-      not parent_provided? and index_provided? ->
-        {:error, :invalid_tree_input}
-
-      not parent_provided? ->
-        {:ok, :restore_original, nil}
-
-      true ->
-        {:ok, Map.fetch!(args, :target_parent_node_id), Map.get(args, :target_index)}
-    end
+    CMS.docs_workspace_restore(
+      community,
+      tree_revision,
+      queue_revision,
+      action_id,
+      Map.get(args, :target_parent_node_id),
+      Map.get(args, :target_index),
+      actor,
+      command_id
+    )
+    |> workspace_result()
   end
 
   def delete_docs_workspace_node(

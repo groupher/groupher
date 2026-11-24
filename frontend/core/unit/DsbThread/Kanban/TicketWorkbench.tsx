@@ -49,7 +49,7 @@ const toDateTime = (date: string): string | null =>
   date ? new Date(`${date}T00:00:00.000Z`).toISOString() : null
 
 export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
-  const { slug, ref: communityRef = '' } = useCommunity()
+  const { slug } = useCommunity()
   const { t } = useTrans()
   const queryClient = useQueryClient()
   const [title, setTitle] = useState(ticket.title)
@@ -67,9 +67,7 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
   const [updateBody, setUpdateBody] = useState('')
   const [updateVisibility, setUpdateVisibility] = useState<'INTERNAL' | 'PUBLIC'>('INTERNAL')
   const [correctionTargetId, setCorrectionTargetId] = useState<string | null>(null)
-  const [assigneeLogins, setAssigneeLogins] = useState(
-    ticket.assignees.map((assignee) => assignee.user.login),
-  )
+  const [assigneeIds, setAssigneeIds] = useState(ticket.assignees.map((assignee) => assignee.id))
   const [tagIds, setTagIds] = useState(ticket.tags.map((tag) => String(tag.id)))
   const [versions, setVersions] = useState(
     ticket.facets
@@ -92,7 +90,7 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
   const [pending, setPending] = useState(false)
   const workflowVersion = ticket.workflowVersion ?? 0
   const deferredQuery = useDeferredValue(query)
-  const assigneeCandidates = useQuery(ticketQueries.assigneeCandidates(communityRef))
+  const assigneeCandidates = useQuery(ticketQueries.assigneeCandidates(slug))
   const tagGroups = useQuery(ticketQueries.tagGroups(slug))
   const communityTags = (tagGroups.data || [])
     .flatMap((group) => group?.tags || [])
@@ -112,7 +110,7 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
     setPriority(String(ticket.priority))
     setPlannedStartAt(toDateInput(ticket.plannedStartAt))
     setPlannedEndAt(toDateInput(ticket.plannedEndAt))
-    setAssigneeLogins(ticket.assignees.map((assignee) => assignee.user.login))
+    setAssigneeIds(ticket.assignees.map((assignee) => assignee.id))
     setTagIds(ticket.tags.map((tag) => String(tag.id)))
     setVersions(
       ticket.facets
@@ -439,7 +437,7 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
           variables: {
             community: slug,
             ticketId: ticket.id,
-            assigneeLogins,
+            assigneeIds: assigneeIds.map(Number),
             expectedWorkflowVersion: workflowVersion,
           },
         }),
@@ -855,15 +853,15 @@ export default function TicketWorkbench({ ticket }: { ticket: TTicket }) {
                 <select
                   className='border-divider min-h-20 w-full rounded-lg border bg-transparent p-2 text-sm'
                   multiple
-                  value={assigneeLogins}
+                  value={assigneeIds}
                   onChange={(event) =>
-                    setAssigneeLogins(
+                    setAssigneeIds(
                       Array.from(event.currentTarget.selectedOptions, (option) => option.value),
                     )
                   }
                 >
                   {(assigneeCandidates.data || []).map((user) => (
-                    <option key={user.login} value={user.login}>
+                    <option key={user.id} value={user.id}>
                       {user.nickname || user.login}
                     </option>
                   ))}

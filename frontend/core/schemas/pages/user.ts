@@ -8,6 +8,7 @@ export const me = graphql(`
       nickname
       avatar
       bio
+      passport
     }
   }
 `)
@@ -73,6 +74,7 @@ export const sessionState = graphql(`
         social {
           ...UserSocialFields
         }
+        passport
         subscribedCommunitiesCount
         achievement {
           ...UserAchievementFields

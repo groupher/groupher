@@ -1,10 +1,10 @@
 /**
- * Defines TypeScript contracts shared inside Import.
+ * Defines TypeScript contracts shared inside Content Import.
  *
  * Business position:
  *
  *   Dash proxy / Phoenix import job
- *     -> Import module
+ *     -> Content Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary
  */

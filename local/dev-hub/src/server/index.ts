@@ -34,8 +34,6 @@ import {
   isAllowedHubHost,
   isAllowedRequestOrigin,
 } from './request-guards.ts'
-import { serviceEnvironmentRoutes } from './service-environment-routes.ts'
-import { ServiceEnvironmentStore } from './service-environment.ts'
 import { REPO_ROOT, SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts'
 
 const host = '127.0.0.1'
@@ -74,7 +72,6 @@ const manager = new ServiceManager(
   },
 )
 const configReader = new ServiceConfigReader(SERVICE_DEFINITIONS)
-const environmentStore = new ServiceEnvironmentStore(SERVICE_DEFINITIONS)
 const gitMonitor = new GitMonitor(REPO_ROOT)
 const metricsStore = new MetricsStore(metricsRoot, SERVICE_DEFINITIONS)
 await Promise.all([manager.initialize(), gitMonitor.initialize(), metricsStore.initialize()])
@@ -175,8 +172,6 @@ app.get('/api/services/:id/logs', (context) => {
     return respondWithError(context, error)
   }
 })
-
-app.route('/api/services', serviceEnvironmentRoutes(environmentStore))
 
 app.get('/api/services/:id/config', async (context) => {
   try {

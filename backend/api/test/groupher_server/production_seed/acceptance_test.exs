@@ -2,7 +2,6 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
   use GroupherServer.TestMate, async: false
   alias CMS.ProductionSeed
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias CMS.Model.GlobalPassport
   alias ProductionSeed.{Run, LoginGrant, Logins}
   alias Accounts.Model.{User, OauthProvider, BrowserSession}
 
@@ -48,24 +47,12 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     assert {:ok, ^manifest} = ProductionSeed.bootstrap("first", db)
     assert length(Map.values(manifest["users"])) == 8
     refute Repo.exists?(OauthProvider)
-
-    assert get_in(manifest, [
-             "globalPassports",
-             "platform",
-             "permissions",
-             "review.platform.decide"
-           ]) == true
-
-    refute get_in(manifest, ["globalPassports", "platform", "isRoot"])
-
-    refute get_in(manifest, ["globalPassports", "adminDev"])
-
-    refute get_in(manifest, ["globalPassports", "adminMock"])
-    assert get_in(manifest, ["communityAdmins", "dev", "isLord"])
-
-    refute get_in(manifest, ["communityAdmins", "mock", "userId"]) ==
-             manifest["users"]["adminDev"]
-
+    assert get_in(manifest, ["passports", "platform", "global", "review.platform.decide"]) == true
+    refute get_in(manifest, ["passports", "platform", "global", "god"])
+    refute get_in(manifest, ["passports", "adminDev", "global", "review.platform.decide"])
+    refute get_in(manifest, ["passports", "adminMock", "global", "review.platform.decide"])
+    assert get_in(manifest, ["passports", "adminDev", "dev", "root"]) == true
+    refute get_in(manifest, ["passports", "adminMock", "dev", "root"])
     assert {:error, :seed_other_run_active} = ProductionSeed.bootstrap("second", db)
 
     for slug <- ~w(dev mock tmp) do
@@ -114,6 +101,7 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
 
   test "Node artifact seeds six node types and retries without duplicates", %{database: db} do
     {:ok, _} = ProductionSeed.bootstrap("content", db)
+    set_seed_system_root!("content", "author")
     path = seed_artifact("content")
     assert {:ok, manifest} = ProductionSeed.Content.apply("content", db, path)
     assert Map.has_key?(manifest["resources"], "CM")
@@ -227,11 +215,12 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
 
   test "purge refuses to delete shared Article history", %{database: db} do
     {:ok, _} = ProductionSeed.bootstrap("purge", db)
+    set_seed_system_root!("purge", "author")
+    set_seed_system_root!("purge", "adminDev")
     path = seed_artifact("purge")
     {:ok, manifest} = ProductionSeed.Content.apply("purge", db, path)
     {:ok, plan} = ProductionSeed.Cleanup.report("purge", db, "purge")
     assert plan.blockers == []
-
     assert {:error,
             {:seed_cleanup_domain_failed, "permanent-post",
              %ErrorCat.Error{
@@ -243,7 +232,6 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     assert Repo.get(CMS.Model.Article, shared_id)
     assert Repo.get(CMS.Model.ArticlePublic, shared_id)
     assert Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: shared_id).state == :published
-
     assert Repo.aggregate(
              from(b in CMS.Model.ArticleBinding, where: b.article_id == ^shared_id),
              :count
@@ -268,15 +256,10 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     refute Repo.exists?(BrowserSession)
   end
 
-  test "unexpected typed global grants are reported and never erased", %{database: db} do
+  test "unexpected passport grants are reported and never erased", %{database: db} do
     {:ok, manifest} = ProductionSeed.bootstrap("roles", db)
-    passport = Repo.get_by!(GlobalPassport, user_id: manifest["users"]["platform"])
-
-    Repo.update_all(
-      from(p in GlobalPassport, where: p.id == ^passport.id),
-      set: [permissions: Map.put(passport.permissions, "post.community.mirror", true)]
-    )
-
+    user = Repo.get!(User, manifest["users"]["author"])
+    {:ok, _} = CMS.Passport.stamp_passport(%{"global" => %{"community.create" => true}}, user)
     {:ok, report} = ProductionSeed.Cleanup.report("roles", db, "retain")
     assert :seed_permissions_changed in report.blockers
 
@@ -284,7 +267,7 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
              ProductionSeed.Cleanup.apply("roles", db, "retain", report.report_digest)
 
     assert {:error, :seed_unexpected_permissions} = ProductionSeed.bootstrap("roles", db)
-    assert Repo.get!(GlobalPassport, passport.id).permissions["post.community.mirror"]
+    assert Repo.get_by(CMS.Model.Passport, user_id: user.id)
   end
 
   test "public create and both rename paths reject protected slugs", %{database: db} do

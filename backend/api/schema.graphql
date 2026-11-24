@@ -53,7 +53,10 @@ type RootQueryType {
   pagedCollectedArticles(folderId: ID!, pagi: PagiInput, filter: ArticleCollectionFilter): ArticleCollectionPage
 
   "paged communities which the user it's the editor"
-  administeredCommunities(login: String, pagi: PagiInput): CommunityPage
+  moderatorableCommunities(login: String, pagi: PagiInput): CommunityPage
+
+  "get all passport rules include system and community etc ..."
+  allPassportRulesString: Rules
 
   "search user by name"
   searchUsers(name: String!): [CommonUser!]!
@@ -78,9 +81,6 @@ type RootQueryType {
 
   "Paged Community Admin memberships"
   pagedCommunityAdmins(communityRef: String!, pagi: PagiInput): CommunityAdminPage!
-
-  "Paged public Admin identities for a readable Community"
-  pagedCommunityAdminMembers(communityRef: String!, filter: UserListFilter, pagi: PagiInput): CommunityAdminDirectoryPage!
 
   "Paged Admin requests visible to the current user"
   pagedCommunityAdminRequests(communityRef: String!, pagi: PagiInput): CommunityAdminRequestPage!
@@ -241,14 +241,14 @@ type RootQueryType {
   "Current authorized Docs publication queue"
   docsPublishQueue(community: String!): DocsPublishQueue
 
-  "One Article's existing Queue member editor source"
-  docsQueueMember(community: String!, articleId: ID!): DocsQueueMemberEditor
-
   "Check whether removing Docs from the Queue discards unique edits"
   docsDequeuePreview(community: String!, queueRevision: Int!, articleIds: [ID!]!): DocsDequeuePreview
 
   "Preview a workspace deletion and any Queue-only edits it would discard"
   docsWorkspaceDeletePreview(community: String!, treeRevision: Int!, queueRevision: Int!, nodeId: ID!): DocsWorkspaceDeletePreview
+
+  "dashboard docs trash items"
+  docTreeTrashItems(community: String!, pagi: PagiInput): DocTreeTrashPage!
 
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
@@ -274,14 +274,23 @@ type RootQueryType {
   "Service-scoped check for a successfully published Wallpaper Batch"
   wallpaperBatchPublished(batchRef: String!): Boolean!
 
+  "Get all passport rules available to the current user."
+  allPassportRules: AllRules
+
   "Check whether a community name is available."
   checkCommunityName(slug: String!): CommunityNameCheck
+
+  "Bounded user picker excluding current moderators"
+  moderatorCandidates(community: String!, name: String!): [User!]!
 
   "communities with pagination info"
   pagedCommunities(filter: CommunitiesFilter, pagi: PagiInput): CommunityPage
 
   "paged subscribers of a community"
   pagedCommunitySubscribers(community: String!, filter: UserListFilter, pagi: PagiInput): UserPage
+
+  "paged subscribers of a community"
+  pagedCommunityModerators(community: String!, filter: UserListFilter, pagi: PagiInput): CommunityModeratorPage
 
   "get all categories"
   categories: [Category!]!
@@ -433,14 +442,14 @@ type RootQueryType {
   "Loads a community site manifest for the Press service."
   pressSiteManifest(community: String!): PressSiteManifest
 
-  "checks whether the current user can import Docs into this Community"
-  canImportDocs(community: String!): Boolean!
+  "check one registered action against the current user's Passport"
+  checkPassport(community: String, action: String!): Boolean!
 
   "plan a bounded SourceTree against the current Docs target without creating a Job"
-  previewDocImportTarget(community: String!, sourceInfo: ImportSourcePreviewInput!, tree: Json!): ImportTargetPreview!
+  previewDocContentImportTarget(community: String!, sourceInfo: ContentImportSourcePreviewInput!, tree: Json!): ContentImportTargetPreview!
 
-  "read one community-scoped Import Job and its safe Doc preview"
-  importJob(community: String!, jobRef: ID!): ImportJob
+  "read one community-scoped ContentImport Job and its safe Doc preview"
+  contentImportJob(community: String!, jobRef: ID!): ContentImportJob
 
   "Lists reports submitted by the current user."
   myReports(filter: AlertReportFilter, pagi: PagiInput): AlertReportPage!
@@ -574,6 +583,18 @@ type RootMutationType {
 
   "update category"
   updateCategory(commandId: ID!, community: String!, id: ID!, title: String!): Category
+
+  "add a moderator for a community"
+  addModerator(commandId: ID!, community: String!, user: String!): Community
+
+  "add moderators for a community"
+  addModerators(commandId: ID!, community: String!, users: [String!]!): Community
+
+  "unset a moderator from a community, the user's passport also deleted"
+  removeModerator(commandId: ID!, community: String!, user: String!): Community
+
+  "update cms moderator's title, passport is not effected"
+  updateModeratorPassport(commandId: ID!, community: String!, user: String!, rules: Json!): Community
 
   "create a tag"
   createCommunityTag(
@@ -945,9 +966,9 @@ type RootMutationType {
   "Reference a member-owned Worker as a shared Case fix"
   addTicketCaseWorker(commandId: ID!, community: String!, caseId: ID!, workerId: ID!, expectedWorkflowVersion: Int!): Ticket
 
-  "Replace assigned Community Admins on a Ticket"
+  "Replace assigned Community moderators on a Ticket"
   setTicketAssignees(
-    commandId: ID!, community: String!, ticketId: ID!, assigneeLogins: [String!]!, expectedWorkflowVersion: Int!
+    commandId: ID!, community: String!, ticketId: ID!, assigneeIds: [Int!]!, expectedWorkflowVersion: Int!
   ): Ticket
 
   "Replace internal Post tags on a Ticket"
@@ -1087,7 +1108,7 @@ type RootMutationType {
 
   "Restore a Docs workspace Trash action"
   restoreDocsWorkspaceNode(
-    commandId: ID!, community: String!, treeRevision: Int!, queueRevision: Int!, trashActionId: ID!, recordRevision: String!, targetParentNodeId: ID, targetIndex: Int
+    commandId: ID!, community: String!, treeRevision: Int!, queueRevision: Int!, trashActionId: ID!, targetParentNodeId: ID, targetIndex: Int
   ): DocsWorkspaceRestoreResult
 
   "Move a Docs workspace subtree to Trash and queue its public deletion"
@@ -1149,21 +1170,21 @@ type RootMutationType {
   updatePinnedDocAppearance(commandId: ID!, community: String!, nodeId: ID!, appearance: Json!): DocCoverPinnedDoc!
 
   "create the persistent import Job after a temporary Preview is confirmed"
-  startDocImport(
-    community: String!, previewRef: ID!, sourceInfo: ImportSourcePreviewInput!, datasetRef: ID!, targetTree: Json!, documents: [ImportSourceDocumentInput!]!, targetRevision: String!, badSmells: Json!
-  ): ImportJob!
+  startDocContentImport(
+    community: String!, previewRef: ID!, sourceInfo: ContentImportSourcePreviewInput!, datasetRef: ID!, targetTree: Json!, documents: [ContentImportSourceDocumentInput!]!, targetRevision: String!, badSmells: Json!
+  ): ContentImportJob!
 
   "persist trusted Node-generated BodyBags in bounded batches"
-  stageDocImportBodies(community: String!, jobRef: ID!, items: [ImportBodyInput!]!): ImportBodyStageResult!
+  stageDocContentImportBodies(community: String!, jobRef: ID!, items: [ContentImportBodyInput!]!): ContentImportBodyStageResult!
 
   "atomically apply all staged BodyBags to the Docs draft"
-  applyDocImport(community: String!, jobRef: ID!): ImportApplyResult!
+  applyDocContentImport(community: String!, jobRef: ID!): ContentImportApplyResult!
 
   "mark an exhausted import workflow as failed"
-  failDocImport(community: String!, jobRef: ID!, code: String!, message: String!): ImportJob!
+  failDocContentImport(community: String!, jobRef: ID!, code: String!, message: String!): ContentImportJob!
 
   "cancel an unfinished import Job and discard its staged BodyBags"
-  cancelDocImport(community: String!, jobRef: ID!): ImportJob!
+  cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
 
   "Requests another review of an article in the given scope."
   recheckArticleV2(target: ArtimentReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
@@ -1196,7 +1217,7 @@ type RootMutationType {
   resolveAlertItem(id: ID!, resolution: String!, expectedVersion: Int!, commandId: ID!): AlertWallCommandResult!
 }
 
-enum ImportJobStatus {
+enum ContentImportJobStatus {
   STAGING
   READY
   APPLYING
@@ -1205,21 +1226,21 @@ enum ImportJobStatus {
   CANCELLED
 }
 
-enum ImportProcessState {
+enum ContentImportProcessState {
   QUEUED
   RUNNING
   COMPLETED
   FAILED
 }
 
-enum ImportProcessStage {
+enum ContentImportProcessStage {
   ANALYZING
   BUILDING_PREVIEW
   PREPARING
   APPLYING
 }
 
-enum ImportProcessUnit {
+enum ContentImportProcessUnit {
   DOCUMENT
   RELEASE
   DISCUSSION
@@ -1227,33 +1248,33 @@ enum ImportProcessUnit {
   COMMENT
 }
 
-enum ImportProcessItemState {
+enum ContentImportProcessItemState {
   COMPLETED
   FAILED
   SKIPPED
 }
 
-type ImportProcessProgress {
+type ContentImportProcessProgress {
   completed: Int!
   total: Int
-  unit: ImportProcessUnit!
+  unit: ContentImportProcessUnit!
 }
 
-type ImportProcessItem {
+type ContentImportProcessItem {
   ref: String!
   label: String!
-  state: ImportProcessItemState!
+  state: ContentImportProcessItemState!
 }
 
-type ImportProcess {
-  state: ImportProcessState!
-  stage: ImportProcessStage!
-  progress: ImportProcessProgress
-  recentBatch: [ImportProcessItem!]!
+type ContentImportProcess {
+  state: ContentImportProcessState!
+  stage: ContentImportProcessStage!
+  progress: ContentImportProcessProgress
+  recentBatch: [ContentImportProcessItem!]!
   updatedAt: DateTime!
 }
 
-type ImportSourceInfo {
+type ContentImportSourceInfo {
   repo: String!
   repoUrl: String!
   branch: String!
@@ -1263,7 +1284,7 @@ type ImportSourceInfo {
   configPaths: [String!]!
 }
 
-type ImportCounts {
+type ContentImportCounts {
   tabs: Int!
   groups: Int!
   pages: Int!
@@ -1271,7 +1292,7 @@ type ImportCounts {
   assets: Int!
 }
 
-input ImportSourcePreviewInput {
+input ContentImportSourcePreviewInput {
   repo: String!
   repoUrl: String!
   branch: String!
@@ -1281,8 +1302,7 @@ input ImportSourcePreviewInput {
   configPaths: [String!]!
 }
 
-input ImportSourceDocumentInput {
-  overwriteConfirmed: Boolean
+input ContentImportSourceDocumentInput {
   sourceRef: String!
   sourcePath: String!
   title: String!
@@ -1291,58 +1311,58 @@ input ImportSourceDocumentInput {
   sizeBytes: Int!
 }
 
-type ImportTargetPreview {
+type ContentImportTargetPreview {
   targetTree: Json!
   conflicts: Json!
-  counts: ImportCounts!
+  counts: ContentImportCounts!
   targetRevision: String!
 }
 
-type ImportJob {
+type ContentImportJob {
   id: ID!
-  status: ImportJobStatus!
+  status: ContentImportJobStatus!
   progress: Json!
-  process: ImportProcess!
+  process: ContentImportProcess!
   errorCode: String
   errorMessage: String
   failedItems: Json!
   skipped: Json!
-  sourceInfo: ImportSourceInfo!
-  counts: ImportCounts!
+  sourceInfo: ContentImportSourceInfo!
+  counts: ContentImportCounts!
   tree: Json!
   badSmells: Json!
   firstImportedDocId: ID
 }
 
-input ImportSkipInput {
+input ContentImportSkipInput {
   code: String!
 }
 
-input ImportFailureInput {
+input ContentImportFailureInput {
   code: String!
   message: String!
   stage: String!
 }
 
-input ImportBodyInput {
+input ContentImportBodyInput {
   externalRef: String!
   bodyBag: ArtimentBodyBagInput
-  skipped: ImportSkipInput
-  failed: ImportFailureInput
+  skipped: ContentImportSkipInput
+  failed: ContentImportFailureInput
 }
 
-type ImportApplyResult {
+type ContentImportApplyResult {
   jobRef: ID!
-  status: ImportJobStatus!
+  status: ContentImportJobStatus!
   firstImportedDocId: ID
   counts: Json!
   failedItems: Json!
   skipped: Json!
 }
 
-type ImportBodyStageResult {
+type ContentImportBodyStageResult {
   jobRef: ID!
-  status: ImportJobStatus!
+  status: ContentImportJobStatus!
   progress: Json!
   failedItems: Json!
   skipped: Json!
@@ -2007,20 +2027,11 @@ type CommunityAdminPage {
   pageInfo: PageInfo!
 }
 
-type CommunityAdminDirectoryMember {
-  memberId: ID!
-  isLord: Boolean!
-  user: CommonUser!
-}
-
-type CommunityAdminDirectoryPage {
-  entries: [CommunityAdminDirectoryMember!]!
-  pageInfo: PageInfo!
-}
-
 type CommunityAdminRequest {
   id: ID!
   communityId: ID!
+  subjectUserId: ID!
+  createdById: ID!
   type: String!
   status: String!
   decision: String
@@ -2063,6 +2074,8 @@ enum PassportAction {
   ARTICLE_UPDATE
   ASSET_UPLOAD
   AUDIT_READ
+  BLOG_DRAFT_PUBLISH
+  BLOG_DRAFT_UPDATE
   BLOG_LOCK_COMMENT
   BLOG_PERMANENT_DELETE
   BLOG_PIN
@@ -2072,11 +2085,14 @@ enum PassportAction {
   BLOG_UNDO_LOCK_COMMENT
   BLOG_UNDO_PIN
   BLOG_UNDO_SINK
+  BLOG_UPDATE
   CATEGORY_CREATE
   CATEGORY_DELETE
   CATEGORY_SET
   CATEGORY_UNSET
   CATEGORY_UPDATE
+  CHANGELOG_DRAFT_PUBLISH
+  CHANGELOG_DRAFT_UPDATE
   CHANGELOG_LOCK_COMMENT
   CHANGELOG_PERMANENT_DELETE
   CHANGELOG_PIN
@@ -2086,6 +2102,7 @@ enum PassportAction {
   CHANGELOG_UNDO_LOCK_COMMENT
   CHANGELOG_UNDO_PIN
   CHANGELOG_UNDO_SINK
+  CHANGELOG_UPDATE
   COMMENT_DELETE
   COMMENT_PIN
   COMMENT_UNDO_PIN
@@ -2121,9 +2138,15 @@ enum PassportAction {
   DOC_QUEUE_WRITE
   DOC_RESTORE
   DOC_SINK
+  DOC_TRASH
   DOC_UNDO_LOCK_COMMENT
   DOC_UNDO_PIN
   DOC_UNDO_SINK
+  MODERATOR_SET
+  MODERATOR_UNSET
+  MODERATOR_UPDATE
+  POST_DRAFT_PUBLISH
+  POST_DRAFT_UPDATE
   POST_LOCK_COMMENT
   POST_PERMANENT_DELETE
   POST_PIN
@@ -2134,6 +2157,7 @@ enum PassportAction {
   POST_UNDO_LOCK_COMMENT
   POST_UNDO_PIN
   POST_UNDO_SINK
+  POST_UPDATE
   REVIEW_CONFIGURE
   REVIEW_DECIDE
   REVIEW_PLATFORM_CONFIGURE
@@ -2226,30 +2250,11 @@ type CommunityDocTreeTrashItem implements CommunityArticleTrashItem {
   treePath: [CommunityDocTrashPathSegment!]!
   pendingMemberCount: Int!
   removedMemberCount: Int!
-  pagedMembers(pagi: PagiInput, recordRevision: String): CommunityDocTrashMemberPage!
-  title: String
-  nodeId: ID
-  docId: ID
-  type: String
-  deletedFromParentNodeId: ID
-  deletedFromIndex: Int
 }
 
 type CommunityDocTrashPathSegment {
   nodeId: ID!
   title: String!
-}
-
-type CommunityDocTrashMember {
-  id: ID!
-  title: String
-  deletionStatus: CommunityArticleTrashStatus!
-  removedFromPublic: Boolean!
-}
-
-type CommunityDocTrashMemberPage {
-  entries: [CommunityDocTrashMember!]!
-  pageInfo: PageInfo!
 }
 
 type CommunityArticleTrashPage {
@@ -2412,7 +2417,7 @@ enum TicketUpdateVisibilityEnum {
 input TicketFilter {
   type: TicketTypeEnum
   status: TicketStatusEnum
-  assigneeLogin: String
+  assigneeId: Int
   priority: Int
   tagIds: [Int]
   versions: [String]
@@ -2432,7 +2437,9 @@ input TicketFacetInput {
 }
 
 type TicketAssignee {
-  user: CommonUser!
+  id: ID!
+  login: String!
+  nickname: String
 }
 
 type TicketTagRef {
@@ -3100,11 +3107,6 @@ type DocsPublishQueue {
   treeChanges: [DocsQueueTreeChange!]!
 }
 
-type DocsQueueMemberEditor {
-  queueRevision: Int!
-  workingCopy: ArticleWorkingCopy!
-}
-
 enum DocsQueueApprovalStatus {
   IDLE
   PENDING
@@ -3285,6 +3287,23 @@ type DocsWorkspaceTree {
   treeRevision: Int!
   queueRevision: Int!
   nodes: [DocsWorkspaceNode!]!
+}
+
+type DocTreeTrashPage {
+  entries: [DocTreeTrashItem!]!
+  pageInfo: PageInfo!
+}
+
+type DocTreeTrashItem {
+  id: ID!
+  nodeId: ID!
+  docId: ID
+  type: String
+  title: String
+  deletedFromParentNodeId: ID
+  deletedFromIndex: Int
+  deletedAt: DateTime
+  restoredAt: DateTime
 }
 
 type CommentMutationArticle {
@@ -4194,6 +4213,24 @@ type Dsb {
   enabledThirdPartyAnalytics: [DsbThirdPartyAnalytics]
 }
 
+type CommunityModerator {
+  id: ID!
+  userId: ID!
+  isRoot: Boolean!
+  passportItemCount: Int!
+  user: CommonUser!
+}
+
+type CommunityModeratorPage {
+  entries: [CommunityModerator!]!
+  pageInfo: PageInfo!
+}
+
+type AllRules {
+  root: String
+  moderator: String
+}
+
 type Community {
   "Stable, immutable Community identity."
   ref: String!
@@ -4235,7 +4272,7 @@ type Community {
 
   subscribersCount: Int
 
-  adminsCount: Int
+  moderatorsCount: Int
 
   "Total number of tags configured for the community."
   communityTagsCount: Int
@@ -4243,8 +4280,8 @@ type Community {
   "Whether the current viewer has subscribed to this community."
   viewerHasSubscribed: Boolean
 
-  "Whether the current viewer is an Admin of this Community."
-  viewerIsAdmin: Boolean
+  "Whether the current viewer is a moderator of this community."
+  viewerIsModerator: Boolean
 
   lifecycleState: CommunityLifecycleState
 
@@ -5346,6 +5383,10 @@ type User {
 
   achievement: Achievement
 
+  passportString: String
+
+  passport: Json
+
   subscribedCommunitiesCount: Int
 
   "get follower users count"
@@ -5498,6 +5539,10 @@ input BrowserSessionMetadataInput {
   createdCountry: String
   createdRegion: String
   createdCity: String
+}
+
+type Rules {
+  cms: Json
 }
 
 type UserPage {

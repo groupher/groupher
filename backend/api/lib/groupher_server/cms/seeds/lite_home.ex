@@ -219,6 +219,8 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
         do: attrs,
         else: Map.put(attrs, :body_bag, mock_body_bag(Map.get(attrs, :body, "")))
 
+    actor = %{actor | cur_passport: %{"global" => %{"god" => true}}}
+
     with {:ok, %{article: article}} <-
            CMS.Articles.create_and_publish_article(community, thread, attrs, actor,
              command_id: command_id

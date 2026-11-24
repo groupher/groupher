@@ -29,18 +29,18 @@ defmodule GroupherServer.CMS.Communities.Count do
   def update(
         %Community{} = community,
         %User{} = user,
-        :admins_count,
+        :moderators_count,
         opt
       ) do
     with {:ok, community} <- ORM.fill_meta(community) do
-      admins_ids =
+      moderators_ids =
         case opt do
-          :inc -> (community.meta.admins_ids ++ [user.id]) |> Enum.uniq()
-          :dec -> (community.meta.admins_ids -- [user.id]) |> Enum.uniq()
+          :inc -> (community.meta.moderators_ids ++ [user.id]) |> Enum.uniq()
+          :dec -> (community.meta.moderators_ids -- [user.id]) |> Enum.uniq()
         end
 
-      with {:ok, community} <- ORM.update_meta(community, %{admins_ids: admins_ids}) do
-        ORM.update(community, %{admins_count: length(admins_ids)})
+      with {:ok, community} <- ORM.update_meta(community, %{moderators_ids: moderators_ids}) do
+        ORM.update(community, %{moderators_count: length(moderators_ids)})
       end
     end
   end

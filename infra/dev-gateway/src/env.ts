@@ -16,13 +16,11 @@ import { config } from 'dotenv'
 
 const gatewayRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-if (process.env.DEV_HUB_MANAGED_ENVIRONMENT !== 'true') {
-  config({
-    path: [
-      path.join(gatewayRoot, '.env.local'),
-      path.join(gatewayRoot, '.env.development'),
-      path.join(gatewayRoot, '.env'),
-    ],
-    quiet: true,
-  })
-}
+config({
+  path: [
+    path.join(gatewayRoot, '.env.local'),
+    path.join(gatewayRoot, '.env.development'),
+    path.join(gatewayRoot, '.env'),
+  ],
+  quiet: true,
+})

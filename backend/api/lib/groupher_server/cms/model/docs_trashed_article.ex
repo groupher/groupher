@@ -6,7 +6,6 @@ defmodule GroupherServer.CMS.Model.DocsTrashedArticle do
   """
 
   use Ecto.Schema
-  use Flop.Schema
   import Ecto.Changeset
 
   alias GroupherServer.{CMS, Accounts}
@@ -15,11 +14,6 @@ defmodule GroupherServer.CMS.Model.DocsTrashedArticle do
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @flop_options [
-    filterable: [],
-    sortable: [:inserted_at, :id],
-    pagination_types: [:page, :first]
-  ]
 
   schema "trashed_doc_articles" do
     field(:hash_id, Ecto.UUID, autogenerate: true)

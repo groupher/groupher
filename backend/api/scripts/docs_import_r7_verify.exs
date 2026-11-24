@@ -1,10 +1,9 @@
 import ExUnit.Assertions
 import Ecto.Query
 import GroupherServer.Support.Factory
-import GroupherServer.Test.ConnSimulator, only: [simu_conn: 3]
 alias GroupherServer.{CMS, Repo}
-alias CMS.Import.{DocValidator, Jobs, Staging}
-alias CMS.DocTree.Workflows.Import
+alias CMS.ContentImport.{DocValidator, Jobs, Staging}
+alias CMS.DocTree.Workflows.ContentImport
 alias CMS.DocTree.Publish.Queue
 alias CMS.Model.{Article, ArticleWorkingCopy, ArticlePublic, DocsTreeNode, DocsQueueArticle}
 [[database]] = Repo.query!("SELECT current_database()").rows
@@ -86,30 +85,25 @@ alias R7ImportFixtures, as: F
 {:ok, actor} = db_insert(:user)
 {:ok, site} = db_insert(:community)
 
-_conn =
-  simu_conn(:user, actor,
-    cms: %{
+{:ok, _} =
+  CMS.Passport.stamp_passport(
+    %{
+      "global" => %{},
       site.slug => %{
-        "doc.import" => true,
-        "doc.queue.write" => true,
-        "doc.queue.publish" => true,
-        "doc.restore" => true,
-        "doc.trash" => true
+        "cms" => %{
+          "doc.import" => true,
+          "doc.queue.write" => true,
+          "doc.queue.publish" => true,
+          "doc.restore" => true,
+          "doc.trash" => true
+        }
       }
-    }
+    },
+    actor
   )
 
-make_job = fn documents, disposition ->
+make_job = fn documents ->
   {:ok, preview} = DocValidator.preview(site, F.source_info(), F.source_tree(documents))
-
-  assert preview.conflicts == []
-  targets = DocValidator.page_targets(preview.target_tree)
-
-  documents =
-    Enum.map(documents, fn document ->
-      assert Map.fetch!(targets, document["source_ref"])["disposition"] == disposition
-      Map.put(document, "overwrite_confirmed", disposition == "overwrite")
-    end)
 
   {:ok, job} =
     Jobs.create(site, actor, %{
@@ -133,27 +127,32 @@ make_job = fn documents, disposition ->
 end
 
 documents = [F.document("docs/start.md", "/start"), F.document("docs/next.md", "/next")]
-job = make_job.(documents, "create")
-assert {:ok, completed} = Import.apply(site, job.job_ref)
+job = make_job.(documents)
+assert {:ok, completed} = ContentImport.apply(site, job.job_ref)
 assert completed.status == :completed
 assert completed.counts.pages == 2
-assert {:ok, ^completed} = Import.apply(site, job.job_ref)
+assert {:ok, ^completed} = ContentImport.apply(site, job.job_ref)
 assert Repo.aggregate(from(n in DocsTreeNode, where: n.community_id == ^site.id), :count) == 4
 
-{:ok, queue} = Queue.read(site)
-queue_members = from(q in DocsQueueArticle, where: q.queue_id == ^queue.id)
-refute Repo.exists?(queue_members)
+assert Repo.aggregate(
+         from(q in DocsQueueArticle,
+           join: a in CMS.Model.DocsLifecycle,
+           on: a.article_id == q.article_id,
+           where: a.community_id == ^site.id
+         ),
+         :count
+       ) == 0
 
 id = completed.first_imported_doc_id
 article = Repo.get!(Article, id)
-copy = Repo.get_by!(ArticleWorkingCopy, article_id: id, scope_type: :default, scope_id: id)
+copy = Repo.get_by!(ArticleWorkingCopy, article_id: id, scope_kind: :default)
 assert CMS.Articles.Body.document(copy).plain_text == "Imported body"
 
 # Editing D after review must reject apply and preserve its staged body.
-stale = make_job.(documents, "overwrite")
+stale = make_job.(documents)
 
 {:ok, _} =
-  CMS.Articles.save_working_copy(
+  CMS.Articles.Commands.SaveWorkingCopy.execute(
     article,
     site,
     copy.id,
@@ -163,18 +162,12 @@ stale = make_job.(documents, "overwrite")
     Ecto.UUID.generate()
   )
 
-assert {:error, %{reason: :target_revision_conflict}} = Import.apply(site, stale.job_ref)
-stale_record = Repo.get_by!(CMS.Import.Model.Job, hash_id: stale.job_ref)
-assert stale_record.status == :ready
-
-assert Repo.aggregate(
-         from(b in CMS.Import.Model.Job.Body, where: b.job_id == ^stale_record.id),
-         :count
-       ) == length(documents)
+assert {:error, _} = ContentImport.apply(site, stale.job_ref)
+assert Repo.get_by!(CMS.ContentImport.Model.Job, hash_id: stale.job_ref).status == :ready
 
 # Reimport uses the same identities and leaves existing Q content unchanged.
-fresh = make_job.(documents, "overwrite")
-assert {:ok, _} = Import.apply(site, fresh.job_ref)
+fresh = make_job.(documents)
+assert {:ok, _} = ContentImport.apply(site, fresh.job_ref)
 copy = Repo.get!(ArticleWorkingCopy, copy.id)
 {:ok, queue} = Queue.read(site)
 
@@ -197,12 +190,19 @@ copy = Repo.get!(ArticleWorkingCopy, copy.id)
 
 refute Repo.exists?(from(w in ArticleWorkingCopy, where: w.article_id == ^id))
 public = Repo.get!(ArticlePublic, id)
-again = make_job.(documents, "overwrite")
-assert {:ok, _} = Import.apply(site, again.job_ref)
-assert Repo.get_by!(ArticleWorkingCopy, article_id: id, scope_type: :default, scope_id: id)
+again = make_job.(documents)
+assert {:ok, _} = ContentImport.apply(site, again.job_ref)
+assert Repo.get_by!(ArticleWorkingCopy, article_id: id, scope_kind: :default)
 assert Repo.get!(ArticlePublic, id).snapshot_id == public.snapshot_id
 
-refute Repo.exists?(queue_members)
+assert Repo.aggregate(
+         from(q in DocsQueueArticle,
+           join: a in CMS.Model.DocsLifecycle,
+           on: a.article_id == q.article_id,
+           where: a.community_id == ^site.id
+         ),
+         :count
+       ) == 0
 
 assert Repo.aggregate(
          from(n in DocsTreeNode, where: n.community_id == ^site.id and n.stage == :draft),

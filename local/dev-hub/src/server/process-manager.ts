@@ -15,11 +15,11 @@ import type {
 import {
   createSpawnEnvironment,
   ensureLocalWorkerStateDirectory,
+  resolveExternalEnvironment,
   resolveLocalEnvironment,
   type TLocalEnvironmentState,
   writeLocalWorkerEnvironment,
 } from './local-environment.ts'
-import { readServiceLocalEnvironment } from './service-environment.ts'
 import type { TServiceDefinition, TServiceStartupCheck } from './services.ts'
 
 const MAX_LOG_CHARS = 300_000
@@ -393,11 +393,8 @@ export class ServiceManager {
       definition,
       process.env,
     )
-    const overrides = await readServiceLocalEnvironment(
-      definition,
-      this.localEnvironmentState.repoRoot,
-    )
-    const resolvedEnv = { ...resolved.env, ...overrides }
+    const external = await resolveExternalEnvironment(definition)
+    const resolvedEnv = { ...resolved.env, ...external }
     if (definition.workerEnvFile) {
       const workerPaths = await writeLocalWorkerEnvironment(
         definition.id,

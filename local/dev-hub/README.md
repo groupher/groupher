@@ -288,9 +288,3 @@ pnpm --filter @groupher/local-dev-hub run format:check
 # Rust 启动器
 cargo test --manifest-path local/dev-hub/src-tauri/Cargo.toml --locked
 ```
-
-## 集中本地配置
-
-服务配置抽屉的 `local-dev.env` 页面支持查看配置来源、编辑允许的本地参数和重置覆盖值。配置保存在 Hub 私有的 `services/<serviceId>/local-dev.env`；内部身份与密钥继续由 `state.json` 管理。保存只影响该服务的下次启动，不自动重启或运行迁移。已有项目 `.env*` 仅作参考；外部凭据需要按服务白名单迁入面板。详见 [集中本地配置](../../docs/architecture/dev-hub-local-config.md)。
-
-隔离浏览器验收：`pnpm --filter @groupher/local-dev-hub run test:environment-ui`，不接管当前 Hub 或应用服务。

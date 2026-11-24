@@ -1,11 +1,6 @@
-import { GATE_ACTION } from '@groupher/contracts/gate'
-import { useQuery } from '@tanstack/react-query'
 import { type FC, memo, useRef, useState } from 'react'
 
-import { ARTICLE_THREAD } from '~/const/thread'
-import { browserGraphQLRequest } from '~/graphql/client'
 import useOutsideClick from '~/hooks/useOutsideClick'
-import useViewingArticle from '~/hooks/useViewingArticle'
 import ArchivedSVG from '~/icons/Archived'
 import ArrowSVG from '~/icons/ArrowSimple'
 import EditSVG from '~/icons/EditPen'
@@ -13,10 +8,8 @@ import LockSVG from '~/icons/LockLight'
 import MergeSVG from '~/icons/Merge'
 import SlugSVG from '~/icons/Slug'
 import DeleteSVG from '~/icons/Trash'
-import useAccount from '~/stores/account/hooks'
 
 import { SUB_MENU } from '../constant'
-import S from '../schema'
 import type { TSubMenu } from '../spec'
 import SubMenu from '../SubMenu'
 import CatItem from './CatItem'
@@ -34,25 +27,6 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
   const [subMenuActive, setSubMenuActive] = useState(false)
 
   const s = useSalon({ subMenuType })
-  const { article, articlePath } = useViewingArticle()
-  const { accountScope } = useAccount()
-  const articleId = article.id ? String(article.id) : ''
-  const permissionsQuery = useQuery({
-    queryKey: ['article-settings-permissions', accountScope, articleId],
-    queryFn: () => browserGraphQLRequest(S.articlePermissions, { articleId }),
-    enabled: !!accountScope && !!articleId && articlePath?.thread === ARTICLE_THREAD.POST,
-  })
-  const canonicalPermissionNames = new Map(
-    Object.keys(GATE_ACTION).map((key) => {
-      const action = GATE_ACTION[key as keyof typeof GATE_ACTION]
-      return [action.replaceAll('.', '_').toUpperCase(), action]
-    }),
-  )
-  const canEditBody = (permissionsQuery.data?.articlePermissions?.permissions ?? []).some(
-    (permission) =>
-      (canonicalPermissionNames.get(String(permission)) ?? String(permission)) ===
-      GATE_ACTION.ARTICLE_UPDATE,
-  )
 
   const ref = useRef(null)
   useOutsideClick(ref, () => {
@@ -89,15 +63,6 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
             <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
           </button>
-
-          {articlePath?.thread === ARTICLE_THREAD.POST && canEditBody ? (
-            <button type='button' className={s.menuItem} onClick={() => openSubMenu(SUB_MENU.BODY)}>
-              <EditSVG className={s.icon} />
-              <div className={s.menuTitle}>编辑正文</div>
-              <div className='grow' />
-              <ArrowSVG className={cn(s.icon, 'rotate-180')} />
-            </button>
-          ) : null}
 
           <button type='button' className={s.menuItem} onClick={() => openSubMenu(SUB_MENU.SLUG)}>
             <SlugSVG className={s.icon} />

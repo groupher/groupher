@@ -84,6 +84,36 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
   defp resolve_community(%Community{} = community), do: {:ok, community}
   defp resolve_community(ref), do: GroupherServer.CMS.front_desk_community(ref, mode: :internal)
 
+  def add_moderator(_root, ~m(community user command_id)a, %{context: %{cur_user: cur_user}}) do
+    CMS.communities_add_moderator(community, user, cur_user, command_id)
+  end
+
+  def add_moderators(_root, ~m(community users command_id)a, %{context: %{cur_user: cur_user}}) do
+    CMS.communities_add_moderators(community, users, cur_user, command_id)
+  end
+
+  def remove_moderator(_root, ~m(community user command_id)a, %{context: %{cur_user: cur_user}}) do
+    CMS.communities_remove_moderator(community, user, cur_user, command_id)
+  end
+
+  def update_moderator_passport(_root, ~m(community user rules command_id)a, %{
+        context: %{cur_user: cur_user}
+      }) do
+    CMS.communities_update_moderator_passport(community, rules, user, cur_user, command_id)
+  end
+
+  def paged_community_moderators(_root, %{community: community} = args, %{context: context}) do
+    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
+      CMS.communities_members(
+        :moderators,
+        community,
+        Map.get(args, :filter) || %{},
+        pagi,
+        Map.get(context, :cur_user)
+      )
+    end
+  end
+
   def create_community_tag(
         _root,
         %{thread: thread, community: community, command_id: command_id} = args,

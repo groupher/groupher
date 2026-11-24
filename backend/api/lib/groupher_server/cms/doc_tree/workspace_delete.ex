@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
   alias CMS.DocTree.WorkspacePersist
 
   alias CMS.Model.{
+    Article,
     ArticleBinding,
     ArticleLifecycle,
     ArticlePublic,
@@ -101,6 +102,10 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
          {:ok, %{target: queue_target}} <- TreeOrder.remove(queued, queued_ids),
          doc_ids <- page_ids(draft, draft_ids),
          removed_ids <- Enum.sort(Enum.uniq(doc_ids ++ page_ids(queued, queued_ids))),
+         {:ok, :pass} <- authorize(community, removed_ids, :delete, actor),
+         survivor_ids <- changed_pages(draft, draft_target) ++ changed_pages(queued, queue_target),
+         survivor_ids <- survivor_ids |> Enum.uniq() |> Kernel.--(removed_ids) |> Enum.sort(),
+         {:ok, :pass} <- authorize(community, survivor_ids, :edit, actor),
          member_ids <- member_ids(queue, removed_ids),
          {:ok, :pass} <-
            authorize_queue(community, queued != queue_target or member_ids != [], actor),
@@ -186,6 +191,33 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
     |> Enum.map(& &1.doc_id)
     |> Enum.uniq()
     |> Enum.sort()
+  end
+
+  defp changed_pages(before, after_nodes) do
+    prior = Map.new(before, &{&1.node_id, &1})
+    changed = after_nodes |> Enum.filter(&(prior[&1.node_id] != &1)) |> MapSet.new(& &1.node_id)
+    page_ids(after_nodes, descendants(after_nodes, changed) |> MapSet.to_list())
+  end
+
+  defp authorize(community, ids, action, actor) do
+    articles =
+      Repo.all(from(a in Article, where: a.id in ^ids, order_by: a.id, lock: "FOR UPDATE"))
+
+    if length(articles) != length(ids) do
+      {:error, :invalid_doc_identity}
+    else
+      Enum.reduce_while(articles, {:ok, :pass}, fn article, _ ->
+        case CMS.Gate.Access.Check.with_authorized_article_binding(
+               actor,
+               action,
+               {community, article},
+               fn _ -> {:ok, :pass} end
+             ) do
+          {:ok, :pass} -> {:cont, {:ok, :pass}}
+          {:error, _} = error -> {:halt, error}
+        end
+      end)
+    end
   end
 
   defp authorize_queue(_community, false, _actor), do: {:ok, :pass}

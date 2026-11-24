@@ -68,12 +68,12 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   @type capability :: :read | :write | :manage | :destroy
   @type read_mode ::
-          :public | :admin | :owner | :admin_management | :operations
+          :public | :admin | :owner | :moderator_management | :operations
 
   @doc "Returns the policy modes shared by Community Scope and access checks."
   @spec read_policy_modes() :: [read_mode()]
   def read_policy_modes do
-    [:public, :admin, :owner, :admin_management, :operations]
+    [:public, :admin, :owner, :moderator_management, :operations]
   end
 
   @doc """
@@ -88,14 +88,14 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   def readable_states(:public), do: @public_readable_states
   def readable_states(:admin), do: @management_readable_states
   def readable_states(:owner), do: @management_readable_states
-  def readable_states(:admin_management), do: @management_readable_states
+  def readable_states(:moderator_management), do: @management_readable_states
   def readable_states(:operations), do: @operations_readable_states
 
   @doc "Checks a Community Lifecycle state for an explicit read policy mode."
   @spec can_read_mode(Community.t() | CommunityLifecycle.t(), read_mode(), map()) ::
           {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_read_mode(resource, mode, _context)
-      when mode in [:public, :admin, :owner, :admin_management, :operations] do
+      when mode in [:public, :admin, :owner, :moderator_management, :operations] do
     with {:ok, lifecycle} <- lifecycle_from(resource) do
       {:ok, lifecycle.state in readable_states(mode)}
     end

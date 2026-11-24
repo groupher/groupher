@@ -1,13 +1,13 @@
 import { graphql } from '~/graphql/authoring'
-import { currentCommunityAdmin as currentAdmin } from '~/schemas/pages/passport'
 
-/** Public Community Admin directory; exposes no permission facts. */
-export const adminDirectoryPage = graphql(`
-  query PagedCommunityAdminMembers($communityRef: String!, $pagi: PagiInput) {
-    pagedCommunityAdminMembers(communityRef: $communityRef, pagi: $pagi) {
+/** Public community member listing; does not expose the legacy Passport string. */
+export const moderatorPage = graphql(`
+  query PagedCommunityModerators($community: String!, $pagi: PagiInput) {
+    pagedCommunityModerators(community: $community, pagi: $pagi) {
       entries {
-        memberId
-        isLord
+        id
+        isRoot
+        passportItemCount
         user {
           login
           avatar
@@ -107,6 +107,21 @@ export const adminRequests = graphql(`
           startCursor
           endCursor
         }
+      }
+    }
+  }
+`)
+
+export const currentAdmin = graphql(`
+  "Current viewer's Community Admin membership"
+  query DashboardCurrentCommunityAdmin($communityRef: String!) {
+    currentCommunityAdmin(communityRef: $communityRef) {
+      memberId
+      revision
+      isLord
+      permissions
+      user {
+        login
       }
     }
   }
@@ -230,7 +245,7 @@ export const leaveCommunityAdmins = graphql(`
 `)
 
 export default {
-  adminDirectoryPage,
+  moderatorPage,
   adminPage,
   adminRequests,
   currentAdmin,

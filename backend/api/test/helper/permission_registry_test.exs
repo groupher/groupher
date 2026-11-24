@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
              PermissionRegistry.allowed?(%{"global" => %{}}, nil, "community.create")
 
     assert {:ok, true} =
-             PermissionRegistry.allowed?(%{"global" => %{"god" => true}}, nil, "doc.update")
+             PermissionRegistry.allowed?(%{"global" => %{"god" => true}}, nil, "post.update")
   end
 
   test "allowed?/4 expands thread-scoped global requirements" do
@@ -73,49 +73,26 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
   test "allowed? checks context grants and requires a community" do
     passport = %{
       "global" => %{},
-      "demo" => %{"cms" => %{"post.set_category" => true}}
+      "demo" => %{"cms" => %{"post.edit" => true}}
     }
 
-    assert {:ok, true} = PermissionRegistry.allowed?(passport, "demo", "post.set_category")
+    assert {:ok, true} = PermissionRegistry.allowed?(passport, "demo", "post.update")
 
     assert {:error, %ErrorCat.Error{reason: :community_required}} =
-             PermissionRegistry.allowed?(passport, nil, "post.set_category")
-  end
-
-  test "ordinary Article legacy actions and grants are retired" do
-    for action <- [
-          "post.update",
-          "post.draft.update",
-          "post.draft.publish",
-          "blog.update",
-          "blog.draft.update",
-          "blog.draft.publish",
-          "changelog.update",
-          "changelog.draft.update",
-          "changelog.draft.publish"
-        ] do
-      assert {:error, %ErrorCat.Error{reason: :unknown_action}} =
-               PermissionRegistry.requirement(action)
-    end
-
-    refute PermissionRegistry.valid_context_permission?(:cms, "post.edit")
-    refute PermissionRegistry.valid_context_permission?(:cms, "blog.edit")
-    refute PermissionRegistry.valid_context_permission?(:cms, "changelog.edit")
-    assert PermissionRegistry.valid_context_permission?(:cms, "doc.edit")
-    assert PermissionRegistry.valid_context_permission?(:cms, "post.set_category")
+             PermissionRegistry.allowed?(passport, nil, "post.update")
   end
 
   test "valid_rules? accepts normalized shape only" do
     normalized = %{
       "global" => %{"category.set" => true, "community.update" => true},
-      "javascript" => %{"cms" => %{"post.pin" => true}}
+      "javascript" => %{"cms" => %{"post.edit" => true}}
     }
 
     assert PermissionRegistry.valid_rules?(normalized)
 
     refute PermissionRegistry.valid_rules?(%{
              "community.update" => true,
-             "javascript" => %{"post.pin" => true}
+             "javascript" => %{"post.edit" => true}
            })
 
     refute PermissionRegistry.valid_rules?(%{
@@ -130,7 +107,7 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
 
     refute PermissionRegistry.valid_rules?(%{
              "global" => %{},
-             "javascript" => %{"communities" => %{"post.pin" => true}}
+             "javascript" => %{"communities" => %{"post.edit" => true}}
            })
   end
 
@@ -138,21 +115,21 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
     normalized =
       PermissionRegistry.normalize_rules(%{
         "global" => %{},
-        "cms" => %{"root" => true, "cms" => %{"post.pin" => true}}
+        "cms" => %{"root" => true, "cms" => %{"post.edit" => true}}
       })
 
     assert get_in(normalized, ["cms", "root"]) == true
-    assert get_in(normalized, ["cms", "cms", "post.pin"]) == true
+    assert get_in(normalized, ["cms", "cms", "post.edit"]) == true
   end
 
   test "normalize_rules still migrates legacy top-level cms context shape" do
     normalized =
       PermissionRegistry.normalize_rules(%{
         "global" => %{},
-        "cms" => %{"javascript" => %{"post.pin" => true}}
+        "cms" => %{"javascript" => %{"post.edit" => true}}
       })
 
-    assert get_in(normalized, ["javascript", "cms", "post.pin"]) == true
+    assert get_in(normalized, ["javascript", "cms", "post.edit"]) == true
   end
 
   defp action_literals_from_schema do

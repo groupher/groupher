@@ -39,16 +39,7 @@ const articleWorkingCopies = graphql(`
       scopeType
       revision
       title
-      bodyJson
       tagIds
-    }
-  }
-`)
-
-const articlePermissions = graphql(`
-  query ArticleSettingMenuPermissions($articleId: ID!) {
-    articlePermissions(articleId: $articleId) {
-      permissions
     }
   }
 `)
@@ -121,7 +112,6 @@ const communityTagGroups = graphql(`
 export default {
   saveWorkingCopy,
   articleWorkingCopies,
-  articlePermissions,
   articleHistoryEvents,
   articleHistoryEvent,
   articleHistoryDiff,

@@ -322,21 +322,10 @@ test('converter and import use matching local and Cloudflare project identities'
     assert.ok(deployment?.url.endsWith(`/view/${id}/production`))
     const manifest = JSON.parse(readFileSync(`${REPO_ROOT}/backend/${id}/package.json`, 'utf8'))
     assert.equal(manifest.name, `@groupher/${id}`)
-    if (id === 'converter') {
-      assert.equal(manifest.scripts['dev:managed'], 'cf dev --mode development')
-    } else {
-      assert.equal(service?.workerEnvFile, true)
-      assert.match(
-        manifest.scripts['dev:managed'],
-        /^wrangler dev --experimental-new-config --env development --local /,
-      )
-      assert.ok(manifest.scripts['dev:managed'].includes(`--port ${port}`))
-      assert.ok(manifest.scripts['dev:managed'].includes('--env-file "$DEV_HUB_WORKER_ENV_FILE"'))
-      assert.ok(
-        manifest.scripts['dev:managed'].includes('--persist-to "$DEV_HUB_WORKER_STATE_DIR"'),
-      )
-      assert.equal(manifest.scripts.deploy, 'cf deploy --mode production')
-    }
+    assert.equal(
+      manifest.scripts['dev:managed'],
+      id === 'converter' ? 'cf dev --mode development' : `cf dev --mode development --port ${port}`,
+    )
     assert.equal(manifest.scripts['dev:node'], undefined)
   }
   for (const id of ['content-import', 'document-converter']) {

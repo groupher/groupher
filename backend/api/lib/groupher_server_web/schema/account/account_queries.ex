@@ -147,12 +147,19 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
     end
 
     @desc "paged communities which the user it's the editor"
-    field :administered_communities, :community_page do
+    field :moderatorable_communities, :community_page do
       arg(:login, :string)
       arg(:pagi, :pagi_input)
 
       middleware(M.FrontDesk, {:user, optional: true})
-      resolve(&R.Accounts.Profiles.administered_communities/3)
+      resolve(&R.Accounts.Profiles.moderatorable_communities/3)
+    end
+
+    @desc "get all passport rules include system and community etc ..."
+    field :all_passport_rules_string, :rules do
+      middleware(M.Authorize, :login)
+
+      resolve(&R.Accounts.Passport.get_all_rules/3)
     end
 
     @desc "search user by name"

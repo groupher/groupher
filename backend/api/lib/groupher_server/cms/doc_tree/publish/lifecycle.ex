@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Lifecycle do
   end
 
   @doc "Moves a first publication from draft to published and checks subsequent publications."
-  def published(%ArticleLifecycle{state: :draft} = lifecycle, _first_publish?, _now) do
+  def published(%ArticleLifecycle{state: :draft} = lifecycle, true, _now) do
     CMS.Articles.Lifecycle.transition(lifecycle, :published)
   end
 

@@ -1,8 +1,8 @@
 import useSalon from './salon/import_issues'
-import type { TImportIssue } from './spec'
+import type { TContentImportIssue } from './spec'
 
 /** Renders bounded per-document failed and skipped outcomes returned by the Job. */
-export default function ImportIssues({ issues }: { issues: TImportIssue[] }) {
+export default function ImportIssues({ issues }: { issues: TContentImportIssue[] }) {
   const s = useSalon()
 
   if (issues.length === 0) return null

@@ -270,19 +270,3 @@ export type THubSnapshot = {
   metrics: Record<string, TServiceMetricsSnapshot>
   metricNotices: TMetricStorageNotice[]
 }
-
-export type TServiceEnvironmentEntry = {
-  key: string
-  value: string | null
-  configured: boolean
-  secret: boolean
-  editable: boolean
-  source: 'local' | 'default' | 'hub'
-}
-
-export type TServiceEnvironment = {
-  serviceId: string
-  filePath: string
-  entries: TServiceEnvironmentEntry[]
-  appliesOn: 'next-start'
-}

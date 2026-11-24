@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   alias Ecto.Multi
   alias Accounts.Model.User
   alias CMS.Communities.{ErrorCat, Lifecycle}
-  alias CMS.Communities.Admins.Setup, as: AdminSetup
+  alias CMS.Communities.Moderators.Setup, as: ModeratorSetup
 
   alias CMS.CommunityApplications.Lifecycle, as: ApplicationLifecycle
   alias CMS.Gate.Const
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
     Community,
     CommunityApplication,
     CommunityApplicationEvent,
-    CommunityAdmin
+    CommunityModerator
   }
 
   @community_normal CMS.Communities.Const.pending_state(:normal)
@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   Runs idempotent initialization for a newly created Community.
 
   Fetches the community, its application and the owner, ensures the owner is
-  the owner Admin, initializes the doc tree and analysis provisioning,
+  the root moderator, initializes the doc tree and analysis provisioning,
   then activates the community.
 
   ## Examples
@@ -278,24 +278,23 @@ defmodule GroupherServer.CMS.Communities.Setup do
   defp ensure_root_locked(community, user) do
     community = lock_community(community.id)
 
-    if lord_admin?(community, user) do
+    if root_moderator?(community, user) do
       :pass
     else
-      add_lord_admin(community, user)
+      add_root_moderator(community, user)
     end
   end
 
-  defp lord_admin?(community, user) do
+  defp root_moderator?(community, user) do
     Repo.exists?(
-      from(admin in CommunityAdmin,
-        where:
-          admin.community_id == ^community.id and admin.user_id == ^user.id and admin.is_lord
+      from(moderator in CommunityModerator,
+        where: moderator.community_id == ^community.id and moderator.user_id == ^user.id
       )
     )
   end
 
-  defp add_lord_admin(community, user) do
-    case AdminSetup.add_lord(community, user) do
+  defp add_root_moderator(community, user) do
+    case ModeratorSetup.add_root(community, user) do
       {:ok, _} -> :pass
       {:error, reason} -> Repo.rollback(reason)
     end

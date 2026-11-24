@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
   use GroupherServer.TestMate
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias CMS.Gate.ErrorCat, as: GateErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
 
   defp emotion_entry(emotions, type) do
     Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GateErrorCat.permission_denied())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GateErrorCat.permission_denied())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn

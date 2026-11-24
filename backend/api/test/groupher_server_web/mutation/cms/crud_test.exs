@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   alias GroupherServer.CMS
   alias CMS.Communities.Categories.Persist, as: CategoriesPersist
-  alias CMS.Model.{Category, CommunityLifecycle, CommunityAdmin, Passport}
+  alias CMS.Model.{Category, CommunityLifecycle, CommunityModerator, Passport}
 
   setup do
     {:ok, category} = db_insert(:category)
@@ -451,6 +451,199 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     |> Map.put(:command_id, Ecto.UUID.generate())
   end
 
+  describe "[mutation cms moderators]" do
+    @all_rules_query S.Moderation.q(:all_passport_rules)
+    test "can get all passport rules", ~m(user)a do
+      rule_conn = simu_conn(:user, user)
+      result = rule_conn |> gq_query(@all_rules_query)
+
+      assert is_binary(result["root"])
+      assert is_binary(result["moderator"])
+
+      assert is_map(Jason.decode!(result["root"]))
+      assert is_map(Jason.decode!(result["moderator"]))
+    end
+
+    @set_moderator_query S.Moderation.m(:add_moderator)
+    test "auth user can add moderator to community", ~m(user user2 community)a do
+      passport_rules = %{community.slug => %{"root" => true}}
+      rule_conn = simu_conn(:user, user, cms: passport_rules)
+
+      variables = %{
+        user: user2.login,
+        community: community.slug,
+        command_id: Ecto.UUID.generate()
+      }
+
+      result = rule_conn |> gq_mutation(@set_moderator_query, variables)
+
+      assert result["slug"] == community.slug
+    end
+
+    @set_moderators_query S.Moderation.m(:add_moderators)
+    test "auth user can add moderators to community", ~m(user user2 community)a do
+      {:ok, user3} = db_insert(:user)
+
+      passport_rules = %{community.slug => %{"root" => true}}
+      rule_conn = simu_conn(:user, user, cms: passport_rules)
+
+      variables = %{
+        users: [user2.login, user3.login],
+        community: community.slug,
+        command_id: Ecto.UUID.generate()
+      }
+
+      result = rule_conn |> gq_mutation(@set_moderators_query, variables)
+
+      assert result["slug"] == community.slug
+      assert Enum.any?(moderators(community), &(&1["user"]["login"] == user2.login))
+      assert Enum.any?(moderators(community), &(&1["user"]["login"] == user3.login))
+    end
+
+    test "global god can add moderators to community", ~m(user2 community)a do
+      {:ok, user3} = db_insert(:user)
+
+      rule_conn = simu_conn(:user, user2, cms: %{"god" => true})
+
+      variables = %{
+        users: [user3.login],
+        community: community.slug,
+        command_id: Ecto.UUID.generate()
+      }
+
+      result = rule_conn |> gq_mutation(@set_moderators_query, variables)
+
+      assert result["slug"] == community.slug
+      assert Enum.any?(moderators(community), &(&1["user"]["login"] == user3.login))
+    end
+
+    @unset_moderator_query S.Moderation.m(:remove_moderator)
+    test "auth user can unset moderator AND passport from community", ~m(user community user2)a do
+      cur_user = user
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
+
+      assert {:ok, _} =
+               CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
+
+      assert {:ok, _} = Passport |> ORM.find_by(user_id: user2.id)
+
+      passport_rules = %{community.slug => %{"root" => true}}
+      rule_conn = simu_conn(:user, cur_user, cms: passport_rules)
+
+      variables = %{
+        user: user2.login,
+        community: community.slug,
+        command_id: Ecto.UUID.generate()
+      }
+
+      rule_conn |> gq_mutation(@unset_moderator_query, variables)
+
+      assert {:error, _} =
+               CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
+    end
+
+    @update_moderator_query S.Moderation.m(:update_moderator_passport)
+    @tag :skip_ci
+    test "auth user can update moderator to community", ~m(user user2 community)a do
+      cur_user = user
+
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
+
+      rule_conn = simu_conn(:user, user2)
+      root_rule_conn = simu_conn(:user, user, cms: %{community.slug => %{"root" => true}})
+
+      new_passport_rules =
+        Jason.encode!(%{
+          "global" => %{},
+          "#{community.slug}" => %{
+            "cms" => %{
+              "post.delete" => false,
+              "post.edit" => true,
+              "post.pin" => true,
+              "post.undo_pin" => true
+            }
+          }
+        })
+
+      variables = %{
+        user: user2.login,
+        community: community.slug,
+        rules: new_passport_rules,
+        command_id: Ecto.UUID.generate()
+      }
+
+      assert rule_conn
+             |> mutation_error?(
+               @update_moderator_query,
+               variables,
+               ErrorCat.code(CommunityErrorCat.community_root_only())
+             )
+
+      result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
+      assert result["slug"] == community.slug
+
+      {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
+      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.edit"])
+
+      moderator = Enum.find(moderators(community), &(&1["user"]["login"] == user2.login))
+      assert moderator["passportItemCount"] == 3
+
+      next_passport_rules =
+        Jason.encode!(%{
+          "global" => %{},
+          "#{community.slug}" => %{
+            "cms" => %{
+              "post.delete" => false,
+              "post.edit" => true,
+              "post.pin" => false,
+              "post.undo_pin" => true
+            }
+          }
+        })
+
+      next_variables = %{variables | rules: next_passport_rules, command_id: Ecto.UUID.generate()}
+      result = root_rule_conn |> gq_mutation(@update_moderator_query, next_variables)
+      assert result["slug"] == community.slug
+
+      {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
+      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.edit"])
+      refute get_in(user2_passport, ["#{community.slug}", "cms", "post.pin"])
+
+      {:ok, persisted_moderator} =
+        CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
+
+      moderator = Enum.find(moderators(community), &(&1["user"]["login"] == user2.login))
+      assert moderator["passportItemCount"] == 2
+      assert persisted_moderator.passport_item_count == 2
+    end
+
+    test "unauth user add moderator fails", ~m(user_conn guest_conn user community)a do
+      variables = %{user: user.login, community: community.slug, command_id: Ecto.UUID.generate()}
+      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
+
+      assert user_conn
+             |> mutation_error?(
+               @set_moderator_query,
+               variables,
+               ErrorCat.code(CommunityErrorCat.community_root_only())
+             )
+
+      assert guest_conn
+             |> mutation_error?(
+               @set_moderator_query,
+               variables,
+               ErrorCat.code(ProfileErrorCat.account_login())
+             )
+
+      assert rule_conn
+             |> mutation_error?(
+               @set_moderator_query,
+               variables,
+               ErrorCat.code(CommunityErrorCat.community_root_only())
+             )
+    end
+  end
+
   describe "[mutation cms subscribes]" do
     @subscribe_query S.Community.m(:subscribe_community)
     test "login user can subscribe community", ~m(user community)a do
@@ -567,4 +760,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
   end
 
+  defp moderators(community) do
+    query =
+      "query($community:String!){pagedCommunityModerators(community:$community,pagi:{offset:{page:1,size:100}}){entries{isRoot passportItemCount user{login}}}}"
+
+    gq_query(simu_conn(:guest), query, %{community: community.slug})["entries"]
+  end
 end

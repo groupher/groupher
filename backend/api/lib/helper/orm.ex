@@ -548,7 +548,7 @@ defmodule Helper.ORM do
   end
 
   @doc """
-  Finds one community by slug or aka with dashboard and Admins preloaded.
+  Finds one community by slug or aka with dashboard and moderators preloaded.
 
   ## Examples
 
@@ -560,7 +560,7 @@ defmodule Helper.ORM do
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)
-    |> preload(admins: :user)
+    |> preload(moderators: :user)
     |> Repo.one()
     |> done
   end

@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.ConnSimulator do
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityAdmin, GlobalPassport}
-  alias Helper.{Guardian, ORM, PermissionRegistry}
+  alias Helper.{Guardian, ORM}
 
   @spec simu_conn(:guest | :invalid_token | :user) :: Plug.Conn.t()
   @doc "Builds a guest, generated-user, or invalid-token test connection."
@@ -253,7 +253,7 @@ defmodule GroupherServer.Test.ConnSimulator do
 
       valid? =
         community_permission?(rule) or
-          PermissionRegistry.valid_context_permission?(:cms, rule)
+          CMS.Passport.Registry.valid_context_permission?(:cms, rule)
 
       if valid? and value == true, do: Map.put(acc, rule, true), else: acc
     end)

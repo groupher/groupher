@@ -4,7 +4,7 @@
 
 本文是 FrontDesk 的唯一当前合同。V1–V3 保留设计和实施历史，不需要组合多个版本才能判断新代码。
 
-> 2026-11-20 工作区已实施：[Article 读取统一与版本接口](../../migrations/frontdesk-article-unification.md)。普通读取统一返回带当前社区的扁平 Article；ArticleView/with_community 已删除；指定 Snapshot、WorkingCopy 有独立入口。读取 mode 使用 `:admin`，内部 policy mode 使用 `:owner`。命名迁移覆盖 Article、Community、Doc、Comment 和 ArticleLog；Community 的 Admin 读取允许所有者或 Admin，owner 仅所有者，并修正 `Communities.fetch` 将 owner 请求扩大为 admin 的转换。Article public 批量接受 actor，但不改变公开可见集合。本文其余旧批量包装和模式描述是历史合同，当前 Article 规则以迁移文档为准；工作区实现尚未发布。
+> 2026-11-20 工作区已实施：[Article 读取统一与版本接口](../../migrations/frontdesk-article-unification.md)。普通读取统一返回带当前社区的扁平 Article；ArticleView/with_community 已删除；指定 Snapshot、WorkingCopy 有独立入口。读取 mode 使用 `:admin`，内部 policy mode 使用 `:owner`。命名迁移覆盖 Article、Community、Doc、Comment 和 ArticleLog；Community 的 admin 仍允许所有者或 moderator，owner 仅所有者，并修正 `Communities.fetch` 将 owner 请求扩大为 admin 的转换。Article public 批量接受 actor，但不改变公开可见集合。本文其余旧批量包装和模式描述是历史合同，当前 Article 规则以迁移文档为准；工作区实现尚未发布。
 
 FrontDesk 负责 User、Community、Article、Comment 等顶层资源的稳定读取、Article/Comment 有界批量读取，以及少量稳定业务关系。
 

@@ -1,5 +1,5 @@
 /**
- * Starts the Import Worker in cf dev and verifies its HTTP boundary.
+ * Starts the Content Import Worker in cf dev and verifies its HTTP boundary.
  *
  * cf dev -> workerd Worker -> health and authorization assertions
  */

@@ -39,15 +39,11 @@ defmodule GroupherServerWeb.ConnCase do
   setup tags do
     async? = tags[:async] == true
 
-    owner_opts = [shared: not async?, ownership_timeout: 900_000]
-
-    owner_opts =
-      case tags[:sandbox_isolation] do
-        nil -> owner_opts
-        isolation -> Keyword.put(owner_opts, :isolation, isolation)
-      end
-
-    owner = Sandbox.start_owner!(GroupherServer.Repo, owner_opts)
+    owner =
+      Sandbox.start_owner!(GroupherServer.Repo,
+        shared: not async?,
+        ownership_timeout: 900_000
+      )
 
     on_exit(fn -> Sandbox.stop_owner(owner) end)
 

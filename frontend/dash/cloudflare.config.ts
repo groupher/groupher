@@ -25,14 +25,14 @@ export default defineConfig(({ mode }) => {
         DASH_DEFAULT_COMMUNITY: bindings.text(
           process.env.DASH_DEFAULT_COMMUNITY || (production ? 'dev' : 'home'),
         ),
-        IMPORT_APP_ENDPOINT: bindings.text(
+        CONTENT_IMPORT_APP_ENDPOINT: bindings.text(
           production ? 'https://import.groupher.com' : 'http://127.0.0.1:8001',
         ),
         GRAPHQL_ENDPOINT: production
           ? bindings.text('https://api.groupher.com/graphiql')
           : bindings.text('http://api.groupher.localhost:4001/graphiql'),
-        IMPORT_SERVICE_AUTH_RESOURCE: bindings.text('https://import.groupher.com/internal'),
-        IMPORT_SERVICE_AUTH_SCOPES: bindings.text('docs:import:proxy'),
+        CONTENT_IMPORT_SERVICE_AUTH_RESOURCE: bindings.text('https://import.groupher.com/internal'),
+        CONTENT_IMPORT_SERVICE_AUTH_SCOPES: bindings.text('docs:import:proxy'),
         SERVICE_AUTH_CLIENT_ID: bindings.text(
           production ? 'dash-cloudflare-91f1107ab3' : 'dash-development',
         ),

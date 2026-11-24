@@ -199,16 +199,6 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Query do
 
   def member_for_user(_, _), do: nil
 
-  @doc "Rejects legacy default-copy paths for an active co-author of this Article."
-  def reject_member_working_copy_access(%Article{thread: :doc} = article, %User{} = actor) do
-    case member_for_user(article, actor.id) do
-      %ArticleCoAuthor{} -> {:error, CMS.Gate.ErrorCat.permission_denied()}
-      nil -> {:ok, :pass}
-    end
-  end
-
-  def reject_member_working_copy_access(_, _), do: {:ok, :pass}
-
   @doc "Returns the current manager check using the Article scoped Gate action."
   def manager?(%Article{} = article, %User{} = actor) do
     case CMS.Gate.access_check(actor, :manage_coauthors, article) do

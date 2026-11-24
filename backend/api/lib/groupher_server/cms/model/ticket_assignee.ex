@@ -1,9 +1,9 @@
 defmodule GroupherServer.CMS.Model.TicketAssignee do
   @moduledoc """
-  Records which Community Admins are responsible for a Ticket.
+  Records which Community moderators are responsible for a Ticket.
 
       assignee command
-        -> Ticket and Admin identity join
+        -> Ticket and moderator identity join
         -> internal workbench assignment list
   """
 

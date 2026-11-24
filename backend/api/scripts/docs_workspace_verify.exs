@@ -1259,7 +1259,7 @@ assert {:ok, _} =
       "global" => %{},
       site.slug => %{
         "cms" => %{
-          "community.article.trash.read" => true,
+          "doc.trash" => true,
           "doc.restore" => true,
           "doc.permanent_delete" => true,
           "doc.queue.write" => true,
@@ -1406,9 +1406,9 @@ assert Repo.get_by!(CMS.Model.DocsTrashedArticle, article_id: pending_id)
 assert Repo.get_by!(CMS.Model.DocsTrashedTreeNode, node_id: pending_node.node_id)
 
 trash_query = """
-query DocsTrash($community: String!, $thread: CommunityArticleTrashThread!) {
-  communityArticleTrashItems(communityRef: $community, thread: $thread) {
-    entries { id recordRevision nodeId title }
+query DocsTrash($community: String!) {
+  docTreeTrashItems(community: $community) {
+    entries { id nodeId title }
     pageInfo { __typename hasNextPage }
   }
 }
@@ -1416,25 +1416,15 @@ query DocsTrash($community: String!, $thread: CommunityArticleTrashThread!) {
 
 assert {:ok, %{errors: [_ | _]}} =
          Absinthe.run(trash_query, GroupherServerWeb.Schema,
-           variables: %{"community" => site.slug, "thread" => "DOC"},
+           variables: %{"community" => site.slug},
            context: %{cur_user: outsider}
          )
 
-assert {:ok, %{data: %{"communityArticleTrashItems" => %{"entries" => trash_entries}}}} =
+assert {:ok, %{data: %{"docTreeTrashItems" => %{"entries" => trash_entries}}}} =
          Absinthe.run(trash_query, GroupherServerWeb.Schema,
-           variables: %{"community" => site.slug, "thread" => "DOC"},
+           variables: %{"community" => site.slug},
            context: %{cur_user: actor}
          )
-
-trash_record_revision = fn action_id ->
-  assert {:ok, %{data: %{"communityArticleTrashItems" => %{"entries" => entries}}}} =
-           Absinthe.run(trash_query, GroupherServerWeb.Schema,
-             variables: %{"community" => site.slug, "thread" => "DOC"},
-             context: %{cur_user: actor}
-           )
-
-  Enum.find(entries, &(&1["id"] == action_id))["recordRevision"]
-end
 
 assert Enum.any?(
          trash_entries,
@@ -1445,8 +1435,8 @@ assert {:ok, %{article_id: _}} =
          CMS.FrontDesk.Article.read_stable(site, :doc, binding.inner_id, nil, [])
 
 restore_mutation = """
-mutation RestoreWorkspace($community: String!, $tree: Int!, $queue: Int!, $action: ID!, $recordRevision: String!, $commandId: ID!, $parent: ID, $position: Int) {
-  restoreDocsWorkspaceNode(community: $community, treeRevision: $tree, queueRevision: $queue, trashActionId: $action, recordRevision: $recordRevision, commandId: $commandId, targetParentNodeId: $parent, targetIndex: $position) {
+mutation RestoreWorkspace($community: String!, $tree: Int!, $queue: Int!, $action: ID!, $commandId: ID!, $parent: ID, $position: Int) {
+  restoreDocsWorkspaceNode(community: $community, treeRevision: $tree, queueRevision: $queue, trashActionId: $action, commandId: $commandId, targetParentNodeId: $parent, targetIndex: $position) {
     nodeId treeRevision queueRevision
   }
 }
@@ -1457,8 +1447,6 @@ restore_vars = %{
   "tree" => 8,
   "queue" => 17,
   "action" => delete_result["trashActionId"],
-  "recordRevision" =>
-    Enum.find(trash_entries, &(&1["id"] == delete_result["trashActionId"]))["recordRevision"],
   "commandId" => Ecto.UUID.generate()
 }
 
@@ -1538,7 +1526,6 @@ restore_vars =
     "tree" => 10,
     "queue" => 20,
     "action" => second_delete["trashActionId"],
-    "recordRevision" => trash_record_revision.(second_delete["trashActionId"]),
     "commandId" => Ecto.UUID.generate()
   })
 
@@ -1633,7 +1620,6 @@ third_restore_vars =
     "tree" => 13,
     "queue" => 24,
     "action" => third_delete["trashActionId"],
-    "recordRevision" => trash_record_revision.(third_delete["trashActionId"]),
     "commandId" => Ecto.UUID.generate()
   })
 
@@ -1703,7 +1689,6 @@ child_restore_vars =
     "tree" => 17,
     "queue" => 26,
     "action" => child_delete["trashActionId"],
-    "recordRevision" => trash_record_revision.(child_delete["trashActionId"]),
     "commandId" => Ecto.UUID.generate()
   })
 

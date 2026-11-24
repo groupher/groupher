@@ -1,11 +1,38 @@
 /**
- * Production Node entrypoint: development login modules are absent from this graph.
+ * Starts the local Node server for Auth.
  *
  * Business position:
- *   Production Node entrypoint -> standard Auth app -> HTTP listener
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
  */
+
+import { serve } from '@hono/node-server'
+
 import './env'
 import { createApp } from './app'
-import { startAuthServer } from './node-server'
+import { createLocalDevLoginHandlers } from './local-dev-login'
 
-startAuthServer(createApp())
+const app = createApp(createLocalDevLoginHandlers())
+
+const port = Number.parseInt(process.env.PORT || '3004', 10)
+const hostname =
+  process.env.HOST?.trim() || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1')
+
+const server = serve({ fetch: app.fetch, hostname, port }, (info) => {
+  console.log(`Auth is ready at http://${hostname}:${info.port}`)
+})
+
+const shutdown = () => {
+  server.close((error) => {
+    if (error) {
+      console.error(error)
+      process.exitCode = 1
+    }
+  })
+}
+
+process.on('SIGINT', shutdown)
+process.on('SIGTERM', shutdown)

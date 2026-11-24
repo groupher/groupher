@@ -96,12 +96,7 @@ const Article: FC<TProps> = ({ sideTree }) => {
             {t('dsb.doc.begin_edit')}
           </button>
         ) : null}
-        <TitleActions
-          coverVisible={coverVisible}
-          disabled={controlsDisabled}
-          docId={docId}
-          title={title}
-        />
+        <TitleActions coverVisible={coverVisible} disabled={controlsDisabled} docId={docId} />
         <Title
           value={title}
           disabled={controlsDisabled}

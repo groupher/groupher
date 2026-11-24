@@ -132,6 +132,7 @@ const loadAccount = async (token: string): Promise<TAccountInit> => {
                 blog: social.blog ?? undefined,
               }
             : undefined,
+          passport: sessionUser.passport as TUser['passport'],
         }
       })()
     : null

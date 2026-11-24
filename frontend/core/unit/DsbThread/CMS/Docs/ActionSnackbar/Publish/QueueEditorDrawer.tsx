@@ -9,7 +9,7 @@ import { slugify } from '~/lib/slug'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import BaseDrawer from '~/ui/Drawer'
-import { queueMemberEditor } from '~/unit/DocThread/schema'
+import S from '~/unit/DsbThread/schema/docs'
 
 import Body from '../../Editor/Article/Body'
 import { parseEditorValue } from '../../Editor/Article/helper'
@@ -20,6 +20,8 @@ import useSalon from './salon/queue_editor'
 
 type TProps = {
   articleId: string
+  workingCopyId: string
+  queueRevision: number
   onClose: () => void
   onSaved: () => void
 }
@@ -27,14 +29,19 @@ type TProps = {
 type TDraft = { title: string; subtitle: string; slug: string; body: TRichEditorValue }
 const signature = (draft: TDraft): string => JSON.stringify(draft)
 
-const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
+const QueueEditorDrawer: FC<TProps> = ({
+  articleId,
+  workingCopyId,
+  queueRevision,
+  onClose,
+  onSaved,
+}) => {
   const s = useSalon()
   const { t } = useTrans()
   const { slug: community } = useCommunity()
   const [draft, setDraft] = useState<TDraft | null>(null)
   const [baseline, setBaseline] = useState('')
-  const [expectedQueueRevision, setExpectedQueueRevision] = useState<number | null>(null)
-  const [workingCopyId, setWorkingCopyId] = useState<string | null>(null)
+  const [expectedQueueRevision, setExpectedQueueRevision] = useState(queueRevision)
   const [workRevision, setWorkRevision] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,21 +50,16 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
 
   useEffect(() => {
     let cancelled = false
-    browserGraphQLRequest<{
-      docsQueueMember: {
-        queueRevision: number
-        workingCopy: TDocWorkingCopy
-      } | null
-    }>(queueMemberEditor, {
+    browserGraphQLRequest<{ articleWorkingCopies: TDocWorkingCopy[] }>(S.docsWorkingCopies, {
       community,
       articleId,
     })
       .then((data) => {
         if (cancelled) return
-        const member = data.docsQueueMember
-        if (!member || member.workingCopy.scopeType !== 'workspace')
-          throw new Error('Queue copy not found')
-        const copy = member.workingCopy
+        const copy = data.articleWorkingCopies.find(
+          (item) => item.id === workingCopyId && item.scopeType === 'workspace',
+        )
+        if (!copy) throw new Error('Queue copy not found')
         const loaded = {
           title: copy.title,
           subtitle: copy.threadFields?.subtitle ?? '',
@@ -66,9 +68,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         }
         setDraft(loaded)
         setBaseline(signature(loaded))
-        setWorkingCopyId(copy.id)
         setWorkRevision(copy.revision)
-        setExpectedQueueRevision(member.queueRevision)
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err))
@@ -76,7 +76,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
     return () => {
       cancelled = true
     }
-  }, [articleId, community])
+  }, [articleId, community, workingCopyId])
 
   useEffect(() => {
     if (!dirty) return
@@ -95,15 +95,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   }
 
   const save = async (): Promise<void> => {
-    if (
-      !draft ||
-      !workRevision ||
-      expectedQueueRevision === null ||
-      !dirty ||
-      !draft.title.trim() ||
-      saving
-    )
-      return
+    if (!draft || !workRevision || !dirty || !draft.title.trim() || saving) return
     const started = draft
     setSaving(true)
     setError(null)
@@ -191,7 +183,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
                 onChange={(event) => setDraft({ ...draft, slug: event.target.value })}
               />
               <Body
-                editorKey={workingCopyId ?? articleId}
+                editorKey={workingCopyId}
                 value={draft.body}
                 mode={DOC_EDITOR_MODE.EDIT}
                 onChange={(body) =>

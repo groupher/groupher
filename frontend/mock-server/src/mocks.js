@@ -375,7 +375,7 @@ const makeCommunity = (slug = 'home') => {
     desc: 'Mocked community for e2e',
     dashboard: makeDashboard(slug),
     viewerHasSubscribed: false,
-    viewerIsAdmin: true,
+    viewerIsModerator: true,
   }
 }
 
@@ -441,16 +441,18 @@ export const resolvers = {
       if (slug === 'home') return HOME_COMMUNITY
       return makeCommunity(slug)
     },
-    pagedCommunityAdminMembers: (_parent, args) =>
+    pagedCommunityModerators: (_parent, args) =>
       mockPage(
         Array.from({ length: 3 }, (_, index) => ({
-          memberId: String(index + 1),
-          isLord: index === 0,
-          user: makeUser({ login: `admin_${index}` }),
+          id: String(index + 1),
+          isRoot: index === 0,
+          passportItemCount: index === 0 ? 20 : 2,
+          user: makeUser({ login: `moderator_${index}` }),
         })),
         args.pagi,
-        `admins:${args.communityRef}`,
+        `moderators:${args.community}`,
       ),
+    moderatorCandidates: () => [],
     postPage: (_parent, args) => {
       const community = args?.filter?.community ?? 'home'
       const entries = Array.from({ length: community === 'home' ? 3 : 2 }, (_, i) =>

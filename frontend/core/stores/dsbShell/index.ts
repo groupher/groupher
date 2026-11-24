@@ -75,7 +75,7 @@ export const createDsbShellStore = (initial: TDsbEditableFields): TDsbShellStore
     store.settingTag = null
     store.editingAlias = null
     store.docFaqSaveZone = null
-    store.activeAdmin = null
+    store.activeModerator = null
   }
 
   const reconcileConfirmed = (confirmed: TDsbEditableFields): void => {
@@ -108,7 +108,7 @@ export const createDsbShellStore = (initial: TDsbEditableFields): TDsbShellStore
     settingTag: null,
     editingAlias: null,
     docFaqSaveZone: null,
-    activeAdmin: null,
+    activeModerator: null,
     setEditingTag: (tag) => {
       store.editingTag = tag
     },
@@ -126,8 +126,8 @@ export const createDsbShellStore = (initial: TDsbEditableFields): TDsbShellStore
     setDocFaqSaveZone: (zone) => {
       store.docFaqSaveZone = zone
     },
-    setActiveAdmin: (admin) => {
-      store.activeAdmin = admin
+    setActiveModerator: (admin) => {
+      store.activeModerator = admin
     },
     resetEditor,
     edit,

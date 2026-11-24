@@ -42,13 +42,6 @@ defmodule GroupherServer.Test.CMS.Passport.Authorization do
              Authorization.check(reviewer, "community.application.review", %{})
   end
 
-  test "passport check rejects unknown actions even when legacy actor rules contain them" do
-    reviewer = %{cur_passport: %{"global" => %{"unknown.action" => true}}}
-
-    assert {:error, %ErrorCat.Error{reason: :unknown_passport_action}} =
-             Authorization.check(reviewer, "unknown.action", %{})
-  end
-
   test "authorize returns a review denial for an unprivileged passport" do
     reviewer = %{cur_passport: %{"global" => %{}}}
 

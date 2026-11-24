@@ -5,10 +5,12 @@ defmodule GroupherServer.CMS.Comments.Mentions do
       Comment create or edit -> selected body -> current Mention edges
   """
 
+  import Ecto.Query
+
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.PlateJSON
   alias CMS.ArtimentMentions
-  alias CMS.Model.{Article, Comment, CommentBody}
+  alias CMS.Model.{Article, ArticleHistoryOwner, Comment, CommentBody}
 
   @doc "Updates the graph for one selected Comment body in the owning transaction."
   def update(%Comment{id: id}, operation_ref, community_id)
@@ -61,12 +63,24 @@ defmodule GroupherServer.CMS.Comments.Mentions do
 
   defp capture_comment_body(_, _, _, _), do: {:error, :comment_mention_source_missing}
 
-  defp comment_community_id(:doc, _article_id, community_id) when is_integer(community_id) do
-    {:ok, community_id}
-  end
+  defp comment_community_id(:doc, article_id, requested_community_id) do
+    owners =
+      from(owner in ArticleHistoryOwner,
+        where: owner.article_id == ^article_id,
+        select: owner.community_id
+      )
+      |> Repo.all()
 
-  defp comment_community_id(:doc, _article_id, _community_id) do
-    {:error, :scope_context_missing}
+    case owners do
+      [owner_id] when is_nil(requested_community_id) or requested_community_id == owner_id ->
+        {:ok, owner_id}
+
+      [_owner_id] ->
+        {:error, :comment_mention_community_mismatch}
+
+      _ ->
+        {:error, :comment_mention_owner_missing_or_ambiguous}
+    end
   end
 
   defp comment_community_id(_thread, _article_id, community_id) when is_integer(community_id) do

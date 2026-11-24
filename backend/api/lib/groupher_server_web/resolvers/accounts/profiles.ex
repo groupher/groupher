@@ -77,11 +77,11 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Profiles do
     end
   end
 
-  def administered_communities(_root, args, %{context: context}) do
+  def moderatorable_communities(_root, args, %{context: context}) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
       case Map.get(args, :user) || Map.get(context, :cur_user) do
         nil -> {:error, "login required"}
-        user -> Accounts.achievements_paged_administered_communities(user, pagi)
+        user -> Accounts.achievements_paged_moderatorable_communities(user, pagi)
       end
     end
   end

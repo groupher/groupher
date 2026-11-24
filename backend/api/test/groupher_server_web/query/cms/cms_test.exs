@@ -352,35 +352,46 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     end
   end
 
-  describe "[cms community admins]" do
+  describe "[cms community moderators]" do
     @query S.Community.q(:community_4)
-    test "guest can get admin count of a community", ~m(guest_conn community)a do
+    test "guest can get moderators count of a community", ~m(guest_conn community user)a do
+      {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
+      cur_user = user
+
+      Enum.each(
+        users,
+        &CMS.Communities.add_moderator(community, &1, cur_user, Ecto.UUID.generate())
+      )
+
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)
+      moderators_count = results["moderatorsCount"]
 
       assert results["slug"] == community.slug
-      assert results["adminsCount"] == 1
+      assert moderators_count == assert_v(:inner_page_size) + 1
     end
 
-    test "guest can page the public admin directory", ~m(guest_conn community)a do
-      lifecycle = Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
-      Repo.update!(Ecto.Changeset.change(lifecycle, state: :active))
-      assert {:ok, _community} = CMS.FrontDesk.community({:ref, community.ref}, nil, mode: :public)
+    @query S.Moderation.q(:paged_community_moderators)
+    test "guest user can get paged moderators", ~m(guest_conn user community)a do
+      {:ok, users} = db_insert_multi(:user, 25)
 
-      query = """
-      query($communityRef: String!, $pagi: PagiInput) {
-        pagedCommunityAdminMembers(communityRef: $communityRef, pagi: $pagi) {
-          entries { memberId user { login } }
-          pageInfo { ... on OffsetPageInfo { page size totalCount } }
-        }
-      }
-      """
-      variables = %{communityRef: community.ref, pagi: %{offset: %{page: 1, size: 10}}}
-      results = guest_conn |> gq_query(query, variables)
+      cur_user = user
+
+      Enum.each(
+        users,
+        &CMS.Communities.add_moderator(
+          community,
+          %User{id: &1.id},
+          cur_user,
+          Ecto.UUID.generate()
+        )
+      )
+
+      variables = %{community: community.slug, pagi: %{offset: %{page: 1, size: 10}}}
+      results = guest_conn |> gq_query(@query, variables)
 
       assert results["pageInfo"]["page"] == 1
       assert results["pageInfo"]["size"] == 10
-      assert length(results["entries"]) == 1
     end
   end
 

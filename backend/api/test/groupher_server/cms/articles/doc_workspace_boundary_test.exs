@@ -135,30 +135,16 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
         })
       )
 
-    editor_conn = simu_conn(:user, editor)
-
-    copies_query = """
-    query DocCopies($articleId: ID!, $community: String!) {
-      articleWorkingCopies(articleId: $articleId, community: $community) { id title }
-    }
-    """
-
-    editor_response =
-      editor_conn
-      |> post("/graphiql",
-        query: copies_query,
-        variables: %{articleId: article.id, community: community.slug}
-      )
-      |> json_response(200)
-
-    assert %{"data" => nil, "errors" => [_ | _]} = editor_response
-
-    owner_conn = simu_conn(:user, actor)
+    conn = simu_conn(:user, editor)
 
     assert [%{"id" => default_id, "title" => "Updated default"}] =
              gq_query(
-               owner_conn,
-               copies_query,
+               conn,
+               """
+               query DocCopies($articleId: ID!, $community: String!) {
+                 articleWorkingCopies(articleId: $articleId, community: $community) { id title }
+               }
+               """,
                %{articleId: article.id, community: community.slug}
              )
 
@@ -166,7 +152,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
 
     assert [] =
              gq_query(
-               owner_conn,
+               conn,
                """
                query DocSnapshots($articleId: ID!, $community: String!) {
                  articleSnapshots(articleId: $articleId, community: $community) { id }
@@ -176,7 +162,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
              )
 
     response =
-      owner_conn
+      conn
       |> post("/graphiql",
         query: """
         query DocSnapshot($articleId: ID!, $snapshotId: ID!, $community: String!) {
@@ -205,10 +191,10 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
     }
 
     assert %{"title" => "editor save"} =
-             gq_mutation(owner_conn, save_query, save_variables)
+             gq_mutation(simu_conn(:user, editor), save_query, save_variables)
 
     workspace_attempt =
-      owner_conn
+      simu_conn(:user, editor)
       |> post("/graphiql",
         query: save_query,
         variables: %{
@@ -228,7 +214,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
     |> Repo.update!()
 
     replay =
-      editor_conn
+      simu_conn(:user, editor)
       |> post("/graphiql", query: save_query, variables: save_variables)
       |> json_response(200)
 

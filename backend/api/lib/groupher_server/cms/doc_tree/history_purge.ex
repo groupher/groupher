@@ -6,8 +6,7 @@ defmodule GroupherServer.CMS.DocTree.HistoryPurge do
         -> navigation / Trash -> Article versions and bodies -> stable identities
 
   Individual Doc deletion never calls this workflow. Shared assets and other
-  Communities' content are not deleted. Queue members are removed before their
-  Queue-owned WorkingCopies and Article history are purged.
+  Communities' content are not deleted. Foreign keys reject unexpected references.
   """
   alias GroupherServer.{CMS, Repo, AlertWall}
   alias CMS.Model.{Community, CommunityLifecycle}
@@ -27,10 +26,6 @@ defmodule GroupherServer.CMS.DocTree.HistoryPurge do
   def run(_, _), do: {:error, :community_destroy_required}
 
   defp purge(id, operation_ref) do
-    purge_unreferenced_history(id, operation_ref)
-  end
-
-  defp purge_unreferenced_history(id, operation_ref) do
     rows =
       Repo.query!(
         "SELECT owner.article_id FROM cms.article_history_owners owner JOIN cms.articles article ON article.id=owner.article_id WHERE owner.community_id=$1 AND article.thread='doc' ORDER BY owner.article_id FOR UPDATE OF owner",
