@@ -148,6 +148,8 @@ backend/api/config/_tmp.exs
 # =====================
 # Misc
 # =====================
+/.memsearch/
+/tmp/pdfs/
 /Unit 2 单元重难点知识清单_清晰版.pdf
 backend/api/_tuts/
 backend/api/docs/draft.ex
