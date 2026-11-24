@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
       {:ok, :pass}
     else
       false ->
-        {:error, ErrorCat.custom("The Docs target changed after Review")}
+        {:error, ErrorCat.target_revision_conflict("The Docs target changed after Review")}
 
       [_ | _] ->
         {:error, ErrorCat.custom("The confirmed Docs target is no longer available")}

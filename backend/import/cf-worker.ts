@@ -72,11 +72,30 @@ export class ApplyWorkflow extends WorkflowEntrypoint<Env, WorkflowPayload> {
           }
         })
       }
-      await step.do('apply staged Docs', async () =>
-        applyDocImport(payload.community, payload.jobRef!, {
-          serviceSubject: 'service:content-import',
-        }),
-      )
+      const conflict = await step.do('apply staged Docs', async () => {
+        try {
+          await applyDocImport(payload.community, payload.jobRef!, {
+            serviceSubject: 'service:content-import',
+          })
+          return null
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            'code' in error &&
+            error.code === 'target_revision_conflict'
+          ) {
+            return { code: error.code, message: error.message }
+          }
+          throw error
+        }
+      })
+      if (conflict) {
+        await step.do('record target revision conflict', () =>
+          failDocImport(payload.community, payload.jobRef!, conflict.code, conflict.message, {
+            serviceSubject: 'service:content-import',
+          }),
+        )
+      }
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Docs import workflow failed.'
       await step.do('mark Phoenix import job failed', async () => {

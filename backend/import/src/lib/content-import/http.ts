@@ -20,6 +20,7 @@
  */
 import { createHmac, randomUUID } from 'node:crypto'
 
+import { GroupherGraphQLError } from '../groupherGraphql'
 import { DocsImportError } from './core/errors'
 import {
   ANALYSIS_RUN_SCHEMA_VERSION,
@@ -84,6 +85,9 @@ const json = (body: unknown, status = 200): Response =>
   Response.json(body, { headers: { 'Cache-Control': 'no-store' }, status })
 
 const failure = (error: unknown): Response => {
+  if (error instanceof GroupherGraphQLError && error.code === 'target_revision_conflict') {
+    return json({ error: { code: error.code, message: error.message }, ok: false }, 409)
+  }
   if (error instanceof DocsImportError) {
     return json(
       {

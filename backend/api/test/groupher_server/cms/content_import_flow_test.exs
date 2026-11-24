@@ -4,6 +4,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   import Ecto.Query, warn: false
   import GroupherServer.Support.Factory
 
+  alias Ecto.Adapters.SQL.Sandbox
   alias GroupherServer.Activity
 
   alias GroupherServer.{CMS, Repo}
@@ -715,7 +716,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
     assert {:error,
             %ErrorCat.Error{
-              reason: :custom,
+              reason: :target_revision_conflict,
               details: "The Docs target changed after Review"
             }} =
              ContentImport.apply(community, job.job_ref)
@@ -820,6 +821,98 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
            ]
   end
 
+  for change <- [:directory, :body] do
+    @tag skip: System.get_env("TEST_REF_ISOLATED") != "1"
+    test "apply serializes with a concurrent #{change} edit and rejects stale Review" do
+      assert_concurrent_change(unquote(change))
+    end
+  end
+
+  defp assert_concurrent_change(change) do
+    Sandbox.unboxed_run(Repo, fn ->
+      docs = [document("docs/start.md", "/start")]
+      %{community: site, actor: actor, job: first} = create_job(docs)
+
+      try do
+        stage = [%{external_ref: "docs/start.md", body_bag: body_bag("Initial", "a")}]
+        assert {:ok, _} = Staging.stage(site, first.job_ref, stage)
+        assert {:ok, result} = ContentImport.apply(site, first.job_ref)
+        %{job: job} = create_job(site, actor, docs)
+        assert {:ok, _} = Staging.stage(site, job.job_ref, stage)
+        parent = self()
+
+        {:ok, waiter} =
+          Repo.transaction(fn ->
+            case change do
+              :directory ->
+                Repo.one!(from(c in Community, where: c.id == ^site.id, lock: "FOR UPDATE"))
+
+              :body ->
+                article = Repo.get!(Article, result.first_imported_doc_id)
+                work = Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id)
+
+                assert {:ok, _} =
+                         CMS.Articles.save_working_copy(
+                           article,
+                           site,
+                           work.id,
+                           %{title: "Concurrent edit"},
+                           work.revision,
+                           actor,
+                           Ecto.UUID.generate()
+                         )
+            end
+
+            waiter =
+              Task.async(fn ->
+                Sandbox.unboxed_run(Repo, fn ->
+                  [[pid]] = Repo.query!("SELECT pg_backend_pid()").rows
+                  send(parent, {:apply_started, pid})
+                  ContentImport.apply(site, job.job_ref)
+                end)
+              end)
+
+            assert_receive {:apply_started, pid}, 5_000
+
+            assert Enum.reduce_while(1..200, false, fn _, _ ->
+                     case Repo.query!("SELECT pg_backend_pid() = ANY(pg_blocking_pids($1))", [
+                            pid
+                          ]).rows do
+                       [[true]] ->
+                         {:halt, true}
+
+                       _ ->
+                         Process.sleep(10)
+                         {:cont, false}
+                     end
+                   end)
+
+            if change == :directory do
+              {:ok, queue} = Queue.read(site)
+
+              assert {:ok, _} =
+                       CreateWorkspaceNode.execute(
+                         site,
+                         queue.tree_lock_version,
+                         %{type: :tab, title: "New tab"},
+                         actor,
+                         Ecto.UUID.generate()
+                       )
+            end
+
+            waiter
+          end)
+
+        assert {:error, %{reason: :target_revision_conflict}} = Task.await(waiter, 10_000)
+        stored = Repo.get_by!(Job, hash_id: job.job_ref)
+        assert stored.status == :ready
+        assert Repo.exists?(from(b in Body, where: b.job_id == ^stored.id))
+      after
+        assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(site.slug)
+      end
+    end)
+  end
+
   defp create_job(documents) do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = db_insert(:community)
@@ -837,6 +930,10 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
         }
       )
 
+    create_job(community, actor, documents)
+  end
+
+  defp create_job(community, actor, documents) do
     source_info = source_info()
     source_tree = source_tree(documents)
     assert {:ok, preview} = DocValidator.preview(community, source_info, source_tree)

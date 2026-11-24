@@ -145,5 +145,9 @@ defmodule GroupherServerWeb.ErrorResponse do
     end
   end
 
+  defp domain_extensions(%Error{namespace: {:cms}, reason: :target_revision_conflict} = error) do
+    %{code: error.code, reasonCode: "target_revision_conflict"}
+  end
+
   defp domain_extensions(%Error{code: code}), do: %{code: code}
 end

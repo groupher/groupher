@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:invalid_mention_type, code: 4518)
   error(:invalid_comment_link, code: 4519)
   error(:invalid_thread, code: 4520)
+  error(:target_revision_conflict, code: 4579, actions: [:reconcile])
   error(:content_import_connection_create_failed, code: 4521, retryable: true)
   error(:content_import_has_no_ready_documents, code: 4522)
   error(:content_import_staged_body_missing, code: 4523)

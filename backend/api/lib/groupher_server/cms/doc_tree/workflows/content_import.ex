@@ -5,10 +5,10 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
       ready Job
          |
          v
-      DB transaction -> lock Job/items/bodies -> revalidate target intent
+      DB transaction -> Gate -> site/Queue -> Job/items/bodies -> Article locks
                                                 |
                                                 v
-      site lock -> restore mapped trash -> write D + workspace tree
+      validate Review -> restore mapped trash -> write D + workspace tree
                                                 |
                                                 v
                          upsert mappings -> delete staging -> complete Job
@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.Articles.MutationLock
   alias CMS.Articles.WorkingCopy.Store
 
   alias CMS.ContentImport.{
@@ -38,7 +39,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
   alias CMS.ErrorCat
   alias CMS.DocTree.Import, as: DocTreeImport
   alias CMS.DocTree.{DefaultCopy, WorkspaceRestore}
-  alias CMS.DocTree.Publish.{Queue, SiteLock}
+  alias CMS.DocTree.Publish.Queue
 
   alias CMS.Model.{Article, Community, DocsTrashedArticle, TrashAction}
 
@@ -46,44 +47,47 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
   @spec apply(Community.t(), Ecto.UUID.t()) :: {:ok, map()} | {:error, term()}
   def apply(%Community{} = community, job_ref) do
     Transaction.run(fn ->
-      case SiteLock.acquire(community) do
-        {:ok, :acquired} -> {:ok, :pass}
+      case Jobs.get_record(community.id, job_ref) do
+        {:ok, %Job{status: :completed} = job} -> Jobs.project(job)
+        {:ok, job} -> admit_and_lock(community, job)
         {:error, reason} -> Repo.rollback(reason)
-      end
-
-      case Jobs.lock_job(community.id, job_ref) do
-        {:ok, job} ->
-          if job.status == :completed do
-            Jobs.project(job)
-          else
-            apply_locked(community, job)
-          end
-
-        {:error, reason} ->
-          Repo.rollback(reason)
       end
     end)
   end
 
-  defp apply_locked(community, %Job{status: :ready} = job) do
+  defp admit_and_lock(community, job) do
     with %User{} = actor <- Repo.get(User, job.actor_id),
-         {:ok, _community} <-
+         {:ok, _} <-
            CMS.Gate.check_community_workflow_in_transaction(actor, :import_docs, community),
-         {:ok, _queue} <- Queue.lock_or_create(community),
-         {:ok, result} <- apply_to_workspace(community, actor, job) do
-      result
+         {:ok, _} <- Queue.lock_or_create(community),
+         {:ok, locked} <- Jobs.lock_job(community.id, job.hash_id) do
+      case locked.status do
+        :completed ->
+          Jobs.project(locked)
+
+        :ready ->
+          case apply_to_workspace(community, actor, locked) do
+            {:ok, result} -> result
+            {:error, reason} -> Repo.rollback(reason)
+          end
+
+        status ->
+          Repo.rollback(ErrorCat.content_import_job_not_ready(status))
+      end
     else
       nil -> Repo.rollback(ErrorCat.content_import_actor_not_found())
       {:error, reason} -> Repo.rollback(reason)
     end
   end
 
-  defp apply_locked(_community, job) do
-    Repo.rollback(ErrorCat.content_import_job_not_ready(job.status))
-  end
-
   defp apply_to_workspace(community, actor, job) do
-    with {:ok, _} <-
+    items = lock_items(job.id)
+    ready_items = Enum.filter(items, &(&1.content_status == :ready))
+
+    with true <- ready_items != [],
+         {:ok, bodies} <- load_bodies(job.id, ready_items),
+         {:ok, _} <- lock_targets(community, ready_items),
+         {:ok, _} <-
            DocValidator.validate_intent(
              community,
              job.source_info,
@@ -91,10 +95,6 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
              job.target_revision
            ),
          {:ok, job} <- job |> Job.changeset(%{status: :applying}) |> Repo.update(),
-         items <- lock_items(job.id),
-         ready_items <- Enum.filter(items, &(&1.content_status == :ready)),
-         true <- ready_items != [],
-         {:ok, bodies} <- load_bodies(job.id, ready_items),
          ready_refs <- MapSet.new(ready_items, & &1.external_ref),
          tree <- DocValidator.filter_target_tree(job.target_tree, ready_refs),
          {:ok, _} <- restore_trashed_targets(community, actor, job.hash_id, ready_items),
@@ -118,6 +118,18 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
       false -> {:error, ErrorCat.content_import_has_no_ready_documents()}
       {:error, reason} -> {:error, reason}
       reason -> {:error, reason}
+    end
+  end
+
+  # Existing targets share the Article lock with ordinary editor saves. Validate
+  # the reviewed version only after every selected target is serialized.
+  defp lock_targets(community, ready_items) do
+    target_ids = Enum.map(ready_items, & &1.target_ref)
+    ids = Repo.all(from(a in Article, where: a.id in ^target_ids, select: a.id))
+
+    with {:ok, plan} <- MutationLock.lock_community_plan(ids, [community.id]),
+         {:ok, :pass} <- MutationLock.lock_article_rows(ids) do
+      MutationLock.verify_community_plan(plan)
     end
   end
 

@@ -12,7 +12,7 @@
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
 import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 
-type TGraphQLError = { code?: unknown; message?: unknown }
+type TGraphQLError = { code?: unknown; extensions?: { reasonCode?: string }; message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
 
 export class GroupherGraphQLError extends Error {
@@ -123,7 +123,7 @@ export const requestGroupherGraphQL = async <T>(
   const payload = (await response.json()) as TGraphQLPayload<T>
   const error = payload.errors
     ?.map((item) => ({
-      code: typeof item.code === 'string' ? item.code : undefined,
+      code: item.extensions?.reasonCode ?? (typeof item.code === 'string' ? item.code : undefined),
       message: formatGraphQLErrorMessage(item.message),
     }))
     .find((item) => item.message)
