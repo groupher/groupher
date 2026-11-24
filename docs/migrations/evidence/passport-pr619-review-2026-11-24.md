@@ -15,7 +15,14 @@ Review and repair the canonical Passport chain in the existing delivery branch. 
 
 ## Validation
 
-Final verification is in progress. Earlier focused results are not a substitute for final full-suite and CI acceptance. Final results will be appended after completion.
+Final full-suite and CI results are reported in the PR description for the delivered head; focused results below are not a substitute for that acceptance.
+
+- Canonical Passport / Queue / Seed / error boundary: 87 passed, 5 skipped.
+- Review / category / provider-failure regressions: 62 passed. The original full run exposed obsolete scope fixtures and global-empty assertions; these were reproduced separately before repair.
+- WorkingCopy / Queue / Admin frontend regression tests: 16 passed.
+- Import: 150 passed, 1 skipped; Auth: 86 passed; Dev Hub: 111 passed.
+- Core, Dash and Apply type checks, GraphQL source/generated checks and documentation/architecture gates passed locally.
+- A final full backend run uses a newly recreated task-owned database with `TEST_REF_ISOLATED=1 mix test --exclude skip_ci --max-cases 8`. Do not infer its result from the focused counts.
 
 ## Review ledger
 

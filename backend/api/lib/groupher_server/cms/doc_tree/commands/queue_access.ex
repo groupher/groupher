@@ -140,9 +140,11 @@ defmodule GroupherServer.CMS.DocTree.Commands.QueueAccess do
         authorize_after_commit(community, article.id, actor)
 
       {:error, %Decision{} = decision} = error ->
-        if permission_denied?(decision),
-          do: authorize_member_read(community, article, actor),
-          else: error
+        if permission_denied?(decision) do
+          authorize_member_read(community, article, actor)
+        else
+          error
+        end
 
       error ->
         error
