@@ -155,6 +155,61 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
              end)
   end
 
+  test "Doc Comment review is platform scoped and excludes its author" do
+    {community, doc, _attrs, author} = mock_article(:doc)
+    {:ok, reviewer} = db_insert(:user)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :doc,
+        article_inner_id(doc, community),
+        mock_comment("doc comment"),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    assert {:ok, {:error, %ErrorCat.Error{reason: :permission_denied}}} =
+             Repo.transaction(fn ->
+               CMS.Review.Decisions.apply_in_transaction(
+                 "comment:#{comment.id}",
+                 "community:#{community.id}",
+                 :reject,
+                 reviewer,
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert {:ok, {:error, %ErrorCat.Error{reason: :permission_denied}}} =
+             Repo.transaction(fn ->
+               CMS.Review.Decisions.apply_in_transaction(
+                 "comment:#{comment.id}",
+                 "platform",
+                 :reject,
+                 author,
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert {:ok, {:ok, :pass}} =
+             Repo.transaction(fn ->
+               CMS.Review.Decisions.apply_in_transaction(
+                 "comment:#{comment.id}",
+                 "platform",
+                 :reject,
+                 reviewer,
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert %CommentReviewBlock{community_id: nil, type: :manual_hold} =
+             Repo.one!(
+               from(block in CommentReviewBlock,
+                 where: block.comment_id == ^comment.id and block.type == :manual_hold
+               )
+             )
+  end
+
   test "a removed co-author who edited the reviewed Snapshot cannot decide its review" do
     {community, public, _, owner} = mock_article(:post)
     article = Repo.get!(CMS.Model.Article, public.id)

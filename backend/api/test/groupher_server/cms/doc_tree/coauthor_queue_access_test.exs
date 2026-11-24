@@ -5,10 +5,28 @@ defmodule GroupherServer.Test.CMS.DocTree.CoauthorQueueAccessTest do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.CoAuthors.Commands.{CreateRequest, DecideRequest, RemoveMember}
   alias CMS.Articles.Commands.{ForkSnapshot, SaveWorkingCopy}
-  alias CMS.DocTree.Commands.{BeginEdit, Enqueue, MergeQueue, QueueAccess, SaveQueue}
+
+  alias CMS.DocTree.Commands.{
+    ApproveQueue,
+    BeginEdit,
+    CreateWorkspaceNode,
+    Enqueue,
+    MergeQueue,
+    QueueAccess,
+    SaveQueue
+  }
+
   alias CMS.DocTree.Publish.Queue
 
-  alias CMS.Model.{Article, ArticleCoAuthor, ArticleWorkingCopy, DocsQueueArticle}
+  alias CMS.Model.{
+    Article,
+    ArticleCoAuthor,
+    ArticleWorkingCopy,
+    CommandReceipt,
+    DocsPublishApproval,
+    DocsQueueArticle,
+    DocsTreeNode
+  }
 
   @permissions %{"article.read_draft" => true, "article.update" => true}
 
@@ -22,7 +40,9 @@ defmodule GroupherServer.Test.CMS.DocTree.CoauthorQueueAccessTest do
     assert work.id == fixture.member.working_copy_id
     assert work.scope_type == :workspace
 
-    assert {:ok, %{queue_revision: saved_queue_revision, working_copy_revision: saved_revision}} =
+    save_command_id = Ecto.UUID.generate()
+
+    assert {:ok, saved} =
              SaveQueue.execute(
                fixture.community,
                queue_revision,
@@ -30,14 +50,52 @@ defmodule GroupherServer.Test.CMS.DocTree.CoauthorQueueAccessTest do
                work.revision,
                %{title: "Co-author Queue edit"},
                coauthor,
-               Ecto.UUID.generate()
+               save_command_id
              )
 
+    saved_queue_revision = saved.queue_revision
+    saved_revision = saved.working_copy_revision
     assert saved_queue_revision > queue_revision
     assert saved_revision > work.revision
     assert Repo.get!(ArticleWorkingCopy, work.id).title == "Co-author Queue edit"
 
-    assert {:ok, _merged} =
+    save_receipt = Repo.get_by!(CommandReceipt, command_id: save_command_id)
+    assert save_receipt.command == "docs.save_queue"
+    assert save_receipt.resource_id == Integer.to_string(fixture.community.id)
+    assert save_receipt.confirmation["operation"] == "docs.save_queue"
+
+    assert save_receipt.confirmation["data"] == %{
+             "community_id" => fixture.community.id,
+             "article_id" => fixture.article_id,
+             "queue_revision" => saved_queue_revision,
+             "working_copy_revision" => saved_revision
+           }
+
+    assert {:ok, ^saved} =
+             SaveQueue.execute(
+               fixture.community,
+               queue_revision,
+               fixture.article_id,
+               work.revision,
+               %{title: "Co-author Queue edit"},
+               coauthor,
+               save_command_id
+             )
+
+    assert {:error, _} =
+             SaveQueue.execute(
+               fixture.community,
+               queue_revision,
+               fixture.article_id,
+               work.revision,
+               %{title: "Changed intent with reused command id"},
+               coauthor,
+               save_command_id
+             )
+
+    merge_command_id = Ecto.UUID.generate()
+
+    assert {:ok, merged} =
              MergeQueue.execute(
                fixture.community,
                saved_queue_revision,
@@ -46,29 +104,119 @@ defmodule GroupherServer.Test.CMS.DocTree.CoauthorQueueAccessTest do
                saved_revision,
                %{},
                coauthor,
-               Ecto.UUID.generate()
+               merge_command_id
+             )
+
+    merge_receipt = Repo.get_by!(CommandReceipt, command_id: merge_command_id)
+    assert merge_receipt.command == "docs.merge_queue"
+    assert merge_receipt.resource_id == Integer.to_string(fixture.community.id)
+    assert merge_receipt.confirmation["operation"] == "docs.merge_queue"
+
+    assert merge_receipt.confirmation["data"] == %{
+             "community_id" => fixture.community.id,
+             "article_id" => fixture.article_id,
+             "queue_revision" => merged.queue_revision,
+             "working_copy_revision" => merged.working_copy_revision
+           }
+
+    assert {:ok, ^merged} =
+             MergeQueue.execute(
+               fixture.community,
+               saved_queue_revision,
+               fixture.article_id,
+               fixture.default_work.revision,
+               saved_revision,
+               %{},
+               coauthor,
+               merge_command_id
              )
   end
 
   test "co-author cannot read or save a Queue member from another Doc" do
     fixture = doc_with_queue_member()
-    other = doc_with_queue_member()
     {coauthor, _member} = grant_coauthor(fixture)
+    {:ok, queue} = Queue.read(fixture.community)
 
-    assert {:error, _} = QueueAccess.read_member(other.community, other.article_id, coauthor)
+    parent_node_id =
+      Repo.get_by!(DocsTreeNode,
+        community_id: fixture.community.id,
+        stage: :draft,
+        doc_id: fixture.article_id
+      ).parent_node_id
+
+    assert {:ok, other} =
+             CreateWorkspaceNode.execute(
+               fixture.community,
+               queue.tree_lock_version,
+               %{type: :page, title: "Unrelated Doc", parent_node_id: parent_node_id},
+               fixture.actor,
+               Ecto.UUID.generate()
+             )
+
+    other_work = Repo.get!(ArticleWorkingCopy, other.working_copy_id)
+
+    assert {:error, _} =
+             QueueAccess.read_member(fixture.community, other.article_id, coauthor)
 
     assert {:error, _} =
              SaveQueue.execute(
-               other.community,
-               other.queue.queue_revision,
+               fixture.community,
+               queue.queue_revision,
                other.article_id,
-               other.work.revision,
+               other_work.revision,
                %{title: "Unauthorized edit"},
                coauthor,
                Ecto.UUID.generate()
              )
 
-    assert Repo.get!(ArticleWorkingCopy, other.work.id).title == other.work.title
+    assert Repo.get!(ArticleWorkingCopy, other_work.id).title == other_work.title
+  end
+
+  test "co-author cannot use the granted Doc through another Community" do
+    fixture = doc_with_queue_member()
+    {coauthor, _member} = grant_coauthor(fixture)
+    {:ok, other_community} = mock_community(fixture.actor)
+
+    assert {:error, _} =
+             QueueAccess.read_member(other_community, fixture.article_id, coauthor)
+
+    assert {:error, _} =
+             SaveQueue.execute(
+               other_community,
+               0,
+               fixture.article_id,
+               fixture.work.revision,
+               %{title: "Wrong Community edit"},
+               coauthor,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.get!(ArticleWorkingCopy, fixture.work.id).title == fixture.work.title
+  end
+
+  test "co-author Queue read returns empty after the member is removed without creating a copy" do
+    fixture = doc_with_queue_member()
+    {coauthor, _member} = grant_coauthor(fixture)
+    Repo.delete!(fixture.member)
+
+    copies_before =
+      Repo.all(
+        from(copy in ArticleWorkingCopy,
+          where: copy.article_id == ^fixture.article_id,
+          order_by: copy.id,
+          select: {copy.id, copy.scope_type, copy.scope_id}
+        )
+      )
+
+    assert {:ok, nil} = QueueAccess.read_member(fixture.community, fixture.article_id, coauthor)
+
+    assert Repo.all(
+             from(copy in ArticleWorkingCopy,
+               where: copy.article_id == ^fixture.article_id,
+               order_by: copy.id,
+               select: {copy.id, copy.scope_type, copy.scope_id}
+             )
+           ) == copies_before
   end
 
   test "Queue editor read requires read_draft even when a malformed grant retains update" do
@@ -81,6 +229,31 @@ defmodule GroupherServer.Test.CMS.DocTree.CoauthorQueueAccessTest do
     )
 
     assert {:error, _} = QueueAccess.read_member(fixture.community, fixture.article_id, coauthor)
+  end
+
+  test "Queue editor admission requires update even when the grant retains read_draft" do
+    fixture = doc_with_queue_member()
+    {coauthor, member} = grant_coauthor(fixture)
+
+    Repo.update_all(
+      from(row in ArticleCoAuthor, where: row.id == ^member.id),
+      set: [permissions: %{"article.read_draft" => true}]
+    )
+
+    assert {:error, _} = QueueAccess.read_member(fixture.community, fixture.article_id, coauthor)
+
+    assert {:error, _} =
+             SaveQueue.execute(
+               fixture.community,
+               fixture.queue.queue_revision,
+               fixture.article_id,
+               fixture.work.revision,
+               %{title: "Update permission missing"},
+               coauthor,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.get!(ArticleWorkingCopy, fixture.work.id).title == fixture.work.title
   end
 
   test "co-author cannot use legacy default-copy reader, save, begin-edit, or fork paths" do
@@ -218,6 +391,46 @@ defmodule GroupherServer.Test.CMS.DocTree.CoauthorQueueAccessTest do
                coauthor,
                Ecto.UUID.generate()
              )
+
+    draft_nodes_before =
+      Repo.all(
+        from(node in DocsTreeNode,
+          where: node.community_id == ^fixture.community.id and node.stage == :draft,
+          order_by: node.node_id,
+          select: node.node_id
+        )
+      )
+
+    assert {:error, _} =
+             CreateWorkspaceNode.execute(
+               fixture.community,
+               fixture.queue.tree_lock_version,
+               %{type: :group, title: "Unauthorized Queue tree change"},
+               coauthor,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.all(
+             from(node in DocsTreeNode,
+               where: node.community_id == ^fixture.community.id and node.stage == :draft,
+               order_by: node.node_id,
+               select: node.node_id
+             )
+           ) == draft_nodes_before
+
+    assert {:error, _} =
+             ApproveQueue.execute(
+               fixture.community,
+               fixture.queue.queue_revision,
+               coauthor,
+               Ecto.UUID.generate()
+             )
+
+    refute Repo.exists?(
+             from(approval in DocsPublishApproval,
+               where: approval.community_id == ^fixture.community.id
+             )
+           )
   end
 
   test "removing the co-author revokes Queue read and save admission" do

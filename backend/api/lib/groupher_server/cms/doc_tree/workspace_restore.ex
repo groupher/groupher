@@ -83,12 +83,20 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
          {:ok, saved_queue} <- decode(entries, :queue_snapshot),
          {:ok, :pass} <- validate_entries(action, entries, docs, saved_draft, saved_queue),
          {:ok, saved_draft} <- relocate(saved_draft, action.root_ref, target_parent, target_index),
-         {:ok, target_draft} <- insert_nodes(draft, saved_draft),
          public <- nodes(community, :public),
          {:ok, changes} <- changes(queue) |> TreeCodec.decode_changes(),
          {:ok, current} <- TargetTree.build(public, changes),
          wanted <- queued_restore(saved_queue, public),
          {:ok, wanted} <- relocate(wanted, action.root_ref, target_parent, target_index),
+         {:ok, :pass} <-
+           validate_restore_target(
+             action.root_ref,
+             target_parent,
+             draft ++ saved_draft,
+             saved_draft,
+             changes
+           ),
+         {:ok, target_draft} <- insert_nodes(draft, saved_draft),
          {:ok, prepared} <-
            prepare_parent(public, target_draft, current, wanted, action.root_ref, target_parent),
          {:ok, target_queue} <- insert_nodes(prepared, wanted),
@@ -159,6 +167,53 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
       Dependencies.ensure_parent(public, draft, current, parent)
     else
       {:ok, current}
+    end
+  end
+
+  defp validate_restore_target(root_id, target_parent, draft, restored, changes) do
+    root = Enum.find(restored, &(&1.node_id == root_id))
+
+    parent =
+      if target_parent == :restore_original do
+        root && root.parent_node_id
+      else
+        target_parent
+      end
+
+    restored_ids = MapSet.new(restored, & &1.node_id)
+    draft_by_id = Map.new(draft, &{&1.node_id, &1})
+
+    pending_delete_ids =
+      changes
+      |> Enum.filter(&(&1.change_type == :delete))
+      |> MapSet.new(& &1.node_id)
+
+    cond do
+      is_nil(root) ->
+        {:error, :invalid_trash_action}
+
+      MapSet.member?(restored_ids, parent) ->
+        {:error, :invalid_restore_parent}
+
+      Enum.any?(
+        ancestor_ids(parent, draft_by_id, MapSet.new()),
+        &MapSet.member?(pending_delete_ids, &1)
+      ) ->
+        {:error, :invalid_restore_parent}
+
+      true ->
+        {:ok, :pass}
+    end
+  end
+
+  defp ancestor_ids(nil, _nodes, _seen), do: []
+
+  defp ancestor_ids(id, nodes, seen) do
+    if MapSet.member?(seen, id) do
+      [id]
+    else
+      parent = Map.get(nodes, id)
+      [id | ancestor_ids(parent && parent.parent_node_id, nodes, MapSet.put(seen, id))]
     end
   end
 
