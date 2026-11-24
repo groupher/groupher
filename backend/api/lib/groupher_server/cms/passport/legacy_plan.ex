@@ -69,8 +69,9 @@ defmodule GroupherServer.CMS.Passport.LegacyPlan do
     end
   end
 
-  def normalize_legacy_rules(%{"global" => global} = rules) when is_map(global),
-    do: {:ok, rules}
+  def normalize_legacy_rules(%{"global" => global} = rules) when is_map(global) do
+    {:ok, rules}
+  end
 
   def normalize_legacy_rules(_), do: {:error, :invalid_legacy_rules}
 

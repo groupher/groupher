@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.DocTree.LegacyQueueDeleteCommandsTest do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Activity, CMS, Repo}
 
   alias CMS.DocTree.Commands.{DeleteWorkspaceNode, Enqueue, PurgeWorkspaceTrash}
   alias CMS.DocTree.Publish.Queue
@@ -21,8 +21,8 @@ defmodule GroupherServer.Test.CMS.DocTree.LegacyQueueDeleteCommandsTest do
     TrashAction
   }
 
-  alias GroupherServer.Activity.Model.DocTreeLog
-  alias GroupherServer.CMS.Outbox.Event
+  alias Activity.Model.DocTreeLog
+  alias CMS.Outbox.Event
 
   test "DeleteWorkspaceNode dequeues the owned copy before trashing the page and preserves Article history" do
     fixture = doc_with_queue_member()
