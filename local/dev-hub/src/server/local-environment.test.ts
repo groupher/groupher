@@ -92,6 +92,7 @@ test('filters managed parent keys while retaining toolchain environment', () => 
       CLOUDFLARE_API_TOKEN: 'ambient-cloudflare-token',
       DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED: 'true',
       SERVICE_AUTH_CLIENT_SECRET: 'ambient-secret',
+      SERVICE_AUTH_CLIENTS_JSON_IMPORT: 'ambient-import-registry',
       AUTH_LOCAL_LOGIN_ENABLED: 'false',
       NODE_ENV: 'development',
     }),
@@ -178,6 +179,7 @@ test('resolved managed values are last and definition collisions fail', () => {
     {
       PATH: '/usr/bin',
       SERVICE_AUTH_CLIENT_SECRET: 'ambient-secret',
+      SERVICE_AUTH_CLIENTS_JSON_IMPORT: 'ambient-import-registry',
       AUTH_LOCAL_LOGIN_ENABLED: 'false',
     },
     { env: { AUTH_LOCAL_LOGIN_ENABLED: 'true' } },

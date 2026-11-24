@@ -17,6 +17,7 @@ import {
 import { REPO_ROOT, SERVICE_DEFINITIONS } from '../src/server/services.ts'
 
 const REGISTRY_KEYS = [
+  'SERVICE_AUTH_CLIENTS_JSON_IMPORT',
   'SERVICE_AUTH_CLIENTS_JSON',
   'SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE',
   'SERVICE_AUTH_CLIENTS_JSON_ADDITIONS',
@@ -77,6 +78,7 @@ const isCredentialHashMatch = (secret: string, hashes: unknown): boolean => {
 
 const readRegistrations = (environment: Record<string, string>, conflicts: string[]) => {
   const registrations = new Map<string, Record<string, unknown>>()
+  const overlayIds = new Set<string>()
   for (const key of REGISTRY_KEYS) {
     const source = environment[key]?.trim()
     if (!source) continue
@@ -102,8 +104,10 @@ const readRegistrations = (environment: Record<string, string>, conflicts: strin
       }
       const registration = value as Record<string, unknown>
       const clientId = registration.clientId as string
-      if (registrations.has(clientId)) conflicts.push(`duplicate Auth registration for ${clientId}`)
-      else registrations.set(clientId, registration)
+      if (registrations.has(clientId)) {
+        if (!overlayIds.has(clientId)) conflicts.push(`duplicate Auth registration for ${clientId}`)
+      } else registrations.set(clientId, registration)
+      if (key === 'SERVICE_AUTH_CLIENTS_JSON_IMPORT') overlayIds.add(clientId)
     }
   }
   return registrations
