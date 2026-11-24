@@ -1084,6 +1084,11 @@ defmodule GroupherServerWeb.Schema.CMS.Spec do
     field(:tree_changes, non_null(list_of(non_null(:docs_queue_tree_change))))
   end
 
+  object :docs_queue_member_editor do
+    field(:queue_revision, non_null(:integer))
+    field(:working_copy, non_null(:article_working_copy))
+  end
+
   enum :docs_queue_approval_status do
     value(:idle)
     value(:pending)

@@ -238,6 +238,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.docs_publish_queue(community, actor)
   end
 
+  def docs_queue_member(_root, %{community: community, article_id: article_id}, %{
+        context: %{cur_user: actor}
+      }) do
+    CMS.docs_queue_member_read(community, article_id, actor)
+  end
+
   def docs_workspace_tree(_root, %{community: community}, %{context: %{cur_user: actor}}) do
     CMS.docs_workspace_read(community, actor)
   end

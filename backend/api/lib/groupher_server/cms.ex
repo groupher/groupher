@@ -2110,6 +2110,11 @@ defmodule GroupherServer.CMS do
                 command_id
               ), to: GroupherServer.CMS.DocTree.Commands.MergeQueue, as: :execute
 
+  @doc "Reads one Article's existing Docs Queue member through its scoped reader."
+  defdelegate docs_queue_member_read(community, article_id, actor),
+    to: GroupherServer.CMS.DocTree.Commands.QueueAccess,
+    as: :read_member
+
   defdelegate docs_editor_read(community, article_id, actor),
     to: GroupherServer.CMS.DocTree.DefaultCopy,
     as: :read

@@ -33,6 +33,7 @@ const config: CodegenConfig = {
     'frontend/core/unit/DsbThread/schema/content.ts',
     'frontend/core/unit/KanbanThread/schema.ts',
     'frontend/core/unit/KanbanThread/fragments.ts',
+    'frontend/core/unit/DocThread/schema.ts',
     'frontend/core/unit/DocCovers/schema.ts',
     'frontend/core/unit/DocCovers/fragments.ts',
     'frontend/core/unit/AlertWall/schema.ts',

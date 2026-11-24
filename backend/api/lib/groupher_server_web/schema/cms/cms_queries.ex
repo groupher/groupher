@@ -541,6 +541,16 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.docs_publish_queue/3)
     end
 
+    @desc "One Article's existing Queue member editor source"
+    field :docs_queue_member, :docs_queue_member_editor do
+      arg(:community, non_null(:string))
+      arg(:article_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_queue_member/3)
+    end
+
     @desc "Check whether removing Docs from the Queue discards unique edits"
     field :docs_dequeue_preview, :docs_dequeue_preview do
       arg(:community, non_null(:string))

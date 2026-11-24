@@ -46,6 +46,13 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
     end
   end
 
+  @doc "Prevents current co-authors from using legacy Article WorkingCopy paths."
+  def reject_member_working_copy_access(%CMS.Model.Article{} = article, %User{} = actor) do
+    Query.reject_member_working_copy_access(article, actor)
+  end
+
+  def reject_member_working_copy_access(_, _), do: {:ok, :pass}
+
   @doc "Creates an invitation for a public login or an application for the current user."
   def create_request(article_id, subject_login, type, permissions, %User{} = actor, command_id) do
     with {:ok, article} <- Query.load_article(article_id),
