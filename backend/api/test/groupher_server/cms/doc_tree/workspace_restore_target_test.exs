@@ -392,6 +392,104 @@ defmodule GroupherServer.Test.CMS.DocTree.WorkspaceRestoreTargetTest do
     end)
   end
 
+  @tag skip: System.get_env("TEST_REF_ISOLATED") != "1"
+  @tag timeout: 60_000
+  test "two editors restoring the same folder commit exactly one complete subtree" do
+    Sandbox.unboxed_run(Repo, fn ->
+      {:ok, owner} = db_insert(:user)
+      {:ok, community} = mock_community(owner)
+      {:ok, editor} = db_insert(:user)
+
+      Repo.insert!(
+        CommunityAdmin.changeset(%CommunityAdmin{}, %{
+          user_id: editor.id,
+          community_id: community.id,
+          permissions: %{
+            "doc.queue.write" => true,
+            "doc.queue.preview" => true,
+            "community.article.trash.read" => true
+          }
+        })
+      )
+
+      assert {:ok, _} = CMS.Gate.access_check(editor, :manage_docs, community)
+
+      tab = create_node(community, owner, %{type: :tab, title: "Docs"})
+
+      folder =
+        create_node(community, owner, %{
+          type: :group,
+          title: "Concurrent restore",
+          parent_node_id: tab.node_id
+        })
+
+      create_node(community, owner, %{type: :page, title: "Child", parent_node_id: folder.node_id})
+
+      expected = draft_snapshot(community)
+      {:ok, before_delete} = Queue.read(community)
+
+      assert {:ok, deleted} =
+               DeleteWorkspaceNode.execute(
+                 community,
+                 before_delete.tree_lock_version,
+                 before_delete.queue_revision,
+                 folder.node_id,
+                 nil,
+                 owner,
+                 Ecto.UUID.generate()
+               )
+
+      {:ok, item} =
+        CMS.Articles.CommunityTrashQuery.get(community, owner, :doc, deleted.trash_action_id)
+
+      {:ok, queue} = Queue.read(community)
+      parent = self()
+
+      workers =
+        for actor <- [owner, editor] do
+          Task.async(fn ->
+            Sandbox.unboxed_run(Repo, fn ->
+              send(parent, {:restore_ready, self()})
+
+              receive do
+                :restore ->
+                  RestoreWorkspaceNode.execute(
+                    community,
+                    queue.tree_lock_version,
+                    queue.queue_revision,
+                    deleted.trash_action_id,
+                    item.record_revision,
+                    :restore_original,
+                    nil,
+                    actor,
+                    Ecto.UUID.generate()
+                  )
+              after
+                10_000 -> {:error, :restore_start_timeout}
+              end
+            end)
+          end)
+        end
+
+      pids =
+        for _ <- workers do
+          assert_receive {:restore_ready, pid}, 10_000
+          pid
+        end
+
+      Enum.each(pids, &send(&1, :restore))
+      results = Enum.map(workers, &Task.await(&1, 20_000))
+      assert Enum.count(results, &match?({:ok, _}, &1)) == 1
+      assert Enum.count(results, &match?({:error, _}, &1)) == 1
+      [{:error, conflict}] = Enum.filter(results, &match?({:error, _}, &1))
+      assert conflict == CMS.ErrorCat.docs_state_conflict()
+      refute Enum.any?(results, &(&1 == {:error, :restore_start_timeout}))
+      assert draft_snapshot(community) == expected
+      assert is_nil(trash_snapshot(community, deleted.trash_action_id))
+      assert queue_versions(community).tree_lock_version == queue.tree_lock_version + 1
+    end)
+  end
+
   defp create_node(community, actor, attrs) do
     {:ok, queue} = Queue.read(community)
 
