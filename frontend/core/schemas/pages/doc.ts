@@ -3,6 +3,7 @@ import { graphql } from '~/graphql/authoring'
 export const doc = graphql(`
   query Doc($article: ArticlePathInput!) {
     doc(article: $article) {
+      id
       ...DocFields
       subtitle
       ...DocDetailFields
