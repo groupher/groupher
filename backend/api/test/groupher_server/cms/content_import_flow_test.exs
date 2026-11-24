@@ -17,7 +17,14 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   alias CMS.DocTree.Workflows.ContentImport
   alias CMS.DocTree.Publish.Queue
   alias CMS.DocTree.Commands.{Enqueue, ReleaseQueue, DeleteWorkspaceNode, CreateWorkspaceNode}
-  alias CMS.Model.{ArticleLifecycle, DocsTreeNode}
+
+  alias CMS.Model.{
+    ArticleEvent,
+    ArticleLifecycle,
+    ArticlePublic,
+    ArticleWorkingCopy,
+    DocsTreeNode
+  }
 
   test "an imported canonical Doc enters Mention capture only through its publish Command" do
     %{actor: actor, community: community, job: job} =
@@ -343,6 +350,62 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert mapping.thread_ref == first_doc_id
     assert mapping.source_revision == next_source_info["commit"]
     assert mapping.source_hash == "source-md-v1:" <> String.duplicate("b", 64)
+  end
+
+  test "import records attributed changes once and forks the published Doc for subsequent edits" do
+    documents = [document("docs/start.md", "/start")]
+    %{actor: actor, community: site, job: first} = create_job(documents)
+
+    stage = fn job, text, hash ->
+      assert {:ok, %{status: :ready}} =
+               Staging.stage(site, job.job_ref, [
+                 %{external_ref: "docs/start.md", body_bag: body_bag(text, hash)}
+               ])
+
+      assert {:ok, result} = ContentImport.apply(site, job.job_ref)
+      assert {:ok, ^result} = ContentImport.apply(site, job.job_ref)
+      result
+    end
+
+    result = stage.(first, "First", "a")
+    id = result.first_imported_doc_id
+    assert [created] = Repo.all(from(e in ArticleEvent, where: e.operation_ref == ^first.job_ref))
+
+    assert {created.type, created.source, created.actor_id, created.service_ref} ==
+             {:create, :import, actor.id, "service:content-import"}
+
+    %{job: same} = create_job(site, actor, documents)
+    stage.(same, "First", "a")
+    refute Repo.exists?(from(e in ArticleEvent, where: e.operation_ref == ^same.job_ref))
+
+    old_copy = Repo.get_by!(ArticleWorkingCopy, article_id: id)
+    {:ok, queue} = Queue.read(site)
+
+    assert {:ok, queued} =
+             Enqueue.execute(
+               site,
+               queue.queue_revision,
+               [%{article_id: id, default_revision: old_copy.revision}],
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, _} =
+             ReleaseQueue.execute(site, queued.queue_revision, actor, Ecto.UUID.generate())
+
+    public = Repo.get!(ArticlePublic, id)
+    refute Repo.get(ArticleWorkingCopy, old_copy.id)
+
+    %{job: next} = create_job(site, actor, documents)
+    stage.(next, "Reimported", "b")
+    assert [edit] = Repo.all(from(e in ArticleEvent, where: e.operation_ref == ^next.job_ref))
+    assert {edit.type, edit.source, edit.actor_id} == {:edit, :import, actor.id}
+    assert edit.before_snapshot_id != edit.after_snapshot_id
+    assert edit.working_copy_id != old_copy.id
+    assert Repo.get!(ArticlePublic, id).snapshot_id == public.snapshot_id
+
+    assert CMS.Articles.Body.document(Repo.get!(ArticleWorkingCopy, edit.working_copy_id)).plain_text ==
+             "Reimported"
   end
 
   test "restores a trashed mapped Doc before overwriting it on repeat import" do

@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
 
   alias Accounts.Model.User
   alias CMS.Articles.MutationLock
-  alias CMS.Articles.WorkingCopy.Store
+  alias CMS.Articles.WorkingCopy.{History, Store}
 
   alias CMS.ContentImport.{
     DocValidator,
@@ -99,7 +99,7 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
          tree <- DocValidator.filter_target_tree(job.target_tree, ready_refs),
          {:ok, _} <- restore_trashed_targets(community, actor, job.hash_id, ready_items),
          {:ok, written_items} <-
-           write_items(community, actor, ready_items, bodies),
+           write_items(community, actor, ready_items, bodies, job.hash_id),
          {:ok, _tree} <- DocTreeImport.apply(community, tree, written_items, actor, job.hash_id),
          {:ok, _} <- upsert_mappings(job, ready_items, bodies),
          result <- build_result(job, items, tree, ready_items),
@@ -204,10 +204,11 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
     end)
   end
 
-  defp write_items(community, actor, items, bodies) do
+  defp write_items(community, actor, items, bodies, operation_ref) do
     items
     |> Enum.sort_by(& &1.target_ref)
-    |> Enum.reduce_while({:ok, %{}}, fn item, {:ok, written} ->
+    |> Enum.with_index()
+    |> Enum.reduce_while({:ok, %{}}, fn {item, index}, {:ok, written} ->
       body = Map.fetch!(bodies, item.external_ref)
 
       attrs = %{
@@ -217,25 +218,49 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
         title: item.title
       }
 
-      case write_item(community, item.target_ref, attrs, actor) do
+      origin = %{
+        source: :import,
+        service_ref: "service:content-import",
+        causation_command_id: operation_ref
+      }
+
+      event = History.event_attrs(actor, operation_ref, community.id, origin, index)
+
+      case write_item(community, item.target_ref, attrs, actor, event) do
         {:ok, _} -> {:cont, {:ok, Map.put(written, item.target_ref, item)}}
         {:error, _} = error -> {:halt, error}
       end
     end)
   end
 
-  defp write_item(community, id, attrs, actor) do
+  defp write_item(community, id, attrs, actor, event) do
     case Repo.get(Article, id) do
       nil ->
-        CMS.Docs.Content.create_workspace(community, attrs, actor)
+        with {:ok, created} <- CMS.Docs.Content.create_workspace(community, attrs, actor) do
+          History.record_initial_in_transaction(
+            created.article,
+            created.working_copy,
+            actor,
+            event.operation_ref,
+            Map.put(event, :type, :create)
+          )
+        end
 
       %Article{thread: :doc} ->
         with {:ok, :pass} <- CMS.DocTree.Commands.QueueAccess.authorize(community, id, actor),
              {:ok, state} <- DefaultCopy.load(community, id),
              true <- state.lifecycle.state in [:draft, :published],
-             {:ok, copy} <- editable_copy(community, state, actor),
-             {:ok, saved} <- Store.save_loaded(copy, attrs, actor, copy.revision, community.id) do
-          {:ok, saved}
+             {:ok, copy} <- editable_copy(community, state, actor) do
+          History.record_save_in_transaction(
+            state.article,
+            copy,
+            actor,
+            event.operation_ref,
+            event,
+            fn ->
+              Store.save_loaded(copy, attrs, actor, copy.revision, community.id)
+            end
+          )
         else
           false -> {:error, :invalid_doc_lifecycle}
           {:error, _} = error -> error
