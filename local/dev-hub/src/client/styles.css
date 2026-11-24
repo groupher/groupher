@@ -4343,3 +4343,85 @@ button.service-status-label:active {
     transition-duration: 0.01ms !important;
   }
 }
+
+.config-environment-tab {
+  width: 100%;
+  margin-bottom: 18px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-card);
+  text-align: left;
+  cursor: pointer;
+}
+.config-environment-tab[aria-pressed='true'] {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.service-environment {
+  padding: 24px;
+  overflow: auto;
+  min-width: 0;
+}
+.service-environment header p,
+.service-environment header > code {
+  color: var(--ink-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.service-environment-field {
+  padding-block: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+.service-environment-field label,
+.service-environment-field > div,
+.service-environment footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.service-environment-field label {
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.service-environment-field small {
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+.service-environment-field input,
+.service-environment-field output {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  font:
+    12px 'SFMono-Regular',
+    Consolas,
+    monospace;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.service-environment-field input {
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+}
+.service-environment-field input:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+.service-environment button {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-card);
+  cursor: pointer;
+}
+.service-environment button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.service-environment footer {
+  padding-block: 20px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}

@@ -56,9 +56,12 @@ uses the same commands through `make be.converter.start` and `make be.import.sta
 The local Portless hostname is `import.groupher.localhost`; the production
 hostname is `import.groupher.com`.
 
-Copy `.env.example` to `.env` and supply development service credentials
-and a preview signing secret. Cloudflare CLI loads local secret values from
-that gitignored file; `cloudflare.config.ts` declares the non-secret bindings.
+Dev Hub supplies service credentials and the preview signing secret. Managed
+development uses the pinned Wrangler engine with the existing programmatic
+`cloudflare.config.ts`, an explicit Hub-generated environment file and private
+Worker state directory. This avoids implicit project `.env` / `.dev.vars`
+loading; deployment continues to use `cf deploy`. See
+[central local configuration](../../docs/architecture/dev-hub-local-config.md).
 
 Framework fixtures must stay self-contained and deterministic. Add a separate
 case directory when covering a new framework/configuration shape; do not reuse

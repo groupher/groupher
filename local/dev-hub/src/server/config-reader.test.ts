@@ -28,7 +28,7 @@ const createDefinition = (
   metrics: METRICS,
 })
 
-test('env manifests follow development precedence and redact values by default', async (t) => {
+test('legacy env files remain redacted references, not active managed configuration', async (t) => {
   const root = await mkdtemp(path.join(tmpdir(), 'dev-hub-env-'))
   t.after(async () => rm(root, { recursive: true, force: true }))
 
@@ -55,9 +55,9 @@ test('env manifests follow development precedence and redact values by default',
   assert.deepEqual(
     manifest.files.map(({ name, group }) => ({ name, group })),
     [
-      { name: '.env.development.local', group: 'active' },
-      { name: '.env.local', group: 'active' },
-      { name: '.env.development', group: 'active' },
+      { name: '.env.development.local', group: 'other' },
+      { name: '.env.local', group: 'other' },
+      { name: '.env.development', group: 'other' },
       { name: '.env.example', group: 'template' },
     ],
   )

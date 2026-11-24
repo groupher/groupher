@@ -90,6 +90,15 @@ const KNOWN_CREDENTIAL_KEYS = new Set([
   'OPENAI_API_KEY',
 ])
 
+// Per-service settings must not leak from the Hub's parent shell into other services.
+for (const definition of SERVICE_DEFINITIONS) {
+  for (const key of [
+    ...(definition.localEnvironment?.editableEnvKeys || []),
+    ...(definition.localEnvironment?.externalEnvKeys || []),
+  ])
+    MANAGED_ENV_KEYS.add(key)
+}
+
 export const LOCAL_ENVIRONMENT_STATE_RELATIVE_PATH =
   'local/dev-hub/.data/local-environment/state.json'
 export const LOCAL_ENVIRONMENT_DIRECTORY_RELATIVE_PATH = 'local/dev-hub/.data/local-environment'
@@ -345,33 +354,6 @@ export const localTestActorsSecret = (state: TLocalEnvironmentState): string =>
   createHmac('sha256', state.secrets['auth:session-secret'])
     .update('dev-hub:local-test-actors:v1')
     .digest('base64url')
-
-export const resolveExternalEnvironment = async (
-  definition: TServiceDefinition,
-): Promise<Record<string, string>> => {
-  const keys = definition.localEnvironment?.externalEnvKeys || []
-  if (keys.length === 0 || definition.config?.kind !== 'env-files') return {}
-  const result: Record<string, string> = {}
-  const files = [
-    path.join(definition.config.root, '.env.development.local'),
-    path.join(definition.config.root, '.env.local'),
-    path.join(definition.config.root, '.env.development'),
-    path.join(definition.config.root, '.env'),
-  ]
-  for (const file of files) {
-    let parsed: NodeJS.Dict<string>
-    try {
-      parsed = parseEnv(await readFile(file, 'utf8'))
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue
-      throw error
-    }
-    for (const key of keys) {
-      if (result[key] === undefined && parsed[key] !== undefined) result[key] = parsed[key]
-    }
-  }
-  return result
-}
 
 export const createSpawnEnvironment = (
   definition: TServiceDefinition,

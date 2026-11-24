@@ -1,5 +1,7 @@
 # Dev Hub 统一本地运行环境
 
+> 本地覆盖配置的当前实现见 [Dev Hub 集中本地配置](./dev-hub-local-config.md)：由 Hub 按服务管理 `local-dev.env`，旧应用 dotenv 文件不再是 Hub 的日常配置来源；下文保留统一身份与历史迁移背景。
+
 > 状态：实施与验收记录；入口清单和验收矩阵见第 4、6、7 节。
 >
 > 基线：`5627fc9d01b59121592f058637d01aa556fe1c07`（2026-11-18）。工作树包含其他
@@ -69,7 +71,7 @@ Press 等调用方分别有自己的本地身份和最小权限；没有服务�
 | 父进程环境                        | 继承后删除全仓库受管 key 和已知凭据，保留工具链兼容性；仅按服务重新注入            |
 | 旧 Dash/Auth 初始化器             | 显式迁移其输出后删除旧 writer；setup-auth 只调用统一 prepare，不再写 Auth/Dash env |
 | Make、package scripts、cross-env  | 删除受管 key 的内联赋值，不能在 spawn 后再次覆盖                                   |
-| 应用 dotenv                       | 托管模式不再加载受管 key；外部授权只由统一 loader 按应用白名单读取                 |
+| 应用 dotenv                       | 托管模式跳过应用 dotenv；白名单外部授权从 Hub 集中 `local-dev.env` 读取            |
 | Vite / Cloudflare 配置            | 开发态消费统一 bindings，清除重复默认值；生产加载路径保持独立                      |
 
 关键约束是“一个 key 有一个 owner”。检查受管 key 的所有旧来源和最终有效值，不能只
@@ -153,11 +155,11 @@ Worker 需要的私有投影固定在 `.data/local-environment/workers/<serviceI
 `.dev.vars`/`.env.local`。B2 须为下列三类工具记录实际配置入口、支持的传递 API/参数及
 禁用旧 dotenv 的方式，真实 handler 探针通过后才算交付；不预设它们支持同一个 CLI 参数：
 
-| 工具                   | 需要覆盖的入口                                           | 交付要求                                                                                      |
-| ---------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Cloudflare Vite plugin | Dash、Community 等 SSR 开发入口                          | 配置从 Hub child env 读取并交给 `bindings.text/secret()`，不使用 public defines 传 secret     |
-| cf CLI                 | Import、Converter、Assets Worker、Edge Router 等启动变体 | 配置从 Hub child env 读取并由 `bindings.*()` 传入；应用配置不得再读 dotenv                    |
-| Wrangler               | Status、Review AI                                        | Hub 在私有目录重建 `.env` 投影，以 pinned Wrangler 的 `--env-file` 加载；远端 AI 授权单独检查 |
+| 工具                   | 需要覆盖的入口                                   | 交付要求                                                                                      |
+| ---------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Cloudflare Vite plugin | Dash、Community 等 SSR 开发入口                  | 配置从 Hub child env 读取并交给 `bindings.text/secret()`，不使用 public defines 传 secret     |
+| cf CLI                 | Converter、Assets Worker、Edge Router 等启动变体 | 配置从 Hub child env 读取并由 `bindings.*()` 传入；应用配置不得再读 dotenv                    |
+| Wrangler               | Import、Status、Review AI                        | Hub 在私有目录重建 `.env` 投影，以 pinned Wrangler 的 `--env-file` 加载；远端 AI 授权单独检查 |
 
 Secret 不通过 `--var SECRET=...` 等命令行字面量传递；没有验证过交付方式时，B2 报告
 阻塞，不能临时改写每个应用的 dotenv 作为替代。
