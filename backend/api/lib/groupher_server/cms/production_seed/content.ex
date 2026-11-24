@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
   """
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.ProductionSeed
+  alias CMS.ProductionSeed.Privileges
   alias Accounts.Model.User
   alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Community}
 
@@ -42,9 +43,18 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
           checksum = Base.encode16(:crypto.hash(:sha256, bytes), case: :lower)
 
           case run.manifest["contentChecksum"] do
-            nil -> seed!(run, input, checksum)
-            ^checksum -> verify_snapshot!(run.manifest)
-            _ -> Repo.rollback(:seed_artifact_changed)
+            nil ->
+              author_id = get_in(run.manifest, ["users", "author"])
+
+              Privileges.with_temporary_root!(author_id, fn ->
+                seed!(run, input, checksum)
+              end)
+
+            ^checksum ->
+              verify_snapshot!(run.manifest)
+
+            _ ->
+              Repo.rollback(:seed_artifact_changed)
           end
 
           {:ok, manifest} = ProductionSeed.report(run_id, database)
@@ -71,7 +81,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
   defp valid_input?(_), do: false
 
   defp create_public_article(community, :doc, attrs, actor, command_id) do
-    CMS.Seeds.Docs.create(community, attrs, seed_publisher(actor), command_id)
+    CMS.Seeds.Docs.create(community, attrs, actor, command_id)
   end
 
   defp create_public_article(community, thread, attrs, actor, command_id)
@@ -81,7 +91,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
              community,
              thread,
              attrs,
-             seed_publisher(actor),
+             actor,
              command_id: command_id
            ),
          {:ok, %{inner_id: inner_id}} <-
@@ -95,10 +105,6 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
       {:ok, public}
     end
   end
-
-  # Only the admitted, fixed acceptance artifact uses this process-local authority.
-  # No passport or role is persisted; browser permission checks still use real accounts.
-  defp seed_publisher(actor), do: %{actor | cur_passport: %{"global" => %{"god" => true}}}
 
   defp seed!(run, input, checksum) do
     commands = input["commands"] || Repo.rollback(:seed_missing_command_ids)
@@ -114,8 +120,6 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
 
     actor = Repo.get!(User, run.manifest["users"]["author"])
     admin = Repo.get!(User, run.manifest["users"]["adminDev"])
-    {:ok, passport} = CMS.Passport.get_passport(admin)
-    admin = %{admin | cur_passport: passport}
 
     communities =
       Map.new(run.manifest["communities"], fn {slug, id} -> {slug, Repo.get!(Community, id)} end)
@@ -144,20 +148,22 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
         {name, describe(article, communities[slug], public)}
       end)
 
-    Enum.each(~w(shared deleteProbe), fn name ->
-      source = communities[resources[name]["community"]]
+    Privileges.with_temporary_root!(admin.id, fn ->
+      Enum.each(~w(shared deleteProbe), fn name ->
+        source = communities[resources[name]["community"]]
 
-      command!(
-        CMS.Articles.mirror(
-          communities["mock"],
-          resources[name]["articleId"],
-          [],
-          admin,
-          source,
-          commands["mirror-#{name}"]
-        ),
-        "mirror-#{name}"
-      )
+        command!(
+          CMS.Articles.mirror(
+            communities["mock"],
+            resources[name]["articleId"],
+            [],
+            admin,
+            source,
+            commands["mirror-#{name}"]
+          ),
+          "mirror-#{name}"
+        )
+      end)
     end)
 
     px = resources["PX"]

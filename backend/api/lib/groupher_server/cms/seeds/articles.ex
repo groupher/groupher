@@ -219,10 +219,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
   defp create_public_article(community, :doc, attrs, _actor, command_id) do
     owner = GroupherServer.Repo.get!(GroupherServer.Accounts.Model.User, community.user_id)
-
-    with {:ok, passport} <- CMS.Passport.get_passport(owner) do
-      CMS.Seeds.Docs.create(community, attrs, %{owner | cur_passport: passport}, command_id)
-    end
+    CMS.Seeds.Docs.create(community, attrs, owner, command_id)
   end
 
   defp create_public_article(community, thread, attrs, actor, command_id)
