@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
   alias CMS.Comments.Commands.StateConfirmation, as: Confirmation
   alias CMS.Model.Comment
 
+  @doc "Executes a fold or unfold action; pin actions require the command-id form."
   @spec execute(atom(), Comment.t(), User.t()) :: {:ok, term()} | {:error, term()}
   def execute(action, %Comment{} = _comment, %User{} = _user)
       when action in [:pin, :undo_pin] do
@@ -61,6 +62,7 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
     end)
   end
 
+  @doc "Executes a retry-safe pin or unpin action for a Comment record or id."
   @spec execute(atom(), Comment.t(), User.t(), Ecto.UUID.t()) ::
           {:ok, Comment.t()} | {:error, term()}
   def execute(action, %Comment{} = comment, %User{} = actor, command_id)

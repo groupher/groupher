@@ -1,8 +1,13 @@
 defmodule GroupherServer.Jobs.CMSOutboxArticle do
   @moduledoc """
-  Oban entrypoint for Article outbox delivery.
+  Routes committed Article outbox wakeups to the CMS delivery workflow. The
+  Oban job carries the durable event identifier; leasing, retries, and
+  idempotent effect handling remain owned by CMS.
 
-      caller -> GroupherServer.Jobs.CMSOutboxArticle -> result
+      Article command commits outbox event
+          -> Oban wakeup with event_id
+          -> CMS.deliver_outbox(:article, job)
+          -> Article outbox workflow and downstream effects
   """
   use Oban.Worker,
     queue: :cms_outbox,

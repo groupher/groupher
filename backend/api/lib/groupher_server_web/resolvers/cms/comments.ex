@@ -16,14 +16,17 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
 
   @viewer_batch_size 100
 
+  @doc "Locks comments on the resolved article and returns the command result."
   def lock_article_comments(_root, ~m(article command_id)a, %{context: %{cur_user: user}}) do
     CMS.articles_lock_comments_result(article, user, command_id)
   end
 
+  @doc "Unlocks comments on the resolved article and returns the command result."
   def undo_lock_article_comments(_root, ~m(article command_id)a, %{context: %{cur_user: user}}) do
     CMS.articles_undo_lock_comments_result(article, user, command_id)
   end
 
+  @doc "Reads comment state for the article in its community and thread, with or without a viewer."
   def comments_state(
         _root,
         %{article: article, article_path: %{thread: thread, community: community}},
@@ -42,6 +45,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     CMS.comments_comments_state(thread, article.id, nil, community)
   end
 
+  @doc "Reads private viewer state for up to 100 comment inner IDs; anonymous viewers get an empty list."
   def comment_viewer_states(
         _root,
         %{article: article_path, comment_inner_ids: comment_inner_ids},
@@ -55,6 +59,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     end
   end
 
+  @doc "Reads reconciliation state for up to 100 comment inner IDs with the optional viewer."
   def comment_reconcile_states(
         _root,
         %{article: article_path, comment_inner_ids: comment_inner_ids},
@@ -66,6 +71,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     end
   end
 
+  @doc "Loads the resolved comment with viewer-specific state when a viewer is present."
   def one_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
     CMS.comments_one_comment(comment, user)
   end
@@ -104,6 +110,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     )
   end
 
+  @doc "Pages participants in the article's comments within its community and thread."
   def paged_comments_participants(
         _root,
         %{article: article, article_path: %{thread: thread, community: community}} = args,
@@ -114,6 +121,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     end
   end
 
+  @doc "Creates a comment from the body bag after resolving the article's community."
   def create_comment(
         _root,
         %{
@@ -137,6 +145,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     end
   end
 
+  @doc "Updates the comment body against its expected version in the request's community."
   def update_comment(_root, ~m(body_bag comment expected_version)a = args, %{
         context: %{cur_user: user}
       }) do
@@ -150,6 +159,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     )
   end
 
+  @doc "Deletes the resolved comment for the viewer in the community from the comment path."
   def delete_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
     CMS.comments_delete_comment_result(
       comment,
@@ -159,6 +169,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     )
   end
 
+  @doc "Creates a reply to the resolved comment using the body bag and the article's community."
   def reply_comment(_root, %{comment: comment, body_bag: body_bag} = args, %{
         context: %{cur_user: user}
       }) do
@@ -173,42 +184,51 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     )
   end
 
+  @doc "Records the viewer's upvote on the resolved comment and returns the command result."
   def upvote_comment(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
     CMS.interactions_upvote_result(comment, user, Map.get(args, :command_id))
   end
 
+  @doc "Withdraws the viewer's upvote from the resolved comment."
   def undo_upvote_comment(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
     CMS.interactions_undo_upvote_result(comment, user, Map.get(args, :command_id))
   end
 
+  @doc "Records the viewer's selected emotion on the resolved comment."
   def emotion_to_comment(_root, %{comment: comment, emotion: emotion} = args, %{
         context: %{cur_user: user}
       }) do
     CMS.interactions_emotion_result(comment, emotion, user, Map.get(args, :command_id))
   end
 
+  @doc "Withdraws the viewer's selected emotion from the resolved comment."
   def undo_emotion_to_comment(_root, %{comment: comment, emotion: emotion} = args, %{
         context: %{cur_user: user}
       }) do
     CMS.interactions_undo_emotion_result(comment, emotion, user, Map.get(args, :command_id))
   end
 
+  @doc "Marks the resolved comment as the solution on behalf of the signed-in user."
   def accept_solution(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
     CMS.comments_accept_solution(comment, user, Map.get(args, :command_id))
   end
 
+  @doc "Revokes the solution designation for the resolved comment."
   def revoke_solution(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
     CMS.comments_revoke_solution(comment, user, Map.get(args, :command_id))
   end
 
+  @doc "Pins the resolved comment on behalf of the signed-in user."
   def pin_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
     CMS.comments_pin_comment(comment, user, Map.get(args, :command_id))
   end
 
+  @doc "Removes the pin from the resolved comment on behalf of the signed-in user."
   def undo_pin_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
     CMS.comments_undo_pin_comment(comment, user, Map.get(args, :command_id))
   end
 
+  @doc "Returns the parent comment's article-local ID, or nil when it is absent."
   def comment_inner_id(%{inner_id: inner_id}, _args, _info) when not is_nil(inner_id) do
     {:ok, inner_id}
   end

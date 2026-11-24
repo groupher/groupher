@@ -7,6 +7,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArtimentStatus do
 
   alias GroupherServer.CMS
 
+  @doc "Looks up resource status by community and locator through the CMS FrontDesk."
   def read(_root, %{community: community, locator: locator}, _info) do
     CMS.artiment_status(community, locator)
   end

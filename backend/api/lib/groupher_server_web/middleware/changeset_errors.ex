@@ -20,6 +20,7 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrors do
 
   alias GroupherServerWeb.Gettext, as: Translator
 
+  @doc "Converts a single changeset error into a field error with validation details."
   def call(%{errors: [%Ecto.Changeset{} = changeset]} = resolution, _) do
     ErrorResponse.put_error(
       resolution,

@@ -17,12 +17,15 @@ defmodule Helper.Transaction do
   alias GroupherServer.{ErrorCat, Repo}
   alias Helper.ORM.AdvisoryLock
 
-  @doc "Runs a caller-owned business transaction and preserves tagged-tuple semantics."
+  @doc """
+  Passes a zero-argument callback or an `Ecto.Multi` to `Repo.transact/1`.
+  A callback returns an ok or error tuple; a failed Multi operation also
+  identifies the failed step and the changes from preceding steps.
+  """
   @spec run((-> {:ok, value} | {:error, reason})) :: {:ok, value} | {:error, reason}
         when value: term(), reason: term()
   def run(fun) when is_function(fun, 0), do: Repo.transact(fun)
 
-  @doc false
   def run(%Ecto.Multi{} = multi), do: Repo.transact(multi)
 
   @doc "Executes an Ecto.Multi by joining a transaction already owned by the caller."

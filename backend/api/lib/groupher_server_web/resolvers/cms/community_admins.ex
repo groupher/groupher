@@ -8,16 +8,19 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
   alias GroupherServer.{Accounts, CMS, Pagi}
   alias Accounts.Model.User
 
+  @doc "Finds community admin candidates by name on behalf of the signed-in actor."
   def candidates(_root, %{community_ref: ref, name: name}, %{context: %{cur_user: actor}}) do
     CMS.communities_admins_candidates(ref, name, actor)
   end
 
+  @doc "Pages administrators for the community identified by its reference."
   def admins(_root, %{community_ref: ref} = args, %{context: %{cur_user: actor}}) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
       CMS.communities_admins_page(ref, pagi, actor)
     end
   end
 
+  @doc "Pages community members using the supplied filter and optional viewer."
   def members(_root, %{community_ref: ref} = args, %{context: context}) do
     actor = Map.get(context, :cur_user)
 
@@ -26,12 +29,14 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
     end
   end
 
+  @doc "Pages admin membership requests for the specified community and actor."
   def requests(_root, %{community_ref: ref} = args, %{context: %{cur_user: actor}}) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
       CMS.communities_admins_requests(ref, pagi, actor)
     end
   end
 
+  @doc "Creates an admin invitation or application after validating its permission map."
   def create(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     with {:ok, permissions} <- permission_map(args.permissions) do
       CMS.communities_admins_create(
@@ -45,6 +50,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
     end
   end
 
+  @doc "Accepts or rejects the specified request revision; only acceptance uses approved permissions."
   def decide(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     with {:ok, decision} <- decision(args.decision),
          {:ok, permissions} <- decision_permission_input(decision, args) do
@@ -59,10 +65,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
     end
   end
 
+  @doc "Cancels the admin request at the supplied revision for the signed-in actor."
   def cancel(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.communities_admins_cancel(args.request_id, args.revision, actor, args.command_id)
   end
 
+  @doc "Updates a member's permissions after validating the member ID and permission map."
   def update_permissions(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     with {:ok, member_id} <- parse_integer_id(args.member_id),
          {:ok, permissions} <- permission_map(args.permissions) do
@@ -77,6 +85,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
     end
   end
 
+  @doc "Removes an admin member by integer ID at the supplied membership revision."
   def remove(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     with {:ok, member_id} <- parse_integer_id(args.member_id) do
       CMS.communities_admins_remove(
@@ -89,14 +98,17 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityAdmins do
     end
   end
 
+  @doc "Ends the actor's own admin membership at the supplied revision."
   def leave(_root, args, %{context: %{cur_user: %User{} = actor}}) do
     CMS.communities_admins_leave(args.community_ref, args.revision, actor, args.command_id)
   end
 
+  @doc "Reads the signed-in actor's current admin status in the identified community."
   def current(_root, %{community_ref: ref}, %{context: %{cur_user: %User{} = actor}}) do
     CMS.communities_admins_current(ref, actor)
   end
 
+  @doc "Checks whether the actor may manage admins in the identified community."
   def management_allowed(_root, %{community_ref: ref}, %{context: %{cur_user: %User{} = actor}}) do
     CMS.communities_admins_management_allowed(ref, actor)
   end

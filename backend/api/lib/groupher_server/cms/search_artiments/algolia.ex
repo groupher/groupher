@@ -53,6 +53,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Algolia do
   end
 
   @impl true
+  @doc "Deletes search objects from the configured Algolia index; an empty list is a no-op."
   def delete([]), do: {:ok, :pass}
 
   def delete(refs) when is_list(refs) do
@@ -67,6 +68,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Algolia do
   end
 
   @impl true
+  @doc "Partially updates ranking fields on existing Algolia objects without creating missing objects."
   def update_metrics([]), do: {:ok, :pass}
 
   def update_metrics(updates) when is_list(updates) do
@@ -84,6 +86,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Algolia do
   end
 
   @impl true
+  @doc "Runs a relevance-ranked query with canonical pagination and decoded highlight fragments."
   def search(%Query{sort: sort}) when sort != :relevance do
     {:error, ErrorCat.custom("Algolia sort replicas are not configured")}
   end

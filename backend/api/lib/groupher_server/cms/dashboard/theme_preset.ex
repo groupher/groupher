@@ -257,7 +257,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
     end
   end
 
-  @doc false
+  @doc "Returns the complete default token map for a built-in or custom preset name."
   def defaults(preset) do
     Map.get(@defaults, normalize_preset(preset), @defaults.default)
   end

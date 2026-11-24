@@ -28,6 +28,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserContribute do
     embeds_many(:records, Embeds.UserContributeRecord, on_replace: :delete)
   end
 
+  @doc "Casts embedded contribution records, leaving the summary dates and total count unchanged."
   def changeset(struct, params) do
     struct
     |> cast(params, @optional_fields)

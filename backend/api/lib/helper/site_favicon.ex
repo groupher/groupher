@@ -1,34 +1,30 @@
 defmodule Helper.SiteFavicon do
   @moduledoc """
-  Discovers a site's favicon through an SSRF-safe, bounded fetch pipeline.
-
-  The implementation originated from `exfavicon` but now validates target and
-  redirect URLs, limits response work, and accepts only supported icon results.
-  fix edge case at line:60
+  Discovers icon links in page HTML and probes their content type. `find_page/1`
+  validates the initial page URL; `find/1` expects its caller to have done so.
+  Redirect destinations are checked before each subsequent page request.
 
   Business position:
 
-      Domain or web caller
-        -> SiteFavicon
-        -> normalized value / infrastructure
+      page HTML -> first icon link -> URL check and HEAD request -> icon or fallback
   """
   alias GroupherServerWeb.ErrorCat
   alias Helper.UrlSafety
 
-  @doc "Finds page through the `SiteFavicon` boundary."
+  @doc "Checks the page URL, follows validated redirects, and returns `{:ok, final_url, response}` or an error."
   def find_page(url) do
     with {:ok, safe_url} <- UrlSafety.validate_http_url(url) do
       req(safe_url)
     end
   end
 
-  @doc "Parses favicon into the canonical `SiteFavicon` representation."
+  @doc "Returns the discovered icon URL, falling back to `/favicon.ico` at the page location without probing that fallback."
   def parse_favicon(html, location) do
     icon_url = find_from_html(html, location)
     if icon_url, do: icon_url, else: default_path(location)
   end
 
-  @doc "Runs `find` through the public `SiteFavicon` boundary."
+  @doc "Fetches an already validated page URL and resolves its icon or default `/favicon.ico`. Raises if the page request fails."
   def find(url) do
     {:ok, location, resp} = req(url)
 
@@ -36,7 +32,7 @@ defmodule Helper.SiteFavicon do
     if icon_url, do: icon_url, else: default_path(location)
   end
 
-  @doc "Finds from html through the `SiteFavicon` boundary."
+  @doc "Returns the first icon link's resolved URL if it passes the image probe, otherwise nil."
   def find_from_html(html, url) do
     case detect(html, url) do
       {:ok, icon_url} ->
@@ -47,7 +43,7 @@ defmodule Helper.SiteFavicon do
     end
   end
 
-  @doc "Reports whether favicon url? according to `SiteFavicon`."
+  @doc "Checks URL safety, then sends a HEAD request and tests whether Content-Type contains `image`."
   def valid_favicon_url?(url) do
     with {:ok, safe_url} <- UrlSafety.validate_http_url(url),
          {:ok, resp} <- head(safe_url) do

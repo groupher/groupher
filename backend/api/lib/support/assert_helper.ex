@@ -24,19 +24,23 @@ defmodule GroupherServer.Test.AssertHelper do
 
   @inner_page_size GroupherServerWeb.Config.inner_page_size()
 
-  @doc """
-  used for non exist id
-  """
+  @doc "Returns a stable numeric identifier that should not match a persisted record."
   def non_exist_id, do: 15_982_398_614
+
+  @doc "Returns a slug reserved by tests for lookups that must not find a community."
   def non_exist_slug, do: "no-exist"
+
+  @doc "Returns a login reserved by tests for lookups that must not find an account."
   def non_exist_login, do: "15_982_398_614"
   # def page_size, do: @page_size
 
+  @doc "Returns yesterday's UTC calendar date for date-boundary assertions."
   def yesterday_date do
     Helper.Datetime.today()
     |> Helper.Datetime.shift(days: -1)
   end
 
+  @doc "Adds a suffix to a community tag's title and slug to keep test fixtures unique."
   def unique_community_tag_attrs(attrs, suffix) do
     attrs
     |> Map.merge(%{
@@ -45,16 +49,20 @@ defmodule GroupherServer.Test.AssertHelper do
     })
   end
 
+  @doc "Compares an error code with the registered code for a namespace and reason."
   def is_error?(error, {namespace, reason}) when is_tuple(namespace) and is_atom(reason) do
     error_code(error) == ErrorCat.definition(namespace, reason).code
   end
 
+  @doc "Extracts an error code from keyword errors, ErrorCat structs, or returns nil."
   def error_code(reason) when is_list(reason), do: Keyword.get(reason, :code)
   def error_code(%Error{code: code}), do: code
   def error_code(_), do: nil
 
+  @doc "Returns the configured inner-page size used by GraphQL pagination tests."
   def assert_v(:inner_page_size), do: @inner_page_size
 
+  @doc "Checks whether a map contains the requested key with a list, integer, or non-empty string value."
   def is_valid_kv?(obj, key, :list) when is_map(obj) do
     obj = map_key_stringify(obj)
 
@@ -82,6 +90,7 @@ defmodule GroupherServer.Test.AssertHelper do
     end
   end
 
+  @doc "Validates the GraphQL pagination envelope and its cursor or offset page metadata."
   def is_valid_pagination?(%{"entries" => entries, "pageInfo" => info}) do
     is_list(entries) and is_boolean(info["hasNextPage"]) and is_boolean(info["hasPreviousPage"]) and
       (info["__typename"] == "CursorPageInfo" or
@@ -89,12 +98,15 @@ defmodule GroupherServer.Test.AssertHelper do
   end
 
   def is_valid_pagination?(_), do: false
+
+  @doc "Validates an empty GraphQL pagination envelope (:empty) or a raw ORM page (:raw)."
   def is_valid_pagination?(obj, :empty), do: is_valid_pagination?(obj) and obj["entries"] == []
 
   def is_valid_pagination?(%{entries: entries} = obj, :raw) do
     is_list(entries) and match?(%{api: _}, Helper.ORM.Pagi.Page.info(obj))
   end
 
+  @doc "Validates a raw pagination result and requires its entries list to be empty."
   def is_valid_pagination?(obj, :raw, :empty) do
     is_valid_pagination?(obj, :raw) and obj.entries == []
   end
@@ -127,6 +139,7 @@ defmodule GroupherServer.Test.AssertHelper do
 
   defp ensure_command_id(_query, variables), do: variables
 
+  @doc "Extracts the first selected field name from a GraphQL query for response assertions."
   def get_operation_name(query) when is_binary(query) do
     # 移除注释和换行，简化处理
     normalized =
@@ -166,6 +179,7 @@ defmodule GroupherServer.Test.AssertHelper do
     end
   end
 
+  @doc "Posts a GraphQL query with variables, optionally logs the response, and returns its operation data."
   def gq_query(conn, query, variables, flag \\ false) do
     conn
     |> post("/graphiql", query: query, variables: variables)
@@ -174,6 +188,7 @@ defmodule GroupherServer.Test.AssertHelper do
     |> successful_operation!(query)
   end
 
+  @doc "Posts a GraphQL query without variables and returns its operation data."
   def gq_query(conn, query) do
     conn
     |> post("/graphiql", query: query, variables: %{})
@@ -207,6 +222,7 @@ defmodule GroupherServer.Test.AssertHelper do
     )
   end
 
+  @doc "Checks whether a GraphQL mutation returns errors or the requested numeric error code."
   def mutation_error?(conn, query, variables, opt \\ false)
 
   def mutation_error?(conn, query, variables, code) when is_integer(code) do
@@ -252,6 +268,7 @@ defmodule GroupherServer.Test.AssertHelper do
     end
   end
 
+  @doc "Returns the first three list values and the final value for compact test assertions."
   def firstn_and_last(values, 3) do
     [value_1 | [value_2 | [value_3 | _]]] = values
     value_x = values |> List.last()
@@ -365,6 +382,7 @@ defmodule GroupherServer.Test.AssertHelper do
   # end
 
   # for embed user situation
+  @doc "Checks whether a list of account projections contains the supplied user's login."
   def user_exist_in?(%{login: login}, list) when is_list(list) do
     # list |> Enum.any?(&(&1.login == login or &1["login"] == login))
     list

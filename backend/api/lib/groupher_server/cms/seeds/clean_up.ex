@@ -34,6 +34,7 @@ defmodule GroupherServer.CMS.Seeds.CleanUp do
     CMS.Seeds.FullCommunity.delete(slug)
   end
 
+  @doc "Deletes the supplied community through the full-community seed cleanup path."
   @spec articles(Community.t(), atom()) :: T.domain_res(:ok)
   def articles(%Community{} = community, _thread) do
     CMS.Seeds.FullCommunity.delete(community.slug)

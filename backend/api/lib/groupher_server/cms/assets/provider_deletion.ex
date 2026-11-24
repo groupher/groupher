@@ -285,10 +285,10 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     end
   end
 
-  @doc false
+  @doc "Queues provider deletion for an asset through the best-effort deletion outbox path."
   def deliver(%CommunityAsset{} = asset), do: safe_enqueue(asset)
 
-  @doc false
+  @doc "Queues provider deletion for an application-upload payload through the best-effort outbox path."
   def deliver_application_upload(data) when is_map(data) do
     case safe_enqueue(%CommunityAsset{
            id: Map.get(data, "id") || Map.get(data, :id),

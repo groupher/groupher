@@ -141,6 +141,7 @@ defmodule GroupherServer.CMS.Dashboard.ThirdPartyAnalytics do
     |> validate_provider_config()
   end
 
+  @doc "Returns only enabled provider configs that pass their provider-specific changeset validation."
   def enabled_valid_configs(configs) when is_list(configs) do
     Enum.filter(configs, fn config -> Map.get(config, :enabled) and valid_config?(config) end)
   end

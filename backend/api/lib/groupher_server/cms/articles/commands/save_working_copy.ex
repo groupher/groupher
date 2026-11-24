@@ -90,6 +90,7 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
     present(fn confirmation -> present_confirmation(confirmation, article, community, actor) end)
   end
 
+  @doc "Saves a revision-checked WorkingCopy patch after Article edit admission and records immutable history."
   def execute(
         article,
         community,

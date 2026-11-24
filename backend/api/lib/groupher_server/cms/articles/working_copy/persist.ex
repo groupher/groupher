@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Persist do
   alias GroupherServer.CMS
   alias CMS.Articles.WorkingCopy.Persist.ArticleHistory
 
+  @doc "Appends an immutable Article event while delegating transaction ownership to ArticleHistory."
   defdelegate append_article_event_in_transaction(article_id, attrs),
     to: ArticleHistory
 

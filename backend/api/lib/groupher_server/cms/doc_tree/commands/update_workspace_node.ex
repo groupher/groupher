@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.UpdateWorkspaceNode do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Updates a workspace node under the expected tree revision using a command receipt."
   def execute(%Community{} = community, revision, node_id, patch, %User{} = actor, command_id)
       when is_integer(revision) and revision >= 0 and is_binary(node_id) and is_map(patch) and
              is_binary(command_id) do

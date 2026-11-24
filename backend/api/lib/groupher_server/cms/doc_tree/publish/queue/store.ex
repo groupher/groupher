@@ -69,6 +69,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Store do
 
   def advance(_community, _queue, _expected, _changes), do: {:error, :invalid_queue_versions}
 
+  @doc "Advances checked Queue counters once when an operation reference is supplied."
   def advance(
         %Community{id: id} = community,
         %DocsPublishQueue{id: queue_id},

@@ -1,8 +1,13 @@
 defmodule GroupherServer.Jobs.CMSOutboxCommunity do
   @moduledoc """
-  Oban entrypoint for Community and DocTree outbox delivery.
+  Routes Community and DocTree outbox wakeups to their CMS-owned delivery
+  workflows. Durable event lookup, state transitions, and retry decisions are
+  handled by CMS rather than this worker.
 
-      caller -> GroupherServer.Jobs.CMSOutboxCommunity -> result
+      Community / DocTree transaction commits event
+          -> Oban wakeup with event_id
+          -> CMS.deliver_outbox(:community, job)
+          -> Community outbox workflow
   """
   use Oban.Worker,
     queue: :cms_outbox,

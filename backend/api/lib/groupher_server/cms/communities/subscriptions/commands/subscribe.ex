@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Commands.Subscribe do
   alias CMS.Model.Community
   alias Helper.T
 
+  @doc "Subscribes the actor to a Community through the retry-safe command pipeline."
   @spec execute(Community.t() | String.t(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Community.t())
   def execute(community_ref, %User{} = actor, command_id) do

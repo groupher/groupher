@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.ApproveQueue do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Records an approval for the current Queue revision through an idempotent command receipt."
   def execute(%Community{} = community, revision, %User{} = actor, command_id)
       when is_integer(revision) and revision >= 0 and is_binary(command_id) do
     run_receipt(community, revision, actor, command_id)

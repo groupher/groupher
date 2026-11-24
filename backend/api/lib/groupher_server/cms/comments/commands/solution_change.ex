@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
 
   @actions [:accept_solution, :revoke_solution]
 
+  @doc "Executes a retry-safe solution action for a Comment, resolving its request Community first."
   @spec execute(atom(), Comment.t(), User.t(), Ecto.UUID.t()) ::
           {:ok, Comment.t()} | {:error, term()}
   def execute(action, %Comment{} = comment, %User{} = actor, command_id)

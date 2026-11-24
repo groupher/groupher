@@ -33,8 +33,10 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
     "dash.groupher.localhost" => MapSet.new([nil, 80, 3103])
   }
 
+  @doc "Returns the options passed to the browser CSRF plug."
   def init(options), do: options
 
+  @doc "Halts browser-cookie mutations when the request method or CSRF proof is invalid."
   def call(conn, _options) do
     conn = conn |> fetch_cookies() |> fetch_query_params()
 

@@ -249,6 +249,7 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
   end
 
   @impl true
+  @doc "Compiles and analyzes the current command call graph, then writes the report or validates it in check mode."
   def run(args) do
     Mix.Task.run("compile", [])
     {opts, _argv, invalid} = OptionParser.parse(args, strict: @switches)
@@ -551,7 +552,7 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
     GraphAnalyzer.reachable_keys(root_keys, edges, function_keys)
   end
 
-  @doc false
+  @doc "Finds command stages where reachable execution bypasses required Gate admission functions."
   def gate_stage_violations(graph, stage_scopes) do
     gate_modules =
       MapSet.new([
@@ -610,7 +611,7 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
     String.ends_with?(name, "_in_transaction")
   end
 
-  @doc false
+  @doc "Compares observed pipeline stages with each compiled contract and reports missing or unexpected stages."
   def stage_analysis_errors(stage_scopes, contracts) do
     actual =
       stage_scopes
@@ -1162,7 +1163,7 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
     end
   end
 
-  @doc false
+  @doc "Raises unless the generated pipeline report proves there are no unresolved or unsafe command paths."
   def validate_report!(report) do
     summary = report["summary"]
 

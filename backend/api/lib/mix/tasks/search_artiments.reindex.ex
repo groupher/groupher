@@ -4,10 +4,11 @@ defmodule Mix.Tasks.SearchArtiments.Reindex do
 
   Business position:
 
-      Operator
-        -> Mix task / Reindex
-        -> context / service
-        -> terminal output
+      operator
+        -> mix search_artiments.reindex [--configure]
+        -> optionally configure the active platform index
+        -> SearchArtiments.Indexer.reindex_articles/0
+        -> completion output or a task error
   """
 
   use Mix.Task
@@ -19,6 +20,7 @@ defmodule Mix.Tasks.SearchArtiments.Reindex do
   @shortdoc "Rebuild the Search Artiments Article index"
 
   @impl true
+  @doc "Optionally configures the active index, rebuilds all Article search documents, and reports success or failure."
   def run(args) do
     Mix.Task.run("app.start")
 

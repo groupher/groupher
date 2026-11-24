@@ -19,6 +19,10 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     {:ok, Map.get(note, field, Map.get(note, Atom.to_string(field)))}
   end
 
+  @doc """
+  Lists a page of moderation items for the actor's platform or community scope,
+  applying the optional item filter.
+  """
   def alert_items(_parent, %{scope: %{type: :platform}} = args, %{context: %{cur_user: actor}}) do
     AlertWall.list_items(%{type: :platform}, Map.get(args, :filter), actor, Map.get(args, :pagi))
   end
@@ -40,6 +44,9 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     {:error, GroupherServer.CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc """
+  Loads an item for the current actor by its positive integer ID or decimal string ID.
+  """
   def alert_item(_parent, %{id: id}, %{context: %{cur_user: actor}}) do
     with {:ok, item_id} <- parse_id(id) do
       AlertWall.item(item_id, actor)
@@ -50,6 +57,10 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     {:error, AlertWall.item_not_found_error()}
   end
 
+  @doc """
+  Returns a page of reports attached to the specified moderation item for the current
+  actor.
+  """
   def item_reports(_parent, %{id: id} = args, %{context: %{cur_user: actor}}) do
     with {:ok, item_id} <- parse_id(id) do
       AlertWall.item_reports(item_id, actor, Map.get(args, :pagi))
@@ -60,6 +71,9 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     {:error, AlertWall.item_not_found_error()}
   end
 
+  @doc """
+  Returns the current actor's own reports, using the requested filter and pagination.
+  """
   def my_reports(_parent, args, %{context: %{cur_user: actor}}) do
     AlertWall.my_reports(actor, Map.get(args, :filter), Map.get(args, :pagi))
   end
@@ -68,6 +82,10 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     {:error, GroupherServer.CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc """
+  Resolves the reported subject and submits a report under the supplied command ID.
+  Missing details are submitted as an empty string.
+  """
   def submit_report(_parent, %{input: input, command_id: command_id}, %{
         context: %{cur_user: actor}
       }) do
@@ -86,6 +104,10 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     {:error, GroupherServer.CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc """
+  Submits a withdrawal for the given report ID on behalf of the current actor and
+  returns the command result.
+  """
   def withdraw_report(_parent, %{report_id: report_id, command_id: command_id}, %{
         context: %{cur_user: actor}
       }) do
@@ -98,18 +120,29 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     {:error, GroupherServer.CMS.passport_error_cat_permission_denied()}
   end
 
+  @doc """
+  Returns the active report count for the parent item, or zero for a parent without an
+  integer ID.
+  """
   def report_count(%{id: id}, _args, _resolution) when is_integer(id) do
     {:ok, AlertWall.active_report_count(id)}
   end
 
   def report_count(_item, _args, _resolution), do: {:ok, 0}
 
+  @doc """
+  Returns the total report count across states for the parent item, or zero when its
+  ID is unavailable.
+  """
   def total_report_count(%{id: id}, _args, _resolution) when is_integer(id) do
     {:ok, AlertWall.total_report_count(id)}
   end
 
   def total_report_count(_item, _args, _resolution), do: {:ok, 0}
 
+  @doc """
+  Returns the report author's login, or null when the account lookup fails.
+  """
   def reporter_login(%UserReport{reporter_id: id}, _args, _resolution) do
     case FrontDesk.user(id, mode: :internal) do
       {:ok, %User{} = user} -> {:ok, user.login}
@@ -117,6 +150,10 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     end
   end
 
+  @doc """
+  Returns a user target's login, or null if it cannot be resolved. For other target
+  types it returns the stored target ID.
+  """
   def public_target_id(%{target_type: :user, target_id: id}, _args, _resolution) do
     with {user_id, ""} <- Integer.parse(id),
          {:ok, %User{} = user} <- FrontDesk.user(user_id, mode: :internal) do
@@ -128,12 +165,20 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
 
   def public_target_id(%{target_id: id}, _args, _resolution), do: {:ok, id}
 
+  @doc """
+  Counts active reports submitted by the parent account, returning zero when its ID is
+  unavailable.
+  """
   def reported_count(%{id: user_id}, _args, _resolution) when is_integer(user_id) do
     {:ok, AlertWall.reported_count(user_id)}
   end
 
   def reported_count(_account, _args, _resolution), do: {:ok, 0}
 
+  @doc """
+  Submits the actor's resolution for an item using the expected version and command
+  ID. Returns the command result or an error.
+  """
   def resolve_alert_item(
         _parent,
         %{

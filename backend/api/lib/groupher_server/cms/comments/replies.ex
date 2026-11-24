@@ -45,6 +45,7 @@ defmodule GroupherServer.CMS.Comments.Replies do
     |> root_comment()
   end
 
+  @doc "Returns the persisted root Comment id for a Comment or Comment id."
   @spec root_id(T.id() | Comment.t()) :: T.domain_res(T.id())
   def root_id(comment) do
     with {:ok, root} <- root(comment), do: {:ok, root.id}

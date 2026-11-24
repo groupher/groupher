@@ -21,8 +21,10 @@ defmodule GroupherServerWeb do
         -> Endpoint / Router / rendered response
   """
 
+  @doc "Lists the static path prefixes recognized by the endpoint and verified routes."
   def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
 
+  @doc "Returns quoted setup for HTML and JSON controllers, including the HTML layout and route helpers."
   def controller do
     quote do
       use Phoenix.Controller,
@@ -53,6 +55,7 @@ defmodule GroupherServerWeb do
   #   end
   # end
 
+  @doc "Returns quoted Phoenix router setup with connection, controller and LiveView imports."
   def router do
     quote do
       use Phoenix.Router, helpers: false
@@ -64,12 +67,14 @@ defmodule GroupherServerWeb do
     end
   end
 
+  @doc "Returns the quoted Phoenix.Channel setup used by application channels."
   def channel do
     quote do
       use Phoenix.Channel
     end
   end
 
+  @doc "Returns quoted setup for HTML components with translations, core components and verified routes."
   def html do
     quote do
       use Phoenix.Component
@@ -96,6 +101,7 @@ defmodule GroupherServerWeb do
     end
   end
 
+  @doc "Returns quoted configuration for verifying routes against the application's router and endpoint."
   def verified_routes do
     quote do
       use Phoenix.VerifiedRoutes,

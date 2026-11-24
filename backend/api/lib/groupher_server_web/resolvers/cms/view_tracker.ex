@@ -12,6 +12,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ViewTracker do
 
   @viewer_batch_size 100
 
+  @doc "Resolves a public article visit and submits it for counting with the request's actor classification."
   def track_article_view(_root, %{article: article_path}, info) do
     {viewer, actor_opts} = view_actor(info.context)
 
@@ -26,6 +27,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ViewTracker do
     end
   end
 
+  @doc "Reads viewer state for up to 100 article paths; anonymous viewers get an empty list."
   def article_viewer_states(_root, %{paths: paths}, info) do
     with {:ok, :pass} <- validate_viewer_batch(paths) do
       case Map.get(info.context, :cur_user) do

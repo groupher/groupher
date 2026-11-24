@@ -88,6 +88,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
     present(fn confirmation -> present_confirmation(confirmation) end)
   end
 
+  @doc "Publishes a saved WorkingCopy revision or same-Article Snapshot after Gate and publication admission."
   def execute(
         article,
         community,

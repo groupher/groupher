@@ -14,7 +14,7 @@ defmodule Helper.Cache do
 
   @cache_pool Helper.Cache.Config.pool()
 
-  @doc "Runs `config` through the public `Cache` boundary."
+  @doc "Builds Cachex pruning and default expiry options for a named pool. Raises ArgumentError for an unknown pool."
   def config(pool_name) do
     pool_config =
       Map.get(@cache_pool, pool_name) ||
@@ -71,9 +71,7 @@ defmodule Helper.Cache do
   # end
 
   @doc """
-  ## Example
-  iex> Helper.Cache.get(:common, :a)
-  {:ok, "b"}
+  Returns `{:ok, value}` on a hit or `{:error, nil}` when Cachex returns nil.
   """
   @spec get(atom(), atom() | String.t()) :: {:error, nil} | {:ok, any}
   def get(pool, key) do
@@ -149,14 +147,16 @@ defmodule Helper.Cache do
   end
 
   @doc """
-  ## Example
-  iex> Helper.Cache.put(a, "x")
-  {:ok, "x"}
+  Writes the value under the key with the pool default expiry and returns the Cachex result.
   """
   def put(pool, key, value) do
     Cachex.put(pool, key, value)
   end
 
+  @doc """
+  With `[]`, uses the pool default. With `:expire_sec` or `:expire_min`, writes
+  the value, then applies the given lifetime and returns the result of the expiry operation.
+  """
   def put(pool, key, value, []), do: put(pool, key, value)
 
   def put(pool, key, value, expire_sec: expire_sec) do
@@ -169,14 +169,11 @@ defmodule Helper.Cache do
     Cachex.expire(pool, key, :timer.minutes(expire_min))
   end
 
-  @doc "Runs `delete` through the public `Cache` boundary."
+  @doc "Deletes the key from the named pool and returns the result of `Cachex.del/2`."
   def delete(pool, key), do: Cachex.del(pool, key)
 
   @doc """
-  clear all the cache
-  ## Example
-  iex> Helper.Cache.clear()
-  {:ok, 1}
+  Evicts all entries from the named pool and returns the Cachex clear result.
   """
   def clear(pool), do: Cachex.clear(pool)
 

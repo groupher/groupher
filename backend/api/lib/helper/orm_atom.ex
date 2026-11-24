@@ -1,7 +1,7 @@
 defmodule Helper.ORMAtom do
   @moduledoc """
-  Builds atomic Ecto update expressions for incrementing and decrementing counters.
-  update_meta: 提供安全的 JSONB 字段部分更新功能，支持并发安全和最小化数据库写入。
+  Persists integer counter updates and partial JSONB updates to embedded `meta`.
+  Individual meta fields can be changed without replacing unrelated fields.
 
   Business position:
 
@@ -124,44 +124,12 @@ defmodule Helper.ORMAtom do
   end
 
   @doc """
-  更新模型的 meta JSONB 字段（部分更新，仅允许更新 meta schema 中已定义的字段路径）。
+  Updates top-level fields of a record's embedded `meta` using PostgreSQL
+  `jsonb_set`. Pass a schema struct and a map of changes. If meta is nil,
+  the default embed is persisted first. Unknown fields and nested paths are rejected.
 
-  ## 参数
-
-  - `queryable`: 可以是以下两种形式之一：
-    - Ecto 结构体（如 `%Post{}`）
-    - Schema 模块（如 `Post`，此时需要传入包含 `:id` 的 updates）
-
-  - `updates`: 要更新的字段映射，仅支持 meta schema 中已定义的字段路径
-
-  ## 返回值
-
-  - `{:ok, updated_struct}` - 更新成功，返回完整结构体
-  - `{:error, reason}` - 更新失败，可能原因：
-    - `:invalid_queryable` - 输入参数类型错误
-    - `:no_primary_key` - 模型没有主键
-    - `:not_found` - 记录不存在
-
-  ## 示例
-
-      # 通过结构体更新
-      post = Repo.get!(Post, 1)
-      {:ok, updated} = update_meta(post, %{
-        is_comment_locked: true
-      })
-
-      # 通过模块更新（需在updates中包含id）
-      {:ok, updated} = update_meta(Post, %{
-        "id" => 1,
-        "is_comment_locked" => true,
-        "next_floor" => 42
-      })
-
-      # 通过 atom key 更新顶层 meta 字段
-      {:ok, updated} = update_meta(post, %{
-        is_comment_locked: true,
-        next_floor: 3
-      })
+  Returns the updated record with previously loaded associations restored, or
+  an error if validation fails or the update finds no row.
   """
   @spec update_meta(struct(), map() | struct()) :: {:ok, struct()} | {:error, term()}
   def update_meta(%{meta: nil} = queryable, changes) when is_map(changes) do

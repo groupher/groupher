@@ -5,6 +5,7 @@ import { Outlet, createFileRoute, redirect, useLocation } from '@tanstack/react-
 
 import { THREAD } from '~/const/thread'
 import URL_PARAM from '~/const/url_param'
+import PagedPostsProvider from '~/hooks/usePagedPosts/provider'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import PostThread from '~/unit/PostThread'
 
@@ -46,9 +47,11 @@ function PostListLayout() {
         surface='posts'
         recovery={recovery}
       >
-        <PostThread />
+        <PagedPostsProvider>
+          <PostThread />
+          <Outlet />
+        </PagedPostsProvider>
       </ArticlePageBoundary>
-      <Outlet />
     </ArticleListStoreProvider>
   )
 }

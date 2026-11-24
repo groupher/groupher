@@ -17,6 +17,7 @@ defmodule GroupherServer.Support.Factory.Articles do
   alias Support.FakeData
   alias Helper.Datetime
 
+  @doc "Injects article-body fixture constructors and thread metadata builders into a test module."
   defmacro __using__(_opts) do
     quote do
       def mock_rich_text(text \\ "text"), do: unquote(__MODULE__).rich_text(text)
@@ -81,6 +82,7 @@ defmodule GroupherServer.Support.Factory.Articles do
   end
 
   # simulate plate json rich text
+  @doc "Encodes a Plate-shaped rich-text fixture, using the supplied text in its final block."
   def rich_text(text \\ "text") do
     Jason.encode!([
       %{
@@ -327,6 +329,7 @@ defmodule GroupherServer.Support.Factory.Articles do
   end
 
   # for link tasks
+  @doc "Encodes a two-paragraph Plate-shaped fixture for link and text rendering tests."
   def rich_text(text1, text2) do
     Jason.encode!([
       %{
@@ -344,6 +347,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     ])
   end
 
+  @doc "Encodes a single-paragraph Plate body for comment fixtures."
   def comment_rich_text(text \\ "comment") do
     Jason.encode!([
       %{
@@ -355,6 +359,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     ])
   end
 
+  @doc "Builds common article attributes and derives `active_at` from the optional seconds offset."
   def article_base(meta, title, text, default_emotions, opts \\ []) do
     active_at_offset = Keyword.get(opts, :active_at_offset, -1)
 
@@ -372,6 +377,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     }
   end
 
+  @doc "Builds default post attributes with generated text, title, digest, and post metadata."
   def post_base(default_article_meta, default_emotions) do
     text = FakeData.sentence(10)
 
@@ -386,6 +392,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     |> Map.put(:digest, String.slice(text, 100, 150))
   end
 
+  @doc "Builds default changelog attributes while retaining the shared article metadata shape."
   def changelog_base(default_article_meta, default_emotions) do
     text = FakeData.sentence(10)
 
@@ -404,6 +411,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     })
   end
 
+  @doc "Builds default documentation-thread attributes with a unique slug and generated content."
   def doc_base(default_article_meta, default_emotions) do
     text = FakeData.sentence(10)
 
@@ -423,6 +431,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     })
   end
 
+  @doc "Builds default blog-thread attributes with generated content and blog metadata."
   def blog_base(default_article_meta, default_emotions) do
     text = FakeData.sentence(10)
 

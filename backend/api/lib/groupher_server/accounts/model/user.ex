@@ -94,7 +94,10 @@ defmodule GroupherServer.Accounts.Model.User do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Builds on the profile update changeset, casts the login, and requires both login and avatar.
+  A duplicate login is reported as a changeset error on write.
+  """
   def changeset(%User{} = user, attrs) do
     user
     |> update_changeset(attrs)
@@ -104,6 +107,10 @@ defmodule GroupherServer.Accounts.Model.User do
     |> unique_constraint(:login)
   end
 
+  @doc """
+  Casts editable profile fields, follow and subscription counts, and optional meta and mailbox embeds.
+  This changeset does not accept login changes.
+  """
   def update_changeset(user, attrs) do
     user
     |> cast(attrs, @optional_fields ++ [:avatar])

@@ -107,6 +107,10 @@ export const readServiceAuthConfig = (
   const ttlSeconds = Number.parseInt(environment.SERVICE_AUTH_TOKEN_TTL_SECONDS || '', 10)
   return {
     clients: [
+      // The coordinated Import registry supersedes only its explicitly named clients.
+      ...(environment.SERVICE_AUTH_CLIENTS_JSON_IMPORT?.trim()
+        ? (JSON.parse(environment.SERVICE_AUTH_CLIENTS_JSON_IMPORT) as TServiceClient[])
+        : []),
       ...jsonEnv<TServiceClient[]>(environment, 'SERVICE_AUTH_CLIENTS_JSON'),
       ...(environment.SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE?.trim()
         ? (JSON.parse(environment.SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE) as TServiceClient[])

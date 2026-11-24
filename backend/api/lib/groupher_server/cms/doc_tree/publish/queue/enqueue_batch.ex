@@ -53,6 +53,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.EnqueueBatch do
     end
   end
 
+  @doc "Rejects batch enqueue requests that do not provide valid Queue revision and entries."
   def run(_, _, _, _, _, _), do: {:error, :invalid_queue_members}
 
   defp ids([]), do: {:error, :invalid_queue_members}

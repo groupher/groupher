@@ -54,6 +54,7 @@ defmodule GroupherServer.Messaging.Model.Mention do
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Casts Mention delivery attributes and validates required fields, recipient uniqueness, and user references."
   def changeset(%Mention{} = mention, attrs) do
     mention
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -65,6 +66,7 @@ defmodule GroupherServer.Messaging.Model.Mention do
     |> foreign_key_constraint(:to_user_id)
   end
 
+  @doc "Casts editable Mention attributes without re-running delivery-identity validations."
   def update_changeset(%Mention{} = mention, attrs) do
     mention |> cast(attrs, @optional_fields ++ @required_fields)
   end

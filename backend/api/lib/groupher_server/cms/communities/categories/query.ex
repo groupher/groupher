@@ -13,6 +13,6 @@ defmodule GroupherServer.CMS.Communities.Categories.Query do
   @doc "Returns the paged Category projection used by the existing Community query."
   defdelegate list(), to: CommunitiesQuery, as: :categories
 
-  @doc false
+  @doc "Loads a category by ID for internal Community queries."
   def get(id), do: Repo.get(Category, id)
 end

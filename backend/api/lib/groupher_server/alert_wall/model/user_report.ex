@@ -44,6 +44,7 @@ defmodule GroupherServer.AlertWall.Model.UserReport do
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Casts and validates a user's report of a moderation target."
   def changeset(report, attrs) do
     report
     |> cast(attrs, [

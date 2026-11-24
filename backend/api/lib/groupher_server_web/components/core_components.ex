@@ -613,6 +613,7 @@ defmodule GroupherServerWeb.CoreComponents do
 
   ## JS Commands
 
+  @doc "Builds a JavaScript command that reveals the selected element with a transition."
   def show(js \\ %JS{}, selector) do
     JS.show(js,
       to: selector,
@@ -623,6 +624,7 @@ defmodule GroupherServerWeb.CoreComponents do
     )
   end
 
+  @doc "Builds a JavaScript command that hides the selected element with a transition."
   def hide(js \\ %JS{}, selector) do
     JS.hide(js,
       to: selector,
@@ -634,6 +636,7 @@ defmodule GroupherServerWeb.CoreComponents do
     )
   end
 
+  @doc "Builds a JavaScript command that opens the modal and moves focus into its content."
   def show_modal(js \\ %JS{}, id) when is_binary(id) do
     js
     |> JS.show(to: "##{id}")
@@ -646,6 +649,7 @@ defmodule GroupherServerWeb.CoreComponents do
     |> JS.focus_first(to: "##{id}-content")
   end
 
+  @doc "Builds a JavaScript command that closes the modal, restores scrolling, and returns focus."
   def hide_modal(js \\ %JS{}, id) do
     js
     |> JS.hide(

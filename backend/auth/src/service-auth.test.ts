@@ -50,6 +50,53 @@ const tokenRequest = (overrides: Record<string, string> = {}) => {
 }
 
 describe('service identity issuer', () => {
+  it('rotates the named Import client without changing other service registrations', async () => {
+    const importResource = 'https://api.groupher.com/import'
+    const importSecret = 'new-import-secret'
+    const registration = {
+      allowedAudiences: ['phoenix:import-api'],
+      allowedScopes: ['import:write'],
+      clientId: 'import-production-test',
+      clientRef: 'client_import_production_test',
+      credentialHashes: [`sha256:${createHash('sha256').update(importSecret).digest('hex')}`],
+      serviceName: 'import',
+      status: 'active',
+    }
+    const configured = {
+      ...environment,
+      SERVICE_AUTH_CLIENTS_JSON: JSON.stringify([
+        ...JSON.parse(environment.SERVICE_AUTH_CLIENTS_JSON),
+        { ...registration, allowedAudiences: ['unregistered:audience'], credentialHashes: [] },
+      ]),
+      SERVICE_AUTH_CLIENTS_JSON_IMPORT: JSON.stringify([registration]),
+      SERVICE_AUTH_RESOURCES_JSON: JSON.stringify({
+        [resource]: 'phoenix:press-api',
+        [importResource]: 'phoenix:import-api',
+      }),
+    }
+    const request = tokenRequest({ resource: importResource, scope: 'import:write' })
+    request.headers.set(
+      'authorization',
+      `Basic ${Buffer.from(`${registration.clientId}:${importSecret}`).toString('base64')}`,
+    )
+    await expect(issueServiceToken(request, configured)).resolves.toMatchObject({
+      scope: 'import:write',
+      token_type: 'Bearer',
+    })
+    await expect(issueServiceToken(tokenRequest(), configured)).resolves.toMatchObject({
+      scope: 'press:article:read',
+      token_type: 'Bearer',
+    })
+    const denied = tokenRequest({ resource: importResource, scope: 'import:write' })
+    denied.headers.set(
+      'authorization',
+      `Basic ${Buffer.from(`${registration.clientId}:unrecognized-secret`).toString('base64')}`,
+    )
+    await expect(issueServiceToken(denied, configured)).resolves.toMatchObject({
+      error: 'invalid_client',
+    })
+  })
+
   it('isolates maintenance capabilities and preserves existing service clients', async () => {
     const maintenanceResource = 'https://api.groupher.com/cms-maintenance'
     const maintenanceEnvironment = {

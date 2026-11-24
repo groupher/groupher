@@ -82,6 +82,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Consume do
     end
   end
 
+  @doc "Rejects Queue-consumption requests that do not provide the required release inputs."
   def release(_, _, _, _, _), do: {:error, :invalid_queue_members}
 
   defp normalize_release_entries([]), do: {:ok, []}

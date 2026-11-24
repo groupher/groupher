@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.ResolvePostPublish do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Resolves a post-publication conflict against the selected working-copy revision."
   def execute(
         %Community{} = community,
         article_id,

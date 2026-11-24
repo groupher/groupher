@@ -400,7 +400,6 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
      end)}
   end
 
-  @doc false
   def scan_provider_orphans(%Community{} = community, fetch_page, opts)
       when is_function(fetch_page, 2) and is_list(opts) do
     cursor = Keyword.get(opts, :cursor)

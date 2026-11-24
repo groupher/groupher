@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Assets.Commands.Restore do
   alias CMS.Assets.{Persist, Query}
   alias CMS.Model.{Community, CommunityAsset}
 
+  @doc "Restores an archived community asset after update admission, returning the receipt-backed result."
   @spec execute(Community.t(), term(), User.t(), String.t() | nil) ::
           {:ok, CommunityAsset.t()} | {:error, term()}
   def execute(%Community{} = community, asset_id, %User{} = user, command_id) do

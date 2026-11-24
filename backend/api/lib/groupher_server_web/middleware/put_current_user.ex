@@ -23,6 +23,7 @@ defmodule GroupherServerWeb.Middleware.PutCurrentUser do
   """
   @behaviour Absinthe.Middleware
 
+  @doc "Copies the current user from the context into the field arguments when present."
   def call(%{context: %{cur_user: cur_user}} = resolution, _) do
     arguments = resolution.arguments |> Map.merge(%{cur_user: cur_user})
 

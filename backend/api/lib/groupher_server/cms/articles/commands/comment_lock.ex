@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, Community}
 
+  @doc "Locks or unlocks Article comments after Gate authorization in the explicit Community context."
   @spec execute(Ecto.UUID.t(), struct(), atom(), keyword()) :: {:ok, term()} | {:error, term()}
   def execute(article_id, actor, :lock_comments, opts) do
     lock_comments(article_id, actor, opts)

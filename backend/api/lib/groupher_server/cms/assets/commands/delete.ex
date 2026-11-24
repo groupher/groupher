@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Assets.Commands.Delete do
   alias CMS.ErrorCat
   alias CMS.Model.{Community, CommunityAsset}
 
+  @doc "Deletes an unreferenced community asset and queues provider cleanup within the command receipt."
   @spec execute(Community.t(), term(), User.t(), String.t() | nil) ::
           {:ok, CommunityAsset.t()} | {:error, term()}
   def execute(%Community{} = community, asset_id, %User{} = actor, command_id) do

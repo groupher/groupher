@@ -17,7 +17,7 @@ defmodule Helper.QueryBuilder do
   alias Helper.Datetime
 
   @doc """
-  load inner user field
+  Inner-joins the `:user` association, selects the joined users, and applies `filter_pack/2`.
   """
   def load_inner_users(queryable, filter) do
     queryable
@@ -27,7 +27,7 @@ defmodule Helper.QueryBuilder do
   end
 
   @doc """
-  inserted in latest x month/days etc..
+  Restricts `inserted_at` to the inclusive UTC window from midnight the given number of days or months ago through the end of today.
   """
   def recent_inserted(queryable, months: count) do
     end_of_today = Datetime.now() |> Datetime.end_of_day()
@@ -47,7 +47,7 @@ defmodule Helper.QueryBuilder do
     |> where([q], q.inserted_at <= ^end_of_today)
   end
 
-  @doc "Runs `filter_pack` through the public `QueryBuilder` boundary."
+  @doc "Applies supported `:sort` orders, `:when` insertion windows, and the `:first` limit; ignores unrecognized filters."
   def filter_pack(queryable, filter) when is_map(filter) do
     # The lower the position, the lower the priority.
     queryable

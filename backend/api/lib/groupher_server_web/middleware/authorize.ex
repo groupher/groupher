@@ -21,6 +21,7 @@ defmodule GroupherServerWeb.Middleware.Authorize do
   alias GroupherServer.Accounts
   alias GroupherServerWeb.ErrorResponse
 
+  @doc "Requires a current user and translates authentication failures into field errors."
   def call(%{context: %{cur_user: _}} = resolution, _info), do: resolution
 
   def call(%{context: %{auth_failure: code}} = resolution, _info) do

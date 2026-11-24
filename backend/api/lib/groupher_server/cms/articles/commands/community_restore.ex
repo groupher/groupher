@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommunityRestore do
   alias CMS.Articles.Commands.{CommunityTrashConfirmation, CommunityTrashSupport}
   alias CMS.Model.Community
 
+  @doc "Executes or replays a Receipt-protected restore of the specified Community Trash revision."
   def execute(
         %Community{} = community,
         article_id,

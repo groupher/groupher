@@ -42,7 +42,10 @@ defmodule GroupherServer.Accounts.Model.Achievement do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Requires a user ID and casts achievement counters and reputation. Database constraint errors
+  are attached to `:user_id` for an unknown user or a second achievement row for that user.
+  """
   def changeset(%Achievement{} = achievement, attrs) do
     achievement
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -51,7 +54,10 @@ defmodule GroupherServer.Accounts.Model.Achievement do
     |> unique_constraint(:user_id, name: :achievements_user_id_index)
   end
 
-  @doc false
+  @doc """
+  Casts changes to counters, reputation, or the user ID without requiring the ID again.
+  The user foreign key and one-row-per-user constraint still apply.
+  """
   def update_changeset(%Achievement{} = achievement, attrs) do
     achievement
     |> cast(attrs, @optional_fields ++ @required_fields)

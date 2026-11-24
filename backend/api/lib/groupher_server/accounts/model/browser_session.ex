@@ -66,6 +66,11 @@ defmodule GroupherServer.Accounts.Model.BrowserSession do
     timestamps(type: :utc_datetime)
   end
 
+  @doc """
+  Requires both session references, the owner, status, and absolute expiry. Each reference
+  must be 8 to 256 characters and unique in its own column. Device, location, and
+  revocation metadata are optional.
+  """
   def changeset(session, attrs) do
     session
     |> cast(attrs, @required_fields ++ @optional_fields)

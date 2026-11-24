@@ -58,12 +58,11 @@ defmodule GroupherServer.CMS.Dashboard do
     UpdateSection.execute(community, Map.get(args, :dsb_section), args, actor, command_id)
   end
 
-  @doc false
   @spec update(Community.t(), atom(), map() | list() | boolean(), term()) ::
           T.domain_res(CommunityDashboard.t())
   def update(%Community{}, _key, _args, _actor), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @doc false
+  @doc "Updates one dashboard section inside the supplied command receipt identity."
   @spec update(Community.t(), atom(), map() | list() | boolean(), term(), Ecto.UUID.t()) ::
           T.domain_res(CommunityDashboard.t())
   def update(%Community{} = community, key, args, actor, command_id) do

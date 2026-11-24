@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Update do
   alias Accounts.Model.User
   alias Helper.T
 
+  @doc "Updates a tag through the retry-safe command pipeline."
   @spec execute(T.id(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(CommunityTag.t())
   def execute(id, attrs, %User{} = actor, command_id) do
     target =

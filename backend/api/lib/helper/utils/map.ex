@@ -26,7 +26,7 @@ defmodule Helper.Utils.Map do
 
   def atom_values_to_upcase(value), do: value
 
-  @doc "Runs `map_key_stringify` through the public `Map` boundary."
+  @doc "Converts top-level keys to strings, dropping a struct's type tag and leaving values unchanged."
   def map_key_stringify(%{__struct__: _} = map) when is_map(map) do
     map = Map.from_struct(map)
     map |> Enum.reduce(%{}, fn {key, val}, acc -> Map.put(acc, to_string(key), val) end)
@@ -135,8 +135,8 @@ defmodule Helper.Utils.Map do
 
   defp map_to_camel({k, v}), do: {Recase.to_camel(to_string(k)), v}
 
+  @doc "Converts nested map keys to snake-case strings and DateTime values to ISO 8601; lists pass through."
   @spec snake_map_key(map) :: map
-  @doc "Runs `snake_map_key` through the public `Map` boundary."
   def snake_map_key(map) do
     map_list =
       Enum.map(map, fn {k, v} ->
@@ -161,7 +161,7 @@ defmodule Helper.Utils.Map do
   defp datetime?(%DateTime{}), do: true
   defp datetime?(_), do: false
 
-  @doc "Runs `map_atom_value` through the public `Map` boundary."
+  @doc "With `:string`, lowercases top-level atom values as strings, except booleans; nil becomes an empty string."
   def map_atom_value(attrs, :string) do
     results =
       Enum.map(attrs, fn {k, v} ->
@@ -180,14 +180,14 @@ defmodule Helper.Utils.Map do
     results |> Enum.into(%{})
   end
 
-  @doc "Runs `reverse_kv` through the public `Map` boundary."
+  @doc "Swaps keys and values; when multiple keys have the same value, only the last one enumerated is kept."
   def reverse_kv(map) when is_map(map) do
     Enum.reduce(map, %{}, fn {key, value}, reversed_map ->
       Map.put(reversed_map, value, key)
     end)
   end
 
-  @doc "Runs `deep_merge` through the public `Map` boundary."
+  @doc "Recursively merges conflicting map values; for other conflicts the right-hand value wins."
   def deep_merge(left, right), do: Map.merge(left, right, &deep_resolve/3)
 
   # Key exists in both maps, and both values are maps as well.

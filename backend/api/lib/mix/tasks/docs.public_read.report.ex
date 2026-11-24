@@ -19,6 +19,7 @@ defmodule Mix.Tasks.Docs.PublicRead.Report do
   @shortdoc "Report Doc public projection integrity and stale counts (no repairs)"
 
   @impl true
+  @doc "Prints the Doc public-projection integrity report without modifying the selected database."
   def run(args) do
     {opts, rest, invalid} = OptionParser.parse(args, strict: [json: :boolean])
     if rest != [] or invalid != [], do: Mix.raise("Usage: mix docs.public_read.report [--json]")

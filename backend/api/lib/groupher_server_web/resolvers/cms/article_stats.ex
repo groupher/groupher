@@ -7,6 +7,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArticleStats do
 
   alias GroupherServer.CMS
 
+  @doc "Reads public article statistics for a batch of inner IDs in one community and thread."
   def article_stats(
         _root,
         %{community: community, thread: thread, inner_ids: inner_ids},

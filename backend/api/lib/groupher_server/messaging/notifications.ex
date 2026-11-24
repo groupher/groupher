@@ -2,7 +2,10 @@ defmodule GroupherServer.Messaging.Notifications do
   @moduledoc """
   Read facade for legacy Notification projections.
 
-      caller -> GroupherServer.Messaging.Notifications -> result
+      Notification resolver
+          -> Messaging.Notifications
+          -> Notifications.Query
+          -> recipient-scoped page or unread-count result
   """
 
   alias __MODULE__.Query

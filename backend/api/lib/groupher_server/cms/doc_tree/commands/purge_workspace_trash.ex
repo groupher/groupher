@@ -86,7 +86,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.PurgeWorkspaceTrash do
     end)
   end
 
-  @doc false
+  @doc "Purges an expired Doc Tree Trash action at the supplied time."
   def execute_due(%TrashAction{root_type: "doc_tree_node"} = action, %DateTime{} = now) do
     run_due(action, now)
   end

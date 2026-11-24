@@ -9,6 +9,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
 
   alias CMS.Model.Community
 
+  @doc "Approves the specified queue revision, mapping stale revisions and disallowed approvals to Docs errors."
   def approve_docs_queue(
         _root,
         %{
@@ -50,12 +51,14 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     end
   end
 
+  @doc "Reads the post-publication conflict for a document in the actor's community workspace."
   def docs_post_publish_conflict(_root, %{community: community, article_id: article_id}, %{
         context: %{cur_user: actor}
       }) do
     CMS.docs_post_publish_conflict(community, article_id, actor)
   end
 
+  @doc "Applies one choice per field; unresolved fields are returned as data, stale revisions as errors."
   def resolve_docs_post_publish(
         _root,
         %{
@@ -96,6 +99,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     end
   end
 
+  @doc "Saves edits to a queued document, reporting a state conflict if the queue or copy revision is stale."
   def save_docs_queue_copy(
         _root,
         %{
@@ -138,6 +142,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     end
   end
 
+  @doc "Merges a queued copy using distinct field choices; unresolved conflicts are returned in the payload."
   def merge_docs_queue_copy(
         _root,
         %{
@@ -188,6 +193,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     end
   end
 
+  @doc "Reads the public document tree, resolving a community reference without counting a view."
   def doc_public_tree(_root, %{community: %Community{} = community}, _info) do
     CMS.doc_tree_read_public(community)
   end
@@ -216,10 +222,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     end
   end
 
+  @doc "Reads the community's document publication queue on behalf of the signed-in actor."
   def docs_publish_queue(_root, %{community: community}, %{context: %{cur_user: actor}}) do
     CMS.docs_publish_queue(community, actor)
   end
 
+  @doc "Reads the editable document tree for the community and signed-in actor."
   def docs_queue_member(_root, %{community: community, article_id: article_id}, %{
         context: %{cur_user: actor}
       }) do
@@ -230,6 +238,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.docs_workspace_read(community, actor)
   end
 
+  @doc "Previews removal of the selected articles from a specific queue revision."
   def docs_dequeue_preview(
         _root,
         %{community: community, queue_revision: revision, article_ids: ids},
@@ -238,6 +247,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.docs_dequeue_preview(community, revision, ids, actor)
   end
 
+  @doc "Previews deletion of a workspace node against the supplied tree and queue revisions."
   def docs_workspace_delete_preview(
         _root,
         %{
@@ -258,6 +268,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     |> workspace_result()
   end
 
+  @doc "Purges workspace trash by trash action ID at the supplied queue revision."
   def purge_docs_workspace_trash(
         _root,
         %{
@@ -279,6 +290,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     |> workspace_result()
   end
 
+  @doc "Restores a trashed node, optionally specifying a target parent and position."
   def restore_docs_workspace_node(
         _root,
         %{
@@ -325,6 +337,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     end
   end
 
+  @doc "Deletes a workspace node at the supplied tree and queue revisions, forwarding discard confirmation when present."
   def delete_docs_workspace_node(
         _root,
         %{
@@ -381,6 +394,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
 
   defp workspace_result(result), do: result
 
+  @doc "Removes selected articles from the specified queue revision with optional discard confirmation."
   def dequeue_docs(
         _root,
         %{
@@ -408,6 +422,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     )
   end
 
+  @doc "Moves a workspace node to the requested parent and position at the supplied tree revision."
   def move_docs_workspace_node(
         _root,
         %{
@@ -431,6 +446,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     )
   end
 
+  @doc "Applies a patch to one workspace node at the supplied tree revision."
   def update_docs_workspace_node(
         _root,
         %{
@@ -453,6 +469,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     )
   end
 
+  @doc "Duplicates a workspace node at the supplied tree revision for the actor."
   def duplicate_docs_workspace_node(
         _root,
         %{
@@ -467,6 +484,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.docs_workspace_duplicate(community, revision, node_id, actor, command_id)
   end
 
+  @doc "Creates a workspace node with the requested parent at the supplied tree revision."
   def create_docs_workspace_node(
         _root,
         %{
@@ -489,6 +507,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     )
   end
 
+  @doc "Adds the supplied entries to the document publication queue at the expected revision."
   def enqueue_docs(
         _root,
         %{
@@ -503,6 +522,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.docs_enqueue(community, revision, entries, actor, command_id)
   end
 
+  @doc "Releases the specified queue revision, distinguishing missing approval from a stale queue."
   def release_docs_queue(
         _root,
         %{
@@ -520,6 +540,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     end
   end
 
+  @doc "Adds the specified document group as a card on the community's document cover."
   def add_doc_cover_card(
         _root,
         %{community: community, group_node_id: group_node_id, command_id: command_id},
@@ -528,6 +549,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.doc_cover_add_card(community, group_node_id, user, command_id)
   end
 
+  @doc "Removes the specified group's card from the document cover."
   def remove_doc_cover_card(
         _root,
         %{community: community, group_node_id: group_node_id, command_id: command_id},
@@ -536,6 +558,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.doc_cover_remove_card(community, group_node_id, user, command_id)
   end
 
+  @doc "Sets the order of document cover cards from the supplied ID list."
   def reorder_doc_cover_cards(
         _root,
         %{community: community, ids: ids, command_id: command_id},
@@ -544,6 +567,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.doc_cover_reorder_cards(community, ids, user, command_id)
   end
 
+  @doc "Updates the appearance of one document cover card by ID."
   def update_doc_cover_card_appearance(
         _root,
         %{community: community, id: id, appearance: appearance, command_id: command_id},
@@ -552,6 +576,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.doc_cover_update_card_appearance(community, id, appearance, user, command_id)
   end
 
+  @doc "Pins a document node to the community's document cover."
   def pin_doc_to_cover(
         _root,
         %{community: community, node_id: node_id, command_id: command_id},
@@ -560,6 +585,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.doc_cover_pin_doc(community, node_id, user, command_id)
   end
 
+  @doc "Removes a document node from the cover's pinned list."
   def unpin_doc_from_cover(
         _root,
         %{community: community, node_id: node_id, command_id: command_id},
@@ -568,6 +594,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.doc_cover_unpin_doc(community, node_id, user, command_id)
   end
 
+  @doc "Sets the order of pinned cover documents from the supplied node IDs."
   def reorder_doc_cover_pinned_docs(
         _root,
         %{community: community, node_ids: node_ids, command_id: command_id},
@@ -576,6 +603,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     CMS.doc_cover_reorder_pinned_docs(community, node_ids, user, command_id)
   end
 
+  @doc "Changes the cover appearance of one pinned document node."
   def update_pinned_doc_appearance(
         _root,
         %{community: community, node_id: node_id, appearance: appearance, command_id: command_id},

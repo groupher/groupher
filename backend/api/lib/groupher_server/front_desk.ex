@@ -9,9 +9,15 @@ defmodule GroupherServer.FrontDesk do
 
   Business position:
 
-      Application caller
+      resolver / application service
         -> FrontDesk
-        -> domain / infrastructure boundary
+        +--> Accounts facade for Users and cache revalidation
+        +--> CMS facade for Communities, Articles, Comments, snapshots, and tags
+        -> owning query and Gate contract
+        -> typed resource result
+
+  This facade standardizes cross-context resource references and read options;
+  it does not replace domain-specific authorization or persistence ownership.
   """
 
   alias GroupherServer.Accounts

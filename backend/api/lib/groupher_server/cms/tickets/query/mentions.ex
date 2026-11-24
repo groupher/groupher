@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
   alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
   alias CMS.Model.{ArticleBinding, Community, TicketState}
 
+  @doc "Loads Ticket source Article references for the supplied locator and ID batches."
   def load(locators, ids) do
     pairs =
       case ids do
@@ -36,6 +37,7 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
 
   def articles([]), do: %{}
 
+  @doc "Loads source Articles keyed by their Ticket locator."
   def articles(locators) do
     slugs = Enum.map(locators, fn {:article_path, slug, _} -> slug end) |> Enum.uniq()
 
@@ -94,6 +96,7 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
 
   def by_identity_pairs([]), do: %{}
 
+  @doc "Loads Ticket source Articles keyed by their stable identity pairs."
   def by_identity_pairs(pairs) do
     community_ids = pairs |> Enum.map(&elem(&1, 1)) |> Enum.uniq()
     communities = Repo.all(from(community in Community, where: community.id in ^community_ids))

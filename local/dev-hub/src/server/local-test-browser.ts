@@ -7,6 +7,7 @@ import path from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import { fileURLToPath } from 'node:url'
 
+import { verifyLocalTestViewer } from './local-test-viewer.ts'
 import { REPO_ROOT } from './services.ts'
 
 type TOpen = {
@@ -471,17 +472,7 @@ async function worker(profile: string, headless: boolean) {
           `Local Auth rejected the account (${status}). Restart Auth/Phoenix through Dev Hub if configuration changed.`,
         )
       await page.goto(url, { waitUntil: 'networkidle', timeout: 45_000 })
-      const viewer = await page.evaluate(async () => {
-        const response = await fetch('/api/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
-          body: JSON.stringify({ query: '{ sessionState { isValid user { login } } }' }),
-        })
-        const result = await response.json()
-        return result.data?.sessionState
-      })
-      if (!viewer?.isValid || viewer.user?.login !== actor.login)
-        throw new Error('Dash viewer did not match the selected account.')
+      await page.evaluate(verifyLocalTestViewer, actor.login)
       const text = await page.locator('body').innerText()
       if (/Sign in required|Sign in to continue|Internal Server Error/.test(text))
         throw new Error('Dash did not render the authenticated community page.')

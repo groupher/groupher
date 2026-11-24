@@ -22,10 +22,11 @@ defmodule GroupherServer.CMS.Seeds do
   @spec communities(atom()) :: T.domain_res(:ok)
   def communities(type), do: Communities.communities(type)
 
-  @doc "Runs `community` through the public `Seeds` boundary."
+  @doc "Seeds or fetches a community by slug using the default seed configuration."
   @spec community(atom()) :: T.domain_res(Community.t())
   def community(slug), do: Communities.mock(slug)
 
+  @doc "Seeds or fetches a community by slug and seed type."
   @spec community(atom(), atom()) :: T.domain_res(Community.t())
   def community(slug, type), do: Communities.mock(slug, type)
 

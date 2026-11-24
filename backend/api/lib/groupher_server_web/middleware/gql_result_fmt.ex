@@ -20,6 +20,7 @@ defmodule GroupherServerWeb.Middleware.GQLResultFmt do
   alias CMS.Gate.Decision
   alias GroupherServerWeb.ErrorResponse
 
+  @doc "Formats domain errors for GraphQL and passes changesets on for validation handling."
   def call(%{errors: [%Ecto.Changeset{}]} = resolution, _), do: resolution
 
   def call(%{errors: errors} = resolution, _) when is_list(errors) and errors != [] do

@@ -50,6 +50,7 @@ defmodule GroupherServer.CMS.Articles.States do
     end
   end
 
+  @doc "Refreshes activity time when an Article is within its thread's active period; otherwise returns a no-op result."
   @spec update_active_timestamp(atom(), term()) :: T.domain_res(term())
   def update_active_timestamp(thread, %{id: article_id} = article) when is_binary(article_id) do
     if in_active_period?(thread, article) do
@@ -59,11 +60,13 @@ defmodule GroupherServer.CMS.Articles.States do
     end
   end
 
+  @doc "Marks a persisted Article as edited."
   @spec update_edit_status(term()) :: T.domain_res(term())
   def update_edit_status(%{id: article_id} = content) when is_binary(article_id) do
     update_stable_article(content, %{is_edited: true})
   end
 
+  @doc "Archives eligible resources for a thread using its configured UTC age threshold."
   @spec archive(atom()) :: T.domain_res(term())
   def archive(thread) do
     with {:ok, _info} <- match(thread) do

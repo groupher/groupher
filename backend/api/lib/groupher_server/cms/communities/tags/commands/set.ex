@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Set do
   alias CMS.Model.{Article, Community}
   alias Helper.T
 
+  @doc "Assigns a tag to an Article after resolving and authorizing its resource."
   @spec execute(Article.t() | map(), T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(Article.t())
   def execute(article, tag_id, %User{} = actor, command_id) do
     with {:ok, command_id} <- TagSupport.command_id(command_id),

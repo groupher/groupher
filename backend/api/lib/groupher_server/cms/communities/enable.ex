@@ -83,6 +83,7 @@ defmodule GroupherServer.CMS.Communities.Enable do
     {:error, CommunityErrorCat.custom("invalid thread")}
   end
 
+  @doc "Checks whether an emotion is enabled for a Community scope and thread."
   @spec allow_emotion(String.t() | nil, scope(), atom(), atom()) ::
           {:ok, atom()} | {:error, CommunityErrorCat.error()}
   def allow_emotion(community_slug, scope, thread, emotion) when is_atom(thread) do
@@ -100,6 +101,7 @@ defmodule GroupherServer.CMS.Communities.Enable do
     {:error, CommunityErrorCat.custom("invalid thread")}
   end
 
+  @doc "Allows commenting on an unlocked Article and returns a lock error otherwise."
   @spec allow_comment(map(), term()) ::
           {:ok, map()} | {:error, CommunityErrorCat.error()}
   def allow_comment(%{meta: %{is_comment_locked: false}} = article, _user), do: done(article)
@@ -116,17 +118,21 @@ defmodule GroupherServer.CMS.Communities.Enable do
 
   def allow_comment(_article, _user), do: {:error, GateErrorCat.article_comments_locked()}
 
+  @doc "Returns the emotion identifiers accepted by the CMS."
   @spec emotions_whitelist() :: [atom()]
   def emotions_whitelist, do: @emotions_whitelist
 
+  @doc "Returns the configured default emotion set for each content thread."
   @spec default_thread_emotions() :: map()
   def default_thread_emotions, do: @default_thread_emotions
 
+  @doc "Returns the content-thread keys used by Community feature settings."
   @spec thread_keys() :: [atom()]
   def thread_keys do
     @threads ++ Enum.map(@threads, &:"#{&1}_comment")
   end
 
+  @doc "Returns the enabled emotions for a Community scope and content thread."
   @spec allowed_emotions(String.t() | nil, scope(), atom()) :: [atom()]
   def allowed_emotions(community_slug, scope, thread) do
     thread_key = thread_key(scope, thread)

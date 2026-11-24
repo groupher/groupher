@@ -37,6 +37,7 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
     end
   end
 
+  @doc "Rejects mention candidates whose declared thread conflicts with a resolved Article identity or path."
   def validate_types(candidates) do
     ids =
       candidates
@@ -127,6 +128,7 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
     end
   end
 
+  @doc "Loads public mention targets in batches and groups them by Article thread and locator."
   def load(candidates) do
     Enum.reject(@threads, &(&1 == :ticket))
     |> Map.new(fn thread ->
@@ -166,6 +168,7 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
     end
   end
 
+  @doc "Loads public Article projections addressed by Community path locators for one thread."
   def articles(_thread, []), do: %{}
 
   def articles(thread, locators) do
@@ -180,6 +183,7 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
     end
   end
 
+  @doc "Loads public Article projections keyed by stable Article and Community identities."
   def by_identity_pairs(_thread, []), do: %{}
 
   def by_identity_pairs(:doc, pairs) do

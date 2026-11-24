@@ -169,6 +169,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
     end
   end
 
+  @doc "Records a verified Assets Hub completion, enforcing the persisted intent and callback idempotency key."
   @spec complete(map()) :: T.domain_res(CommunityAsset.t())
   def complete(input) when is_map(input) do
     upload_ref = input |> get(:upload_ref) |> normalize_string()

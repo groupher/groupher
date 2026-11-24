@@ -23,6 +23,7 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
   alias GroupherServerWeb.ErrorResponse
 
+  @doc "Formats errors on a failed field resolution and replaces the value with an empty list."
   def call(%{errors: errors} = resolution, _) when is_list(errors) and errors != [] do
     %{resolution | value: [], errors: Enum.map(errors, &format_error/1)}
   end

@@ -45,6 +45,12 @@ defmodule GroupherServer.ReviewBot do
     to: UpdateConfig,
     as: :execute
 
+  @doc """
+  Evaluates content against a platform and optional community policy snapshot.
+
+  Returns separate opinions for each policy layer so CMS can apply their
+  visibility rules independently.
+  """
   @spec check(map(), map() | struct()) :: {:ok, map()} | {:error, term()}
   def check(content, %{system: system, community: community}) when is_map(content) do
     with {:ok, normalized_content} <- normalize_content(content),

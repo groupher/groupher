@@ -20,6 +20,7 @@ defmodule GroupherServerWeb.Middleware.ViewerDidConvert do
   """
   @behaviour Absinthe.Middleware
 
+  @doc "Maps nil or an empty list to false and a singleton viewer association to true."
   def call(%{value: nil} = resolution, _) do
     %{resolution | value: false}
   end

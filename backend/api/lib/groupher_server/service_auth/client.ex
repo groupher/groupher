@@ -5,8 +5,13 @@ defmodule GroupherServer.ServiceAuth.Client do
   Business position:
 
       Application caller
-        -> Client
-        -> domain / infrastructure boundary
+        -> Client.token/2
+        -> ETS lookup keyed by resource and sorted scopes
+        -> Auth client-credentials endpoint on miss or near-expiry
+        -> cached Bearer token or stable service-token error
+
+  Concurrent refreshes for the same resource/scope pair are serialized, and
+  tokens are refreshed before expiry to avoid returning a nearly unusable token.
   """
 
   alias GroupherServerWeb.ErrorCat
@@ -14,6 +19,7 @@ defmodule GroupherServer.ServiceAuth.Client do
   @cache_table :groupher_service_token_cache
   @refresh_skew_seconds 30
 
+  @doc "Returns a cached or newly acquired Bearer token for the resource and requested scopes."
   def token(resource, scopes) do
     key = {resource, Enum.sort(scopes)}
     now = System.system_time(:second)

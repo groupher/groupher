@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.DuplicateWorkspaceNode do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Duplicates a workspace node under the expected tree revision using a command receipt."
   def execute(%Community{} = community, revision, node_id, %User{} = actor, command_id)
       when is_integer(revision) and revision >= 0 and is_binary(node_id) and is_binary(command_id) do
     run_receipt(community, revision, node_id, actor, command_id)

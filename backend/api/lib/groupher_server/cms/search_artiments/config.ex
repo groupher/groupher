@@ -40,12 +40,15 @@ defmodule GroupherServer.CMS.SearchArtiments.Config do
     })
   end
 
+  @doc "Returns the configured platform adapter module."
   @spec platform() :: module()
   def platform, do: runtime().platform
 
+  @doc "Returns the configured background job queue adapter module."
   @spec queue() :: module()
   def queue, do: runtime().queue
 
+  @doc "Returns the configured Algolia endpoint and credential options."
   @spec algolia() :: keyword()
   def algolia, do: runtime().algolia
 end

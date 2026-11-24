@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Communities.ErrorCat do
 
   # Internal callers may use the clearer name while the public wire reason
   # remains backward compatible with existing clients.
+  @doc "Builds the standard error for a command identity reused with conflicting input."
   def command_identity_conflict(details \\ nil), do: idempotency_conflict(details)
   error(:active_application_exists, code: 5513)
   error(:slug_claimed, code: 5514)

@@ -61,6 +61,7 @@ export default defineConfig(({ mode }) => {
         AUTH_GITHUB_SECRET: bindings.secret(),
         NEXTAUTH_SECRET: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON: bindings.secret(),
+        SERVICE_AUTH_CLIENTS_JSON_IMPORT: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON_ADDITIONS: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON_EXTRA: bindings.secret(),

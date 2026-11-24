@@ -19,9 +19,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   alias GroupherServerWeb.Middleware, as: M
   alias GroupherServerWeb.Resolvers, as: R
 
-  @doc """
-  add basic mutation reactions to article
-  """
+  @doc "Expands the selected mutation pairs for one article thread."
   defmacro article_react_mutations(thread, reactions) do
     reactions
     |> Enum.map(
@@ -31,46 +29,56 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     )
   end
 
+  @doc "Declares light and dark cover URLs, asset references and cover editing options."
   defmacro article_cover_args do
     quote do
+      @desc "URL of the default article cover."
       arg(:cover_url, :string)
+      @desc "URL of the dark-mode article cover."
       arg(:cover_url_dark, :string)
+      @desc "Display adjustments for the article cover."
       arg(:cover_edit_info, :cover_edit_info_input)
+      @desc "Asset ID of the default cover."
       arg(:cover_asset_id, :id)
+      @desc "Asset details for the default cover."
       arg(:cover_asset, :community_asset_input)
+      @desc "Asset ID of the dark-mode cover."
       arg(:cover_asset_dark_id, :id)
+      @desc "Asset details for the dark-mode cover."
       arg(:cover_asset_dark, :community_asset_input)
     end
   end
 
+  @doc "Declares the asset references associated with the article."
   defmacro article_asset_args do
     quote do
+      @desc "Assets referenced by this article."
       arg(:asset_refs, list_of(:article_asset_ref_input))
     end
   end
 
+  @doc "Declares attribution, source link, subtitle and template arguments for thread content."
   defmacro article_thread_content_args do
     quote do
+      @desc "Copyright attribution for the article."
       arg(:copy_right, :string)
+      @desc "Source link for the article."
       arg(:link_addr, :string)
+      @desc "Secondary title for the article."
       arg(:subtitle, :string)
+      @desc "Key identifying the article template."
       arg(:template_key, :string)
     end
   end
 
-  @doc """
-  upvote mutation for article
-
-  include:
-  -----
-  upvote_[thread]
-  undo_upvote_[thread]
-  """
+  @doc "Declares mutations to add or remove the viewer's upvote."
   defmacro article_upvote_mutation(thread) do
     quote do
-      @desc unquote("upvote to #{thread}")
+      @desc unquote("Add your upvote to this #{thread}.")
       field unquote(:"upvote_#{thread}"), :article_reaction_result do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -79,9 +87,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         resolve(&R.CMS.Interactions.upvote_article/3)
       end
 
-      @desc unquote("undo upvote to #{thread}")
+      @desc unquote("Remove your upvote from this #{thread}.")
       field unquote(:"undo_upvote_#{thread}"), :article_reaction_result do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -92,19 +102,14 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     end
   end
 
-  @doc """
-  pin mutation for article
-
-  include:
-  -----
-  pin_[thread]
-  unto_pin_[thread]
-  """
+  @doc "Declares mutations to pin or unpin an article in its community."
   defmacro article_pin_mutation(thread) do
     quote do
-      @desc unquote("pin to #{thread}")
+      @desc unquote("Pin this #{thread} in its community.")
       field unquote(:"pin_#{thread}"), unquote(thread) do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -119,9 +124,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         resolve(&R.CMS.Articles.pin_article/3)
       end
 
-      @desc unquote("undo pin to #{thread}")
+      @desc unquote("Unpin this #{thread} in its community.")
       field unquote(:"undo_pin_#{thread}"), unquote(thread) do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -138,20 +145,16 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     end
   end
 
-  @doc """
-  emotion mutation for article
-
-  include:
-  -----
-  emotion_to_[thread]
-  unto_emotion_to_[thread]
-  """
+  @doc "Declares mutations to add or remove the viewer's selected emotion."
   defmacro article_emotion_mutation(thread) do
     quote do
-      @desc unquote("emotion to #{thread}")
+      @desc unquote("Add the selected emotion to this #{thread}.")
       field unquote(:"emotion_to_#{thread}"), :article_reaction_result do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Emotion to add or remove."
         arg(:emotion, non_null(:article_emotion))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -160,10 +163,13 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         resolve(&R.CMS.Interactions.emotion_to_article/3)
       end
 
-      @desc unquote("undo emotion to #{thread}")
+      @desc unquote("Remove your selected emotion from this #{thread}.")
       field unquote(:"undo_emotion_to_#{thread}"), :article_reaction_result do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Emotion to add or remove."
         arg(:emotion, non_null(:article_emotion))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -174,19 +180,14 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     end
   end
 
-  @doc """
-  sink mutation for article
-
-  include:
-  -----
-  sink_[thread]
-  undo_sink_[thread]
-  """
+  @doc "Declares mutations to apply or clear the article's sunk state."
   defmacro article_sink_mutation(thread) do
     quote do
-      @desc unquote("sink a #{thread}")
+      @desc unquote("Mark this #{thread} as sunk.")
       field unquote(:"sink_#{thread}"), :article do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -201,9 +202,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         resolve(&R.CMS.Articles.sink_article/3)
       end
 
-      @desc unquote("undo sink to #{thread}")
+      @desc unquote("Clear the sunk state of this #{thread}.")
       field unquote(:"undo_sink_#{thread}"), :article do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -220,19 +223,14 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     end
   end
 
-  @doc """
-  lock comment of a article
-
-  include:
-  -----
-  lock_[thread]_comment
-  undo_lock_[thread]_comment
-  """
+  @doc "Declares mutations to lock or reopen an article's comments."
   defmacro article_lock_comment_mutation(thread) do
     quote do
-      @desc unquote("lock comment of a #{thread}")
+      @desc unquote("Lock comments on this #{thread}.")
       field unquote(:"lock_#{thread}_comment"), :article do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
@@ -247,9 +245,11 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         resolve(&R.CMS.Comments.lock_article_comments/3)
       end
 
-      @desc unquote("undo lock to a #{thread}")
+      @desc unquote("Reopen comments on this #{thread}.")
       field unquote(:"undo_lock_#{thread}_comment"), :article do
+        @desc "Community, thread and local ID of the article."
         arg(:article, non_null(:article_path_input))
+        @desc "Client command ID; reuse it when retrying the same write."
         arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)

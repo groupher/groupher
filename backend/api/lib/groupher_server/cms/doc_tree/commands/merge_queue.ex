@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.MergeQueue do
     present(fn confirmation -> present_result(confirmation, community, actor) end)
   end
 
-  @doc false
+  @doc "Merges a selected default revision into its Queue copy through a command receipt."
   def execute(
         %Community{} = community,
         queue_revision,
