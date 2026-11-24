@@ -15,6 +15,8 @@
 | One deletion contains one pending page and two pages removed from public | Aggregate counts remain 1/2; member pages preserve all identities and individual states; nested GraphQL `pagedMembers` works directly from the Trash list projection           | `cms/articles/doc_trash_acceptance_test.exs`     |
 | Two authorized editors restore the same folder concurrently              | Both pass admission, exactly one command succeeds, the other receives `docs_state_conflict`; the full saved subtree appears exactly once and the tree revision increments once | `cms/doc_tree/workspace_restore_target_test.exs` |
 
+Pagination fixtures run in an automatically rolled-back SQL Sandbox with REPEATABLE READ isolation; they do not commit rows into a shared test database. Only the real restoration race requires TEST_REF_ISOLATED=1. The repeatable-read paging cases passed 2/2 after the review correction, with zero Communities/Articles remaining in their fresh database.
+
 The mixed-state test intentionally constructs canonical relational facts to isolate reader projection and pagination. It does not claim a browser deletion/Release workflow. The restoration race uses the real Create/Delete/Restore Commands and independent database connections.
 
 ## Final combined verification
