@@ -172,4 +172,25 @@ describe('TagsEditorStore', () => {
     ).toEqual([['tag-b'], ['tag-c', 'tag-a']])
     expect(store.hasSortingChanges(THREAD.POST)).toBe(true)
   })
+
+  it('drops deleted tags from an unsaved cross-group move', () => {
+    const store = createTagsEditorStore('community')
+    const confirmedAfterDelete: TTagGroup[] = [
+      { id: 'group-a', title: 'A', index: 0, tags: [{ id: 'tag-b', title: 'B', index: 0 }] },
+      { id: 'group-b', title: 'B', index: 1, tags: [{ id: 'tag-c', title: 'C', index: 0 }] },
+    ]
+
+    store.syncConfirmedOrder(THREAD.POST, groups)
+    store.setSortingDraft(THREAD.POST, {
+      groupIds: ['group-a', 'group-b'],
+      tagIdsByGroup: { 'group-a': ['tag-b'], 'group-b': ['tag-c', 'tag-a'] },
+    })
+    store.syncConfirmedOrder(THREAD.POST, confirmedAfterDelete)
+
+    expect(store.getSortingDraft(THREAD.POST)?.tagIdsByGroup).toEqual({
+      'group-a': ['tag-b'],
+      'group-b': ['tag-c'],
+    })
+    expect(store.hasSortingChanges(THREAD.POST)).toBe(false)
+  })
 })

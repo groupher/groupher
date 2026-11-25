@@ -110,6 +110,7 @@ const rebaseTagSortOrder = (
     const hasDraftMove =
       baselineGroupId !== undefined &&
       draftGroupId !== undefined &&
+      confirmedGroupId !== undefined &&
       draftGroupId !== baselineGroupId &&
       confirmedGroupIds.has(draftGroupId)
     const nextGroupId = hasDraftMove
