@@ -258,28 +258,30 @@ describe('useDraftAutoSave', () => {
     )
   })
 
-  it('clears an unknown command after a deterministic payload rejection', async () => {
-    mocks.saveDocWorkingCopy
-      .mockRejectedValueOnce(
-        new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
+  it.each(['payload_too_large', 'invalid_value', 'too_many_nodes', 'value_too_deep'])(
+    'clears an unknown command after %s',
+    async (code) => {
+      mocks.saveDocWorkingCopy
+        .mockRejectedValueOnce(
+          new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
+        )
+        .mockRejectedValueOnce(new ContentPublishError('rejected', { code, status: 422 }))
+        .mockResolvedValueOnce({ articleId: 'doc-a', slug: 'guide', revision: 4 })
+      const state = createDraftState()
+      const view = renderHook(
+        ({ current }) =>
+          useDraftAutoSave(current, { patchSideTreeChild: mocks.patchSideTreeChild }),
+        { initialProps: { current: state } },
       )
-      .mockRejectedValueOnce(
-        new ContentPublishError('too large', { code: 'payload_too_large', status: 413 }),
+      await act(async () => view.result.current.save())
+      view.rerender({ current: { ...state, draft: { ...state.draft, title: 'Corrected' } } })
+      await act(async () => view.result.current.save())
+      expect(mocks.saveDocWorkingCopy.mock.calls[2][0]).toMatchObject({ title: 'Corrected' })
+      expect(mocks.saveDocWorkingCopy.mock.calls[2][0].commandId).not.toBe(
+        mocks.saveDocWorkingCopy.mock.calls[0][0].commandId,
       )
-      .mockResolvedValueOnce({ articleId: 'doc-a', slug: 'guide', revision: 4 })
-    const state = createDraftState()
-    const view = renderHook(
-      ({ current }) => useDraftAutoSave(current, { patchSideTreeChild: mocks.patchSideTreeChild }),
-      { initialProps: { current: state } },
-    )
-    await act(async () => view.result.current.save())
-    view.rerender({ current: { ...state, draft: { ...state.draft, title: 'Corrected' } } })
-    await act(async () => view.result.current.save())
-    expect(mocks.saveDocWorkingCopy.mock.calls[2][0]).toMatchObject({ title: 'Corrected' })
-    expect(mocks.saveDocWorkingCopy.mock.calls[2][0].commandId).not.toBe(
-      mocks.saveDocWorkingCopy.mock.calls[0][0].commandId,
-    )
-  })
+    },
+  )
 
   it('autosaves newer edits after an ordinary in-flight failure', async () => {
     vi.useFakeTimers()
