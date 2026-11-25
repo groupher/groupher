@@ -237,13 +237,13 @@ export default function useDraftAutoSave(
           toast('This editing session has ended. Your local edits were preserved.', 'error')
           return
         }
-        reconcileConflict(composeWorkingCopySession(copy, activePage))
-        toast(
+        const conflictMessage =
           err.code === 'revision_conflict'
             ? 'The server draft changed. Your local edits were preserved.'
-            : 'The previous save result could not be confirmed. Your local edits were preserved; review the current draft.',
-          'error',
-        )
+            : 'The previous save result could not be confirmed. Your local edits were preserved; review the current draft.'
+        reconcileConflict(composeWorkingCopySession(copy, activePage))
+        setSaveError(conflictMessage)
+        toast(conflictMessage, 'error')
         return
       }
       if (err instanceof ContentPublishError && err.status === 429) {

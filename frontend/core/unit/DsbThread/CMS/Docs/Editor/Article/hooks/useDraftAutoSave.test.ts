@@ -428,6 +428,11 @@ describe('useDraftAutoSave', () => {
 
       expect(mocks.browserGraphQLRequest).toHaveBeenCalledOnce()
       expect(mocks.reconcileConflict).toHaveBeenCalledWith(expect.objectContaining({ version: 4 }))
+      expect(mocks.setSaveError).toHaveBeenCalledWith(
+        code === 'revision_conflict'
+          ? 'The server draft changed. Your local edits were preserved.'
+          : 'The previous save result could not be confirmed. Your local edits were preserved; review the current draft.',
+      )
       expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
       view.rerender({ current: { ...state, draft: { ...state.draft, version: 4 } } })
       await act(async () => vi.runOnlyPendingTimersAsync())
