@@ -4,13 +4,13 @@ import { equals } from 'ramda'
 import { ARTICLE_STAGE } from '~/const/article'
 
 import type { TSideTreePage } from '../SideTree/spec'
+import type { TDocDraftInfo } from '../store/spec'
 import { EMPTY_EDITOR_VALUE } from './constant'
 import type {
   TDocDraftSession,
   TDocWorkingCopy,
   TEditorDraft,
   TEditorDraftMeta,
-  TEditorDraftStorePatchInput,
   TSavedDraft,
 } from './spec'
 
@@ -199,10 +199,13 @@ export const composeDocDraftInfo = ({
   draft,
   meta,
   publishState,
-}: Pick<
-  TEditorDraftStorePatchInput,
-  'bodyStats' | 'draft' | 'meta' | 'publishState' | 'workingCopyId'
->) => ({
+}: {
+  workingCopyId?: string | null
+  bodyStats: Pick<TDocDraftInfo, 'characterCount' | 'wordCount'>
+  draft: TEditorDraft
+  meta: TEditorDraftMeta
+  publishState?: TDocDraftInfo['publishState']
+}): TDocDraftInfo => ({
   author: meta.author,
   characterCount: bodyStats.characterCount,
   id: draft.docId,
@@ -216,38 +219,6 @@ export const composeDocDraftInfo = ({
   title: draft.title,
   updatedAt: meta.updatedAt,
   wordCount: bodyStats.wordCount,
-})
-
-/** Runs the compose empty draft editor store patch operation at the frontend shared boundary. */
-export const composeEmptyDraftEditorStorePatch = () => ({
-  baselineValue: EMPTY_EDITOR_VALUE,
-  bodyValue: EMPTY_EDITOR_VALUE,
-  docDraftInfo: composeDocDraftInfo({
-    bodyStats: countEditorText(EMPTY_EDITOR_VALUE),
-    draft: composeEmptyEditorDraft(),
-    meta: composeEditorDraftMeta(),
-    publishState: null,
-  }),
-  saveError: null,
-  saveStatus: 'idle' as const,
-})
-
-/** Runs the compose draft editor store patch operation at the frontend shared boundary. */
-export const composeDraftEditorStorePatch = ({
-  workingCopyId,
-  bodyStats,
-  draft,
-  meta,
-  publishState,
-  saveError,
-  savedDraft,
-  saveStatus,
-}: TEditorDraftStorePatchInput) => ({
-  baselineValue: savedDraft.bodyValue,
-  bodyValue: draft.bodyValue,
-  docDraftInfo: composeDocDraftInfo({ bodyStats, draft, meta, publishState, workingCopyId }),
-  saveError,
-  saveStatus,
 })
 
 /** Builds editor state from the Article default WorkingCopy. */

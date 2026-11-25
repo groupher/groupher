@@ -19,7 +19,15 @@ vi.mock('~/lib/signal', () => ({ send: vi.fn() }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
 vi.mock('~/ui/Toaster', () => ({ toast: vi.fn() }))
 vi.mock('../helper', () => ({ reloadDocsPublishQueue: vi.fn() }))
-vi.mock('../store/hooks', () => ({ default: () => ({ saveStatus: 'saved' }) }))
+vi.mock('../store', () => ({ deriveDocSaveStatus: () => 'saved' }))
+vi.mock('../store/hooks', () => ({
+  useDocsEditorStore: () => ({
+    draft: {},
+    savedDraft: {},
+    loadStatus: {},
+    draftSaveStatus: {},
+  }),
+}))
 vi.mock('./useDocEditorUrl', () => ({
   default: () => ({ currentDocId: null, syncDocIdToUrl: vi.fn() }),
 }))

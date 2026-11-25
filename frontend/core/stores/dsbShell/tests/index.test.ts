@@ -24,6 +24,22 @@ describe('DsbShellStore', () => {
     expect(store.isTouched('title')).toBe(true)
   })
 
+  it('increments the FAQ save session whenever its selected zone changes or resets', () => {
+    const store = createDsbShellStore(fields('title', 'description'))
+    const initialSession = store.docFaqSaveSession
+
+    store.setDocFaqSaveZone({ type: 'title' })
+    const selectedSession = store.docFaqSaveSession
+    store.setDocFaqSaveZone({ type: 'title' })
+    const renewedSession = store.docFaqSaveSession
+    store.resetEditor()
+
+    expect(selectedSession).toBeGreaterThan(initialSession)
+    expect(renewedSession).toBeGreaterThan(selectedSession)
+    expect(store.docFaqSaveZone).toBeNull()
+    expect(store.docFaqSaveSession).toBeGreaterThan(renewedSession)
+  })
+
   it('uses the server-normalized value as the new baseline', () => {
     const store = createDsbShellStore(fields('A', 'old'))
 

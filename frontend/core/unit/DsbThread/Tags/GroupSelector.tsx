@@ -9,7 +9,7 @@ import useSalon, { cn } from './salon/group_selector'
 const GroupSelector = () => {
   const s = useSalon()
   const { t } = useTrans()
-  const { activeTagGroup, edit, tagGroups } = useTags()
+  const { activeTagGroup, setActiveGroup, tagGroups } = useTags()
 
   const active = activeTagGroup
 
@@ -22,7 +22,7 @@ const GroupSelector = () => {
           size='small'
           className={cn(active !== null && 'saturate-0')}
           noBorder={active !== null}
-          onClick={() => edit(null, 'activeTagGroup')}
+          onClick={() => setActiveGroup(null)}
         >
           {t('dsb.tags.group.all')}
         </Button>
@@ -36,7 +36,7 @@ const GroupSelector = () => {
               size='small'
               className={cn('w-20', active !== group.id && 'saturate-0')}
               noBorder={active !== group.id}
-              onClick={() => edit(group.id, 'activeTagGroup')}
+              onClick={() => setActiveGroup(group.id)}
             >
               {group.title}
             </Button>

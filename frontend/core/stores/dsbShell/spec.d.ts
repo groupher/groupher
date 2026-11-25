@@ -1,10 +1,8 @@
 import type {
-  TChangeTagMode,
   TDocFaqSaveZone,
   TDsbEditableFieldKey,
   TDsbFieldMap,
   TNameAlias,
-  TTag,
   TAdmin,
 } from '~/spec'
 
@@ -27,14 +25,10 @@ export type TDsbShellStore = TDsbEditableFields & {
   ui: TDsbShellUi
 
   // Transient editor selections. Not persisted, not part of original/touched, and never saved.
-  editingTag: TTag | null
-  settingTag: TTag | null
   editingAlias: TNameAlias | null
   docFaqSaveZone: TDocFaqSaveZone
+  docFaqSaveSession: number
   activeAdmin: TAdmin | null
-  setEditingTag: (tag: TTag | null) => void
-  setSettingTag: (tag: TTag | null) => void
-  setTag: (mode: TChangeTagMode, tag: TTag | null) => void
   setEditingAlias: (alias: TNameAlias | null) => void
   setDocFaqSaveZone: (zone: TDocFaqSaveZone) => void
   setActiveAdmin: (admin: TAdmin | null) => void

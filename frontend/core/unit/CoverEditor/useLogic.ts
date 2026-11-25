@@ -1,5 +1,5 @@
 import { clone, equals, keys, mergeDeepRight, pick } from 'ramda'
-import { proxy, useSnapshot } from 'valtio'
+import { useSnapshot } from 'valtio'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
@@ -14,11 +14,10 @@ import {
   type TGradientRenderer,
 } from '~/lib/wallpaperMesh'
 
-import { composeCoverGradientRecipe, createCoverBgThemeConfig } from './background'
-import { COVER_CANVAS_SIZE, COVER_HEIGHT_RANGE, COVER_IMAGE_WHICH } from './constant'
+import { composeCoverGradientRecipe } from './background'
+import { COVER_HEIGHT_RANGE } from './constant'
 import {
   createCoverImageConfig,
-  EMPTY_COVER_IMAGES,
   getActiveImage,
   getNextActiveImageWhich,
   getRaisedImages,
@@ -41,6 +40,7 @@ import type {
   TStore,
   TTuningSetting,
 } from './spec'
+import useCoverEditorStore from './store/hooks'
 
 type TRet = {
   coverConfig: TCoverConfig
@@ -58,7 +58,6 @@ type TRet = {
   ) => void
   imageDeleteOnChange: (which: TCoverImageWhich) => void
   imageActivateOnChange: (which: TCoverImageWhich) => void
-  resetImages: () => void
   positionOnChange: (which: TCoverImageWhich, position: TCoverPoint) => void
   shadowOnChange: (which: TCoverImageWhich, shadow: Partial<TCoverShadow>) => void
   borderRadiusOnChange: (which: TCoverImageWhich, borderRadius: number) => void
@@ -84,39 +83,9 @@ type TRet = {
   exportFinalImage: (options?: TCoverExportOptions) => Promise<TExportedImageAsset>
 } & TStore
 
-const store = proxy<TStore>({
-  images: clone(EMPTY_COVER_IMAGES),
-  activeImageWhich: COVER_IMAGE_WHICH.PRIMARY,
-  canvasWidth: COVER_CANVAS_SIZE.WIDTH,
-  canvasHeight: COVER_CANVAS_SIZE.HEIGHT,
-
-  // for background
-  background: createCoverBgThemeConfig(),
-  originalBackground: createCoverBgThemeConfig(),
-
-  get tuningSetting(): TTuningSetting {
-    const { images, activeImageWhich, background, originalBackground, canvasWidth, canvasHeight } =
-      store
-
-    return {
-      images,
-      activeImageWhich,
-      activeImage: getActiveImage(images, activeImageWhich),
-      canvasWidth,
-      canvasHeight,
-      background,
-      activeBackground: background.light,
-      isBackgroundTouched: !equals(clone(originalBackground), clone(background)),
-    }
-  },
-
-  commit: (patch: Partial<TStore>): void => {
-    Object.assign(store, patch)
-  },
-})
-
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
+  const store = useCoverEditorStore()
   const snap = useSnapshot(store)
   const { isDarkTheme } = useTheme()
   const activeThemeKey = isDarkTheme ? 'dark' : 'light'
@@ -223,10 +192,6 @@ export default function useLogic(): TRet {
     if (activeImageWhich === which && equals(images, nextImages)) return
 
     commitImages(nextImages, which)
-  }
-
-  const resetImages = (): void => {
-    commitImages(clone(EMPTY_COVER_IMAGES), COVER_IMAGE_WHICH.PRIMARY)
   }
 
   const positionOnChange = (which: TCoverImageWhich, position: TCoverPoint): void =>
@@ -354,7 +319,6 @@ export default function useLogic(): TRet {
     imagePatchOnChange,
     imageDeleteOnChange,
     imageActivateOnChange,
-    resetImages,
     positionOnChange,
     shadowOnChange,
     borderRadiusOnChange,

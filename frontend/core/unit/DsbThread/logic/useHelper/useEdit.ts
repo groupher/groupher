@@ -4,11 +4,10 @@ import { useCallback } from 'react'
 import useDsbFieldSave from '~/query/mutation/useDsbFieldSave'
 import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
 import { useAliasEditor } from '~/stores/dsbShell/editor'
-import { useTagsEditor } from '~/stores/dsbShell/editor'
 import useDsbShell from '~/stores/dsbShell/hooks'
 import { isObject } from '~/validator'
 
-import { BASEINFO_KEYS, FAQ_STORE_FIELDS, FIELD, SEO_KEYS, TAG_STORE_FIELDS } from '../../constant'
+import { BASEINFO_KEYS, FAQ_STORE_FIELDS, FIELD, SEO_KEYS } from '../../constant'
 import type { TDsbEditableFieldKey, TDsbFieldKey } from '../../spec'
 
 const NAME_ALIAS_FIELD = FIELD.NAME_ALIAS
@@ -26,7 +25,6 @@ export type TRet = {
 export default function useEdit(): TRet {
   const dsb$ = useDsbShell()
   const aliasEditor = useAliasEditor()
-  const tagsEditor = useTagsEditor()
   const { mutation, isPending, error } = useDsbFieldSave()
 
   const edit = useCallback(
@@ -58,16 +56,6 @@ export default function useEdit(): TRet {
 
     if (field === FIELD.SEO) {
       dsb$.rollback(SEO_KEYS)
-      return
-    }
-
-    if (field === FIELD.TAG) {
-      tagsEditor.setEditingTag(null)
-      return
-    }
-
-    if (field === FIELD.TAG_INDEX) {
-      dsb$.rollback(TAG_STORE_FIELDS)
       return
     }
 

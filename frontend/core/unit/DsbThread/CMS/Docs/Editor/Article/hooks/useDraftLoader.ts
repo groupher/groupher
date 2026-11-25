@@ -7,7 +7,7 @@ import useEvent from '~/hooks/useEvent'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DsbThread/schema/docs'
 
-import useDocsEditor from '../../store/hooks'
+import { useDocsEditorStore } from '../../store/hooks'
 import { composePublicSnapshotSession, composeWorkingCopySession } from '../helper'
 import type { TDocEditorSource } from '../spec'
 import type { TDraftEditorState } from './useDraftEditorState'
@@ -24,7 +24,7 @@ export default function useDraftLoader(draftState: TDraftEditorState): void {
     setLoading,
   } = draftState
   const { slug: community } = useCommunity()
-  const { revisionReloadKey } = useDocsEditor()
+  const { revisionReloadKey } = useDocsEditorStore()
   const loadIdRef = useRef(0)
   const handledReloadKeyRef = useRef(revisionReloadKey)
   const dirtyRef = useRef(draftState.dirty)

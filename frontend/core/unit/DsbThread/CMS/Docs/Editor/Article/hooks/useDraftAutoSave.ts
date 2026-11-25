@@ -10,9 +10,9 @@ import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
 
+import useDocsEditorCommands from '../../commands/hooks'
 import { reloadDocsPublishQueue } from '../../helper'
 import type { TSideTreeChild } from '../../SideTree/spec'
-import useDocsEditor from '../../store/hooks'
 import { DOC_AUTO_SAVE_DELAY } from '../constant'
 import {
   composeDraftPublishState,
@@ -34,7 +34,7 @@ export default function useDraftAutoSave(
   { patchSideTreeChild }: TParams,
 ) {
   const { slug: community } = useCommunity()
-  const { attachSaveDocDraft } = useDocsEditor()
+  const { registerSaveDocDraft } = useDocsEditorCommands()
   const failedAutoSaveDraftRef = useRef<TDraftEditorState['draft'] | null>(null)
   const conflictPausedRef = useRef(false)
   const saveInFlightRef = useRef(false)
@@ -222,11 +222,7 @@ export default function useDraftAutoSave(
     [],
   )
 
-  useEffect(() => {
-    attachSaveDocDraft(save)
-
-    return () => attachSaveDocDraft(null)
-  }, [attachSaveDocDraft, save])
+  useEffect(() => registerSaveDocDraft(save), [registerSaveDocDraft, save])
 
   useEffect(() => {
     if (!dirty || !editable || invalid || loadStatus.loading || saveStatus.saving) return

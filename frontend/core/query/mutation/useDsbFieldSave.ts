@@ -1,20 +1,23 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { DocumentNode } from 'graphql'
-import { clone, findIndex, includes, values } from 'ramda'
-import { useEffect, useRef } from 'react'
+import { clone, includes, values } from 'ramda'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useDsbTab from '~/hooks/useDsbTab'
 import { patchCommunity } from '~/query'
-import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDsbFieldMap } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import { useFaqEditorState } from '~/stores/dsbShell/editor'
-import { useTagsEditor } from '~/stores/dsbShell/editor'
-import { useDsbShellStore } from '~/stores/dsbShell/hooks'
-import { toast } from '~/ui/Toaster'
-import TagsSchema from '~/unit/DsbThread/schema/tags'
-import { slugify } from '~/utils/slug'
+import { useDsbShellSession, useDsbShellStore } from '~/stores/dsbShell/hooks'
+import {
+  COMMUNITY_BASEINFO_KEYS,
+  BASEINFO_KEYS,
+  FAQ_STORE_FIELDS,
+  FIELD,
+  LAYOUT_FIELD,
+  SEO_KEYS,
+} from '~/unit/DsbThread/constant'
+import type { TDsbEditableFieldKey, TDsbFieldKey } from '~/unit/DsbThread/spec'
 
 import {
   buildBaseInfoSave,
@@ -30,26 +33,11 @@ import {
   buildHeaderLinksSave,
   buildSocialLinksSave,
 } from './dsb/links'
-import { buildTagReindexSave, buildTagSave } from './dsb/tags'
 import type { TDsbSaveRequest } from './dsb/types'
 import useDsbSaveRunner from './useDsbSaveRunner'
 
-const S = TagsSchema
-
-import {
-  COMMUNITY_BASEINFO_KEYS,
-  BASEINFO_KEYS,
-  FAQ_STORE_FIELDS,
-  FIELD,
-  LAYOUT_FIELD,
-  SEO_KEYS,
-  TAG_STORE_FIELDS,
-} from '~/unit/DsbThread/constant'
-import type { TDsbEditableFieldKey, TDsbFieldKey } from '~/unit/DsbThread/spec'
-
 type TRet = {
   mutation: (field: TDsbFieldKey) => void
-  mergeBackEditingTag: () => void
   isPending: boolean
   error: Error | null
 }
@@ -57,55 +45,22 @@ type TRet = {
 /** Routes editor field intent to its domain request builder and the shared save runner. */
 export default function useDsbFieldSave(): TRet {
   const dashboardStore = useDsbShellStore()
-  const tagsEditor = useTagsEditor()
   const faqEditor = useFaqEditorState()
+  const shellSession = useDsbShellSession()
   const community$ = useCommunity()
   const { subTab } = useDsbTab()
 
-  const storeRef = useRef(dashboardStore)
-  const tagEditorRef = useRef(tagsEditor)
-  const faqEditorRef = useRef(faqEditor)
-  const { slug: community } = community$
+  const community = shellSession.community || community$.slug
   const queryClient = useQueryClient()
-  const { save, isPending, error } = useDsbSaveRunner({ community, dashboardStore })
+  const { save, isPending, error } = useDsbSaveRunner({ community })
 
   const saveContext = () => ({
     community,
-    dashboard: storeRef.current,
-    original: storeRef.current.original,
+    dashboard: dashboardStore,
+    original: dashboardStore.original,
   })
 
-  // get latest store, for those state not in UI render cycle
-  useEffect(() => {
-    tagEditorRef.current = tagsEditor
-    faqEditorRef.current = faqEditor
-  }, [faqEditor, tagsEditor])
-
-  const mergeBackEditingTag = (): void => {
-    const { editingTag } = tagEditorRef.current
-    if (!editingTag) return
-    const { tagGroups } = storeRef.current
-    const targetIdx = findIndex(
-      (item) => item.id === editingTag.id,
-      tagGroups.flatMap((group) => group.tags),
-    )
-
-    if (targetIdx < 0) return undefined
-
-    const updatedTagGroups = tagGroups.map((group) => ({
-      ...group,
-      tags: group.tags.map((tag) => (tag.id === editingTag.id ? editingTag : tag)),
-    }))
-
-    storeRef.current.editMany({ tagGroups: updatedTagGroups })
-    tagEditorRef.current.setEditingTag(null)
-
-    return undefined
-  }
-
   const resolveSavedFields = (field: TDsbFieldKey): readonly TDsbEditableFieldKey[] => {
-    if (field === FIELD.TAG_INDEX || field === FIELD.TAG) return TAG_STORE_FIELDS
-
     if (field === FIELD.DOC_FAQ) {
       return FAQ_STORE_FIELDS
     }
@@ -113,23 +68,17 @@ export default function useDsbFieldSave(): TRet {
     if (field === FIELD.BASE_INFO) return BASEINFO_KEYS
     if (field === FIELD.SEO) return SEO_KEYS as readonly TDsbEditableFieldKey[]
 
-    return field in storeRef.current.original ? [field as TDsbEditableFieldKey] : []
+    return field in dashboardStore.original ? [field as TDsbEditableFieldKey] : []
   }
 
-  const snapshotFields = (fields: readonly TDsbEditableFieldKey[]): Partial<TDsbFieldMap> => {
-    const current = storeRef.current
+  const snapshotFields = (
+    store: typeof dashboardStore,
+    fields: readonly TDsbEditableFieldKey[],
+  ): Partial<TDsbFieldMap> => {
     const submitted = {} as Partial<TDsbFieldMap>
 
     for (const field of fields) {
-      submitted[field] = clone(current[field]) as never
-    }
-
-    const editingTag = tagEditorRef.current.editingTag
-    if (editingTag && fields.includes(FIELD.TAGS)) {
-      submitted.tagGroups = current.tagGroups.map((group) => ({
-        ...group,
-        tags: group.tags.map((tag) => (tag.id === editingTag.id ? clone(editingTag) : tag)),
-      }))
+      submitted[field] = clone(store[field]) as never
     }
 
     return submitted
@@ -143,15 +92,28 @@ export default function useDsbFieldSave(): TRet {
     okCb: ((data: unknown) => void) | null = null,
     savedFields: readonly TDsbEditableFieldKey[] = resolveSavedFields(field),
   ): void => {
+    const requestStore = dashboardStore
+    const requestCommunity = community
+    const requestDemoMode = shellSession.demoMode
+    const faqSession = requestStore.docFaqSaveSession
+
     save({
+      community: requestCommunity,
+      demoMode: requestDemoMode,
+      dashboardStore: requestStore,
       execute: (commandId) => browserGraphQLRequest<unknown>(schema, { ...params, commandId }),
       field,
       savedFields,
       readConfirmed,
-      submitted: snapshotFields(savedFields),
+      submitted: snapshotFields(requestStore, savedFields),
       afterConfirmed: (data) => {
-        if (field === FIELD.TAG) mergeBackEditingTag()
-        if (field === FIELD.DOC_FAQ) faqEditorRef.current.setDocFaqSaveZone(null)
+        if (
+          field === FIELD.DOC_FAQ &&
+          requestStore.docFaqSaveSession === faqSession &&
+          requestStore.docFaqSaveZone === faqEditor.docFaqSaveZone
+        ) {
+          requestStore.setDocFaqSaveZone(null)
+        }
         okCb?.(data)
       },
     })
@@ -208,6 +170,7 @@ export default function useDsbFieldSave(): TRet {
       const savedFields = Object.keys(request.params).filter(
         (key): key is TDsbEditableFieldKey => key !== 'community',
       )
+      const submittedCommunity = community
       handleMutation(
         field,
         request.schema,
@@ -220,7 +183,7 @@ export default function useDsbFieldSave(): TRet {
             if (request.params[key] !== undefined) communityPatch[key] = request.params[key]
           }
 
-          patchCommunity(queryClient, community, communityPatch)
+          patchCommunity(queryClient, submittedCommunity, communityPatch)
         },
         savedFields,
       )
@@ -259,65 +222,6 @@ export default function useDsbFieldSave(): TRet {
       return
     }
 
-    if (field === FIELD.TAG) {
-      const { editingTag } = tagEditorRef.current
-      if (!editingTag?.title) return
-      slugify(editingTag.title)
-        .then((slug) => {
-          tagEditorRef.current.setEditingTag({ ...editingTag, slug })
-          const request = buildTagSave({
-            ...saveContext(),
-            editingTag,
-            slug,
-          })
-          handleMutation(field, request.schema, request.params, request.readConfirmed)
-        })
-        .catch((err) => {
-          console.error('## slugify tag title error: ', err)
-          toast(String(err), 'error')
-        })
-      return
-    }
-
-    if (field === FIELD.TAG_INDEX) {
-      const { activeTagThread } = storeRef.current
-      if (!activeTagThread) {
-        return
-      }
-      const request = buildTagReindexSave({
-        ...saveContext(),
-        activeTagThread,
-      })
-
-      const savedFields = resolveSavedFields(field)
-      save({
-        execute: async () => {
-          await Promise.all([
-            executeCommand({
-              request: (variables) => browserGraphQLRequest(S.reindexCommunityTagGroups, variables),
-              variables: {
-                community,
-                thread: request.thread,
-                groups: [...request.groups],
-              },
-            }),
-            executeCommand({
-              request: (variables) => browserGraphQLRequest(S.reindexCommunityTags, variables),
-              variables: {
-                community,
-                thread: request.thread,
-                tags: [...request.tags],
-              },
-            }),
-          ])
-        },
-        field,
-        savedFields,
-        submitted: snapshotFields(savedFields),
-      })
-      return
-    }
-
     if (field === FIELD.DOC_FAQ) {
       const request = buildDocFaqSave(saveContext())
       handleMutation(field, request.schema, request.params, request.readConfirmed)
@@ -333,7 +237,6 @@ export default function useDsbFieldSave(): TRet {
 
   return {
     mutation,
-    mergeBackEditingTag,
     isPending,
     error,
   }

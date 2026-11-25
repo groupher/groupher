@@ -5,7 +5,7 @@ import TagSVG from '~/icons/Tag'
 import CheckLabel from '~/ui/CheckLabel'
 
 import { FIELD } from '../../constant'
-import useTags from '../../logic/useTags'
+import useTagLayout from '../../logic/useTags/useTagLayout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon from './salon'
@@ -31,7 +31,7 @@ export default function TagLayout() {
   const s = useSalon()
   const { t } = useTrans()
 
-  const { edit, tagLayout, tagLayoutTouched: isTouched } = useTags()
+  const { edit, tagLayout, tagLayoutTouched: isTouched } = useTagLayout()
 
   return (
     <div className={s.wrapper}>

@@ -108,9 +108,6 @@ export const FIELD = {
   HEADER_LINKS: 'headerLinks',
   FOOTER_LINKS: 'footerLinks',
   FOOTER_ONELINE_LINKS: 'footerOnelineLinks',
-  TAGS: 'tagGroups',
-  TAG: 'tag',
-  TAG_INDEX: 'tagIndex',
   DOC_FAQ: 'docFaq',
   NAME_ALIAS: 'nameAlias',
   WIDGETS_PRIMARY_COLOR: 'widgetsPrimaryColor',
@@ -119,7 +116,6 @@ export const FIELD = {
   BROADCAST_ENABLE: 'broadcastEnable',
 } as const
 
-export const TAG_STORE_FIELDS: readonly TDsbEditableFieldKey[] = [FIELD.TAGS]
 export const FAQ_STORE_FIELDS: readonly TDsbEditableFieldKey[] = [FIELD.DOC_FAQ]
 export const MENU: TDsbMenu = {
   BASIC: {

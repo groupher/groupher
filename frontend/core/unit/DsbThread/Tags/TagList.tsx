@@ -24,7 +24,6 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { THREAD } from '~/const/thread'
-import useMount from '~/hooks/useMount'
 import type { TTag } from '~/spec'
 import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
@@ -85,7 +84,7 @@ export default function TagList({
   onCompleteDraft,
   onSettingTag,
 }: TProps) {
-  const { activeTagThread, commitTagSorting, loading, loadTags, tagGroups } = useTags()
+  const { activeTagThread, commitTagSorting, loading, tagGroups } = useTags()
   const s = useSalon()
   const dropIndicatorRef = useRef<HTMLDivElement | null>(null)
   const pointerYRef = useRef<number | null>(null)
@@ -179,9 +178,6 @@ export default function TagList({
     }
   }, [])
 
-  useMount(() => {
-    if (!tagGroups?.length) loadTags()
-  })
   const currentThread = activeTagThread || THREAD.POST
   const { cancelDrag, commitGroupDrag, commitTagDrag, groups, groupNames, moveTagDrag, startDrag } =
     useTagDragDraft({

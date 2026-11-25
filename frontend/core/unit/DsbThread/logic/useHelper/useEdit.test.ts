@@ -26,14 +26,6 @@ vi.mock('~/stores/dsbShell/editor', () => ({
     reset: commit,
     setEditingAlias: commit,
   }),
-  useTagsEditor: () => ({
-    editingTag: null,
-    settingTag: null,
-    setEditingTag: commit,
-    setSettingTag: commit,
-    setTag: commit,
-    reset: commit,
-  }),
 }))
 
 vi.mock('~/query/mutation/useDsbFieldSave', () => ({

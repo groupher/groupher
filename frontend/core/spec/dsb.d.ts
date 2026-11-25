@@ -28,7 +28,6 @@ import type {
   TResolvedThemePreset,
   TSizeSML,
   TSocialItem,
-  TTagGroup,
   TTagLayout,
   TThemePreset,
   TThemePresetOption,
@@ -123,9 +122,6 @@ export type TDsbFieldMap = {
   docCategories: readonly TDsbGroupCategory[]
   overlayDark: boolean
 
-  tagGroups: readonly TTagGroup[]
-  activeTagGroup: string | null
-  activeTagThread: TThread | null
   nameAlias: readonly TNameAlias[]
   enable: TEnableConf
   docFaq: TDocFaq
@@ -156,5 +152,3 @@ export type TDocFaqSaveZone =
   | { type: 'mode' }
   | { type: 'listOrder' }
   | null
-
-export type TChangeTagMode = 'settingTag' | 'editingTag'

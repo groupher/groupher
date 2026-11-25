@@ -2,27 +2,9 @@
 
 import { useSnapshot } from 'valtio'
 
-import type { TChangeTagMode, TAdmin, TTag } from '~/spec'
+import type { TAdmin } from '~/spec'
 
 import { useDsbShellStore } from './hooks'
-
-/** Reads Tags editor selections from the Dash shell session. */
-export const useTagsEditor = () => {
-  const store = useDsbShellStore()
-  const snapshot = useSnapshot(store)
-
-  return {
-    editingTag: snapshot.editingTag as TTag | null,
-    settingTag: snapshot.settingTag as TTag | null,
-    setEditingTag: store.setEditingTag,
-    setSettingTag: store.setSettingTag,
-    setTag: (mode: TChangeTagMode, tag: TTag | null) => store.setTag(mode, tag),
-    reset: () => {
-      store.setEditingTag(null)
-      store.setSettingTag(null)
-    },
-  }
-}
 
 /** Reads the Alias editor selection from the Dash shell session. */
 export const useAliasEditor = () => {
@@ -43,6 +25,7 @@ export const useFaqEditorState = () => {
 
   return {
     docFaqSaveZone: snapshot.docFaqSaveZone,
+    docFaqSaveSession: snapshot.docFaqSaveSession,
     setDocFaqSaveZone: store.setDocFaqSaveZone,
     reset: () => store.setDocFaqSaveZone(null),
   }

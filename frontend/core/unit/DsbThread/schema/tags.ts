@@ -22,6 +22,8 @@ export const updateCommunityTag = graphql(`
     $color: RainbowColor
     $title: String
     $slug: String
+    $layout: String
+    $desc: String
     $community: String!
     $extra: [String]
     $marker: MarkerInput
@@ -33,6 +35,8 @@ export const updateCommunityTag = graphql(`
       color: $color
       title: $title
       slug: $slug
+      layout: $layout
+      desc: $desc
       community: $community
       extra: $extra
       marker: $marker
@@ -51,6 +55,20 @@ export const updateCommunityTag = graphql(`
         src
         unified
       }
+    }
+  }
+`)
+
+export const deleteCommunityTag = graphql(`
+  "Delete a tag by thread"
+  mutation DashboardDeleteCommunityTag(
+    $commandId: ID!
+    $id: ID!
+    $community: String!
+    $thread: Thread
+  ) {
+    deleteCommunityTag(commandId: $commandId, id: $id, community: $community, thread: $thread) {
+      id
     }
   }
 `)
@@ -196,6 +214,7 @@ export const reindexCommunityTagGroups = graphql(`
 export default {
   communityTagGroups,
   updateCommunityTag,
+  deleteCommunityTag,
   createCommunityTagGroup,
   updateCommunityTagGroup,
   createCommunityTag,

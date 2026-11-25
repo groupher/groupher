@@ -1,17 +1,18 @@
 import useTrans from '~/hooks/useTrans'
 
-import { FIELD } from '../constant'
-import useIndexTouched from '../logic/useTags/useIndexTouched'
+import useTags from '../logic/useTags'
 import SavingBar from '../SavingBar'
 
 export default function Footer() {
-  const isTouched = useIndexTouched()
+  const { hasSortingChanges, resetTagSorting, saveTagSorting, saving } = useTags()
   const { t } = useTrans()
 
   return (
     <SavingBar
-      isTouched={isTouched}
-      field={FIELD.TAG_INDEX}
+      isTouched={hasSortingChanges}
+      loading={saving}
+      onCancel={resetTagSorting}
+      onConfirm={() => void saveTagSorting()}
       prefix={t('dsb.tags.sort_prefix')}
       top={10}
     />

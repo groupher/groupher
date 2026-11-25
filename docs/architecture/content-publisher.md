@@ -772,8 +772,8 @@ forbidden 和 rate limit，并落实上述 reload/reconcile/retry 语义，不�
 - Article capability scope；
 - Article 与公开 Doc read projection 从 `document` 到 `body` direct cutover，不保留双字段。
 
-对外 GraphQL mutation 字段只有基座合同中的六个名字。Editor 的 GraphQL 操作文档位于
-`frontend/core/unit/ArticleEditor/schema.ts`；operation label 与字段动作一致（例如
+对外 GraphQL mutation 字段只有基座合同中的六个名字。Content Publisher 的 GraphQL 操作文档位于
+`frontend/core/lib/graphql/content-publisher.ts`；operation label 与字段动作一致（例如
 `SaveWorkingCopy` 文档调用 GraphQL 字段 `saveWorkingCopy`）。
 Content Publisher HTTP action 是另一层传输合同，不作为 GraphQL mutation 名或 CMS facade 名：
 

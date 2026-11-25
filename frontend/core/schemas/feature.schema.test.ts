@@ -32,7 +32,6 @@ import DashboardTagsSchema from '../unit/DsbThread/schema/tags'
 import KanbanSchema from '../unit/KanbanThread/schema'
 import PostThreadSchema from '../unit/PostThread/schema'
 import RichEditorSchema from '../unit/RichEditor/schema'
-import TagSettingSchema from '../unit/TagSettingEditor/schema'
 import { pageDocuments } from './pages/contract-inventory'
 import PressSchema from './pages/press'
 
@@ -125,7 +124,6 @@ const featureDocuments: Record<string, Record<string, SchemaValue>> = {
     pagedChangelogs: PostThreadSchema.getPagedArticlesSchema(THREAD_PATH.CHANGELOG),
   },
   richEditor: RichEditorSchema,
-  tagSetting: TagSettingSchema,
 }
 
 const documents = Object.entries(featureDocuments).flatMap(([feature, registry]) =>

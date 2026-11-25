@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { clone } from 'ramda'
 import { createContext, use, useMemo, useRef, useState } from 'react'
 
@@ -24,8 +24,10 @@ import {
 } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import type { TDsb, TParsedWallpaper, TWallpaperData, TWallpaperType } from '~/spec'
-import useCommunity from '~/stores/community/hooks'
+import { writeDemoFields } from '~/stores/dsbShell/demoFields'
+import { useDsbShellSession } from '~/stores/dsbShell/hooks'
 import useDsbShell, { useDsbShellStore } from '~/stores/dsbShell/hooks'
+import { writeDemoWallpaper } from '~/stores/wallpaper/demo'
 import {
   getWallpaperThemeSavablePatch,
   pickWallpaperThemeState,
@@ -62,6 +64,7 @@ const getInitialTab = (type: TWallpaperType): TTab => {
 
 type TWallpaperSaveRequest = {
   community: string
+  demoMode: boolean
   baseVersion: number
   commandId: string
   submitted: TWallpaperPatch
@@ -175,12 +178,12 @@ export function useLogicValue(): TWallpaperLogic {
   const liveWallpaper$ = useWallpaperStore()
   const dsb$ = useDsbShell()
   const liveDsb$ = useDsbShellStore()
-  const community$ = useCommunity()
+  const { community, demoMode } = useDsbShellSession()
   const { getWallpaper: getWallpaperBase } = useFullWallpaper()
   const { isDarkTheme } = useTheme()
   const { t } = useTrans()
   const queryClient = useQueryClient()
-  const { data: wallpaperConfig } = useQuery(wallpaperQueries.slug(community$.slug))
+  const { data: wallpaperConfig } = useQuery(wallpaperQueries.slug(community))
   const wallpaperStateVersion = wallpaperConfig?.wallpaper?.version ?? 0
   const pendingSaveRef = useRef<TPendingWallpaperSave | null>(null)
   const savePlanRef = useRef<{
@@ -241,14 +244,20 @@ export function useLogicValue(): TWallpaperLogic {
   ])
 
   const wallpaperMutation = useMutation({
-    mutationKey: wallpaperMutationKeys.publish(community$.slug),
+    mutationKey: wallpaperMutationKeys.publish(community),
     mutationFn: async ({
       community,
+      demoMode: requestDemoMode,
       baseVersion,
       commandId,
       submitted,
       theme,
     }: TWallpaperSaveRequest) => {
+      if (requestDemoMode) {
+        writeDemoWallpaper(community, submitted)
+        return { result: null, submitted }
+      }
+
       const plan = buildWallpaperPublishPlan({
         baseVersion,
         community,
@@ -260,23 +269,28 @@ export function useLogicValue(): TWallpaperLogic {
       if (!result) throw new Error('WALLPAPER_PUBLISH_EMPTY_RESPONSE')
       return { result, submitted }
     },
-    onSuccess: ({ result, submitted }, { community }) => {
+    onSuccess: ({ result, submitted }, { community, demoMode: requestDemoMode }) => {
       liveWallpaper$.acceptSubmitted(submitted)
-      queryClient.setQueryData<TParsedWallpaper>(wallpaperKeys.slug(community), (current) =>
-        updatePublishedWallpaperVersion(current, result.version),
-      )
       pendingSaveRef.current = null
-      void invalidate(queryClient, [
-        QueryInvalidation.community.wallpaper(community),
-        QueryInvalidation.community.wallpaperEditor(community),
-      ])
+      if (!requestDemoMode && result) {
+        queryClient.setQueryData<TParsedWallpaper>(wallpaperKeys.slug(community), (current) =>
+          updatePublishedWallpaperVersion(current, result.version),
+        )
+        void invalidate(queryClient, [
+          QueryInvalidation.community.wallpaper(community),
+          QueryInvalidation.community.wallpaperEditor(community),
+        ])
+      }
       markSaveLaneComplete('wallpaper')
     },
-    onError: (err) => {
+    onError: (err, request) => {
       console.error('## wallpaper publish error: ', err)
-      if (graphqlErrorCode(err) === '5702' || graphqlErrorCode(err) === '5708') {
-        void invalidate(queryClient, QueryInvalidation.community.wallpaper(community$.slug))
-          .then(() => queryClient.fetchQuery(wallpaperQueries.slug(community$.slug)))
+      if (
+        !request.demoMode &&
+        (graphqlErrorCode(err) === '5702' || graphqlErrorCode(err) === '5708')
+      ) {
+        void invalidate(queryClient, QueryInvalidation.community.wallpaper(request.community))
+          .then(() => queryClient.fetchQuery(wallpaperQueries.slug(request.community)))
           .catch(() => undefined)
       }
       toast(extractErrorMessage(err), 'error')
@@ -284,22 +298,31 @@ export function useLogicValue(): TWallpaperLogic {
   })
 
   const contentShadowMutation = useMutation({
-    mutationKey: dsbMutationKeys.contentShadow(community$.slug),
-    mutationFn: (plan: TContentShadowSavePlan) => executeContentShadowUpdate(plan),
-    onSuccess: ({ contentShadow }, { community, enabled }) => {
+    mutationKey: dsbMutationKeys.contentShadow(community),
+    mutationFn: async (plan: TContentShadowSavePlan & { demoMode: boolean }) => {
+      if (plan.demoMode) {
+        writeDemoFields(plan.community, { contentShadow: plan.enabled })
+        return { contentShadow: plan.enabled }
+      }
+
+      return executeContentShadowUpdate(plan)
+    },
+    onSuccess: ({ contentShadow }, { community, enabled, demoMode: requestDemoMode }) => {
       const confirmed = contentShadow ?? enabled
       liveDsb$.reconcile({
         fields: ['contentShadow'],
         submitted: { contentShadow: enabled },
         confirmed: { contentShadow: confirmed },
       })
-      queryClient.setQueryData<TDsb>(dsbKeys.slug(community), (current) =>
-        current ? { ...current, contentShadow: confirmed } : current,
-      )
-      void invalidate(queryClient, [
-        QueryInvalidation.community.dashboard(community),
-        QueryInvalidation.community.wallpaperEditor(community),
-      ])
+      if (!requestDemoMode) {
+        queryClient.setQueryData<TDsb>(dsbKeys.slug(community), (current) =>
+          current ? { ...current, contentShadow: confirmed } : current,
+        )
+        void invalidate(queryClient, [
+          QueryInvalidation.community.dashboard(community),
+          QueryInvalidation.community.wallpaperEditor(community),
+        ])
+      }
       markSaveLaneComplete('shadow')
     },
     onError: (err) => {
@@ -329,7 +352,6 @@ export function useLogicValue(): TWallpaperLogic {
   const onSave = (): void => {
     flushWallpaperDraft()
     clearWallpaperPreview()
-    const community = community$.slug
     const theme = isDarkTheme ? 'dark' : 'light'
     const submittedTheme = clone(getWallpaperThemeSavablePatch(liveWallpaper$, theme))
     const submitted = { [theme]: submittedTheme } as TWallpaperPatch
@@ -354,6 +376,7 @@ export function useLogicValue(): TWallpaperLogic {
         ? async () => {
             await contentShadowMutation.mutateAsync({
               community,
+              demoMode,
               enabled: dsb$.contentShadow,
             })
           }
@@ -368,6 +391,7 @@ export function useLogicValue(): TWallpaperLogic {
             await wallpaperMutation.mutateAsync({
               baseVersion: wallpaperStateVersion,
               community,
+              demoMode,
               commandId: pending.commandId,
               submitted,
               theme,
@@ -477,9 +501,14 @@ export function useLogicValue(): TWallpaperLogic {
   const changeTexture = (texture: TWallpaperThemeState['texture']): void =>
     scheduleWallpaperPreview({ texture })
 
+  const isWallpaperSaving =
+    useIsMutating({ mutationKey: wallpaperMutationKeys.publish(community) }) > 0
+  const isContentShadowSaving =
+    useIsMutating({ mutationKey: dsbMutationKeys.contentShadow(community) }) > 0
+
   return {
     tab,
-    loading: wallpaperMutation.isPending || contentShadowMutation.isPending,
+    loading: isWallpaperSaving || isContentShadowSaving,
     // drive
     getWallpaper,
     isTouched,

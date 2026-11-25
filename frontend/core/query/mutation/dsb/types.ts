@@ -1,6 +1,6 @@
 import type { DocumentNode } from 'graphql'
 
-import type { TDsbFieldMap, TTag, TThread } from '~/spec'
+import type { TDsbFieldMap } from '~/spec'
 
 export type TDsbSaveRequest = {
   schema: DocumentNode
@@ -14,12 +14,4 @@ export type TDsbSaveContext = {
   community: string
   dashboard: TDsbFieldMap
   original: TDsbFieldMap
-}
-
-export type TDsbTagSaveContext = TDsbSaveContext & {
-  editingTag: TTag
-}
-
-export type TDsbTagReindexContext = TDsbSaveContext & {
-  activeTagThread: TThread
 }

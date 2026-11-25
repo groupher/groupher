@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: mocks.request }))
 vi.mock('~/hooks/useEvent', () => ({ default: vi.fn() }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
-vi.mock('../../store/hooks', () => ({ default: () => ({ revisionReloadKey: 0 }) }))
+vi.mock('../../store/hooks', () => ({ useDocsEditorStore: () => ({ revisionReloadKey: 0 }) }))
 
 describe('Docs default working copy loader', () => {
   beforeEach(() => {

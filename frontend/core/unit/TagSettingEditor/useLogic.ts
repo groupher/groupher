@@ -1,20 +1,15 @@
 import { reject, uniq } from 'ramda'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
-import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
-import { browserGraphQLRequest } from '~/graphql/client'
-import { executeCommand } from '~/query/mutation/optimistic/execute'
-import { closeDrawer, send } from '~/signal'
-import type { TChangeMode, TColorName, TEditValue, TSelectOption, TTag } from '~/spec'
-import useCommunity from '~/stores/community/hooks'
-import { useTagsEditor } from '~/stores/dsbShell/editor'
-import useDsbShell from '~/stores/dsbShell/hooks'
+import { closeDrawer } from '~/signal'
+import type { TChangeMode, TEditValue, TSelectOption, TTag } from '~/spec'
+import useTags from '~/unit/DsbThread/logic/useTags'
+import useTagsEditor from '~/unit/DsbThread/Tags/store/hooks'
 import { slugify } from '~/utils/slug'
 import { nilOrEmpty, validateSlug } from '~/validator'
 
 import { DEFAULT_CREATE_TAG } from './constant'
-import S from './schema'
 
 type TArgs = {
   initialGroup?: string
@@ -28,8 +23,7 @@ type TRet = {
   slugError: string
   canSubmit: boolean
   initEditingTag: (mode: TChangeMode) => void
-
-  edit: (e: TEditValue, key) => void
+  edit: (e: TEditValue, key: keyof TTag) => void
   onDelete: (tag: TTag) => void
   onUpdate: () => void
   onCreate: () => void
@@ -37,168 +31,133 @@ type TRet = {
   categoryOptions: TSelectOption[]
 }
 
-/** Exposes logic state and actions through the shared React hook boundary. */
+/** Exposes Tag form behavior while its draft is owned by TagsEditorStore. */
 export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRet {
-  const dsb$ = useDsbShell()
-  const { settingTag } = useTagsEditor()
-  const { tagGroups, activeTagThread } = dsb$
-
-  const community$ = useCommunity()
-
-  const [editingTag, setEditingTag] = useState<TTag | null>(null)
-  const [mode, setMode] = useState<TChangeMode>(CHANGE_MODE.UPDATE)
-  const [processing, setProcessing] = useState(false)
-  const [slugEdited, setSlugEdited] = useState(false)
+  const tagsEditor = useTagsEditor()
+  const { activeTagThread, createTagFromForm, deleteTag, saving, tagGroups, updateTag } = useTags()
+  const editingTag = tagsEditor.tagFormDraft
+  const mode = tagsEditor.tagFormMode ?? CHANGE_MODE.UPDATE
   const slugRequestId = useRef(0)
+  const activeStoreRef = useRef(tagsEditor.store)
+  activeStoreRef.current = tagsEditor.store
+
+  const defaultGroup = initialGroup || tagGroups[0]?.id || ''
 
   const initEditingTag = useCallback(
-    (mode: TChangeMode): void => {
-      setMode(mode)
-      if (mode === CHANGE_MODE.CREATE) {
-        const defaultGroup = initialGroup || tagGroups[0]?.id || ''
-        setEditingTag({
-          ...DEFAULT_CREATE_TAG,
-          groupId: defaultGroup,
-          thread: activeTagThread ?? undefined,
-        })
-      } else {
-        setEditingTag(settingTag)
+    (nextMode: TChangeMode): void => {
+      if (nextMode === CHANGE_MODE.CREATE) {
+        if (tagsEditor.tagFormMode !== CHANGE_MODE.CREATE || !tagsEditor.tagFormDraft) {
+          tagsEditor.store.beginTagForm(CHANGE_MODE.CREATE, {
+            ...DEFAULT_CREATE_TAG,
+            groupId: defaultGroup,
+            thread: activeTagThread,
+          } as TTag)
+        } else if (!tagsEditor.tagFormDraft.groupId && defaultGroup) {
+          tagsEditor.store.updateTagForm({ groupId: defaultGroup })
+        }
+        return
       }
-      setSlugEdited(false)
+
+      if (tagsEditor.tagFormMode === CHANGE_MODE.UPDATE && tagsEditor.tagFormDraft) {
+        return
+      }
+
+      if (tagsEditor.tagFormDraft) return
+      // An update drawer is opened by TagAction, which initializes the selected tag first.
     },
-    [activeTagThread, initialGroup, settingTag, tagGroups],
+    [
+      activeTagThread,
+      defaultGroup,
+      tagsEditor.tagFormDraft,
+      tagsEditor.tagFormMode,
+      tagsEditor.tagFormSession,
+      tagsEditor.store,
+    ],
   )
 
-  const edit = (e: TEditValue, key): void => {
+  const edit = (value: TEditValue, key: keyof TTag): void => {
     if (!editingTag) return
-    if (key === 'slug') setSlugEdited(true)
-    if (key === 'title' && !slugEdited) {
-      setEditingTag({ ...editingTag, title: e as string, slug: '' })
+    if (key === 'slug') tagsEditor.store.markTagFormSlugEdited()
+    if (key === 'title' && !tagsEditor.tagFormSlugEdited) {
+      tagsEditor.store.updateTagForm({ title: value as string, slug: '' })
       return
     }
 
-    setEditingTag({ ...editingTag, [key]: e })
+    tagsEditor.store.updateTagForm({ [key]: value } as Partial<TTag>)
   }
 
   useEffect(() => {
-    if (!editingTag || slugEdited) return
+    if (!editingTag || tagsEditor.tagFormSlugEdited) return
 
     const title = editingTag.title?.trim()
     if (!title) {
-      setEditingTag((tag) => (tag ? { ...tag, slug: '' } : tag))
+      tagsEditor.store.updateTagForm({ slug: '' })
       return
     }
 
     const requestId = ++slugRequestId.current
+    const session = tagsEditor.tagFormSession
     const timer = window.setTimeout(() => {
-      slugify(title)
+      void slugify(title)
         .then((slug) => {
           if (slugRequestId.current !== requestId) return
-          setEditingTag((tag) => {
-            if (!tag) return tag
-            if (tag.title?.trim() !== title) return tag
-            if (tag.slug === slug) return tag
-
-            return { ...tag, slug }
-          })
+          if (activeStoreRef.current !== tagsEditor.store) return
+          if (tagsEditor.store.tagFormSession !== session) return
+          if (tagsEditor.store.tagFormDraft?.title?.trim() !== title) return
+          if (tagsEditor.store.tagFormDraft.slug === slug) return
+          tagsEditor.store.updateTagForm({ slug })
         })
         .catch(() => undefined)
     }, 250)
 
     return () => window.clearTimeout(timer)
-  }, [editingTag?.title, slugEdited])
+  }, [editingTag?.title, tagsEditor.store, tagsEditor.tagFormSession, tagsEditor.tagFormSlugEdited])
 
-  const _handleDone = (): void => {
-    setProcessing(false)
+  const finishForm = (session: number, tagId?: string): void => {
+    if (activeStoreRef.current !== tagsEditor.store) return
+    if (tagsEditor.store.tagFormSession !== session) return
+    if (tagId && tagsEditor.store.tagFormDraft?.id !== tagId) return
+
+    tagsEditor.store.clearTagForm(session)
     closeDrawer()
-    send(EVENT.REFRESH_TAGS)
     onDone?.()
   }
 
   const onDelete = (tag: TTag): void => {
-    if (!tag?.community) return
-    setProcessing(true)
-    const { id, thread, community } = tag
-
-    executeCommand({
-      request: (variables) => browserGraphQLRequest(S.deleteCommunityTag, variables),
-      variables: { id, community: community.slug, thread },
-    })
-      .then((res) => {
-        console.log('## deleteCommunityTag: ', res)
-        _handleDone()
+    const session = tagsEditor.tagFormSession
+    const store = tagsEditor.store
+    void deleteTag(tag, session)
+      .then(() => {
+        if (activeStoreRef.current !== store) return
+        finishForm(session, tag.id)
       })
       .catch(() => undefined)
-      .finally(() => setProcessing(false))
   }
 
   const onUpdate = (): void => {
-    setProcessing(true)
-    if (!activeTagThread || !editingTag) {
-      setProcessing(false)
-      return
-    }
+    if (!activeTagThread || !editingTag || !validateSlug(editingTag.slug).valid) return
 
-    if (!validateSlug(editingTag.slug).valid) {
-      setProcessing(false)
-      return
-    }
-
-    executeCommand({
-      request: (variables) => browserGraphQLRequest(S.updateCommunityTag, variables),
-      variables: {
-        id: editingTag.id ?? '',
-        color: editingTag.color as TColorName,
-        title: editingTag.title,
-        layout: editingTag.layout,
-        desc: editingTag.desc,
-        slug: validateSlug(editingTag.slug).value,
-        community: community$.slug,
-        groupId: editingTag.groupId,
-        marker: editingTag.marker,
-      },
-    })
-      .then((res) => {
-        console.log('## updateCommunityTag: ', res)
-        _handleDone()
+    const session = tagsEditor.tagFormSession
+    const store = tagsEditor.store
+    void updateTag(editingTag, { source: 'form', id: session })
+      .then(() => {
+        if (activeStoreRef.current !== store) return
+        finishForm(session, editingTag.id)
       })
       .catch(() => undefined)
-      .finally(() => setProcessing(false))
   }
 
   const onCreate = (): void => {
-    setProcessing(true)
-    if (!activeTagThread || !editingTag) {
-      setProcessing(false)
-      return
-    }
+    if (!activeTagThread || !editingTag || !validateSlug(editingTag.slug).valid) return
 
-    if (!validateSlug(editingTag.slug).valid) {
-      setProcessing(false)
-      return
-    }
-
-    const params = {
-      thread: activeTagThread,
-      title: editingTag.title ?? '',
-      slug: validateSlug(editingTag.slug).value,
-      layout: editingTag.layout,
-      color: (editingTag.color ?? '') as TColorName,
-      groupId: editingTag.groupId ?? '',
-      community: community$.slug,
-      marker: editingTag.marker,
-    }
-
-    executeCommand({
-      request: (variables) => browserGraphQLRequest(S.createCommunityTag, variables),
-      variables: params,
-    })
-      .then((res) => {
-        console.log('## createCommunityTag: ', res)
-        _handleDone()
+    const session = tagsEditor.tagFormSession
+    const store = tagsEditor.store
+    void createTagFromForm(editingTag, session)
+      .then(() => {
+        if (activeStoreRef.current !== store) return
+        finishForm(session)
       })
       .catch(() => undefined)
-      .finally(() => setProcessing(false))
   }
 
   const curCategory = useMemo((): TSelectOption => {
@@ -219,21 +178,12 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
       label: group.title,
       value: group.id,
     }))
-
-    let retOptions = existOptions
-
     const group = tagGroups.find((item) => item.id === editingTag.groupId)
-    if (group) {
-      retOptions = uniq([
-        {
-          label: group.title,
-          value: group.id,
-        },
-        ...existOptions,
-      ])
-    }
+    const options = group
+      ? [{ label: group.title, value: group.id }, ...existOptions]
+      : existOptions
 
-    return reject((opt: TSelectOption) => nilOrEmpty(opt.value), uniq(retOptions))
+    return reject((option: TSelectOption) => nilOrEmpty(option.value), uniq(options))
   }, [editingTag, tagGroups])
 
   const slugValidation = validateSlug(editingTag?.slug)
@@ -251,14 +201,13 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
     mode,
     initEditingTag,
     editingTag,
-    processing,
+    processing: saving,
     slugError,
     canSubmit,
     edit,
     onDelete,
     onUpdate,
     onCreate,
-
     curCategory,
     categoryOptions,
   }
