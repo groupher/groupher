@@ -52,9 +52,34 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
   defp update_published_projection(_result, _public), do: {:ok, :pass}
 
   @doc "Delivers the recipient and content snapshot stored by the first-publish intent."
-  def deliver_first_publish_notification(%{event: "article.first_published_notification"} = event) do
-    Messaging.notify(:notify_admin_new_article, event)
+  def deliver_first_publish_notification(%CMS.Outbox.Event{
+        id: event_id,
+        event: "article.first_published_notification",
+        resource_type: "article",
+        resource_id: resource_id,
+        operation_ref: operation_ref,
+        contract_version: 1,
+        data: data
+      })
+      when is_map(data) do
+    with {:ok, event_id} <- Ecto.UUID.cast(event_id),
+         {:ok, _} <- Ecto.UUID.cast(operation_ref),
+         {:ok, article_id} <- Ecto.UUID.cast(resource_id),
+         {:ok, ^article_id} <- Ecto.UUID.cast(data["article_id"]) do
+      Messaging.notify(:notify_admin_new_article, %{
+        event_id: event_id,
+        article_id: article_id,
+        title: data["title"],
+        thread: data["thread"],
+        author: data["author"],
+        recipient_ids: data["notify_user_ids"]
+      })
+    else
+      _ -> {:error, :invalid_first_publication_notice}
+    end
   end
+
+  def deliver_first_publish_notification(_event), do: {:error, :invalid_first_publication_notice}
 
   defp public_projection(%Article{thread: thread}, community, inner_id)
        when is_integer(inner_id) do

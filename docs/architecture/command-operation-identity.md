@@ -878,7 +878,7 @@ telemetry 报告；锁下复查、重入队和 Oban job 写入处于同一事务
 | 旧位置（相对 `backend/api/lib/groupher_server/`）                  | 本次替代                                                              | 验收重点                                                                              |
 | ------------------------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `cms/doc_tree/publish/queue_release.ex` publication/removal 两处   | 删除布尔开关，Release 后按本次发布键登记；不新增发布 owner 自动 reset | 新 release 新意图；Receipt 恢复不执行登记；旧 dead 按人工/替代诊断处理                |
-| `cms/articles/working_copy/publisher.ex` cache/projections 两处    | 删除布尔开关，按本次 publish O 登记；Command 路径不新增自动 reset     | 新发布不碰旧 dead；同 command_id 只恢复 Confirmation                                  |
+| `cms/articles/publication.ex` cache/projections 两处               | 删除布尔开关，按本次 publish O 登记；Command 路径不新增自动 reset     | 新发布不碰旧 dead；同 command_id 只恢复 Confirmation                                  |
 | `cms/assets/provider_reconciliation.ex` provider delete 一处       | 当前巡检 step 按稳定对象键恢复原意图，接共用事务原语并按 outcome 分支 | R1 完成后 E dead，R2 仍恢复 E；旧 step 不重开；首次/重试 O 分离；计数与 step 结果真实 |
 | `cms/articles/effects/outbox.ex`、`cms/assets/effects.ex` 两个包装 | 删除 retry_failed 入参及透传，使用具体事件入口                        | 普通 send 仍显式返回 dead，不能把旧 flag 改名保留                                     |
 

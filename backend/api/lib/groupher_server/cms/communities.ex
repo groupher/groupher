@@ -178,6 +178,14 @@ defmodule GroupherServer.CMS.Communities do
     UpdateCommand.execute_workflow(community, args, :operations, operation_ref)
   end
 
+  @doc "Updates the derived contribution digest under an explicitly owned operation UUID."
+  @spec update_contribution_digest(Community.t(), [integer()], Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def update_contribution_digest(%Community{} = community, digest, operation_ref)
+      when is_list(digest) and is_binary(operation_ref) do
+    Workflow.update_contribution_digest(community, digest, operation_ref)
+  end
+
   @doc "Creates a Community from an approved Application through its durable workflow owner."
   @spec create_from_application(String.t(), String.t()) :: T.domain_res(term())
   def create_from_application(application_ref, operation_ref) do

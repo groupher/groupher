@@ -38,6 +38,14 @@ defmodule GroupherServer.CMS.Interactions.Reactions.CollectChange do
     end
   end
 
+  @doc "Attaches a folder to the current collect fact."
+  def attach_folder(article, user, folder) do
+    with {:ok, collect} <- Persist.find_collect(article, user),
+         {:ok, attached} <- Persist.attach_collect_folder(collect, folder) do
+      {:ok, attached}
+    end
+  end
+
   defp sync_state(_canonical, _actor, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_state(canonical, actor, operation, :changed) do

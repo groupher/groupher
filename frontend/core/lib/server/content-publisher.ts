@@ -49,9 +49,20 @@ const graphQLErrorProjection = (errors: NonNullable<TGraphQLPayload['errors']>) 
   if (authCode) return { code: authCode, status: 401 }
   if (codes.has('SERVICE_SCOPE_FORBIDDEN')) return { code: 'forbidden', status: 403 }
   if (codes.has('RATE_LIMITED') || codes.has('429')) return { code: 'rate_limited', status: 429 }
+  if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.COMMAND_ID_CONFLICT)))
+    return { code: 'command_id_conflict', status: 422 }
+  if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.COMMAND_RESULT_UNAVAILABLE)))
+    return { code: 'command_result_unavailable', status: 422 }
+  if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.COMMAND_RESULT_EXPIRED)))
+    return { code: 'command_result_expired', status: 422 }
+  if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.DOCS_QUEUE_VERSION_CONFLICT)))
+    return { code: 'docs_queue_version_conflict', status: 409 }
+  if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.DOCS_QUEUE_COPY_REVISION_CONFLICT)))
+    return { code: 'docs_queue_copy_revision_conflict', status: 409 }
   if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.ARTICLE_WORKING_COPY_REVISION_CONFLICT)))
     return { code: 'revision_conflict', status: 409 }
-  if (codes.has('4569')) return { code: 'revision_conflict', status: 409 }
+  if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.DOCS_STATE_CONFLICT)))
+    return { code: 'revision_conflict', status: 409 }
   if (
     codes.has(String(CONTENT_PUBLISH_ERROR_CODE.DRAFT_VERSION_CONFLICT)) ||
     codes.has(String(CONTENT_PUBLISH_ERROR_CODE.COMMENT_BODY_VERSION_CONFLICT))

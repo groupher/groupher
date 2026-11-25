@@ -90,25 +90,20 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
         |> Repo.all()
         |> Enum.reject(&(&1.id == author.id))
 
-      now = DateTime.utc_now(:second)
+      source = %{
+        article_id: selected.article_id,
+        comment_id: endpoint.comment_id,
+        thread: selected.thread,
+        title: selected.title
+      }
 
-      rows =
-        Enum.map(recipients, fn user ->
-          %{
-            from_user_id: author.id,
-            to_user_id: user.id,
-            article_id: selected.article_id,
-            comment_id: endpoint.comment_id,
-            thread: selected.thread,
-            title: selected.title,
-            read: false,
-            block_linker: [],
-            inserted_at: now,
-            updated_at: now
-          }
-        end)
-
-      with {:ok, users} <- Messaging.record_mention_in_transaction(selected.content, rows, author),
+      with {:ok, users} <-
+             Messaging.record_mention_recipients_in_transaction(
+               selected.content,
+               source,
+               Enum.map(recipients, & &1.id),
+               author
+             ),
            %Event{resource_id: ^source_id} = event <- Repo.get(Event, event_id),
            {:ok, _} <-
              event

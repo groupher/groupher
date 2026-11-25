@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Articles.Workflow do
     Community
   }
 
-  alias CMS.Articles.WorkingCopy.Publisher
+  alias CMS.Articles.Publication
   alias Helper.ORM
 
   @doc "Runs an Article workflow in the current transaction or opens one."
@@ -53,7 +53,7 @@ defmodule GroupherServer.CMS.Articles.Workflow do
          operation_ref <- Ecto.UUID.generate() do
       result =
         transaction(fn ->
-          Publisher.publish_in_transaction(
+          Publication.publish_in_transaction(
             article,
             community,
             source,

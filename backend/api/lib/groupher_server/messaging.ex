@@ -27,6 +27,17 @@ defmodule GroupherServer.Messaging do
   end
 
   @doc """
+  Records verified mention recipients within the caller's transaction.
+
+  ## Examples
+
+      Messaging.record_mention_recipients_in_transaction(content, source, recipient_ids, author)
+  """
+  defdelegate record_mention_recipients_in_transaction(content, source, recipient_ids, author),
+    to: Commands.SendMention,
+    as: :record_recipients_in_transaction
+
+  @doc """
   Records mention mailbox rows within the caller's transaction; invalidate after commit.
 
   ## Examples

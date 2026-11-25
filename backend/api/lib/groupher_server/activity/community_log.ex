@@ -161,8 +161,30 @@ defmodule GroupherServer.Activity.CommunityLog do
       Activity.CommunityLog.stats(community, actor, %{filter: %{outcomes: [:denied]}})
   """
   def stats(%Community{} = community, actor, selection) do
+    do_stats(community, actor, selection, :load)
+  end
+
+  @doc """
+  Returns counts using an explicitly supplied actor-bound Passport scope.
+
+  ## Examples
+
+      Activity.CommunityLog.stats(community, actor, selection, passport_scope: scope)
+  """
+  def stats(%Community{} = community, actor, selection, opts) when is_list(opts) do
+    case Keyword.fetch(opts, :passport_scope) do
+      {:ok, scope} -> do_stats(community, actor, selection, {:provided, scope})
+      :error -> {:error, CMS.passport_error_cat_permission_denied()}
+    end
+  end
+
+  def stats(%Community{}, _actor, _selection, _opts) do
+    {:error, CMS.passport_error_cat_permission_denied()}
+  end
+
+  defp do_stats(community, actor, selection, scope_source) do
     with {:ok, visibility} <-
-           authorize_audit_read(actor, community),
+           authorize_audit_read(actor, community, scope_source),
          {:ok, resolved} <- Filter.resolve(selection, active_actions()),
          {:ok, normalized} <- normalize_filter(resolved.filter, :stats) do
       {total_count, counts} =

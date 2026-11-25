@@ -1,12 +1,13 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
-import { useEffect, useMemo, useState, type FC } from 'react'
+import { useEffect, useMemo, useRef, useState, type FC } from 'react'
 
 import TYPE from '~/const/type'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { saveDocQueueCopy, type TSaveDocQueueCopyInput } from '~/lib/artimentPublisher'
+import { ContentPublishError } from '~/lib/contentPublisher'
 import { slugify } from '~/lib/slug'
-import { executeCommand } from '~/query/mutation/optimistic/execute'
+import { createCommandHandle, executeCommand } from '~/query/mutation/optimistic/execute'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import BaseDrawer from '~/ui/Drawer'
@@ -33,24 +34,33 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   const { t } = useTrans()
   const { accountScope } = useAccount()
   const { slug: community } = useCommunity()
+  const pendingSaveRef = useRef<{
+    started: TDraft
+    unknown: boolean
+    persisted: TDraft
+    variables: TSaveDocQueueCopyInput
+  } | null>(null)
   const [draft, setDraft] = useState<TDraft | null>(null)
   const [baseline, setBaseline] = useState('')
   const [expectedQueueRevision, setExpectedQueueRevision] = useState<number | null>(null)
   const [workingCopyId, setWorkingCopyId] = useState<string | null>(null)
   const [workRevision, setWorkRevision] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
+  const [recoveryBlocked, setRecoveryBlocked] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmClose, setConfirmClose] = useState(false)
   const dirty = useMemo(() => !!draft && signature(draft) !== baseline, [draft, baseline])
 
   useEffect(() => {
     let cancelled = false
+    pendingSaveRef.current = null
     setDraft(null)
     setBaseline('')
     setWorkingCopyId(null)
     setWorkRevision(null)
     setExpectedQueueRevision(null)
     setError(null)
+    setRecoveryBlocked(false)
     if (!accountScope) return
     browserGraphQLRequest<{
       docsQueueMember: {
@@ -110,34 +120,47 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
       expectedQueueRevision === null ||
       !dirty ||
       !draft.title.trim() ||
-      saving
+      saving ||
+      recoveryBlocked
     )
       return
-    const started = draft
     setSaving(true)
     setError(null)
     try {
-      const slug = started.slug.trim() || (await slugify(started.title.trim()))
-      const persisted = {
-        ...started,
-        title: started.title.trim(),
-        subtitle: started.subtitle.trim(),
-        slug,
-      }
-      const result = await executeCommand({
-        request: (variables: TSaveDocQueueCopyInput) =>
-          saveDocQueueCopy<{ queueRevision: number; workingCopyRevision: number }>(variables),
-        variables: {
-          value: started.body,
-          community,
-          articleId,
+      if (!pendingSaveRef.current) {
+        const started = draft
+        const slug = started.slug.trim() || (await slugify(started.title.trim()))
+        const persisted = {
+          ...started,
           title: started.title.trim(),
           subtitle: started.subtitle.trim(),
           slug,
-          revision: workRevision,
-          queueRevision: expectedQueueRevision,
-        },
+        }
+        pendingSaveRef.current = {
+          started,
+          unknown: false,
+          persisted,
+          variables: {
+            value: started.body,
+            community,
+            articleId,
+            title: persisted.title,
+            subtitle: persisted.subtitle,
+            slug,
+            revision: workRevision,
+            queueRevision: expectedQueueRevision,
+            commandId: createCommandHandle({ articleId }).commandId,
+          },
+        }
+      }
+      const { started, persisted, variables } = pendingSaveRef.current
+      const result = await executeCommand({
+        request: (input: TSaveDocQueueCopyInput) =>
+          saveDocQueueCopy<{ queueRevision: number; workingCopyRevision: number }>(input),
+        variables,
+        commandId: variables.commandId,
       })
+      pendingSaveRef.current = null
       setExpectedQueueRevision(result.queueRevision)
       setWorkRevision(result.workingCopyRevision)
       setBaseline(signature(persisted))
@@ -152,6 +175,51 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
       )
       onSaved()
     } catch (err) {
+      if (err instanceof ContentPublishError && err.code === 'transport_unknown') {
+        if (pendingSaveRef.current) pendingSaveRef.current.unknown = true
+      } else if (
+        !(err instanceof ContentPublishError) ||
+        !pendingSaveRef.current?.unknown ||
+        ![401, 403, 429].includes(err.status)
+      ) {
+        pendingSaveRef.current = null
+      }
+      if (
+        err instanceof ContentPublishError &&
+        [
+          'docs_queue_version_conflict',
+          'docs_queue_copy_revision_conflict',
+          'revision_conflict',
+          'command_result_unavailable',
+          'command_result_expired',
+        ].includes(err.code)
+      ) {
+        setRecoveryBlocked(true)
+        try {
+          const data = await browserGraphQLRequest<{
+            docsQueueMember: { queueRevision: number; workingCopy: TDocWorkingCopy } | null
+          }>(queueMemberEditor, { community, articleId })
+          const member = data.docsQueueMember
+          const copy = member?.workingCopy
+          const serverDraft = copy && {
+            title: copy.title,
+            subtitle: copy.threadFields?.subtitle ?? '',
+            slug: copy.slug ?? '',
+            body: parseEditorValue(copy.bodyJson),
+          }
+          if (copy?.id === workingCopyId && serverDraft && signature(serverDraft) === baseline) {
+            setExpectedQueueRevision(member.queueRevision)
+            setWorkRevision(copy.revision)
+            setRecoveryBlocked(false)
+            setError('The queue changed. Your local edits are preserved; review and save again.')
+          } else {
+            setError('The queue copy changed or was removed. Your local edits are preserved.')
+          }
+        } catch {
+          setError('The queue could not be reloaded. Your local edits are preserved.')
+        }
+        return
+      }
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
@@ -219,7 +287,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
           <button
             type='button'
             className={s.save}
-            disabled={!draft || !dirty || !draft.title.trim() || saving}
+            disabled={!draft || !dirty || !draft.title.trim() || saving || recoveryBlocked}
             onClick={() => void save()}
           >
             {t('dsb.doc.queue.editor_save')}

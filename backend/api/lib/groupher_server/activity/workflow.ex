@@ -158,6 +158,17 @@ defmodule GroupherServer.Activity.Workflow do
   end
 
   @doc """
+  Returns counts using the supplied Community Passport scope.
+
+  ## Examples
+
+      Activity.Workflow.get_community_log_stats(community, actor, selection, passport_scope: scope)
+  """
+  def get_community_log_stats(community, actor, selection, opts) do
+    CommunityLog.stats(community, actor, selection, opts)
+  end
+
+  @doc """
   Returns active CommunityLog actions for dashboard filter controls.
 
   ## Examples

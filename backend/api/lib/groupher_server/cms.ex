@@ -1767,6 +1767,11 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Communities,
     as: :update_operations
 
+  @doc "Updates the derived Community contribution digest."
+  defdelegate communities_update_contribution_digest(community, digest, operation_ref),
+    to: GroupherServer.CMS.Communities,
+    as: :update_contribution_digest
+
   @doc "Delegates GroupherServer.CMS.Communities.update_tag_group/4 through the CMS Context boundary."
   defdelegate communities_update_tag_group(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
@@ -2184,8 +2189,25 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.DocTree.Commands.Enqueue,
     as: :execute
 
+  @doc "Resolves the Article visible to an Activity reader."
+  defdelegate articles_activity_access(article, actor),
+    to: GroupherServer.CMS.Articles.ActivityAccess,
+    as: :authorize_read
+
+  @doc "Returns communities where the viewer has the Insights Passport grant."
+  defdelegate insights_granted_community_slugs(viewer),
+    to: GroupherServer.CMS.Insights,
+    as: :passport_granted_community_slugs
+
   @doc "Returns the error for a Docs operation based on state that is no longer current."
   defdelegate docs_state_conflict(), to: GroupherServer.CMS.ErrorCat
+  defdelegate article_public_head_conflict(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns a stale Docs queue version error."
+  defdelegate docs_queue_version_conflict(), to: GroupherServer.CMS.ErrorCat
+
+  @doc "Returns a stale Docs queue copy revision error."
+  defdelegate docs_queue_copy_revision_conflict(), to: GroupherServer.CMS.ErrorCat
 
   @doc "Returns the error for an invalid conflict resolution choice."
   defdelegate docs_invalid_merge_choice(), to: GroupherServer.CMS.ErrorCat
@@ -2474,9 +2496,9 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Interactions.Persist,
     as: :find_collect
 
-  @doc "Delegates CMS.Interactions.Persist.attach_collect_folder/2 through the CMS Context boundary."
-  defdelegate interactions_persist_attach_collect_folder(arg1, arg2),
-    to: GroupherServer.CMS.Interactions.Persist,
+  @doc "Attaches an account folder to an existing collect fact."
+  defdelegate interactions_attach_collect_folder(article, user, folder),
+    to: GroupherServer.CMS.Interactions,
     as: :attach_collect_folder
 
   @doc "Delegates CMS.Interactions.Persist.detach_collect_folder/2 through the CMS Context boundary."
@@ -2621,6 +2643,9 @@ defmodule GroupherServer.CMS do
   defdelegate error_cat_unexpected_external_response(arg1),
     to: ErrorCat,
     as: :unexpected_external_response
+
+  @doc "Returns an unavailable Docs publication read error."
+  defdelegate docs_publication_read_unavailable(), to: GroupherServer.CMS.ErrorCat
 
   @doc "Delegates CMS.ErrorCat.external_unavailable/0 through the CMS Context boundary."
   defdelegate error_cat_external_unavailable(),

@@ -40,7 +40,6 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:invalid_search_artiment, code: 4527)
   error(:not_searchable, code: 4528)
   error(:search_platform, code: 4529, retryable: true)
-  error(:command_id_conflict, code: 4530)
 
   error(:command_resolution_pending,
     code: 4531,
@@ -51,8 +50,6 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:command_id_required, code: 4532)
   error(:command_id_invalid, code: 4535)
   error(:unsupported_command_resource, code: 4533)
-  error(:command_result_unavailable, code: 4534, actions: [:reconcile])
-  error(:command_result_expired, code: 4536, actions: [:reconcile])
   error(:command_invalid_result, code: 4537)
   error(:invalid_command_intent, code: 4538)
 
@@ -79,7 +76,6 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:docs_managed_content, code: 4566)
   error(:article_snapshot_not_found, code: 4567)
   error(:docs_restore_parent_missing, code: 4568)
-  error(:docs_state_conflict, code: 4569, actions: [:reconcile])
   error(:docs_discard_confirmation_required, code: 4570, actions: [:reconcile])
   error(:docs_discard_confirmation_stale, code: 4571, actions: [:reconcile])
   error(:docs_restore_node_conflict, code: 4572, actions: [:reconcile])
@@ -91,6 +87,8 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:docs_approval_required, code: 4578, actions: [:reconcile])
   error(:target_revision_conflict, code: 4579, actions: [:reconcile])
   error(:import_intent_conflict, code: 4580, actions: [:reconcile])
+  error(:docs_publication_read_unavailable, code: 4581)
+  error(:article_public_head_conflict, code: 4584, actions: [:reconcile])
   error(:invalid_mention_notification_event, code: 4555)
   error(:mention_url_too_long, code: 4556)
 end

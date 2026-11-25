@@ -36,6 +36,12 @@ export default function useDraftAutoSave(
   const { slug: community } = useCommunity()
   const { registerSaveDocDraft } = useDocsEditorCommands()
   const failedAutoSaveDraftRef = useRef<TDraftEditorState['draft'] | null>(null)
+  const pendingSaveRef = useRef<{
+    startedDraft: TDraftEditorState['draft']
+    unknown: boolean
+    requestDraft: ReturnType<typeof composeEditorDraft>
+    variables: TSaveDocWorkingCopyInput
+  } | null>(null)
   const conflictPausedRef = useRef(false)
   const saveInFlightRef = useRef(false)
   const rateLimitUntilRef = useRef(0)
@@ -68,6 +74,7 @@ export default function useDraftAutoSave(
       rateLimitTimerRef.current = null
       rateLimitUntilRef.current = 0
       failedAutoSaveDraftRef.current = null
+      pendingSaveRef.current = null
       conflictPausedRef.current = false
     }
     latestDocIdRef.current = draft.docId
@@ -85,7 +92,15 @@ export default function useDraftAutoSave(
     )
       return
 
-    const startedDraft = draft
+    if (
+      pendingSaveRef.current &&
+      (pendingSaveRef.current.variables.articleId !== activePage.docId ||
+        pendingSaveRef.current.variables.workingCopyId !== workingCopyId ||
+        pendingSaveRef.current.variables.community !== community)
+    )
+      pendingSaveRef.current = null
+
+    const startedDraft = pendingSaveRef.current?.startedDraft ?? draft
     conflictPausedRef.current = false
     const requestDocId = startedDraft.docId || activePage.docId
     const nextTitle = startedDraft.title.trim()
@@ -95,31 +110,41 @@ export default function useDraftAutoSave(
     setSaving()
 
     try {
-      const nextSlug = await slugify(nextTitle)
-      const requestDraft = composeEditorDraft({
-        bodyValue: startedDraft.bodyValue,
-        docId: requestDocId,
-        slug: nextSlug,
-        subtitle: nextSubtitle,
-        title: nextTitle,
-      })
-      const input = composeDraftSaveInput(requestDraft, nextSlug)
-      const command = createCommandHandle({ docId: requestDocId })
-      const executeSave = () =>
-        executeCommand({
-          request: (variables: TSaveDocWorkingCopyInput) =>
-            saveDocWorkingCopy<TDocWorkingCopy>(variables),
+      if (!pendingSaveRef.current) {
+        const nextSlug = await slugify(nextTitle)
+        const requestDraft = composeEditorDraft({
+          bodyValue: startedDraft.bodyValue,
+          docId: requestDocId,
+          slug: nextSlug,
+          subtitle: nextSubtitle,
+          title: nextTitle,
+        })
+        const input = composeDraftSaveInput(requestDraft, nextSlug)
+        pendingSaveRef.current = {
+          startedDraft,
+          unknown: false,
+          requestDraft,
           variables: {
             value: input.value,
             community,
             articleId: input.id,
-            workingCopyId: workingCopyId!,
+            workingCopyId,
             slug: input.slug,
             subtitle: input.subtitle,
             title: input.title,
             revision: startedDraft.version,
+            commandId: createCommandHandle({ docId: requestDocId }).commandId,
           },
-          commandId: command.commandId,
+        }
+      }
+
+      const pending = pendingSaveRef.current
+      const executeSave = () =>
+        executeCommand({
+          request: (variables: TSaveDocWorkingCopyInput) =>
+            saveDocWorkingCopy<TDocWorkingCopy>(variables),
+          variables: pending.variables,
+          commandId: pending.variables.commandId,
         })
       let savedDraft: TDocWorkingCopy
       try {
@@ -127,8 +152,11 @@ export default function useDraftAutoSave(
       } catch (error) {
         if (!(error instanceof ContentPublishError) || error.code !== 'transport_unknown')
           throw error
+        pending.unknown = true
         savedDraft = await executeSave()
       }
+      pendingSaveRef.current = null
+      const requestDraft = pending.requestDraft
       failedAutoSaveDraftRef.current = null
       if (rateLimitTimerRef.current !== null) window.clearTimeout(rateLimitTimerRef.current)
       rateLimitTimerRef.current = null
@@ -160,15 +188,39 @@ export default function useDraftAutoSave(
         return
 
       const message = err instanceof Error ? err.message : String(err)
-      if (err instanceof ContentPublishError && err.code === 'revision_conflict') {
-        conflictPausedRef.current = true
-        const data = await browserGraphQLRequest<{ articleWorkingCopies: TDocWorkingCopy[] }>(
-          S.docsWorkingCopies,
-          {
-            community,
-            articleId: requestDocId,
-          },
+      if (err instanceof ContentPublishError && err.code === 'transport_unknown') {
+        if (pendingSaveRef.current) pendingSaveRef.current.unknown = true
+      } else if (
+        !(err instanceof ContentPublishError) ||
+        !pendingSaveRef.current?.unknown ||
+        ![401, 403, 429].includes(err.status)
+      ) {
+        pendingSaveRef.current = null
+      }
+      if (
+        err instanceof ContentPublishError &&
+        ['revision_conflict', 'command_result_unavailable', 'command_result_expired'].includes(
+          err.code,
         )
+      ) {
+        conflictPausedRef.current = true
+        let data: { articleWorkingCopies: TDocWorkingCopy[] }
+        try {
+          data = await browserGraphQLRequest<{ articleWorkingCopies: TDocWorkingCopy[] }>(
+            S.docsWorkingCopies,
+            {
+              community,
+              articleId: requestDocId,
+            },
+          )
+        } catch {
+          if (latestDocIdRef.current !== requestDocId || latestCopyIdRef.current !== workingCopyId)
+            return
+          const message = 'The server draft could not be reloaded. Your local edits were preserved.'
+          setSaveError(message)
+          toast(message, 'error')
+          return
+        }
         if (latestDocIdRef.current !== requestDocId || latestCopyIdRef.current !== workingCopyId)
           return
         const copy = data.articleWorkingCopies.find((item) => item.scopeType === 'default')

@@ -12,8 +12,8 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
   alias GroupherServer.{CMS, Repo, Accounts}
   alias Accounts.Model.User
   alias CMS.Articles.Commands.CreateAndPublishArticleConfirmation, as: Confirmation
-  alias CMS.Articles.Tags.Assignment
-  alias CMS.Articles.WorkingCopy.{History, Publisher, Store}
+  alias CMS.Articles.{Publication, Tags.Assignment}
+  alias CMS.Articles.WorkingCopy.{History, Store}
   alias CMS.Model.{ArticleSnapshot, ArticleWorkingCopy, Community}
 
   @pipeline operation: :article_create_and_publish_article,
@@ -135,7 +135,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
              Map.put(event_attrs, :type, :create)
            ),
          {:ok, published} <-
-           Publisher.publish_in_transaction(
+           Publication.publish_in_transaction(
              article,
              community,
              %{working_copy_id: work.id, revision: work.revision},

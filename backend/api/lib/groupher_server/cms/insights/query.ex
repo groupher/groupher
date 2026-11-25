@@ -10,14 +10,67 @@ defmodule GroupherServer.CMS.Insights.Query do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Artiment.Matcher
   alias CMS.Gate
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Gate.ErrorCat, as: GateErrorCat
-  alias CMS.Model.Article
+  alias CMS.Model.{Article, Community, CommunityAdmin}
+  alias CMS.Passport.Scope.Community, as: CommunityScope
+
+  @doc """
+  Extracts current community-scoped insight grants from Passport Store.
+
+  ## Examples
+
+      CMS.Insights.passport_granted_community_slugs(viewer)
+  """
+  @spec passport_granted_community_slugs(term()) :: {:ok, [String.t()]} | {:error, term()}
+  def passport_granted_community_slugs(%{id: user_id}) when is_integer(user_id) do
+    viewer = %User{id: user_id}
+
+    with {:ok, global_scope} <- CMS.Passport.load_global_scope(viewer) do
+      admins =
+        Repo.all(
+          from(admin in CommunityAdmin,
+            join: community in Community,
+            on: community.id == admin.community_id,
+            where: admin.user_id == ^user_id,
+            select: {community, admin}
+          )
+        )
+
+      Enum.reduce_while(admins, {:ok, []}, fn {community, admin}, {:ok, slugs} ->
+        with {:ok, permissions} <-
+               CMS.Passport.Catalog.validate_permissions(:community, admin.permissions),
+             scope <- %CommunityScope{
+               actor_id: user_id,
+               community_id: community.id,
+               global: global_scope.global,
+               community: %{is_lord: admin.is_lord, permissions: permissions}
+             },
+             {:ok, allowed} <-
+               CMS.Passport.allowed?(viewer, scope, CMS.GateAction.article_insights_read()) do
+          if allowed do
+            {:cont, {:ok, [community.slug | slugs]}}
+          else
+            {:cont, {:ok, slugs}}
+          end
+        else
+          {:error, _reason} = error -> {:halt, error}
+        end
+      end)
+      |> case do
+        {:ok, slugs} -> {:ok, Enum.uniq(slugs)}
+        {:error, _reason} = error -> error
+      end
+    end
+  end
+
+  def passport_granted_community_slugs(_viewer), do: {:ok, []}
 
   @doc "Returns the CMS Article type used by the Analysis projection."
   @spec article_type(map()) :: {:ok, atom()} | {:error, term()}

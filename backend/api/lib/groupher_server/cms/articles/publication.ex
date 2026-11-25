@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
+defmodule GroupherServer.CMS.Articles.Publication do
   @moduledoc """
   Applies the internal publication steps after the outer command has authorized the Article.
 

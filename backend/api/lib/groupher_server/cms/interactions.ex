@@ -18,6 +18,17 @@ defmodule GroupherServer.CMS.Interactions do
   alias CMS.Interactions.{CommandResult, ErrorCat, Reactions, Projection, Scope}
 
   @doc """
+  Attaches an account folder to an existing collect fact inside the caller's transaction.
+
+  ## Examples
+
+      CMS.Interactions.attach_collect_folder(article, user, folder)
+  """
+  defdelegate attach_collect_folder(article, user, folder),
+    to: Reactions.CollectChange,
+    as: :attach_folder
+
+  @doc """
   Returns typed Interaction state for one Artiment and optional viewer.
 
   ## Examples

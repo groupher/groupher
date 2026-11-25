@@ -6,6 +6,23 @@ defmodule GroupherServer.Test.CMS.DocTree.PublicationActivityTest do
   alias Activity.Model.DocLog
   alias CMS.Model.ArticlePublic
 
+  test "a publication read transaction failure is not reported as command recovery" do
+    {community, _doc, _attrs, user} = mock_article(:doc)
+
+    receipts_before = Repo.aggregate(CMS.Model.CommandReceipt, :count)
+
+    assert {:ok, {:error, %ErrorCat.Error{reason: :docs_publication_read_unavailable}}} =
+             Repo.transaction(fn ->
+               GroupherServerWeb.Resolvers.CMS.Docs.docs_release_detail(
+                 nil,
+                 %{community: community, release_id: 0},
+                 %{context: %{cur_user: user}}
+               )
+             end)
+
+    assert Repo.aggregate(CMS.Model.CommandReceipt, :count) == receipts_before
+  end
+
   test "each Docs publication records the selected Snapshot and stable Article identity" do
     {community, doc, _attrs, user} = mock_article(:doc)
     first = Repo.get!(ArticlePublic, doc.id)

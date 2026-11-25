@@ -7,12 +7,12 @@ defmodule GroupherServer.Activity.ArticleLog do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.{Activity, CMS}
 
   alias Activity.Artiment
   alias Activity.ErrorCat, as: ActivityErrorCat
 
-  alias CMS.Model.{Article, ArticleWorkingCopy, Community}
+  alias CMS.Model.Community
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order}
   alias GroupherServer.{Pagi}
@@ -144,69 +144,13 @@ defmodule GroupherServer.Activity.ArticleLog do
     end)
   end
 
-  defp authorize_read(%ArticleWorkingCopy{article_id: article_id}, actor) do
-    with %Article{} = article <- Repo.get(Article, article_id),
-         {:ok, [%{community: %Community{} = community}]} <-
-           CMS.articles_bindings_all(article),
-         {:ok, _admitted} <-
-           CMS.articles_working_copy_access_check(actor, :edit, article, community) do
-      {:ok, article}
-    else
-      nil -> {:error, GroupherServer.CMS.articles_error_cat_not_exist("Article")}
-      {:error, _reason} = error -> error
-      _ -> {:error, ActivityErrorCat.custom("invalid Activity Article scope")}
-    end
-  end
-
-  defp authorize_read(%Article{id: article_id, thread: :doc}, actor) do
-    authorize_scoped(article_id, actor, :read, GroupherServer.CMS.gate_context_scope_doc_public())
-  end
-
-  defp authorize_read(%Article{id: article_id, thread: thread}, actor) do
-    authorize_scoped(
-      article_id,
-      actor,
-      :read,
-      GroupherServer.CMS.gate_context_scope_article_public(thread)
-    )
-  end
-
   defp authorize_read(article, actor) do
-    with thread when is_atom(thread) <- Map.get(article, :thread),
-         article_id when is_binary(article_id) <-
-           Map.get(article, :article_id) || Map.get(article, :id),
-         {:ok, action, context} <- scope_context(article, thread) do
-      authorize_scoped(article_id, actor, action, context)
-    else
-      {:error, _reason} = error -> error
-      _ -> {:error, ActivityErrorCat.custom("invalid Activity Article scope")}
+    case CMS.articles_activity_access(article, actor) do
+      {:error, :invalid_activity_article_scope} ->
+        {:error, ActivityErrorCat.custom("invalid Activity Article scope")}
+
+      result ->
+        result
     end
-  end
-
-  defp authorize_scoped(article_id, actor, action, context) do
-    with %Ecto.Query{} = query <- GroupherServer.CMS.gate_scope(Article, actor, action, context),
-         %Article{} = canonical <-
-           query |> where([candidate], candidate.id == ^article_id) |> Repo.one() do
-      {:ok, canonical}
-    else
-      nil -> {:error, GroupherServer.CMS.articles_error_cat_not_exist("Article")}
-      {:error, _reason} = error -> error
-    end
-  end
-
-  defp scope_context(%{stage: :draft}, :doc) do
-    {:ok, :read_draft, GroupherServer.CMS.gate_context_scope_doc_draft(:owner)}
-  end
-
-  defp scope_context(%{stage: :public}, :doc) do
-    {:ok, :read, GroupherServer.CMS.gate_context_scope_doc_public()}
-  end
-
-  defp scope_context(%{stage: :public}, thread) do
-    {:ok, :read, GroupherServer.CMS.gate_context_scope_article_public(thread)}
-  end
-
-  defp scope_context(_article, _thread) do
-    {:error, ActivityErrorCat.custom("invalid Activity Article scope")}
   end
 end

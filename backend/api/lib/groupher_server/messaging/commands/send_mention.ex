@@ -83,6 +83,36 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
     end
   end
 
+  @doc """
+  Records explicit user-mention deliveries from a verified content source.
+
+  ## Examples
+
+      SendMention.record_recipients_in_transaction(content, source, recipient_ids, author)
+  """
+  def record_recipients_in_transaction(content, source, recipient_ids, %User{} = author)
+      when is_map(source) and is_list(recipient_ids) do
+    now = DateTime.utc_now(:second)
+
+    mentions =
+      Enum.map(recipient_ids, fn recipient_id ->
+        %{
+          from_user_id: author.id,
+          to_user_id: recipient_id,
+          article_id: source.article_id,
+          comment_id: source.comment_id,
+          thread: source.thread,
+          title: source.title,
+          read: false,
+          block_linker: [],
+          inserted_at: now,
+          updated_at: now
+        }
+      end)
+
+    record_in_transaction(content, mentions, author)
+  end
+
   defp ensure_public_content(%Comment{id: id}) do
     require_public_read(Comment, id, CMS.gate_context_scope_comment_all_public())
   end

@@ -206,6 +206,413 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
     end
   end
 
+  @tag capture_log: true
+  test "failure after one public selection rolls back a multi-Doc release" do
+    f = prepare_release(:publication)
+
+    node =
+      Repo.get_by!(CMS.Model.DocsTreeNode,
+        community_id: f.community.id,
+        node_id: f.node_id,
+        stage: :draft
+      )
+
+    second =
+      create_node(f.community, f.actor, %{
+        type: :page,
+        title: "Second document",
+        parent_node_id: node.parent_node_id
+      })
+
+    second_article = Repo.get!(CMS.Model.Article, second.article_id)
+    second_work = Repo.get!(CMS.Model.ArticleWorkingCopy, second.working_copy_id)
+
+    assert {:ok, saved} =
+             CMS.Articles.Commands.SaveWorkingCopy.execute(
+               second_article,
+               f.community,
+               second_work.id,
+               %{
+                 title: "Second document",
+                 body_bag: mock_body_bag(mock_rich_text("Second body"))
+               },
+               second_work.revision,
+               f.actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, queue} = Queue.read(f.community)
+
+    assert {:ok, _} =
+             Enqueue.execute(
+               f.community,
+               queue.queue_revision,
+               [%{article_id: second_article.id, default_revision: saved.revision}],
+               f.actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, queue} = Queue.read(f.community)
+    before = persistent_facts()
+    command_id = Ecto.UUID.generate()
+    trigger = "fail_second_public_" <> String.replace(Ecto.UUID.generate(), "-", "")
+
+    Repo.query!("""
+    CREATE FUNCTION cms.#{trigger}() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF NEW.article_id IN ('#{f.article.id}'::uuid, '#{second_article.id}'::uuid)
+         AND EXISTS (SELECT 1 FROM cms.article_publics
+           WHERE article_id IN ('#{f.article.id}'::uuid, '#{second_article.id}'::uuid)) THEN
+        RAISE EXCEPTION 'second_public_selection';
+      END IF;
+      RETURN NEW;
+    END $$
+    """)
+
+    ref = make_ref()
+    handler_id = {__MODULE__, ref}
+    event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
+    :ok = :telemetry.attach(handler_id, event, &__MODULE__.capture_second_public/4, {self(), ref})
+
+    try do
+      Repo.query!(
+        "CREATE TRIGGER #{trigger} BEFORE INSERT ON cms.article_publics FOR EACH ROW EXECUTE FUNCTION cms.#{trigger}()"
+      )
+
+      assert {:error, _} =
+               ReleaseQueue.execute(f.community, queue.queue_revision, f.actor, command_id)
+
+      assert_receive {^ref, :second_public_selection}
+      assert_unchanged(before)
+      refute Repo.get_by(CommandReceipt, command_id: command_id)
+    after
+      :telemetry.detach(handler_id)
+      Repo.query!("DROP TRIGGER IF EXISTS #{trigger} ON cms.article_publics")
+      Repo.query!("DROP FUNCTION IF EXISTS cms.#{trigger}()")
+    end
+  end
+
+  @doc false
+  def capture_second_public(
+        _event,
+        _measurements,
+        %{result: {:error, %Postgrex.Error{postgres: %{message: "second_public_selection"}}}},
+        {owner, ref}
+      ) do
+    send(owner, {ref, :second_public_selection})
+  end
+
+  def capture_second_public(_event, _measurements, _metadata, _config), do: :ok
+
+  test "an approved release reuses its pinned Snapshot on command replay" do
+    f = prepare_release(:publication)
+
+    assert {:ok, _} =
+             CMS.DocTree.Commands.ConfigureQueue.execute(
+               f.community,
+               f.queue.approval_policy_revision,
+               true,
+               true,
+               f.actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, queue} = Queue.read(f.community)
+
+    assert {:ok, approved} =
+             CMS.DocTree.Commands.ApproveQueue.execute(
+               f.community,
+               queue.queue_revision,
+               f.actor,
+               Ecto.UUID.generate()
+             )
+
+    pinned =
+      Repo.get_by!(CMS.Model.DocsPublishApprovalArticle,
+        approval_id: approved.approval_id,
+        article_id: f.article.id
+      )
+
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, result} =
+             ReleaseQueue.execute(f.community, queue.queue_revision, f.actor, command_id)
+
+    release = Repo.get!(DocsRelease, result.release_id)
+    assert release.approval_id == approved.approval_id
+    assert Repo.get!(CMS.Model.ArticlePublic, f.article.id).snapshot_id == pinned.snapshot_id
+
+    assert Repo.get_by!(CMS.Model.DocsReleaseArticle,
+             release_id: release.id,
+             article_id: f.article.id
+           ).snapshot_id ==
+             pinned.snapshot_id
+
+    committed = persistent_facts()
+
+    assert {:ok, ^result} =
+             ReleaseQueue.execute(f.community, queue.queue_revision, f.actor, command_id)
+
+    assert_unchanged(committed)
+  end
+
+  @tag timeout: 60_000
+  test "two administrators competing to release one queue produce one release" do
+    Sandbox.unboxed_run(Repo, fn ->
+      initial_jobs = Repo.all(from(row in Oban.Job, select: row.id))
+      initial_events = Repo.all(from(row in Event, select: row.id))
+      initial_receipts = Repo.all(from(row in CommandReceipt, select: row.id))
+      f = prepare_release(:publication)
+
+      try do
+        {:ok, second_actor} = db_insert(:user)
+
+        %CommunityAdmin{}
+        |> CommunityAdmin.changeset(%{
+          user_id: second_actor.id,
+          community_id: f.community.id,
+          permissions: %{"doc.queue.publish" => true}
+        })
+        |> Repo.insert!()
+
+        tasks =
+          Enum.map([f.actor, second_actor], fn actor ->
+            Task.async(fn ->
+              Sandbox.unboxed_run(Repo, fn ->
+                receive do
+                  :release ->
+                    ReleaseQueue.execute(
+                      f.community,
+                      f.queue.queue_revision,
+                      actor,
+                      Ecto.UUID.generate()
+                    )
+                after
+                  10_000 -> {:error, :test_timeout}
+                end
+              end)
+            end)
+          end)
+
+        Enum.each(tasks, &send(&1.pid, :release))
+        results = Enum.map(tasks, &Task.await(&1, 20_000))
+        assert Enum.count(results, &match?({:ok, _}, &1)) == 1
+
+        assert Enum.count(
+                 results,
+                 &match?({:error, {:queue_version_conflict, :queue_revision, _}}, &1)
+               ) == 1
+
+        {:ok, result} = Enum.find(results, &match?({:ok, _}, &1))
+
+        assert Repo.aggregate(
+                 from(release in DocsRelease, where: release.community_id == ^f.community.id),
+                 :count
+               ) == 1
+
+        assert {:ok, queue} = Queue.read(f.community)
+        assert queue.queue_revision == f.queue.queue_revision + 1
+        public = Repo.get!(CMS.Model.ArticlePublic, f.article.id)
+
+        member =
+          Repo.get_by!(CMS.Model.DocsReleaseArticle,
+            release_id: result.release_id,
+            article_id: f.article.id
+          )
+
+        assert member.snapshot_id == public.snapshot_id
+
+        assert Repo.exists?(
+                 from(node in CMS.Model.DocsTreeNode,
+                   where:
+                     node.community_id == ^f.community.id and node.stage == :public and
+                       node.doc_id == ^f.article.id
+                 )
+               )
+
+        assert Repo.exists?(
+                 from(event in Event,
+                   where:
+                     event.event == "article.published" and event.resource_id == ^f.article.id
+                 )
+               )
+      after
+        cleanup_committed(f, initial_jobs, initial_events, initial_receipts)
+      end
+    end)
+  end
+
+  @tag timeout: 60_000
+  test "independent report transactions crossing the threshold create one hold" do
+    Sandbox.unboxed_run(Repo, fn ->
+      initial_jobs = Repo.all(from(row in Oban.Job, select: row.id))
+      initial_events = Repo.all(from(row in Event, select: row.id))
+      initial_receipts = Repo.all(from(row in CommandReceipt, select: row.id))
+      f = prepare_release(:publication)
+
+      try do
+        assert {:ok, _} =
+                 ReleaseQueue.execute(
+                   f.community,
+                   f.queue.queue_revision,
+                   f.actor,
+                   Ecto.UUID.generate()
+                 )
+
+        public = Repo.get!(CMS.Model.ArticlePublic, f.article.id)
+
+        target = %{
+          owner: :cms,
+          target_type: :article,
+          target_id: f.article.id,
+          community_id: f.community.id,
+          observed_version: CMS.Review.SnapshotVersion.from_id(public.snapshot_id)
+        }
+
+        threshold = CMS.Review.Config.report_threshold()
+        assert threshold >= 2
+
+        reporters =
+          Enum.map(1..threshold, fn _ ->
+            {:ok, reporter} = db_insert(:user)
+            reporter
+          end)
+
+        {prior, competing} = Enum.split(reporters, threshold - 2)
+
+        submit = fn reporter ->
+          GroupherServer.AlertWall.Commands.SubmitReport.execute(
+            target,
+            :spam,
+            "independent report",
+            reporter,
+            Ecto.UUID.generate()
+          )
+        end
+
+        Enum.each(prior, fn reporter -> assert {:ok, _} = submit.(reporter) end)
+
+        tasks =
+          Enum.map(competing, fn reporter ->
+            Task.async(fn ->
+              Sandbox.unboxed_run(Repo, fn ->
+                receive do
+                  :submit -> submit.(reporter)
+                after
+                  10_000 -> {:error, :test_timeout}
+                end
+              end)
+            end)
+          end)
+
+        Enum.each(tasks, &send(&1.pid, :submit))
+        assert Enum.all?(Enum.map(tasks, &Task.await(&1, 20_000)), &match?({:ok, _}, &1))
+
+        assert Repo.aggregate(
+                 from(report in GroupherServer.AlertWall.Model.UserReport,
+                   where:
+                     report.target_id == ^f.article.id and
+                       report.observed_version == ^target.observed_version
+                 ),
+                 :count
+               ) == threshold
+
+        assert Repo.aggregate(
+                 from(block in CMS.Model.ArticleReviewBlock,
+                   where:
+                     block.article_id == ^f.article.id and block.type == :report_threshold_hold and
+                       is_nil(block.resolved_at)
+                 ),
+                 :count
+               ) == 1
+      after
+        cleanup_committed(f, initial_jobs, initial_events, initial_receipts)
+      end
+    end)
+  end
+
+  @tag timeout: 60_000
+  test "independent publishers competing for an Article public head commit once" do
+    Sandbox.unboxed_run(Repo, fn ->
+      initial_jobs = Repo.all(from(row in Oban.Job, select: row.id))
+      initial_events = Repo.all(from(row in Event, select: row.id))
+      initial_receipts = Repo.all(from(row in CommandReceipt, select: row.id))
+      {community, article, _attrs, actor} = mock_article(:post)
+      f = %{community: community, article: article}
+
+      try do
+        {:ok, other} = db_insert(:user)
+
+        other_author = Repo.insert!(%CMS.Model.Author{user_id: other.id})
+
+        Repo.insert!(
+          CMS.Model.ArticleCoAuthor.changeset(%CMS.Model.ArticleCoAuthor{}, %{
+            article_id: article.id,
+            author_id: other_author.id,
+            joined_at: DateTime.utc_now(:second),
+            permissions: %{"article.read_draft" => true, "article.publish" => true}
+          })
+        )
+
+        work =
+          Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id, scope_type: :default)
+
+        public = Repo.get!(CMS.Model.ArticlePublic, article.id)
+
+        assert {:ok, saved} =
+                 CMS.Articles.save_working_copy(
+                   article,
+                   community,
+                   work.id,
+                   %{
+                     title: "Competing publication",
+                     body_bag: mock_body_bag(mock_rich_text("new public body"))
+                   },
+                   work.revision,
+                   actor,
+                   Ecto.UUID.generate()
+                 )
+
+        source = %{working_copy_id: work.id, revision: saved.revision}
+
+        tasks =
+          Enum.map([actor, other], fn publisher ->
+            Task.async(fn ->
+              Sandbox.unboxed_run(Repo, fn ->
+                receive do
+                  :publish ->
+                    CMS.Articles.publish_article(
+                      article,
+                      community,
+                      source,
+                      public.snapshot_id,
+                      publisher,
+                      Ecto.UUID.generate()
+                    )
+                after
+                  10_000 -> {:error, :test_timeout}
+                end
+              end)
+            end)
+          end)
+
+        Enum.each(tasks, &send(&1.pid, :publish))
+        results = Enum.map(tasks, &Task.await(&1, 20_000))
+        assert Enum.count(results, &match?({:ok, _}, &1)) == 1
+        assert Enum.count(results, &match?({:error, :public_conflict}, &1)) == 1
+        {:ok, result} = Enum.find(results, &match?({:ok, _}, &1))
+        assert Repo.get!(CMS.Model.ArticlePublic, article.id).snapshot_id == result.snapshot.id
+
+        assert Repo.get!(CMS.Model.ArticlePublicBody, article.id).snapshot_id ==
+                 result.snapshot.id
+
+        refute result.snapshot.id == public.snapshot_id
+      after
+        cleanup_committed(f, initial_jobs, initial_events, initial_receipts)
+      end
+    end)
+  end
+
   defp run_fault_case(action, phase) when phase in [:wakeup, :notification_wakeup] do
     # Oban's failed SQL insert disconnects a Sandbox-owned connection. Use committed
     # fixtures here so that losing the Sandbox transaction cannot erase the baseline.
@@ -258,9 +665,14 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
     Repo.delete_all(from(row in CMS.Outbox.Retry, where: row.event_id in ^new_events))
     Repo.delete_all(from(row in Event, where: row.id in ^new_events))
     Repo.delete_all(from(row in CommandReceipt, where: row.id in ^new_receipts))
-    refute Repo.get(CMS.Model.Article, f.article.id)
+
+    if f.article.thread == :doc do
+      refute Repo.get(CMS.Model.Article, f.article.id)
+    end
+
     refute Repo.exists?(from(row in DocsRelease, where: row.community_id == ^f.community.id))
-    # The domain retains the destroyed Community/blocker facts and the actor.
+    # The domain retains the destroyed Community/blocker facts and actors; a Post
+    # also survives Community destruction under its independent Article lifecycle.
     # Only this test's wakeups, intent rows and Receipt fixtures are removed.
   end
 

@@ -7,17 +7,17 @@ defmodule GroupherServer.CMS.Review.Threshold do
           -> Review.Restrictions
   """
 
-  alias GroupherServer.{AlertWall, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
 
   @doc "Applies a report threshold hold atomically with the report that crosses it."
-  def apply_report_in_transaction(%{owner: :cms} = report)
-      when is_integer(report.item_id) and is_integer(report.observed_version) do
+  def apply_report_in_transaction(%{owner: :cms, active_reporter_count: count} = report)
+      when is_integer(report.item_id) and is_integer(report.observed_version) and
+             is_integer(count) and count >= 0 do
     scope_key =
       if is_nil(report.community_id), do: "platform", else: "community:#{report.community_id}"
 
     with true <- Repo.in_transaction?(),
          {:ok, context} <- load_context(report, scope_key),
-         count <- AlertWall.active_reporter_count(report.item_id, report.observed_version),
          {:ok, :pass} <- maybe_apply(context, report, count) do
       {:ok, :pass}
     else
@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Review.Threshold do
     end
   end
 
-  def apply_report_in_transaction(_report), do: {:ok, :pass}
+  def apply_report_in_transaction(_report), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp load_context(%{target_type: :comment} = report, _report_community_scope) do
     with {:ok, context} <- CMS.Review.load_for_update("comment:#{report.target_id}", "platform"),

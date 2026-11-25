@@ -13,6 +13,15 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     CommunityAdmin
   }
 
+  test "report threshold rejects incomplete versioned facts" do
+    assert {:error, _} =
+             CMS.apply_report_threshold_in_transaction(%{
+               owner: :cms,
+               item_id: 1,
+               observed_version: 1
+             })
+  end
+
   for target_type <- [:article, :comment, :doc, :doc_comment] do
     @target_type target_type
     test "#{target_type} restriction retries reuse the active hold across timestamps" do

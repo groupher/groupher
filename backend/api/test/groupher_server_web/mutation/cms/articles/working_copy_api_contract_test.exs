@@ -259,6 +259,19 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
     assert published["snapshotId"]
     assert published["title"] == "Saved WorkingCopy"
 
+    assert mutation_error?(
+             conn,
+             publish_query,
+             %{
+               articleId: created["articleId"],
+               community: community.slug,
+               source: %{snapshotId: published["snapshotId"]},
+               expectedPublicSnapshotId: nil,
+               commandId: Ecto.UUID.generate()
+             },
+             4584
+           )
+
     CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
       :last_publish_time,
       %User{id: actor.id},

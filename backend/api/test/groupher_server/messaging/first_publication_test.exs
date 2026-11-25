@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Messaging.FirstPublicationTest do
     Repo.update!(Ecto.Changeset.change(f.author, nickname: "Current author"))
 
     assert {:ok, %{outcome: :delivered, recipient_ids: recipients, notice_ids: notice_ids}} =
-             Messaging.notify(:notify_admin_new_article, f.event)
+             CMS.Articles.Effects.Publish.deliver_first_publish_notification(f.event)
 
     assert recipients == Enum.sort([f.author.id, f.recipient.id])
     assert length(notice_ids) == 2
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Messaging.FirstPublicationTest do
   end
 
   test "event and recipient delivery identity survives read and notice deletion", f do
-    assert {:ok, _} = Messaging.notify(:notify_admin_new_article, f.event)
+    assert {:ok, _} = CMS.Articles.Effects.Publish.deliver_first_publish_notification(f.event)
     recipient_notice = Repo.get_by!(Notice, user_id: f.recipient.id)
     author_notice = Repo.get_by!(Notice, user_id: f.author.id)
 
@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.Messaging.FirstPublicationTest do
     before = facts()
 
     assert {:ok, %{outcome: :already_delivered, notice_ids: []}} =
-             Messaging.notify(:notify_admin_new_article, f.event)
+             CMS.Articles.Effects.Publish.deliver_first_publish_notification(f.event)
 
     assert facts() == before
     assert Repo.get!(Notice, recipient_notice.id).read
@@ -70,11 +70,11 @@ defmodule GroupherServer.Test.Messaging.FirstPublicationTest do
 
   test "a different event creates distinct notices instead of joining the hourly activity group",
        f do
-    assert {:ok, _} = Messaging.notify(:notify_admin_new_article, f.event)
+    assert {:ok, _} = CMS.Articles.Effects.Publish.deliver_first_publish_notification(f.event)
     next = %{f.event | id: Ecto.UUID.generate(), operation_ref: Ecto.UUID.generate()}
 
     assert {:ok, %{outcome: :delivered, notice_ids: ids}} =
-             Messaging.notify(:notify_admin_new_article, next)
+             CMS.Articles.Effects.Publish.deliver_first_publish_notification(next)
 
     assert length(ids) == 2
     assert Repo.aggregate(Notice, :count) == 4
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.Messaging.FirstPublicationTest do
     before = facts()
 
     assert {:error, :first_publication_recipient_not_found} =
-             Messaging.notify(:notify_admin_new_article, broken)
+             CMS.Articles.Effects.Publish.deliver_first_publish_notification(broken)
 
     assert facts() == before
   end
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.Messaging.FirstPublicationTest do
     """)
 
     before = facts()
-    assert {:error, _} = Messaging.notify(:notify_admin_new_article, f.event)
+    assert {:error, _} = CMS.Articles.Effects.Publish.deliver_first_publish_notification(f.event)
     assert facts() == before
   end
 
@@ -129,7 +129,7 @@ defmodule GroupherServer.Test.Messaging.FirstPublicationTest do
 
     for invalid <- variants do
       assert {:error, :invalid_first_publication_notice} =
-               Messaging.notify(:notify_admin_new_article, invalid)
+               CMS.Articles.Effects.Publish.deliver_first_publish_notification(invalid)
     end
 
     assert facts() == before
@@ -140,7 +140,7 @@ defmodule GroupherServer.Test.Messaging.FirstPublicationTest do
     before = facts()
 
     assert {:ok, %{outcome: :delivered, recipient_ids: [], notice_ids: []}} =
-             Messaging.notify(:notify_admin_new_article, empty)
+             CMS.Articles.Effects.Publish.deliver_first_publish_notification(empty)
 
     assert facts() == before
   end

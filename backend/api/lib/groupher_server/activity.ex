@@ -65,6 +65,16 @@ defmodule GroupherServer.Activity do
   defdelegate get_community_log_stats(arg1, arg2, arg3), to: GroupherServer.Activity.Workflow
 
   @doc """
+  Returns counts using the supplied Community Passport scope.
+
+  ## Examples
+
+      Activity.get_community_log_stats(community, actor, selection, passport_scope: scope)
+  """
+  defdelegate get_community_log_stats(community, actor, selection, opts),
+    to: GroupherServer.Activity.Workflow
+
+  @doc """
   Delegates list_article_logs/2 to the Context workflow owner.
 
   ## Examples

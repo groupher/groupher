@@ -189,12 +189,14 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     assert report.target_id == article.id
     assert report.observed_version == version
 
+    {:ok, target_user} = db_insert(:user)
+
     assert {:ok, account_report} =
              AlertWall.submit_report(
                %{
                  owner: :accounts,
                  target_type: :user,
-                 target_id: "108965",
+                 target_id: Integer.to_string(target_user.id),
                  community_id: nil
                },
                :impersonation,
@@ -205,6 +207,22 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
 
     assert account_report.owner == :accounts
     assert account_report.target_type == :user
+
+    for target_id <- ["999999999", Integer.to_string(reporter.id), "invalid"] do
+      invalid_command_id = Ecto.UUID.generate()
+
+      assert {:error, _} =
+               AlertWall.submit_report(
+                 %{owner: :accounts, target_type: :user, target_id: target_id},
+                 :spam,
+                 "Invalid target",
+                 reporter,
+                 invalid_command_id
+               )
+
+      refute Repo.get_by(CommandReceipt, command_id: invalid_command_id)
+      refute Repo.get_by(UserReport, reporter_id: reporter.id, target_id: target_id)
+    end
   end
 
   test "a report for a previous public version does not create an item" do

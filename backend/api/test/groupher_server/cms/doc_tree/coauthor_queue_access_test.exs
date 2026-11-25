@@ -30,6 +30,40 @@ defmodule GroupherServer.Test.CMS.DocTree.CoauthorQueueAccessTest do
 
   @permissions %{"article.read_draft" => true, "article.update" => true}
 
+  test "queue save resolver distinguishes stale queue and copy revisions" do
+    fixture = doc_with_queue_member()
+
+    assert {:ok, %{working_copy: work, queue_revision: revision}} =
+             QueueAccess.read_member(fixture.community, fixture.article_id, fixture.actor)
+
+    args = %{
+      community: fixture.community,
+      article_id: fixture.article_id,
+      queue_revision: revision - 1,
+      working_copy_revision: work.revision,
+      command_id: Ecto.UUID.generate(),
+      cur_user: fixture.actor,
+      title: "Local change"
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :docs_queue_version_conflict}} =
+             GroupherServerWeb.Resolvers.CMS.Docs.save_docs_queue_copy(nil, args, nil)
+
+    assert {:error, %ErrorCat.Error{reason: :docs_queue_copy_revision_conflict}} =
+             GroupherServerWeb.Resolvers.CMS.Docs.save_docs_queue_copy(
+               nil,
+               %{
+                 args
+                 | queue_revision: revision,
+                   working_copy_revision: work.revision + 1,
+                   command_id: Ecto.UUID.generate()
+               },
+               nil
+             )
+
+    assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
+  end
+
   test "a site Queue editor can read and save another author's existing Queue member" do
     fixture = doc_with_queue_member()
     {:ok, editor} = db_insert(:user)

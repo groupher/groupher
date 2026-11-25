@@ -337,6 +337,9 @@ describe('handleContentPublishRequest', () => {
     ['Doc Draft version conflict', 4539, 'version_conflict'],
     ['Comment body version conflict', 4540, 'version_conflict'],
     ['Article WorkingCopy revision conflict', 4561, 'revision_conflict'],
+    ['Docs state conflict', 4569, 'revision_conflict'],
+    ['Docs queue version conflict', 4582, 'docs_queue_version_conflict'],
+    ['Docs queue copy conflict', 4583, 'docs_queue_copy_revision_conflict'],
   ])('maps %s to a stable 409 response', async (_name, code, errorCode) => {
     const response = await handleContentPublishRequest(request(), {
       backendToken: 'user-token',
@@ -351,6 +354,23 @@ describe('handleContentPublishRequest', () => {
       error: { code: errorCode },
       ok: false,
     })
+  })
+
+  it.each([
+    [4530, 'command_id_conflict'],
+    [4534, 'command_result_unavailable'],
+    [4536, 'command_result_expired'],
+  ])('preserves command recovery error %i', async (code, errorCode) => {
+    const response = await handleContentPublishRequest(request(), {
+      backendToken: 'user-token',
+      fetcher: vi.fn(async () =>
+        Response.json({ errors: [{ extensions: { code }, message: 'command failed' }] }),
+      ) as typeof fetch,
+      serviceAuthClient,
+    })
+
+    expect(response.status).toBe(422)
+    await expect(response.json()).resolves.toMatchObject({ error: { code: errorCode }, ok: false })
   })
 
   it('maps the Auth service-scope contract to a stable 403 response', async () => {

@@ -1,10 +1,12 @@
 # GraphQL 字段内的 Passport Scope
 
-> 状态：`communityActivity` 字段内的 Community scope 传递已在工作区实施；Article Action 接入仍按本文逐项设计和验收，未随该试点一并完成。
+> 状态：`communityActivity` 和 `communityActivityStats` 字段内的 Community scope 传递已实施；Article Action 接入仍按本文逐项设计和验收。
 
 Passport 持久化与 Action 合同见
 
 > [Passport Permission 与 Community Admin](../migrations/passport-permissions-refactor.md)。
+
+实测 stats 在同一测试数据与筛选条件下，自行加载 scope 执行 3 条 SQL，复用已加载 scope 执行 1 条 SQL；该数字不含上游 middleware 的加载，具体见 CommunityActivityTest。
 
 ## 目标
 

@@ -394,6 +394,20 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
 
     assert system_request.payload["text"]["title"] == "Title"
     assert system_request.payload["images"] == []
+
+    original_policy = community_request.policy_snapshot
+
+    configs.community
+    |> Ecto.Changeset.change(%{
+      prompt: "Updated after registration",
+      ban_words: ["new-term"],
+      version: configs.community.version + 1
+    })
+    |> Repo.update!()
+
+    assert Repo.get!(ArtimentReview, community_request.id).policy_snapshot == original_policy
+    assert original_policy["config_version"] == configs.community.version
+    refute original_policy["prompt"] == "Updated after registration"
   end
 
   test "a new community binding does not replace the system request" do
