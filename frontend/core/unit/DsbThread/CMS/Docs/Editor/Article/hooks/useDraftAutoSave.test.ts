@@ -163,6 +163,30 @@ describe('useDraftAutoSave', () => {
     )
   })
 
+  it('does not repeatedly retry a retained unknown save after a later edit', async () => {
+    vi.useFakeTimers()
+    const unknown = new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 })
+    mocks.saveDocWorkingCopy.mockRejectedValue(unknown)
+    const state = createDraftState()
+    const view = renderHook(
+      ({ current }) => useDraftAutoSave(current, { patchSideTreeChild: mocks.patchSideTreeChild }),
+      { initialProps: { current: state } },
+    )
+    await act(async () => view.result.current.save())
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledTimes(2)
+    const later = { ...state, draft: { ...state.draft, title: 'Later edit' } }
+    view.rerender({ current: later })
+    await act(async () => vi.runOnlyPendingTimersAsync())
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledTimes(4)
+    view.rerender({ current: { ...later, saveStatus: { ...later.saveStatus, saving: true } } })
+    view.rerender({ current: { ...later, saveStatus: { ...later.saveStatus, saving: false } } })
+    await act(async () => vi.runOnlyPendingTimersAsync())
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledTimes(4)
+    expect(mocks.saveDocWorkingCopy.mock.calls[3][0]).toEqual(
+      mocks.saveDocWorkingCopy.mock.calls[0][0],
+    )
+  })
+
   it('retries the same input after repeated lost responses and preserves later edits', async () => {
     vi.useFakeTimers()
     const unknown = new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 })
@@ -210,6 +234,25 @@ describe('useDraftAutoSave', () => {
     await act(async () => vi.advanceTimersByTimeAsync(1_000))
 
     expect(mocks.saveDocWorkingCopy).toHaveBeenCalledTimes(3)
+    expect(mocks.saveDocWorkingCopy.mock.calls[2][0]).toEqual(
+      mocks.saveDocWorkingCopy.mock.calls[0][0],
+    )
+  })
+
+  it('retains an unknown command when its recovery attempt returns 502', async () => {
+    mocks.saveDocWorkingCopy
+      .mockRejectedValueOnce(
+        new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
+      )
+      .mockRejectedValueOnce(
+        new ContentPublishError('unavailable', { code: 'publisher_unavailable', status: 502 }),
+      )
+      .mockResolvedValueOnce({ articleId: 'doc-a', slug: 'guide', revision: 4 })
+    const view = renderHook(() =>
+      useDraftAutoSave(createDraftState(), { patchSideTreeChild: mocks.patchSideTreeChild }),
+    )
+    await act(async () => view.result.current.save())
+    await act(async () => view.result.current.save())
     expect(mocks.saveDocWorkingCopy.mock.calls[2][0]).toEqual(
       mocks.saveDocWorkingCopy.mock.calls[0][0],
     )

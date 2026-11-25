@@ -49,9 +49,11 @@ export default function useDraftAutoSave(
   const latestSaveRef = useRef<() => Promise<void>>(async () => undefined)
   const latestDocIdRef = useRef(draftState.draft.docId)
   const latestCopyIdRef = useRef(draftState.workingCopyId)
+  const latestDraftRef = useRef(draftState.draft)
   useLayoutEffect(() => {
     latestCopyIdRef.current = draftState.workingCopyId
-  }, [draftState.workingCopyId])
+    latestDraftRef.current = draftState.draft
+  }, [draftState.workingCopyId, draftState.draft])
 
   const {
     workingCopyId,
@@ -191,9 +193,14 @@ export default function useDraftAutoSave(
       if (err instanceof ContentPublishError && err.code === 'transport_unknown') {
         if (pendingSaveRef.current) pendingSaveRef.current.unknown = true
       } else if (
-        !(err instanceof ContentPublishError) ||
         !pendingSaveRef.current?.unknown ||
-        ![401, 403, 429].includes(err.status)
+        (err instanceof ContentPublishError &&
+          [
+            'command_id_conflict',
+            'command_result_unavailable',
+            'command_result_expired',
+            'revision_conflict',
+          ].includes(err.code))
       ) {
         pendingSaveRef.current = null
       }
@@ -244,7 +251,7 @@ export default function useDraftAutoSave(
           void latestSaveRef.current()
         }, retrySeconds * 1000)
       }
-      failedAutoSaveDraftRef.current = startedDraft
+      failedAutoSaveDraftRef.current = latestDraftRef.current
       setSaveError(message)
       toast(message, 'error')
     } finally {

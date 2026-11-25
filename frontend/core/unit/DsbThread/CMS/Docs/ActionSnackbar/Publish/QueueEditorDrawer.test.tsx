@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ContentPublishError } from '~/lib/contentPublisher'
@@ -271,6 +271,80 @@ describe('QueueEditorDrawer', () => {
       title: 'Later edit',
       queueRevision: 6,
       revision: 3,
+    })
+  })
+
+  it('keeps an unknown command through a temporary publisher failure', async () => {
+    mocks.save
+      .mockRejectedValueOnce(
+        new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
+      )
+      .mockRejectedValueOnce(
+        new ContentPublishError('unavailable', { code: 'publisher_unavailable', status: 502 }),
+      )
+      .mockResolvedValueOnce({ queueRevision: 6, workingCopyRevision: 3 })
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'First edit' } })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByRole('alert')
+    fireEvent.change(title, { target: { value: '' } })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText('unavailable')
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(3))
+    expect(mocks.save.mock.calls[2][0]).toEqual(mocks.save.mock.calls[0][0])
+    expect(title).toHaveValue('')
+  })
+
+  it('ignores a recovery read from the previous article', async () => {
+    mocks.save.mockRejectedValueOnce(
+      new ContentPublishError('queue conflict', {
+        code: 'docs_queue_version_conflict',
+        status: 409,
+      }),
+    )
+    const view = open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'Old edit' } })
+    let finish: ((value: unknown) => void) | undefined
+    mocks.read.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+    )
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await waitFor(() => expect(mocks.read).toHaveBeenCalledTimes(2))
+    view.rerender(
+      <QueueEditorDrawer articleId='other' onClose={mocks.close} onSaved={mocks.saved} />,
+    )
+    await waitFor(() =>
+      expect(screen.getByLabelText('dsb.doc.queue.editor_title_field')).toHaveValue('Queued'),
+    )
+    await act(async () =>
+      finish?.({
+        docsQueueMember: {
+          queueRevision: 99,
+          workingCopy: {
+            id: 'queued',
+            scopeType: 'workspace',
+            title: 'Queued',
+            slug: 'queued',
+            bodyJson: '[]',
+            revision: 99,
+          },
+        },
+      }),
+    )
+    fireEvent.change(screen.getByLabelText('dsb.doc.queue.editor_title_field'), {
+      target: { value: 'New edit' },
+    })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(2))
+    expect(mocks.save.mock.calls[1][0]).toMatchObject({
+      articleId: 'other',
+      queueRevision: 5,
+      revision: 2,
     })
   })
 

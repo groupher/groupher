@@ -41,6 +41,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
     variables: TSaveDocQueueCopyInput
   } | null>(null)
   const recoveryCandidateRef = useRef<{ started: TDraft; persisted: TDraft } | null>(null)
+  const generationRef = useRef(0)
   const [draft, setDraft] = useState<TDraft | null>(null)
   const [baseline, setBaseline] = useState('')
   const [expectedQueueRevision, setExpectedQueueRevision] = useState<number | null>(null)
@@ -48,14 +49,18 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   const [workRevision, setWorkRevision] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [recoveryBlocked, setRecoveryBlocked] = useState(false)
+  const [pendingUnknown, setPendingUnknown] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmClose, setConfirmClose] = useState(false)
   const dirty = useMemo(() => !!draft && signature(draft) !== baseline, [draft, baseline])
 
   useEffect(() => {
     let cancelled = false
+    generationRef.current += 1
     pendingSaveRef.current = null
     recoveryCandidateRef.current = null
+    setPendingUnknown(false)
+    setSaving(false)
     setDraft(null)
     setBaseline('')
     setWorkingCopyId(null)
@@ -116,11 +121,13 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   }
 
   const reloadRecovery = async (): Promise<void> => {
+    const generation = generationRef.current
     setSaving(true)
     try {
       const data = await browserGraphQLRequest<{
         docsQueueMember: { queueRevision: number; workingCopy: TDocWorkingCopy } | null
       }>(queueMemberEditor, { community, articleId })
+      if (generation !== generationRef.current) return
       const member = data.docsQueueMember
       const copy = member?.workingCopy
       const serverDraft = copy && {
@@ -163,9 +170,10 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         setError('The queue copy changed or was removed. Your local edits are preserved.')
       }
     } catch {
-      setError('The queue could not be reloaded. Your local edits are preserved.')
+      if (generation === generationRef.current)
+        setError('The queue could not be reloaded. Your local edits are preserved.')
     } finally {
-      setSaving(false)
+      if (generation === generationRef.current) setSaving(false)
     }
   }
 
@@ -174,18 +182,19 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
       !draft ||
       !workRevision ||
       expectedQueueRevision === null ||
-      !dirty ||
-      !draft.title.trim() ||
+      (!pendingSaveRef.current && (!dirty || !draft.title.trim())) ||
       saving ||
       recoveryBlocked
     )
       return
+    const generation = generationRef.current
     setSaving(true)
     setError(null)
     try {
       if (!pendingSaveRef.current) {
         const started = draft
         const slug = started.slug.trim() || (await slugify(started.title.trim()))
+        if (generation !== generationRef.current) return
         const persisted = {
           ...started,
           title: started.title.trim(),
@@ -216,7 +225,9 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         variables,
         commandId: variables.commandId,
       })
+      if (generation !== generationRef.current) return
       pendingSaveRef.current = null
+      setPendingUnknown(false)
       setExpectedQueueRevision(result.queueRevision)
       setWorkRevision(result.workingCopyRevision)
       setBaseline(signature(persisted))
@@ -231,15 +242,25 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
       )
       onSaved()
     } catch (err) {
+      if (generation !== generationRef.current) return
       const pending = pendingSaveRef.current
       if (err instanceof ContentPublishError && err.code === 'transport_unknown') {
         if (pendingSaveRef.current) pendingSaveRef.current.unknown = true
+        setPendingUnknown(true)
       } else if (
-        !(err instanceof ContentPublishError) ||
         !pendingSaveRef.current?.unknown ||
-        ![401, 403, 429].includes(err.status)
+        (err instanceof ContentPublishError &&
+          [
+            'command_id_conflict',
+            'command_result_unavailable',
+            'command_result_expired',
+            'docs_queue_version_conflict',
+            'docs_queue_copy_revision_conflict',
+            'revision_conflict',
+          ].includes(err.code))
       ) {
         pendingSaveRef.current = null
+        setPendingUnknown(false)
       }
       if (
         err instanceof ContentPublishError &&
@@ -258,7 +279,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
       }
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setSaving(false)
+      if (generation === generationRef.current) setSaving(false)
     }
   }
 
@@ -333,7 +354,12 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
           <button
             type='button'
             className={s.save}
-            disabled={!draft || !dirty || !draft.title.trim() || saving || recoveryBlocked}
+            disabled={
+              !draft ||
+              saving ||
+              recoveryBlocked ||
+              (!pendingUnknown && (!dirty || !draft.title.trim()))
+            }
             onClick={() => void save()}
           >
             {t('dsb.doc.queue.editor_save')}

@@ -375,33 +375,26 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
         })
         |> Repo.insert!()
 
-        tasks =
+        actions =
           Enum.map([f.actor, second_actor], fn actor ->
-            Task.async(fn ->
-              Sandbox.unboxed_run(Repo, fn ->
-                receive do
-                  :release ->
-                    ReleaseQueue.execute(
-                      f.community,
-                      f.queue.queue_revision,
-                      actor,
-                      Ecto.UUID.generate()
-                    )
-                after
-                  10_000 -> {:error, :test_timeout}
-                end
-              end)
-            end)
+            fn ->
+              ReleaseQueue.execute(
+                f.community,
+                f.queue.queue_revision,
+                actor,
+                Ecto.UUID.generate()
+              )
+            end
           end)
 
-        Enum.each(tasks, &send(&1.pid, :release))
-        results = Enum.map(tasks, &Task.await(&1, 20_000))
+        results = run_contended(actions, "docs_publish_queues")
         assert Enum.count(results, &match?({:ok, _}, &1)) == 1
 
         assert Enum.count(
                  results,
                  &match?({:error, {:queue_version_conflict, :queue_revision, _}}, &1)
-               ) == 1
+               ) == 1,
+               inspect(results)
 
         {:ok, result} = Enum.find(results, &match?({:ok, _}, &1))
 
@@ -492,21 +485,31 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
 
         Enum.each(prior, fn reporter -> assert {:ok, _} = submit.(reporter) end)
 
-        tasks =
-          Enum.map(competing, fn reporter ->
-            Task.async(fn ->
-              Sandbox.unboxed_run(Repo, fn ->
-                receive do
-                  :submit -> submit.(reporter)
-                after
-                  10_000 -> {:error, :test_timeout}
-                end
-              end)
-            end)
-          end)
+        refute Repo.exists?(
+                 from(block in CMS.Model.ArticleReviewBlock,
+                   where:
+                     block.article_id == ^f.article.id and block.type == :report_threshold_hold and
+                       is_nil(block.resolved_at)
+                 )
+               )
 
-        Enum.each(tasks, &send(&1.pid, :submit))
-        assert Enum.all?(Enum.map(tasks, &Task.await(&1, 20_000)), &match?({:ok, _}, &1))
+        assert Enum.all?(
+                 run_contended(
+                   Enum.map(competing, fn reporter -> fn -> submit.(reporter) end end),
+                   "articles",
+                   fn ->
+                     refute Repo.exists?(
+                              from(block in CMS.Model.ArticleReviewBlock,
+                                where:
+                                  block.article_id == ^f.article.id and
+                                    block.type == :report_threshold_hold and
+                                    is_nil(block.resolved_at)
+                              )
+                            )
+                   end
+                 ),
+                 &match?({:ok, _}, &1)
+               )
 
         assert Repo.aggregate(
                  from(report in GroupherServer.AlertWall.Model.UserReport,
@@ -575,32 +578,32 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
 
         source = %{working_copy_id: work.id, revision: saved.revision}
 
-        tasks =
-          Enum.map([actor, other], fn publisher ->
-            Task.async(fn ->
-              Sandbox.unboxed_run(Repo, fn ->
-                receive do
-                  :publish ->
-                    CMS.Articles.publish_article(
-                      article,
-                      community,
-                      source,
-                      public.snapshot_id,
-                      publisher,
-                      Ecto.UUID.generate()
-                    )
-                after
-                  10_000 -> {:error, :test_timeout}
-                end
-              end)
-            end)
+        command_ids = [Ecto.UUID.generate(), Ecto.UUID.generate()]
+
+        actions =
+          Enum.zip([actor, other], command_ids)
+          |> Enum.map(fn {publisher, command_id} ->
+            fn ->
+              CMS.Articles.publish_article(
+                article,
+                community,
+                source,
+                public.snapshot_id,
+                publisher,
+                command_id
+              )
+            end
           end)
 
-        Enum.each(tasks, &send(&1.pid, :publish))
-        results = Enum.map(tasks, &Task.await(&1, 20_000))
+        results = run_contended(actions, "articles")
         assert Enum.count(results, &match?({:ok, _}, &1)) == 1
-        assert Enum.count(results, &match?({:error, :public_conflict}, &1)) == 1
+        assert Enum.count(results, &match?({:error, :public_conflict}, &1)) == 1, inspect(results)
         {:ok, result} = Enum.find(results, &match?({:ok, _}, &1))
+        winner_index = Enum.find_index(results, &match?({:ok, _}, &1))
+        winner = Enum.at([actor, other], winner_index)
+        assert Repo.get!(CMS.Model.ArticlePublic, article.id).published_by_id == winner.id
+        assert Repo.get_by(CommandReceipt, command_id: Enum.at(command_ids, winner_index))
+        refute Repo.get_by(CommandReceipt, command_id: Enum.at(command_ids, 1 - winner_index))
         assert Repo.get!(CMS.Model.ArticlePublic, article.id).snapshot_id == result.snapshot.id
 
         assert Repo.get!(CMS.Model.ArticlePublicBody, article.id).snapshot_id ==
@@ -611,6 +614,107 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
         cleanup_committed(f, initial_jobs, initial_events, initial_receipts)
       end
     end)
+  end
+
+  defp run_contended([first_action, second_action], table, before_second \\ nil) do
+    owner = self()
+    ref = make_ref()
+
+    tasks =
+      Enum.map([first_action, second_action], fn action ->
+        Task.async(fn ->
+          Sandbox.unboxed_run(Repo, fn ->
+            Repo.checkout(fn ->
+              [[database_pid]] = Repo.query!("SELECT pg_backend_pid()").rows
+              send(owner, {ref, :ready, self(), database_pid})
+
+              receive do
+                {^ref, :start} -> action.()
+              after
+                15_000 -> {:error, :test_timeout}
+              end
+            end)
+          end)
+        end)
+      end)
+
+    [first, second] = tasks
+    handler = "contention-#{Ecto.UUID.generate()}"
+    second_handler = "contention-second-#{Ecto.UUID.generate()}"
+    event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
+
+    try do
+      assert_receive {^ref, :ready, first_pid, first_db}, 10_000
+      assert_receive {^ref, :ready, second_pid, second_db}, 10_000
+      databases = %{first_pid => first_db, second_pid => second_db}
+
+      :ok =
+        :telemetry.attach(
+          handler,
+          event,
+          &__MODULE__.pause_contended_lock/4,
+          {owner, first.pid, ref, table}
+        )
+
+      send(first.pid, {ref, :start})
+      assert_receive {^ref, :locked}, 10_000
+      send(second.pid, {ref, :start})
+      assert await_blocked(databases[first.pid], databases[second.pid], 250)
+      :telemetry.detach(handler)
+
+      if before_second do
+        :ok =
+          :telemetry.attach(
+            second_handler,
+            event,
+            &__MODULE__.pause_contended_lock/4,
+            {owner, second.pid, ref, table}
+          )
+      end
+
+      send(first.pid, {ref, :continue})
+      first_result = Task.await(first, 20_000)
+
+      if before_second do
+        assert_receive {^ref, :locked}, 10_000
+        before_second.()
+        :telemetry.detach(second_handler)
+        send(second.pid, {ref, :continue})
+      end
+
+      [first_result, Task.await(second, 20_000)]
+    after
+      :telemetry.detach(handler)
+      :telemetry.detach(second_handler)
+      Enum.each(tasks, &Task.shutdown(&1, :brutal_kill))
+    end
+  end
+
+  @doc false
+  def pause_contended_lock(_event, _measurements, %{query: query}, {owner, first, ref, table}) do
+    if self() == first and String.contains?(query, table) and
+         String.contains?(query, "FOR UPDATE") do
+      send(owner, {ref, :locked})
+
+      receive do
+        {^ref, :continue} -> :ok
+      after
+        15_000 -> :ok
+      end
+    end
+  end
+
+  defp await_blocked(_first, _second, 0), do: false
+
+  defp await_blocked(first, second, attempts) do
+    case Repo.query!("SELECT $1 = ANY(pg_blocking_pids($2))", [first, second]).rows do
+      [[true]] ->
+        true
+
+      _ ->
+        Process.sleep(20)
+        await_blocked(first, second, attempts - 1)
+    end
   end
 
   defp run_fault_case(action, phase) when phase in [:wakeup, :notification_wakeup] do
