@@ -297,6 +297,29 @@ describe('QueueEditorDrawer', () => {
     expect(title).toHaveValue('')
   })
 
+  it('replaces an unknown input after a deterministic payload rejection', async () => {
+    mocks.save
+      .mockRejectedValueOnce(
+        new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
+      )
+      .mockRejectedValueOnce(
+        new ContentPublishError('too large', { code: 'payload_too_large', status: 413 }),
+      )
+      .mockResolvedValueOnce({ queueRevision: 6, workingCopyRevision: 3 })
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'First edit' } })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByRole('alert')
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText('too large')
+    fireEvent.change(title, { target: { value: 'Corrected' } })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(3))
+    expect(mocks.save.mock.calls[2][0]).toMatchObject({ title: 'Corrected' })
+    expect(mocks.save.mock.calls[2][0].commandId).not.toBe(mocks.save.mock.calls[0][0].commandId)
+  })
+
   it('ignores a recovery read from the previous article', async () => {
     mocks.save.mockRejectedValueOnce(
       new ContentPublishError('queue conflict', {

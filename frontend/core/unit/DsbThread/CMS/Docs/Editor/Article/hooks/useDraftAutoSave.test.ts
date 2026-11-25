@@ -258,6 +258,58 @@ describe('useDraftAutoSave', () => {
     )
   })
 
+  it('clears an unknown command after a deterministic payload rejection', async () => {
+    mocks.saveDocWorkingCopy
+      .mockRejectedValueOnce(
+        new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
+      )
+      .mockRejectedValueOnce(
+        new ContentPublishError('too large', { code: 'payload_too_large', status: 413 }),
+      )
+      .mockResolvedValueOnce({ articleId: 'doc-a', slug: 'guide', revision: 4 })
+    const state = createDraftState()
+    const view = renderHook(
+      ({ current }) => useDraftAutoSave(current, { patchSideTreeChild: mocks.patchSideTreeChild }),
+      { initialProps: { current: state } },
+    )
+    await act(async () => view.result.current.save())
+    view.rerender({ current: { ...state, draft: { ...state.draft, title: 'Corrected' } } })
+    await act(async () => view.result.current.save())
+    expect(mocks.saveDocWorkingCopy.mock.calls[2][0]).toMatchObject({ title: 'Corrected' })
+    expect(mocks.saveDocWorkingCopy.mock.calls[2][0].commandId).not.toBe(
+      mocks.saveDocWorkingCopy.mock.calls[0][0].commandId,
+    )
+  })
+
+  it('autosaves newer edits after an ordinary in-flight failure', async () => {
+    vi.useFakeTimers()
+    let fail!: (reason: Error) => void
+    mocks.saveDocWorkingCopy
+      .mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          fail = reject
+        }),
+      )
+      .mockResolvedValueOnce({ articleId: 'doc-a', slug: 'guide', revision: 4 })
+    const state = createDraftState()
+    const view = renderHook(
+      ({ current }) => useDraftAutoSave(current, { patchSideTreeChild: mocks.patchSideTreeChild }),
+      { initialProps: { current: state } },
+    )
+    let saving!: Promise<void>
+    await act(async () => {
+      saving = view.result.current.save()
+      await Promise.resolve()
+    })
+    view.rerender({ current: { ...state, draft: { ...state.draft, title: 'Later edit' } } })
+    await act(async () => {
+      fail(new ContentPublishError('unavailable', { code: 'publisher_unavailable', status: 502 }))
+      await saving
+    })
+    await act(async () => vi.runOnlyPendingTimersAsync())
+    expect(mocks.saveDocWorkingCopy.mock.calls[1][0]).toMatchObject({ title: 'Later edit' })
+  })
+
   it('automatically retries the latest draft after Retry-After expires', async () => {
     vi.useFakeTimers()
     mocks.saveDocWorkingCopy

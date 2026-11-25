@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { ARTICLE_STAGE } from '~/const/article'
 import { browserGraphQLRequest } from '~/graphql/client'
 import { saveDocWorkingCopy, type TSaveDocWorkingCopyInput } from '~/lib/artimentPublisher'
-import { ContentPublishError } from '~/lib/contentPublisher'
+import { ContentPublishError, isRejectedContentPayload } from '~/lib/contentPublisher'
 import { slugify } from '~/lib/slug'
 import { createCommandHandle, executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
@@ -194,6 +194,7 @@ export default function useDraftAutoSave(
         if (pendingSaveRef.current) pendingSaveRef.current.unknown = true
       } else if (
         !pendingSaveRef.current?.unknown ||
+        isRejectedContentPayload(err) ||
         (err instanceof ContentPublishError &&
           [
             'command_id_conflict',
@@ -251,7 +252,9 @@ export default function useDraftAutoSave(
           void latestSaveRef.current()
         }, retrySeconds * 1000)
       }
-      failedAutoSaveDraftRef.current = latestDraftRef.current
+      failedAutoSaveDraftRef.current = pendingSaveRef.current?.unknown
+        ? latestDraftRef.current
+        : startedDraft
       setSaveError(message)
       toast(message, 'error')
     } finally {

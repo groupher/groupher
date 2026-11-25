@@ -27,6 +27,13 @@ export class ContentPublishError extends Error {
   }
 }
 
+/** Identifies payload rejections made before the Publisher forwards a command. */
+export const isRejectedContentPayload = (error: unknown): boolean =>
+  error instanceof ContentPublishError &&
+  ['payload_too_large', 'unsupported_media_type', 'invalid_json', 'invalid_request'].includes(
+    error.code,
+  )
+
 type TPublisherResponse<TResult> = {
   error?: { code?: string; details?: unknown; message?: string }
   ok?: boolean

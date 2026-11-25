@@ -5,7 +5,7 @@ import TYPE from '~/const/type'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { saveDocQueueCopy, type TSaveDocQueueCopyInput } from '~/lib/artimentPublisher'
-import { ContentPublishError } from '~/lib/contentPublisher'
+import { ContentPublishError, isRejectedContentPayload } from '~/lib/contentPublisher'
 import { slugify } from '~/lib/slug'
 import { createCommandHandle, executeCommand } from '~/query/mutation/optimistic/execute'
 import useAccount from '~/stores/account/hooks'
@@ -249,6 +249,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         setPendingUnknown(true)
       } else if (
         !pendingSaveRef.current?.unknown ||
+        isRejectedContentPayload(err) ||
         (err instanceof ContentPublishError &&
           [
             'command_id_conflict',
