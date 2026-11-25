@@ -6,8 +6,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
 
   Recipient IDs frozen by capture are checked against current edges again;
   source content is never reparsed.
-  Mailbox rows and the consumed-recipient marker commit together, so newer
-  versions can carry undelivered intentions without repeating completed ones.
+  Mailbox rows and the consumed-recipient marker commit together. The historical
+  `consumed_user_ids` field records the captured candidates handled by this event,
+  including candidates filtered out at delivery; it is not a delivered-user list.
+  Stale events do not set this marker, and restricted sources defer until visible
+  or expired, allowing a newer revision to carry still-pending intentions.
   """
   import Ecto.Query
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}

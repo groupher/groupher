@@ -177,6 +177,42 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     assert Repo.aggregate(from(m in Mention, where: m.article_id == ^article.id), :count) == 1
   end
 
+  test "the consumed marker records handled candidates rather than delivered users", ctx do
+    {:ok, %{comment: comment}} =
+      CMS.Comments.Commands.Create.create(
+        :doc,
+        %{id: ctx.doc.id, community: ctx.community},
+        bag(ctx),
+        ctx.author,
+        Ecto.UUID.generate()
+      )
+
+    endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
+    event = Repo.get_by!(Event, event: "mention.notify", resource_id: endpoint.id)
+    {:ok, filtered} = db_insert(:user)
+    candidates = [ctx.recipient.id, ctx.author.id, filtered.id]
+
+    event
+    |> Event.changeset(%{data: Map.put(event.data, "notify_user_ids", candidates)})
+    |> Repo.update!()
+
+    assert {:ok, :pass} = deliver_event(event.id)
+    assert Repo.get!(Event, event.id).data["consumed_user_ids"] == candidates
+
+    assert Repo.exists?(
+             from(m in Mention,
+               where: m.to_user_id == ^ctx.recipient.id and m.comment_id == ^comment.id
+             )
+           )
+
+    refute Repo.exists?(
+             from(m in Mention,
+               where:
+                 m.to_user_id in ^[ctx.author.id, filtered.id] and m.comment_id == ^comment.id
+             )
+           )
+  end
+
   test "soft deleting a Doc Comment keeps its incoming and outgoing edges", ctx do
     {:ok, comment} =
       CMS.Comments.create_comment(

@@ -15,6 +15,9 @@ vi.mock('~/ui/Drawer', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 vi.mock('../../Editor/Article/Body', () => ({ default: () => <div>Rich editor</div> }))
+vi.mock('../../Editor/Article/Body/Preview', () => ({
+  default: ({ value }: { value: unknown }) => <div>{JSON.stringify(value)}</div>,
+}))
 vi.mock('../../Editor/SideTree/ConfirmDeleteModal', () => ({
   default: ({
     message,
@@ -78,6 +81,15 @@ describe('QueueEditorDrawer', () => {
       ),
     )
     await waitFor(() => expect(mocks.saved).toHaveBeenCalledOnce())
+  })
+
+  it('does not submit or reconcile a command when the initial queue read fails', async () => {
+    mocks.read.mockRejectedValueOnce(new Error('Queue read failed'))
+    open()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Queue read failed')
+    expect(mocks.save).not.toHaveBeenCalled()
+    expect(mocks.saved).not.toHaveBeenCalled()
+    expect(screen.getByText('dsb.doc.queue.editor_save')).toBeDisabled()
   })
 
   it('asks before discarding unsaved content and retains it on save failure', async () => {
@@ -210,6 +222,158 @@ describe('QueueEditorDrawer', () => {
     expect(title).toHaveValue('Local edit')
     expect(screen.getByText('dsb.doc.queue.editor_save')).toBeDisabled()
     expect(mocks.save).toHaveBeenCalledOnce()
+  })
+
+  it('compares the remote copy and saves local edits only after confirmation with fresh revisions', async () => {
+    mocks.save.mockRejectedValueOnce(
+      new ContentPublishError('conflict', {
+        code: 'docs_queue_copy_revision_conflict',
+        status: 409,
+      }),
+    )
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'Local edit' } })
+    mocks.read.mockResolvedValueOnce({
+      docsQueueMember: {
+        queueRevision: 9,
+        workingCopy: {
+          id: 'queued',
+          scopeType: 'workspace',
+          title: 'Remote edit',
+          slug: 'remote',
+          bodyJson: '[{"type":"p","children":[{"text":"Remote text"}]}]',
+          revision: 7,
+        },
+      },
+    })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText('dsb.doc.queue.conflict_remote')
+    expect(screen.getByText(/Remote text/)).toBeInTheDocument()
+    expect(title).toHaveValue('Local edit')
+    fireEvent.click(screen.getByText('dsb.doc.queue.conflict_keep_local'))
+    expect(screen.getByText('dsb.doc.queue.conflict_confirm_local')).toBeInTheDocument()
+    expect(mocks.save).toHaveBeenCalledOnce()
+    fireEvent.click(screen.getByText('Discard'))
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(2))
+    expect(mocks.save.mock.calls[1][0]).toMatchObject({
+      title: 'Local edit',
+      queueRevision: 9,
+      revision: 7,
+    })
+    expect(mocks.save.mock.calls[1][0].commandId).not.toBe(mocks.save.mock.calls[0][0].commandId)
+  })
+
+  it('requires confirmation before replacing local edits with the remote copy', async () => {
+    mocks.save.mockRejectedValueOnce(
+      new ContentPublishError('conflict', {
+        code: 'docs_queue_copy_revision_conflict',
+        status: 409,
+      }),
+    )
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'Local edit' } })
+    mocks.read.mockResolvedValueOnce({
+      docsQueueMember: {
+        queueRevision: 9,
+        workingCopy: {
+          id: 'queued',
+          scopeType: 'workspace',
+          title: 'Remote edit',
+          slug: 'remote',
+          bodyJson: '[]',
+          revision: 7,
+        },
+      },
+    })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText('dsb.doc.queue.conflict_remote')
+    fireEvent.click(screen.getByText('dsb.doc.queue.conflict_use_remote'))
+    expect(title).toHaveValue('Local edit')
+    fireEvent.click(screen.getByText('Discard'))
+    expect(title).toHaveValue('Remote edit')
+    expect(screen.getByText('dsb.doc.queue.editor_save')).toBeDisabled()
+  })
+
+  it('blocks again if the remote version changes after confirming local edits', async () => {
+    const conflict = new ContentPublishError('conflict', {
+      code: 'docs_queue_copy_revision_conflict',
+      status: 409,
+    })
+    mocks.save.mockRejectedValueOnce(conflict).mockRejectedValueOnce(conflict)
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'Local edit' } })
+    const remote = (revision: number, name: string) => ({
+      docsQueueMember: {
+        queueRevision: revision,
+        workingCopy: {
+          id: 'queued',
+          scopeType: 'workspace',
+          title: name,
+          slug: 'remote',
+          bodyJson: '[]',
+          revision,
+        },
+      },
+    })
+    mocks.read.mockResolvedValueOnce(remote(7, 'Remote edit'))
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText('dsb.doc.queue.conflict_remote')
+    fireEvent.click(screen.getByText('dsb.doc.queue.conflict_keep_local'))
+    fireEvent.click(screen.getByText('Discard'))
+    mocks.read.mockResolvedValueOnce(remote(8, 'Another edit'))
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText(/Another edit/)
+    expect(title).toHaveValue('Local edit')
+    expect(screen.getByText('dsb.doc.queue.editor_save')).toBeDisabled()
+  })
+
+  it('does not offer overwrite when the queued copy was removed', async () => {
+    mocks.save.mockRejectedValueOnce(
+      new ContentPublishError('conflict', { code: 'docs_queue_version_conflict', status: 409 }),
+    )
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'Local edit' } })
+    mocks.read.mockResolvedValueOnce({ docsQueueMember: null })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText(
+      'The queue copy changed or was removed. Your local edits are preserved.',
+    )
+    expect(screen.queryByText('dsb.doc.queue.conflict_keep_local')).not.toBeInTheDocument()
+    expect(title).toHaveValue('Local edit')
+  })
+
+  it('withdraws conflict choices when a subsequent reload is denied', async () => {
+    mocks.save.mockRejectedValueOnce(
+      new ContentPublishError('conflict', { code: 'docs_queue_version_conflict', status: 409 }),
+    )
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'Local edit' } })
+    mocks.read.mockResolvedValueOnce({
+      docsQueueMember: {
+        queueRevision: 9,
+        workingCopy: {
+          id: 'queued',
+          scopeType: 'workspace',
+          title: 'Remote edit',
+          slug: 'remote',
+          bodyJson: '[]',
+          revision: 7,
+        },
+      },
+    })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText('dsb.doc.queue.conflict_keep_local')
+    mocks.read.mockRejectedValueOnce(new Error('Permission denied'))
+    fireEvent.click(screen.getByText('dsb.activity.retry'))
+    await screen.findByText('The queue could not be reloaded. Your local edits are preserved.')
+    expect(screen.queryByText('dsb.doc.queue.conflict_keep_local')).not.toBeInTheDocument()
+    expect(title).toHaveValue('Local edit')
   })
 
   it('retries a failed recovery read before permitting another write', async () => {

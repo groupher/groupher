@@ -14,6 +14,7 @@ import BaseDrawer from '~/ui/Drawer'
 import { queueMemberEditor } from '~/unit/DocThread/schema'
 
 import Body from '../../Editor/Article/Body'
+import Preview from '../../Editor/Article/Body/Preview'
 import { parseEditorValue } from '../../Editor/Article/helper'
 import type { TDocWorkingCopy } from '../../Editor/Article/spec'
 import { DOC_EDITOR_MODE } from '../../Editor/constant'
@@ -52,6 +53,13 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   const [pendingUnknown, setPendingUnknown] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmClose, setConfirmClose] = useState(false)
+  const [confirmResolution, setConfirmResolution] = useState<'local' | 'remote' | null>(null)
+  const [remoteConflict, setRemoteConflict] = useState<{
+    draft: TDraft
+    queueRevision: number
+    workRevision: number
+  } | null>(null)
+  const [editorVersion, setEditorVersion] = useState(0)
   const dirty = useMemo(() => !!draft && signature(draft) !== baseline, [draft, baseline])
 
   useEffect(() => {
@@ -68,6 +76,8 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
     setExpectedQueueRevision(null)
     setError(null)
     setRecoveryBlocked(false)
+    setRemoteConflict(null)
+    setConfirmResolution(null)
     if (!accountScope) return
     browserGraphQLRequest<{
       docsQueueMember: {
@@ -123,6 +133,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   const reloadRecovery = async (): Promise<void> => {
     const generation = generationRef.current
     setSaving(true)
+    setRemoteConflict(null)
     try {
       const data = await browserGraphQLRequest<{
         docsQueueMember: { queueRevision: number; workingCopy: TDocWorkingCopy } | null
@@ -144,6 +155,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         serverDraft &&
         (signature(serverDraft) === baseline || matchesCandidate)
       ) {
+        setRemoteConflict(null)
         setExpectedQueueRevision(member.queueRevision)
         setWorkRevision(copy.revision)
         if (matchesCandidate && candidate) {
@@ -167,6 +179,15 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         setRecoveryBlocked(false)
         setError('The queue changed. Your local edits are preserved; review and save again.')
       } else {
+        setRemoteConflict(
+          copy?.id === workingCopyId && copy.scopeType === 'workspace' && member && serverDraft
+            ? {
+                draft: serverDraft,
+                queueRevision: member.queueRevision,
+                workRevision: copy.revision,
+              }
+            : null,
+        )
         setError('The queue copy changed or was removed. Your local edits are preserved.')
       }
     } catch {
@@ -175,6 +196,24 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
     } finally {
       if (generation === generationRef.current) setSaving(false)
     }
+  }
+
+  const resolveConflict = (): void => {
+    if (!remoteConflict || !confirmResolution) return
+    setExpectedQueueRevision(remoteConflict.queueRevision)
+    setWorkRevision(remoteConflict.workRevision)
+    setBaseline(signature(remoteConflict.draft))
+    if (confirmResolution === 'remote') {
+      setDraft(remoteConflict.draft)
+      setEditorVersion((version) => version + 1)
+    }
+    recoveryCandidateRef.current = null
+    pendingSaveRef.current = null
+    setPendingUnknown(false)
+    setRecoveryBlocked(false)
+    setRemoteConflict(null)
+    setConfirmResolution(null)
+    setError(null)
   }
 
   const save = async (): Promise<void> => {
@@ -292,6 +331,14 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         onCancel={() => setConfirmClose(false)}
         onConfirm={onClose}
       />
+      <ConfirmDeleteModal
+        message={
+          confirmResolution ? t(`dsb.doc.queue.conflict_confirm_${confirmResolution}`) : null
+        }
+        confirmLabel={t('dsb.doc.queue.conflict_confirm')}
+        onCancel={() => setConfirmResolution(null)}
+        onConfirm={resolveConflict}
+      />
       <div className={s.wrapper}>
         <div className={s.header}>
           <div className={s.title}>{t('dsb.doc.queue.editor_title')}</div>
@@ -326,7 +373,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
                 onChange={(event) => setDraft({ ...draft, slug: event.target.value })}
               />
               <Body
-                editorKey={workingCopyId ?? articleId}
+                editorKey={`${workingCopyId ?? articleId}:${editorVersion}`}
                 value={draft.body}
                 mode={DOC_EDITOR_MODE.EDIT}
                 onChange={(body) =>
@@ -339,6 +386,37 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
             <div className={s.error} role='alert'>
               {error}
             </div>
+          )}
+          {remoteConflict && (
+            <section className={s.conflict} aria-label={t('dsb.doc.queue.conflict_remote')}>
+              <strong>{t('dsb.doc.queue.conflict_remote')}</strong>
+              <div>
+                {t('dsb.doc.queue.editor_title_field')}: {remoteConflict.draft.title}
+              </div>
+              <div>
+                {t('dsb.doc.queue.editor_subtitle_field')}: {remoteConflict.draft.subtitle}
+              </div>
+              <div>
+                {t('dsb.doc.queue.editor_slug_field')}: {remoteConflict.draft.slug}
+              </div>
+              <Preview value={remoteConflict.draft.body} />
+              <button
+                type='button'
+                className={s.save}
+                disabled={saving}
+                onClick={() => setConfirmResolution('local')}
+              >
+                {t('dsb.doc.queue.conflict_keep_local')}
+              </button>
+              <button
+                type='button'
+                className={s.save}
+                disabled={saving}
+                onClick={() => setConfirmResolution('remote')}
+              >
+                {t('dsb.doc.queue.conflict_use_remote')}
+              </button>
+            </section>
           )}
         </div>
         <div className={s.footer}>
