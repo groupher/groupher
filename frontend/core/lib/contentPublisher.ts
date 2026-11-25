@@ -95,7 +95,16 @@ export const publishContentCommand = async <TResult>(
       status: 0,
     })
   }
-  const payload = (await response.json().catch(() => null)) as TPublisherResponse<TResult> | null
+  let payload: TPublisherResponse<TResult> | null
+  try {
+    payload = (await response.json()) as TPublisherResponse<TResult> | null
+  } catch (cause) {
+    throw new ContentPublishError('Content Publisher response is unknown.', {
+      code: 'transport_unknown',
+      details: cause instanceof Error ? cause.message : undefined,
+      status: response.status,
+    })
+  }
   if (!response.ok || !payload?.ok || payload.result === undefined) {
     throw new ContentPublishError(
       payload?.error?.message || 'Content Publisher could not complete the command.',

@@ -25,6 +25,17 @@ describe('publishContentCommand', () => {
     vi.unstubAllGlobals()
   })
 
+  it('retains an unknown outcome when a response body cannot be decoded', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{broken', { status: 200 })),
+    )
+    await expect(publishContentCommand(command)).rejects.toMatchObject({
+      code: 'transport_unknown',
+      status: 200,
+    } satisfies Partial<ContentPublishError>)
+  })
+
   it('parses Retry-After delay seconds', async () => {
     vi.stubGlobal(
       'fetch',
