@@ -105,6 +105,16 @@ export const publishContentCommand = async <TResult>(
       status: response.status,
     })
   }
+  if (response.status >= 500 || (response.ok && (!payload?.ok || payload.result === undefined))) {
+    throw new ContentPublishError(
+      payload?.error?.message || 'Content Publisher response is unknown.',
+      {
+        code: 'transport_unknown',
+        details: payload?.error?.details,
+        status: response.status,
+      },
+    )
+  }
   if (!response.ok || !payload?.ok || payload.result === undefined) {
     throw new ContentPublishError(
       payload?.error?.message || 'Content Publisher could not complete the command.',

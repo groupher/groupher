@@ -36,6 +36,23 @@ describe('publishContentCommand', () => {
     } satisfies Partial<ContentPublishError>)
   })
 
+  it.each([
+    Response.json(
+      { error: { code: 'upstream_failure', message: 'failed' }, ok: false },
+      { status: 502 },
+    ),
+    Response.json({ ok: true }, { status: 200 }),
+  ])('treats an upstream failure or incomplete success as an unknown outcome', async (response) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => response),
+    )
+    await expect(publishContentCommand(command)).rejects.toMatchObject({
+      code: 'transport_unknown',
+      status: response.status,
+    })
+  })
+
   it('parses Retry-After delay seconds', async () => {
     vi.stubGlobal(
       'fetch',
