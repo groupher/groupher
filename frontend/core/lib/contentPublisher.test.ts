@@ -25,6 +25,49 @@ describe('publishContentCommand', () => {
     vi.unstubAllGlobals()
   })
 
+  it('retains an unknown outcome when a response body cannot be decoded', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{broken', { status: 200 })),
+    )
+    await expect(publishContentCommand(command)).rejects.toMatchObject({
+      code: 'transport_unknown',
+      status: 200,
+    } satisfies Partial<ContentPublishError>)
+  })
+
+  it.each([
+    Response.json(
+      { error: { code: 'upstream_failure', message: 'failed' }, ok: false },
+      { status: 502 },
+    ),
+    Response.json({ ok: true }, { status: 200 }),
+  ])('treats an upstream failure or incomplete success as an unknown outcome', async (response) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => response),
+    )
+    await expect(publishContentCommand(command)).rejects.toMatchObject({
+      code: 'transport_unknown',
+      status: response.status,
+    })
+  })
+
+  it.each([401, 413, 429])('classifies unreadable HTTP %s as a rejection', async (status) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response('<html>rejected</html>', { status, headers: { 'Retry-After': '17' } }),
+      ),
+    )
+    await expect(publishContentCommand(command)).rejects.toMatchObject({
+      code: 'upstream_graphql_error',
+      status,
+      retryAfter: 17,
+    })
+  })
+
   it('parses Retry-After delay seconds', async () => {
     vi.stubGlobal(
       'fetch',

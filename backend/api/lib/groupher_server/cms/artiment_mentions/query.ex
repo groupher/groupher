@@ -52,6 +52,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       )
       |> Repo.all()
 
+    # Historical field: candidates consumed by an event, not a delivery receipt.
     consumed =
       Enum.flat_map(events, fn {data, _status} -> Map.get(data, "consumed_user_ids", []) end)
 

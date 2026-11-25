@@ -114,6 +114,36 @@ defmodule GroupherServer.Test.Analysis.Contribution do
   end
 
   describe "[analysis contribution community] " do
+    @tag capture_log: true
+    test "rolls back the contribution when the community digest write fails", ~m(community)a do
+      trigger = "fail_contribution_" <> Integer.to_string(System.unique_integer([:positive]))
+
+      Repo.query!("""
+      CREATE FUNCTION cms.#{trigger}() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF NEW.id = #{community.id} AND NEW.contributes_digest IS DISTINCT FROM OLD.contributes_digest THEN
+          RAISE EXCEPTION 'injected_contribution_digest_failure';
+        END IF;
+        RETURN NEW;
+      END $$
+      """)
+
+      try do
+        Repo.query!(
+          "CREATE TRIGGER #{trigger} BEFORE UPDATE ON cms.communities FOR EACH ROW EXECUTE FUNCTION cms.#{trigger}()"
+        )
+
+        assert {:error,
+                %Postgrex.Error{postgres: %{message: "injected_contribution_digest_failure"}}} =
+                 Analysis.make_contribution(%Community{id: community.id})
+
+        refute Repo.get_by(CommunityContribute, community_id: community.id)
+      after
+        Repo.query!("DROP TRIGGER IF EXISTS #{trigger} ON cms.communities")
+        Repo.query!("DROP FUNCTION IF EXISTS cms.#{trigger}()")
+      end
+    end
+
     test "should inserted a community contribute when create community", ~m(community)a do
       community_id = community.id
       assert {:error, _} = ORM.find_by(CommunityContribute, ~m(community_id)a)
@@ -168,6 +198,30 @@ defmodule GroupherServer.Test.Analysis.Contribution do
                0,
                1
              ]
+    end
+
+    test "contributions on adjacent UTC dates occupy separate digest days", ~m(community)a do
+      today = Date.utc_today()
+      yesterday = Date.add(today, -1)
+      yesterday_at = DateTime.new!(yesterday, ~T[23:59:59], "Etc/UTC")
+
+      Repo.insert_all(CommunityContribute, [
+        %{
+          community_id: community.id,
+          date: yesterday,
+          count: 2,
+          inserted_at: yesterday_at,
+          updated_at: yesterday_at
+        }
+      ])
+
+      assert {:ok, _} = Analysis.make_contribution(%Community{id: community.id})
+      assert Repo.get_by!(CommunityContribute, community_id: community.id, date: today).count == 1
+
+      assert Repo.get_by!(CommunityContribute, community_id: community.id, date: yesterday).count ==
+               2
+
+      assert Enum.take(Repo.get!(Community, community.id).contributes_digest, -2) == [2, 1]
     end
 
     test "should update a contribute when make communityContribute before", ~m(community)a do

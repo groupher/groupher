@@ -232,6 +232,13 @@ export default {
   'dsb.doc.queue.editor_slug_field': '地址标识',
   'dsb.doc.queue.editor_save': '保存队列内容',
   'dsb.doc.queue.editor_discard': '队列内容有未保存的修改，关闭后将丢失。',
+  'dsb.doc.queue.editor_discard_close': '放弃修改并关闭',
   'dsb.doc.queue.editor_discard_confirm': '放弃修改',
+  'dsb.doc.queue.conflict_remote': '当前队列版本',
+  'dsb.doc.queue.conflict_keep_local': '保留我的修改',
+  'dsb.doc.queue.conflict_use_remote': '加载当前版本',
+  'dsb.doc.queue.conflict_confirm': '确认',
+  'dsb.doc.queue.conflict_confirm_local': '保留你的修改，并在保存时覆盖当前队列版本？',
+  'dsb.doc.queue.conflict_confirm_remote': '放弃你的修改并加载当前队列版本？',
   'dsb.doc.queue.close': '关闭发布队列',
 }

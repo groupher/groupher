@@ -1,8 +1,10 @@
 defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias Accounts.Model.{CollectFolderEntry, Embeds}
+  alias Analysis.Aggregator
+  alias Analysis.Model.{ArticleHourlyMetric, MetricEvent}
   alias CMS.Articles.{BindingPersist, Bindings}
   alias CMS.Articles.Commands.BindingSupport
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
@@ -27,6 +29,60 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
            )
 
     refute Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id)
+  end
+
+  test "moving a binding reassigns aggregated and pending metrics without counting retries twice",
+       ~m(community destination post)a do
+    binding = Repo.get_by!(ArticleBinding, article_id: post.id, community_id: community.id)
+    first_operation = Ecto.UUID.generate()
+    second_operation = Ecto.UUID.generate()
+    occurred_at = DateTime.utc_now(:second)
+
+    assert {:ok, :pass} =
+             Analysis.MetricEvent.append_article_action(post, first_operation, :upvote_added,
+               occurred_at: occurred_at
+             )
+
+    assert {:ok, _} = Aggregator.run()
+
+    assert %ArticleHourlyMetric{community_id: source_id, value: 1} =
+             Repo.get_by!(ArticleHourlyMetric, binding_id: binding.id, metric: :upvote_added)
+
+    assert source_id == community.id
+
+    assert {:ok, :pass} =
+             Analysis.MetricEvent.append_article_action(post, second_operation, :upvote_added,
+               occurred_at: occurred_at
+             )
+
+    assert {:ok, _} =
+             Repo.transact(fn ->
+               BindingPersist.move(Repo.get!(Article, post.id), community, destination)
+             end)
+
+    assert %ArticleHourlyMetric{community_id: destination_id, value: 1} =
+             Repo.get_by!(ArticleHourlyMetric, binding_id: binding.id, metric: :upvote_added)
+
+    assert destination_id == destination.id
+
+    assert {:ok, :pass} =
+             Analysis.MetricEvent.append_article_action(post, second_operation, :upvote_added,
+               binding_id: binding.id,
+               community_id: destination.id,
+               occurred_at: occurred_at
+             )
+
+    assert {:ok, _} = Aggregator.run()
+    assert {:ok, 0} = Aggregator.run()
+
+    events = Repo.all(Ecto.Query.where(MetricEvent, article_id: ^post.id))
+    assert length(events) == 2
+    assert Enum.all?(events, &(&1.binding_id == binding.id and &1.community_id == destination.id))
+
+    assert %ArticleHourlyMetric{community_id: destination_id, value: 2} =
+             Repo.get_by!(ArticleHourlyMetric, binding_id: binding.id, metric: :upvote_added)
+
+    assert destination_id == destination.id
   end
 
   setup do

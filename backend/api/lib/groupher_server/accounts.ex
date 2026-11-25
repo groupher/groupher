@@ -162,21 +162,6 @@ defmodule GroupherServer.Accounts do
     to: GroupherServer.Accounts.Mailbox,
     as: :invalidate_users
 
-  @doc "Delegates GroupherServer.Accounts.Mailbox.mark_read_all/2 through the Accounts Context boundary."
-  defdelegate mailbox_mark_read_all(arg1, arg2),
-    to: GroupherServer.Accounts.Mailbox,
-    as: :mark_read_all
-
-  @doc "Delegates GroupherServer.Accounts.Mailbox.mark_read/3 through the Accounts Context boundary."
-  defdelegate mailbox_mark_read(arg1, arg2, arg3),
-    to: GroupherServer.Accounts.Mailbox,
-    as: :mark_read
-
-  @doc "Delegates GroupherServer.Accounts.Mailbox.paged_messages/4 through the Accounts Context boundary."
-  defdelegate mailbox_paged_messages(arg1, arg2, arg3, arg4),
-    to: GroupherServer.Accounts.Mailbox,
-    as: :paged_messages
-
   @doc "Delegates GroupherServer.Accounts.Mailbox.status/1 through the Accounts Context boundary."
   defdelegate mailbox_status(arg1), to: GroupherServer.Accounts.Mailbox, as: :status
 
@@ -222,6 +207,17 @@ defmodule GroupherServer.Accounts do
 
   @doc "Delegates GroupherServer.Accounts.Profiles.user/1 through the Accounts Context boundary."
   defdelegate profiles_user(arg1), to: GroupherServer.Accounts.Profiles, as: :user
+
+  @doc """
+  Validates a user report target within the caller's transaction.
+
+  ## Examples
+
+      Accounts.profiles_validate_report_target("1", 2)
+  """
+  defdelegate profiles_validate_report_target(target_id, reporter_id),
+    to: GroupherServer.Accounts.Profiles.ReportTarget,
+    as: :validate_in_transaction
 
   @doc "Delegates GroupherServer.Accounts.Profiles.user/2 through the Accounts Context boundary."
   defdelegate profiles_user(arg1, arg2), to: GroupherServer.Accounts.Profiles, as: :user

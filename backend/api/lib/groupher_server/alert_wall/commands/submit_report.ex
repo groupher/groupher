@@ -13,7 +13,7 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
-  alias GroupherServer.{AlertWall, CMS, Repo}
+  alias GroupherServer.{Accounts, AlertWall, CMS, Repo}
   alias AlertWall.Model.UserReport
   alias CMS.Command.ConfirmationDefinition
 
@@ -103,19 +103,49 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
     attrs = Map.put(prepared, :reporter_id, reporter_id)
 
     with {:ok, :pass} <- validate_current_target(attrs),
-         {:ok, %UserReport{id: report_id}} <-
+         {:ok, %UserReport{} = report} <-
            AlertWall.Persist.submit_report_in_transaction(attrs, operation_ref),
-         %UserReport{} = report <- Repo.get(UserReport, report_id),
-         {:ok, :pass} <- CMS.apply_report_threshold_in_transaction(report) do
-      {:ok, %Confirmation{data: %{"report_id" => report_id}}}
+         {:ok, :pass} <- apply_threshold(report) do
+      {:ok, %Confirmation{data: %{"report_id" => report.id}}}
     end
   end
+
+  defp apply_threshold(%UserReport{owner: :cms} = report) do
+    facts =
+      report
+      |> Map.take([
+        :owner,
+        :item_id,
+        :target_type,
+        :target_id,
+        :community_id,
+        :observed_version,
+        :operation_ref
+      ])
+      |> Map.put(
+        :active_reporter_count,
+        AlertWall.Persist.active_reporter_count(report.item_id, report.observed_version)
+      )
+
+    CMS.apply_report_threshold_in_transaction(facts)
+  end
+
+  defp apply_threshold(_report), do: {:ok, :pass}
 
   defp validate_current_target(%{owner: :cms} = attrs) do
     CMS.validate_report_target_in_transaction(attrs)
   end
 
-  defp validate_current_target(%{owner: :accounts}), do: {:ok, :pass}
+  defp validate_current_target(%{
+         owner: :accounts,
+         target_id: target_id,
+         reporter_id: reporter_id
+       }) do
+    case Accounts.profiles_validate_report_target(target_id, reporter_id) do
+      {:ok, :pass} -> {:ok, :pass}
+      {:error, _reason} -> {:error, AlertWall.ErrorCat.invalid_report()}
+    end
+  end
 
   defp present_report(%Confirmation{data: %{"report_id" => report_id}}) do
     case Repo.get(UserReport, report_id) do

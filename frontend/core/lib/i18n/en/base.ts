@@ -235,6 +235,15 @@ export default {
   'dsb.doc.queue.editor_slug_field': 'URL slug',
   'dsb.doc.queue.editor_save': 'Save queued content',
   'dsb.doc.queue.editor_discard': 'Unsaved queue edits will be lost if you close this editor.',
+  'dsb.doc.queue.editor_discard_close': 'Discard edits and close',
   'dsb.doc.queue.editor_discard_confirm': 'Discard changes',
+  'dsb.doc.queue.conflict_remote': 'Current queued version',
+  'dsb.doc.queue.conflict_keep_local': 'Keep my edits',
+  'dsb.doc.queue.conflict_use_remote': 'Load current version',
+  'dsb.doc.queue.conflict_confirm': 'Confirm',
+  'dsb.doc.queue.conflict_confirm_local':
+    'Keep your edits and replace the current queued version when you save?',
+  'dsb.doc.queue.conflict_confirm_remote':
+    'Discard your edits and load the current queued version?',
   'dsb.doc.queue.close': 'Close publish queue',
 }

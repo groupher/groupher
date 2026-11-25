@@ -132,10 +132,10 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
            command_id
          ) do
       {:error, {:queue_version_conflict, _, _}} ->
-        {:error, CMS.docs_state_conflict()}
+        {:error, CMS.docs_queue_version_conflict()}
 
       {:error, {:queue_work_revision_conflict, _, _}} ->
-        {:error, CMS.docs_state_conflict()}
+        {:error, CMS.docs_queue_copy_revision_conflict()}
 
       result ->
         result
@@ -618,7 +618,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
 
   @doc "Reads only configuration visible to a policy administrator."
   def docs_queue_policy(_, %{community: site}, %{context: %{cur_user: actor}}) do
-    publication_result(CMS.docs_queue_policy(site, actor))
+    publication_read_result(CMS.docs_queue_policy(site, actor))
   end
 
   @doc "Restores one historical Snapshot under independent edit admission."
@@ -648,36 +648,36 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
 
   @doc "Adapts authorized publication read requests without exposing internal errors."
   def docs_queue_preview(_, %{community: site} = args, %{context: %{cur_user: actor}}) do
-    publication_result(CMS.docs_queue_preview(site, actor, Map.to_list(args)))
+    publication_read_result(CMS.docs_queue_preview(site, actor, Map.to_list(args)))
   end
 
   @doc "Reads an explicit approval comparison baseline."
   def docs_approval_diff(_, %{community: site} = args, %{context: %{cur_user: actor}}) do
-    publication_result(CMS.docs_approval_diff(site, actor, Map.to_list(args)))
+    publication_read_result(CMS.docs_approval_diff(site, actor, Map.to_list(args)))
   end
 
   @doc "Reads authorized Release summaries."
   def docs_release_history(_, %{community: site} = args, %{context: %{cur_user: actor}}) do
-    publication_result(CMS.docs_release_history(site, actor, Map.to_list(args)))
+    publication_read_result(CMS.docs_release_history(site, actor, Map.to_list(args)))
   end
 
   @doc "Reads one authorized historical site projection."
   def docs_release_detail(_, %{community: site, release_id: id} = args, %{
         context: %{cur_user: actor}
       }) do
-    publication_result(CMS.docs_release_detail(site, actor, id, args[:article_id]))
+    publication_read_result(CMS.docs_release_detail(site, actor, id, args[:article_id]))
   end
 
   @doc "Reads authorized Snapshot summaries and content."
   def docs_snapshot_history(_, %{community: site, article_id: id} = args, %{
         context: %{cur_user: actor}
       }) do
-    publication_result(CMS.docs_snapshot_history(site, actor, id, Map.to_list(args)))
+    publication_read_result(CMS.docs_snapshot_history(site, actor, id, Map.to_list(args)))
   end
 
   @doc "Reads status notices for the authenticated actor."
   def docs_publication_notices(_, %{community: site}, %{context: %{cur_user: actor}}) do
-    publication_result(CMS.docs_publication_notices(site, actor))
+    publication_read_result(CMS.docs_publication_notices(site, actor))
   end
 
   @doc "Updates only approval configuration under its current policy revision."
@@ -697,6 +697,20 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
       CMS.docs_configure_queue(site, revision, required, self_approval, actor, command)
     )
   end
+
+  defp publication_read_result({:error, :docs_preview_changed}) do
+    {:error, CMS.docs_state_conflict()}
+  end
+
+  defp publication_read_result({:error, {:queue_version_conflict, _, _}}) do
+    {:error, CMS.docs_state_conflict()}
+  end
+
+  defp publication_read_result({:error, reason}) when is_atom(reason) do
+    {:error, CMS.docs_publication_read_unavailable()}
+  end
+
+  defp publication_read_result(result), do: result
 
   defp publication_result({:error, :docs_preview_changed}) do
     {:error, CMS.docs_state_conflict()}

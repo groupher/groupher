@@ -28,6 +28,15 @@ defmodule GroupherServer.ReviewBot do
   @doc "Reads the platform and community policy snapshot for a content type."
   defdelegate configs_for_target(community_id, subject_type), to: ReviewBotConfig
 
+  @doc """
+  Builds immutable policy snapshots for a CMS review request.
+
+  ## Examples
+
+      ReviewBot.policy_snapshots(configs, :publish, :all)
+  """
+  defdelegate policy_snapshots(configs, trigger, scope), to: __MODULE__.PolicySnapshot, as: :build
+
   @doc "Reads the system and optional community policy for one content target."
   defdelegate configs(community_id, subject_type), to: ReviewBotConfig
 

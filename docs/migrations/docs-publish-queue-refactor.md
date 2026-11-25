@@ -428,7 +428,7 @@ V1 计划对象的键为 `plan_format_version`、`base_release_id`、`public_tre
 
 公开详情正文读取 ArticlePublicBody，元数据和当前公开目录按 ArticlePublic 选中的 Snapshot 及当前 Gate 解析，Release 用于发布历史及站点发布基线。新合同下单篇永久清理保留正式历史所需的 Article 身份与 Snapshot，直至社区删除，不以是否仍被审批或 Release 引用作为到期判断。清理事务移除 Public / PublicBody、公开定位与绑定，并关闭 Doc 的读权限；剩余身份仅供授权的 Docs 历史入口解析。通用详情、按 ID 查询、Search 和 Press 返回前按当前公开事实过滤，待处理的投影失效与缓存命中均不能绕过该检查。投影任务重试时复核公开事实，防止旧任务重建已删除页面。历史按本次发布涉及的 Doc、删除和完整树结果查看。单篇内容恢复从 ArticleSnapshot fork 到可编辑副本；Trash 恢复与 Receipt 恢复沿用各自命令。
 
-普通 Article 基座的 [WorkingCopy Publisher](../../backend/api/lib/groupher_server/cms/articles/working_copy/publisher.ex#L29) 仅支持 Post / Blog / Changelog，Docs 新路径由整队 Release 编排内部 Public 选择；`旧 Doc 发布路径`（旧路径已在 R7 退场）仍是退役盘点对象。以下矩阵用于核对新路径的副作用覆盖，具体已验证范围见 §0 和附录 A。矩阵须逐项补齐拥有命令、触发条件、同步写入或 Outbox、去重键、失败与重试验证。
+普通 Article 基座的 [Article Publication](../../backend/api/lib/groupher_server/cms/articles/publication.ex#L29) 仅支持 Post / Blog / Changelog，Docs 新路径由整队 Release 编排内部 Public 选择；`旧 Doc 发布路径`（旧路径已在 R7 退场）仍是退役盘点对象。以下矩阵用于核对新路径的副作用覆盖，具体已验证范围见 §0 和附录 A。矩阵须逐项补齐拥有命令、触发条件、同步写入或 Outbox、去重键、失败与重试验证。
 
 | 领域                          | 首发、再发布及公开删除要验证的边界                                                         |
 | ----------------------------- | ------------------------------------------------------------------------------------------ |

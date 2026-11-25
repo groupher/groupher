@@ -1,10 +1,9 @@
 defmodule GroupherServer.Accounts.Mailbox do
   @moduledoc """
-  Public account boundary for mailbox reads and unread-counter workflows.
+  Public account boundary for mailbox status and unread-counter workflows.
 
-  Query and read-state access belongs to Messaging. This facade owns only the
-  stable Accounts entrypoint and delegates counter rebuilding to the mailbox
-  projection workflow.
+  Query and read-state access belongs to Messaging; this facade owns the
+  account mailbox projection and its cache invalidation.
 
       Messaging rows
           |
@@ -16,7 +15,7 @@ defmodule GroupherServer.Accounts.Mailbox do
   """
 
   alias __MODULE__.{Effects, Projection, Query, Workflow}
-  alias GroupherServer.{Accounts, Messaging}
+  alias GroupherServer.Accounts
 
   alias Accounts.Model.User
 
@@ -29,35 +28,6 @@ defmodule GroupherServer.Accounts.Mailbox do
   """
   @spec status(User.t()) :: {:ok, map()} | {:error, term()}
   def status(%User{} = user), do: Query.status(user)
-
-  @doc """
-  Marks selected mention or notification rows as read.
-
-  ## Examples
-
-      Accounts.Mailbox.mark_read(:mention, message_ids, user)
-  """
-  def mark_read(type, ids, %User{} = user), do: Messaging.mark_read(type, ids, user)
-
-  @doc """
-  Marks all rows of one inbox message type as read.
-
-  ## Examples
-
-      Accounts.Mailbox.mark_read_all(:notification, user)
-  """
-  def mark_read_all(type, %User{} = user), do: Messaging.mark_read_all(type, user)
-
-  @doc """
-  Returns one page of mailbox messages.
-
-  ## Examples
-
-      Accounts.Mailbox.paged_messages(:mention, user, %{}, %GroupherServer.Pagi.Params.Offset{page: 1, size: 20})
-  """
-  def paged_messages(type, user, filter, pagi) do
-    Messaging.paged_messages(type, user, filter, pagi)
-  end
 
   @doc """
   Rebuilds and persists one user's mailbox counters.

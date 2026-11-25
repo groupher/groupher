@@ -5,6 +5,7 @@
 本目录记录跨应用或跨领域的工程规则、架构决策和技术迁移。能够明确归属于某个业务领域
 或独立应用的文档，应放入对应目录。
 
+- [CMS 从编辑到发布的架构审查与重构顺序](./cms-flow-review.md)：现状、待决契约、实施依赖与兼容退出条件。
 - [`command-operation-identity.md`](./command-operation-identity.md)：待实施的 Command/Pipeline 长期方案，包含后台操作 UUID owner、change/2、事件入口统一生成 dedupe_key、Outbox 去重与事务验收；不保留历史兼容协议。
 
 - 工程规则统一收录在 [`docs/rules/`](../rules/)，入口见 [`be.md`](../rules/be.md) 与 [`fe.md`](../rules/fe.md)。
@@ -20,7 +21,7 @@
 - [`query-store-boundary.md`](./query-store-boundary.md)：Query、Store、Draft 与缓存边界。
 - [`query-invalidation.md`](./query-invalidation.md)：TanStack Query typed target、领域 key resolver 与通用失效 executor。
 - [`frontend-account-passport-gate.md`](./frontend-account-passport-gate.md)：AccountStore、Passport、前端 Gate 与各应用的认证策略。
-- [`passport-request-scope.md`](./passport-request-scope.md)：Passport 字段级 typed scope 加载与 Gate 复用提案（尚未实现）。
+- [`passport-request-scope.md`](./passport-request-scope.md)：communityActivity 与 communityActivityStats 字段内的 Community scope 传递已实施，Article Action 待接入。
 - [`account-identity.md`](./account-identity.md)：`login`、`nickname`、`user.id` 的身份边界。
 - [`contracts.md`](./contracts.md)：跨运行时 contract 的归属、生成、freshness 与 Gate Action 目标合同。
 - [`protocol-constants.md`](./protocol-constants.md)：前端裸写协议字符串的历史审计和现有归属记录。

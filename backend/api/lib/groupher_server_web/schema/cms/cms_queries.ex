@@ -312,7 +312,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:selection, non_null(:community_activity_selection_input))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "audit.read")
+      middleware(M.Passport, action: "audit.read", pass_scope: true)
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.Activity.community_activity_stats/3)
     end

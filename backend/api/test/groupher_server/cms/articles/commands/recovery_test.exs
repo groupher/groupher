@@ -47,30 +47,35 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     end
   end
 
-  test "published Article WorkingCopy writes are author-only even with a Passport grant" do
+  test "a Post coauthor with Article update permission can save the WorkingCopy" do
     {community, public, _attrs, author} = mock_article(:post)
     article = Repo.get!(Article, public.id)
     work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
     {:ok, other_user} = db_insert(:user)
 
-    editor =
-      Map.put(other_user, :cur_passport, %{
-        "global" => %{},
-        community.slug => %{"cms" => %{"post.edit" => true}}
-      })
+    editor_author = Repo.insert!(%CMS.Model.Author{user_id: other_user.id})
 
-    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+    Repo.insert!(
+      CMS.Model.ArticleCoAuthor.changeset(%CMS.Model.ArticleCoAuthor{}, %{
+        article_id: article.id,
+        author_id: editor_author.id,
+        joined_at: DateTime.utc_now(:second),
+        permissions: %{"article.read_draft" => true, "article.update" => true}
+      })
+    )
+
+    assert {:ok, coauthor_saved} =
              CMS.Articles.save_working_copy(
                article,
                community,
                work.id,
-               %{title: "Editor must not change Article content"},
+               %{title: "Coauthor updated content"},
                work.revision,
-               editor,
+               other_user,
                Ecto.UUID.generate()
              )
 
-    assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
+    assert coauthor_saved.revision == work.revision + 1
 
     assert {:ok, saved} =
              CMS.Articles.save_working_copy(
@@ -78,12 +83,12 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
                community,
                work.id,
                %{title: "Author can change Article content"},
-               work.revision,
+               coauthor_saved.revision,
                author,
                Ecto.UUID.generate()
              )
 
-    assert saved.revision == work.revision + 1
+    assert saved.revision == work.revision + 2
   end
 
   test "a missing required Dashboard fails published editing closed" do
@@ -570,6 +575,221 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     assert replayed.id == saved.id
     assert replayed.revision == saved.revision
     assert replayed.title == "Saved title"
+  end
+
+  test "saveWorkingCopy replay remains readable after published editing is disabled" do
+    {community, public, _attrs, user} = mock_article(:post)
+    article = Repo.get!(Article, public.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
+    command_id = Ecto.UUID.generate()
+    attrs = %{title: "Saved before editing was disabled"}
+
+    assert {:ok, saved} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               attrs,
+               work.revision,
+               user,
+               command_id
+             )
+
+    assert {:ok, _} =
+             CMS.Dashboard.update(
+               community,
+               :enable,
+               %{post_published_editing: false},
+               :operations,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, replayed} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               attrs,
+               work.revision,
+               user,
+               command_id
+             )
+
+    assert replayed.id == saved.id
+    assert replayed.revision == saved.revision
+
+    assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               %{title: "New write"},
+               saved.revision,
+               user,
+               Ecto.UUID.generate()
+             )
+  end
+
+  test "saveWorkingCopy replay does not disclose a deleted Article's working copy" do
+    {community, public, _attrs, user} = mock_article(:post)
+    article = Repo.get!(Article, public.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
+    command_id = Ecto.UUID.generate()
+    attrs = %{title: "Saved before deletion"}
+
+    assert {:ok, saved} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               attrs,
+               work.revision,
+               user,
+               command_id
+             )
+
+    lifecycle = Repo.get_by!(ArticleLifecycle, article_id: article.id)
+    now = DateTime.utc_now(:second)
+
+    lifecycle
+    |> ArticleLifecycle.changeset(%{
+      state: :deleted,
+      deleted_at: now,
+      changed_at: now,
+      version: lifecycle.version + 1
+    })
+    |> Repo.update!()
+
+    assert {:error, %ErrorCat.Error{reason: :command_result_unavailable}} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               attrs,
+               work.revision,
+               user,
+               command_id
+             )
+
+    assert Repo.get!(ArticleWorkingCopy, work.id).revision == saved.revision
+  end
+
+  test "saveWorkingCopy replay cannot present a later revision as the original result" do
+    {community, public, _attrs, user} = mock_article(:post)
+    article = Repo.get!(Article, public.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
+    command_id = Ecto.UUID.generate()
+    attrs = %{title: "First save"}
+
+    assert {:ok, first} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               attrs,
+               work.revision,
+               user,
+               command_id
+             )
+
+    assert {:ok, second} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               %{title: "Second save"},
+               first.revision,
+               user,
+               Ecto.UUID.generate()
+             )
+
+    assert {:error, %ErrorCat.Error{reason: :command_result_unavailable}} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               attrs,
+               work.revision,
+               user,
+               command_id
+             )
+
+    current = Repo.get!(ArticleWorkingCopy, work.id)
+    assert current.revision == second.revision
+    assert current.title == "Second save"
+  end
+
+  test "saveWorkingCopy rejects the same command identity with different input" do
+    {community, public, _attrs, user} = mock_article(:post)
+    article = Repo.get!(Article, public.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, saved} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               %{title: "Original"},
+               work.revision,
+               user,
+               command_id
+             )
+
+    assert {:error, %ErrorCat.Error{reason: :command_id_conflict}} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               %{title: "Different"},
+               work.revision,
+               user,
+               command_id
+             )
+
+    current = Repo.get!(ArticleWorkingCopy, work.id)
+    assert current.revision == saved.revision
+    assert current.title == "Original"
+  end
+
+  test "saveWorkingCopy does not execute again after its receipt result expires" do
+    {community, public, _attrs, user} = mock_article(:post)
+    article = Repo.get!(Article, public.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
+    command_id = Ecto.UUID.generate()
+    attrs = %{title: "Saved before expiry"}
+
+    assert {:ok, saved} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               attrs,
+               work.revision,
+               user,
+               command_id
+             )
+
+    receipt = Repo.get_by!(CMS.Model.CommandReceipt, command_id: command_id)
+
+    receipt
+    |> Ecto.Changeset.change(expires_at: DateTime.add(DateTime.utc_now(:second), -60, :second))
+    |> Repo.update!()
+
+    assert {:error, %ErrorCat.Error{reason: :command_result_expired}} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               attrs,
+               work.revision,
+               user,
+               command_id
+             )
+
+    current = Repo.get!(ArticleWorkingCopy, work.id)
+    assert current.revision == saved.revision
+    assert current.title == "Saved before expiry"
   end
 
   test "author can save a published Article loaded without its author association" do

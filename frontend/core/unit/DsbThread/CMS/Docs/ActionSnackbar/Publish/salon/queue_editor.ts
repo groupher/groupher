@@ -10,6 +10,7 @@ export default function useSalon() {
     body: 'column min-h-0 flex-1 gap-4 overflow-y-auto px-5 py-4',
     input: cn('w-full rounded-lg border px-3 py-2', br('divider'), fg('title')),
     error: cn('text-sm', fg('rainbow.red')),
+    conflict: cn('column gap-3 rounded-lg border p-4', br('divider')),
     footer: cn('row-center shrink-0 justify-end border-t px-5 py-4', br('divider')),
     save: cn(
       'h-8 rounded-lg px-4 button-reset text-sm bold-sm disabled:opacity-60',

@@ -36,11 +36,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Activity do
   @doc "Returns community activity statistics for the viewer's selection."
   def community_activity_stats(
         _root,
-        %{community: %Community{} = community, selection: selection},
+        %{community: %Community{} = community, selection: selection} = args,
         info
       ) do
     actor = Map.get(info.context, :cur_user)
-    Activity.get_community_log_stats(community, actor, selection)
+    scope = get_in(args, [:passport_scopes, :community])
+    Activity.get_community_log_stats(community, actor, selection, passport_scope: scope)
   end
 
   @doc "Loads the community activity log configuration for the requesting viewer."

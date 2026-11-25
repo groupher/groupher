@@ -10,6 +10,9 @@ defmodule GroupherServer.CMS.Insights do
 
   alias __MODULE__.Query
 
+  @doc "Returns communities where the viewer has the Insights Passport grant."
+  defdelegate passport_granted_community_slugs(viewer), to: Query
+
   @doc "Returns the CMS Article type used by the Analysis projection."
   @spec article_type(map()) :: {:ok, atom()} | {:error, term()}
   defdelegate article_type(article), to: Query

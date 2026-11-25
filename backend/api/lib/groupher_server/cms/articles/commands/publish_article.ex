@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
   alias Accounts.Model.User
   alias CMS.Articles.Commands.PublishArticleConfirmation, as: Confirmation
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
-  alias CMS.Articles.WorkingCopy.{Publisher, History}
+  alias CMS.Articles.{Publication, WorkingCopy.History}
   alias CMS.Model.{Article, ArticlePublic, ArticleSnapshot, Community}
 
   @pipeline operation: :article_publish_article,
@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
       history_context = Map.put(history_context, :causation_command_id, command_id)
 
       with {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(canonical_article) do
-        case Publisher.publish_in_transaction(
+        case Publication.publish_in_transaction(
                canonical_article,
                community,
                source,

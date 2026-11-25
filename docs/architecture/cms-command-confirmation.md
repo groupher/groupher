@@ -96,6 +96,7 @@ INSERT claim
 - command、target、intent params 相同且 result 未过期：decode Confirmation，不执行 Action；
 - 任一 identity 字段不同：`command_id_conflict`，details 只含不同字段名；
 - identity 相同但 Confirmation 缺失：`command_result_unavailable`；
+- Confirmation 存在，但当前权限、资源状态或 revision 不允许安全展示原结果：也返回 `command_result_unavailable`；不向客户端区分这些原因，也不能据此推断写入是否提交；
 - result 已过期、tombstone 有效且 identity 相同：`command_result_expired`；
 - result 已过期但 identity 不同：仍为 `command_id_conflict`。
 

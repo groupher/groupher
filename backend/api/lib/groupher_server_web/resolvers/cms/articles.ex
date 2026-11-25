@@ -278,6 +278,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
       )
       |> case do
         {:ok, %{public: public}} -> {:ok, public}
+        {:error, :public_conflict} -> {:error, CMS.article_public_head_conflict()}
         other -> other
       end
     else

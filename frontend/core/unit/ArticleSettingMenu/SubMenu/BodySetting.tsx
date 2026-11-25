@@ -4,8 +4,11 @@ import { type FC, useEffect, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { saveArticleBodyWorkingCopy } from '~/lib/artimentPublisher'
-import { ContentPublishError } from '~/lib/contentPublisher'
+import {
+  saveArticleBodyWorkingCopy,
+  type TSaveArticleBodyWorkingCopyInput,
+} from '~/lib/artimentPublisher'
+import { ContentPublishError, isRejectedContentPayload } from '~/lib/contentPublisher'
 import { invalidatePrefix } from '~/query/invalidation'
 import { viewerQueryKeys } from '~/query/key'
 import { createCommandHandle } from '~/query/mutation/optimistic/execute'
@@ -60,12 +63,17 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
   const [editorKey, setEditorKey] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const commandRef = useRef<ReturnType<typeof createCommandHandle> | null>(null)
+  const [pendingUnknown, setPendingUnknown] = useState(false)
+  const pendingSaveRef = useRef<{
+    input: TSaveArticleBodyWorkingCopyInput
+    unknown: boolean
+  } | null>(null)
 
   useEffect(() => {
     setEditedValue(null)
     setSaveError(null)
-    commandRef.current = null
+    pendingSaveRef.current = null
+    setPendingUnknown(false)
   }, [accountScope, articleId, community])
 
   const value = editedValue ?? (workingCopy ? parseBodyValue(workingCopy.bodyJson) : null)
@@ -81,39 +89,56 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
       return
     }
 
-    const command =
-      commandRef.current ?? createCommandHandle({ operation: 'article.working_copy.save.body' })
-    commandRef.current = command
-    setSaving(true)
-    setSaveError(null)
-    try {
-      await saveArticleBodyWorkingCopy({
+    const pending = pendingSaveRef.current ?? {
+      input: {
         value,
         community,
         articleId,
         workingCopyId: workingCopy.id,
         revision: workingCopy.revision,
-        commandId: command.commandId,
-      })
+        commandId: createCommandHandle({ operation: 'article.working_copy.save.body' }).commandId,
+      },
+      unknown: false,
+    }
+    pendingSaveRef.current = pending
+    setSaving(true)
+    setSaveError(null)
+    try {
+      await saveArticleBodyWorkingCopy(pending.input)
       await workingCopiesQuery.refetch()
       setEditedValue((current) =>
-        current !== null && JSON.stringify(current) !== JSON.stringify(value) ? current : null,
+        current !== null && JSON.stringify(current) !== JSON.stringify(pending.input.value)
+          ? current
+          : null,
       )
       setEditorKey((current) => current + 1)
       await invalidatePrefix(
         queryClient,
         viewerQueryKeys.articleWorkingCopiesPrefix(accountScope || 'anonymous', articleId),
       )
-      commandRef.current = null
+      pendingSaveRef.current = null
+      setPendingUnknown(false)
       toast('正文已保存到默认编辑副本；公开版本未变')
     } catch (error) {
       const message = error instanceof Error ? error.message : '正文保存失败'
       setSaveError(message)
       const hasRevisionConflict =
         error instanceof ContentPublishError &&
-        (error.status === 409 || error.code.includes('revision_conflict'))
+        (error.status === 409 ||
+          ['command_result_unavailable', 'command_result_expired'].includes(error.code))
+      if (error instanceof ContentPublishError && error.code === 'transport_unknown') {
+        pending.unknown = true
+        setPendingUnknown(true)
+      } else if (
+        !pending.unknown ||
+        isRejectedContentPayload(error) ||
+        hasRevisionConflict ||
+        (error instanceof ContentPublishError && error.code === 'command_id_conflict')
+      ) {
+        pendingSaveRef.current = null
+        setPendingUnknown(false)
+      }
       if (hasRevisionConflict) {
-        commandRef.current = null
         await workingCopiesQuery.refetch().catch(() => undefined)
       }
       toast(message, 'error')
@@ -138,7 +163,6 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
             defaultValue={value}
             onChange={(nextValue) => {
               setEditedValue(nextValue)
-              commandRef.current = null
               setSaveError(null)
             }}
           />
@@ -159,7 +183,12 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
         <Button
           size='small'
           loading={saving || workingCopiesQuery.isFetching}
-          disabled={saving || !hasChanges || !workingCopy || workingCopiesQuery.isFetching}
+          disabled={
+            saving ||
+            (!hasChanges && !pendingUnknown) ||
+            !workingCopy ||
+            workingCopiesQuery.isFetching
+          }
           onClick={save}
           space={3}
         >

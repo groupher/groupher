@@ -14,9 +14,15 @@ defmodule GroupherServer.CMS.ContentPublishContract do
   @doc "Injects the generated Publisher conflict errors into the calling ErrorCat module."
   defmacro define_errors do
     quote do
+      error(:command_id_conflict, code: 4530)
+      error(:command_result_unavailable, code: 4534, actions: [:reconcile])
+      error(:command_result_expired, code: 4536, actions: [:reconcile])
       error(:draft_version_conflict, code: 4539, actions: [:reconcile])
       error(:comment_body_version_conflict, code: 4540, actions: [:reconcile])
       error(:article_working_copy_revision_conflict, code: 4561, actions: [:reconcile])
+      error(:docs_state_conflict, code: 4569, actions: [:reconcile])
+      error(:docs_queue_version_conflict, code: 4582, actions: [:reconcile])
+      error(:docs_queue_copy_revision_conflict, code: 4583, actions: [:reconcile])
     end
   end
 end

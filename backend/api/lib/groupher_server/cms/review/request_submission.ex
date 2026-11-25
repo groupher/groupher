@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   alias GroupherServer.ReviewBot
   alias GroupherServer.{AlertWall, CMS, Repo}
   alias CMS.Model.ArtimentReview
-  alias ReviewBot.Model.ReviewBotConfig
 
   @doc "Creates scoped requests with immutable content and complete configuration snapshots."
   @spec register_in_transaction(map(), map(), map(), :publish | :edit | :recheck | :binding) ::
@@ -50,8 +49,8 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
       fn ->
         with true <- Repo.in_transaction?(),
              {:ok, operation_ref} <- Ecto.UUID.cast(Map.get(target, :operation_ref)),
-             {:ok, scopes} <- policy_scopes(configs, requested_scope),
-             {:ok, attrs} <- target_attrs(target, content, trigger, scopes, operation_ref),
+             {:ok, scopes} <- review_policy_snapshots(configs, trigger, requested_scope),
+             {:ok, attrs} <- target_attrs(target, content, scopes, operation_ref),
              {:ok, :pass} <- end_previous_wall_items(target, trigger),
              {:ok, requests} <- insert_scoped_requests(attrs, target) do
           {:ok, requests}
@@ -68,80 +67,22 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
 
-  defp policy_scopes(configs, :all), do: all_policy_scopes(configs)
-
-  defp policy_scopes(configs, requested_scope) do
-    with {:ok, scopes} <- all_policy_scopes(configs) do
-      case Enum.find(scopes, &(&1.scope == requested_scope)) do
-        nil -> {:error, CMS.ErrorCat.invalid_review_block()}
-        scope -> {:ok, [scope]}
-      end
+  defp review_policy_snapshots(configs, trigger, scope) do
+    case ReviewBot.policy_snapshots(configs, trigger, scope) do
+      {:ok, snapshots} -> {:ok, snapshots}
+      {:error, _reason} -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end
 
-  defp all_policy_scopes(%{system: %ReviewBotConfig{} = system, community: nil}) do
-    {:ok, [%{scope: :system, config: system, system_config: system}]}
-  end
-
-  defp all_policy_scopes(%{
-         system: %ReviewBotConfig{} = system,
-         community: %ReviewBotConfig{} = community
-       }) do
-    {:ok,
-     [
-       %{scope: :system, config: system, system_config: system},
-       %{scope: {:community, community.community_id}, config: community, system_config: system}
-     ]}
-  end
-
-  defp all_policy_scopes(%{system: %ReviewBotConfig{} = system, communities: communities})
-       when is_map(communities) do
-    scope_policies =
-      communities
-      |> Enum.sort_by(fn {community_id, _config} -> community_id end)
-      |> Enum.map(fn {community_id, %ReviewBotConfig{} = config} ->
-        %{scope: {:community, community_id}, config: config, system_config: system}
-      end)
-
-    {:ok, [%{scope: :system, config: system, system_config: system} | scope_policies]}
-  end
-
-  defp all_policy_scopes(_configs) do
-    {:error, CMS.ErrorCat.invalid_review_block()}
-  end
-
-  defp target_attrs(target, content, trigger, scopes, operation_ref) do
+  defp target_attrs(target, content, scopes, operation_ref) do
     with {:ok, payload} <- normalize_content(content),
          {:ok, common} <- validate_target(target) do
       {:ok,
        Enum.map(scopes, fn scope ->
-         config = scope.config
-         system_config = scope.system_config
-         community_id = community_id(scope.scope)
-
-         policy_snapshot = %{
-           "scope" => scope_name(scope.scope),
-           "trigger" => Atom.to_string(trigger),
-           "system_config_id" => system_config.id,
-           "system_config_version" => system_config.version,
-           "config_id" => config.id,
-           "config_version" => config.version,
-           "system_prompt" => system_config.prompt,
-           "prompt" => if(scope.scope == :system, do: "", else: config.prompt),
-           "ban_words" => config.ban_words
-         }
-
-         policy_snapshot =
-           if scope.scope == :system do
-             policy_snapshot
-           else
-             Map.put(policy_snapshot, "review_mode", Atom.to_string(config.review_mode))
-           end
-
          Map.merge(common, %{
            operation_ref: operation_ref,
-           community_id: community_id,
-           policy_snapshot: policy_snapshot,
+           community_id: scope.community_id,
+           policy_snapshot: scope.policy_snapshot,
            payload: payload
          })
        end)}
@@ -273,10 +214,4 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
       AlertWall.mark_content_changed_in_transaction(:comment, to_string(id), Ecto.UUID.generate())
     end
   end
-
-  defp community_id({:community, community_id}), do: community_id
-  defp community_id(:system), do: nil
-
-  defp scope_name({:community, community_id}), do: "community:#{community_id}"
-  defp scope_name(:system), do: "system"
 end

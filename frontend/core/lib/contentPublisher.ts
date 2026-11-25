@@ -27,6 +27,19 @@ export class ContentPublishError extends Error {
   }
 }
 
+/** Identifies payload rejections made before the Publisher forwards a command. */
+export const isRejectedContentPayload = (error: unknown): boolean =>
+  error instanceof ContentPublishError &&
+  [
+    'payload_too_large',
+    'unsupported_media_type',
+    'invalid_json',
+    'invalid_request',
+    'invalid_value',
+    'too_many_nodes',
+    'value_too_deep',
+  ].includes(error.code)
+
 type TPublisherResponse<TResult> = {
   error?: { code?: string; details?: unknown; message?: string }
   ok?: boolean
@@ -82,7 +95,33 @@ export const publishContentCommand = async <TResult>(
       status: 0,
     })
   }
-  const payload = (await response.json().catch(() => null)) as TPublisherResponse<TResult> | null
+  let payload: TPublisherResponse<TResult> | null
+  try {
+    payload = (await response.json()) as TPublisherResponse<TResult> | null
+  } catch (cause) {
+    const rejected = response.status >= 400 && response.status < 500
+    throw new ContentPublishError(
+      rejected
+        ? 'Content Publisher could not complete the command.'
+        : 'Content Publisher response is unknown.',
+      {
+        code: rejected ? 'upstream_graphql_error' : 'transport_unknown',
+        details: cause instanceof Error ? cause.message : undefined,
+        retryAfter: retryAfterSeconds(response.headers.get('retry-after')),
+        status: response.status,
+      },
+    )
+  }
+  if (response.status >= 500 || (response.ok && (!payload?.ok || payload.result === undefined))) {
+    throw new ContentPublishError(
+      payload?.error?.message || 'Content Publisher response is unknown.',
+      {
+        code: 'transport_unknown',
+        details: payload?.error?.details,
+        status: response.status,
+      },
+    )
+  }
   if (!response.ok || !payload?.ok || payload.result === undefined) {
     throw new ContentPublishError(
       payload?.error?.message || 'Content Publisher could not complete the command.',

@@ -37,9 +37,9 @@ defmodule GroupherServer.Analysis.Contribution.Workflow do
            with {:ok, contribute} <- Persist.record_community(community),
                 digest <- Query.community_records(community) |> Query.digest_from_records(),
                 {:ok, result} <-
-                  CMS.communities_update_operations(
+                  CMS.communities_update_contribution_digest(
                     community,
-                    %{contributes_digest: digest},
+                    digest,
                     Ecto.UUID.generate()
                   ) do
              %{contribute: contribute, community: result}

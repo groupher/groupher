@@ -366,6 +366,37 @@ defmodule GroupherServer.Test.ActivityTest do
     assert {:error, _} = Activity.list_article_logs(post, nil)
   end
 
+  test "ArticleLog limits mirrored Article events to the requested community" do
+    {community, post, _attrs, user} = mock_article(:post)
+    {:ok, destination} = mock_community(user)
+    article = Repo.get!(CMS.Model.Article, post.id)
+
+    assert {:ok, _binding} =
+             Repo.transact(fn -> CMS.Articles.BindingPersist.mirror(article, destination) end)
+
+    assert {:ok, source_event} =
+             Activity.log(Map.put(post, :community_id, community.id), :restored, actor: user)
+
+    assert {:ok, destination_event} =
+             Activity.log(Map.put(post, :community_id, destination.id), :restored, actor: user)
+
+    assert {:ok, source_logs} =
+             Activity.list_article_logs(Map.put(post, :community, community), nil)
+
+    assert {:ok, destination_logs} =
+             Activity.list_article_logs(Map.put(post, :community, destination), nil)
+
+    source_ids = Enum.map(source_logs.entries, & &1.id)
+    destination_ids = Enum.map(destination_logs.entries, & &1.id)
+    assert source_event.event_ref in source_ids
+    refute destination_event.event_ref in source_ids
+    assert destination_event.event_ref in destination_ids
+    refute source_event.event_ref in destination_ids
+
+    {:ok, unrelated} = mock_community(user)
+    assert {:error, _} = Activity.list_article_logs(Map.put(post, :community, unrelated), nil)
+  end
+
   test "ArticleLog keeps ordinary WorkingCopies owner-scoped" do
     {community, _published, _attrs, user} = mock_article(:post)
     {:ok, stranger} = db_insert(:user)
@@ -663,6 +694,22 @@ defmodule GroupherServer.Test.ActivityTest do
     {:ok, scope} = CMS.passport_community_scope(manager, community)
     admin |> CommunityAdmin.changeset(%{permissions: %{}}) |> Repo.update!()
 
+    now = DateTime.utc_now(:second)
+    selection = %{filter: %{occurred_after: DateTime.add(now, -1, :day), occurred_before: now}}
+
+    assert {:ok, _} =
+             Activity.get_community_log_stats(community, manager, selection,
+               passport_scope: scope
+             )
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.get_community_log_stats(community, manager, %{filter: %{}})
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.get_community_log_stats(community, manager, %{filter: %{}},
+               passport_scope: nil
+             )
+
     assert {:ok, _} =
              Activity.list_community_logs(
                community,
@@ -731,6 +778,11 @@ defmodule GroupherServer.Test.ActivityTest do
              )
 
     {other_community, _other_post, _other_attrs, _other_owner} = mock_article(:post)
+
+    assert {:error, %ErrorCat.Error{code: 4353}} =
+             Activity.get_community_log_stats(other_community, manager, %{filter: %{}},
+               passport_scope: scope
+             )
 
     assert {:error, %ErrorCat.Error{code: 4353}} =
              Activity.list_community_logs(

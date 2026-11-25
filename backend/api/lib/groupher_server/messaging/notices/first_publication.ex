@@ -13,7 +13,6 @@ defmodule GroupherServer.Messaging.Notices.FirstPublication do
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}
   alias Accounts.Model.User
   alias CMS.Model.Embeds
-  alias CMS.Outbox.Event
   alias Messaging.Model.Notice
   alias Messaging.Notices.Dedup
 
@@ -38,29 +37,25 @@ defmodule GroupherServer.Messaging.Notices.FirstPublication do
     end
   end
 
-  defp snapshot(%Event{
-         id: event_id,
-         event: "article.first_published_notification",
-         resource_type: "article",
-         resource_id: resource_id,
-         operation_ref: operation_ref,
-         contract_version: 1,
-         data: data
-       })
-       when is_map(data) do
+  defp snapshot(%{
+         event_id: event_id,
+         article_id: article_id,
+         title: title,
+         thread: thread,
+         author: author,
+         recipient_ids: recipient_ids
+       }) do
     with {:ok, event_id} <- Ecto.UUID.cast(event_id),
-         {:ok, _operation_ref} <- Ecto.UUID.cast(operation_ref),
-         {:ok, article_id} <- Ecto.UUID.cast(resource_id),
-         {:ok, ^article_id} <- Ecto.UUID.cast(data["article_id"]),
-         true <- is_binary(data["title"]),
-         {:ok, thread} <- thread(data["thread"]),
-         {:ok, author} <- author(data["author"]),
-         {:ok, recipient_ids} <- recipients(data["notify_user_ids"]) do
+         {:ok, article_id} <- Ecto.UUID.cast(article_id),
+         true <- is_binary(title),
+         {:ok, thread} <- thread(thread),
+         {:ok, author} <- author(author),
+         {:ok, recipient_ids} <- recipients(recipient_ids) do
       {:ok,
        %{
          event_id: event_id,
          article_id: article_id,
-         title: data["title"],
+         title: title,
          thread: thread,
          author: author,
          recipient_ids: recipient_ids
