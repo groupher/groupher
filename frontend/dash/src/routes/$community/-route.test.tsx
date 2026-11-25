@@ -57,6 +57,24 @@ describe('Dash community route loader', () => {
     await expect(resultPromise).resolves.toMatchObject({ locale: { locale: 'zh' } })
   })
 
+  it('observes an explicit locale failure while the community request is pending', async () => {
+    mocks.loadCommunity.mockReturnValue(new Promise(() => undefined))
+    mocks.loadLocale.mockRejectedValue(new Error('locale load failed'))
+    const load = Route.options.loader as unknown as (input: {
+      context: { queryClient: QueryClient }
+      deps: { lang?: string; mode?: string }
+      params: { community: string }
+    }) => Promise<unknown>
+
+    const resultPromise = load({
+      context: { queryClient: new QueryClient() },
+      deps: { lang: 'zh' },
+      params: { community: 'home' },
+    })
+
+    await expect(resultPromise).rejects.toThrow('locale load failed')
+  })
+
   it('loads the dashboard locale after community data when there is no route override', async () => {
     mocks.loadCommunity.mockResolvedValue(communityData)
     const load = Route.options.loader as unknown as (input: {
