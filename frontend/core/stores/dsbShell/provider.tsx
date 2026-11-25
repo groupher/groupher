@@ -1,10 +1,8 @@
 'use client'
 
-import { useQueryClient } from '@tanstack/react-query'
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useLayoutEffect, useMemo, useState } from 'react'
 
-import { dsbKeys } from '~/query'
-import type { TDsbEditableFieldKey, TDsb } from '~/spec'
+import type { TDsb } from '~/spec'
 
 import { createDsbShellStore } from '.'
 import { DsbShellContext } from './context'
@@ -19,28 +17,12 @@ type TProps = {
 }
 
 export default function DsbShellProvider({ children, community, demoMode, initialData }: TProps) {
-  const queryClient = useQueryClient()
   const [editStore] = useState(() => createDsbShellStore(initialData))
 
-  useEffect(() => {
-    editStore.reconcileConfirmed(initialData)
-  }, [editStore, initialData])
-
-  useEffect(() => {
-    if (!demoMode) return
-
-    const saved = readDemoFields(community)
-    const fields = Object.keys(saved).filter(
-      (field) => field in editStore.original,
-    ) as TDsbEditableFieldKey[]
-    if (fields.length === 0) return
-
-    editStore.editMany(saved)
-    editStore.accept(fields)
-    queryClient.setQueryData<TDsb>(dsbKeys.slug(community), (current) =>
-      current ? { ...current, ...saved } : current,
-    )
-  }, [community, demoMode, editStore, queryClient])
+  useLayoutEffect(() => {
+    const confirmed = demoMode ? { ...initialData, ...readDemoFields(community) } : initialData
+    editStore.reconcileConfirmed(confirmed)
+  }, [community, demoMode, editStore, initialData])
 
   const value = useMemo<TDsbShellContextValue>(
     () => ({

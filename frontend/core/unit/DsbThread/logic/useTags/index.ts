@@ -1,93 +1,121 @@
-import { pick } from 'ramda'
+import { useQuery } from '@tanstack/react-query'
+import type { UseQueryOptions } from '@tanstack/react-query'
+import { useEffect, useMemo } from 'react'
 
-import type {
-  TColorName,
-  TEditFunc,
-  TInlineTagLayout,
-  TTag,
-  TTagGroup,
-  TTagLayout,
-  TThread,
-} from '~/spec'
-import type { TChangeTagMode } from '~/spec'
-import { useTagsEditor } from '~/stores/dsbShell/editor'
-import useDsbShell from '~/stores/dsbShell/hooks'
+import { CHANGE_MODE } from '~/const/mode'
+import { Q } from '~/query'
+import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
+import { useDsbShellSession } from '~/stores/dsbShell/hooks'
+import { applyTagSortOrder } from '~/unit/DsbThread/Tags/store'
+import { demoTagGroupsQueryKey, readDemoTagGroups } from '~/unit/DsbThread/Tags/store/demo'
+import useTagsEditor from '~/unit/DsbThread/Tags/store/hooks'
 
-import useHelper from '../useHelper'
-import useDerived, { type TRet as TDrived } from './useDerived'
+import useDerived, { type TRet as TDerived } from './useDerived'
 import useUtils from './useUtils'
 
-type TRet = {
+type TUpdateSession = { source: 'inline' | 'form'; id: number }
+
+type TRet = TDerived & {
   loading: boolean
   saving: boolean
   editingTag: TTag | null
   settingTag: TTag | null
   activeTagGroup: string | null
-  activeTagThread: TThread | null
-  tagLayout: TTagLayout
-  inlineTagLayout: TInlineTagLayout
-
-  edit: TEditFunc
+  activeTagThread: TThread
   changeThread: (thread: TThread) => void
-  editTag: (key: TChangeTagMode, tag: TTag) => void
-
-  loadTags: (thread?: TThread) => void
+  setActiveGroup: (groupId: string | null) => void
+  editTag: (key: 'editingTag' | 'settingTag', tag: TTag | null) => void
   createGroup: (title: string) => Promise<void>
   createTag: (title: string, groupId: string, color?: TColorName) => Promise<void>
-  updateTag: (tag: TTag) => Promise<void>
+  createTagFromForm: (tag: TTag, session: number) => Promise<void>
+  updateTag: (tag: TTag, session?: TUpdateSession) => Promise<void>
+  deleteTag: (tag: TTag, session: number) => Promise<void>
   renameGroup: (groupId: string, toGroup: string) => Promise<void>
   commitTagSorting: (tagGroups: TTagGroup[]) => void
-} & TDrived
+  saveTagSorting: () => Promise<void>
+  resetTagSorting: () => void
+  hasSortingChanges: boolean
+}
 
-/** Exposes tags state and actions through the shared React hook boundary. */
+/** Exposes Tags page data and actions while Query owns confirmed tag groups. */
 export default function useTags(): TRet {
-  const dsb$ = useDsbShell()
   const tagsEditor = useTagsEditor()
-  const { edit } = useHelper()
-  const derived = useDerived()
+  const activeTagThread = tagsEditor.activeThread
+  const { demoMode } = useDsbShellSession()
+  const tagGroupsOptions = Q.article.tagGroups(tagsEditor.community, activeTagThread)
+  const tagGroupsQuery = useQuery({
+    ...tagGroupsOptions,
+    ...(demoMode
+      ? {
+          queryKey: demoTagGroupsQueryKey(tagsEditor.community, activeTagThread),
+          initialData: readDemoTagGroups(tagsEditor.community, activeTagThread),
+          staleTime: Number.POSITIVE_INFINITY,
+        }
+      : {}),
+  } as UseQueryOptions<TTagGroup[]>)
+  const confirmedTagGroups = tagGroupsQuery.data ?? []
+  const sortState = tagsEditor.sorting[activeTagThread]
+  const tagGroups = useMemo(
+    () => applyTagSortOrder(confirmedTagGroups, sortState?.draft ?? null),
+    [confirmedTagGroups, sortState?.draft],
+  )
+  const derived = useDerived(tagGroups, tagsEditor.activeGroupId)
 
   const {
-    loadTags,
-    loading,
     createGroup,
     createTag,
+    createTagFromForm,
     updateTag,
+    deleteTag,
     commitTagSorting,
+    saveTagSorting,
+    resetTagSorting,
+    hasSortingChanges,
     renameGroup,
     saving,
-  } = useUtils()
+  } = useUtils(confirmedTagGroups, activeTagThread)
 
-  const exportState = ['tagLayout', 'inlineTagLayout', 'activeTagGroup', 'activeTagThread']
+  useEffect(() => {
+    if (tagGroupsQuery.data) {
+      tagsEditor.store.syncConfirmedOrder(activeTagThread, tagGroupsQuery.data)
+    }
+  }, [activeTagThread, tagGroupsQuery.data, tagsEditor.store])
 
-  const editTag = (key: TChangeTagMode, tag: TTag): void => tagsEditor.setTag(key, tag)
+  const editTag = (key: 'editingTag' | 'settingTag', tag: TTag | null): void => {
+    if (key === 'editingTag') {
+      if (tag) tagsEditor.store.beginInlineEdit(tag)
+      else tagsEditor.store.clearInlineEdit()
+      return
+    }
+
+    if (tag) tagsEditor.store.beginTagForm(CHANGE_MODE.UPDATE, tag)
+    else tagsEditor.store.clearTagForm()
+  }
+
   const changeThread = (thread: TThread): void => {
-    dsb$.editMany({
-      activeTagThread: thread,
-      activeTagGroup: null,
-    })
-    tagsEditor.setEditingTag(null)
-    tagsEditor.setSettingTag(null)
-    loadTags(thread)
+    tagsEditor.store.setActiveThread(thread)
   }
 
   return {
-    // @ts-expect-error
-    ...pick(exportState, dsb$),
-    editingTag: tagsEditor.editingTag,
-    settingTag: tagsEditor.settingTag,
-    loading,
+    activeTagGroup: tagsEditor.activeGroupId,
+    activeTagThread,
+    editingTag: tagsEditor.inlineTagDraft,
+    settingTag: tagsEditor.tagFormMode === CHANGE_MODE.UPDATE ? tagsEditor.tagFormDraft : null,
+    loading: tagGroupsQuery.isPending || tagGroupsQuery.isFetching,
     ...derived,
     saving,
-    // actions
     changeThread,
+    setActiveGroup: (groupId) => tagsEditor.store.setActiveGroup(groupId),
     editTag,
-    edit,
-    // move actions
-    loadTags,
     createGroup,
     createTag,
+    createTagFromForm,
     updateTag,
+    deleteTag,
     renameGroup,
     commitTagSorting,
+    saveTagSorting: () => saveTagSorting(tagGroups),
+    resetTagSorting,
+    hasSortingChanges,
   }
 }

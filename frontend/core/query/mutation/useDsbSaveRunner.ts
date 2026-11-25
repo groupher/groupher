@@ -9,7 +9,6 @@ import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDsbFieldMap, TDsb } from '~/spec'
 import { writeDemoFields } from '~/stores/dsbShell/demoFields'
-import { useDsbShellSession } from '~/stores/dsbShell/hooks'
 import type { TDsbShellStore } from '~/stores/dsbShell/spec'
 import { toast } from '~/ui/Toaster'
 import type { TDsbEditableFieldKey, TDsbFieldKey } from '~/unit/DsbThread/spec'
@@ -17,6 +16,9 @@ import type { TDsbEditableFieldKey, TDsbFieldKey } from '~/unit/DsbThread/spec'
 import type { TDsbConfirmedReader } from './dsb/types'
 
 export type TDsbSaveExecution = {
+  community: string
+  demoMode: boolean
+  dashboardStore: TDsbShellStore
   execute: (commandId: string) => Promise<unknown>
   field: TDsbFieldKey
   submitted: Partial<TDsbFieldMap>
@@ -27,26 +29,30 @@ export type TDsbSaveExecution = {
 
 type TArgs = {
   community: string
-  dashboardStore: TDsbShellStore
 }
 
 /** Owns only transport lifecycle, confirmed Query update, and editor reconcile. */
-export default function useDsbSaveRunner({ community, dashboardStore }: TArgs) {
+export default function useDsbSaveRunner({ community }: TArgs) {
   const queryClient = useQueryClient()
   const { t } = useTrans()
-  const { demoMode } = useDsbShellSession()
   const mutationKey = dsbMutationKeys.save(community)
 
-  const applyConfirmed = (request: TDsbSaveExecution, confirmed: Partial<TDsbFieldMap>): void => {
-    queryClient.setQueryData<TDsb>(dsbKeys.slug(community), (previous) =>
-      previous ? { ...previous, ...confirmed } : previous,
-    )
-    dashboardStore.reconcile({
+  const applyConfirmed = (
+    request: TDsbSaveExecution,
+    confirmed: Partial<TDsbFieldMap>,
+    data: unknown,
+  ): void => {
+    if (!request.demoMode) {
+      queryClient.setQueryData<TDsb>(dsbKeys.slug(request.community), (previous) =>
+        previous ? { ...previous, ...confirmed } : previous,
+      )
+    }
+    request.dashboardStore.reconcile({
       fields: request.savedFields,
       submitted: request.submitted,
       confirmed,
     })
-    request.afterConfirmed?.(undefined)
+    request.afterConfirmed?.(data)
   }
 
   const confirm = (request: TDsbSaveExecution, data: unknown): void => {
@@ -65,17 +71,17 @@ export default function useDsbSaveRunner({ community, dashboardStore }: TArgs) {
     }
 
     if (!responseComplete) {
-      void invalidate(queryClient, QueryInvalidation.community.dashboard(community))
+      void invalidate(queryClient, QueryInvalidation.community.dashboard(request.community))
     }
 
-    applyConfirmed(request, confirmed)
+    applyConfirmed(request, confirmed, data)
   }
 
   const saveMutation = useMutation({
     mutationKey,
     mutationFn: async (request: TDsbSaveExecution) => {
-      if (demoMode) {
-        writeDemoFields(community, request.submitted)
+      if (request.demoMode) {
+        writeDemoFields(request.community, request.submitted)
         return null
       }
 
@@ -85,8 +91,8 @@ export default function useDsbSaveRunner({ community, dashboardStore }: TArgs) {
       })
     },
     onSuccess: (data, request) => {
-      if (demoMode) {
-        applyConfirmed(request, clone(request.submitted))
+      if (request.demoMode) {
+        applyConfirmed(request, clone(request.submitted), null)
       } else {
         confirm(request, data)
       }
@@ -100,7 +106,8 @@ export default function useDsbSaveRunner({ community, dashboardStore }: TArgs) {
 
   return {
     save: saveMutation.mutate,
-    isPending: useIsMutating({ mutationKey: dsbMutationKeys.save() }) > 0,
-    error: saveMutation.error as Error | null,
+    isPending: useIsMutating({ mutationKey }) > 0,
+    error:
+      saveMutation.variables?.community === community ? (saveMutation.error as Error | null) : null,
   }
 }

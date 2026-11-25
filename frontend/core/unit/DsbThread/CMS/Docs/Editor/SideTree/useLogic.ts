@@ -12,7 +12,8 @@ import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
 
 import { reloadDocsPublishQueue } from '../helper'
-import useDocsEditor from '../store/hooks'
+import { deriveDocSaveStatus } from '../store'
+import { useDocsEditorStore } from '../store/hooks'
 import {
   DEFAULT_LINK_MARKER,
   DOC_TREE_NODE_TYPE_WIRE,
@@ -109,7 +110,13 @@ const findTabByDocId = (tabs: readonly TSideTreeTab[], docId: string | null): TS
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeController {
   const { t } = useTrans()
-  const { saveStatus } = useDocsEditor()
+  const editorStore = useDocsEditorStore()
+  const saveStatus = deriveDocSaveStatus(
+    editorStore.draft,
+    editorStore.savedDraft,
+    editorStore.loadStatus,
+    editorStore.draftSaveStatus,
+  )
   const saveStatusRef = useRef(saveStatus)
   saveStatusRef.current = saveStatus
   const { currentDocId, syncDocIdToUrl } = useDocEditorUrl()

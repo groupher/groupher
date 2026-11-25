@@ -71,10 +71,8 @@ export const createDsbShellStore = (initial: TDsbEditableFields): TDsbShellStore
   }
 
   const resetEditor = (): void => {
-    store.editingTag = null
-    store.settingTag = null
     store.editingAlias = null
-    store.docFaqSaveZone = null
+    store.setDocFaqSaveZone(null)
     store.activeAdmin = null
   }
 
@@ -104,27 +102,16 @@ export const createDsbShellStore = (initial: TDsbEditableFields): TDsbShellStore
         store.ui.submenuCollapsed = value
       },
     },
-    editingTag: null,
-    settingTag: null,
     editingAlias: null,
     docFaqSaveZone: null,
+    docFaqSaveSession: 0,
     activeAdmin: null,
-    setEditingTag: (tag) => {
-      store.editingTag = tag
-    },
-    setSettingTag: (tag) => {
-      store.settingTag = tag
-    },
-    setTag: (mode, tag) => {
-      if (mode === 'editingTag') store.settingTag = null
-      else store.editingTag = null
-      store[mode] = tag
-    },
     setEditingAlias: (alias) => {
       store.editingAlias = alias
     },
     setDocFaqSaveZone: (zone) => {
       store.docFaqSaveZone = zone
+      store.docFaqSaveSession += 1
     },
     setActiveAdmin: (admin) => {
       store.activeAdmin = admin

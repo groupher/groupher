@@ -6,33 +6,30 @@ import type { TCommunityThread, TNameAlias, TTag, TTagGroup } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDsbShell from '~/stores/dsbShell/hooks'
 
-import { FIELD } from '../../constant'
-import useTouch from '../useHelper/useTouch'
-
 export type TRet = {
   tags: readonly TTag[]
   tagGroups: readonly TTagGroup[]
   groups: string[]
   threads: TCommunityThread[]
-  tagLayoutTouched: boolean
-  inlineTagLayoutTouched: boolean
 }
 
 /** Exposes derived state and actions through the shared React hook boundary. */
-export default function useDerived(): TRet {
+export default function useDerived(
+  tagGroups: readonly TTagGroup[],
+  activeGroupId: string | null,
+): TRet {
   const dsb$ = useDsbShell()
   const community$ = useCommunity()
-  const { isChanged } = useTouch()
 
-  const { tagGroups, activeTagGroup, nameAlias } = dsb$
+  const { nameAlias } = dsb$
 
   const filteredTags = useMemo(() => {
-    const activeGroups = activeTagGroup
-      ? tagGroups.filter((group) => group.id === activeTagGroup)
+    const activeGroups = activeGroupId
+      ? tagGroups.filter((group) => group.id === activeGroupId)
       : tagGroups
 
     return activeGroups.flatMap((group) => group.tags)
-  }, [activeTagGroup, tagGroups])
+  }, [activeGroupId, tagGroups])
 
   const groups = useMemo(() => tagGroups.map((group) => group.title), [tagGroups])
 
@@ -53,15 +50,10 @@ export default function useDerived(): TRet {
     )
   }, [community$.threads, nameAlias])
 
-  const tagLayoutTouched = isChanged(FIELD.TAG_LAYOUT)
-  const inlineTagLayoutTouched = isChanged(FIELD.INLINE_TAG_LAYOUT)
-
   return {
     tags: filteredTags,
     tagGroups,
     groups,
     threads,
-    tagLayoutTouched,
-    inlineTagLayoutTouched,
   }
 }

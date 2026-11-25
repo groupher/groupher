@@ -5,7 +5,7 @@ import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DsbThread/schema/docs'
 
-import useDocsEditor from '../../store/hooks'
+import useDocsEditorCommands from '../../commands/hooks'
 import { composeWorkingCopySession } from '../helper'
 import type { TDocEditorSource } from '../spec'
 import type { TDraftEditorState } from './useDraftEditorState'
@@ -13,7 +13,7 @@ import type { TDraftEditorState } from './useDraftEditorState'
 /** Explicitly opens a new editing session; neither reads nor stale saves recreate D. */
 export default function useBeginDocEdit(state: TDraftEditorState) {
   const { slug: community } = useCommunity()
-  const { reloadSideTree } = useDocsEditor()
+  const { reloadSideTree } = useDocsEditorCommands()
   const [starting, setStarting] = useState(false)
   const latest = useRef(state)
   useLayoutEffect(() => {

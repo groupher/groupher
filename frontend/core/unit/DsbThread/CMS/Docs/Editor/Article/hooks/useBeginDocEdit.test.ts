@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: mocks.request }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
-vi.mock('../../store/hooks', () => ({ default: () => ({ reloadSideTree: mocks.reload }) }))
+vi.mock('../../commands/hooks', () => ({ default: () => ({ reloadSideTree: mocks.reload }) }))
 vi.mock('~/query/mutation/optimistic/execute', () => ({
   executeCommand: ({
     request,

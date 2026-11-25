@@ -1,38 +1,52 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 
+import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
-import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
-import useChangeI18n from '~/hooks/useChangeI18n'
-import useTrans from '~/hooks/useTrans'
-import type { TLocale } from '~/spec'
+import useLocale from '~/stores/locale/hooks'
+import LocaleProvider from '~/stores/locale/provider'
+import { MetricProvider } from '~/stores/metric'
 
-const { loadLocaleFile } = vi.hoisted(() => ({
-  loadLocaleFile: vi.fn(async () => ({ post: 'Hi' })),
+import useChangeI18n from './index'
+
+const mocks = vi.hoisted(() => ({ loadLocaleFile: vi.fn() }))
+
+vi.mock('~/i18n', () => ({
+  getI18nNamespacesByMetric: () => [],
+  loadLocaleFile: mocks.loadLocaleFile,
 }))
 
-vi.mock('~/i18n', () => {
-  return {
-    getI18nNamespacesByMetric: vi.fn((metric) =>
-      metric === METRIC.DASHBOARD ? ['base', 'dashboard'] : ['base', 'main'],
-    ),
-    loadLocaleFile,
-  }
-})
-
 describe('useChangeI18n', () => {
-  it('loads locale file and commits to locale store', async () => {
-    const wrapper = makeStoreWrapper({ localeData: '{}', metric: METRIC.COMMUNITY })
-    const { result } = renderHook(() => ({ i18n: useChangeI18n(), trans: useTrans() }), { wrapper })
-
-    const zh: TLocale = 'zh'
-    act(() => result.current.i18n.changeLocale(zh))
-
-    await waitFor(() => {
-      expect(result.current.i18n.locale).toBe(zh)
+  it('ignores an older locale load after a newer locale request', async () => {
+    const pending = new Map<string, (value: Record<string, string>) => void>()
+    mocks.loadLocaleFile.mockImplementation(
+      (locale: string) =>
+        new Promise((resolve) => {
+          pending.set(locale, resolve)
+        }),
+    )
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <MetricProvider value={METRIC.DASHBOARD}>
+        <LocaleProvider initData={{ locale: LOCALE.EN, localeData: 'initial' }}>
+          {children}
+        </LocaleProvider>
+      </MetricProvider>
+    )
+    const { result } = renderHook(() => ({ locale: useLocale(), changeI18n: useChangeI18n() }), {
+      wrapper,
     })
-    await waitFor(() => {
-      expect(result.current.trans.t('post')).toBe('Hi')
+
+    act(() => {
+      result.current.changeI18n.changeLocale(LOCALE.ZH)
+      result.current.changeI18n.changeLocale(LOCALE.EN)
     })
-    expect(loadLocaleFile).toHaveBeenCalledWith(zh, ['base', 'main'])
+    await waitFor(() => expect(pending.size).toBe(2))
+
+    await act(async () => pending.get(LOCALE.EN)?.({ message: 'English' }))
+    await waitFor(() => expect(result.current.locale.localeData).toBe('{"message":"English"}'))
+    await act(async () => pending.get(LOCALE.ZH)?.({ message: '中文' }))
+
+    expect(result.current.locale.locale).toBe(LOCALE.EN)
+    expect(result.current.locale.localeData).toBe('{"message":"English"}')
   })
 })

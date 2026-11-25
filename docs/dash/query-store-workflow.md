@@ -4,8 +4,9 @@
 > Wallpaper projection、compatibility facade 退出和 server-owned CacheEffect 已收口。真实 Cloudflare
 > purge、跨 PoP 行为和生产告警仍是独立发布门。
 >
-> 2026-11 后续：Community / Dsb / DsbShell 的状态边界以 [store-boundary-refactor.md](./store-boundary-refactor.md)
-> 为准。Demo 不再按只读 Demo 处理，而是与 Dash 共用 DsbShell 会话，Dsb 字段保存走本地适配器；
+> 2026-11 后续：Dash 编辑器的当前状态边界与 R0–R7 批次以
+> [store-boundary-refactor.md](./store-boundary-refactor.md) 为准。Demo 与 Dash 共用 DsbShell 会话，
+> Dsb 字段走本地适配器；Tags 标签组确认数据由 `Q.article.tagGroups` 持有，TagsEditor 独立持有编辑会话；
 > `submenuCollapsed` 合并到 `DsbShellStore.ui`。下方 Phase 4 的“只读 Demo”和独立 shell UI state
 > 表述属于上一轮历史。
 >
@@ -39,7 +40,7 @@
   -> TanStack Query
 
 本地 UI / Dashboard 未保存编辑值
-  -> Valtio（Dsb 使用专用 DsbEditStore）
+  -> Valtio（DsbShellStore；复杂 Tags 与 Wallpaper 各持有编辑器范围状态）
 
 mutation
   -> TanStack mutation

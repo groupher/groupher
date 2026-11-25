@@ -1,6 +1,6 @@
 'use client'
 
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 
 import setupStore from '.'
 import { StoreContext } from './context'
@@ -13,10 +13,6 @@ type TProps = {
 
 export default function Provider({ children, initData = {} }: TProps) {
   const [store] = useState<TStore>(() => setupStore(initData))
-
-  useEffect(() => {
-    if (initData.sideTree) store.attachSideTree(initData.sideTree)
-  }, [initData.sideTree, store])
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }

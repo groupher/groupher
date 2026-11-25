@@ -3,7 +3,6 @@ import useBeginDocEdit from './useBeginDocEdit'
 import useDraftAutoSave from './useDraftAutoSave'
 import useDraftEditorState from './useDraftEditorState'
 import useDraftLoader from './useDraftLoader'
-import useDraftStoreSync from './useDraftStoreSync'
 import useLocalDraftHistory from './useLocalDraftHistory'
 
 /** Exposes logic state and actions through the shared React hook boundary. */
@@ -16,7 +15,6 @@ export default function useLogic(sideTree: TSideTreeController) {
   const begin = useBeginDocEdit(draftState)
   useDraftLoader(draftState)
   const localDraftHistory = useLocalDraftHistory(draftState)
-  useDraftStoreSync(draftState)
 
   return {
     ...begin,

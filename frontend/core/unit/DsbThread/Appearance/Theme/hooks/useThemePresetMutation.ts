@@ -1,6 +1,9 @@
-import { useMutation as useTanStackMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  useIsMutating,
+  useMutation as useTanStackMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { clone } from 'ramda'
-import { useRef } from 'react'
 
 import { DEFAULT_THEME_PRESET, THEME_PRESET } from '~/const/theme_preset'
 import { browserGraphQLRequest } from '~/graphql/client'
@@ -10,8 +13,9 @@ import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDsb, TResolvedThemePreset, TThemePreset, TThemePresetOption } from '~/spec'
 import type { TDsbFieldMap } from '~/spec'
-import useCommunity from '~/stores/community/hooks'
-import { useDsbShellStore } from '~/stores/dsbShell/hooks'
+import { writeDemoFields } from '~/stores/dsbShell/demoFields'
+import { useDsbShellSession, useDsbShellStore } from '~/stores/dsbShell/hooks'
+import type { TDsbShellStore } from '~/stores/dsbShell/spec'
 import { toast } from '~/ui/Toaster'
 import * as S from '~/unit/DsbThread/Appearance/Theme/schema'
 
@@ -34,6 +38,14 @@ type TThemePresetMutationData = {
   }
 }
 
+type TThemePresetSaveVariables = {
+  community: string
+  demoMode: boolean
+  dashboardStore: TDsbShellStore
+  isCustomPreset: boolean
+  submitted: Partial<TDsbFieldMap>
+}
+
 /**
  * ThemePreset-specific mutation boundary.
  *
@@ -47,32 +59,42 @@ type TThemePresetMutationData = {
 export default function useThemePresetMutation(): TThemePresetMutationRet {
   const dashboardStore = useDsbShellStore()
   const { t } = useTrans()
-  const storeRef = useRef(dashboardStore)
-  const { slug: community } = useCommunity()
+  const { community, demoMode } = useDsbShellSession()
   const queryClient = useQueryClient()
+  const mutationKey = dsbMutationKeys.themeSave(community)
 
-  const snapshot = (): Partial<TDsbFieldMap> => {
-    const current = storeRef.current
+  const snapshot = (store: TDsbShellStore): Partial<TDsbFieldMap> => {
     const fields = {} as Partial<TDsbFieldMap>
-    for (const field of THEME_PRESET_STORE_FIELDS) fields[field] = clone(current[field]) as never
+    for (const field of THEME_PRESET_STORE_FIELDS) fields[field] = clone(store[field]) as never
     return fields
   }
 
   const themeMutation = useTanStackMutation({
-    mutationKey: dsbMutationKeys.themeSave(community),
+    mutationKey,
     mutationFn: async ({
+      community: targetCommunity,
+      demoMode: requestDemoMode,
+      dashboardStore: requestStore,
       isCustomPreset,
       submitted,
-    }: {
-      isCustomPreset: boolean
-      submitted: Partial<TDsbFieldMap>
-    }) => {
+    }: TThemePresetSaveVariables) => {
+      if (requestDemoMode) {
+        writeDemoFields(targetCommunity, submitted)
+        return {
+          data: null,
+          submitted,
+          community: targetCommunity,
+          demoMode: requestDemoMode,
+          dashboardStore: requestStore,
+        }
+      }
+
       const data = isCustomPreset
         ? await executeCommand({
             request: (variables) =>
               browserGraphQLRequest<TThemePresetMutationData>(S.saveCustomThemePreset, variables),
             variables: {
-              community,
+              community: targetCommunity,
               themePreset: submitted.themePreset,
               themePresetBase: submitted.themePresetBase ?? DEFAULT_THEME_PRESET,
               themeOverwrite: JSON.stringify(submitted.themeOverwrite ?? {}),
@@ -82,34 +104,49 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
             request: (variables) =>
               browserGraphQLRequest<TThemePresetMutationData>(S.selectThemePreset, variables),
             variables: {
-              community,
+              community: targetCommunity,
               themePreset: submitted.themePreset,
             },
           })
-      return { data, submitted }
+      return {
+        data,
+        submitted,
+        community: targetCommunity,
+        demoMode: requestDemoMode,
+        dashboardStore: requestStore,
+      }
     },
-    onSuccess: ({ data, submitted }) => {
-      const layout = data.saveCustomThemePreset?.layout ?? data.selectThemePreset?.layout
-      const confirmed: Partial<TDsbFieldMap> = layout
-        ? {
-            themePreset: layout.themePreset,
-            themePresetBase: layout.themePresetBase ?? DEFAULT_THEME_PRESET,
-            themeTokens: clone(layout.themeTokens),
-            themePresets: clone(layout.themePresets),
-            themeOverwrite: clone(submitted.themeOverwrite),
-          }
-        : submitted
+    onSuccess: ({
+      data,
+      submitted,
+      community: targetCommunity,
+      demoMode: requestDemoMode,
+      dashboardStore: requestStore,
+    }) => {
+      const layout = data?.saveCustomThemePreset?.layout ?? data?.selectThemePreset?.layout
+      const confirmed: Partial<TDsbFieldMap> =
+        !requestDemoMode && layout
+          ? {
+              themePreset: layout.themePreset,
+              themePresetBase: layout.themePresetBase ?? DEFAULT_THEME_PRESET,
+              themeTokens: clone(layout.themeTokens),
+              themePresets: clone(layout.themePresets),
+              themeOverwrite: clone(submitted.themeOverwrite),
+            }
+          : submitted
 
-      queryClient.setQueryData<TDsb>(dsbKeys.slug(community), (previous) =>
-        previous ? { ...previous, ...confirmed } : previous,
-      )
-      storeRef.current.reconcile({
+      if (!requestDemoMode) {
+        queryClient.setQueryData<TDsb>(dsbKeys.slug(targetCommunity), (previous) =>
+          previous ? { ...previous, ...confirmed } : previous,
+        )
+      }
+      requestStore.reconcile({
         fields: THEME_PRESET_STORE_FIELDS,
         submitted,
         confirmed,
       })
-      if (!layout) {
-        void invalidate(queryClient, QueryInvalidation.community.dashboard(community))
+      if (!requestDemoMode && !layout) {
+        void invalidate(queryClient, QueryInvalidation.community.dashboard(targetCommunity))
       }
 
       toast(t('dsb.appearance.saved'))
@@ -124,20 +161,27 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
     // Only Custom saves sparse `themeOverwrite`; the backend merges it into
     // the dashboard's nullable Custom preset definition. Readonly presets are
     // saved by preset name and do not modify the saved Custom preset.
+    const requestStore = dashboardStore
     themeMutation.mutate({
-      isCustomPreset: storeRef.current.themePreset === THEME_PRESET.CUSTOM,
-      submitted: snapshot(),
+      community,
+      demoMode,
+      dashboardStore: requestStore,
+      isCustomPreset: requestStore.themePreset === THEME_PRESET.CUSTOM,
+      submitted: snapshot(requestStore),
     })
   }
 
   const rollbackThemePreset = (): void => {
-    storeRef.current.rollback(THEME_PRESET_STORE_FIELDS)
+    dashboardStore.rollback(THEME_PRESET_STORE_FIELDS)
   }
 
   return {
     saveThemePreset,
     rollbackThemePreset,
-    isPending: themeMutation.isPending,
-    error: themeMutation.error as Error | null,
+    isPending: useIsMutating({ mutationKey }) > 0,
+    error:
+      (themeMutation.variables as TThemePresetSaveVariables | undefined)?.community === community
+        ? (themeMutation.error as Error | null)
+        : null,
   }
 }

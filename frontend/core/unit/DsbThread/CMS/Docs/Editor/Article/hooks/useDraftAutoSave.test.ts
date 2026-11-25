@@ -9,7 +9,7 @@ import type { TDraftEditorState } from './useDraftEditorState'
 
 const mocks = vi.hoisted(() => ({
   applySaved: vi.fn(),
-  attachSaveDocDraft: vi.fn(),
+  registerSaveDocDraft: vi.fn(),
   patchSideTreeChild: vi.fn(),
   reconcileConflict: vi.fn(),
   saveDocWorkingCopy: vi.fn(),
@@ -28,8 +28,8 @@ vi.mock('~/stores/community/hooks', () => ({
 }))
 vi.mock('~/ui/Toaster', () => ({ toast: vi.fn() }))
 vi.mock('../../helper', () => ({ reloadDocsPublishQueue: vi.fn() }))
-vi.mock('../../store/hooks', () => ({
-  default: () => ({ attachSaveDocDraft: mocks.attachSaveDocDraft }),
+vi.mock('../../commands/hooks', () => ({
+  default: () => ({ registerSaveDocDraft: mocks.registerSaveDocDraft }),
 }))
 
 const createDraftState = (): TDraftEditorState =>
@@ -85,7 +85,7 @@ describe('useDraftAutoSave', () => {
 
     await act(async () => view.result.current.save())
 
-    expect(mocks.attachSaveDocDraft).toHaveBeenCalledWith(expect.any(Function))
+    expect(mocks.registerSaveDocDraft).toHaveBeenCalledWith(expect.any(Function))
     expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
     expect(mocks.saveDocWorkingCopy).toHaveBeenCalledWith(
       expect.objectContaining({

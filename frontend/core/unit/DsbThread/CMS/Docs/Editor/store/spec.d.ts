@@ -2,12 +2,21 @@ import type { TRichEditorValue } from '@groupher/rich-editor'
 
 import type { TArticleStage } from '~/const/article'
 
+import type {
+  TDocDraftSession,
+  TDocDraftSource,
+  TEditorDraft,
+  TEditorDraftMeta,
+  TSavedDraft,
+  TDraftLoadStatus,
+  TDraftSaveStatus,
+} from '../Article/spec'
 import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/spec'
 import type { TDocEditorMode } from '../spec'
 
-export type TDocSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
 export type TDocPublishQueueStatus = 'checking' | 'pending' | 'none'
 export type TDocActionSnackbarMode = 'hidden' | 'article' | 'tree'
+export type TDocSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
 
 export type TDocPublishRuntime = {
   isPublishing: boolean
@@ -54,31 +63,57 @@ export type TDocDraftInfo = {
   characterCount: number
 }
 
-export type TInit = {
-  sideTree?: TSideTreeController
+export type TApplySavedParams = {
+  meta: TEditorDraftMeta
+  requestDraft: TEditorDraft
+  savedDraft: {
+    id: string
+    articleId: string
+    revision: number
+    insertedAt?: string | null
+    updatedAt?: string | null
+    slug?: string | null
+  }
+  startedDraft: TEditorDraft
 }
 
+export type TInit = Record<string, never>
+
 export type TStore = {
-  baselineValue: TRichEditorValue
-  bodyValue: TRichEditorValue
-  docDraftInfo: TDocDraftInfo
+  workingCopyId: string | null
+  publicSnapshotId: string | null
+  draft: TEditorDraft
+  savedDraft: TSavedDraft
+  draftSource: TDocDraftSource
+  meta: TEditorDraftMeta
+  loadStatus: TDraftLoadStatus
+  draftSaveStatus: TDraftSaveStatus
   mode: TDocEditorMode
   publishRuntime: TDocPublishRuntime
-  publishView: TDocPublishView
   revisionReloadKey: number
-  saveError: string | null
-  saveStatus: TDocSaveStatus
-  addGroup: () => void
-  attachSideTree: (sideTree: TSideTreeController) => void
-  attachSaveDocDraft: (handler: (() => Promise<void>) | null) => void
+  applyDraftPatch: (patch: Partial<TEditorDraftMeta>) => void
+  applyLoaded: (session: TDocDraftSession) => void
+  reconcileConflict: (session: TDocDraftSession) => void
+  applySaved: (params: TApplySavedParams) => void
+  clearSaveError: () => void
+  editBodyValue: (value: TRichEditorValue) => void
+  editSubtitle: (value: string) => void
+  editTitle: (value: string) => void
+  resetDraft: () => void
+  setDraftSlug: (slug: string) => void
+  setLoadError: (error: string) => void
+  setLoading: () => void
+  setSaveError: (error: string) => void
+  setSaving: () => void
   reloadDocDraft: () => void
-  reloadSideTree: () => void
-  saveDocDraft: () => Promise<void>
   setMode: (mode: TDocEditorMode) => void
   setPublishRuntime: (patch: Partial<TDocPublishRuntime>) => void
-  setDocDraftSession: (
-    patch: Partial<
-      Pick<TStore, 'baselineValue' | 'bodyValue' | 'docDraftInfo' | 'saveError' | 'saveStatus'>
-    >,
-  ) => void
+}
+
+export type TDocsEditorCommandValue = {
+  sideTree: TSideTreeController
+  addGroup: () => void
+  reloadSideTree: () => void
+  saveDocDraft: () => Promise<void>
+  registerSaveDocDraft: (handler: () => Promise<void>) => () => void
 }

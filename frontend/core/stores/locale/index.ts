@@ -9,10 +9,12 @@ import type { TInit, TStore } from './spec'
 export default function createLocaleStore({
   locale = LOCALE.EN,
   localeData = '{}',
+  routeOverride = false,
 }: TInit): TStore {
   const store = proxy({
     locale,
     localeData,
+    routeOverride,
 
     // actions
     setLocale: (locale: TLocale): void => {
@@ -20,6 +22,9 @@ export default function createLocaleStore({
     },
     setLocaleData: (localeStr: string): void => {
       store.localeData = localeStr
+    },
+    setRouteOverride: (value: boolean): void => {
+      store.routeOverride = value
     },
   })
 

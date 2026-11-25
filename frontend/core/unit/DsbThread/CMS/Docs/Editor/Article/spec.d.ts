@@ -3,7 +3,6 @@ import type { TRichEditorValue } from '@groupher/rich-editor'
 import type { TArticleStage } from '~/const/article'
 import type { TLocalDraftServerBase } from '~/lib/localDraftHistory/types'
 
-import type { TDocTreeNodePublishState } from '../SideTree/spec'
 import type { TDocDraftInfo } from '../store/spec'
 
 export type TDocWorkingCopy = {
@@ -64,17 +63,6 @@ export type TDraftSaveStatus = {
 export type TDraftSnapshotStatus = {
   creating: boolean
   lastCreatedSignature: string
-}
-
-export type TEditorDraftStorePatchInput = {
-  workingCopyId?: string | null
-  bodyStats: Pick<TDocDraftInfo, 'characterCount' | 'wordCount'>
-  draft: TEditorDraft
-  meta: TEditorDraftMeta
-  publishState?: TDocTreeNodePublishState | null
-  saveError: string | null
-  savedDraft: TSavedDraft
-  saveStatus: 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
 }
 
 export type TDocDraftSession = {

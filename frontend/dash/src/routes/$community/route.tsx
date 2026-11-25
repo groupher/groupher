@@ -28,12 +28,17 @@ export const Route = createFileRoute('/$community')({
     }
   },
   loader: async ({ context, deps, params }) => {
-    const [data, locale] = await Promise.all([
-      loadCommunity({ data: { community: params.community, ...deps } }),
-      loadLocale({ data: { lang: deps.lang } }),
+    const communityPromise = loadCommunity({ data: { community: params.community, ...deps } })
+    const localePromise = deps.lang
+      ? loadLocale({ data: { lang: deps.lang, routeOverride: true } })
+      : null
+    const [data, routeLocale] = await Promise.all([
+      communityPromise,
+      localePromise ?? Promise.resolve(null),
     ])
 
-    await Promise.all([
+    const [locale] = await Promise.all([
+      routeLocale ?? loadLocale({ data: { lang: data.dashboard.locale, routeOverride: false } }),
       context.queryClient.ensureQueryData(
         communityQueries.slug(params.community, () => data.community),
       ),

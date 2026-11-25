@@ -1,150 +1,259 @@
 import type { VariablesOf } from '@graphql-typed-document-node/core'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useIsMutating, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { COLOR } from '~/const/colors'
-import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
 import { dsbMutationKeys, Q } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
-import useCommunity from '~/stores/community/hooks'
-import { useTagsEditor } from '~/stores/dsbShell/editor'
-import useDsbShell from '~/stores/dsbShell/hooks'
+import { useDsbShellSession } from '~/stores/dsbShell/hooks'
 import S from '~/unit/DsbThread/schema/tags'
+import {
+  applyTagSortOrder,
+  tagSortOrderFromGroups,
+  type TTagSortOrder,
+} from '~/unit/DsbThread/Tags/store'
+import { demoTagGroupsQueryKey, writeDemoTagGroups } from '~/unit/DsbThread/Tags/store/demo'
+import useTagsEditor from '~/unit/DsbThread/Tags/store/hooks'
 import { slugify } from '~/utils/slug'
 
 type TUpdateCommunityTagVariables = VariablesOf<typeof S.updateCommunityTag>
+type TCreateCommunityTagVariables = VariablesOf<typeof S.createCommunityTag>
+type TDeleteCommunityTagVariables = VariablesOf<typeof S.deleteCommunityTag>
+
+type TUpdateSession = { source: 'inline' | 'form'; id: number }
 
 type TRet = {
-  loadTags: (thread?: TThread) => void
-  loading: boolean
   createGroup: (title: string) => Promise<void>
   createTag: (title: string, groupId: string, color?: TColorName) => Promise<void>
-  updateTag: (tag: TTag) => Promise<void>
+  createTagFromForm: (tag: TTag, session: number) => Promise<void>
+  updateTag: (tag: TTag, session?: TUpdateSession) => Promise<void>
+  deleteTag: (tag: TTag, session: number) => Promise<void>
   renameGroup: (groupId: string, toGroup: string) => Promise<void>
   commitTagSorting: (tagGroups: TTagGroup[]) => void
+  saveTagSorting: (tagGroups: readonly TTagGroup[]) => Promise<void>
+  resetTagSorting: () => void
+  hasSortingChanges: boolean
   saving: boolean
 }
 
-/** Exposes utils state and actions through the shared React hook boundary. */
-export default function useUtils(): TRet {
-  const dsb$ = useDsbShell()
+/** Exposes Tags domain commands while confirmed groups remain in TanStack Query. */
+export default function useUtils(
+  confirmedTagGroups: readonly TTagGroup[],
+  activeThread: TThread,
+): TRet {
   const tagsEditor = useTagsEditor()
-  const community$ = useCommunity()
   const queryClient = useQueryClient()
-  const [loading, setLoading] = useState(false)
+  const { demoMode } = useDsbShellSession()
+  const community = tagsEditor.community
+  const invalidateTags = (targetCommunity: string, thread: TThread) =>
+    invalidate(queryClient, QueryInvalidation.article.tagGroups(targetCommunity, thread))
 
-  const invalidateTags = (thread: TThread): void => {
-    void invalidate(queryClient, QueryInvalidation.article.tagGroups(community$.slug, thread))
-  }
-  const confirmTagGroups = (tagGroups: readonly TTagGroup[]): void => {
-    const confirmed = { tagGroups }
-    dsb$.reconcile({ fields: ['tagGroups'], submitted: confirmed, confirmed })
-  }
   const createGroupMutation = useMutation({
-    mutationKey: dsbMutationKeys.tagGroupCreate(community$.slug),
-    mutationFn: ({ title, thread }: { title: string; thread: TThread }) =>
-      executeCommand({
-        request: (variables) => browserGraphQLRequest(S.createCommunityTagGroup, variables),
-        variables: { thread, title, community: community$.slug },
-      }),
-    onSuccess: (_data, { thread }) => {
-      invalidateTags(thread)
-    },
-  })
-  const createTagMutation = useMutation({
-    mutationKey: dsbMutationKeys.tagCreate(community$.slug),
-    mutationFn: (input: {
-      thread: TThread
+    mutationKey: dsbMutationKeys.tagGroupCreate(community),
+    mutationFn: ({
+      community: targetCommunity,
+      title,
+      thread,
+    }: {
+      community: string
       title: string
-      slug: string
-      layout: null
-      groupId: string
-      color: TColorName
+      thread: TThread
     }) =>
       executeCommand({
-        request: (variables) => browserGraphQLRequest(S.createCommunityTag, variables),
-        variables: { ...input, community: community$.slug },
+        request: (variables) => browserGraphQLRequest(S.createCommunityTagGroup, variables),
+        variables: { thread, title, community: targetCommunity },
       }),
-    onSuccess: (_data, { thread }) => {
-      invalidateTags(thread)
-    },
+    onSuccess: (_data, { community: targetCommunity, thread }) =>
+      invalidateTags(targetCommunity, thread),
   })
-  const updateTagMutation = useMutation({
-    mutationKey: dsbMutationKeys.tagUpdate(community$.slug),
-    mutationFn: async ({ tag, thread }: { tag: TTag; thread: TThread }) => {
+
+  const createTagMutation = useMutation({
+    mutationKey: dsbMutationKeys.tagCreate(community),
+    mutationFn: async ({
+      community: targetCommunity,
+      tag,
+      thread,
+    }: {
+      community: string
+      tag: TTag
+      thread: TThread
+    }) => {
       const title = (tag.title ?? '').trim()
-      const slug = await slugify(title)
+      const slug = tag.slug?.trim() || (await slugify(title))
+      await executeCommand<TCreateCommunityTagVariables, unknown>({
+        request: (variables) => browserGraphQLRequest(S.createCommunityTag, variables),
+        variables: {
+          thread,
+          title,
+          slug,
+          layout: tag.layout ?? null,
+          color: (tag.color || COLOR.BLACK) as TColorName,
+          groupId: tag.groupId ?? '',
+          community: targetCommunity,
+          marker: tag.marker,
+        } as Omit<TCreateCommunityTagVariables, 'commandId'>,
+      })
+
+      return { community: targetCommunity, thread }
+    },
+    onSuccess: ({ community: targetCommunity, thread }) => invalidateTags(targetCommunity, thread),
+  })
+
+  const updateTagMutation = useMutation({
+    mutationKey: dsbMutationKeys.tagUpdate(community),
+    mutationFn: async ({
+      community: targetCommunity,
+      tag,
+      thread,
+      session,
+    }: {
+      community: string
+      tag: TTag
+      thread: TThread
+      session?: TUpdateSession
+    }) => {
+      const title = (tag.title ?? '').trim()
+      const slug =
+        session?.source === 'inline' || !tag.slug?.trim() ? await slugify(title) : tag.slug.trim()
       const nextTag = { ...tag, title, slug }
       await executeCommand<TUpdateCommunityTagVariables, unknown>({
         request: (variables) => browserGraphQLRequest(S.updateCommunityTag, variables),
         variables: {
-          ...nextTag,
           id: tag.id,
-          community: community$.slug,
+          color: tag.color,
+          title,
+          slug,
+          layout: tag.layout,
+          desc: tag.desc,
+          community: targetCommunity,
+          groupId: tag.groupId,
+          marker: tag.marker,
         } as Omit<TUpdateCommunityTagVariables, 'commandId'>,
       })
-      return { nextTag, thread }
+
+      return { community: targetCommunity, thread, nextTag, session }
     },
-    onSuccess: ({ nextTag, thread }) => {
-      invalidateTags(thread)
-      const updatedTagGroups = dsb$.tagGroups.map((group) => ({
-        ...group,
-        tags: group.tags.map((item) => (item.id === nextTag.id ? nextTag : item)),
-      }))
-      confirmTagGroups(updatedTagGroups)
-      tagsEditor.setEditingTag(null)
-    },
+    onSuccess: ({ community: targetCommunity, thread }) => invalidateTags(targetCommunity, thread),
   })
+
+  const deleteTagMutation = useMutation({
+    mutationKey: dsbMutationKeys.tagUpdate(community),
+    mutationFn: async ({
+      community: targetCommunity,
+      id,
+      thread,
+    }: {
+      community: string
+      id: string
+      thread: TThread
+    }) => {
+      await executeCommand<TDeleteCommunityTagVariables, unknown>({
+        request: (variables) => browserGraphQLRequest(S.deleteCommunityTag, variables),
+        variables: { id, community: targetCommunity, thread } as Omit<
+          TDeleteCommunityTagVariables,
+          'commandId'
+        >,
+      })
+
+      return { community: targetCommunity, thread }
+    },
+    onSuccess: ({ community: targetCommunity, thread }) => invalidateTags(targetCommunity, thread),
+  })
+
   const renameGroupMutation = useMutation({
-    mutationKey: dsbMutationKeys.tagGroupUpdate(community$.slug),
-    mutationFn: ({ groupId, title, thread }: { groupId: string; title: string; thread: TThread }) =>
+    mutationKey: dsbMutationKeys.tagGroupUpdate(community),
+    mutationFn: ({
+      community: targetCommunity,
+      groupId,
+      title,
+      thread,
+    }: {
+      community: string
+      groupId: string
+      title: string
+      thread: TThread
+    }) =>
       executeCommand({
         request: (variables) => browserGraphQLRequest(S.updateCommunityTagGroup, variables),
-        variables: {
-          id: groupId,
-          community: community$.slug,
-          thread,
-          title,
-        },
+        variables: { id: groupId, community: targetCommunity, thread, title },
       }),
-    onSuccess: (_data, { thread }) => {
-      invalidateTags(thread)
-    },
+    onSuccess: (_data, { community: targetCommunity, thread }) =>
+      invalidateTags(targetCommunity, thread),
   })
 
-  const loadTags = (activeThread: TThread = THREAD.POST): void => {
-    const community = community$.slug
-    const thread = activeThread
+  const saveSortingMutation = useMutation({
+    mutationKey: dsbMutationKeys.tagGroupUpdate(community),
+    mutationFn: async ({
+      community: targetCommunity,
+      thread,
+      groups,
+      tags,
+    }: {
+      community: string
+      thread: TThread
+      groups: { id: string; index: number }[]
+      tags: { id: string; groupId: string; index: number }[]
+    }) => {
+      await Promise.all([
+        executeCommand({
+          request: (variables) => browserGraphQLRequest(S.reindexCommunityTagGroups, variables),
+          variables: { community: targetCommunity, thread, groups },
+        }),
+        executeCommand({
+          request: (variables) => browserGraphQLRequest(S.reindexCommunityTags, variables),
+          variables: { community: targetCommunity, thread, tags },
+        }),
+      ])
+    },
+    onSettled: (_data, _error, { community: targetCommunity, thread }) =>
+      invalidateTags(targetCommunity, thread),
+  })
 
-    setLoading(true)
-    void queryClient
-      .fetchQuery(Q.article.tagGroups(community, thread))
-      .then((tagGroups) => {
-        const normalizedTagGroups = tagGroups.map((group) => ({
-          ...group,
-          tags: group.tags.map((tag) => ({
-            ...tag,
-            thread: tag.thread as TThread,
-          })),
-        }))
-        confirmTagGroups(normalizedTagGroups)
-      })
-      .catch((error) => console.error('## load tag groups error: ', error))
-      .finally(() => setLoading(false))
+  const updateDemoGroups = (
+    targetCommunity: string,
+    thread: TThread,
+    fallback: readonly TTagGroup[],
+    update: (groups: readonly TTagGroup[]) => TTagGroup[],
+  ): TTagGroup[] => {
+    const queryKey = demoTagGroupsQueryKey(targetCommunity, thread)
+    const current = queryClient.getQueryData<TTagGroup[]>(queryKey) ?? [...fallback]
+    const next = update(current)
+    queryClient.setQueryData(queryKey, next)
+    writeDemoTagGroups(targetCommunity, thread, next)
+    return next
+  }
+
+  const localId = (type: 'group' | 'tag'): string => {
+    const suffix = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
+    return `demo-${type}:${suffix}`
   }
 
   const createGroup = async (title: string): Promise<void> => {
-    const { activeTagThread } = dsb$
-    const thread = activeTagThread || THREAD.POST
     const trimmedTitle = title.trim()
-
     if (!trimmedTitle) return
 
-    await createGroupMutation.mutateAsync({ title: trimmedTitle, thread })
-    loadTags(thread)
+    const targetCommunity = community
+    const thread = activeThread
+    if (demoMode) {
+      updateDemoGroups(targetCommunity, thread, confirmedTagGroups, (groups) => [
+        {
+          id: localId('group'),
+          title: trimmedTitle,
+          index: 0,
+          tags: [],
+        },
+        ...groups.map((group, index) => ({ ...group, index: index + 1 })),
+      ])
+      return
+    }
+
+    await createGroupMutation.mutateAsync({
+      community: targetCommunity,
+      title: trimmedTitle,
+      thread,
+    })
   }
 
   const createTag = async (
@@ -152,81 +261,243 @@ export default function useUtils(): TRet {
     groupId: string,
     color: TColorName = COLOR.BLACK,
   ): Promise<void> => {
-    const { activeTagThread } = dsb$
-    const thread = activeTagThread || THREAD.POST
     const trimmedTitle = title.trim()
-
     if (!trimmedTitle || !groupId) return
 
-    const slug = await slugify(trimmedTitle)
+    const targetCommunity = community
+    const thread = activeThread
+    if (demoMode) {
+      const slug = await slugify(trimmedTitle)
+      const tag = {
+        id: localId('tag'),
+        title: trimmedTitle,
+        slug,
+        groupId,
+        thread,
+        color,
+        index: 0,
+      } as TTag
+      updateDemoGroups(targetCommunity, thread, confirmedTagGroups, (groups) =>
+        groups.map((group) =>
+          group.id === groupId
+            ? { ...group, tags: [...group.tags, { ...tag, index: group.tags.length }] }
+            : group,
+        ),
+      )
+      return
+    }
 
     await createTagMutation.mutateAsync({
+      community: targetCommunity,
       thread,
-      title: trimmedTitle,
-      slug,
-      layout: null,
-      color,
-      groupId,
+      tag: { title: trimmedTitle, groupId, color, thread } as TTag,
     })
-
-    loadTags(thread)
   }
 
-  const updateTag = async (tag: TTag): Promise<void> => {
+  const createTagFromForm = async (tag: TTag, session: number): Promise<void> => {
     const title = tag.title?.trim()
+    if (!title || !tag.groupId) return
+    const editorStore = tagsEditor.store
+    if (editorStore.tagFormSession !== session || editorStore.tagFormMode !== 'create') return
 
+    const thread = tag.thread ?? activeThread
+    const targetCommunity = tagsEditor.community
+    if (demoMode) {
+      const slug = tag.slug?.trim() || (await slugify(title))
+      if (editorStore.tagFormSession !== session || editorStore.tagFormMode !== 'create') return
+      const nextTag = { ...tag, id: localId('tag'), title, slug, thread } as TTag
+      updateDemoGroups(targetCommunity, thread, confirmedTagGroups, (groups) =>
+        groups.map((group) =>
+          group.id === nextTag.groupId
+            ? { ...group, tags: [...group.tags, { ...nextTag, index: group.tags.length }] }
+            : group,
+        ),
+      )
+      return
+    }
+
+    await createTagMutation.mutateAsync({
+      community: targetCommunity,
+      thread,
+      tag: { ...tag, title },
+    })
+  }
+
+  const updateTag = async (tag: TTag, session?: TUpdateSession): Promise<void> => {
+    const title = tag.title?.trim()
     if (!tag.id || !title) return
 
+    const editorStore = tagsEditor.store
+    if (session?.source === 'inline') {
+      if (
+        editorStore.inlineEditSession !== session.id ||
+        editorStore.inlineTagDraft?.id !== tag.id
+      ) {
+        return
+      }
+    }
+    if (session?.source === 'form') {
+      if (editorStore.tagFormSession !== session.id || editorStore.tagFormDraft?.id !== tag.id) {
+        return
+      }
+    }
+
+    if (demoMode) {
+      const thread = tag.thread ?? activeThread
+      const targetCommunity = tagsEditor.community
+      const slug =
+        session?.source === 'inline' || !tag.slug?.trim() ? await slugify(title) : tag.slug.trim()
+      if (session?.source === 'inline') {
+        if (
+          editorStore.inlineEditSession !== session.id ||
+          editorStore.inlineTagDraft?.id !== tag.id
+        ) {
+          return
+        }
+      }
+      if (session?.source === 'form') {
+        if (editorStore.tagFormSession !== session.id || editorStore.tagFormDraft?.id !== tag.id) {
+          return
+        }
+      }
+      const nextTag = { ...tag, title, slug, thread }
+      updateDemoGroups(targetCommunity, thread, confirmedTagGroups, (groups) => {
+        const oldGroupId = groups.find((group) => group.tags.some((item) => item.id === tag.id))?.id
+        return groups.map((group) => {
+          if (group.id === oldGroupId && group.id !== nextTag.groupId) {
+            return { ...group, tags: group.tags.filter((item) => item.id !== tag.id) }
+          }
+          if (group.id === nextTag.groupId) {
+            const exists = group.tags.some((item) => item.id === tag.id)
+            const tags = exists
+              ? group.tags.map((item) => (item.id === tag.id ? nextTag : item))
+              : [...group.tags, { ...nextTag, index: group.tags.length }]
+            return { ...group, tags }
+          }
+          return group
+        })
+      })
+      if (
+        session?.source === 'inline' &&
+        editorStore.inlineEditSession === session.id &&
+        editorStore.inlineTagDraft?.id === tag.id
+      ) {
+        editorStore.clearInlineEdit(session.id)
+      }
+      return
+    }
+
     await updateTagMutation.mutateAsync({
+      community: tagsEditor.community,
       tag,
-      thread: dsb$.activeTagThread || THREAD.POST,
+      thread: tag.thread ?? activeThread,
+      session,
     })
+
+    if (
+      session?.source === 'inline' &&
+      editorStore.inlineEditSession === session.id &&
+      editorStore.inlineTagDraft?.id === tag.id
+    ) {
+      editorStore.clearInlineEdit(session.id)
+    }
+  }
+
+  const deleteTag = async (tag: TTag, session: number): Promise<void> => {
+    if (!tag.id) return
+    const editorStore = tagsEditor.store
+    if (editorStore.tagFormSession !== session || editorStore.tagFormDraft?.id !== tag.id) return
+    const targetCommunity = tagsEditor.community
+    const thread = tag.thread ?? activeThread
+    if (demoMode) {
+      updateDemoGroups(targetCommunity, thread, confirmedTagGroups, (groups) =>
+        groups.map((group) => ({
+          ...group,
+          tags: group.tags.filter((item) => item.id !== tag.id),
+        })),
+      )
+      return
+    }
+
+    await deleteTagMutation.mutateAsync({ community: targetCommunity, id: tag.id, thread })
   }
 
   const commitTagSorting = (tagGroups: TTagGroup[]): void => {
-    dsb$.editMany({ tagGroups })
+    tagsEditor.store.setSortingDraft(activeThread, tagSortOrderFromGroups(tagGroups))
+  }
+
+  const saveTagSorting = async (tagGroups: readonly TTagGroup[]): Promise<void> => {
+    const editorStore = tagsEditor.store
+    const submitted: TTagSortOrder =
+      editorStore.getSortingDraft(activeThread) ?? tagSortOrderFromGroups(tagGroups)
+    if (!editorStore.hasSortingChanges(activeThread)) return
+
+    const targetCommunity = tagsEditor.community
+    const thread = activeThread
+    if (demoMode) {
+      const sortedGroups = applyTagSortOrder(confirmedTagGroups, submitted)
+      updateDemoGroups(targetCommunity, thread, confirmedTagGroups, () => sortedGroups)
+      editorStore.reconcileSorting(thread, submitted, tagSortOrderFromGroups(sortedGroups))
+      return
+    }
+
+    const sortedGroups = applyTagSortOrder(confirmedTagGroups, submitted)
+    const groups = sortedGroups.map((group, index) => ({ id: group.id, index }))
+    const tags = sortedGroups.flatMap((group) =>
+      group.tags.flatMap((tag, index) =>
+        tag.id ? [{ id: tag.id, groupId: group.id, index }] : [],
+      ),
+    )
+    await saveSortingMutation.mutateAsync({ community: targetCommunity, thread, groups, tags })
+    const confirmed = await queryClient.fetchQuery({
+      ...Q.article.tagGroups(targetCommunity, thread),
+      staleTime: 0,
+    })
+    editorStore.reconcileSorting(thread, submitted, tagSortOrderFromGroups(confirmed))
   }
 
   const renameGroup = async (groupId: string, toGroup: string): Promise<void> => {
-    const { activeTagThread, tagGroups } = dsb$
     const trimmedGroup = toGroup.trim()
-    const targetGroup = tagGroups.find((group) => group.id === groupId)
+    const targetGroup = confirmedTagGroups.find((group) => group.id === groupId)
+    if (!targetGroup || !trimmedGroup || trimmedGroup === targetGroup.title) return
 
-    if (!activeTagThread || !targetGroup || !trimmedGroup || trimmedGroup === targetGroup.title) {
+    if (demoMode) {
+      updateDemoGroups(community, activeThread, confirmedTagGroups, (groups) =>
+        groups.map((group) => (group.id === groupId ? { ...group, title: trimmedGroup } : group)),
+      )
       return
     }
 
     await renameGroupMutation.mutateAsync({
+      community,
       groupId,
-      thread: activeTagThread,
+      thread: activeThread,
       title: trimmedGroup,
     })
-
-    const updatedGroups = tagGroups.map((group) =>
-      group.id === groupId
-        ? {
-            ...group,
-            title: trimmedGroup,
-            tags: group.tags.map((tag) => ({ ...tag, group: trimmedGroup })),
-          }
-        : group,
-    )
-
-    confirmTagGroups(updatedGroups)
   }
 
+  const pendingGroupCreate = useIsMutating({
+    mutationKey: dsbMutationKeys.tagGroupCreate(community),
+  })
+  const pendingTagCreate = useIsMutating({ mutationKey: dsbMutationKeys.tagCreate(community) })
+  const pendingTagUpdate = useIsMutating({ mutationKey: dsbMutationKeys.tagUpdate(community) })
+  const pendingGroupUpdate = useIsMutating({
+    mutationKey: dsbMutationKeys.tagGroupUpdate(community),
+  })
+  const saving =
+    pendingGroupCreate > 0 || pendingTagCreate > 0 || pendingTagUpdate > 0 || pendingGroupUpdate > 0
+
   return {
-    loadTags,
-    loading,
     createGroup,
     createTag,
+    createTagFromForm,
     updateTag,
+    deleteTag,
     renameGroup,
     commitTagSorting,
-    saving:
-      createGroupMutation.isPending ||
-      createTagMutation.isPending ||
-      updateTagMutation.isPending ||
-      renameGroupMutation.isPending,
+    saveTagSorting,
+    resetTagSorting: () => tagsEditor.store.resetSorting(activeThread),
+    hasSortingChanges: tagsEditor.store.hasSortingChanges(activeThread),
+    saving,
   }
 }

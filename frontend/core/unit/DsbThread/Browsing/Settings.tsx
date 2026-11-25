@@ -6,8 +6,9 @@ import useTrans from '~/hooks/useTrans'
 import { dsbKeys } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDsb } from '~/spec'
-import useCommunity from '~/stores/community/hooks'
 import useDsb from '~/stores/dsb/hooks'
+import { writeDemoFields } from '~/stores/dsbShell/demoFields'
+import { useDsbShellSession } from '~/stores/dsbShell/hooks'
 import useDsbShell, { useDsbShellStore } from '~/stores/dsbShell/hooks'
 
 import { updateDashboardPagiMode } from '../schema/settings'
@@ -18,25 +19,37 @@ import useSalon from './salon/settings'
 export default function PagiModeSettings() {
   const s = useSalon()
   const { t } = useTrans()
-  const { slug } = useCommunity()
+  const { community, demoMode } = useDsbShellSession()
   const dashboard = useDsb()
   const dsb$ = useDsbShell()
   const liveDsb$ = useDsbShellStore()
   const client = useQueryClient()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const current = dashboard.pagiMode ?? 'PAGE'
-  const currentMobile = dashboard.pagiMobileMode ?? 'INFINITE_SCROLL'
+  const current = dsb$.original.pagiMode ?? dashboard.pagiMode ?? 'PAGE'
+  const currentMobile =
+    dsb$.original.pagiMobileMode ?? dashboard.pagiMobileMode ?? 'INFINITE_SCROLL'
   const mode = dsb$.pagiMode
   const mobileMode = dsb$.pagiMobileMode
   const save = async () => {
     setSaving(true)
     setError(null)
     try {
+      const submitted = { pagiMode: mode, pagiMobileMode: mobileMode }
+      if (demoMode) {
+        writeDemoFields(community, submitted)
+        liveDsb$.reconcile({
+          fields: ['pagiMode', 'pagiMobileMode'],
+          submitted,
+          confirmed: submitted,
+        })
+        return
+      }
+
       const result = await executeCommand({
         request: (variables) => browserGraphQLRequest(updateDashboardPagiMode, variables),
         variables: {
-          community: slug,
+          community,
           mode,
           mobileMode,
           expectedRevision: dashboard.pagiRevision ?? 0,
@@ -53,7 +66,7 @@ export default function PagiModeSettings() {
           submitted: { pagiMode: mode, pagiMobileMode: mobileMode },
           confirmed,
         })
-        client.setQueryData<TDsb>(dsbKeys.slug(slug), (previous) =>
+        client.setQueryData<TDsb>(dsbKeys.slug(community), (previous) =>
           previous ? { ...previous, ...confirmed, pagiRevision: saved.pagiRevision } : previous,
         )
       }

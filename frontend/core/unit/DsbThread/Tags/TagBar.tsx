@@ -1,4 +1,4 @@
-import { memo, type FC, useState } from 'react'
+import { memo, type FC } from 'react'
 
 import { MARKER } from '~/const/marker'
 import { DEFAULT_TAG_MARKER } from '~/const/tag'
@@ -11,6 +11,7 @@ import TagNode from '~/ui/TagNode'
 import useTags from '../logic/useTags'
 import SavingBar from '../SavingBar'
 import useSalon, { cn } from './salon/tag_bar'
+import useTagsEditor from './store/hooks'
 import TagAction from './TagAction'
 
 export type TProps = {
@@ -32,11 +33,10 @@ const TagBar: FC<TProps> = ({
   inGroup = false,
   itemRef,
 }) => {
-  const { editingTag, editTag, updateTag } = useTags()
+  const { editingTag, editTag, saving, updateTag } = useTags()
+  const tagsEditor = useTagsEditor()
   const isEditMode = editingTag?.id === tag.id
-  const [draftTag, setDraftTag] = useState<TTag | null>(null)
-  const editingDraft = draftTag ?? tag
-  const [saving, setSaving] = useState(false)
+  const editingDraft = editingTag ?? tag
   const s = useSalon({
     color: editingDraft.color as TColorName,
     editing: isEditMode,
@@ -47,25 +47,20 @@ const TagBar: FC<TProps> = ({
   const markerIsEmoji = editingMarker.type === MARKER.EMOJI
 
   const cancelEdit = (): void => {
-    setDraftTag(null)
-    editTag('editingTag', null as unknown as TTag)
+    tagsEditor.store.clearInlineEdit(tagsEditor.inlineEditSession)
   }
 
   const startEdit = (): void => {
-    setDraftTag(tag)
     editTag('editingTag', tag)
   }
 
   const saveEdit = async (): Promise<void> => {
     if (!editingDraft.title?.trim()) return
 
-    setSaving(true)
     try {
-      await updateTag(editingDraft)
+      await updateTag(editingDraft, { source: 'inline', id: tagsEditor.inlineEditSession })
     } catch {
       // Keep the local draft open so the user can retry without losing input.
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -87,13 +82,13 @@ const TagBar: FC<TProps> = ({
                 value={editingMarker}
                 activeColor={markerIsEmoji ? undefined : (editingDraft.color as TColorName)}
                 iconSize={3.5}
-                onChange={(marker) => setDraftTag((prev) => ({ ...(prev ?? tag), marker }))}
+                onChange={(marker) => tagsEditor.store.updateInlineDraft({ marker })}
               />
             </div>
             {!markerIsEmoji && (
               <ColorSelector
                 activeColor={editingDraft.color}
-                onChange={(color) => setDraftTag((prev) => ({ ...(prev ?? tag), color }))}
+                onChange={(color) => tagsEditor.store.updateInlineDraft({ color })}
                 placement='bottom-start'
                 offset={[-8, 0]}
               >
@@ -111,12 +106,7 @@ const TagBar: FC<TProps> = ({
             className={s.input}
             width='w-48'
             value={editingDraft.title}
-            onChange={(e) =>
-              setDraftTag((prev) => ({
-                ...(prev ?? tag),
-                title: e.target.value,
-              }))
-            }
+            onChange={(e) => tagsEditor.store.updateInlineDraft({ title: e.target.value })}
             focusOnMount
           />
         ) : (

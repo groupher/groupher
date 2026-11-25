@@ -14,6 +14,18 @@ const mocks = vi.hoisted(() => ({
   reloadTrash: vi.fn(),
   syncDocIdToUrl: vi.fn(),
   queryCallCount: 0,
+  treeQuery: {
+    data: null as null | {
+      docsWorkspaceTree: { treeRevision: number; queueRevision: number; nodes: unknown[] }
+    },
+    isFetching: false,
+    refetch: vi.fn(),
+  },
+  trashQuery: {
+    data: { communityArticleTrashItems: { entries: [], pageInfo: null } },
+    isFetching: false,
+    refetch: vi.fn(),
+  },
   saveStatus: 'saved',
   preview: {
     requiresConfirmation: false,
@@ -37,13 +49,7 @@ vi.mock('@tanstack/react-query', async () => ({
   ...(await vi.importActual('@tanstack/react-query')),
   useQuery: () => {
     const slot = mocks.queryCallCount++ % 2
-    if (slot === 1)
-      return {
-        data: { communityArticleTrashItems: { entries: [], pageInfo: null } },
-        isFetching: false,
-        refetch: mocks.reloadTrash,
-      }
-    return { data: null, isFetching: false, refetch: mocks.reload }
+    return slot === 1 ? mocks.trashQuery : mocks.treeQuery
   },
 }))
 vi.mock('~/hooks/useTrans', () => ({
@@ -53,7 +59,15 @@ vi.mock('~/lib/signal', () => ({ send: vi.fn() }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
 vi.mock('~/ui/Toaster', () => ({ toast: vi.fn() }))
 vi.mock('../helper', () => ({ reloadDocsPublishQueue: vi.fn() }))
-vi.mock('../store/hooks', () => ({ default: () => ({ saveStatus: mocks.saveStatus }) }))
+vi.mock('../store', () => ({ deriveDocSaveStatus: () => mocks.saveStatus }))
+vi.mock('../store/hooks', () => ({
+  useDocsEditorStore: () => ({
+    draft: {},
+    savedDraft: {},
+    loadStatus: {},
+    draftSaveStatus: {},
+  }),
+}))
 vi.mock('./useDocEditorUrl', () => ({
   default: () => ({ currentDocId: null, syncDocIdToUrl: mocks.syncDocIdToUrl }),
 }))
@@ -104,6 +118,9 @@ const resolveCreated = async (id: string, articleId?: string) => {
 beforeEach(() => {
   mocks.resolveCreate = null
   mocks.queryCallCount = 0
+  mocks.treeQuery.data = null
+  mocks.treeQuery.refetch = mocks.reload
+  mocks.trashQuery.refetch = mocks.reloadTrash
   mocks.saveStatus = 'saved'
   mocks.preview = { requiresConfirmation: false, confirmation: null, publicCount: 0, draftCount: 1 }
   mocks.mutate.mockReset()
@@ -125,6 +142,35 @@ beforeEach(() => {
   })
 })
 
+const loadRemoteGroup = (): void => {
+  mocks.treeQuery.data = {
+    docsWorkspaceTree: {
+      treeRevision: 1,
+      queueRevision: 0,
+      nodes: [
+        {
+          nodeId: 'tab-remote',
+          type: 'TAB',
+          parentNodeId: null,
+          index: 0,
+          title: 'Docs',
+          hidden: false,
+          published: false,
+        },
+        {
+          nodeId: 'group-remote',
+          type: 'GROUP',
+          parentNodeId: 'tab-remote',
+          index: 0,
+          title: 'Guides',
+          hidden: false,
+          published: false,
+        },
+      ],
+    },
+  }
+}
+
 describe('Docs workspace tree', () => {
   it.each([
     ['group', 'group-created'],
@@ -132,6 +178,7 @@ describe('Docs workspace tree', () => {
     ['link', 'link-created'],
     ['pin', 'pin-created'],
   ])('deletes a %s after its in-flight creation completes', async (kind, createdId) => {
+    loadRemoteGroup()
     const { result } = renderHook(() => useLogic(initialData))
     let localId: string
     if (kind === 'group') {
@@ -193,6 +240,7 @@ describe('Docs workspace tree', () => {
   })
 
   it('retains the remote node when the user cancels deletion', async () => {
+    loadRemoteGroup()
     const { result } = renderHook(() => useLogic(initialData))
     act(() => result.current.deleteGroup('group-remote'))
     await waitFor(() => expect(result.current.deleteConfirmation).not.toBeNull())
@@ -202,6 +250,7 @@ describe('Docs workspace tree', () => {
   })
 
   it('binds an explicit confirmation to the queue revision and proof', async () => {
+    loadRemoteGroup()
     mocks.preview = {
       requiresConfirmation: true,
       confirmation: { formatVersion: 1, hash: 'proof' },

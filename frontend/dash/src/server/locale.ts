@@ -7,10 +7,11 @@ import { I18N_NS } from '~/i18n/namespaces'
 export type TCommunityLocale = {
   locale: typeof LOCALE.EN | typeof LOCALE.ZH
   localeData: string
+  routeOverride: boolean
 }
 
 export const loadLocale = createServerFn({ method: 'GET', strict: false })
-  .validator((data: { lang?: string }) => data)
+  .validator((data: { lang?: string; routeOverride?: boolean }) => data)
   .handler(async ({ data }): Promise<TCommunityLocale> => {
     const locale = data.lang === LOCALE.ZH ? LOCALE.ZH : LOCALE.EN
     const localeData = await loadLocaleFile(locale, [...I18N_NS.DASHBOARD, ...I18N_NS.PASSPORT])
@@ -18,5 +19,6 @@ export const loadLocale = createServerFn({ method: 'GET', strict: false })
     return {
       locale,
       localeData: JSON.stringify(localeData),
+      routeOverride: Boolean(data.routeOverride),
     }
   })
