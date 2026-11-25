@@ -126,7 +126,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
 
   const requestClose = (): void => {
     if (saving) return
-    if (dirty) setConfirmClose(true)
+    if (dirty || recoveryBlocked || pendingUnknown) setConfirmClose(true)
     else onClose()
   }
 
@@ -177,7 +177,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         }
         recoveryCandidateRef.current = null
         setRecoveryBlocked(false)
-        setError('The queue changed. Your local edits are preserved; review and save again.')
+        setError('The queue was reloaded. Your local edits are preserved; review and save again.')
       } else {
         setRemoteConflict(
           copy?.id === workingCopyId && copy.scopeType === 'workspace' && member && serverDraft
@@ -188,7 +188,9 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
               }
             : null,
         )
-        setError('The queue copy changed or was removed. Your local edits are preserved.')
+        setError(
+          'The queue copy changed or was removed. Your local edits are preserved; copy them before discarding and closing.',
+        )
       }
     } catch {
       if (generation === generationRef.current)
@@ -420,6 +422,11 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
           )}
         </div>
         <div className={s.footer}>
+          {recoveryBlocked && !remoteConflict && (
+            <button type='button' className={s.save} disabled={saving} onClick={requestClose}>
+              {t('dsb.doc.queue.editor_discard_close')}
+            </button>
+          )}
           {recoveryBlocked && (
             <button
               type='button'

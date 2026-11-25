@@ -53,6 +53,21 @@ describe('publishContentCommand', () => {
     })
   })
 
+  it.each([401, 413, 429])('classifies unreadable HTTP %s as a rejection', async (status) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response('<html>rejected</html>', { status, headers: { 'Retry-After': '17' } }),
+      ),
+    )
+    await expect(publishContentCommand(command)).rejects.toMatchObject({
+      code: 'upstream_graphql_error',
+      status,
+      retryAfter: 17,
+    })
+  })
+
   it('parses Retry-After delay seconds', async () => {
     vi.stubGlobal(
       'fetch',

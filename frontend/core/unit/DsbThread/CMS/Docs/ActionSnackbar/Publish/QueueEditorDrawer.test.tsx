@@ -168,7 +168,7 @@ describe('QueueEditorDrawer', () => {
     fireEvent.change(title, { target: { value: 'Local edit' } })
     fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
     await screen.findByText(
-      'The queue changed. Your local edits are preserved; review and save again.',
+      'The queue was reloaded. Your local edits are preserved; review and save again.',
     )
     expect(title).toHaveValue('Local edit')
     fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
@@ -217,7 +217,7 @@ describe('QueueEditorDrawer', () => {
     fireEvent.change(title, { target: { value: 'Local edit' } })
     fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
     await screen.findByText(
-      'The queue copy changed or was removed. Your local edits are preserved.',
+      'The queue copy changed or was removed. Your local edits are preserved; copy them before discarding and closing.',
     )
     expect(title).toHaveValue('Local edit')
     expect(screen.getByText('dsb.doc.queue.editor_save')).toBeDisabled()
@@ -341,10 +341,15 @@ describe('QueueEditorDrawer', () => {
     mocks.read.mockResolvedValueOnce({ docsQueueMember: null })
     fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
     await screen.findByText(
-      'The queue copy changed or was removed. Your local edits are preserved.',
+      'The queue copy changed or was removed. Your local edits are preserved; copy them before discarding and closing.',
     )
     expect(screen.queryByText('dsb.doc.queue.conflict_keep_local')).not.toBeInTheDocument()
     expect(title).toHaveValue('Local edit')
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_discard_close'))
+    expect(screen.getByText('dsb.doc.queue.editor_discard')).toBeInTheDocument()
+    expect(mocks.close).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByText('Discard'))
+    expect(mocks.close).toHaveBeenCalledOnce()
   })
 
   it('withdraws conflict choices when a subsequent reload is denied', async () => {
@@ -438,14 +443,16 @@ describe('QueueEditorDrawer', () => {
     })
   })
 
-  it('keeps an unknown command through a temporary publisher failure', async () => {
+  it.each([
+    { code: 'publisher_unavailable', status: 502 },
+    { code: 'upstream_graphql_error', status: 401 },
+    { code: 'upstream_graphql_error', status: 413 },
+  ])('keeps an unknown command through a later $status error', async ({ code, status }) => {
     mocks.save
       .mockRejectedValueOnce(
         new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
       )
-      .mockRejectedValueOnce(
-        new ContentPublishError('unavailable', { code: 'publisher_unavailable', status: 502 }),
-      )
+      .mockRejectedValueOnce(new ContentPublishError('unavailable', { code, status }))
       .mockResolvedValueOnce({ queueRevision: 6, workingCopyRevision: 3 })
     open()
     const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')

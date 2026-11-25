@@ -99,11 +99,18 @@ export const publishContentCommand = async <TResult>(
   try {
     payload = (await response.json()) as TPublisherResponse<TResult> | null
   } catch (cause) {
-    throw new ContentPublishError('Content Publisher response is unknown.', {
-      code: 'transport_unknown',
-      details: cause instanceof Error ? cause.message : undefined,
-      status: response.status,
-    })
+    const rejected = response.status >= 400 && response.status < 500
+    throw new ContentPublishError(
+      rejected
+        ? 'Content Publisher could not complete the command.'
+        : 'Content Publisher response is unknown.',
+      {
+        code: rejected ? 'upstream_graphql_error' : 'transport_unknown',
+        details: cause instanceof Error ? cause.message : undefined,
+        retryAfter: retryAfterSeconds(response.headers.get('retry-after')),
+        status: response.status,
+      },
+    )
   }
   if (response.status >= 500 || (response.ok && (!payload?.ok || payload.result === undefined))) {
     throw new ContentPublishError(
