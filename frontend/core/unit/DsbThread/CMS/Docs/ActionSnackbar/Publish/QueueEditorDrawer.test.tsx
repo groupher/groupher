@@ -212,6 +212,68 @@ describe('QueueEditorDrawer', () => {
     expect(mocks.save).toHaveBeenCalledOnce()
   })
 
+  it('retries a failed recovery read before permitting another write', async () => {
+    mocks.save.mockRejectedValueOnce(
+      new ContentPublishError('queue conflict', {
+        code: 'docs_queue_version_conflict',
+        status: 409,
+      }),
+    )
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    mocks.read.mockRejectedValueOnce(new Error('offline'))
+    fireEvent.change(title, { target: { value: 'Local edit' } })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByText('The queue could not be reloaded. Your local edits are preserved.')
+    expect(screen.getByText('dsb.doc.queue.editor_save')).toBeDisabled()
+    fireEvent.click(screen.getByText('dsb.activity.retry'))
+    await waitFor(() => expect(screen.getByText('dsb.doc.queue.editor_save')).toBeEnabled())
+    expect(title).toHaveValue('Local edit')
+    expect(mocks.save).toHaveBeenCalledOnce()
+  })
+
+  it('recognizes an expired committed save and retains later edits', async () => {
+    mocks.save
+      .mockRejectedValueOnce(
+        new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
+      )
+      .mockRejectedValueOnce(
+        new ContentPublishError('expired', { code: 'command_result_expired', status: 422 }),
+      )
+      .mockResolvedValueOnce({ queueRevision: 7, workingCopyRevision: 4 })
+    open()
+    const title = await screen.findByLabelText('dsb.doc.queue.editor_title_field')
+    fireEvent.change(title, { target: { value: 'First edit' } })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await screen.findByRole('alert')
+    fireEvent.change(title, { target: { value: 'Later edit' } })
+    mocks.read.mockResolvedValueOnce({
+      docsQueueMember: {
+        queueRevision: 6,
+        workingCopy: {
+          id: 'queued',
+          scopeType: 'workspace',
+          title: 'First edit',
+          slug: 'queued',
+          bodyJson: '[]',
+          articleId: 'doc',
+          revision: 3,
+        },
+      },
+    })
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await waitFor(() => expect(screen.getByText('dsb.doc.queue.editor_save')).toBeEnabled())
+    expect(title).toHaveValue('Later edit')
+    expect(mocks.save.mock.calls[1][0]).toEqual(mocks.save.mock.calls[0][0])
+    fireEvent.click(screen.getByText('dsb.doc.queue.editor_save'))
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(3))
+    expect(mocks.save.mock.calls[2][0]).toMatchObject({
+      title: 'Later edit',
+      queueRevision: 6,
+      revision: 3,
+    })
+  })
+
   it('preserves edits made while a save is in flight and uses the new revisions', async () => {
     let finish:
       | ((result: { queueRevision: number; workingCopyRevision: number }) => void)

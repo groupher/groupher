@@ -40,6 +40,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
     persisted: TDraft
     variables: TSaveDocQueueCopyInput
   } | null>(null)
+  const recoveryCandidateRef = useRef<{ started: TDraft; persisted: TDraft } | null>(null)
   const [draft, setDraft] = useState<TDraft | null>(null)
   const [baseline, setBaseline] = useState('')
   const [expectedQueueRevision, setExpectedQueueRevision] = useState<number | null>(null)
@@ -54,6 +55,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
   useEffect(() => {
     let cancelled = false
     pendingSaveRef.current = null
+    recoveryCandidateRef.current = null
     setDraft(null)
     setBaseline('')
     setWorkingCopyId(null)
@@ -111,6 +113,60 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
     if (saving) return
     if (dirty) setConfirmClose(true)
     else onClose()
+  }
+
+  const reloadRecovery = async (): Promise<void> => {
+    setSaving(true)
+    try {
+      const data = await browserGraphQLRequest<{
+        docsQueueMember: { queueRevision: number; workingCopy: TDocWorkingCopy } | null
+      }>(queueMemberEditor, { community, articleId })
+      const member = data.docsQueueMember
+      const copy = member?.workingCopy
+      const serverDraft = copy && {
+        title: copy.title,
+        subtitle: copy.threadFields?.subtitle ?? '',
+        slug: copy.slug ?? '',
+        body: parseEditorValue(copy.bodyJson),
+      }
+      const candidate = recoveryCandidateRef.current
+      const matchesCandidate =
+        candidate && serverDraft && signature(serverDraft) === signature(candidate.persisted)
+      if (
+        copy?.id === workingCopyId &&
+        serverDraft &&
+        (signature(serverDraft) === baseline || matchesCandidate)
+      ) {
+        setExpectedQueueRevision(member.queueRevision)
+        setWorkRevision(copy.revision)
+        if (matchesCandidate && candidate) {
+          setBaseline(signature(serverDraft))
+          setDraft(
+            (current) =>
+              current && {
+                ...current,
+                title:
+                  current.title === candidate.started.title ? serverDraft.title : current.title,
+                subtitle:
+                  current.subtitle === candidate.started.subtitle
+                    ? serverDraft.subtitle
+                    : current.subtitle,
+                slug: current.slug === candidate.started.slug ? serverDraft.slug : current.slug,
+              },
+          )
+          onSaved()
+        }
+        recoveryCandidateRef.current = null
+        setRecoveryBlocked(false)
+        setError('The queue changed. Your local edits are preserved; review and save again.')
+      } else {
+        setError('The queue copy changed or was removed. Your local edits are preserved.')
+      }
+    } catch {
+      setError('The queue could not be reloaded. Your local edits are preserved.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const save = async (): Promise<void> => {
@@ -175,6 +231,7 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
       )
       onSaved()
     } catch (err) {
+      const pending = pendingSaveRef.current
       if (err instanceof ContentPublishError && err.code === 'transport_unknown') {
         if (pendingSaveRef.current) pendingSaveRef.current.unknown = true
       } else if (
@@ -195,29 +252,8 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
         ].includes(err.code)
       ) {
         setRecoveryBlocked(true)
-        try {
-          const data = await browserGraphQLRequest<{
-            docsQueueMember: { queueRevision: number; workingCopy: TDocWorkingCopy } | null
-          }>(queueMemberEditor, { community, articleId })
-          const member = data.docsQueueMember
-          const copy = member?.workingCopy
-          const serverDraft = copy && {
-            title: copy.title,
-            subtitle: copy.threadFields?.subtitle ?? '',
-            slug: copy.slug ?? '',
-            body: parseEditorValue(copy.bodyJson),
-          }
-          if (copy?.id === workingCopyId && serverDraft && signature(serverDraft) === baseline) {
-            setExpectedQueueRevision(member.queueRevision)
-            setWorkRevision(copy.revision)
-            setRecoveryBlocked(false)
-            setError('The queue changed. Your local edits are preserved; review and save again.')
-          } else {
-            setError('The queue copy changed or was removed. Your local edits are preserved.')
-          }
-        } catch {
-          setError('The queue could not be reloaded. Your local edits are preserved.')
-        }
+        recoveryCandidateRef.current = pending?.unknown ? pending : null
+        await reloadRecovery()
         return
       }
       setError(err instanceof Error ? err.message : String(err))
@@ -284,6 +320,16 @@ const QueueEditorDrawer: FC<TProps> = ({ articleId, onClose, onSaved }) => {
           )}
         </div>
         <div className={s.footer}>
+          {recoveryBlocked && (
+            <button
+              type='button'
+              className={s.save}
+              disabled={saving}
+              onClick={() => void reloadRecovery()}
+            >
+              {t('dsb.activity.retry')}
+            </button>
+          )}
           <button
             type='button'
             className={s.save}
