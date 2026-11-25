@@ -7,7 +7,6 @@ import useDsbTab from '~/hooks/useDsbTab'
 import { patchCommunity } from '~/query'
 import type { TDsbFieldMap } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import { useFaqEditorState } from '~/stores/dsbShell/editor'
 import { useDsbShellSession, useDsbShellStore } from '~/stores/dsbShell/hooks'
 import {
   COMMUNITY_BASEINFO_KEYS,
@@ -45,7 +44,6 @@ type TRet = {
 /** Routes editor field intent to its domain request builder and the shared save runner. */
 export default function useDsbFieldSave(): TRet {
   const dashboardStore = useDsbShellStore()
-  const faqEditor = useFaqEditorState()
   const shellSession = useDsbShellSession()
   const community$ = useCommunity()
   const { subTab } = useDsbTab()
@@ -107,11 +105,7 @@ export default function useDsbFieldSave(): TRet {
       readConfirmed,
       submitted: snapshotFields(requestStore, savedFields),
       afterConfirmed: (data) => {
-        if (
-          field === FIELD.DOC_FAQ &&
-          requestStore.docFaqSaveSession === faqSession &&
-          requestStore.docFaqSaveZone === faqEditor.docFaqSaveZone
-        ) {
+        if (field === FIELD.DOC_FAQ && requestStore.docFaqSaveSession === faqSession) {
           requestStore.setDocFaqSaveZone(null)
         }
         okCb?.(data)

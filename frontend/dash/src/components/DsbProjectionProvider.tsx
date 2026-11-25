@@ -19,7 +19,10 @@ export default function DsbProjectionProvider({ children, initialData }: TProps)
     ? {
         ...initialData,
         ...Object.fromEntries(
-          (Object.keys(FIELDS) as TDsbEditableFieldKey[]).map((field) => [field, dashboard[field]]),
+          (Object.keys(FIELDS) as TDsbEditableFieldKey[]).map((field) => [
+            field,
+            dashboard.original[field],
+          ]),
         ),
       }
     : initialData

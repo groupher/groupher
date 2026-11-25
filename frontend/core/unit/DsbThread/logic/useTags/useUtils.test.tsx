@@ -8,6 +8,7 @@ import { articleQueryKeys } from '~/query/key'
 import type { TTagGroup, TDsb } from '~/spec'
 import DsbShellProvider from '~/stores/dsbShell/provider'
 import { demoTagGroupsQueryKey, readDemoTagGroups } from '~/unit/DsbThread/Tags/store/demo'
+import useTagsEditor from '~/unit/DsbThread/Tags/store/hooks'
 import TagsEditorProvider from '~/unit/DsbThread/Tags/store/provider'
 
 import useUtils from './useUtils'
@@ -59,5 +60,40 @@ describe('useUtils Demo adapter', () => {
       { title: 'Local tag', slug: 'local-tag', groupId: localGroups[0].id },
     ])
     expect(mocks.browserGraphQLRequest).not.toHaveBeenCalled()
+  })
+
+  it('keeps a changed sorting draft available after a failed save', async () => {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    const initialData = { ...FIELDS } as TDsb
+    const groups: TTagGroup[] = [
+      { id: 'group-a', title: 'A', index: 0, tags: [] },
+      { id: 'group-b', title: 'B', index: 1, tags: [] },
+    ]
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>
+        <DsbShellProvider community='home' demoMode={false} initialData={initialData}>
+          <TagsEditorProvider>{children}</TagsEditorProvider>
+        </DsbShellProvider>
+      </QueryClientProvider>
+    )
+    const { result } = renderHook(
+      () => ({ ...useUtils(groups, THREAD.POST), editor: useTagsEditor() }),
+      { wrapper },
+    )
+    mocks.browserGraphQLRequest.mockRejectedValue(new Error('sorting failed'))
+
+    act(() => {
+      result.current.editor.store.syncConfirmedOrder(THREAD.POST, groups)
+      result.current.commitTagSorting(
+        groups.toReversed().map((group, index) => ({ ...group, index })),
+      )
+    })
+    await act(async () => {
+      await expect(result.current.saveTagSorting(groups)).rejects.toThrow('sorting failed')
+    })
+
+    expect(result.current.hasSortingChanges).toBe(true)
   })
 })
