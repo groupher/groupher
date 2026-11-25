@@ -225,9 +225,9 @@ export default function useUtils(
     return next
   }
 
-  const localId = (kind: 'group' | 'tag'): string => {
+  const localId = (type: 'group' | 'tag'): string => {
     const suffix = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`
-    return `demo-${kind}:${suffix}`
+    return `demo-${type}:${suffix}`
   }
 
   const createGroup = async (title: string): Promise<void> => {

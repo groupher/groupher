@@ -80,4 +80,16 @@ describe('TagsEditorStore', () => {
     expect(result[1].tags.map((tag) => tag.id)).toEqual(['tag-b', 'tag-a'])
     expect(result[1].title).toBe('A')
   })
+
+  it('projects a tag move across groups without restoring it to its source group', () => {
+    const order = {
+      groupIds: ['group-a', 'group-b'],
+      tagIdsByGroup: { 'group-a': ['tag-a'], 'group-b': ['tag-c', 'tag-b'] },
+    }
+    const result = applyTagSortOrder(groups, order)
+
+    expect(result[0].tags.map((tag) => tag.id)).toEqual(['tag-a'])
+    expect(result[1].tags.map((tag) => tag.id)).toEqual(['tag-c', 'tag-b'])
+    expect(result[1].tags[1]).toMatchObject({ groupId: 'group-b', index: 1 })
+  })
 })

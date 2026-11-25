@@ -82,8 +82,33 @@ export const applyTagSortOrder = (
   const sourceGroups = [...groups].sort((left, right) => (left.index ?? 0) - (right.index ?? 0))
   if (!order) return sourceGroups
 
+  const tagsById = new Map(
+    sourceGroups.flatMap((group) =>
+      group.tags.flatMap((tag) => (tag.id ? [[String(tag.id), tag] as const] : [])),
+    ),
+  )
+  const assignedGroupByTagId = new Map<string, string>()
+
+  for (const groupId of order.groupIds) {
+    for (const tagId of order.tagIdsByGroup[groupId] ?? []) {
+      if (!assignedGroupByTagId.has(tagId)) assignedGroupByTagId.set(tagId, groupId)
+    }
+  }
+
   return orderByIds(sourceGroups, order.groupIds).map((group, index) => {
-    const tags = orderByIds(group.tags, order.tagIdsByGroup[String(group.id)] ?? [])
+    const groupId = String(group.id)
+    const tagIds = order.tagIdsByGroup[groupId] ?? []
+    const includedTagIds = new Set<string>()
+    const orderedTags = tagIds.flatMap((tagId) => {
+      if (includedTagIds.has(tagId) || assignedGroupByTagId.get(tagId) !== groupId) return []
+      includedTagIds.add(tagId)
+      const tag = tagsById.get(tagId)
+      return tag ? [tag] : []
+    })
+    const unassignedTags = group.tags.filter(
+      (tag) => !tag.id || !assignedGroupByTagId.has(String(tag.id)),
+    )
+    const tags = [...orderedTags, ...unassignedTags]
 
     return {
       ...group,
