@@ -92,4 +92,84 @@ describe('TagsEditorStore', () => {
     expect(result[1].tags.map((tag) => tag.id)).toEqual(['tag-c', 'tag-b'])
     expect(result[1].tags[1]).toMatchObject({ groupId: 'group-b', index: 1 })
   })
+
+  it('keeps unsaved ordering while adopting a confirmed tag group change', () => {
+    const store = createTagsEditorStore('community')
+    const initialGroups: TTagGroup[] = [
+      {
+        id: 'group-a',
+        title: 'A',
+        index: 0,
+        tags: [
+          { id: 'tag-a', groupId: 'group-a', title: 'A', index: 0 },
+          { id: 'tag-b', groupId: 'group-a', title: 'B', index: 1 },
+          { id: 'tag-c', groupId: 'group-a', title: 'C', index: 2 },
+        ],
+      },
+      {
+        id: 'group-b',
+        title: 'B',
+        index: 1,
+        tags: [{ id: 'tag-d', groupId: 'group-b', title: 'D', index: 0 }],
+      },
+    ]
+    const confirmedGroups: TTagGroup[] = [
+      {
+        ...initialGroups[0],
+        tags: [
+          { id: 'tag-a', groupId: 'group-a', title: 'A', index: 0 },
+          { id: 'tag-c', groupId: 'group-a', title: 'C', index: 1 },
+        ],
+      },
+      {
+        ...initialGroups[1],
+        tags: [
+          { id: 'tag-d', groupId: 'group-b', title: 'D', index: 0 },
+          { id: 'tag-b', groupId: 'group-b', title: 'B', index: 1 },
+        ],
+      },
+    ]
+
+    store.syncConfirmedOrder(THREAD.POST, initialGroups)
+    store.setSortingDraft(THREAD.POST, {
+      groupIds: ['group-a', 'group-b'],
+      tagIdsByGroup: {
+        'group-a': ['tag-c', 'tag-b', 'tag-a'],
+        'group-b': ['tag-d'],
+      },
+    })
+    store.syncConfirmedOrder(THREAD.POST, confirmedGroups)
+
+    expect(store.sorting[THREAD.POST]?.baseline?.tagIdsByGroup).toEqual({
+      'group-a': ['tag-a', 'tag-c'],
+      'group-b': ['tag-d', 'tag-b'],
+    })
+    expect(store.getSortingDraft(THREAD.POST)?.tagIdsByGroup).toEqual({
+      'group-a': ['tag-c', 'tag-a'],
+      'group-b': ['tag-d', 'tag-b'],
+    })
+    expect(store.hasSortingChanges(THREAD.POST)).toBe(true)
+  })
+
+  it('preserves an unsaved cross-group move while rebasing confirmed order', () => {
+    const store = createTagsEditorStore('community')
+
+    store.syncConfirmedOrder(THREAD.POST, groups)
+    store.setSortingDraft(THREAD.POST, {
+      groupIds: ['group-a', 'group-b'],
+      tagIdsByGroup: { 'group-a': ['tag-b'], 'group-b': ['tag-c', 'tag-a'] },
+    })
+    store.syncConfirmedOrder(THREAD.POST, groups)
+
+    expect(store.getSortingDraft(THREAD.POST)?.tagIdsByGroup).toEqual({
+      'group-a': ['tag-b'],
+      'group-b': ['tag-c', 'tag-a'],
+    })
+    expect(
+      applyTagSortOrder(groups, store.getSortingDraft(THREAD.POST)).map((group) =>
+        group.tags.map((tag) => tag.id),
+      ),
+    ).toEqual([['tag-b'], ['tag-c', 'tag-a']])
+    expect(store.hasSortingChanges(THREAD.POST)).toBe(true)
+  })
 })

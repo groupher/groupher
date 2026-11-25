@@ -74,6 +74,80 @@ const orderByIds = <T extends { id?: string }>(
   return [...ordered, ...byId.values()]
 }
 
+const groupByTagId = (order: TTagSortOrder): Map<string, string> => {
+  const groupById = new Map<string, string>()
+
+  for (const groupId of order.groupIds) {
+    for (const tagId of order.tagIdsByGroup[groupId] ?? []) {
+      if (!groupById.has(tagId)) groupById.set(tagId, groupId)
+    }
+  }
+
+  return groupById
+}
+
+/** Reconciles server membership changes while retaining unsaved order and group moves. */
+const rebaseTagSortOrder = (
+  baseline: TTagSortOrder,
+  draft: TTagSortOrder,
+  confirmed: TTagSortOrder,
+): TTagSortOrder => {
+  const baselineGroupByTag = groupByTagId(baseline)
+  const draftGroupByTag = groupByTagId(draft)
+  const confirmedGroupByTag = groupByTagId(confirmed)
+  const confirmedGroupIds = new Set(confirmed.groupIds)
+  const nextGroupByTag = new Map<string, string>()
+  const tagIds = new Set([
+    ...baselineGroupByTag.keys(),
+    ...draftGroupByTag.keys(),
+    ...confirmedGroupByTag.keys(),
+  ])
+
+  for (const tagId of tagIds) {
+    const baselineGroupId = baselineGroupByTag.get(tagId)
+    const draftGroupId = draftGroupByTag.get(tagId)
+    const confirmedGroupId = confirmedGroupByTag.get(tagId)
+    const hasDraftMove =
+      baselineGroupId !== undefined &&
+      draftGroupId !== undefined &&
+      draftGroupId !== baselineGroupId &&
+      confirmedGroupIds.has(draftGroupId)
+    const nextGroupId = hasDraftMove
+      ? draftGroupId
+      : (confirmedGroupId ?? (!baselineGroupId ? draftGroupId : undefined))
+
+    if (nextGroupId && confirmedGroupIds.has(nextGroupId)) nextGroupByTag.set(tagId, nextGroupId)
+  }
+
+  const preserveDraftGroupOrder = !equals(draft.groupIds, baseline.groupIds)
+  const groupIds = [...(preserveDraftGroupOrder ? draft.groupIds : confirmed.groupIds)].filter(
+    (groupId, index, all) => confirmedGroupIds.has(groupId) && all.indexOf(groupId) === index,
+  )
+  for (const groupId of confirmed.groupIds) {
+    if (!groupIds.includes(groupId)) groupIds.push(groupId)
+  }
+
+  const tagIdsByGroup = Object.fromEntries(
+    groupIds.map((groupId) => {
+      const baselineTagIds = baseline.tagIdsByGroup[groupId] ?? []
+      const draftTagIds = draft.tagIdsByGroup[groupId] ?? []
+      const confirmedTagIds = confirmed.tagIdsByGroup[groupId] ?? []
+      const preserveDraftTagOrder = !equals(draftTagIds, baselineTagIds)
+      const sourceTagIds = preserveDraftTagOrder ? draftTagIds : confirmedTagIds
+      const nextTagIds: string[] = []
+
+      for (const tagId of [...sourceTagIds, ...confirmedTagIds, ...draftTagIds]) {
+        if (nextGroupByTag.get(tagId) !== groupId || nextTagIds.includes(tagId)) continue
+        nextTagIds.push(tagId)
+      }
+
+      return [groupId, nextTagIds]
+    }),
+  )
+
+  return { groupIds, tagIdsByGroup }
+}
+
 /** Applies an ID-based order draft over the latest confirmed group data. */
 export const applyTagSortOrder = (
   groups: readonly TTagGroup[],
@@ -199,7 +273,13 @@ export const createTagsEditorStore = (community: string): TTagsEditorStore => {
     syncConfirmedOrder: (thread: TThread, groups: readonly TTagGroup[]): void => {
       const confirmed = tagSortOrderFromGroups(groups)
       const current = store.sorting[thread]
-      if (current?.baseline && current.draft && !equals(current.baseline, current.draft)) return
+      if (current?.baseline && current.draft && !equals(current.baseline, current.draft)) {
+        setSortState(thread, {
+          baseline: clone(confirmed),
+          draft: rebaseTagSortOrder(current.baseline, current.draft, confirmed),
+        })
+        return
+      }
       setSortState(thread, { baseline: clone(confirmed), draft: clone(confirmed) })
     },
     setSortingDraft: (thread: TThread, order: TTagSortOrder): void => {
