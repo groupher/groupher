@@ -8,7 +8,7 @@ import {
   saveArticleBodyWorkingCopy,
   type TSaveArticleBodyWorkingCopyInput,
 } from '~/lib/artimentPublisher'
-import { ContentPublishError } from '~/lib/contentPublisher'
+import { ContentPublishError, isRejectedContentPayload } from '~/lib/contentPublisher'
 import { invalidatePrefix } from '~/query/invalidation'
 import { viewerQueryKeys } from '~/query/key'
 import { createCommandHandle } from '~/query/mutation/optimistic/execute'
@@ -63,6 +63,7 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
   const [editorKey, setEditorKey] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [pendingUnknown, setPendingUnknown] = useState(false)
   const pendingSaveRef = useRef<{
     input: TSaveArticleBodyWorkingCopyInput
     unknown: boolean
@@ -72,6 +73,7 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
     setEditedValue(null)
     setSaveError(null)
     pendingSaveRef.current = null
+    setPendingUnknown(false)
   }, [accountScope, articleId, community])
 
   const value = editedValue ?? (workingCopy ? parseBodyValue(workingCopy.bodyJson) : null)
@@ -115,6 +117,7 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
         viewerQueryKeys.articleWorkingCopiesPrefix(accountScope || 'anonymous', articleId),
       )
       pendingSaveRef.current = null
+      setPendingUnknown(false)
       toast('正文已保存到默认编辑副本；公开版本未变')
     } catch (error) {
       const message = error instanceof Error ? error.message : '正文保存失败'
@@ -125,11 +128,15 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
           ['command_result_unavailable', 'command_result_expired'].includes(error.code))
       if (error instanceof ContentPublishError && error.code === 'transport_unknown') {
         pending.unknown = true
+        setPendingUnknown(true)
       } else if (
-        error instanceof ContentPublishError &&
-        !(pending.unknown && [401, 403, 429].includes(error.status))
+        !pending.unknown ||
+        isRejectedContentPayload(error) ||
+        hasRevisionConflict ||
+        (error instanceof ContentPublishError && error.code === 'command_id_conflict')
       ) {
         pendingSaveRef.current = null
+        setPendingUnknown(false)
       }
       if (hasRevisionConflict) {
         await workingCopiesQuery.refetch().catch(() => undefined)
@@ -176,7 +183,12 @@ const BodySetting: FC<TProps> = ({ onBack }) => {
         <Button
           size='small'
           loading={saving || workingCopiesQuery.isFetching}
-          disabled={saving || !hasChanges || !workingCopy || workingCopiesQuery.isFetching}
+          disabled={
+            saving ||
+            (!hasChanges && !pendingUnknown) ||
+            !workingCopy ||
+            workingCopiesQuery.isFetching
+          }
           onClick={save}
           space={3}
         >

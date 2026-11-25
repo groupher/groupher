@@ -334,9 +334,39 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
       )
 
     command_id = Ecto.UUID.generate()
+    handler = "approved-snapshot-#{Ecto.UUID.generate()}"
+    ref = make_ref()
+    event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
+    :ok = :telemetry.attach(handler, event, &__MODULE__.capture_snapshot_lookup/4, {self(), ref})
 
-    assert {:ok, result} =
-             ReleaseQueue.execute(f.community, queue.queue_revision, f.actor, command_id)
+    result =
+      try do
+        work =
+          Repo.get_by!(CMS.Model.ArticleWorkingCopy,
+            article_id: f.article.id,
+            scope_type: :workspace
+          )
+
+        assert {:ok, _} =
+                 Repo.transact(fn ->
+                   CMS.Articles.WorkingCopy.Snapshotter.freeze_locked(
+                     f.article,
+                     work,
+                     f.actor,
+                     Ecto.UUID.generate()
+                   )
+                 end)
+
+        assert_receive {^ref, :snapshot_lookup}
+
+        assert {:ok, result} =
+                 ReleaseQueue.execute(f.community, queue.queue_revision, f.actor, command_id)
+
+        refute_receive {^ref, :snapshot_lookup}, 50
+        result
+      after
+        :telemetry.detach(handler)
+      end
 
     release = Repo.get!(DocsRelease, result.release_id)
     assert release.approval_id == approved.approval_id
@@ -354,6 +384,21 @@ defmodule GroupherServer.Test.CMS.DocTree.ReleaseEffectsTest do
              ReleaseQueue.execute(f.community, queue.queue_revision, f.actor, command_id)
 
     assert_unchanged(committed)
+  end
+
+  @doc false
+  def capture_snapshot_lookup(_event, _measurements, %{query: query}, {owner, ref}) do
+    case String.split(query, " WHERE ", parts: 2) do
+      [from, predicates] ->
+        if String.contains?(from, "article_snapshots") and
+             String.contains?(predicates, "source_working_copy_id") and
+             String.contains?(predicates, "source_revision") do
+          send(owner, {ref, :snapshot_lookup})
+        end
+
+      _ ->
+        :ok
+    end
   end
 
   @tag timeout: 60_000

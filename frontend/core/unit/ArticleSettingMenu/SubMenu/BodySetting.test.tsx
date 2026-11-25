@@ -171,6 +171,42 @@ describe('BodySetting', () => {
     )
   })
 
+  it('retries an unknown save after reverting to the loaded body', async () => {
+    mocks.saveArticleBodyWorkingCopy
+      .mockRejectedValueOnce(
+        new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
+      )
+      .mockResolvedValueOnce({ revision: 4 })
+    mocks.browserGraphQLRequest.mockResolvedValueOnce(workingCopy).mockResolvedValue({
+      articleWorkingCopies: [
+        {
+          ...workingCopy.articleWorkingCopies[0],
+          revision: 4,
+          bodyJson: JSON.stringify([{ type: 'p', children: [{ text: 'Submitted body' }] }]),
+        },
+      ],
+    })
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BodySetting onBack={vi.fn()} />
+      </QueryClientProvider>,
+    )
+    const editor = await screen.findByRole('textbox', { name: '正文' })
+    fireEvent.change(editor, { target: { value: 'Submitted body' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存正文' }))
+    await screen.findByRole('alert')
+    fireEvent.change(editor, { target: { value: 'Current body' } })
+    expect(screen.getByRole('button', { name: '保存正文' })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: '保存正文' }))
+    await waitFor(() => expect(mocks.saveArticleBodyWorkingCopy).toHaveBeenCalledTimes(2))
+    expect(mocks.saveArticleBodyWorkingCopy.mock.calls[1][0]).toEqual(
+      mocks.saveArticleBodyWorkingCopy.mock.calls[0][0],
+    )
+    await waitFor(() => expect(screen.getByRole('textbox', { name: '正文' })).toHaveValue(bodyJson))
+    expect(screen.getByRole('button', { name: '保存正文' })).toBeEnabled()
+  })
+
   it('does not reuse the previous account draft after an account switch', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const view = () => (

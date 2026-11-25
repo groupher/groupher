@@ -45,6 +45,11 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
     assert {:ok, _} = Aggregator.run()
 
+    assert %ArticleHourlyMetric{community_id: source_id, value: 1} =
+             Repo.get_by!(ArticleHourlyMetric, binding_id: binding.id, metric: :upvote_added)
+
+    assert source_id == community.id
+
     assert {:ok, :pass} =
              Analysis.MetricEvent.append_article_action(post, second_operation, :upvote_added,
                occurred_at: occurred_at
@@ -54,6 +59,11 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
              Repo.transact(fn ->
                BindingPersist.move(Repo.get!(Article, post.id), community, destination)
              end)
+
+    assert %ArticleHourlyMetric{community_id: destination_id, value: 1} =
+             Repo.get_by!(ArticleHourlyMetric, binding_id: binding.id, metric: :upvote_added)
+
+    assert destination_id == destination.id
 
     assert {:ok, :pass} =
              Analysis.MetricEvent.append_article_action(post, second_operation, :upvote_added,
