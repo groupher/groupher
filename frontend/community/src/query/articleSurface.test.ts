@@ -1,5 +1,4 @@
 import { QueryClient } from '@tanstack/react-query'
-import { afterEach } from 'vitest'
 import { beforeEach, expect, it, vi } from 'vitest'
 
 import { articleQueryKeys, dsbKeys } from '~/query'
@@ -181,8 +180,46 @@ it('rejects ambiguous or mixed error sets as revision-only recovery candidates',
   ).toBe(false)
 })
 
-const testViewportWidth = window.innerWidth
-beforeEach(() => Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 }))
-afterEach(() =>
-  Object.defineProperty(window, 'innerWidth', { configurable: true, value: testViewportWidth }),
+it('recovers a rejected saved cursor at the head without dropping filters', async () => {
+  const client = setup()
+  client.setQueryData(dsbKeys.slug('home'), { pagiMode: 'LOAD_MORE', pagiRevision: 1 })
+  transport.loadPosts
+    .mockRejectedValueOnce(mismatch('cursor', 4204))
+    .mockResolvedValueOnce(page('cursor'))
+  const cursor = btoa(
+    JSON.stringify({
+      cursor_version: 1,
+      key_version: 1,
+      payload: { cursor: 'x', surface: 'posts', order: {}, fingerprint: 'x' },
+      signature: 'bad',
+    }),
+  )
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+  const result = await loadArticleSurface(client, 'home', 'posts', `?after=${cursor}&order=publish`)
+  expect(result).toMatchObject({ recovery: null, recoveredSearch: 'order=publish' })
+  expect(transport.loadPosts.mock.calls[0][0].data.pagi.cursor.after).toBe(cursor)
+  expect(transport.loadPosts.mock.calls[1][0].data.pagi.cursor.after).toBeUndefined()
+})
+
+it('rejects malformed cursors before querying and preserves filters', async () => {
+  const client = setup()
+  transport.loadPosts.mockResolvedValue(page())
+  const result = await loadArticleSurface(client, 'home', 'posts', '?after=bad&order=publish')
+  expect(result).toMatchObject({ recoveredSearch: 'order=publish' })
+  expect(transport.loadPosts).toHaveBeenCalledTimes(1)
+  expect(transport.loadPosts.mock.calls[0][0].data.pagi).toMatchObject({ offset: { page: 1 } })
+})
+
+it.each(['abc', '0', '-1', '1.5'])(
+  'recovers invalid page %s before requesting a list',
+  async (value) => {
+    const client = setup()
+    client.setQueryData(dsbKeys.slug('home'), { pagiMode: 'LOAD_MORE', pagiRevision: 1 })
+    transport.loadPosts.mockResolvedValue(page('cursor'))
+    const result = await loadArticleSurface(client, 'home', 'posts', `?page=${value}&order=publish`)
+    expect(result).toMatchObject({ recoveredSearch: 'order=publish' })
+    expect(transport.loadPosts).toHaveBeenCalledTimes(1)
+  },
 )

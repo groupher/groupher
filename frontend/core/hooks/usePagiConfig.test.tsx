@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react'
 import { hydrateRoot } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 
-import usePagiConfig from './usePagiConfig'
+import usePagiConfig, { PaginationDeviceContext } from './usePagiConfig'
 
 const preference = { pagiMode: 'PAGE', pagiMobileMode: 'INFINITE_SCROLL', pagiRevision: 3 } as const
 const width = (value: number) =>
@@ -53,19 +53,24 @@ it('keeps the SSR snapshot unresolved even when rendering in a browser-like envi
   expect(ready).toBe(false)
 })
 
-it('hydrates a mobile list without a desktop render or hydration mismatch', async () => {
-  width(768)
+it('hydrates the request-selected mobile mode even on a wide viewport', async () => {
+  width(1440)
   const error = vi.fn()
   function Probe() {
     const { config, ready } = usePagiConfig(preference, 'xx')
     return <span>{ready ? config.mode : 'pending'}</span>
   }
   const container = document.createElement('div')
-  container.innerHTML = renderToString(<Probe />)
-  expect(container.textContent).toBe('pending')
+  const tree = (
+    <PaginationDeviceContext.Provider value={true}>
+      <Probe />
+    </PaginationDeviceContext.Provider>
+  )
+  container.innerHTML = renderToString(tree)
+  expect(container.textContent).toBe('INFINITE_SCROLL')
   let root: ReturnType<typeof hydrateRoot>
   await act(async () => {
-    root = hydrateRoot(container, <Probe />, { onRecoverableError: error })
+    root = hydrateRoot(container, tree, { onRecoverableError: error })
   })
   expect(container.textContent).toBe('INFINITE_SCROLL')
   expect(error).not.toHaveBeenCalled()

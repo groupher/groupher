@@ -453,8 +453,9 @@ export const resolvers = {
       ),
     postPage: (_parent, args) => {
       const community = args?.filter?.community ?? 'home'
-      const entries = Array.from({ length: community === 'home' ? 3 : 2 }, (_, i) =>
-        makePost(i + 1, community),
+      const entries = Array.from(
+        { length: community === 'pagi-hash' ? 21 : community === 'home' ? 3 : 2 },
+        (_, i) => makePost(i + 1, community),
       )
       return { ...mockPage(entries, args.pagi, `posts:${community}`), pinnedEntries: [] }
     },

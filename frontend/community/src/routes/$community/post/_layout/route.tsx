@@ -1,7 +1,7 @@
 import ArticlePageBoundary from '@community/components/ArticlePageBoundary'
 import { loadArticleSurface } from '@community/query/articleSurface'
 import { communityPublicPath } from '@community/server/public-path'
-import { Outlet, createFileRoute, redirect, useLocation } from '@tanstack/react-router'
+import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
 import URL_PARAM from '~/const/url_param'
@@ -17,6 +17,7 @@ export const Route = createFileRoute('/$community/post/_layout')({
       params.community,
       'posts',
       location.searchStr,
+      context.requestContext.mobilePagination,
     )
     if (result.resetPage && new URLSearchParams(location.searchStr).has(URL_PARAM.PAGE)) {
       const search = new URLSearchParams(location.searchStr)
@@ -37,15 +38,15 @@ export const Route = createFileRoute('/$community/post/_layout')({
 
 function PostListLayout() {
   const { community } = Route.useParams()
-  const { recovery } = Route.useLoaderData()
-  const { searchStr } = useLocation()
+  const { recovery, recoveredSearch } = Route.useLoaderData()
   return (
     <ArticleListStoreProvider initData={{ thread: THREAD.POST }}>
       <ArticlePageBoundary
-        key={`${community}:posts:${recovery}:${searchStr}`}
+        key={`${community}:posts`}
         community={community}
         surface='posts'
         recovery={recovery}
+        recoveredSearch={recoveredSearch}
       >
         <PagedPostsProvider>
           <PostThread />

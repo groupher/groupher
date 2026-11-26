@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 
 import TYPE from '~/const/type'
+import useArticleListSearch from '~/hooks/useArticleListSearch'
 import { useArticleStatesByChunks } from '~/hooks/useArticleStates'
-import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { normalizePaginationError } from '~/lib/pagination/errors'
 import type {
@@ -22,7 +22,7 @@ export const usePagedChangelogsInput = (
   config: TEffectivePagiConfig,
 ): { pagedParams: TPagedArticlesParams } => {
   const { slug } = useCommunity()
-  const searchParams = useURLSearchParams()
+  const searchParams = useArticleListSearch()
   return { pagedParams: getPagedArticlesParams(slug, searchParams, config.defaultSize) }
 }
 

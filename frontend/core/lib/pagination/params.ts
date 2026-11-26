@@ -69,7 +69,7 @@ const toCursorInput = (pagi: TCursorPagi) => ({
 export const resolvePagiPosition = (
   config: TEffectivePagiConfig,
   search: Pick<URLSearchParams, 'get'>,
-  keys = { api: 'pagiApi', page: 'page', after: 'after' },
+  keys: { api: string; page: string; after: string },
 ) => {
   const explicit = search.get(keys.api)
   const api =

@@ -31,6 +31,7 @@ export const Route = createFileRoute('/$community/post/$id')({
       THREAD.POST,
       params.id,
       location.searchStr,
+      context.requestContext.mobilePagination,
     )
     const postInnerId = Number(post.innerId)
     if (Number.isSafeInteger(postInnerId) && postInnerId > 0) {

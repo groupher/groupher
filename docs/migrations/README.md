@@ -5,6 +5,7 @@
 本目录保留跨应用或跨框架的阶段性迁移记录；稳定的当前合同应回到所属应用、Feature
 或 Architecture。
 
+- [Community 讨论列表首屏 SSR 修复](./community-pagination-ssr-fix.md)：请求设备分类、分页位置恢复、公共缓存隔离与 CI 原始 HTML 冒烟。
 - [Comments、Replies 与 Reaction 快照和计数收口](./comment-reaction-snapshot-counts.md)：共享 Doc 评论、原子 count/快照、正文准入/审核/删除、folded 与 replies UI 已在工作区实现；[本地验收与 B5 发布剩余项](./comment-reaction-snapshot-counts-implementation.md) 单独记录，不提供旧数据回填或旧逻辑 fallback。
 - [账号物理删除与评论摘要核查](./comment-account-deletion-audit.md)：保留无 guard 时的 CASCADE 摘要漂移诊断；后续 [物理删除封闭方案](./comment-account-physical-deletion-block.md) 已在工作区实施并验收，未部署。受控删除/匿名化仍待独立设计。
 - [并行测试 pending 原因审计](./comment-pending-concurrency-audit.md)：确认 Sandbox 外层事务与 MentionsGraph 全局版本行争用，保留原始 PostgreSQL 错误及真实提交并发对照；后续测试隔离另列，未发布。

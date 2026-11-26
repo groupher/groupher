@@ -1,7 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
 
 import { toEffectivePagiConfig } from '~/lib/pagination/params'
-import { hasExplicitPagiPosition, readPagiMobileLayout } from '~/lib/pagination/viewport'
 import { dsbKeys } from '~/query'
 import { resolveCommentPosition } from '~/query/commentPage'
 import type { TArticleThread, TDsb } from '~/spec'
@@ -16,26 +15,11 @@ export async function prefetchComments(
   thread: TArticleThread,
   innerId: string,
   search = '',
+  mobile = false,
 ) {
   const prefetch = () => {
-    const mobile = readPagiMobileLayout()
-    const config = toEffectivePagiConfig(
-      client.getQueryData<TDsb>(dsbKeys.slug(community)),
-      mobile === true,
-    )
+    const config = toEffectivePagiConfig(client.getQueryData<TDsb>(dsbKeys.slug(community)), mobile)
     const position = resolveCommentPosition(config, new URLSearchParams(search))
-    if (
-      mobile === null &&
-      !(
-        position.config.api === 'offset' &&
-        hasExplicitPagiPosition(new URLSearchParams(search), {
-          api: 'commentsApi',
-          page: 'commentsPage',
-          after: 'commentsAfter',
-        })
-      )
-    )
-      return
     if (position.config.api === 'cursor')
       return client.ensureInfiniteQueryData({
         ...communityQueries.commentsInfinite(

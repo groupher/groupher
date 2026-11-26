@@ -6,17 +6,19 @@ import { loadLocale } from '@community/server/locale'
 import { communityPublicPath } from '@community/server/public-path'
 import { Outlet, createFileRoute, notFound, redirect, useLoaderData } from '@tanstack/react-router'
 
+import { PaginationDeviceContext } from '~/hooks/usePagiConfig'
 import { communityQueries, dsbQueries, wallpaperQueries } from '~/query'
 
 export const Route = createFileRoute('/$community')({
-  beforeLoad: ({ params }) => {
+  beforeLoad: async ({ params }) => {
     if (params.community === '.well-known') throw notFound()
+    return { requestContext: await loadCommunityRequestContext() }
   },
   loader: async ({ params, context, location }) => {
-    const [data, locale, requestContext] = await Promise.all([
+    const { requestContext } = context
+    const [data, locale] = await Promise.all([
       loadCommunity({ data: { community: params.community } }),
       loadLocale({ data: {} }),
-      loadCommunityRequestContext(),
     ])
     if (!data) throw notFound()
     await Promise.all([
@@ -90,7 +92,7 @@ export const Route = createFileRoute('/$community')({
 })
 
 function CommunityLayout() {
-  const { locale } = Route.useLoaderData()
+  const { locale, requestContext } = Route.useLoaderData()
   const { community } = Route.useParams()
   const { renderedAt, theme } = useLoaderData({ from: '__root__' })
   return (
@@ -101,9 +103,11 @@ function CommunityLayout() {
       initialNow={renderedAt}
       theme={theme}
     >
-      <CommunityShell>
-        <Outlet />
-      </CommunityShell>
+      <PaginationDeviceContext.Provider value={requestContext.mobilePagination}>
+        <CommunityShell>
+          <Outlet />
+        </CommunityShell>
+      </PaginationDeviceContext.Provider>
     </CommunityBoundary>
   )
 }

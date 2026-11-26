@@ -21,7 +21,7 @@ const toValidFilterValue = <TValue extends string>(
 /** Exposes articles filter state and actions through the shared React hook boundary. */
 export default function useArticlesFilter(): TRes {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   const searchParams = useURLSearchParams()
 
   const order = toValidFilterValue(
@@ -62,7 +62,7 @@ export default function useArticlesFilter(): TRes {
 
     if (nextUrl === currentUrl) return
 
-    void navigate({ to: nextUrl as never })
+    void navigate({ to: nextUrl as never, hash })
   }
 
   return {

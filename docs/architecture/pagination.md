@@ -6,7 +6,7 @@
 
 技术层同时支持 offset 和 cursor。管理员配置只决定访问时的默认 API、交互和默认数量，不禁止另一种 API。
 
-Dashboard 保存社区级 `pagi_mode` / `pagi_mobile_mode`（GraphQL/Core 为 `pagiMode` / `pagiMobileMode`），取值 `page / load_more / infinite_scroll`；Posts、Changelogs 和主评论列表共同遵循它，不提供按资源覆盖。服务端 `pagi_revision` 用于并发控制与缓存隔离，不是产品选项。桌面默认 page，手机和平板布局默认 infinite_scroll；两项原子保存、共享 revision。每批默认 20，硬上限 100，由平台策略拥有。
+Dashboard 保存社区级 `pagi_mode` / `pagi_mobile_mode`（GraphQL/Core 为 `pagiMode` / `pagiMobileMode`），取值 `page / load_more / infinite_scroll`；Posts、Changelogs 和主评论列表共同遵循它，不提供按资源覆盖。服务端 `pagi_revision` 用于并发控制与缓存隔离，不是产品选项。基础配置默认 page，移动配置默认 infinite_scroll；两项原子保存、共享 revision。每批默认 20，硬上限 100，由平台策略拥有。
 
 | 当前布局选中的 mode | 主要列表默认 API / 交互 | 展开的回复            |
 | ------------------- | ----------------------- | --------------------- |
@@ -16,9 +16,11 @@ Dashboard 保存社区级 `pagi_mode` / `pagi_mobile_mode`（GraphQL/Core 为 `p
 
 管理表格可显式选择 offset。回复技术层仍接受 offset/cursor，但当前产品展开列表固定 cursor 手动追加。设置在社区级“浏览体验”中统一呈现，不放到各 thread 行为页。
 
-布局使用现有 xl 断点：宽度小于 1280px 采用 pagiMobileMode，否则采用 pagiMode，不按 UA 判断。每个列表进入时确定布局，窗口缩放不重置已加载位置；切换列表身份后重新选择。SSR 无可靠 viewport 时，默认访问只输出列表加载占位，hydration 后按真实宽度注册唯一的分页查询，不先请求桌面 Page 再切 cursor；显式 offset 位置链接仍可 SSR；cursor 链接保留位置，交互模式在视口确定后选择，避免 hydration 前后 query identity 改变。
+Community 父路由从请求读取 `Sec-CH-UA-Mobile`。仅值 `?1` 选择 `pagiMobileMode`，`?0`、缺失及其他值选择 `pagiMode`。没有该提示的浏览器（包括 Safari、Firefox）使用同一桌面回退。文章 loader 和 Provider 共享该选择，服务端输出列表，hydration 沿用相同的分页查询。旋转和缩放保留已加载位置。每次服务端请求进入社区路由时重新选择。1280px 断点仅用于未提供 Community 请求上下文的客户端宿主。
 
-优先级：显式 URL 位置 > 当前布局默认值。Articles 的 `pagiApi=offset|cursor`、`page`、`after` 保存位置；comments 对应 `commentsApi`、`commentsPage`、`commentsAfter`。带 page 的链接明确表示 offset，带 after 的链接明确表示 cursor。切换后台默认值后，原链接继续使用其指定方式。URL 不冻结 revision，调用方从最新 bootstrap 获取 revision；cursor 签名不绑定默认 API/mode/revision。
+所有经过 Community 社区父路由的文档响应使用 `private, no-store`。这些 HTML 可能包含设备相关的分页结果，边缘目前没有设备分类缓存键，因此共享 HTML 缓存暂时关闭。子 loader 可以追加缓存标签，但不得恢复公共缓存。重新开启 HTML 共享缓存的前提是边缘层按规范化设备类别分键，并验证同一 URL 的两种请求互不复用。
+
+文章 URL 中的 `page` 和 `after` 表示位置，Dash 决定交互和查询方式。有效同模式链接从原位置读取；`page=1` 在两种模式下都表示首批。切换模式后，当前 API 没有页码与签名游标之间的位置映射。页码无法换算为签名游标。有效的 after 使用 cursor 查询恢复位置，PAGE 模式提供返回分页列表的入口。SSR 在查询前排除空值、超长和明显无法解码的游标，其他游标交由后端验证；游标错误或位置越界时回到首批，保留排序、筛选并提示，浏览器接管后清除失效位置。`pagiApi` 已删除，按未知参数处理，无专用兼容分支。评论使用独立的位置参数。URL 不冻结 revision。
 
 两种方式指向同一可见集合和排序，可以共同访问，但不是无成本的随机位置换算：第 N 页不能凭空变出同位置的 keyset cursor。改 sort/filter 必须回起点；分享 cursor 链接必须保留相同查询条件。集合是 live 数据，不保证插入、删除或排序指标变化后页面内容完全不变。
 
@@ -125,7 +127,7 @@ Press 读取不可变 published revision/body 的专用 publication batch；完�
 - finite/infinite query 使用不同 key，包含完整 article path、root、mode、sort、size、显式 api、schema/revision；SSR 与 browser 共用 builder。
 - 公共回复数据与 viewer state 分开。新增 cursor chunk 只 batch 该 chunk 的 viewer IDs，不重取历史全部 IDs。
 - 写操作继续使用现有 Command/receipt 管道；公共 projection 更新、临时记录、回滚、receipt reconciliation 与失效覆盖 root/timeline、preview 和独立 replies cache，包括 infinite pages。
-- offset/cursor 同时支持；管理员设置是默认值。主列表遵循当前布局的 pagiMode / pagiMobileMode 和显式 URL；展开回复始终 cursor 点击加载更多，不继承主列表 offset 或 infinite_scroll。
+- offset/cursor 同时支持；管理员设置是默认值。文章主列表遵循 Dash 模式和可恢复的 URL 位置；展开回复始终 cursor 点击加载更多，不继承主列表 offset 或 infinite_scroll。
 - api/config 切换不改变回复关系；query key 隔离旧请求，切文章或卸载不会把迟到结果写入其他列表。
 
 ### 5.4 删除与验收
@@ -148,7 +150,7 @@ Mutation/Command receipt 对所有相关 finite/infinite cache、preview、summa
 
 ## 7. 验收与可观测性
 
-- 覆盖 pagiMode / pagiMobileMode 的独立默认值、原子保存和 revision 冲突；1279/1280px 边界、SSR/hydration、显式双模式链接、缩放不丢失位置，以及所有布局下回复固定手动加载。
+- 覆盖 pagiMode / pagiMobileMode 的独立默认值、原子保存和 revision 冲突；Community 请求头与无提示回退、其他客户端宿主的 1279/1280px 边界、SSR/hydration、显式双模式链接、缩放不丢失位置，以及所有布局下回复固定手动加载。
 - 对每类资源覆盖 offset/cursor、空页/末页、相同时间戳、稳定身份、筛选和权限范围，以及跨资源/跨条件 cursor 拒绝。
 - GraphQL 不再接受旧分页 filter/字段；生成 schema、typed documents、SSR、mock-server fixtures 与所有运行时 consumers 一起切换。
 - 覆盖管理员切换默认 API 后显式双模式链接的 SSR/browser 一致性、独立回复分页、重试、切换资源和 mutation receipt。

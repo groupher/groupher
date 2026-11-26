@@ -55,6 +55,11 @@ const appConfig = {
     url: 'http://dash.groupher.localhost:3103',
     testDir: path.join(repoRoot, 'frontend/e2e/tests/auth'),
   },
+  'community-ssr': {
+    cmd: `pnpm exec cross-env E2E_AUTH_STACK=1 PORT=3107 GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} PHOENIX_GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} pnpm --filter @groupher/frontend-community run dev:managed`,
+    url: 'http://127.0.0.1:3107/health',
+    testDir: path.join(repoRoot, 'frontend/e2e/tests/community-ssr'),
+  },
   community: {
     cmd: `pnpm exec cross-env E2E_AUTH_STACK=1 PORT=3107 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql ${appDevCommand('@groupher/frontend-community')}`,
     url: 'http://community.groupher.localhost:3107/home/post',
@@ -70,9 +75,10 @@ const { cmd, url, testDir } = appConfig[app as keyof typeof appConfig]
 const authStack = app === 'auth'
 const mockServerCommand = (port: string, auth = false) => {
   const env = `MOCK_GRAPHQL_PORT=${port}${auth ? ' E2E_AUTH_STACK=1' : ''}`
-  const server = process.env.CI
-    ? 'pnpm --filter @groupher/mock-server run start'
-    : 'pnpm run mock:server'
+  const server =
+    process.env.CI || app === 'community-ssr'
+      ? 'pnpm --filter @groupher/mock-server run start'
+      : 'pnpm run mock:server'
   return `pnpm exec cross-env ${env} ${server}`
 }
 const authHostResolverRules = [

@@ -28,6 +28,7 @@ export const Route = createFileRoute('/$community/post/_layout/previewer/$id')({
         THREAD.POST,
         params.id,
         location.searchStr,
+        context.requestContext.mobilePagination,
       ),
     ])
     if (!post) throw notFound()

@@ -1,4 +1,6 @@
 export default {
+  'pagination.return_to_pages': '返回分页列表',
+  'pagination.position_reset': '此链接的分页位置已失效，已显示第一页。',
   'mentions_graph.title': '提及',
   'mentions_graph.graph': '有向提及关系图',
   'mentions_graph.links': '提及关系列表',

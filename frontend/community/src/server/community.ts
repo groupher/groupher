@@ -63,12 +63,14 @@ export type TCommunityShell = {
 export const loadCommunityRequestContext = createServerFn({ method: 'GET', strict: false }).handler(
   async () => {
     const request = getRequest()
+    setPrivateCacheHeader()
     const slug = request.headers.get(GROUPHER_COMMUNITY_SLUG_HEADER) || ''
     const pathname = new URL(request.url).pathname
     const host = (request.headers.get('x-forwarded-host') || new URL(request.url).host)
       .split(':')[0]
       .toLowerCase()
     return {
+      mobilePagination: request.headers.get('sec-ch-ua-mobile') === '?1',
       customDomain: isCommunityPathContextTrusted(pathname, slug) && !isPlatformHost(host),
       directOriginPage: isDirectCommunityOriginPage(host, pathname),
     }

@@ -30,6 +30,7 @@ export const Route = createFileRoute('/$community/blog/$id')({
       THREAD.BLOG,
       params.id,
       location.searchStr,
+      context.requestContext.mobilePagination,
     )
     await context.queryClient.ensureQueryData(
       communityQueries.stat(context.queryClient, params.community, THREAD.BLOG, params.id),

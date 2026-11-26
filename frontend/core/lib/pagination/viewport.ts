@@ -10,9 +10,8 @@ export const readPagiMobileLayout = (): boolean | null =>
 /** Detects an explicit page or cursor URL so it wins over mutable defaults. */
 export const hasExplicitPagiPosition = (
   search: Pick<URLSearchParams, 'get'>,
-  keys = { api: 'pagiApi', page: 'page', after: 'after' },
+  keys: { api?: string; page: string; after: string } = { page: 'page', after: 'after' },
 ) =>
-  search.get(keys.api) === 'offset' ||
-  search.get(keys.api) === 'cursor' ||
+  (keys.api !== undefined && ['offset', 'cursor'].includes(search.get(keys.api) ?? '')) ||
   search.get(keys.page) !== null ||
   search.get(keys.after) !== null

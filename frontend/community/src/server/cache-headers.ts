@@ -21,10 +21,12 @@ export const mergeCacheTags = (
 
 /** Applies the shared public cache policy and accumulates semantic tags for the whole request. */
 export const setPublicCacheHeaders = (tags: readonly string[]): void => {
-  setResponseHeader(
-    'cache-control',
-    `public, s-maxage=${PUBLIC_CACHE_FRESH_SECONDS}, stale-while-revalidate=${PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS}`,
-  )
+  if (!String(getResponseHeader('cache-control') ?? '').includes('no-store')) {
+    setResponseHeader(
+      'cache-control',
+      `public, s-maxage=${PUBLIC_CACHE_FRESH_SECONDS}, stale-while-revalidate=${PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS}`,
+    )
+  }
   const merged = mergeCacheTags(getResponseHeader('cache-tag'), tags)
   setResponseHeader('cache-tag', merged.join(', '))
 }

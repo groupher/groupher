@@ -118,6 +118,7 @@
     "test:landing": "vitest --config frontend/core/vitest.config.mts run frontend/core frontend/landing",
     "mock:server": "pnpm devhub start mock-server",
     "test:e2e:dash": "cross-env E2E_APP=dash playwright test -c frontend/e2e/playwright.config.ts",
+    "test:ssr:community": "cross-env E2E_APP=community-ssr MOCK_GRAPHQL_PORT=4107 playwright test -c frontend/e2e/playwright.config.ts --retries=0",
     "test:e2e:community": "cross-env E2E_APP=community playwright test -c frontend/e2e/playwright.config.ts",
     "test:e2e:landing": "cross-env E2E_APP=landing playwright test -c frontend/e2e/playwright.config.ts",
     "test:e2e:auth": "cross-env E2E_APP=auth playwright test -c frontend/e2e/playwright.config.ts",
