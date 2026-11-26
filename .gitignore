@@ -8,6 +8,7 @@ local/**/dist/
 backend/**/dist/
 infra/**/dist/
 local/**/.data/
+local/dev-hub/config/
 **/target/
 **/*.app/
 local/dev-hub/src-tauri/gen/schemas/

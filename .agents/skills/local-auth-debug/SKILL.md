@@ -15,4 +15,4 @@ Read [the local identity runbook](../../../docs/auth/local-test-actors.md). Diag
 - Browser login works but Dash SSR fails: inspect Dash GraphQL/service-auth configuration separately. A user session does not replace the Dash service credential.
 - Cookie or refresh problems: verify the canonical local HTTPS host, normal HttpOnly cookies and selected profile. Do not copy cookies into code or print tokens/session refs.
 
-Managed services receive environment from Hub's private state, not application dotenv files. `pnpm devhub setup-auth` runs the existing idempotent preparation; it does not rotate identities. Restart only affected services after a configuration change. Keep diagnostics read-only until repair or login is within the user's scope.
+Managed services receive environment from Hub's private state, not application dotenv files. Dev Hub prepares and reuses the service identity when services start. Restart only affected services after a configuration change. Keep diagnostics read-only until repair or login is within the user's scope.

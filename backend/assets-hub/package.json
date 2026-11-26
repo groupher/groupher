@@ -12,7 +12,7 @@
     "dev:upload-api:managed": "tsx watch src/server.ts",
     "dev:read-worker": "pnpm --dir ../.. devhub start assets-read-worker",
     "dev:worker": "pnpm --dir ../.. devhub start assets-read-worker",
-    "dev:read-worker:managed": "cf dev --mode development --port 8787 --persist-to \"$DEV_HUB_WORKER_STATE_DIR\"",
+    "dev:read-worker:managed": "cf dev --mode development -- --host 127.0.0.1 --port 8787",
     "deploy:worker": "cf deploy --mode production",
     "deploy:worker:dry-run": "cf deploy --dry-run --mode production",
     "smoke:r2": "tsx scripts/r2-smoke.ts",

@@ -1,5 +1,8 @@
 import { execFile, spawn, type ChildProcess } from 'node:child_process'
+import { writeFileSync } from 'node:fs'
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import net from 'node:net'
+import path from 'node:path'
 import { promisify } from 'node:util'
 
 import type {
@@ -14,13 +17,14 @@ import type {
 } from '../shared/contracts.ts'
 import {
   createSpawnEnvironment,
-  ensureLocalWorkerStateDirectory,
+  localWorkerEnvironmentPaths,
   resolveLocalEnvironment,
   type TLocalEnvironmentState,
   writeLocalWorkerEnvironment,
 } from './local-environment.ts'
 import { readServiceLocalEnvironment } from './service-environment.ts'
 import type { TServiceDefinition, TServiceStartupCheck } from './services.ts'
+import { workerRoot, workerStateRoot } from './storage-paths.ts'
 
 const MAX_LOG_CHARS = 300_000
 const EXTERNAL_POLL_MS = 2_500
@@ -53,6 +57,8 @@ type TRuntimeService = {
   logChars: number
   logSeq: number
   readinessTimer: NodeJS.Timeout | null
+  workerCleanup: Promise<void> | null
+  workerDirectory: string | null
 }
 
 type THubSubscriber = (event: THubEvent) => void
@@ -96,6 +102,7 @@ export class ServiceManager {
     },
     private readonly startupCheckRunner: TStartupCheckRunner = runHttpStartupCheck,
     private readonly prepareEnvironment?: () => Promise<TLocalEnvironmentState>,
+    private readonly cleanupRepoRoot?: string,
   ) {
     this.devHubOrigin = devHubOrigin
     for (const definition of definitions) {
@@ -115,6 +122,8 @@ export class ServiceManager {
         logChars: 0,
         logSeq: 0,
         readinessTimer: null,
+        workerCleanup: null,
+        workerDirectory: null,
       })
     }
 
@@ -126,6 +135,11 @@ export class ServiceManager {
 
   async initialize(): Promise<void> {
     await this.refreshExternalStates()
+    if (this.cleanupRepoRoot) {
+      await cleanAbandonedWorkerEnvironments(this.cleanupRepoRoot).catch((error) => {
+        console.error('Could not clean abandoned worker environments.', error)
+      })
+    }
 
     const externalServiceIds = Array.from(this.runtimes.values())
       .filter(
@@ -178,6 +192,7 @@ export class ServiceManager {
     await this.prepareLocalEnvironment()
     const runtime = this.getRuntime(id)
     const { definition } = runtime
+    await runtime.workerCleanup
 
     if (!definition.command) {
       throw new ServiceManagerError(
@@ -227,13 +242,29 @@ export class ServiceManager {
       `\u001b[38;5;75m$ ${[definition.command, ...(definition.args || [])].join(' ')}\u001b[0m\r\n`,
     )
 
-    const environment = await this.resolveSpawnEnvironment(definition)
-    const child = spawn(definition.command, definition.args || [], {
-      cwd: definition.cwd,
-      env: environment,
-      detached: process.platform !== 'win32',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
+    let environment: Record<string, string>
+    try {
+      environment = await this.resolveSpawnEnvironment(runtime)
+    } catch (error) {
+      await this.cleanupWorkerEnvironment(runtime)
+      runtime.status = 'error'
+      this.emitStatus(runtime)
+      throw error
+    }
+    let child: ChildProcess
+    try {
+      child = spawn(definition.command, definition.args || [], {
+        cwd: definition.cwd,
+        env: environment,
+        detached: process.platform !== 'win32',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+    } catch (error) {
+      await this.cleanupWorkerEnvironment(runtime)
+      runtime.status = 'error'
+      this.emitStatus(runtime)
+      throw error
+    }
 
     runtime.child = child
     runtime.pid = child.pid ?? null
@@ -250,6 +281,20 @@ export class ServiceManager {
       if (runtime.child !== child) return
       this.handleExit(runtime, code, signal)
     })
+
+    if (runtime.workerDirectory && child.pid) {
+      try {
+        writeFileSync(
+          path.join(runtime.workerDirectory, 'owner.json'),
+          JSON.stringify({ hubPid: process.pid, childPid: child.pid }),
+          { mode: 0o600 },
+        )
+      } catch (error) {
+        await terminateProcessGroup(child, child.pid)
+        await runtime.workerCleanup
+        throw error
+      }
+    }
 
     if (definition.port) this.watchReadiness(runtime)
     return this.toPublicService(runtime)
@@ -317,6 +362,7 @@ export class ServiceManager {
     this.appendLog(runtime, 'system', '\r\n\u001b[38;5;214mStopping service…\u001b[0m\r\n')
 
     await terminateProcessGroup(child, pid)
+    await runtime.workerCleanup
     return this.toPublicService(runtime)
   }
 
@@ -348,6 +394,7 @@ export class ServiceManager {
         runtime.stopRequested = true
         if (runtime.child && runtime.pid) {
           await terminateProcessGroup(runtime.child, runtime.pid)
+          await runtime.workerCleanup
         }
       }),
     )
@@ -365,9 +412,8 @@ export class ServiceManager {
     }
   }
 
-  private async resolveSpawnEnvironment(
-    definition: TServiceDefinition,
-  ): Promise<Record<string, string>> {
+  private async resolveSpawnEnvironment(runtime: TRuntimeService): Promise<Record<string, string>> {
+    const { definition } = runtime
     if (!this.prepareEnvironment || !this.localEnvironmentState) {
       const inherited = { ...process.env }
       delete inherited.NO_COLOR
@@ -399,19 +445,35 @@ export class ServiceManager {
     )
     const resolvedEnv = { ...resolved.env, ...overrides }
     if (definition.workerEnvFile) {
+      runtime.workerDirectory = path.join(
+        localWorkerEnvironmentPaths(definition.id, this.localEnvironmentState.repoRoot).directory,
+        runtime.runId!,
+      )
       const workerPaths = await writeLocalWorkerEnvironment(
         definition.id,
         resolvedEnv,
         this.localEnvironmentState.repoRoot,
+        runtime.runId!,
+      )
+      runtime.workerDirectory = workerPaths.directory
+      await writeFile(
+        path.join(workerPaths.directory, 'owner.json'),
+        JSON.stringify({ hubPid: process.pid }),
+        { mode: 0o600 },
       )
       resolvedEnv.DEV_HUB_WORKER_ENV_FILE = workerPaths.envFile
-      resolvedEnv.DEV_HUB_WORKER_STATE_DIR = workerPaths.directory
-    } else if (definition.workerStateDir) {
-      const workerPaths = await ensureLocalWorkerStateDirectory(
+      resolvedEnv.DEV_HUB_WORKER_STATE_DIR = path.join(
+        workerStateRoot(this.localEnvironmentState.repoRoot),
         definition.id,
-        this.localEnvironmentState.repoRoot,
       )
-      resolvedEnv.DEV_HUB_WORKER_STATE_DIR = workerPaths.directory
+    } else if (definition.workerStateDir) {
+      resolvedEnv.DEV_HUB_WORKER_STATE_DIR = path.join(
+        workerStateRoot(this.localEnvironmentState.repoRoot),
+        definition.id,
+      )
+    }
+    if (resolvedEnv.DEV_HUB_WORKER_STATE_DIR) {
+      await mkdir(resolvedEnv.DEV_HUB_WORKER_STATE_DIR, { recursive: true, mode: 0o700 })
     }
     return createSpawnEnvironment(definition, process.env, { env: resolvedEnv }, this.devHubOrigin)
   }
@@ -641,6 +703,8 @@ export class ServiceManager {
 
   private handleExit(runtime: TRuntimeService, code: number | null, signal: NodeJS.Signals | null) {
     this.clearReadinessTimer(runtime)
+    const workerPid = runtime.pid
+    runtime.workerCleanup = this.cleanupWorkerEnvironment(runtime, workerPid)
     runtime.child = null
     runtime.pid = null
     runtime.endedAt = Date.now()
@@ -662,6 +726,8 @@ export class ServiceManager {
     if (runtime.child !== child) return
 
     this.clearReadinessTimer(runtime)
+    const workerPid = runtime.pid
+    runtime.workerCleanup = this.cleanupWorkerEnvironment(runtime, workerPid)
     runtime.child = null
     runtime.pid = null
     runtime.endedAt = Date.now()
@@ -669,6 +735,22 @@ export class ServiceManager {
     runtime.stopRequested = false
     this.appendLog(runtime, 'system', `\r\n\u001b[31m${error.message}\u001b[0m\r\n`)
     this.emitStatus(runtime)
+  }
+
+  private async cleanupWorkerEnvironment(
+    runtime: TRuntimeService,
+    pid: number | null = null,
+  ): Promise<void> {
+    const directory = runtime.workerDirectory
+    if (!directory) return
+    runtime.workerDirectory = null
+    if (pid && process.platform !== 'win32' && !(await waitForProcessGroupExit(pid, STOP_GRACE_MS)))
+      return
+    try {
+      await rm(directory, { recursive: true, force: true })
+    } catch (error) {
+      this.appendLog(runtime, 'system', `Could not remove worker environment: ${error}\n`)
+    }
   }
 
   private clearReadinessTimer(runtime: TRuntimeService): void {
@@ -1209,5 +1291,42 @@ async function terminateProcessGroup(child: ChildProcess, pid: number): Promise<
   if (outcome === 'expired') {
     killProcessGroup(child, pid, 'SIGKILL')
     await exited
+  }
+}
+
+/** Remove projections only after both the owning Hub and worker process group have exited. */
+export async function cleanAbandonedWorkerEnvironments(repoRoot: string): Promise<void> {
+  const root = workerRoot(repoRoot)
+  const services = await readdir(root, { withFileTypes: true }).catch((error) => {
+    if (error.code === 'ENOENT') return []
+    throw error
+  })
+  for (const service of services) {
+    if (!service.isDirectory()) continue
+    const serviceDir = path.join(root, service.name)
+    for (const run of await readdir(serviceDir, { withFileTypes: true })) {
+      if (!run.isDirectory()) continue
+      const directory = path.join(serviceDir, run.name)
+      let owner: { hubPid?: number; childPid?: number }
+      try {
+        owner = JSON.parse(await readFile(path.join(directory, 'owner.json'), 'utf8'))
+      } catch {
+        continue
+      }
+      if (!Number.isSafeInteger(owner.hubPid) || !Number.isSafeInteger(owner.childPid)) continue
+      if (isProcessAlive(owner.hubPid!) || isProcessAlive(owner.childPid!)) continue
+      if (process.platform !== 'win32' && isProcessGroupAlive(owner.childPid!)) continue
+      await rm(directory, { recursive: true, force: true })
+    }
+  }
+}
+
+function isProcessAlive(pid: number): boolean {
+  if (pid <= 0) return true
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code !== 'ESRCH'
   }
 }

@@ -1,5 +1,7 @@
 # Groupher Dev Hub
 
+> Dev Hub 本地存储路径正在调整，本文中的旧路径及文件名可能已失效。当前实现状态和目标路径见 [Dev Hub 本地存储整理](../../docs/architecture/dev-hub-storage-reorganization.md)。
+
 Groupher Dev Hub 是 Groupher monorepo 的本地开发控制台。它把分散在不同目录、端口和终端里的前后端服务集中到一个界面中，负责启动与停止进程、展示日志、识别端口占用、观察运行指标，并把 Git 状态、配置文件和服务依赖关系放在同一处。
 
 ![Groupher Dev Hub 服务列表](./docs/dev-hub-overview.png)
@@ -263,13 +265,13 @@ local/dev-hub/
 
 ## 本地端口与数据
 
-| 内容                          | 默认位置                                |
-| ----------------------------- | --------------------------------------- |
-| production Hub / 桌面应用后端 | `http://127.0.0.1:4310`                 |
-| `make dev.dev` Vite 页面      | `http://127.0.0.1:4310`                 |
-| `make dev.dev` API            | `http://127.0.0.1:4311`                 |
-| 指标数据                      | `local/dev-hub/.data/metrics`           |
-| 桌面启动日志                  | Tauri 的应用日志目录中的 `launcher.log` |
+| 内容                          | 默认位置                                                |
+| ----------------------------- | ------------------------------------------------------- |
+| production Hub / 桌面应用后端 | `http://127.0.0.1:4310`                                 |
+| `make dev.dev` Vite 页面      | `http://127.0.0.1:4310`                                 |
+| `make dev.dev` API            | `http://127.0.0.1:4311`                                 |
+| 指标数据                      | 用户数据目录下的 `Groupher/DevHub/<工作树标识>/metrics` |
+| 桌面启动日志                  | Tauri 的应用日志目录中的 `launcher.log`                 |
 
 Dev Hub 只监听 loopback 地址，不应改为局域网或公网服务。配置读取、Git patch 和进程控制接口都按“仅本机开发者可访问”的边界设计。
 
@@ -291,6 +293,6 @@ cargo test --manifest-path local/dev-hub/src-tauri/Cargo.toml --locked
 
 ## 集中本地配置
 
-服务配置抽屉的 `local-dev.env` 页面支持查看配置来源、编辑允许的本地参数和重置覆盖值。配置保存在 Hub 私有的 `services/<serviceId>/local-dev.env`；内部身份与密钥继续由 `state.json` 管理。保存只影响该服务的下次启动，不自动重启或运行迁移。已有项目 `.env*` 仅作参考；外部凭据需要按服务白名单迁入面板。详见 [集中本地配置](../../docs/architecture/dev-hub-local-config.md)。
+服务配置抽屉的 `<serviceId>.env` 页面支持查看配置来源、编辑允许的本地参数和重置覆盖值。配置保存在 Hub 私有的 `local/dev-hub/config/<serviceId>.env`；内部身份与密钥继续由 `service-identity.json` 管理。保存只影响该服务的下次启动，不自动重启或运行迁移。已有项目 `.env*` 仅作参考；外部凭据需要按服务白名单迁入面板。详见 [集中本地配置](../../docs/architecture/dev-hub-local-config.md)。
 
 隔离浏览器验收：`pnpm --filter @groupher/local-dev-hub run test:environment-ui`，不接管当前 Hub 或应用服务。

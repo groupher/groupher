@@ -6,6 +6,11 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 
 import { runHubCommand } from '../src/server/cli.ts'
+import {
+  actorBrowserRoot,
+  cleanActorBrowsers,
+  registerEphemeralBrowserRun,
+} from '../src/server/local-test-browser.ts'
 import { REPO_ROOT } from '../src/server/services.ts'
 
 const require = createRequire(path.join(REPO_ROOT, 'package.json'))
@@ -25,6 +30,7 @@ const context = await browser.newContext()
 const page = await context.newPage()
 const auth = 'https://auth.groupher.localhost/api/auth/test-login'
 const headers = { Origin: 'https://dash.groupher.localhost', 'X-Groupher-CSRF': '1' }
+await registerEphemeralBrowserRun(run)
 try {
   const owner = ((await actor('create', '--alias', 'owner')) as Array<{ login: string }>)[0]
   created = true
@@ -134,9 +140,7 @@ try {
     assert.equal(cleaned.status, 'cleaned')
     assert.equal(cleaned.admins, 0)
     assert.deepEqual(cleaned.communities_to_archive, [])
-    await assert.rejects(
-      access(path.join(REPO_ROOT, 'local/dev-hub/.data/test-actors/browsers', run)),
-    )
+    await assert.rejects(access(path.join(actorBrowserRoot(), run)))
     assert.equal(((await actor('clean', '--apply')) as { status: string }).status, 'cleaned')
     checks.push(
       'optional cleanup archives owned community, removes grants and browser profiles; repeat is safe',
@@ -145,7 +149,12 @@ try {
   evidence.status = 'passed'
 } finally {
   if (created && evidence.status !== 'passed') await actor('close').catch(() => {})
-  await browser.close()
+  try {
+    await cleanActorBrowsers(run)
+    await assert.rejects(access(path.join(actorBrowserRoot(), run)), { code: 'ENOENT' })
+  } finally {
+    await browser.close()
+  }
   await mkdir(path.join(REPO_ROOT, '.playwright'), { recursive: true })
   await writeFile(
     path.join(REPO_ROOT, '.playwright/local-test-actors-acceptance.json'),

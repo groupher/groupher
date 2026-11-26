@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 
 import { fetchServiceConfig, fetchServiceConfigContent } from '@/lib/hub-client'
 
+export const ENVIRONMENT_FILE_ID = '__environment__'
+
 export function useServiceConfig(serviceId: string) {
   const [manifest, setManifest] = useState<TServiceConfigManifest | null>(null)
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
@@ -23,7 +25,7 @@ export function useServiceConfig(serviceId: string) {
     void fetchServiceConfig(serviceId, controller.signal)
       .then((nextManifest) => {
         setManifest(nextManifest)
-        setSelectedFileId('local-dev.env')
+        setSelectedFileId(ENVIRONMENT_FILE_ID)
       })
       .catch((cause: unknown) => {
         if (!controller.signal.aborted) {
@@ -38,7 +40,7 @@ export function useServiceConfig(serviceId: string) {
   }, [requestVersion, serviceId])
 
   useEffect(() => {
-    if (!selectedFileId || selectedFileId === 'local-dev.env') {
+    if (!selectedFileId || selectedFileId === ENVIRONMENT_FILE_ID) {
       setContent(null)
       setContentLoading(false)
       setContentError(null)

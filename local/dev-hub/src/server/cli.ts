@@ -3,12 +3,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import type { THubSnapshot } from '../shared/contracts.ts'
-import { setupLocalServiceAuth } from './local-service-auth.ts'
 import { PortlessManager, runPortless } from './portless.ts'
 import { REPO_ROOT } from './services.ts'
 
 const USAGE =
-  'Usage: pnpm devhub status | logs <id> | start <id> [chain|related|self] | stop <id> | restart <id> | url <id> | ensure | setup | setup-auth | doctor'
+  'Usage: pnpm devhub status | logs <id> | start <id> [chain|related|self] | stop <id> | restart <id> | url <id> | ensure | setup | doctor'
 
 /** Control existing Hub services; never launch a replacement application process. */
 export async function runHubCommand(
@@ -22,7 +21,6 @@ export async function runHubCommand(
   }
   const [action, id, mode, ...extra] = args
   if (!action || extra.length) throw new Error(USAGE)
-  if (action === 'setup-auth' && !id) return setupLocalServiceAuth()
   if (['ensure', 'setup'].includes(action) && !id) {
     await new PortlessManager().ensure(action === 'setup')
     return { ready: true }

@@ -577,3 +577,19 @@ test('Import identity and environment contracts agree across managed services', 
   assert.equal(resources['https://api.groupher.com/content-import'], undefined)
   assert.ok(Object.keys(env).every((key) => !key.startsWith('CONTENT_IMPORT_')))
 })
+
+test('Vite-based Workers receive managed persistence without unsupported cf dev options', () => {
+  for (const [directory, script, port] of [
+    ['backend/assets-hub', 'dev:read-worker:managed', 8787],
+    ['infra/edge-router', 'dev:managed', 8788],
+  ] as const) {
+    const manifest = JSON.parse(readFileSync(`${REPO_ROOT}/${directory}/package.json`, 'utf8'))
+    assert.equal(
+      manifest.scripts[script],
+      `cf dev --mode development -- --host 127.0.0.1 --port ${port}`,
+    )
+    const viteConfig = readFileSync(`${REPO_ROOT}/${directory}/vite.config.ts`, 'utf8')
+    assert.match(viteConfig, /persistState:/)
+    assert.match(viteConfig, /path: process\.env\.DEV_HUB_WORKER_STATE_DIR/)
+  }
+})

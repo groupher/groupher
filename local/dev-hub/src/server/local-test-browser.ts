@@ -1,7 +1,17 @@
 /** Owns persistent, separate browser profiles for local synthetic identities. No HTTP listener. */
 import { fork } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, readdir, realpath, rename, rm, writeFile } from 'node:fs/promises'
+import {
+  lstat,
+  mkdir,
+  readFile,
+  readdir,
+  readlink,
+  realpath,
+  rename,
+  rm,
+  writeFile,
+} from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
@@ -9,6 +19,7 @@ import { fileURLToPath } from 'node:url'
 
 import { verifyLocalTestViewer } from './local-test-viewer.ts'
 import { REPO_ROOT } from './services.ts'
+import { userDataRoot } from './storage-paths.ts'
 
 type TOpen = {
   run: string
@@ -56,13 +67,100 @@ type TRequest = {
   actor?: TOpen
   operation?: TActorUIOperation
 }
-const root = path.join(REPO_ROOT, 'local/dev-hub/.data/test-actors/browsers')
+export const actorBrowserRoot = (repoRoot = REPO_ROOT) =>
+  path.join(userDataRoot(repoRoot), 'browsers')
+const root = actorBrowserRoot()
 const NAME = /^[a-z][a-z0-9-]{0,39}$/
-const read = async (file: string) => JSON.parse(await readFile(file, 'utf8').catch(() => 'null'))
+const read = async (file: string) => {
+  try {
+    return JSON.parse(await readFile(file, 'utf8'))
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
+    throw error
+  }
+}
 const write = async (file: string, value: unknown) => {
   const temporary = `${file}.${randomUUID()}.tmp`
   await writeFile(temporary, JSON.stringify(value), { mode: 0o600 })
   await rename(temporary, file)
+}
+
+const processAlive = (pid: unknown): boolean => {
+  if (!Number.isSafeInteger(pid) || (pid as number) <= 0) return false
+  try {
+    process.kill(pid as number, 0)
+    return true
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code !== 'ESRCH'
+  }
+}
+
+/** Chromium's singleton lock identifies a browser that can outlive its worker. */
+const browserProfileBusy = async (profile: string): Promise<boolean> => {
+  const lock = path.join(profile, 'chrome', 'SingletonLock')
+  let info
+  try {
+    info = await lstat(lock)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false
+    throw error
+  }
+  if (!info.isSymbolicLink()) return true
+  const target = await readlink(lock).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') return null
+    throw error
+  })
+  if (target === null) return false
+  const match = target.match(/-(\d+)$/)
+  return !match || Number(match[1]) <= 0 || processAlive(Number(match[1]))
+}
+
+/** Register a newly created run before opening any browser profiles. */
+export const registerEphemeralBrowserRun = async (run: string, browserRoot = root) => {
+  if (!NAME.test(run)) throw new Error('Invalid run.')
+  await mkdir(browserRoot, { recursive: true, mode: 0o700 })
+  const runRoot = path.join(browserRoot, run)
+  await mkdir(runRoot, { mode: 0o700 })
+  try {
+    await writeFile(path.join(runRoot, 'ephemeral.json'), JSON.stringify({ pid: process.pid }), {
+      flag: 'wx',
+      mode: 0o600,
+    })
+  } catch (error) {
+    await rm(runRoot, { recursive: true, force: true })
+    throw error
+  }
+}
+
+/** Reap only abandoned ephemeral runs whose owner and all browser workers have exited. */
+export const cleanAbandonedBrowserRuns = async (browserRoot = root) => {
+  const entries = await readdir(browserRoot, { withFileTypes: true }).catch((error) => {
+    if (error.code === 'ENOENT') return []
+    throw error
+  })
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !NAME.test(entry.name)) continue
+    const runRoot = path.join(browserRoot, entry.name)
+    const marker = await read(path.join(runRoot, 'ephemeral.json')).catch(() => null)
+    if (!marker || !Number.isSafeInteger(marker.pid) || marker.pid <= 0 || processAlive(marker.pid))
+      continue
+    const aliases = await readdir(runRoot, { withFileTypes: true })
+    let active = false
+    for (const alias of aliases) {
+      if (!alias.isDirectory() || !NAME.test(alias.name)) continue
+      const state = await read(path.join(runRoot, alias.name, 'worker.json')).catch(() => undefined)
+      if (
+        !state ||
+        (state.pid !== null &&
+          (!Number.isSafeInteger(state.pid) || state.pid <= 0 || processAlive(state.pid))) ||
+        (await browserProfileBusy(path.join(runRoot, alias.name)))
+      ) {
+        active = true
+        break
+      }
+    }
+    if (!active) await rm(runRoot, { recursive: true })
+  }
 }
 
 const requestBrowser = async (profile: string, request: TRequest) => {
@@ -95,9 +193,18 @@ export const openActorBrowser = async (actor: TOpen) => {
   }
   if (!alive) {
     const env = Object.fromEntries(
-      ['PATH', 'HOME', 'TMPDIR', 'LANG', 'DISPLAY', 'XAUTHORITY', 'SystemRoot'].flatMap((key) =>
-        process.env[key] ? [[key, process.env[key]!]] : [],
-      ),
+      [
+        'PATH',
+        'HOME',
+        'TMPDIR',
+        'LANG',
+        'DISPLAY',
+        'XAUTHORITY',
+        'SystemRoot',
+        'XDG_DATA_HOME',
+        'LOCALAPPDATA',
+        'USERPROFILE',
+      ].flatMap((key) => (process.env[key] ? [[key, process.env[key]!]] : [])),
     )
     const child = fork(
       fileURLToPath(import.meta.url),
@@ -260,19 +367,32 @@ export const operateActorBrowser = async (actor: TOpen, operation: TActorUIOpera
   return requestBrowser(profile, { id: randomUUID(), action: 'ui', actor, operation })
 }
 
-export const closeActorBrowsers = async (run: string) => {
+const ownedRunRoot = async (run: string, browserRoot: string): Promise<string | null> => {
   if (!NAME.test(run)) throw new Error('Invalid run.')
-  const runRoot = path.join(root, run)
-  for (const alias of await readdir(runRoot).catch(() => [])) {
-    if (!NAME.test(alias)) continue
-    const profile = path.join(runRoot, alias)
+  const runRoot = path.join(browserRoot, run)
+  let actual: string
+  try {
+    actual = await realpath(runRoot)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
+    throw error
+  }
+  if (actual !== path.join(await realpath(browserRoot), run))
+    throw new Error('Refusing to access a symlinked browser run.')
+  return runRoot
+}
+
+export const closeActorBrowsers = async (run: string, browserRoot = root) => {
+  const runRoot = await ownedRunRoot(run, browserRoot)
+  if (!runRoot) return
+  for (const entry of await readdir(runRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !NAME.test(entry.name)) continue
+    const profile = path.join(runRoot, entry.name)
     const state = await read(path.join(profile, 'worker.json'))
-    if (!state?.pid) continue
-    try {
-      process.kill(state.pid, 0)
-    } catch {
-      continue
-    }
+    if (!state || state.pid === null) continue
+    if (!Number.isSafeInteger(state.pid) || state.pid <= 0)
+      throw new Error('Invalid browser worker state; refusing to clean this profile.')
+    if (!processAlive(state.pid)) continue
     await requestBrowser(profile, { id: randomUUID(), action: 'close' })
     for (let i = 0; i < 40; i++) {
       if (!(await read(path.join(profile, 'worker.json')))?.pid) break
@@ -284,14 +404,19 @@ export const closeActorBrowsers = async (run: string) => {
 }
 
 /** Deletes only a validated run's private profiles, after its workers have stopped. */
-export const cleanActorBrowsers = async (run: string) => {
-  if (!NAME.test(run)) throw new Error('Invalid run.')
-  await closeActorBrowsers(run)
-  const runRoot = path.join(root, run)
-  const actual = await realpath(runRoot).catch(() => null)
-  if (!actual) return
-  if (actual !== path.join(await realpath(root), run))
-    throw new Error('Refusing to clean a symlinked browser run.')
+export const cleanActorBrowsers = async (run: string, browserRoot = root) => {
+  const runRoot = await ownedRunRoot(run, browserRoot)
+  if (!runRoot) return
+  await closeActorBrowsers(run, browserRoot)
+  for (const alias of await readdir(runRoot, { withFileTypes: true })) {
+    if (
+      alias.isDirectory() &&
+      NAME.test(alias.name) &&
+      (await browserProfileBusy(path.join(runRoot, alias.name)))
+    ) {
+      throw new Error('A browser still owns this profile; close it before cleanup.')
+    }
+  }
   await rm(runRoot, { recursive: true })
 }
 
@@ -433,10 +558,10 @@ async function worker(profile: string, headless: boolean) {
           return
         }
         if (request.operation.op === 'fill') {
-          if ((await locator.getAttribute("contenteditable")) === "true") {
+          if ((await locator.getAttribute('contenteditable')) === 'true') {
             await locator.click()
-            await locator.press(process.platform === "darwin" ? "Meta+a" : "Control+a")
-            await locator.press("Backspace")
+            await locator.press(process.platform === 'darwin' ? 'Meta+a' : 'Control+a')
+            await locator.press('Backspace')
             await locator.pressSequentially(request.operation.value)
           } else {
             await locator.fill(request.operation.value)

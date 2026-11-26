@@ -8,6 +8,7 @@ import { localWorkerEnvironmentPaths } from './local-environment.ts'
 import { ServiceManager, ServiceManagerError } from './process-manager.ts'
 import { ServiceEnvironmentStore } from './service-environment.ts'
 import type { TServiceDefinition } from './services.ts'
+import { workerStateRoot } from './storage-paths.ts'
 
 const FIXTURE_SERVICE: TServiceDefinition = {
   id: 'stop-fixture',
@@ -193,6 +194,7 @@ test('managed spawn filters parent values and resolves authoritative local envir
 
   t.after(async () => {
     await manager.shutdown()
+    await rm(workerStateRoot(fixtureRoot), { force: true, recursive: true })
     await rm(fixtureRoot, { force: true, recursive: true })
     if (previousParentValue === undefined) delete process.env[parentKey]
     else process.env[parentKey] = previousParentValue
@@ -236,6 +238,7 @@ test('saved local configuration reaches the next real managed process and Worker
   )
   t.after(async () => {
     await manager.shutdown()
+    await rm(workerStateRoot(fixtureRoot), { force: true, recursive: true })
     await rm(fixtureRoot, { force: true, recursive: true })
   })
   await store.update(definition.id, { DB_NAME: 'saved_before_start' })
@@ -247,14 +250,16 @@ test('saved local configuration reaches the next real managed process and Worker
     started.pid,
   )
   await manager.stop(definition.id)
+  const { readdir } = await import('node:fs/promises')
+  const directory = localWorkerEnvironmentPaths(definition.id, fixtureRoot).directory
+  assert.deepEqual(await readdir(directory), [])
   await manager.start(definition.id)
   await waitForLog(manager, definition.id, 'saved_for_next_start')
   const { readFile } = await import('node:fs/promises')
   const { parseEnv } = await import('node:util')
-  const projection = await readFile(
-    localWorkerEnvironmentPaths(definition.id, fixtureRoot).envFile,
-    'utf8',
-  )
+  const runs = await readdir(directory)
+  assert.equal(runs.length, 1)
+  const projection = await readFile(path.join(directory, runs[0], '.env'), 'utf8')
   assert.equal(parseEnv(projection).DB_NAME, 'saved_for_next_start')
 })
 
@@ -277,6 +282,7 @@ test('managed Worker receives its private persistent state directory', async (t)
 
   t.after(async () => {
     await manager.shutdown()
+    await rm(workerStateRoot(fixtureRoot), { force: true, recursive: true })
     await rm(fixtureRoot, { force: true, recursive: true })
   })
 
@@ -288,7 +294,7 @@ test('managed Worker receives its private persistent state directory', async (t)
     .filter((log) => log.stream === 'stdout')
     .map((log) => log.chunk)
     .join('')
-  assert.equal(output.trim(), localWorkerEnvironmentPaths(definition.id, fixtureRoot).directory)
+  assert.equal(output.trim(), path.join(workerStateRoot(fixtureRoot), definition.id))
 })
 
 test(
@@ -685,3 +691,100 @@ async function waitForStatuses(statuses: string[], expected: string[]): Promise<
   }
   throw new Error(`Timed out waiting for statuses: ${expected.join(', ')}.`)
 }
+
+test('reaps abandoned worker projections without deleting live or uncertain ones', async (t) => {
+  const { mkdir, writeFile, access } = await import('node:fs/promises')
+  const { cleanAbandonedWorkerEnvironments } = await import('./process-manager.ts')
+  const { workerRoot } = await import('./storage-paths.ts')
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'worker-cleanup-fixture-'))
+  const root = workerRoot(fixtureRoot)
+  t.after(async () => {
+    await rm(root, { recursive: true, force: true })
+    await rm(fixtureRoot, { recursive: true, force: true })
+  })
+  for (const run of ['abandoned', 'live', 'uncertain']) {
+    await mkdir(path.join(root, 'import', run), { recursive: true })
+  }
+  await writeFile(
+    path.join(root, 'import', 'abandoned', 'owner.json'),
+    JSON.stringify({ hubPid: 2147483647, childPid: 2147483647 }),
+  )
+  await writeFile(
+    path.join(root, 'import', 'live', 'owner.json'),
+    JSON.stringify({ hubPid: process.pid, childPid: 2147483647 }),
+  )
+  await writeFile(
+    path.join(root, 'import', 'uncertain', 'owner.json'),
+    JSON.stringify({ hubPid: 2147483647 }),
+  )
+  await cleanAbandonedWorkerEnvironments(fixtureRoot)
+  await assert.rejects(access(path.join(root, 'import', 'abandoned')), { code: 'ENOENT' })
+  await access(path.join(root, 'import', 'live'))
+  await access(path.join(root, 'import', 'uncertain'))
+})
+
+test('failed worker environment preparation removes the partial projection', async (t) => {
+  const { readdir } = await import('node:fs/promises')
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'worker-failure-fixture-'))
+  const definition: TServiceDefinition = {
+    ...FIXTURE_SERVICE,
+    id: 'worker-failure-fixture',
+    workerEnvFile: true,
+    localEnvironment: { env: { 'INVALID-KEY': 'value' } },
+  }
+  const manager = new ServiceManager(
+    [definition],
+    null,
+    undefined,
+    undefined,
+    undefined,
+    async () => ({ formatVersion: 1, repoRoot: fixtureRoot, secrets: {}, serviceCredentials: {} }),
+  )
+  t.after(async () => {
+    await manager.shutdown()
+    await rm(localWorkerEnvironmentPaths(definition.id, fixtureRoot).directory, {
+      recursive: true,
+      force: true,
+    })
+    await rm(fixtureRoot, { recursive: true, force: true })
+  })
+  await assert.rejects(() => manager.start(definition.id), /Invalid worker environment key/)
+  assert.deepEqual(
+    await readdir(localWorkerEnvironmentPaths(definition.id, fixtureRoot).directory),
+    [],
+  )
+  assert.equal(manager.listServices()[0].status, 'error')
+})
+
+test('worker spawn failure removes its temporary environment', async (t) => {
+  const { readdir } = await import('node:fs/promises')
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'worker-spawn-failure-'))
+  const definition: TServiceDefinition = {
+    ...FIXTURE_SERVICE,
+    id: 'worker-spawn-failure',
+    command: path.join(fixtureRoot, 'missing-command'),
+    workerEnvFile: true,
+  }
+  const directory = localWorkerEnvironmentPaths(definition.id, fixtureRoot).directory
+  const manager = new ServiceManager(
+    [definition],
+    null,
+    undefined,
+    undefined,
+    undefined,
+    async () => ({ formatVersion: 1, repoRoot: fixtureRoot, secrets: {}, serviceCredentials: {} }),
+  )
+  t.after(async () => {
+    await manager.shutdown()
+    await rm(directory, { recursive: true, force: true })
+    await rm(workerStateRoot(fixtureRoot), { recursive: true, force: true })
+    await rm(fixtureRoot, { recursive: true, force: true })
+  })
+  await manager.start(definition.id)
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (manager.listServices()[0].status === 'error' && (await readdir(directory)).length === 0)
+      return
+    await new Promise((resolve) => setTimeout(resolve, 20))
+  }
+  assert.fail('failed worker projection was not removed')
+})

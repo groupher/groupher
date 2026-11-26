@@ -138,8 +138,8 @@ pnpm devhub actors open --run coauthor-demo --as actor-1 --community home --app 
 
 ## Browsers and session lifecycle
 
-Each run/alias has a persistent, independent Chrome profile under the ignored private directory
-`local/dev-hub/.data/test-actors/browsers/`. Install Chrome and trust local HTTPS through the normal
+Each run/alias has a persistent, independent Chrome profile under the user data directory
+`Groupher/DevHub/<worktree-id>/browsers/`. Install Chrome and trust local HTTPS through the normal
 Portless setup. Browser workers have no HTTP listener; they live until their window or run closes.
 Do not use ordinary tabs of one profile for separate identities. Reopening reuses the profile and
 reauthenticates the selected synthetic account. The command verifies the current viewer and saves a
@@ -180,14 +180,14 @@ and traversal segments are rejected. `press` accepts only Enter, Tab, Escape, ar
 Delete, Home and End. The interface has no arbitrary selector, script evaluation, cookie/storage,
 header or network inspection. It does not expose an HTTP listener.
 
-Close revokes all sessions for that run's accounts, closes their browsers and seals the run. Existing
-cookies then fail normal session validation. Accounts, permissions, communities, requests and history
-are retained; physical deletion is not part of close. A new run is required after closure. Runs do
+Close revokes all sessions for that run's accounts, closes their browsers, removes their profiles and
+seals the run. Existing cookies then fail normal session validation. Accounts, permissions, communities,
+requests and history are retained; physical account deletion is not part of close. A new run is required after closure. Runs do
 not isolate a shared Article or database; use separate resources when tests must not interfere.
 
 ## Optional cleanup
 
-`close` only seals the run and revokes sessions. `clean` first reports its scope without changing data:
+`close` seals the run, revokes sessions and removes its browser profiles. To remove browser profiles without changing account state, use `pnpm devhub actors browsers-clean --run <run>`. `clean` first reports its scope without changing data:
 
 ```bash
 pnpm devhub actors clean --run coauthor-demo

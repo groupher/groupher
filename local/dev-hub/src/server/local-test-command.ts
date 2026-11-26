@@ -17,7 +17,7 @@ import {
 type TOptions = Record<string, string | boolean>
 const NAME = /^[a-z][a-z0-9-]{0,39}$/
 const USAGE =
-  'Usage: pnpm devhub actors create|list|grant|open|ui|close|clean --run <name> ... | communities create --run <name> --owner <alias> [--slug <slug>] | articles create --run <name> --as <alias> --community <slug> --thread post [--key <key>] [--publish]'
+  'Usage: pnpm devhub actors create|list|grant|open|ui|close|clean|browsers-clean --run <name> ... | communities create --run <name> --owner <alias> [--slug <slug>] | articles create --run <name> --as <alias> --community <slug> --thread post [--key <key>] [--publish]'
 
 const UI_OPERATIONS = ['snapshot', 'navigate', 'click', 'fill', 'press', 'assert-text'] as const
 const UI_ROLES = [
@@ -179,6 +179,7 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
     ],
     'actors.close': ['run'],
     'actors.clean': ['run', 'apply'],
+    'actors.browsers-clean': ['run'],
     'communities.create': ['run', 'owner', 'slug', 'title'],
     'articles.create': ['run', 'as', 'community', 'thread', 'key', 'title', 'markdown', 'publish'],
   }
@@ -272,6 +273,10 @@ export const runLocalTestCommand = async (
   assertLocalTestTarget(origin)
   const { command, options } = parseLocalTestCommand(args)
   const status = (await checkHub()) as Array<{ id: string; status: string }>
+  if (command === 'actor.browsers-clean') {
+    await cleanActorBrowsers(String(options.run))
+    return { cleaned: true }
+  }
   const app = options.app === 'community' ? 'community' : 'dash'
   const required =
     command === 'actor.open' || command === 'article.create'
@@ -359,7 +364,7 @@ export const runLocalTestCommand = async (
   }
   if (command === 'actor.close') {
     const result = await call({ command })
-    await closeActorBrowsers(String(options.run))
+    await cleanActorBrowsers(String(options.run))
     return result
   }
   if (command === 'actor.clean') {

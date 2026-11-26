@@ -15,7 +15,7 @@ export function ServiceEnvironmentField({ entry, pending, disabled, onChange }: 
       ? 'Reset to default on save'
       : 'Unsaved change'
     : entry.source === 'local'
-      ? 'local-dev.env'
+      ? 'Local config'
       : entry.source === 'hub'
         ? 'Hub managed'
         : 'Default'

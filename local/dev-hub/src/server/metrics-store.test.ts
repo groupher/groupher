@@ -25,15 +25,19 @@ const definition: TServiceDefinition = {
   },
 }
 
-test('keeps only the current local day and returns recorded history', async () => {
+test('keeps seven local days and returns recorded history', async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), 'dev-hub-metrics-'))
   const now = new Date(2026, 6, 23, 12, 0, 0).getTime()
   await mkdir(path.join(rootDir, '2026-07-22'), { recursive: true })
+  await mkdir(path.join(rootDir, '2026-07-16'), { recursive: true })
+  await mkdir(path.join(rootDir, '2026-07-17'), { recursive: true })
   const store = new MetricsStore(rootDir, [definition], { now: () => now })
 
   try {
     await store.initialize()
-    await assert.rejects(access(path.join(rootDir, '2026-07-22')))
+    await assert.rejects(access(path.join(rootDir, '2026-07-16')))
+    await access(path.join(rootDir, '2026-07-17'))
+    await access(path.join(rootDir, '2026-07-22'))
 
     await store.recordServer('community', 'community-run', {
       cpuPercent: 24.3,

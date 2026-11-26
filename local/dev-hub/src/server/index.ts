@@ -25,6 +25,7 @@ import {
 import { ServiceConfigError, ServiceConfigReader } from './config-reader.ts'
 import { GitMonitor, GitMonitorError } from './git-monitor.ts'
 import { prepareLocalEnvironment } from './local-environment.ts'
+import { cleanAbandonedBrowserRuns } from './local-test-browser.ts'
 import { MetricsStore } from './metrics-store.ts'
 import { PortlessManager } from './portless.ts'
 import { ServiceManager, ServiceManagerError } from './process-manager.ts'
@@ -37,6 +38,7 @@ import {
 import { serviceEnvironmentRoutes } from './service-environment-routes.ts'
 import { ServiceEnvironmentStore } from './service-environment.ts'
 import { REPO_ROOT, SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts'
+import { userDataRoot } from './storage-paths.ts'
 
 const host = '127.0.0.1'
 const port = Number.parseInt(process.env.DEV_HUB_PORT || '4310', 10)
@@ -47,7 +49,7 @@ const apiOnly = process.env.DEV_HUB_API_ONLY === 'true'
 const devHubRoot = fileURLToPath(new URL('../../', import.meta.url))
 const clientRoot = path.join(devHubRoot, 'dist/client')
 const indexHtmlPath = path.join(clientRoot, 'index.html')
-const metricsRoot = path.join(devHubRoot, '.data/metrics')
+const metricsRoot = path.join(userDataRoot(REPO_ROOT), 'metrics')
 const hubOrigins = new Set([
   origin,
   webOrigin,
@@ -72,12 +74,20 @@ const manager = new ServiceManager(
     await portless.ensure()
     return prepareLocalEnvironment()
   },
+  REPO_ROOT,
 )
 const configReader = new ServiceConfigReader(SERVICE_DEFINITIONS)
 const environmentStore = new ServiceEnvironmentStore(SERVICE_DEFINITIONS)
 const gitMonitor = new GitMonitor(REPO_ROOT)
 const metricsStore = new MetricsStore(metricsRoot, SERVICE_DEFINITIONS)
-await Promise.all([manager.initialize(), gitMonitor.initialize(), metricsStore.initialize()])
+await Promise.all([
+  manager.initialize(),
+  gitMonitor.initialize(),
+  metricsStore.initialize(),
+  cleanAbandonedBrowserRuns().catch((error) => {
+    console.error('Could not clean abandoned test browsers.', error)
+  }),
+])
 const processMetricsMonitor = new ProcessMetricsMonitor(manager, metricsStore)
 processMetricsMonitor.start()
 

@@ -10,7 +10,6 @@ import {
   assertLocalEnvironmentAllowed,
   assertNoManagedEnvironment,
   createSpawnEnvironment,
-  ensureLocalWorkerStateDirectory,
   filterParentEnvironment,
   localEnvironmentPaths,
   localWorkerEnvironmentPaths,
@@ -73,15 +72,17 @@ test('prepare creates one private stable state and separate service identities',
   )
 })
 
-test('preparation refuses to replace an unmigrated local identity', async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), 'local-environment-legacy-'))
+test('preparation uses only the Hub configuration when application dotenv files exist', async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'local-environment-independent-'))
   t.after(async () => rm(root, { recursive: true, force: true }))
-  const legacyFile = path.join(root, 'frontend/dash/.env.local')
-  await mkdir(path.dirname(legacyFile), { recursive: true })
-  await writeFile(legacyFile, 'SERVICE_AUTH_CLIENT_SECRET=existing-local-secret\n')
+  const appFile = path.join(root, 'frontend/dash/.env.local')
+  await mkdir(path.dirname(appFile), { recursive: true })
+  const contents = 'SERVICE_AUTH_CLIENT_SECRET=existing-local-secret\n'
+  await writeFile(appFile, contents)
 
-  await assert.rejects(() => prepareLocalEnvironment(root, {}), /migration --check.*--apply/)
-  await assert.rejects(() => readFile(localEnvironmentPaths(root).state), { code: 'ENOENT' })
+  const state = await prepareLocalEnvironment(root, {})
+  assert.notEqual(state.serviceCredentials.dash.secret, 'existing-local-secret')
+  assert.equal(await readFile(appFile, 'utf8'), contents)
 })
 
 test('filters managed parent keys while retaining toolchain environment', () => {
@@ -100,9 +101,13 @@ test('filters managed parent keys while retaining toolchain environment', () => 
   )
 })
 
-test('writes Wrangler environment projections privately under the Dev Hub data directory', async (t) => {
+test('writes Wrangler environment projections privately under the temporary directory', async (t) => {
   const root = await mkdtemp(path.join(tmpdir(), 'local-worker-environment-'))
-  t.after(async () => rm(root, { recursive: true, force: true }))
+  t.after(async () => {
+    const { workerRoot } = await import('./storage-paths.ts')
+    await rm(workerRoot(root), { recursive: true, force: true })
+    await rm(root, { recursive: true, force: true })
+  })
   const values = {
     ENVIRONMENT: 'development',
     REVIEW_BOT_TOKEN: 'local token with spaces',
@@ -115,17 +120,11 @@ test('writes Wrangler environment projections privately under the Dev Hub data d
   assert.deepEqual(parsed, values)
   assert.equal((await (await import('node:fs/promises')).stat(paths.directory)).mode & 0o777, 0o700)
   assert.equal(await localEnvironmentStateMode(paths.envFile), 0o600)
-  assert.equal(paths.envFile, localWorkerEnvironmentPaths('review-ai', root).envFile)
-})
-
-test('creates a private persistent directory for Workers without secret bindings', async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), 'local-worker-state-'))
-  t.after(async () => rm(root, { recursive: true, force: true }))
-
-  const paths = await ensureLocalWorkerStateDirectory('edge-router', root)
-
-  assert.equal(paths.directory, localWorkerEnvironmentPaths('edge-router', root).directory)
-  assert.equal((await (await import('node:fs/promises')).stat(paths.directory)).mode & 0o777, 0o700)
+  const { worktreeId } = await import('./storage-paths.ts')
+  assert.equal(
+    paths.envFile,
+    path.join(tmpdir(), 'groupher-dev-hub', worktreeId(root), 'workers', 'review-ai', '.env'),
+  )
 })
 
 test('one managed-key set covers every service resolved environment', () => {
