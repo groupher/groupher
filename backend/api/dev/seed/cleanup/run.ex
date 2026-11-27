@@ -284,7 +284,13 @@ defmodule GroupherServer.Seed.Cleanup.Run do
         do: ["global_grant_provenance_unknown" | blockers],
         else: blockers
 
-    admins = own_admin_memberships(users)
+    {admins, admin_visibility_blocked?} = own_admin_memberships(users)
+
+    blockers =
+      if admin_visibility_blocked?,
+        do: ["admin_memberships_unavailable" | blockers],
+        else: blockers
+
     data = %{bindings: bindings, communities: communities}
 
     blockers =
@@ -327,9 +333,11 @@ defmodule GroupherServer.Seed.Cleanup.Run do
   defp own_admin_memberships(users) do
     users
     |> Map.values()
-    |> Enum.flat_map(fn user ->
-      {:ok, memberships} = CMS.list_own_community_admin_memberships(user)
-      memberships
+    |> Enum.reduce({[], false}, fn user, {memberships, blocked?} ->
+      case CMS.list_own_community_admin_memberships(user) do
+        {:ok, own} -> {memberships ++ own, blocked?}
+        {:error, _} -> {memberships, true}
+      end
     end)
   end
 

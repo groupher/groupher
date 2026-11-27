@@ -440,6 +440,21 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
     assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "legacy")
   end
 
+  test "hidden Community memberships fail closed without sealing the run" do
+    {community, _, _, owner} = mock_article(:post)
+    register(owner, "owner")
+    lifecycle = Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
+    lifecycle |> Ecto.Changeset.change(state: :destroy) |> Repo.update!()
+
+    assert {:error, :permission_denied} = CMS.list_own_community_admin_memberships(owner)
+
+    assert {:ok, %{status: "blocked", blockers: blockers}} =
+             GroupherServer.Seed.Cleanup.Run.apply("fixture-test")
+
+    assert "admin_memberships_unavailable" in blockers
+    assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "owner")
+  end
+
   test "clean report is read-only; apply removes only run grants and retains shared community/content" do
     {community, public, _, owner} = mock_article(:post)
     {:ok, subject} = db_insert(:user)

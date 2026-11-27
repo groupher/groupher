@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
 
   alias GroupherServer.{CMS, Accounts, Repo}
   alias Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
   alias CMS.Model.{Community, CommunityAdmin, CommunityAdminRequest}
   alias Helper.ORM
   alias Helper.ORM.Pagi.Order
@@ -158,25 +159,39 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
   def current_member(_, _), do: {:error, :invalid_community}
 
   @doc "Lists the authenticated actor's own Community Admin memberships."
-  def own_memberships(%User{id: user_id}) when is_integer(user_id) do
-    {:ok,
-     Repo.all(
-       from(a in CommunityAdmin,
-         join: c in Community,
-         on: c.id == a.community_id,
-         where: a.user_id == ^user_id,
-         select: %{
-           member_id: a.id,
-           user_id: a.user_id,
-           community_id: c.id,
-           community: c.slug,
-           community_ref: c.ref,
-           is_lord: a.is_lord,
-           permissions: a.permissions,
-           revision: a.revision
-         }
-       )
-     )}
+  def own_memberships(%User{id: user_id} = actor) when is_integer(user_id) do
+    case CMS.Gate.scope(Community, actor, :read, CommunityContext.admin()) do
+      %Ecto.Query{} = visible ->
+        memberships =
+          Repo.all(
+            from(a in CommunityAdmin,
+              join: c in subquery(visible),
+              on: c.id == a.community_id,
+              where: a.user_id == ^user_id,
+              select: %{
+                member_id: a.id,
+                user_id: a.user_id,
+                community_id: c.id,
+                community: c.slug,
+                community_ref: c.ref,
+                is_lord: a.is_lord,
+                permissions: a.permissions,
+                revision: a.revision
+              }
+            )
+          )
+
+        total = Repo.aggregate(from(a in CommunityAdmin, where: a.user_id == ^user_id), :count)
+
+        if length(memberships) == total do
+          {:ok, memberships}
+        else
+          {:error, :permission_denied}
+        end
+
+      _ ->
+        {:error, :permission_denied}
+    end
   end
 
   def own_memberships(_), do: {:error, :permission_denied}
