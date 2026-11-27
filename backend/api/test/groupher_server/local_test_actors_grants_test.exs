@@ -440,6 +440,63 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
     assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "legacy")
   end
 
+  test "owned Community membership checks require the owner and block foreign subscribers" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, outsider} = db_insert(:user)
+    register(owner, "owner")
+
+    assert {:ok, created} =
+             Repo.transact_result(fn ->
+               GroupherServer.Seed.Community.Create.run("fixture-test", %{
+                 "owner" => "owner",
+                 "slug" => "seed-membership-safety"
+               })
+             end)
+
+    assert {:ok, false} = CMS.community_members_outside?(created.communityRef, [owner.id], owner)
+
+    assert {:error, _} =
+             CMS.community_members_outside?(created.communityRef, [owner.id], outsider)
+
+    assert {:ok, _} =
+             CMS.subscribe_to_community("seed-membership-safety", outsider, Ecto.UUID.generate())
+
+    assert {:ok, true} = CMS.community_members_outside?(created.communityRef, [owner.id], owner)
+
+    assert {:ok, %{status: "blocked", blockers: blockers}} =
+             GroupherServer.Seed.Cleanup.Run.apply("fixture-test")
+
+    assert "owned_community_has_foreign_members" in blockers
+    assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "owner")
+  end
+
+  test "cleanup retains an owned Community when its membership is no longer owner-readable" do
+    {:ok, owner} = db_insert(:user)
+    register(owner, "owner")
+
+    assert {:ok, created} =
+             Repo.transact_result(fn ->
+               GroupherServer.Seed.Community.Create.run("fixture-test", %{
+                 "owner" => "owner",
+                 "slug" => "seed-hidden-membership"
+               })
+             end)
+
+    community = Repo.get_by!(CMS.Model.Community, ref: created.communityRef)
+    lifecycle = Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
+    lifecycle |> Ecto.Changeset.change(state: :destroy) |> Repo.update!()
+
+    assert {:error, _} = CMS.community_members_outside?(community.ref, [owner.id], owner)
+
+    assert {:ok, %{status: "blocked", blockers: blockers, communities_retained: retained}} =
+             GroupherServer.Seed.Cleanup.Run.apply("fixture-test")
+
+    assert "owned_community_membership_unavailable" in blockers
+    assert [%{communityRef: ref, lifecycle: :destroy}] = retained
+    assert ref == community.ref
+    assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "owner")
+  end
+
   test "hidden Community memberships fail closed without sealing the run" do
     {community, _, _, owner} = mock_article(:post)
     register(owner, "owner")

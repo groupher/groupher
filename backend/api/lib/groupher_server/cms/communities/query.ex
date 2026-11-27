@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Communities.Query do
   alias CMS.QueryBuilder
   alias CMS.Communities.Query.Contract
   alias Accounts.Model.User
-  alias CMS.Model.{Community, Category}
+  alias CMS.Model.{Community, CommunityAdmin, CommunitySubscriber, Category}
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order}
   alias GroupherServer.{Pagi}
@@ -36,6 +36,23 @@ defmodule GroupherServer.CMS.Communities.Query do
   @spec public_query() :: Ecto.Query.t() | {:error, term()}
   def public_query do
     CMS.Gate.scope(Community, nil, :list, CommunityContext.public())
+  end
+
+  @doc "Checks for Admin or subscriber relationships outside the supplied user set."
+  def members_outside?(%Community{id: id}, excluded_ids) when is_list(excluded_ids) do
+    admins =
+      Repo.exists?(
+        from(a in CommunityAdmin, where: a.community_id == ^id and a.user_id not in ^excluded_ids)
+      )
+
+    subscribers =
+      Repo.exists?(
+        from(s in CommunitySubscriber,
+          where: s.community_id == ^id and s.user_id not in ^excluded_ids
+        )
+      )
+
+    {:ok, admins or subscribers}
   end
 
   @doc """

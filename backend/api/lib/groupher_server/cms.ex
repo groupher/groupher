@@ -1608,6 +1608,11 @@ defmodule GroupherServer.CMS do
   @doc "Delegates GroupherServer.CMS.Communities.fetch/3 through the CMS Context boundary."
   defdelegate fetch_community(arg1, arg2, arg3), to: GroupherServer.CMS.Communities, as: :fetch
 
+  @doc "Checks for members outside a user set in an owner-readable Community."
+  defdelegate community_members_outside?(community_ref, excluded_ids, actor),
+    to: GroupherServer.CMS.Communities,
+    as: :members_outside?
+
   @doc "Delegates GroupherServer.CMS.Communities.Lifecycle.ensure_created/1 through the CMS Context boundary."
   defdelegate communities_lifecycle_ensure_created(arg1),
     to: GroupherServer.CMS.Communities.Lifecycle,

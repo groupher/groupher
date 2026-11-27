@@ -248,18 +248,13 @@ defmodule GroupherServer.Seed.Cleanup.Run do
         end)
       end)
 
-    foreign_members? =
-      Enum.any?(communities, fn {community, _} ->
-        Repo.exists?(
-          from(a in CommunityAdmin,
-            where: a.community_id == ^community.id and a.user_id not in ^ids
-          )
-        ) or
-          Repo.exists?(
-            from(s in CMS.Model.CommunitySubscriber,
-              where: s.community_id == ^community.id and s.user_id not in ^ids
-            )
-          )
+    {foreign_members?, memberships_unavailable?} =
+      Enum.reduce(communities, {false, false}, fn {community, binding},
+                                                  {foreign?, unavailable?} ->
+        case CMS.community_members_outside?(community.ref, ids, Map.get(users, binding.user_id)) do
+          {:ok, found?} -> {foreign? or found?, unavailable?}
+          {:error, _} -> {foreign?, true}
+        end
       end)
 
     global_rows = Repo.all(from(g in GlobalPassport, where: g.user_id in ^ids))
@@ -270,6 +265,11 @@ defmodule GroupherServer.Seed.Cleanup.Run do
 
     blockers =
       if foreign_members?, do: ["owned_community_has_foreign_members" | blockers], else: blockers
+
+    blockers =
+      if memberships_unavailable?,
+        do: ["owned_community_membership_unavailable" | blockers],
+        else: blockers
 
     blockers =
       if Enum.any?(global_rows, & &1.is_root),
