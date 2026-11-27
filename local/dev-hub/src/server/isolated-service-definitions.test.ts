@@ -2,7 +2,10 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { databaseTargetForEnvironment } from './database-ownership.ts'
-import { isolatedServiceDefinitions } from './isolated-service-definitions.ts'
+import {
+  ISOLATED_CORE_SERVICE_IDS,
+  isolatedServiceDefinitions,
+} from './isolated-service-definitions.ts'
 import { createSpawnEnvironment } from './local-environment.ts'
 import { SERVICE_DEFINITIONS } from './services.ts'
 
@@ -25,6 +28,7 @@ test('derives a sibling domain, independent service ports and the owned database
   const community = result.find((service) => service.id === 'community')!
   const press = result.find((service) => service.id === 'press')!
   const assets = result.find((service) => service.id === 'assets-hub')!
+  const status = result.find((service) => service.id === 'status')!
   assert.equal(auth.localEnvironment?.env?.AUTH_COOKIE_DOMAIN, '.groupher-feature-login.localhost')
   assert.equal(
     auth.localEnvironment?.env?.AUTH_URL,
@@ -68,6 +72,9 @@ test('derives a sibling domain, independent service ports and the owned database
   )
   assert.equal(gateway.localEnvironment?.env?.COMMUNITY_SITE, `http://127.0.0.1:${ports.community}`)
   assert.equal(phoenix.localEnvironment?.env?.PORT, String(ports.phoenix))
+  assert.equal(status.localEnvironment?.env?.PORT, String(ports.status))
+  assert.equal(status.workerEnvFile, true)
+  assert.ok(ISOLATED_CORE_SERVICE_IDS.has('status'))
   assert.equal(dash.portlessAppUrl, 'https://dash.groupher-feature-login.localhost/home/overview')
   assert.equal(
     SERVICE_DEFINITIONS.find((service) => service.id === 'auth')?.localEnvironment?.env

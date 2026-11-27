@@ -14,6 +14,7 @@ export const ISOLATED_CORE_SERVICE_IDS = new Set([
   'community',
   'dash',
   'assets-hub',
+  'status',
 ])
 
 /** Derive all local addresses from one registered checkout and its reserved ports. */

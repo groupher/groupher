@@ -804,7 +804,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.status.start.managed'],
     workerEnvFile: true,
-    localEnvironment: { env: { ENVIRONMENT: 'development' } },
+    localEnvironment: { env: { ENVIRONMENT: 'development', PORT: '8793' } },
     port: 8793,
     url: 'http://127.0.0.1:8793/health',
     appUrl: 'http://127.0.0.1:8793/',
