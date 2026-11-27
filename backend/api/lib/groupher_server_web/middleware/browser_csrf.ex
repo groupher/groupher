@@ -140,8 +140,28 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
   defp host_allowed?(_), do: false
 
   defp development_host?(host) do
-    Application.get_env(:groupher_server, :env) != :prod and
-      MapSet.member?(@development_hosts, host)
+    environment = Application.get_env(:groupher_server, :env)
+    managed_root = System.get_env("DEV_HUB_PUBLIC_ROOT", "")
+
+    cond do
+      environment == :prod ->
+        false
+
+      environment == :dev and System.get_env("DEV_HUB_MANAGED_ENVIRONMENT") == "true" and
+          managed_root != "" ->
+        managed_development_host?(host)
+
+      true ->
+        MapSet.member?(@development_hosts, host)
+    end
+  end
+
+  defp managed_development_host?(host) do
+    root = System.get_env("DEV_HUB_PUBLIC_ROOT", "")
+
+    System.get_env("DEV_HUB_MANAGED_ENVIRONMENT") == "true" and
+      Regex.match?(~r/\Agroupher-[a-z0-9]+(?:-[a-z0-9]+)*\.localhost\z/, root) and
+      host in [root, "community.#{root}", "dash.#{root}"]
   end
 
   defp reject(conn, status, message, code) do

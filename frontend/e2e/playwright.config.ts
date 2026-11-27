@@ -2,12 +2,16 @@ import path from 'node:path'
 
 import { defineConfig, devices } from '@playwright/test'
 
+import { registryRoot } from '../../local/dev-hub/src/server/storage-paths'
+import { assertLegacyE2ECheckout } from './checkout-guard'
+
 const app = process.env.E2E_APP ?? 'dash'
 const useSystemChrome = process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1'
 const browserChannel = useSystemChrome ? 'chrome' : 'chromium'
 const mockGraphQLEndpoint = `http://localhost:${process.env.MOCK_GRAPHQL_PORT ?? '4001'}/graphiql`
 const dashPort = process.env.DASH_E2E_PORT ?? '3103'
 const repoRoot = path.resolve(__dirname, '../..')
+assertLegacyE2ECheckout(repoRoot, registryRoot())
 
 type TWebServer = {
   command: string
@@ -118,7 +122,7 @@ const webServer: TWebServer[] = communityStack
         },
         {
           ...webServerCommand(
-            'pnpm exec cross-env NODE_ENV=test E2E_AUTH_STACK=1 PORT=3104 AUTH_URL=http://auth.groupher.localhost:3104 AUTH_COOKIE_SECURE=true AUTH_COOKIE_DOMAIN=.groupher.localhost NEXTAUTH_SECRET=e2e-auth-secret-e2e-auth-secret SERVICE_AUTH_CLIENT_ID=auth-e2e SERVICE_AUTH_CLIENT_SECRET=e2e-secret SERVICE_AUTH_TOKEN_ENDPOINT=http://127.0.0.1:4104/oauth2/token PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql AUTH_TEST_ALLOWED_ORIGINS=http://dash.groupher.localhost:3103,http://community.groupher.localhost:3107 pnpm --filter @groupher/backend-auth exec tsx src/e2e/server.ts',
+            'pnpm exec cross-env NODE_ENV=test E2E_AUTH_STACK=1 AUTH_GITHUB_ID=e2e-github AUTH_GITHUB_SECRET=e2e-github-secret PORT=3104 AUTH_URL=http://auth.groupher.localhost:3104 AUTH_COOKIE_SECURE=true AUTH_COOKIE_DOMAIN=.groupher.localhost NEXTAUTH_SECRET=e2e-auth-secret-e2e-auth-secret SERVICE_AUTH_CLIENT_ID=auth-e2e SERVICE_AUTH_CLIENT_SECRET=e2e-secret SERVICE_AUTH_TOKEN_ENDPOINT=http://127.0.0.1:4104/oauth2/token PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql AUTH_TEST_ALLOWED_ORIGINS=http://dash.groupher.localhost:3103,http://community.groupher.localhost:3107 pnpm --filter @groupher/backend-auth exec tsx src/e2e/server.ts',
           ),
           cwd: repoRoot,
           gracefulShutdown,

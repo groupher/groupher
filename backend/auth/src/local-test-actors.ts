@@ -7,8 +7,6 @@
 import type { TBrowserSigninResult } from './auth'
 import { createDevelopmentSessionResponse } from './development-session'
 
-const ENDPOINT = 'http://127.0.0.1:4001/__local-test/actors'
-
 /** Requires Hub-only credentials and rejects deployment environment markers. */
 export const localTestActorsEnabled = (env: NodeJS.ProcessEnv): boolean =>
   env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' &&
@@ -31,14 +29,32 @@ export const localTestActorLogin =
     if (!Object.hasOwn(body, 'localActor')) {
       return Response.json({ code: 'LOCAL_TEST_ACTOR_REQUIRED' }, { status: 400 })
     }
+    const root = env.DEV_HUB_PUBLIC_ROOT || 'groupher.localhost'
+    let endpoint: URL
+    try {
+      if (!/^groupher(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?\.localhost$/.test(root))
+        throw new Error('Invalid local environment.')
+      if (root !== 'groupher.localhost' && !env.PHOENIX_GRAPHQL_ENDPOINT)
+        throw new Error('Phoenix endpoint is missing.')
+      const phoenix = new URL(env.PHOENIX_GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphiql')
+      if (
+        phoenix.protocol !== 'http:' ||
+        phoenix.hostname !== '127.0.0.1' ||
+        !phoenix.port ||
+        phoenix.username ||
+        phoenix.password
+      )
+        throw new Error('Invalid local Phoenix endpoint.')
+      endpoint = new URL('/__local-test/actors', phoenix)
+    } catch {
+      return new Response(null, { status: 404 })
+    }
     if (
       !localTestActorsEnabled(env) ||
-      new URL(request.url).hostname !== 'auth.groupher.localhost' ||
-      ![
-        'https://dash.groupher.localhost',
-        'https://community.groupher.localhost',
-        'https://groupher.localhost',
-      ].includes(request.headers.get('origin') || '')
+      new URL(request.url).hostname !== `auth.${root}` ||
+      ![`https://dash.${root}`, `https://community.${root}`, `https://${root}`].includes(
+        request.headers.get('origin') || '',
+      )
     ) {
       return new Response(null, { status: 404 })
     }
@@ -47,7 +63,7 @@ export const localTestActorLogin =
       return Response.json({ code: 'INVALID_LOCAL_TEST_ACTOR' }, { status: 400 })
     }
     const call = (command: string, extra: Record<string, unknown> = {}) =>
-      requestBackend(ENDPOINT, {
+      requestBackend(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -31,7 +31,10 @@ inspire: fe.dev.inspire
 
 # local development hub
 dev:
-	pnpm --filter @groupher/local-dev-hub run hub
+	pnpm devhub up
+
+dev.hub:
+	pnpm devhub foreground
 
 dev.dev:
 	pnpm --filter @groupher/local-dev-hub run dev
@@ -230,7 +233,7 @@ be.migrate:
 	cd ./backend/api && MIX_ENV=dev mix ecto.migrate && cd -
 
 be.seed.home:
-	cd ./backend/api && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; export ASSETS_HUB_BATCH_ENDPOINT=http://127.0.0.1:8002; export ASSETS_HUB_DELETE_ENDPOINT=http://127.0.0.1:8002; MIX_ENV=dev mix run --no-start scripts/seed_lite_home.exs && cd -
+	pnpm seed home prepare
 
 be.migrate.prod:
 	cd ./backend/api && MIX_ENV=prod mix ecto.migrate && cd -

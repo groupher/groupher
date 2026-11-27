@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish.Config do
   @general_config Application.compile_env(:groupher_server, :general, [])
 
   @type publish_throttle :: %{
-          interval_minutes: pos_integer(),
+          interval_minutes: non_neg_integer(),
           hour_limit: pos_integer(),
           day_limit: pos_integer()
         }
@@ -48,5 +48,14 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish.Config do
       #=> 20
   """
   @spec publish_throttle() :: publish_throttle()
-  def publish_throttle, do: base().publish_throttle
+  def publish_throttle do
+    if Application.get_env(:groupher_server, :env) == :dev do
+      case Application.get_env(:groupher_server, :managed_publish_throttle) do
+        nil -> base().publish_throttle
+        limits -> Map.new(limits)
+      end
+    else
+      base().publish_throttle
+    end
+  end
 end

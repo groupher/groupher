@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   getDashUrl,
@@ -17,6 +17,7 @@ import {
 } from './routing'
 
 describe('dev-gateway/routing', () => {
+  afterEach(() => vi.unstubAllEnvs())
   const resolve = (
     pathname: string,
     host: string,
@@ -48,6 +49,22 @@ describe('dev-gateway/routing', () => {
     expect(isPressRoute('/home/post/1.md')).toBe(true)
     expect(isPlatformRootHost('groupher.localhost')).toBe(true)
     expect(isPlatformRootHost('docs.example.com')).toBe(false)
+  })
+
+  it('recognizes only the configured sibling root in managed development', () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    vi.stubEnv('DEV_HUB_MANAGED_ENVIRONMENT', 'true')
+    vi.stubEnv('DEV_HUB_PUBLIC_ROOT', 'groupher-feature.localhost')
+    expect(isPlatformRootHost('groupher-feature.localhost')).toBe(true)
+    expect(resolve('/home', 'groupher-feature.localhost').targetKind).toBe('community')
+    expect(
+      resolve('/api/graphql', 'groupher-feature.localhost', '', undefined, 'POST').targetKind,
+    ).toBe('phoenix')
+    expect(isPlatformRootHost('groupher-other.localhost')).toBe(false)
+    expect(isPlatformRootHost('groupher.localhost')).toBe(false)
+    expect(isDashHost('dash.groupher.localhost')).toBe(false)
+    vi.stubEnv('NODE_ENV', 'production')
+    expect(isPlatformRootHost('groupher-feature.localhost')).toBe(false)
   })
 
   it('keeps only Landing static assets as a named static product route', () => {

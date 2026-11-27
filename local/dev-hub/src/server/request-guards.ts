@@ -32,3 +32,10 @@ export const isAllowedRequestOrigin = (
     return false
   }
 }
+
+/** Bind managed mutations to the instance observed by their caller. */
+export const isAllowedInstanceMutation = (
+  method: string,
+  expected: string | undefined,
+  supplied: string | undefined,
+): boolean => !expected || ['GET', 'HEAD', 'OPTIONS'].includes(method) || supplied === expected

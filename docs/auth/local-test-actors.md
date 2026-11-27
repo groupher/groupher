@@ -4,6 +4,8 @@ The development-only Dev Hub commands create synthetic accounts, real Community 
 permissions, and isolated browser profiles. `actors open` signs in through Auth and navigates directly
 to Dash; no OAuth page, login button or console request is required.
 
+The examples below use the available Dev Hub commands. The proposed primary CLI for local fixture operations is `pnpm seed`. Its design keeps the existing commands as compatible entrypoints. [Local seed toolkit proposal](../architecture/local-seed-toolkit.md)
+
 ## Local-only boundary
 
 - Phoenix compiles `backend/api/dev/` only in `MIX_ENV=dev`. Its fixture route is compiled only in

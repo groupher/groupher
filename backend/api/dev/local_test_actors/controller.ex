@@ -20,8 +20,19 @@ defmodule GroupherServer.LocalTestActors.Controller do
 
     if allowed do
       case LocalTestActors.execute(input) do
-        {:ok, result} -> json(conn, %{data: result})
-        {:error, reason} -> conn |> put_status(400) |> json(%{error: safe_error(reason)})
+        {:ok, result} ->
+          json(conn, %{data: result})
+
+        {:error, {:slug_retained, state}} ->
+          conn
+          |> put_status(400)
+          |> json(%{
+            error: "slug_retained",
+            details: %{slug: input["slug"], lifecycle: state, action: "choose_a_new_slug"}
+          })
+
+        {:error, reason} ->
+          conn |> put_status(400) |> json(%{error: safe_error(reason)})
       end
     else
       conn |> put_status(403) |> json(%{error: "local_test_access_denied"})
@@ -29,5 +40,9 @@ defmodule GroupherServer.LocalTestActors.Controller do
   end
 
   defp safe_error(reason) when is_atom(reason), do: Atom.to_string(reason)
+
+  defp safe_error(%GroupherServer.ErrorCat.Error{reason: reason}) when is_atom(reason),
+    do: Atom.to_string(reason)
+
   defp safe_error(_), do: "local_test_command_failed"
 end

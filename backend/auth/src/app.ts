@@ -114,7 +114,14 @@ const LOCAL_AUTH_HOSTS = new Set([
 const isAllowedLocalAuthOrigin = (url: URL): boolean => {
   if (!['http:', 'https:'].includes(url.protocol)) return false
 
-  return LOCAL_AUTH_HOSTS.has(url.hostname) && (url.port === '' || url.port === '443')
+  const root = process.env.DEV_HUB_PUBLIC_ROOT || ''
+  const managed = process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' && root !== ''
+  const hosts = managed
+    ? /^groupher(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?\.localhost$/.test(root)
+      ? new Set([root, `community.${root}`, `dash.${root}`])
+      : new Set<string>()
+    : LOCAL_AUTH_HOSTS
+  return hosts.has(url.hostname) && (url.port === '' || url.port === '443')
 }
 
 /** Reports whether allowed auth origin at the auth boundary. */
@@ -835,10 +842,16 @@ export const createApp = ({
     )
 
   app.get('/api/auth/error', (context) => {
+    const localRoot =
+      process.env.NODE_ENV !== 'production' &&
+      process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' &&
+      /^groupher-[a-z0-9]+(?:-[a-z0-9]+)*\.localhost$/.test(process.env.DEV_HUB_PUBLIC_ROOT || '')
+        ? process.env.DEV_HUB_PUBLIC_ROOT
+        : undefined
     const fallback =
       process.env.NODE_ENV === 'production'
         ? 'https://groupher.com/'
-        : 'https://community.groupher.localhost/home/post'
+        : `https://community.${localRoot || 'groupher.localhost'}/home/post`
     let target = fallback
     try {
       const cookie = requestCookie(

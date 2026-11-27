@@ -19,7 +19,6 @@ import {
   getAuthCookieNames,
   getAuthSessionCookieName,
 } from '@groupher/contracts/auth'
-import { LOCAL_PHOENIX_GRAPHQL_ENDPOINT } from '@groupher/contracts/endpoint'
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
 import type { PagiInput, PagiPage } from '@groupher/contracts/pagination'
 import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
@@ -27,7 +26,7 @@ import { serialize } from 'hono/utils/cookie'
 
 import { buildHostOnlyAuthCookies } from '../cookie-config'
 import { resolveAuthRedirect } from '../redirect-url'
-import './env'
+import { resolvePhoenixGraphqlEndpoint } from './env'
 import { OAUTH_PROVIDERS, oauthProvider } from './oauth-providers'
 import { issueServiceToken } from './service-auth'
 
@@ -35,8 +34,7 @@ const AUTH_BASE_PATH = '/api/auth'
 export const ACCESS_TOKEN_MAX_AGE = 60 * 30
 export const BROWSER_SESSION_MAX_AGE = 60 * 60 * 24 * 90
 export const BROWSER_SESSION_USER_AGENT_MAX_LENGTH = 255
-const PHOENIX_GRAPHQL_ENDPOINT =
-  process.env.PHOENIX_GRAPHQL_ENDPOINT?.trim() || LOCAL_PHOENIX_GRAPHQL_ENDPOINT
+const PHOENIX_GRAPHQL_ENDPOINT = resolvePhoenixGraphqlEndpoint(process.env)
 const PHOENIX_AUTH_RESOURCE = 'https://api.groupher.com/auth'
 let serviceTokenProvider: TServiceAuthClient | undefined
 

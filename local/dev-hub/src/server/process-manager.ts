@@ -33,6 +33,8 @@ const RESTART_PORT_RELEASE_POLL_MS = 50
 const RESTART_PORT_RELEASE_TIMEOUT_MS = 5_000
 const START_DEPENDENCY_READY_POLL_MS = 500
 const START_DEPENDENCY_READY_TIMEOUT_MS = 45_000
+// A fresh checkout compiles the Phoenix dependency tree on its first start.
+const PHOENIX_COLD_START_TIMEOUT_MS = 120_000
 const STOP_GRACE_MS = 750
 const execFileAsync = promisify(execFile)
 const SELF_START_POLICY: TServiceStartPolicy = {
@@ -814,9 +816,19 @@ export class ServiceManager {
   }
 
   private async waitForRuntimeReady(runtime: TRuntimeService): Promise<void> {
-    const deadline = Date.now() + START_DEPENDENCY_READY_TIMEOUT_MS
+    const timeout =
+      runtime.definition.id === 'phoenix'
+        ? PHOENIX_COLD_START_TIMEOUT_MS
+        : START_DEPENDENCY_READY_TIMEOUT_MS
+    const deadline = Date.now() + timeout
 
     while (!(await this.isRuntimeReady(runtime))) {
+      if (runtime.status === 'error' || runtime.status === 'stopped') {
+        throw new ServiceManagerError(
+          `${runtime.definition.name} exited before it became healthy; inspect its logs.`,
+          409,
+        )
+      }
       if (Date.now() >= deadline) {
         throw new ServiceManagerError(
           `${runtime.definition.name} started, but did not become healthy before starting dependents.`,

@@ -71,6 +71,23 @@ test('actor UI page location remains on allowed app routes after each interactio
     assert.throws(() => assertActorUIPageLocation(url, 'demo-one', 'dash'))
 })
 
+test('secondary browser actions remain within their own sibling domain', () => {
+  const root = 'groupher-feature.localhost'
+  assert.equal(
+    assertActorUIPath('/home/overview', 'demo-one', 'dash', root),
+    'https://dash.groupher-feature.localhost/home/overview',
+  )
+  assert.throws(() =>
+    assertActorUIPageLocation(
+      'https://dash.groupher.localhost/home/overview',
+      'demo-one',
+      'dash',
+      root,
+    ),
+  )
+  assert.throws(() => assertActorUIPath('/home/overview', 'demo-one', 'dash', 'evil.example'))
+})
+
 test('worker UI operations accept only accessible locator operations and the key allowlist', () => {
   for (const operation of [
     { op: 'snapshot' },

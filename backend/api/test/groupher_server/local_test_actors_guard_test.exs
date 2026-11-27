@@ -1,9 +1,9 @@
-Code.require_file("../../dev/local_test_actors/guard.ex", __DIR__)
+Code.require_file("../../dev/seed/target.ex", __DIR__)
 
 defmodule GroupherServer.LocalTestActorsGuardTest do
   use ExUnit.Case, async: false
-  alias GroupherServer.LocalTestActors
-  alias LocalTestActors.Guard
+  alias GroupherServer.Seed
+  alias Seed.Target, as: Guard
 
   @variables %{
     "DEV_HUB_MANAGED_ENVIRONMENT" => "true",
@@ -49,5 +49,41 @@ defmodule GroupherServer.LocalTestActorsGuardTest do
     after
       Mix.env(original)
     end
+  end
+
+  test "secondary fixture access requires its own marked development database" do
+    database = "groupher_example_0123456789abcdef_dev"
+    target = [hostname: "127.0.0.1", port: 5432, database: database]
+    config = target
+
+    marker = %{
+      "namespace" => "groupher-devhub",
+      "formatVersion" => 1,
+      "worktreeId" => "0123456789abcdef",
+      "purpose" => "dev",
+      "previousComment" => nil
+    }
+
+    assert {:ok, :pass} = Guard.check_environment(:dev, @variables, config, target)
+    assert {:error, _} = Guard.check_environment(:prod, @variables, config, target)
+    assert {:error, _} = Guard.check_environment(:dev, @variables, @config, target)
+
+    assert {:ok, :pass} =
+             Guard.check_database([database, "127.0.0.1", 5432, Jason.encode!(marker)], target)
+
+    assert {:error, _} = Guard.check_database([database, "127.0.0.1", 5432, nil], target)
+
+    for changed <- [
+          Map.put(marker, "purpose", "test"),
+          Map.put(marker, "worktreeId", "ffffffffffffffff"),
+          Map.put(marker, "formatVersion", 2),
+          Map.put(marker, "run", "other")
+        ] do
+      assert {:error, _} =
+               Guard.check_database([database, "127.0.0.1", 5432, Jason.encode!(changed)], target)
+    end
+
+    assert {:error, _} =
+             Guard.check_database([database, "10.0.0.1", 5432, Jason.encode!(marker)], target)
   end
 end

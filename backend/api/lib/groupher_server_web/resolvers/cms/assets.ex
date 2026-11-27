@@ -14,7 +14,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Assets do
   @doc "Pages assets in the resolved community using the supplied filter."
   def paged_community_assets(_root, %{community: %Community{} = community} = args, _info) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.assets_page(community, Map.get(args, :filter), pagi)
+      CMS.page_community_assets(community, Map.get(args, :filter), pagi)
     end
   end
 
@@ -25,7 +25,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Assets do
         info
       ) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.assets_refs(community, asset_id, pagi, Map.get(info.context, :cur_user))
+      CMS.page_asset_references(community, asset_id, pagi, Map.get(info.context, :cur_user))
     end
   end
 
@@ -61,7 +61,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Assets do
           context: %{cur_user: user}
         }
       ) do
-    CMS.assets_register_to_community(community, asset, user, Map.get(args, :command_id))
+    CMS.register_community_asset(community, asset, user, Map.get(args, :command_id))
   end
 
   @doc "Creates a community asset upload intent from file metadata and the signed-in user."
@@ -70,12 +70,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Assets do
         %{community: %Community{} = community, file: file},
         %{context: %{cur_user: user}}
       ) do
-    CMS.assets_create_upload_intent(community, file, user)
+    CMS.create_community_asset_upload_intent(community, file, user)
   end
 
   @doc "Finalizes a community asset upload using the submitted completion payload."
   def complete_community_asset_upload(_root, %{input: input}, _info) do
-    CMS.assets_complete_upload(input)
+    CMS.complete_asset_upload(input)
   end
 
   @doc "Submits the actor's delete command for an asset in the specified community."
@@ -84,6 +84,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Assets do
         %{community: %Community{} = community, id: id, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.assets_delete(community, id, user, command_id)
+    CMS.delete_community_asset(community, id, user, command_id)
   end
 end

@@ -32,7 +32,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Dashboard do
         %{community: community} = args,
         %{context: %{cur_user: actor}}
       ) do
-    CMS.dashboard_save_custom_theme_preset(community, args, actor, args[:command_id])
+    CMS.save_custom_theme_preset(community, args, actor, args[:command_id])
   end
 
   @doc "Selects the requested theme preset for the community dashboard."
@@ -41,6 +41,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Dashboard do
         %{community: community} = args,
         %{context: %{cur_user: actor}}
       ) do
-    CMS.dashboard_select_theme_preset(community, args, actor, args[:command_id])
+    CMS.select_theme_preset(community, args, actor, args[:command_id])
   end
 end

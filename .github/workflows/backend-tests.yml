@@ -140,6 +140,13 @@ jobs:
       - name: Verify migrations from a fresh database
         run: bash scripts/fresh_db_migrations.sh
 
+      - name: Verify seed concurrency on a disposable database
+        env:
+          MIX_ENV: test
+          TEST_DB_NAME: groupher_seed_concurrency
+          TEST_SEED_CONCURRENCY: '1'
+        run: mix test test/groupher_server/local_seed_concurrency_test.exs
+
   test:
     name: Run tests (partition ${{ matrix.partition }}/8)
     runs-on: ubuntu-latest

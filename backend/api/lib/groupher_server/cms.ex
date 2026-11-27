@@ -29,27 +29,27 @@ defmodule GroupherServer.CMS do
     as: :article_insights_read
 
   @doc "Returns candidate Users for a Community Admin invitation."
-  defdelegate communities_admins_candidates(community_ref, name, actor),
+  defdelegate search_community_admin_candidates(community_ref, name, actor),
     to: GroupherServer.CMS.Communities.Admins,
     as: :candidates
 
   @doc "Pages Community Admins with their current Passport permissions."
-  defdelegate communities_admins_page(community_ref, pagi, actor),
+  defdelegate page_community_admins(community_ref, pagi, actor),
     to: GroupherServer.CMS.Communities.Admins,
     as: :page_admins
 
   @doc "Pages readable Community Admin memberships."
-  defdelegate communities_admins_members(community_ref, filter, pagi, actor),
+  defdelegate page_community_admin_memberships(community_ref, filter, pagi, actor),
     to: GroupherServer.CMS.Communities.Admins,
     as: :page_members
 
   @doc "Pages Community Admin requests visible to the actor."
-  defdelegate communities_admins_requests(community_ref, pagi, actor),
+  defdelegate page_community_admin_requests(community_ref, pagi, actor),
     to: GroupherServer.CMS.Communities.Admins,
     as: :page_requests
 
   @doc "Creates a Community Admin invite or application."
-  defdelegate communities_admins_create(
+  defdelegate create_community_admin_request(
                 community_ref,
                 subject_login,
                 type,
@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS do
               as: :create
 
   @doc "Decides a Community Admin request."
-  defdelegate communities_admins_decide(
+  defdelegate decide_community_admin_request(
                 request_id,
                 revision,
                 decision,
@@ -73,12 +73,12 @@ defmodule GroupherServer.CMS do
               as: :decide
 
   @doc "Cancels a Community Admin request."
-  defdelegate communities_admins_cancel(request_id, revision, actor, command_id),
+  defdelegate cancel_community_admin_request(request_id, revision, actor, command_id),
     to: GroupherServer.CMS.Communities.Admins,
     as: :cancel
 
   @doc "Updates a Community Admin's Passport permissions."
-  defdelegate communities_admins_update_permissions(
+  defdelegate update_community_admin_permissions(
                 community_ref,
                 member_id,
                 revision,
@@ -90,52 +90,52 @@ defmodule GroupherServer.CMS do
               as: :update_permissions
 
   @doc "Removes a Community Admin membership."
-  defdelegate communities_admins_remove(community_ref, member_id, revision, actor, command_id),
+  defdelegate remove_community_admin(community_ref, member_id, revision, actor, command_id),
     to: GroupherServer.CMS.Communities.Admins,
     as: :remove
 
   @doc "Leaves the actor's Community Admin membership."
-  defdelegate communities_admins_leave(community_ref, revision, actor, command_id),
+  defdelegate leave_community_admin_role(community_ref, revision, actor, command_id),
     to: GroupherServer.CMS.Communities.Admins,
     as: :leave
 
   @doc "Returns the current actor's Community Admin membership."
-  defdelegate communities_admins_current(community_ref, actor),
+  defdelegate get_current_community_admin_membership(community_ref, actor),
     to: GroupherServer.CMS.Communities.Admins,
     as: :current
 
   @doc "Checks whether the actor can manage Community Admins."
-  defdelegate communities_admins_management_allowed(community_ref, actor),
+  defdelegate check_community_admin_management_access(community_ref, actor),
     to: GroupherServer.CMS.Communities.Admins,
     as: :management_allowed
 
   @doc "Pages Article co-authors visible to an authorized manager."
-  defdelegate articles_co_authors_members(article_id, actor, pagi),
+  defdelegate page_article_co_authors(article_id, actor, pagi),
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :members
 
   @doc "Searches Article co-author invitation candidates."
-  defdelegate articles_co_authors_candidates(article_id, actor, name),
+  defdelegate search_article_co_author_candidates(article_id, actor, name),
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :candidates
 
   @doc "Pages Article co-author requests visible to the actor."
-  defdelegate articles_co_authors_requests(article_id, actor, pagi),
+  defdelegate page_article_co_author_requests(article_id, actor, pagi),
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :requests
 
   @doc "Returns the actor's effective Article permissions."
-  defdelegate articles_co_authors_permissions(article_id, actor),
+  defdelegate get_current_article_co_author_permissions(article_id, actor),
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :permissions
 
   @doc "Rejects legacy Article WorkingCopy access for a current co-author."
-  defdelegate articles_co_authors_reject_working_copy_access(article, actor),
+  defdelegate reject_co_author_working_copy_access(article, actor),
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :reject_member_working_copy_access
 
   @doc "Creates an Article co-author invitation or application."
-  defdelegate articles_co_authors_create_request(
+  defdelegate create_article_co_author_request(
                 article_id,
                 subject_login,
                 type,
@@ -147,7 +147,7 @@ defmodule GroupherServer.CMS do
               as: :create_request
 
   @doc "Decides a revisioned Article co-author request."
-  defdelegate articles_co_authors_decide_request(
+  defdelegate decide_article_co_author_request(
                 request_id,
                 revision,
                 decision,
@@ -159,12 +159,12 @@ defmodule GroupherServer.CMS do
               as: :decide_request
 
   @doc "Cancels a pending Article co-author request."
-  defdelegate articles_co_authors_cancel_request(request_id, revision, actor, command_id),
+  defdelegate cancel_article_co_author_request(request_id, revision, actor, command_id),
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :cancel_request
 
   @doc "Replaces one Article co-author's permissions."
-  defdelegate articles_co_authors_update_permissions(
+  defdelegate update_article_co_author_permissions(
                 article_id,
                 member_id,
                 revision,
@@ -176,7 +176,7 @@ defmodule GroupherServer.CMS do
               as: :update_permissions
 
   @doc "Removes one Article co-author membership."
-  defdelegate articles_co_authors_remove_member(
+  defdelegate remove_article_co_author(
                 article_id,
                 member_id,
                 revision,
@@ -187,7 +187,7 @@ defmodule GroupherServer.CMS do
               as: :remove_member
 
   @doc "Leaves the actor's Article co-author membership."
-  defdelegate articles_co_authors_leave_member(article_id, revision, actor, command_id),
+  defdelegate leave_article_co_author_role(article_id, revision, actor, command_id),
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :leave_member
 
@@ -664,32 +664,32 @@ defmodule GroupherServer.CMS do
     as: :cover_edit_info
 
   @doc "Delegates stable Article WorkingCopy creation through the CMS boundary."
-  defdelegate articles_create_article(arg1, arg2, arg3, arg4, arg5),
+  defdelegate create_article(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Articles,
     as: :create_article
 
   @doc "Delegates one-transaction Article creation and first publication through CMS."
-  defdelegate articles_create_and_publish_article(arg1, arg2, arg3, arg4, arg5),
+  defdelegate create_and_publish_article(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Articles,
     as: :create_and_publish_article
 
   @doc "Delegates Article WorkingCopy save through the CMS boundary."
-  defdelegate articles_save_working_copy(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+  defdelegate save_article_working_copy(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
     to: GroupherServer.CMS.Articles,
     as: :save_working_copy
 
   @doc "Delegates a WorkingCopy save with trusted history provenance."
-  defdelegate articles_save_working_copy(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8),
+  defdelegate save_article_working_copy(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8),
     to: GroupherServer.CMS.Articles,
     as: :save_working_copy
 
   @doc "Delegates Snapshot-based WorkingCopy creation through the CMS boundary."
-  defdelegate articles_fork_snapshot(arg1, arg2, arg3, arg4, arg5, arg6),
+  defdelegate fork_article_snapshot(arg1, arg2, arg3, arg4, arg5, arg6),
     to: GroupherServer.CMS.Articles,
     as: :fork_snapshot
 
   @doc "Delegates Snapshot fork with trusted history provenance."
-  defdelegate articles_fork_snapshot(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+  defdelegate fork_article_snapshot(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
     to: GroupherServer.CMS.Articles,
     as: :fork_snapshot
 
@@ -712,6 +712,11 @@ defmodule GroupherServer.CMS do
   defdelegate articles_history_events(article_id, actor, opts),
     to: GroupherServer.CMS.Articles,
     as: :history_events
+
+  @doc "Finds the caller's authorized Article creation for a command identity."
+  defdelegate find_article_creation_by_command(command_id, community_id, actor),
+    to: GroupherServer.CMS.Articles,
+    as: :find_creation_by_command
 
   @doc "Reads one Article history event through its history permission boundary."
   defdelegate articles_history_event(article_id, event_id, actor, opts),
@@ -1134,17 +1139,17 @@ defmodule GroupherServer.CMS do
   defdelegate articles_pin(arg1, arg2, arg3, arg4), to: GroupherServer.CMS.Articles, as: :pin
 
   @doc "Delegates Snapshot-based Article publication through the CMS boundary."
-  defdelegate articles_publish_article(arg1, arg2, arg3, arg4, arg5, arg6),
+  defdelegate publish_article(arg1, arg2, arg3, arg4, arg5, arg6),
     to: GroupherServer.CMS.Articles,
     as: :publish_article
 
   @doc "Delegates Article publication with trusted history provenance."
-  defdelegate articles_publish_article(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+  defdelegate publish_article(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
     to: GroupherServer.CMS.Articles,
     as: :publish_article
 
   @doc "Delegates deletion of one Article WorkingCopy through CMS."
-  defdelegate articles_delete_working_copy(arg1, arg2, arg3, arg4, arg5),
+  defdelegate delete_article_working_copy(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Articles,
     as: :delete_working_copy
 
@@ -1266,18 +1271,20 @@ defmodule GroupherServer.CMS do
     as: :article_enums
 
   @doc "Delegates GroupherServer.CMS.Assets.complete_upload/1 through the CMS Context boundary."
-  defdelegate assets_complete_upload(arg1), to: GroupherServer.CMS.Assets, as: :complete_upload
+  defdelegate complete_asset_upload(arg1), to: GroupherServer.CMS.Assets, as: :complete_upload
 
   @doc "Delegates GroupherServer.CMS.Assets.create_upload_intent/3 through the CMS Context boundary."
-  defdelegate assets_create_upload_intent(arg1, arg2, arg3),
+  defdelegate create_community_asset_upload_intent(arg1, arg2, arg3),
     to: GroupherServer.CMS.Assets,
     as: :create_upload_intent
 
   @doc "Delegates GroupherServer.CMS.Assets.delete/2 through the CMS Context boundary."
-  defdelegate assets_delete(arg1, arg2), to: GroupherServer.CMS.Assets, as: :delete
+  defdelegate delete_community_asset(arg1, arg2), to: GroupherServer.CMS.Assets, as: :delete
 
   @doc "Delegates GroupherServer.CMS.Assets.delete/4 through the CMS Context boundary."
-  defdelegate assets_delete(arg1, arg2, arg3, arg4), to: GroupherServer.CMS.Assets, as: :delete
+  defdelegate delete_community_asset(arg1, arg2, arg3, arg4),
+    to: GroupherServer.CMS.Assets,
+    as: :delete
 
   @doc "Delegates GroupherServer.CMS.Assets.Endpoints.validate!/0 through the CMS Context boundary."
   defdelegate assets_endpoints_validate!(),
@@ -1298,20 +1305,22 @@ defmodule GroupherServer.CMS do
   defdelegate assets_origin_info(arg1), to: GroupherServer.CMS.Assets, as: :origin_info
 
   @doc "Pages community assets using separate business filters and Pagi parameters."
-  defdelegate assets_page(community, filter, pagi), to: GroupherServer.CMS.Assets, as: :page
+  defdelegate page_community_assets(community, filter, pagi),
+    to: GroupherServer.CMS.Assets,
+    as: :page
 
   @doc "Pages version-owned asset references using Pagi parameters."
-  defdelegate assets_refs(community, asset_id, pagi, actor),
+  defdelegate page_asset_references(community, asset_id, pagi, actor),
     to: GroupherServer.CMS.Assets,
     as: :refs
 
   @doc "Delegates GroupherServer.CMS.Assets.register_to_community/3 through the CMS Context boundary."
-  defdelegate assets_register_to_community(arg1, arg2, arg3),
+  defdelegate register_community_asset(arg1, arg2, arg3),
     to: GroupherServer.CMS.Assets,
     as: :register_to_community
 
   @doc "Delegates GroupherServer.CMS.Assets.register_to_community/4 through the CMS Context boundary."
-  defdelegate assets_register_to_community(arg1, arg2, arg3, arg4),
+  defdelegate register_community_asset(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Assets,
     as: :register_to_community
 
@@ -1467,10 +1476,12 @@ defmodule GroupherServer.CMS do
     as: :viewer_states
 
   @doc "Delegates GroupherServer.CMS.Communities.check_name/1 through the CMS Context boundary."
-  defdelegate communities_check_name(arg1), to: GroupherServer.CMS.Communities, as: :check_name
+  defdelegate check_community_slug_availability(arg1),
+    to: GroupherServer.CMS.Communities,
+    as: :check_name
 
   @doc "Delegates GroupherServer.CMS.Communities.check_name/2 through the CMS Context boundary."
-  defdelegate communities_check_name(arg1, arg2),
+  defdelegate check_community_slug_availability(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :check_name
 
@@ -1478,12 +1489,12 @@ defmodule GroupherServer.CMS do
   defdelegate communities_count(arg1, arg2), to: GroupherServer.CMS.Communities, as: :count
 
   @doc "Delegates GroupherServer.CMS.Communities.create_category/2 through the CMS Context boundary."
-  defdelegate communities_create_category(arg1, arg2),
+  defdelegate create_community_category(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :create_category
 
   @doc "Delegates GroupherServer.CMS.Communities.create_category/3 through the CMS Context boundary."
-  defdelegate communities_create_category(arg1, arg2, arg3),
+  defdelegate create_community_category(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :create_category
 
@@ -1493,84 +1504,84 @@ defmodule GroupherServer.CMS do
     as: :create_from_application
 
   @doc "Delegates GroupherServer.CMS.Communities.create_tag_group/3 through the CMS Context boundary."
-  defdelegate communities_create_tag_group(arg1, arg2, arg3),
+  defdelegate create_community_tag_group(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :create_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.create_tag_group/4 through the CMS Context boundary."
-  defdelegate communities_create_tag_group(arg1, arg2, arg3, arg4),
+  defdelegate create_community_tag_group(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :create_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.create_tag_group/5 through the CMS Context boundary."
-  defdelegate communities_create_tag_group(arg1, arg2, arg3, arg4, arg5),
+  defdelegate create_community_tag_group(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Communities,
     as: :create_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.create_tag/4 through the CMS Context boundary."
-  defdelegate communities_create_tag(arg1, arg2, arg3, arg4),
+  defdelegate create_community_tag(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :create_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.create_tag/5 through the CMS Context boundary."
-  defdelegate communities_create_tag(arg1, arg2, arg3, arg4, arg5),
+  defdelegate create_community_tag(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Communities,
     as: :create_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.create/2 through the CMS Context boundary."
-  defdelegate communities_create(arg1, arg2), to: GroupherServer.CMS.Communities, as: :create
+  defdelegate create_community(arg1, arg2), to: GroupherServer.CMS.Communities, as: :create
 
   @doc "Delegates GroupherServer.CMS.Communities.create/3 through the CMS Context boundary."
-  defdelegate communities_create(arg1, arg2, arg3),
+  defdelegate create_community(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :create
 
   @doc "Delegates GroupherServer.CMS.Communities.delete_category/2 through the CMS Context boundary."
-  defdelegate communities_delete_category(arg1, arg2),
+  defdelegate delete_community_category(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :delete_category
 
   @doc "Delegates GroupherServer.CMS.Communities.delete_category/4 through the CMS Context boundary."
-  defdelegate communities_delete_category(arg1, arg2, arg3, arg4),
+  defdelegate delete_community_category(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :delete_category
 
   @doc "Delegates GroupherServer.CMS.Communities.delete_tag_group/3 through the CMS Context boundary."
-  defdelegate communities_delete_tag_group(arg1, arg2, arg3),
+  defdelegate delete_community_tag_group(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :delete_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.delete_tag_group/4 through the CMS Context boundary."
-  defdelegate communities_delete_tag_group(arg1, arg2, arg3, arg4),
+  defdelegate delete_community_tag_group(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :delete_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.delete_tag_group/5 through the CMS Context boundary."
-  defdelegate communities_delete_tag_group(arg1, arg2, arg3, arg4, arg5),
+  defdelegate delete_community_tag_group(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Communities,
     as: :delete_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.delete_tag/1 through the CMS Context boundary."
-  defdelegate communities_delete_tag(arg1), to: GroupherServer.CMS.Communities, as: :delete_tag
+  defdelegate delete_community_tag(arg1), to: GroupherServer.CMS.Communities, as: :delete_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.delete_tag/2 through the CMS Context boundary."
-  defdelegate communities_delete_tag(arg1, arg2),
+  defdelegate delete_community_tag(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :delete_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.delete_tag/3 through the CMS Context boundary."
-  defdelegate communities_delete_tag(arg1, arg2, arg3),
+  defdelegate delete_community_tag(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :delete_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.fetch/1 through the CMS Context boundary."
-  defdelegate communities_fetch(arg1), to: GroupherServer.CMS.Communities, as: :fetch
+  defdelegate fetch_community(arg1), to: GroupherServer.CMS.Communities, as: :fetch
 
   @doc "Delegates GroupherServer.CMS.Communities.fetch/2 through the CMS Context boundary."
-  defdelegate communities_fetch(arg1, arg2), to: GroupherServer.CMS.Communities, as: :fetch
+  defdelegate fetch_community(arg1, arg2), to: GroupherServer.CMS.Communities, as: :fetch
 
   @doc "Delegates GroupherServer.CMS.Communities.fetch/3 through the CMS Context boundary."
-  defdelegate communities_fetch(arg1, arg2, arg3), to: GroupherServer.CMS.Communities, as: :fetch
+  defdelegate fetch_community(arg1, arg2, arg3), to: GroupherServer.CMS.Communities, as: :fetch
 
   @doc "Delegates GroupherServer.CMS.Communities.Lifecycle.ensure_created/1 through the CMS Context boundary."
   defdelegate communities_lifecycle_ensure_created(arg1),
@@ -1598,48 +1609,48 @@ defmodule GroupherServer.CMS do
     as: :members
 
   @doc "Delegates GroupherServer.CMS.Communities.categories/0 through the CMS Context boundary."
-  defdelegate communities_categories(),
+  defdelegate list_community_categories(),
     to: GroupherServer.CMS.Communities,
     as: :categories
 
   @doc "Delegates GroupherServer.CMS.Communities.paged/2 through the CMS Context boundary."
-  defdelegate communities_paged(arg1, arg2), to: GroupherServer.CMS.Communities, as: :paged
+  defdelegate page_communities(arg1, arg2), to: GroupherServer.CMS.Communities, as: :paged
 
   @doc "Delegates GroupherServer.CMS.Communities.paged/3 through the CMS Context boundary."
-  defdelegate communities_paged(arg1, arg2, arg3), to: GroupherServer.CMS.Communities, as: :paged
+  defdelegate page_communities(arg1, arg2, arg3), to: GroupherServer.CMS.Communities, as: :paged
 
   @doc "Delegates GroupherServer.CMS.Communities.reindex_tag_groups/3 through the CMS Context boundary."
-  defdelegate communities_reindex_tag_groups(arg1, arg2, arg3),
+  defdelegate reindex_community_tag_groups(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :reindex_tag_groups
 
   @doc "Delegates GroupherServer.CMS.Communities.reindex_tag_groups/4 through the CMS Context boundary."
-  defdelegate communities_reindex_tag_groups(arg1, arg2, arg3, arg4),
+  defdelegate reindex_community_tag_groups(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :reindex_tag_groups
 
   @doc "Delegates GroupherServer.CMS.Communities.reindex_tag_groups/5 through the CMS Context boundary."
-  defdelegate communities_reindex_tag_groups(arg1, arg2, arg3, arg4, arg5),
+  defdelegate reindex_community_tag_groups(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Communities,
     as: :reindex_tag_groups
 
   @doc "Delegates GroupherServer.CMS.Communities.reindex_tags_across_groups/4 through the CMS Context boundary."
-  defdelegate communities_reindex_tags_across_groups(arg1, arg2, arg3, arg4),
+  defdelegate reindex_tags_across_groups(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :reindex_tags_across_groups
 
   @doc "Delegates GroupherServer.CMS.Communities.reindex_tags_across_groups/5 through the CMS Context boundary."
-  defdelegate communities_reindex_tags_across_groups(arg1, arg2, arg3, arg4, arg5),
+  defdelegate reindex_tags_across_groups(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Communities,
     as: :reindex_tags_across_groups
 
   @doc "Delegates GroupherServer.CMS.Communities.reindex_tags_in_group/5 through the CMS Context boundary."
-  defdelegate communities_reindex_tags_in_group(arg1, arg2, arg3, arg4, arg5),
+  defdelegate reindex_tags_in_group(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Communities,
     as: :reindex_tags_in_group
 
   @doc "Delegates GroupherServer.CMS.Communities.reindex_tags_in_group/6 through the CMS Context boundary."
-  defdelegate communities_reindex_tags_in_group(arg1, arg2, arg3, arg4, arg5, arg6),
+  defdelegate reindex_tags_in_group(arg1, arg2, arg3, arg4, arg5, arg6),
     to: GroupherServer.CMS.Communities,
     as: :reindex_tags_in_group
 
@@ -1649,17 +1660,17 @@ defmodule GroupherServer.CMS do
     as: :release_expired_slug_claims
 
   @doc "Delegates GroupherServer.CMS.Communities.request_destroy/1 through the CMS Context boundary."
-  defdelegate communities_request_destroy(arg1),
+  defdelegate request_community_destruction(arg1),
     to: GroupherServer.CMS.Communities,
     as: :request_destroy
 
   @doc "Delegates GroupherServer.CMS.Communities.request_destroy/2 through the CMS Context boundary."
-  defdelegate communities_request_destroy(arg1, arg2),
+  defdelegate request_community_destruction(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :request_destroy
 
   @doc "Delegates GroupherServer.CMS.Communities.request_destroy/3 through the CMS Context boundary."
-  defdelegate communities_request_destroy(arg1, arg2, arg3),
+  defdelegate request_community_destruction(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :request_destroy
 
@@ -1669,25 +1680,25 @@ defmodule GroupherServer.CMS do
     as: :run_setup
 
   @doc "Delegates GroupherServer.CMS.Communities.set_category/2 through the CMS Context boundary."
-  defdelegate communities_set_category(arg1, arg2),
+  defdelegate assign_community_category(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :set_category
 
   @doc "Delegates GroupherServer.CMS.Communities.set_category/4 through the CMS Context boundary."
-  defdelegate communities_set_category(arg1, arg2, arg3, arg4),
+  defdelegate assign_community_category(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :set_category
 
   @doc "Delegates GroupherServer.CMS.Communities.set_tag/2 through the CMS Context boundary."
-  defdelegate communities_set_tag(arg1, arg2), to: GroupherServer.CMS.Communities, as: :set_tag
+  defdelegate tag_article(arg1, arg2), to: GroupherServer.CMS.Communities, as: :set_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.set_tag/3 through the CMS Context boundary."
-  defdelegate communities_set_tag(arg1, arg2, arg3),
+  defdelegate tag_article(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :set_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.set_tag/4 through the CMS Context boundary."
-  defdelegate communities_set_tag(arg1, arg2, arg3, arg4),
+  defdelegate tag_article(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :set_tag
 
@@ -1697,68 +1708,68 @@ defmodule GroupherServer.CMS do
     as: :subscribe_default_ifnot
 
   @doc "Delegates GroupherServer.CMS.Communities.subscribe/2 through the CMS Context boundary."
-  defdelegate communities_subscribe(arg1, arg2),
+  defdelegate subscribe_to_community(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :subscribe
 
   @doc "Delegates GroupherServer.CMS.Communities.subscribe/3 through the CMS Context boundary."
-  defdelegate communities_subscribe(arg1, arg2, arg3),
+  defdelegate subscribe_to_community(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :subscribe
 
   @doc "Delegates GroupherServer.CMS.Communities.tag_groups/1 through the CMS Context boundary."
-  defdelegate communities_tag_groups(arg1), to: GroupherServer.CMS.Communities, as: :tag_groups
+  defdelegate list_community_tag_groups(arg1), to: GroupherServer.CMS.Communities, as: :tag_groups
 
   @doc "Delegates GroupherServer.CMS.Communities.tag_stats/1 through the CMS Context boundary."
-  defdelegate communities_tag_stats(arg1), to: GroupherServer.CMS.Communities, as: :tag_stats
+  defdelegate get_community_tag_stats(arg1), to: GroupherServer.CMS.Communities, as: :tag_stats
 
   @doc "Delegates GroupherServer.CMS.Communities.tag_stats/3 through the CMS Context boundary."
-  defdelegate communities_tag_stats(arg1, arg2, arg3),
+  defdelegate get_community_tag_stats(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :tag_stats
 
   @doc "Delegates GroupherServer.CMS.Communities.unset_category/2 through the CMS Context boundary."
-  defdelegate communities_unset_category(arg1, arg2),
+  defdelegate unassign_community_category(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :unset_category
 
   @doc "Delegates GroupherServer.CMS.Communities.unset_category/4 through the CMS Context boundary."
-  defdelegate communities_unset_category(arg1, arg2, arg3, arg4),
+  defdelegate unassign_community_category(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :unset_category
 
   @doc "Delegates GroupherServer.CMS.Communities.unset_tag/2 through the CMS Context boundary."
-  defdelegate communities_unset_tag(arg1, arg2),
+  defdelegate untag_article(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :unset_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.unset_tag/3 through the CMS Context boundary."
-  defdelegate communities_unset_tag(arg1, arg2, arg3),
+  defdelegate untag_article(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :unset_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.unset_tag/4 through the CMS Context boundary."
-  defdelegate communities_unset_tag(arg1, arg2, arg3, arg4),
+  defdelegate untag_article(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :unset_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.unsubscribe/2 through the CMS Context boundary."
-  defdelegate communities_unsubscribe(arg1, arg2),
+  defdelegate unsubscribe_from_community(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :unsubscribe
 
   @doc "Delegates GroupherServer.CMS.Communities.unsubscribe/3 through the CMS Context boundary."
-  defdelegate communities_unsubscribe(arg1, arg2, arg3),
+  defdelegate unsubscribe_from_community(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :unsubscribe
 
   @doc "Delegates GroupherServer.CMS.Communities.update_category/2 through the CMS Context boundary."
-  defdelegate communities_update_category(arg1, arg2),
+  defdelegate update_community_category(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :update_category
 
   @doc "Delegates GroupherServer.CMS.Communities.update_category/4 through the CMS Context boundary."
-  defdelegate communities_update_category(arg1, arg2, arg3, arg4),
+  defdelegate update_community_category(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :update_category
 
@@ -1773,42 +1784,42 @@ defmodule GroupherServer.CMS do
     as: :update_contribution_digest
 
   @doc "Delegates GroupherServer.CMS.Communities.update_tag_group/4 through the CMS Context boundary."
-  defdelegate communities_update_tag_group(arg1, arg2, arg3, arg4),
+  defdelegate update_community_tag_group(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :update_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.update_tag_group/5 through the CMS Context boundary."
-  defdelegate communities_update_tag_group(arg1, arg2, arg3, arg4, arg5),
+  defdelegate update_community_tag_group(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Communities,
     as: :update_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.update_tag_group/6 through the CMS Context boundary."
-  defdelegate communities_update_tag_group(arg1, arg2, arg3, arg4, arg5, arg6),
+  defdelegate update_community_tag_group(arg1, arg2, arg3, arg4, arg5, arg6),
     to: GroupherServer.CMS.Communities,
     as: :update_tag_group
 
   @doc "Delegates GroupherServer.CMS.Communities.update_tag/2 through the CMS Context boundary."
-  defdelegate communities_update_tag(arg1, arg2),
+  defdelegate update_community_tag(arg1, arg2),
     to: GroupherServer.CMS.Communities,
     as: :update_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.update_tag/3 through the CMS Context boundary."
-  defdelegate communities_update_tag(arg1, arg2, arg3),
+  defdelegate update_community_tag(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :update_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.update_tag/4 through the CMS Context boundary."
-  defdelegate communities_update_tag(arg1, arg2, arg3, arg4),
+  defdelegate update_community_tag(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :update_tag
 
   @doc "Delegates GroupherServer.CMS.Communities.update/3 through the CMS Context boundary."
-  defdelegate communities_update(arg1, arg2, arg3),
+  defdelegate update_community(arg1, arg2, arg3),
     to: GroupherServer.CMS.Communities,
     as: :update
 
   @doc "Delegates GroupherServer.CMS.Communities.update/4 through the CMS Context boundary."
-  defdelegate communities_update(arg1, arg2, arg3, arg4),
+  defdelegate update_community(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Communities,
     as: :update
 
@@ -1953,32 +1964,32 @@ defmodule GroupherServer.CMS do
     as: :submit
 
   @doc "Delegates GroupherServer.CMS.Dashboard.save_custom_theme_preset/2 through the CMS Context boundary."
-  defdelegate dashboard_save_custom_theme_preset(arg1, arg2),
+  defdelegate save_custom_theme_preset(arg1, arg2),
     to: GroupherServer.CMS.Dashboard,
     as: :save_custom_theme_preset
 
   @doc "Delegates GroupherServer.CMS.Dashboard.save_custom_theme_preset/3 through the CMS Context boundary."
-  defdelegate dashboard_save_custom_theme_preset(arg1, arg2, arg3),
+  defdelegate save_custom_theme_preset(arg1, arg2, arg3),
     to: GroupherServer.CMS.Dashboard,
     as: :save_custom_theme_preset
 
   @doc "Delegates GroupherServer.CMS.Dashboard.save_custom_theme_preset/4 through the CMS Context boundary."
-  defdelegate dashboard_save_custom_theme_preset(arg1, arg2, arg3, arg4),
+  defdelegate save_custom_theme_preset(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Dashboard,
     as: :save_custom_theme_preset
 
   @doc "Delegates GroupherServer.CMS.Dashboard.select_theme_preset/2 through the CMS Context boundary."
-  defdelegate dashboard_select_theme_preset(arg1, arg2),
+  defdelegate select_theme_preset(arg1, arg2),
     to: GroupherServer.CMS.Dashboard,
     as: :select_theme_preset
 
   @doc "Delegates GroupherServer.CMS.Dashboard.select_theme_preset/3 through the CMS Context boundary."
-  defdelegate dashboard_select_theme_preset(arg1, arg2, arg3),
+  defdelegate select_theme_preset(arg1, arg2, arg3),
     to: GroupherServer.CMS.Dashboard,
     as: :select_theme_preset
 
   @doc "Delegates GroupherServer.CMS.Dashboard.select_theme_preset/4 through the CMS Context boundary."
-  defdelegate dashboard_select_theme_preset(arg1, arg2, arg3, arg4),
+  defdelegate select_theme_preset(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Dashboard,
     as: :select_theme_preset
 
@@ -2458,12 +2469,12 @@ defmodule GroupherServer.CMS do
     as: :batch_published?
 
   @doc "Delegates GroupherServer.CMS.Wallpaper.prepare_upload/3 through the CMS Context boundary."
-  defdelegate wallpaper_prepare_upload(arg1, arg2, arg3),
+  defdelegate prepare_wallpaper_upload(arg1, arg2, arg3),
     to: GroupherServer.CMS.Wallpaper,
     as: :prepare_upload
 
   @doc "Delegates GroupherServer.CMS.Wallpaper.publish/3 through the CMS Context boundary."
-  defdelegate wallpaper_publish(arg1, arg2, arg3), to: GroupherServer.CMS.Wallpaper, as: :publish
+  defdelegate publish_wallpaper(arg1, arg2, arg3), to: GroupherServer.CMS.Wallpaper, as: :publish
 
   @doc "Delegates GroupherServer.CMS.Wallpaper.reconcile_lifecycle/0 through the CMS Context boundary."
   defdelegate wallpaper_reconcile_lifecycle(),
@@ -2471,7 +2482,7 @@ defmodule GroupherServer.CMS do
     as: :reconcile_lifecycle
 
   @doc "Delegates GroupherServer.CMS.Wallpaper.restore_snapshot/3 through the CMS Context boundary."
-  defdelegate wallpaper_restore_snapshot(arg1, arg2, arg3),
+  defdelegate restore_wallpaper_snapshot(arg1, arg2, arg3),
     to: GroupherServer.CMS.Wallpaper,
     as: :restore_snapshot
 

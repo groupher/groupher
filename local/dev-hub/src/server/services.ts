@@ -165,6 +165,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
         LANDING_SITE: LOCAL_SERVICE_ENDPOINTS.landing,
         DASH_SITE: LOCAL_SERVICE_ENDPOINTS.dash,
         APPLY_SITE: LOCAL_SERVICE_ENDPOINTS.apply,
+        COMMUNITY_SITE: LOCAL_SERVICE_ENDPOINTS.community,
         AUTH_SITE: LOCAL_SERVICE_ENDPOINTS.auth,
         API_SITE: LOCAL_SERVICE_ENDPOINTS.phoenix,
         PRESS_SITE: LOCAL_SERVICE_ENDPOINTS.press,
@@ -195,7 +196,12 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.auth.start.managed'],
     localEnvironment: {
-      externalEnvKeys: ['AUTH_GITHUB_ID', 'AUTH_GITHUB_SECRET'],
+      externalEnvKeys: [
+        'AUTH_GITHUB_ID',
+        'AUTH_GITHUB_SECRET',
+        'AUTH_LINUXDO_ID',
+        'AUTH_LINUXDO_SECRET',
+      ],
       env: {
         PORT: '3004',
         AUTH_URL: 'https://auth.groupher.localhost',
@@ -223,7 +229,8 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
           'auth:session:read',
           'auth:session:revoke',
           'auth:oauth:read',
-          'auth:oauth:link',
+          'auth:oauth:register',
+          'auth:oauth:flow',
           'auth:oauth:unlink',
         ],
         clientId: 'auth-development',
@@ -288,6 +295,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
         PORT: '3007',
         GRAPHQL_ENDPOINT: LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
         NEXT_PUBLIC_AUTH_ENDPOINT: `${LOCAL_SERVICE_AUTH_ISSUER}/api/auth`,
+        SERVICE_AUTH_TOKEN_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/oauth2/token`,
       },
       serviceAuth: {
         allowedAudiences: ['phoenix:content-publisher-api'],
@@ -467,6 +475,8 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
         'DB_USERNAME',
         'DB_PASSWORD',
         'DB_POOL_SIZE',
+        'OAUTH_GITHUB_STATE',
+        'OAUTH_LINUXDO_STATE',
         'MIX_DEPS_PATH',
         'MIX_BUILD_PATH',
       ],

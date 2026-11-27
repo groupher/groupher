@@ -9,7 +9,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.Articles.WorkingCopy.Diff
-  alias CMS.Model.{Article, ArticleEvent, ArticleSnapshot, ArticleWorkingCopy}
+  alias CMS.Model.{Article, ArticleEvent, ArticlePublic, ArticleSnapshot, ArticleWorkingCopy}
+  alias CMS.Model.CommandReceipt
   alias Accounts.Model.User
 
   @default_limit 20
@@ -115,6 +116,53 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
   end
 
   def paged_events(_article_id, _actor, _opts), do: {:error, :article_history_unavailable}
+
+  @doc "Finds the caller's authorized Article creation associated with one command identity."
+  def find_creation_by_command(command_id, community_id, %User{id: user_id} = actor)
+      when is_integer(community_id) and is_integer(user_id) do
+    with {:ok, command_id} <- cast_uuid(command_id) do
+      initiator_key = Integer.to_string(user_id)
+
+      matches =
+        Repo.all(
+          from(receipt in CommandReceipt,
+            join: event in ArticleEvent,
+            on: event.operation_ref == receipt.operation_ref,
+            join: snapshot in ArticleSnapshot,
+            on: snapshot.id == event.after_snapshot_id,
+            where:
+              receipt.initiator_type == "user" and receipt.initiator_key == ^initiator_key and
+                receipt.command_id == ^command_id and snapshot.causation_command_id == ^command_id and
+                event.type == :create and
+                event.actor_id == ^user_id and event.source_community_id == ^community_id,
+            select: {event.article_id, event.working_copy_id},
+            limit: 2
+          )
+        )
+
+      case matches do
+        [] ->
+          {:ok, nil}
+
+        [{article_id, work_id}] ->
+          with {:ok, article} <- load_article(article_id),
+               {:ok, :pass} <- authorize(article, actor, CMS.GateAction.article_history_read()) do
+            snapshot_id =
+              case Repo.get(ArticlePublic, article_id) do
+                %ArticlePublic{snapshot_id: id} -> id
+                nil -> nil
+              end
+
+            {:ok, %{article_id: article_id, working_copy_id: work_id, snapshot_id: snapshot_id}}
+          end
+
+        _ ->
+          {:error, :article_history_unavailable}
+      end
+    end
+  end
+
+  def find_creation_by_command(_, _, _), do: {:error, :article_history_unavailable}
 
   @doc "Returns one event only when it belongs to the authorized Article."
   def event(article_id, event_id, actor, opts \\ [])

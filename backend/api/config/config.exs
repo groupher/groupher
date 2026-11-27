@@ -323,6 +323,19 @@ if File.exists?("config/#{config_env()}.secret.exs") do
   import_config "#{config_env()}.secret.exs"
 end
 
+secondary_dev? =
+  config_env() == :dev and
+    not is_nil(GroupherLinkedCheckoutGuard.resolve!(Path.expand("../../..", __DIR__), :dev))
+
+if secondary_dev? do
+  # A secondary checkout must not index or provision against shared services,
+  # even if a local secret config contains credentials from another environment.
+  config :groupher_server, :search_artiments,
+    platform: GroupherServer.CMS.SearchArtiments.Disabled
+
+  config :groupher_server, :web_analysis_policy, provision_on_community_create: false
+end
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",

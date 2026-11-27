@@ -1,9 +1,18 @@
 import { createHash } from 'node:crypto'
+import { realpathSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import path from 'node:path'
 
-export const worktreeId = (repoRoot: string) =>
-  createHash('sha256').update(path.resolve(repoRoot)).digest('hex').slice(0, 16)
+export const worktreeId = (repoRoot: string) => {
+  const resolved = path.resolve(repoRoot)
+  let canonical = resolved
+  try {
+    canonical = realpathSync(resolved)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+  }
+  return createHash('sha256').update(canonical).digest('hex').slice(0, 16)
+}
 
 export const userDataBase = (
   platform: NodeJS.Platform,
@@ -25,6 +34,9 @@ export const userDataRoot = (repoRoot: string) =>
     'DevHub',
     worktreeId(repoRoot),
   )
+
+export const registryRoot = () =>
+  path.join(userDataBase(process.platform, process.env, homedir()), 'Groupher', 'DevHub')
 
 export const workerRoot = (repoRoot: string) =>
   path.join(tmpdir(), 'groupher-dev-hub', worktreeId(repoRoot), 'workers')

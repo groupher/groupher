@@ -578,6 +578,17 @@ test('Import identity and environment contracts agree across managed services', 
   assert.ok(Object.keys(env).every((key) => !key.startsWith('CONTENT_IMPORT_')))
 })
 
+test('Auth development identity grants the current OAuth flow scopes', () => {
+  const auth = SERVICE_DEFINITIONS.find((definition) => definition.id === 'auth')
+  const config = auth?.localEnvironment
+  assert.ok(config?.externalEnvKeys?.includes('AUTH_LINUXDO_ID'))
+  assert.ok(config?.externalEnvKeys?.includes('AUTH_LINUXDO_SECRET'))
+  assert.deepEqual(config?.serviceAuth?.allowedAudiences, ['phoenix:auth-api'])
+  assert.ok(config?.serviceAuth?.allowedScopes.includes('auth:oauth:flow'))
+  assert.ok(config?.serviceAuth?.allowedScopes.includes('auth:oauth:register'))
+  assert.ok(!config?.serviceAuth?.allowedScopes.includes('auth:oauth:link'))
+})
+
 test('Vite-based Workers receive managed persistence without unsupported cf dev options', () => {
   for (const [directory, script, port] of [
     ['backend/assets-hub', 'dev:read-worker:managed', 8787],

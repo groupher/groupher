@@ -105,7 +105,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
 
   @doc "Revokes the session by reference and returns a done flag on success."
   def revoke_browser_session(_root, %{browser_session_ref: ref}, _info) do
-    with {:ok, _result} <- Accounts.profiles_revoke_browser_session(ref) do
+    with {:ok, _result} <- Accounts.revoke_browser_session(ref) do
       {:ok, %{done: true}}
     end
   end
@@ -143,7 +143,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
 
   @doc "Unlinks the binding identified by public reference from the signed-in account."
   def unlink_oauth_identity(_root, %{public_ref: public_ref}, %{context: %{cur_user: cur_user}}) do
-    Accounts.profiles_unlink_oauth_identity(cur_user.login, public_ref)
+    Accounts.unlink_oauth_identity(cur_user.login, public_ref)
   end
 
   defp browser_session_result({:error, reason}) do

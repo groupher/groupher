@@ -78,7 +78,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
   defp working_copy_read_access(user, article, community) do
     action = if article.thread == :doc, do: :manage_coauthors, else: :edit
 
-    with {:ok, :pass} <- CMS.articles_co_authors_reject_working_copy_access(article, user),
+    with {:ok, :pass} <- CMS.reject_co_author_working_copy_access(article, user),
          {:ok, canonical} <-
            CMS.articles_working_copy_access_check(user, action, article, community) do
       {:ok, canonical}
@@ -143,7 +143,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
 
     with {:ok, origin} <- GroupherServerWeb.Resolvers.CMS.HistoryOrigin.from_context(context),
          {:ok, %{working_copy: working_copy}} <-
-           CMS.articles_create_article(
+           CMS.create_article(
              community,
              thread,
              attrs,
@@ -174,7 +174,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
 
     with {:ok, origin} <- GroupherServerWeb.Resolvers.CMS.HistoryOrigin.from_context(context),
          {:ok, %{public: public}} <-
-           CMS.articles_create_and_publish_article(
+           CMS.create_and_publish_article(
              community,
              thread,
              attrs,
@@ -206,7 +206,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
       attrs =
         Map.drop(args, [:community, :article_id, :working_copy_id, :revision, :command_id])
 
-      CMS.articles_save_working_copy(
+      CMS.save_article_working_copy(
         article,
         community,
         args.working_copy_id,
@@ -236,7 +236,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
       ) do
     with {:ok, origin} <- GroupherServerWeb.Resolvers.CMS.HistoryOrigin.from_context(context),
          {:ok, working_copy} <-
-           CMS.articles_fork_snapshot(
+           CMS.fork_article_snapshot(
              snapshot_id,
              community,
              scope_type(args.scope_type),
@@ -267,7 +267,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     with {:ok, origin} <- GroupherServerWeb.Resolvers.CMS.HistoryOrigin.from_context(context),
          {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
          {:ok, source} <- publish_source(source) do
-      CMS.articles_publish_article(
+      CMS.publish_article(
         article,
         community,
         source,
@@ -305,7 +305,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
       ) do
     with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
          {:ok, _deleted} <-
-           CMS.articles_delete_working_copy(
+           CMS.delete_article_working_copy(
              article,
              community,
              working_copy_id,

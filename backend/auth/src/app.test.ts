@@ -6,15 +6,11 @@ import {
 import { AUTH_ROUTE } from '@groupher/route-contract'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { createApp, mapBrowserSessionError } from './app'
+import { createApp, isAllowedAuthOrigin, mapBrowserSessionError } from './app'
 import { PhoenixBrowserSessionError, useSecureCookies } from './auth'
 import { decodeLinkState } from './link-intent'
 
 describe('Auth Hono application', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
   it('returns only registration summary and protects completion against cross-origin requests', async () => {
     const summary = {
       provider: 'linuxdo',
@@ -203,6 +199,27 @@ describe('Auth Hono application', () => {
     expect(await response.text()).toContain('try signing in again')
     expect(response.headers.get('cache-control')).toBe('no-store')
     expect(authHandler).not.toHaveBeenCalled()
+  })
+
+  it('keeps the OAuth error fallback within the managed development environment', async () => {
+    vi.stubEnv('NODE_ENV', 'development')
+    vi.stubEnv('DEV_HUB_MANAGED_ENVIRONMENT', 'true')
+    vi.stubEnv('DEV_HUB_PUBLIC_ROOT', 'groupher-feature-login.localhost')
+    vi.stubEnv('AUTH_TEST_ALLOWED_ORIGINS', '')
+    expect(isAllowedAuthOrigin('https://dash.groupher-feature-login.localhost')).toBe(true)
+    expect(isAllowedAuthOrigin('https://dash.groupher.localhost')).toBe(false)
+    const response = await createApp().request('/api/auth/error')
+    expect(await response.text()).toContain(
+      'https://community.groupher-feature-login.localhost/home/post',
+    )
+
+    vi.stubEnv('NODE_ENV', 'production')
+    const production = await createApp().request('/api/auth/error')
+    expect(await production.text()).toContain('https://groupher.com/')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('exposes the service health contract', async () => {

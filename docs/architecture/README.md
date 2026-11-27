@@ -44,6 +44,7 @@
 - [`cms-query-v2.md`](./cms-query-v2.md)：CMS Reader/List 向 Query、Store/Facts、Projection 收口，以及与 FrontDesk 的互补边界。
 - [`cms-context-module-architecture.md`](./cms-context-module-architecture.md)：CMS Context 的 specialization、ownership、调用路径与共享基础设施边界；通用模块结构见 [`be-context-module-structure.md`](../rules/be-context-module-structure.md)。
 - [`cms-facade-directory.md`](./cms-facade-directory.md)：CMS internal capability Facade 的历史拆分与实施记录。
+- [本地 seed 工具箱](./local-seed-toolkit.md)（提案）：本地 fixture 命令、Context 调用、重试和回收。
 - [`cms-multi-entry-boundary.md`](./cms-multi-entry-boundary.md)：GraphQL、CLI、MCP 与 Plugin 复用同一 CMS facade 和领域用例的多入口架构。
 - [`graphql-resolver-boundary.md`](./graphql-resolver-boundary.md)：GraphQL resolver 越界审计、目标职责和 R1-R5 完成结果。
 - [`cms-outbox.md`](./cms-outbox.md)：当前 CMS Domain Outbox、typed event、Jobs Worker、Workflow 和

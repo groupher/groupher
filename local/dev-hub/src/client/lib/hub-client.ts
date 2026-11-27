@@ -34,6 +34,19 @@ const readResponseError = async (response: Response, fallback: string): Promise<
   return new Error(payload?.error || `${fallback} (HTTP ${response.status})`)
 }
 
+async function mutationHeaders(): Promise<Record<string, string>> {
+  const response = await fetch('/api/identity', { cache: 'no-store' })
+  if (!response.ok) throw new Error('Could not verify the Dev Hub identity.')
+  const identity = (await response.json()) as { instanceId?: unknown; apiVersion?: unknown }
+  if (identity.apiVersion === 1 && typeof identity.instanceId === 'string' && identity.instanceId) {
+    return { 'X-Groupher-Instance-Id': identity.instanceId }
+  }
+  if (identity.apiVersion !== undefined || identity.instanceId !== undefined) {
+    throw new Error('The Dev Hub returned an invalid instance identity.')
+  }
+  return {}
+}
+
 export async function fetchSnapshot(signal?: AbortSignal): Promise<THubSnapshot> {
   const response = await fetch('/api/services', { signal })
   if (!response.ok) throw new Error('Could not load local services.')
@@ -83,7 +96,7 @@ export async function saveServiceEnvironment(
 ): Promise<TServiceEnvironment> {
   const response = await fetch(`/api/services/${encodeURIComponent(id)}/environment`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await mutationHeaders()) },
     body: JSON.stringify({ changes }),
   })
   if (!response.ok) throw await readResponseError(response, 'Could not save local environment.')
@@ -127,9 +140,12 @@ export async function controlService(
 ): Promise<TPublicService[]> {
   const response = await fetch(`/api/services/${encodeURIComponent(id)}/${action}`, {
     method: 'POST',
+    headers: {
+      ...(await mutationHeaders()),
+      ...(action === 'start' && mode ? { 'Content-Type': 'application/json' } : {}),
+    },
     ...(action === 'start' && mode
       ? {
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mode }),
         }
       : {}),

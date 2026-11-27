@@ -53,6 +53,31 @@ describe('local actor login boundary', () => {
     ).toBe(404)
     expect(backend).not.toHaveBeenCalled()
   })
+  it('uses only the assigned sibling origin and Phoenix port', async () => {
+    const backend = vi.fn(async (_url: URL | RequestInfo) =>
+      Response.json({ error: 'actor_unavailable' }, { status: 400 }),
+    )
+    const env = {
+      ...environment,
+      DEV_HUB_PUBLIC_ROOT: 'groupher-feature.localhost',
+      PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:14001/graphiql',
+    }
+    const request = loginRequest('https://auth.groupher-feature.localhost')
+    request.headers.set('Origin', 'https://dash.groupher-feature.localhost')
+    expect((await localTestActorLogin(env, backend)(request)).status).toBe(403)
+    expect(String(backend.mock.calls[0][0])).toBe('http://127.0.0.1:14001/__local-test/actors')
+    backend.mockClear()
+    expect((await localTestActorLogin(env, backend)(loginRequest())).status).toBe(404)
+    expect(
+      (
+        await localTestActorLogin(
+          { ...env, PHOENIX_GRAPHQL_ENDPOINT: 'https://api.groupher.com/graphiql' },
+          backend,
+        )(request)
+      ).status,
+    ).toBe(404)
+    expect(backend).not.toHaveBeenCalled()
+  })
   it('does not issue cookies when Phoenix rejects the identity, scope or database', async () => {
     const backend = vi.fn(async () =>
       Response.json({ error: 'local_test_database_required' }, { status: 400 }),

@@ -22,7 +22,7 @@ $TMPDIR/groupher-dev-hub/<工作树标识>/
 └── workers/<服务名>/<run>/            # Hub 为开发工具生成的临时环境文件
 ```
 
-工作树标识是规范化后的仓库根路径字符串的 SHA-256 摘要前 16 位，由共享路径函数计算。Linux 使用 XDG 数据目录，Windows 使用 LOCALAPPDATA。Auth 的 OAuth 凭据通过 Dev Hub 配置面板维护。
+当前共享路径函数对 checkout 真实路径取 SHA-256 摘要前 16 位；符号链接归一及新 checkout 不能继承旧登记已有单测，实际双 worktree 验收仍待执行。见[路径实现](../../local/dev-hub/src/server/storage-paths.ts)。Linux 使用 XDG 数据目录，Windows 使用 LOCALAPPDATA。Auth 的 OAuth 凭据通过 Dev Hub 配置面板维护。
 
 ## 清理规则
 
@@ -48,3 +48,17 @@ $TMPDIR/groupher-dev-hub/<工作树标识>/
 - Assets Worker 和 Edge Router 使用 Cloudflare Vite 插件的 `persistState` 指定持久状态目录，避免向 Vite 传递不支持的 `--persist-to` 参数。Assets Worker 身份链路通过；Edge Router 的本地健康检查通过。
 - Linux 和 Windows 的路径选择有单测覆盖，尚未在对应系统实机验证。
 - 旧 `.data` 已删除；新 profile 均写入用户数据目录。
+
+## 待验收的存储操作
+
+**Status 的本地 D1 迁移。** 此前受管 Worker 使用 `DEV_HUB_WORKER_STATE_DIR`，而 `make be.status.db.migrate.local` 只指定 `--local`。现已让[迁移入口](../../ops/status/package.json)使用当前 checkout 的同一状态目录。
+
+本次实现让迁移入口复用 `workerStateRoot`，并在两个一次性路径验证了迁移、重复迁移、隔离及使用相同 D1 数据库标识的 Miniflare `DB` binding 读回。该验证使用临时 Worker，真实受管 Status Worker 的读回及重启验收仍待执行。
+
+1. 在本次演练专用的空状态目录中，通过上述公开入口迁移，用受管 Status Worker 的实际 `DB` binding 读取[首条迁移](../../ops/status/migrations/0001_current_status.sql)创建的 `service_status` 表。记录工作树、解析出的目录、迁移版本和查询结果。
+2. 重启 Worker 后再次读取；重复迁移应报告已应用。在另一个 checkout 的独立空目录重复，确认 B 迁移前读不到 A 的表、迁移后两边各自可读。验收只使用本地 D1，单环境读回可先独立交付，双环境部分在 Status 支持并发后执行。
+3. 仅回收演练创建的目录，保留既有 Worker 状态。部署和远端 D1 迁移继续使用现有生产入口；通过本地配置测试核对调用目标，无需执行远端命令。
+
+**工作树退役。** 浏览器、指标和 Worker 状态可能在删除 checkout 后继续存在。`doctor` 会列出登记的 checkout、归属状态和浏览器、指标、Worker 状态及运行目录；路径缺失或归属无法确认时只报告，不自动继承或递归清除。若数据根目录是符号链接，子目录标为待核验，不跟随它判断目录内容。登记中的运行阶段只代表登记快照，不代表进程存活。[诊断实现](../../local/dev-hub/src/server/doctor.ts) · [登记核验](../../local/dev-hub/src/server/environment-registry.ts)
+
+PostgreSQL 开发库、测试库、临时库以及 fixture 的回收条件见[多 worktree 方案](dev-hub-multi-worktree.md)。双 worktree 的并行测试、迁移回滚及空库 seed 结果见[数据库实测](dev-hub-multi-worktree.md#2026-11-26-双-worktree-数据库实测)。该次演练使用一次性 PostgreSQL 实例；后续仍需验证自动选库、成功 seed 和 fixture 回收。

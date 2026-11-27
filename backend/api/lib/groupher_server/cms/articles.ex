@@ -122,6 +122,15 @@ defmodule GroupherServer.CMS.Articles do
     CMS.Articles.WorkingCopy.History.Query.paged_events(article_id, actor, opts)
   end
 
+  @doc "Finds an authorized Article creation by its command identity."
+  def find_creation_by_command(command_id, community_id, actor) do
+    CMS.Articles.WorkingCopy.History.Query.find_creation_by_command(
+      command_id,
+      community_id,
+      actor
+    )
+  end
+
   @doc "Reads one Article event and its stored-version Diff."
   def history_event(article_id, event_id, actor, opts \\ []) do
     CMS.Articles.WorkingCopy.History.Query.event(article_id, event_id, actor, opts)

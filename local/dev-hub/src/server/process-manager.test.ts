@@ -636,6 +636,61 @@ test('required dependencies in the same layer start in parallel', async (t) => {
   )
 })
 
+test('an exited required dependency fails promptly without starting its dependent', async (t) => {
+  const dependency: TServiceDefinition = {
+    ...PARALLEL_DEPENDENCY_A,
+    args: ['-e', 'process.exit(1)'],
+  }
+  const target: TServiceDefinition = {
+    ...PARALLEL_TARGET_SERVICE,
+    startPolicy: {
+      defaultMode: 'chain',
+      requiredDependencies: [dependency.id],
+      optionalDependencies: [],
+    },
+  }
+  const manager = new ServiceManager([dependency, target], null, async () => false)
+  t.after(async () => manager.shutdown())
+
+  await assert.rejects(manager.startWithMode(target.id), /exited before it became healthy/)
+  assert.equal(
+    manager.listServices().find((service) => service.id === target.id)?.status,
+    'stopped',
+  )
+})
+
+test(
+  'a cold Phoenix dependency may become ready after the ordinary dependency deadline',
+  { timeout: 5_000 },
+  async (t) => {
+    const dependency: TServiceDefinition = { ...PARALLEL_DEPENDENCY_A, id: 'phoenix' }
+    const target: TServiceDefinition = {
+      ...PARALLEL_TARGET_SERVICE,
+      startPolicy: {
+        defaultMode: 'chain',
+        requiredDependencies: [dependency.id],
+        optionalDependencies: [],
+      },
+    }
+    let now = Date.now()
+    t.mock.method(Date, 'now', () => now)
+    let ready = false
+    const manager = new ServiceManager([dependency, target], null, async () => ready)
+    t.after(async () => manager.shutdown())
+    const statuses: string[] = []
+    manager.subscribe((event) => {
+      if (event.type === 'status') statuses.push(`${event.service.id}:${event.service.status}`)
+    })
+    const start = manager.startWithMode(target.id)
+    await waitForStatuses(statuses, ['phoenix:starting'])
+    now += 46_000
+    await new Promise((resolve) => setTimeout(resolve, 600))
+    ready = true
+    const services = await start
+    assert.equal(services.at(-1)?.id, target.id)
+  },
+)
+
 test('self start mode skips configured dependencies', async (t) => {
   const manager = new ServiceManager([CHAIN_DEPENDENCY_SERVICE, CHAIN_TARGET_SERVICE])
   t.after(async () => manager.shutdown())

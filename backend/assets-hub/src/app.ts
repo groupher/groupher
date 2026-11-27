@@ -25,6 +25,7 @@ import {
   verifyReviewReadCapability,
   type TUploadCapability,
 } from './capability'
+import { validateProductionAssetsEnvironment } from './environment-policy'
 import { LocalGeneratedBatchStore } from './local-batch'
 import { LocalObjectStore } from './local-storage'
 import { completePhoenixUpload, fetchAssetOriginInfo, registerGeneratedAsset } from './phoenix'
@@ -225,6 +226,7 @@ const parseCapability = (input: unknown) => {
 
 /** Creates the assets hub application with injectable runtime dependencies. */
 export const createApp = ({ environment = process.env }: TOptions = {}) => {
+  validateProductionAssetsEnvironment(environment)
   const app = new Hono()
   const localRuntime = isLocalRuntime(environment)
   const serviceAuthIssuer =

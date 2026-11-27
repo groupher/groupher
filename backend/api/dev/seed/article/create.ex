@@ -1,4 +1,4 @@
-defmodule GroupherServer.LocalTestActors.Articles do
+defmodule GroupherServer.Seed.Article.Create do
   @moduledoc """
   Owns local Article fixture intent and verified references, never Article content writes.
 
@@ -16,6 +16,7 @@ defmodule GroupherServer.LocalTestActors.Articles do
     Article,
     ArticleBinding,
     ArticleEvent,
+    ArticlePublic,
     ArticleSnapshot,
     ArticleWorkingCopy,
     Author
@@ -24,6 +25,10 @@ defmodule GroupherServer.LocalTestActors.Articles do
   alias LocalTestActors.Communities
 
   @key ~r/\A[a-z][a-z0-9-]{0,39}\z/
+
+  @doc "Requires the client protocol that claims dispatch before submitting content."
+  def prepare_client(run, %{"protocol" => 2} = input), do: prepare(run, input)
+  def prepare_client(_, _), do: {:error, :local_test_article_client_outdated}
 
   def prepare(run, input) do
     with {:ok, context} <- context(run, input) do
@@ -36,6 +41,8 @@ defmodule GroupherServer.LocalTestActors.Articles do
             "thread" => "post",
             "publish" => context.publish,
             "digest" => context.digest,
+            "preparedAt" => DateTime.utc_now(:second) |> DateTime.to_iso8601(),
+            "dispatchState" => "prepared",
             "status" => "pending"
           }
 
@@ -52,7 +59,20 @@ defmodule GroupherServer.LocalTestActors.Articles do
               end
 
             %{"status" => "pending"} ->
-              {:ok, prepared(context, entry)}
+              case recover_confirmed(context, entry) do
+                {:ok, {:found, result}} ->
+                  {:ok, %{existing: result}}
+
+                {:ok, :not_found} ->
+                  if entry["dispatchState"] == "prepared" do
+                    {:ok, prepared(context, entry)}
+                  else
+                    {:error, :local_test_article_recovery_required}
+                  end
+
+                {:error, _} = error ->
+                  error
+              end
 
             _ ->
               {:error, :invalid_local_test_article_fixture}
@@ -63,6 +83,39 @@ defmodule GroupherServer.LocalTestActors.Articles do
       end
     end
   end
+
+  @doc "Marks one prepared operation as dispatched before the browser sends it downstream."
+  def begin_dispatch(run, %{"commandId" => command_id, "attemptId" => attempt_id} = input)
+      when is_binary(command_id) and is_binary(attempt_id) do
+    with {:ok, context} <- context(run, input),
+         {:ok, attempt_id} <- Ecto.UUID.cast(attempt_id),
+         %{"digest" => digest, "commandId" => ^command_id, "status" => "pending"} = entry <-
+           get_in(context.binding.raw, ["articles", context.fixture_key]),
+         true <- digest == context.digest do
+      case entry do
+        %{"dispatchState" => "prepared"} ->
+          updated =
+            entry
+            |> Map.put("dispatchState", "dispatched")
+            |> Map.put("dispatchAttempt", attempt_id)
+
+          with {:ok, _} <- put_entry(context, updated) do
+            {:ok, %{commandId: command_id, status: "dispatched"}}
+          end
+
+        %{"dispatchState" => "dispatched", "dispatchAttempt" => ^attempt_id} ->
+          {:ok, %{commandId: command_id, status: "dispatched"}}
+
+        _ ->
+          {:error, :local_test_article_recovery_required}
+      end
+    else
+      {:error, _} = error -> error
+      _ -> {:error, :local_test_article_recovery_required}
+    end
+  end
+
+  def begin_dispatch(_, _), do: {:error, :invalid_local_test_article_input}
 
   def record(run, %{"articleId" => article_id, "workingCopyId" => work_id} = input) do
     with {:ok, context} <- context(run, input),
@@ -94,6 +147,32 @@ defmodule GroupherServer.LocalTestActors.Articles do
 
   def record(_, _), do: {:error, :invalid_local_test_article_result}
 
+  @doc "Identifies a pending operation that may have reached the Publisher."
+  def unresolved?(entry) do
+    entry["status"] == "pending" and entry["dispatchState"] != "prepared"
+  end
+
+  @doc "Cancels unsent prepared operations while the caller holds the run lock."
+  def cancel_unsent(raw) do
+    case raw["articles"] do
+      nil ->
+        raw
+
+      articles when is_map(articles) ->
+        updated =
+          Map.new(articles, fn {key, entry} ->
+            if entry["status"] == "pending" and entry["dispatchState"] == "prepared" do
+              {key,
+               entry |> Map.put("status", "cancelled") |> Map.put("dispatchState", "cancelled")}
+            else
+              {key, entry}
+            end
+          end)
+
+        Map.put(raw, "articles", updated)
+    end
+  end
+
   @doc "Lists only retained fixture references; cleanup never deletes content by these IDs."
   def retained(bindings) do
     Enum.flat_map(bindings, fn binding ->
@@ -101,6 +180,8 @@ defmodule GroupherServer.LocalTestActors.Articles do
         Map.take(entry, [
           "key",
           "commandId",
+          "preparedAt",
+          "dispatchState",
           "communityRef",
           "publish",
           "articleId",
@@ -109,6 +190,7 @@ defmodule GroupherServer.LocalTestActors.Articles do
           "status"
         ])
         |> Map.put("ownerAlias", binding.raw["alias"])
+        |> Map.put("operationRef", entry["commandId"])
       end)
     end)
   end
@@ -127,7 +209,7 @@ defmodule GroupherServer.LocalTestActors.Articles do
          true <- is_binary(title) and String.trim(title) != "" and byte_size(title) <= 1000,
          true <- is_binary(markdown) and byte_size(markdown) <= 512_000,
          true <- is_boolean(publish),
-         {:ok, user, binding} <- LocalTestActors.actor(run, name),
+         {:ok, user, binding} <- GroupherServer.Seed.Run.actor(run, name),
          {:ok, community, _} <- Communities.require_admin(user, slug) do
       digest_input =
         if publish, do: ["post", title, markdown, "published"], else: ["post", title, markdown]
@@ -176,6 +258,37 @@ defmodule GroupherServer.LocalTestActors.Articles do
       }
     }
   end
+
+  defp recover_confirmed(context, %{"commandId" => command_id} = entry) do
+    with {:ok, result} <-
+           CMS.find_article_creation_by_command(command_id, context.community.id, context.user) do
+      case result do
+        nil ->
+          {:ok, :not_found}
+
+        %{article_id: article_id, working_copy_id: work_id, snapshot_id: public_snapshot_id} ->
+          snapshot_id = if context.publish, do: public_snapshot_id, else: nil
+
+          with {:ok, result} <- canonical(context, entry, article_id, work_id, snapshot_id),
+               {:ok, _} <-
+                 put_entry(
+                   context,
+                   Map.merge(entry, %{
+                     "articleId" => article_id,
+                     "workingCopyId" => work_id,
+                     "snapshotId" => snapshot_id,
+                     "status" => "confirmed"
+                   })
+                 ) do
+            {:ok, {:found, result}}
+          end
+      end
+    else
+      {:error, _} = error -> error
+    end
+  end
+
+  defp recover_confirmed(_, _), do: {:error, :invalid_local_test_article_fixture}
 
   defp canonical(context, entry, article_id, work_id, snapshot_id) do
     with {:ok, _} <- Ecto.UUID.cast(article_id),
@@ -231,7 +344,7 @@ defmodule GroupherServer.LocalTestActors.Articles do
                    e.source_community_id == ^context.community.id
              )
            ),
-         {:ok, public} <- CMS.Articles.Public.get(article),
+         %ArticlePublic{} = public <- Repo.get(ArticlePublic, article.id),
          true <- public.snapshot_id == snapshot_id do
       true
     else

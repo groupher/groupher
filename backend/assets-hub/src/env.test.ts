@@ -135,7 +135,11 @@ describe('loadAssetsHubEnvironment', () => {
 
   it('preserves explicit service credentials outside the local runtime', async () => {
     const root = await createEnvironmentRoot()
-    const environment = {
+    await writeFile(
+      path.join(root, '.env'),
+      'ASSETS_HUB_RUNTIME=local\nPHOENIX_GRAPHQL_ENDPOINT=http://localhost:4001/graphiql\n',
+    )
+    const environment: Record<string, string | undefined> = {
       NODE_ENV: 'production',
       SERVICE_AUTH_CLIENT_ID: 'deployed-assets-hub',
       SERVICE_AUTH_CLIENT_SECRET: 'deployed-secret',
@@ -147,5 +151,44 @@ describe('loadAssetsHubEnvironment', () => {
       SERVICE_AUTH_CLIENT_ID: 'deployed-assets-hub',
       SERVICE_AUTH_CLIENT_SECRET: 'deployed-secret',
     })
+    expect(environment.PHOENIX_GRAPHQL_ENDPOINT).toBeUndefined()
+    expect(environment.ASSETS_HUB_RUNTIME).toBeUndefined()
+  })
+
+  it('rejects an inherited local runtime before production loads package dotenv', async () => {
+    const root = await createEnvironmentRoot()
+    const environment = {
+      NODE_ENV: 'production',
+      DEV_HUB_MANAGED_ENVIRONMENT: 'true',
+      ASSETS_HUB_RUNTIME: 'local',
+    }
+
+    expect(() => loadAssetsHubEnvironment(environment, root)).toThrow(
+      'ASSETS_HUB_RUNTIME=local is unavailable in production.',
+    )
+  })
+
+  it('rejects inherited local targets in a production runtime', async () => {
+    const root = await createEnvironmentRoot()
+    for (const key of [
+      'PHOENIX_GRAPHQL_ENDPOINT',
+      'SERVICE_AUTH_ISSUER',
+      'SERVICE_AUTH_JWKS_URL',
+      'SERVICE_AUTH_TOKEN_ENDPOINT',
+      'ASSETS_R2_ENDPOINT',
+    ]) {
+      expect(() =>
+        loadAssetsHubEnvironment(
+          { ENVIRONMENT: 'production', [key]: 'http://127.0.0.1:14001/endpoint' },
+          root,
+        ),
+      ).toThrow(key)
+    }
+  })
+
+  it('rejects production mode loaded from a development dotenv file', async () => {
+    const root = await createEnvironmentRoot()
+    await writeFile(path.join(root, '.env'), 'NODE_ENV=production\nASSETS_HUB_RUNTIME=local\n')
+    expect(() => loadAssetsHubEnvironment({}, root)).toThrow('must be supplied by the process')
   })
 })

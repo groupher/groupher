@@ -13,6 +13,13 @@ const dashRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.join(dashRoot, '../..')
 const dashPort = Number.parseInt(process.env.PORT || '3005', 10)
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const localRoot =
+  isDevelopment &&
+  process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' &&
+  /^groupher-[a-z0-9]+(?:-[a-z0-9]+)*\.localhost$/.test(process.env.DEV_HUB_PUBLIC_ROOT || '')
+    ? process.env.DEV_HUB_PUBLIC_ROOT
+    : undefined
+const localDashHost = localRoot ? `dash.${localRoot}` : 'dash.groupher.localhost'
 
 export default defineConfig({
   // Managed local runs consume Hub-injected values, not project dotenv files.
@@ -35,10 +42,12 @@ export default defineConfig({
   server: {
     port: dashPort,
     strictPort: true,
-    allowedHosts: ['dash.groupher.localhost', 'groupher.localhost'],
+    allowedHosts: localRoot
+      ? [localDashHost, localRoot]
+      : ['dash.groupher.localhost', 'groupher.localhost'],
     ws: {
       protocol: isDevelopment ? 'ws' : 'wss',
-      host: 'dash.groupher.localhost',
+      host: localDashHost,
       clientPort: isDevelopment ? dashPort : 443,
       path: '__dash_hmr',
     },

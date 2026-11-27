@@ -28,6 +28,7 @@ type TOpen = {
   login: string
   headless: boolean
   app: 'dash' | 'community'
+  publicRoot?: string
 }
 export const ACTOR_UI_ROLES = [
   'button',
@@ -71,6 +72,11 @@ export const actorBrowserRoot = (repoRoot = REPO_ROOT) =>
   path.join(userDataRoot(repoRoot), 'browsers')
 const root = actorBrowserRoot()
 const NAME = /^[a-z][a-z0-9-]{0,39}$/
+const publicRoot = (value = 'groupher.localhost') => {
+  if (!/^groupher(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?\.localhost$/.test(value))
+    throw new Error('Invalid local browser environment.')
+  return value
+}
 const read = async (file: string) => {
   try {
     return JSON.parse(await readFile(file, 'utf8'))
@@ -244,6 +250,7 @@ export const assertActorUIPath = (
   pathname: string,
   community: string,
   app: TOpen['app'],
+  root = 'groupher.localhost',
 ): string => {
   if (
     typeof pathname !== 'string' ||
@@ -277,7 +284,7 @@ export const assertActorUIPath = (
   )
     throw new Error('UI navigation is limited to the actor community or /home.')
 
-  const origin = `https://${app}.groupher.localhost`
+  const origin = `https://${app}.${publicRoot(root)}`
   const target = new URL(pathname, origin)
   if (target.origin !== origin || target.pathname !== pathname || target.search || target.hash)
     throw new Error('UI navigation is limited to the actor app origin and path.')
@@ -288,13 +295,14 @@ export const assertActorUILinkHref = (
   href: string | null,
   community: string,
   app: TOpen['app'],
+  root = 'groupher.localhost',
 ): string => {
   if (!href || href.length > 512) throw new Error('UI links require a bounded local href.')
-  const origin = `https://${app}.groupher.localhost`
+  const origin = `https://${app}.${publicRoot(root)}`
   const target = new URL(href, origin)
   if (target.search || target.hash || target.origin !== origin)
     throw new Error('UI links are limited to an allowed local app route.')
-  assertActorUIPath(target.pathname, community, app)
+  assertActorUIPath(target.pathname, community, app, root)
   return target.href
 }
 
@@ -302,12 +310,13 @@ export const assertActorUIPageLocation = (
   pageUrl: string,
   community: string,
   app: TOpen['app'],
+  root = 'groupher.localhost',
 ): void => {
   const current = new URL(pageUrl)
-  const origin = `https://${app}.groupher.localhost`
+  const origin = `https://${app}.${publicRoot(root)}`
   if (current.origin !== origin || current.search || current.hash)
     throw new Error('Actor browser is outside its allowed application route.')
-  assertActorUIPath(current.pathname, community, app)
+  assertActorUIPath(current.pathname, community, app, root)
 }
 
 export const validateActorUIOperation = (operation: TActorUIOperation): void => {
@@ -462,14 +471,17 @@ async function worker(profile: string, headless: boolean) {
       if (request.action === 'ui') {
         if (!request.operation) throw new Error('Actor UI operation is missing.')
         validateActorUIOperation(request.operation)
-        assertActorUIPageLocation(page.url(), actor.community, actor.app)
+        assertActorUIPageLocation(page.url(), actor.community, actor.app, actor.publicRoot)
 
         if (request.operation.op === 'navigate') {
-          await page.goto(assertActorUIPath(request.operation.path, actor.community, actor.app), {
-            waitUntil: 'networkidle',
-            timeout: 45_000,
-          })
-          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          await page.goto(
+            assertActorUIPath(request.operation.path, actor.community, actor.app, actor.publicRoot),
+            {
+              waitUntil: 'networkidle',
+              timeout: 45_000,
+            },
+          )
+          assertActorUIPageLocation(page.url(), actor.community, actor.app, actor.publicRoot)
           await write(path.join(profile, 'result.json'), {
             id: request.id,
             data: { url: page.url(), title: await page.title() },
@@ -512,14 +524,14 @@ async function worker(profile: string, headless: boolean) {
           const visibleText = await page.locator('body').innerText()
           const matched = visibleText.includes(request.operation.text)
           if (!matched) throw new Error('Expected visible text was not found.')
-          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          assertActorUIPageLocation(page.url(), actor.community, actor.app, actor.publicRoot)
           await write(path.join(profile, 'result.json'), { id: request.id, data: { matched } })
           return
         }
 
         if (request.operation.op === 'press') {
           await page.keyboard.press(request.operation.key)
-          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          assertActorUIPageLocation(page.url(), actor.community, actor.app, actor.publicRoot)
           await write(path.join(profile, 'result.json'), {
             id: request.id,
             data: { pressed: true },
@@ -542,6 +554,7 @@ async function worker(profile: string, headless: boolean) {
               await locator.getAttribute('href'),
               actor.community,
               actor.app,
+              actor.publicRoot,
             )
             const target = await locator.getAttribute('target')
             if (target && target !== '_self')
@@ -550,7 +563,7 @@ async function worker(profile: string, headless: boolean) {
               throw new Error('UI links must stay on the current actor app origin.')
           }
           await locator.click()
-          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          assertActorUIPageLocation(page.url(), actor.community, actor.app, actor.publicRoot)
           await write(path.join(profile, 'result.json'), {
             id: request.id,
             data: { clicked: true },
@@ -566,30 +579,34 @@ async function worker(profile: string, headless: boolean) {
           } else {
             await locator.fill(request.operation.value)
           }
-          assertActorUIPageLocation(page.url(), actor.community, actor.app)
+          assertActorUIPageLocation(page.url(), actor.community, actor.app, actor.publicRoot)
           await write(path.join(profile, 'result.json'), { id: request.id, data: { filled: true } })
           return
         }
         throw new Error('Unsupported actor UI operation.')
       }
-      const url = `https://${actor.app}.groupher.localhost/${encodeURIComponent(actor.community)}/${actor.app === 'dash' ? 'overview' : 'post'}`
-      await page.goto(`https://${actor.app}.groupher.localhost/health`, {
+      const domain = publicRoot(actor.publicRoot)
+      const url = `https://${actor.app}.${domain}/${encodeURIComponent(actor.community)}/${actor.app === 'dash' ? 'overview' : 'post'}`
+      await page.goto(`https://${actor.app}.${domain}/health`, {
         waitUntil: 'domcontentloaded',
       })
       const status = await page.evaluate(async (actor) => {
-        const response = await fetch('https://auth.groupher.localhost/api/auth/test-login', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
-          body: JSON.stringify({
-            localActor: {
-              run: actor.run,
-              alias: actor.alias,
-              community: actor.community,
-              app: actor.app,
-            },
-          }),
-        })
+        const response = await fetch(
+          `https://auth.${actor.publicRoot || 'groupher.localhost'}/api/auth/test-login`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
+            body: JSON.stringify({
+              localActor: {
+                run: actor.run,
+                alias: actor.alias,
+                community: actor.community,
+                app: actor.app,
+              },
+            }),
+          },
+        )
         return response.status
       }, actor)
       if (status !== 204)

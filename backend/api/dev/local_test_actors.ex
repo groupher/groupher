@@ -7,31 +7,50 @@ defmodule GroupherServer.LocalTestActors do
   Synthetic OAuth bindings own run/alias provenance. Normal OAuth cannot select
   these bindings. No fixture tables or production authorization exceptions exist.
   """
-  import Ecto.Query
   alias GroupherServer.{Accounts, Repo}
-  alias Accounts.Model.{BrowserSession, OauthProvider, User}
-  alias Accounts.Profiles.{BrowserSessions, Oauth}
-  alias GroupherServer.LocalTestActors.{Articles, Cleanup, Communities, Grants, Guard}
+  alias Accounts.Model.{BrowserSession, User}
+  alias Accounts.Profiles.BrowserSessions
+  alias GroupherServer.LocalTestActors.{Communities, Grants}
+  alias GroupherServer.Seed.Run
+  alias GroupherServer.Seed.Target, as: Guard
+  alias GroupherServer.Seed.Article.Create, as: Articles
+  alias GroupherServer.Seed.Cleanup.Run, as: Cleanup
   alias Helper.ORM.AdvisoryLock
-
-  @provider "local-test-actor-v1"
-  @name ~r/\A[a-z][a-z0-9-]{0,39}\z/
 
   def execute(%{"run" => run, "command" => command} = input) do
     with {:ok, :pass} <- Guard.admit(),
-         true <- valid_name?(run) do
+         true <- Run.valid_name?(run) do
       previous = Logger.get_process_level(self())
       Logger.put_process_level(self(), :info)
 
       try do
-        if command == "actor.clean" and input["apply"] == true do
-          Cleanup.apply(run)
-        else
-          Repo.transact_result(fn ->
-            with {:ok, :acquired} <- AdvisoryLock.acquire!("local-test-actors:#{run}") do
-              dispatch(command, run, input)
+        case {command, input["apply"]} do
+          {"home.prepare", _} ->
+            GroupherServer.Seed.Home.Prepare.run()
+
+          {"actor.clean", true} when is_map_key(input, "retain-unconfirmed") ->
+            Cleanup.retain_unconfirmed(run, input["retain-unconfirmed"], input["reason"])
+
+          {"actor.clean", true} ->
+            Cleanup.apply(run)
+
+          {"actor.clean", _} ->
+            Cleanup.report(run)
+
+          _ ->
+            result =
+              Repo.transact_result(fn ->
+                with {:ok, :acquired} <- AdvisoryLock.acquire!("local-test-actors:#{run}"),
+                     {:ok, :pass} <- require_open_run(command, run) do
+                  dispatch(command, run, input)
+                end
+              end)
+
+            if command == "community.create" do
+              GroupherServer.Seed.Community.Create.resolve_slug_conflict(result, input)
+            else
+              result
             end
-          end)
         end
       after
         if previous do
@@ -48,66 +67,72 @@ defmodule GroupherServer.LocalTestActors do
 
   def execute(_), do: {:error, :invalid_local_test_command}
 
-  def actor(run, name) do
-    with true <- valid_name?(name),
-         %OauthProvider{
-           raw: %{"tool" => @provider, "status" => "active", "run" => ^run, "alias" => ^name}
-         } = binding <-
-           Repo.get_by(OauthProvider, provider: @provider, provider_id: "#{run}/#{name}"),
-         %User{} = user <- Repo.get(User, binding.user_id) do
-      {:ok, user, binding}
+  defp require_open_run(command, run)
+       when command in [
+              "actor.create",
+              "actor.grant",
+              "actor.login",
+              "community.create",
+              "community.request-destroy",
+              "article.prepare",
+              "article.begin",
+              "article.record",
+              "admin.invite",
+              "admin.accept",
+              "admin.set-permissions",
+              "admin.remove",
+              "scenario.theme-permissions"
+            ] do
+    if Enum.any?(Run.bindings(run), &(&1.raw["status"] != "active")) do
+      {:error, :local_test_run_closed}
     else
-      _ -> {:error, :local_test_actor_unavailable}
+      {:ok, :pass}
     end
   end
 
-  def bindings(run) do
-    Repo.all(from(o in OauthProvider, where: o.provider == @provider and o.raw["run"] == ^run))
-  end
+  defp require_open_run(_, _), do: {:ok, :pass}
 
-  def present(user, binding) do
-    %{alias: binding.raw["alias"], login: user.login, status: binding.raw["status"]}
-  end
-
-  defp dispatch("actor.create", run, %{"alias" => name}) do
-    cond do
-      not valid_name?(name) ->
-        {:error, :invalid_local_test_name}
-
-      Enum.any?(bindings(run), &(&1.raw["status"] != "active")) ->
-        {:error, :local_test_run_closed}
-
-      true ->
-        case actor(run, name) do
-          {:ok, user, binding} -> {:ok, present(user, binding)}
-          _ -> register(run, name)
-        end
-    end
-  end
+  defp dispatch("actor.create", run, input), do: GroupherServer.Seed.Actor.Create.run(run, input)
 
   defp dispatch("actor.list", run, _) do
     {:ok,
-     Enum.map(bindings(run), fn binding ->
+     Enum.map(Run.bindings(run), fn binding ->
        user = Repo.get!(User, binding.user_id)
-       Map.put(present(user, binding), :communities, Communities.memberships(user))
+       Map.put(Run.present(user, binding), :communities, Communities.memberships(user))
      end)}
   end
 
-  defp dispatch("community.create", run, input), do: Communities.create(run, input)
-  defp dispatch("article.prepare", run, input), do: Articles.prepare(run, input)
+  defp dispatch("community.create", run, input),
+    do: GroupherServer.Seed.Community.Create.run(run, input)
+
+  defp dispatch("community.request-destroy", run, input),
+    do: GroupherServer.Seed.Community.RequestDestroy.run(run, input)
+
+  defp dispatch("article.prepare", run, input), do: Articles.prepare_client(run, input)
+  defp dispatch("article.begin", run, input), do: Articles.begin_dispatch(run, input)
   defp dispatch("article.record", run, input), do: Articles.record(run, input)
   defp dispatch("actor.grant", run, input), do: Grants.configure(run, input)
-  defp dispatch("actor.clean", run, _input), do: Cleanup.report(run)
+  defp dispatch("admin.invite", run, input), do: GroupherServer.Seed.Admin.Invite.run(run, input)
+  defp dispatch("admin.accept", run, input), do: GroupherServer.Seed.Admin.Accept.run(run, input)
+
+  defp dispatch("admin.set-permissions", run, input),
+    do: GroupherServer.Seed.Admin.SetPermissions.run(run, input)
+
+  defp dispatch("admin.remove", run, input),
+    do: GroupherServer.Seed.Admin.Remove.run(run, input)
+
+  defp dispatch("scenario.theme-permissions", run, input),
+    do: GroupherServer.Seed.Scenario.ThemePermissions.run(run, input)
 
   defp dispatch("actor.check", run, %{"alias" => name, "community" => slug} = input) do
-    with {:ok, user, binding} <- actor(run, name),
+    with {:ok, user, binding} <- Run.actor(run, name),
          {:ok, community, member} <- target(user, slug, input) do
-      {:ok, Map.merge(present(user, binding), %{community: community.slug, admin: member})}
+      {:ok, Map.merge(Run.present(user, binding), %{community: community.slug, admin: member})}
     end
   end
 
   defp dispatch("actor.login", run, %{"alias" => name, "community" => slug} = input) do
-    with {:ok, user, _} <- actor(run, name),
+    with {:ok, user, _} <- Run.actor(run, name),
          {:ok, _, _} <- target(user, slug, input),
          {:ok, session} <-
            BrowserSessions.create_until(
@@ -131,7 +156,7 @@ defmodule GroupherServer.LocalTestActors do
 
   defp dispatch("actor.revoke", run, %{"sessionRef" => ref, "alias" => name})
        when is_binary(ref) do
-    with {:ok, user, _} <- actor(run, name),
+    with {:ok, user, _} <- Run.actor(run, name),
          %BrowserSession{} <- Repo.get_by(BrowserSession, ref: ref, user_id: user.id) do
       BrowserSessions.revoke_current(ref)
     else
@@ -146,25 +171,58 @@ defmodule GroupherServer.LocalTestActors do
   @doc "Seals registered identities under the caller's transaction; preserves account history."
   def close_run(run) do
     {:ok, :acquired} = AdvisoryLock.acquire!("local-test-actors:#{run}")
-    rows = bindings(run)
+    rows = Run.bindings(run)
 
-    Enum.each(rows, fn binding ->
-      user = Repo.get!(User, binding.user_id)
-      {:ok, _} = BrowserSessions.revoke_other_sessions(user, "local-test-close")
+    if Enum.any?(Articles.retained(rows), &Articles.unresolved?/1) do
+      {:error, :local_test_article_pending}
+    else
+      Enum.each(rows, fn binding ->
+        user = Repo.get!(User, binding.user_id)
+        {:ok, _} = BrowserSessions.revoke_other_sessions(user, "local-test-close")
 
-      {:ok, _} =
-        binding
-        |> Ecto.Changeset.change(raw: Map.put(binding.raw, "status", "closed"))
-        |> Repo.update()
+        {:ok, _} =
+          binding
+          |> Ecto.Changeset.change(
+            raw: binding.raw |> Articles.cancel_unsent() |> Map.put("status", "closed")
+          )
+          |> Repo.update()
+      end)
+
+      {:ok, %{status: "closed", actors: length(rows)}}
+    end
+  end
+
+  @doc "Persists a completed cleanup only after the run has been sealed."
+  def mark_cleanup_complete(run, report) when is_map(report) do
+    Repo.transact_result(fn ->
+      with {:ok, :acquired} <- AdvisoryLock.acquire!("local-test-actors:#{run}") do
+        rows = Run.bindings(run)
+
+        if rows != [] and Enum.all?(rows, &(&1.raw["status"] == "closed")) do
+          Enum.reduce_while(rows, {:ok, :pass}, fn binding, _ ->
+            raw =
+              binding.raw
+              |> Map.put("cleanup_status", "cleaned")
+              |> Map.put("cleanup_report", report)
+
+            case binding
+                 |> Ecto.Changeset.change(raw: raw)
+                 |> Repo.update() do
+              {:ok, _} -> {:cont, {:ok, :pass}}
+              {:error, reason} -> {:halt, {:error, reason}}
+            end
+          end)
+        else
+          {:error, :local_test_run_not_closed}
+        end
+      end
     end)
-
-    {:ok, %{status: "closed", actors: length(rows)}}
   end
 
   defp target(user, slug, %{"app" => "community"}) do
     with %GroupherServer.CMS.Model.Community{} = community <-
            Repo.get_by(GroupherServer.CMS.Model.Community, slug: slug),
-         {:ok, _} <- GroupherServer.CMS.Gate.access_check(user, :read, community) do
+         {:ok, _} <- GroupherServer.CMS.gate_access_check(user, :read, community) do
       {:ok, community, nil}
     else
       _ -> {:error, :community_not_found}
@@ -176,38 +234,4 @@ defmodule GroupherServer.LocalTestActors do
 
   defp target(user, slug, %{"app" => "dash"}), do: Communities.require_admin(user, slug)
   defp target(_, _, _), do: {:error, :invalid_local_test_app}
-
-  defp register(run, name) do
-    login =
-      "lt-#{String.slice(run, 0, 12)}-#{name}-#{Base.encode16(:crypto.strong_rand_bytes(6), case: :lower)}"
-
-    with {:ok, user} <-
-           Oauth.register_in_transaction(%{
-             provider: @provider,
-             provider_id: "#{run}/#{name}",
-             login: login,
-             nickname: "#{name} (#{run})"
-           }),
-         %OauthProvider{} = binding <-
-           Repo.get_by(OauthProvider, provider: @provider, user_id: user.id),
-         {:ok, binding} <-
-           binding
-           |> Ecto.Changeset.change(
-             raw: %{
-               "tool" => @provider,
-               "run" => run,
-               "alias" => name,
-               "status" => "active",
-               "communities" => []
-             }
-           )
-           |> Repo.update() do
-      {:ok, present(user, binding)}
-    else
-      {:error, _} = error -> error
-      _ -> {:error, :local_test_registration_failed}
-    end
-  end
-
-  defp valid_name?(name), do: is_binary(name) and Regex.match?(@name, name)
 end

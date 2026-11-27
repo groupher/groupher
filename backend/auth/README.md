@@ -49,6 +49,8 @@ pnpm --filter @groupher/backend-auth run format:check
 
 The browser and Phoenix sides must be running for end-to-end Session tests.
 Use `.env.example` as the public configuration inventory.
+The production Node entrypoint reads configuration from the process environment, not local dotenv
+files. Production rejects loopback or `.localhost` service targets and development-only E2E mode.
 
 ## Related documentation
 

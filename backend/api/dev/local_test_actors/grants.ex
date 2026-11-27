@@ -7,16 +7,17 @@ defmodule GroupherServer.LocalTestActors.Grants do
   Ordinary grants use the generated Passport Catalog and retain domain events,
   requests, CAS revisions and notices. Only lord initialization is a trusted fixture.
   """
+  import Ecto.Query
   alias GroupherServer.{CMS, Repo, LocalTestActors}
   alias CMS.Model.{Article, ArticleCoAuthor, Author, Community, CommunityAdmin}
   alias CMS.Communities.Admins
-  alias CMS.Articles.CoAuthors
 
   def configure(run, %{"alias" => name, "community" => slug, "role" => "lord"}) do
-    with {:ok, user, _} <- LocalTestActors.actor(run, name),
+    with {:ok, user, binding} <- GroupherServer.Seed.Run.actor(run, name),
          %Community{} = community <- Repo.get_by(Community, slug: slug),
          {:ok, {member, created?}} <- lord(community, user),
-         {:ok, _} <- lord_activity(community, user, member, created?) do
+         {:ok, _} <- lord_activity(community, user, member, created?),
+         {:ok, _} <- record_lord(binding, community, member, created?) do
       {:ok,
        %{
          community: slug,
@@ -34,14 +35,14 @@ defmodule GroupherServer.LocalTestActors.Grants do
         run,
         %{"alias" => name, "community" => slug, "by" => by, "permissions" => permissions} = input
       ) do
-    with {:ok, subject, _} <- LocalTestActors.actor(run, name),
-         {:ok, manager, _} <- LocalTestActors.actor(run, by),
+    with {:ok, subject, _} <- GroupherServer.Seed.Run.actor(run, name),
+         {:ok, manager, _} <- GroupherServer.Seed.Run.actor(run, by),
          %Community{} = community <- Repo.get_by(Community, slug: slug),
-         {:ok, normalized} <- CMS.Passport.Catalog.validate_permissions(:community, permissions) do
+         {:ok, normalized} <- CMS.passport_validate_permissions(:community, permissions) do
       case Repo.get_by(CommunityAdmin, community_id: community.id, user_id: subject.id) do
         nil ->
           with {:ok, request} <-
-                 Admins.create(
+                 CMS.create_community_admin_request(
                    community.ref,
                    subject.login,
                    :invite,
@@ -54,7 +55,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
               {:ok, %{requestId: request.id, status: "pending"}}
             else
               with {:ok, _} <-
-                     Admins.decide(
+                     CMS.decide_community_admin_request(
                        request.id,
                        request.revision,
                        :accept,
@@ -73,7 +74,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
 
         %CommunityAdmin{} = member ->
           with {:ok, _} <-
-                 Admins.update_permissions(
+                 CMS.update_community_admin_permissions(
                    community.ref,
                    member.id,
                    member.revision,
@@ -96,11 +97,11 @@ defmodule GroupherServer.LocalTestActors.Grants do
         %{"alias" => name, "article" => article_id, "by" => by, "permissions" => permissions} =
           input
       ) do
-    with {:ok, subject, _} <- LocalTestActors.actor(run, name),
-         {:ok, manager, _} <- LocalTestActors.actor(run, by),
+    with {:ok, subject, _} <- GroupherServer.Seed.Run.actor(run, name),
+         {:ok, manager, _} <- GroupherServer.Seed.Run.actor(run, by),
          {:ok, _} <- Ecto.UUID.cast(article_id),
          %Article{} = article <- Repo.get(Article, article_id),
-         {:ok, normalized} <- CMS.Passport.Catalog.validate_permissions(:article, permissions) do
+         {:ok, normalized} <- CMS.passport_validate_permissions(:article, permissions) do
       author = Repo.get_by(Author, user_id: subject.id)
 
       member =
@@ -109,9 +110,9 @@ defmodule GroupherServer.LocalTestActors.Grants do
       case member do
         nil ->
           with {:ok, request} <-
-                 CoAuthors.Commands.CreateRequest.execute(
-                   article,
-                   subject.id,
+                 CMS.create_article_co_author_request(
+                   article.id,
+                   subject.login,
                    :invite,
                    normalized,
                    manager,
@@ -122,8 +123,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
               {:ok, %{requestId: request.id, status: "pending"}}
             else
               with {:ok, _} <-
-                     CoAuthors.Commands.DecideRequest.execute(
-                       article,
+                     CMS.decide_article_co_author_request(
                        request.id,
                        request.revision,
                        :accept,
@@ -131,7 +131,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
                        subject,
                        Ecto.UUID.generate()
                      ) do
-                CoAuthors.permissions(article.id, subject)
+                CMS.get_current_article_co_author_permissions(article.id, subject)
               end
             end
           else
@@ -141,7 +141,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
 
         %ArticleCoAuthor{} = member ->
           with {:ok, _} <-
-                 CoAuthors.update_permissions(
+                 CMS.update_article_co_author_permissions(
                    article.id,
                    member.id,
                    member.revision,
@@ -149,7 +149,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
                    manager,
                    Ecto.UUID.generate()
                  ) do
-            CoAuthors.permissions(article.id, subject)
+            CMS.get_current_article_co_author_permissions(article.id, subject)
           end
       end
     else
@@ -160,21 +160,76 @@ defmodule GroupherServer.LocalTestActors.Grants do
   end
 
   def configure(run, %{"alias" => name, "scope" => "global", "permissions" => permissions}) do
-    with {:ok, user, _} <- LocalTestActors.actor(run, name),
-         {:ok, normalized} <- CMS.Passport.Catalog.validate_permissions(:global, permissions),
+    with {:ok, user, binding} <- GroupherServer.Seed.Run.actor(run, name),
+         {:ok, normalized} <- CMS.passport_validate_permissions(:global, permissions),
+         _ <-
+           Repo.one!(
+             from(u in GroupherServer.Accounts.Model.User,
+               where: u.id == ^user.id,
+               lock: "FOR UPDATE"
+             )
+           ),
          current <- Repo.get_by(CMS.Model.GlobalPassport, user_id: user.id),
-         {:ok, _} <-
+         false <- match?(%CMS.Model.GlobalPassport{is_root: true}, current),
+         {:ok, updated} <-
            CMS.Passport.grant_in_transaction(
              user,
              %CMS.Passport.Scope.GlobalGrant{subject_id: user.id, current: current},
              normalized,
              nil
-           ) do
+           ),
+         {:ok, _} <- record_global(binding, current, updated) do
       CMS.Passport.global_facts(user.id)
+    else
+      true -> {:error, :local_test_refuses_root_grant}
+      {:error, _} = error -> error
     end
   end
 
   def configure(_, _), do: {:error, :explicit_scope_and_permissions_required}
+
+  defp record_global(binding, current, updated) do
+    previous = binding.raw["global_grant"]
+
+    if previous && previous["after"] != global_snapshot(current) do
+      {:error, :local_test_global_grant_changed}
+    else
+      entry = %{
+        "before" => if(previous, do: previous["before"], else: global_snapshot(current)),
+        "after" => global_snapshot(updated),
+        "status" => "active"
+      }
+
+      binding
+      |> Ecto.Changeset.change(raw: Map.put(binding.raw, "global_grant", entry))
+      |> Repo.update()
+    end
+  end
+
+  defp global_snapshot(nil), do: nil
+
+  defp global_snapshot(passport) do
+    %{
+      "id" => passport.id,
+      "permissions" => passport.permissions,
+      "revision" => passport.revision,
+      "is_root" => passport.is_root
+    }
+  end
+
+  defp record_lord(binding, community, member, created?) do
+    entries = binding.raw["lord_grants"] || %{}
+    key = Integer.to_string(member.id)
+
+    entry = %{
+      "community_id" => community.id,
+      "user_id" => member.user_id,
+      "created" => created?
+    }
+
+    raw = Map.put(binding.raw, "lord_grants", Map.put_new(entries, key, entry))
+    binding |> Ecto.Changeset.change(raw: raw) |> Repo.update()
+  end
 
   defp lord(community, user) do
     case Repo.get_by(CommunityAdmin, user_id: user.id, community_id: community.id) do

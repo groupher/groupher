@@ -17,11 +17,12 @@
 
 ## Planned
 
+- [本地 seed 工具箱](./architecture/local-seed-toolkit.md)：拟以 `pnpm seed` 提供本地 fixture 主入口，先验收单个受管开发库的建社区、授权、重试及清理。
 - [Comments、Replies 与 Reaction 快照和计数](./migrations/comment-reaction-snapshot-counts.md)：
   只读审计与无兼容执行计划已完成；Doc 支持多社区 Binding，并与普通 Article 共用 ArticleLifecycle、Review target、正文和 Public 投影；目录树、发布队列及 Release 按 Docs 站点分别管理。共享评论和 Mention 按稳定 Article 身份存储，公开读取按请求社区验证 Binding。该目标尚待实施；旧的单 owner / DocsLifecycle 合同只作历史实现记录。
   原子维护、快照、folded 访问、切读前协议/版本及新库准入和 replies UI 待实施，不包含旧数据回填。
 - [AI](./ai/README.md)：首期应用仍处于规划阶段。
-- [OAuth 帐户链接与取消链接](./auth/link-unlink-oauth.md)：设计尚未实施。
+- [多平台 OAuth 与账号绑定](./auth/multi-provider-oauth-plan.md)：本地已接入 GitHub/Linux DO 登录、选名和手动绑定确认，真实浏览器已验证两平台换码与绑定；解绑已有本地实现与集成测试覆盖，真实浏览器复验尚未进行。剩余并发、错误换码、生产配置和完整验收。[OAuth V2 方案](./auth/multi-provider-oauth-v2.md)的平台定义和展示映射已在本地收拢；完整回归、真实平台和生产验收仍待完成。
 - [Post Merge](./feature/post/merge.md)：relation-based merge 仍为草案。
 - [About 访客分布地图](./feature/community/about-visitor-map.md)：方案已确认，尚未实施。
 - [Gate V5](./feature/gate/v5.md)：下一阶段 Gate 设计。
