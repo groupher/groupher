@@ -17,20 +17,32 @@ test('environment command initializes and reuses the current Git checkout withou
   try {
     await mkdir(root)
     execFileSync('git', ['init', '-q', root])
-    await assert.rejects(runEnvironmentCommand(['register'], root, registry), /Primary identity/)
-    const initialized = (await runEnvironmentCommand(['init-primary'], root, registry)) as Record<
-      string,
-      unknown
-    >
+    await assert.rejects(
+      runEnvironmentCommand(['register'], root, registry, {}),
+      /Primary identity/,
+    )
+    const initialized = (await runEnvironmentCommand(
+      ['init-primary'],
+      root,
+      registry,
+      {},
+    )) as Record<string, unknown>
     assert.equal(initialized.root, root)
     assert.equal(initialized.role, 'primary')
     assert.equal('claimToken' in initialized, false)
-    assert.deepEqual(await runEnvironmentCommand(['register'], root, registry), initialized)
+    assert.deepEqual(await runEnvironmentCommand(['register'], root, registry, {}), initialized)
+    await assert.rejects(
+      runEnvironmentCommand(['register'], root, registry, { CI: 'true' }),
+      /local development/,
+    )
     await assert.rejects(
       runEnvironmentCommand(['register'], root, registry, { MIX_ENV: 'prod' }),
       /local development/,
     )
-    await assert.rejects(runEnvironmentCommand(['register', '--force'], root, registry), /Usage/)
+    await assert.rejects(
+      runEnvironmentCommand(['register', '--force'], root, registry, {}),
+      /Usage/,
+    )
   } finally {
     await rm(base, { recursive: true, force: true })
   }

@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "local/dev-hub/**"
+      - "backend/api/config/linked_checkout_guard.exs"
       - "pnpm-lock.yaml"
       - "package.json"
       - "pnpm-workspace.yaml"
@@ -11,6 +12,7 @@ on:
   push:
     paths:
       - "local/dev-hub/**"
+      - "backend/api/config/linked_checkout_guard.exs"
       - "pnpm-lock.yaml"
       - "package.json"
       - "pnpm-workspace.yaml"
@@ -30,6 +32,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: '29.1.2'
+          elixir-version: '1.20.5'
 
       - uses: pnpm/setup@v1
         with:
