@@ -64,13 +64,17 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrfTest do
     on_exit(fn ->
       Application.put_env(:groupher_server, :env, previous_env)
 
-      if previous_root,
-        do: System.put_env("DEV_HUB_PUBLIC_ROOT", previous_root),
-        else: System.delete_env("DEV_HUB_PUBLIC_ROOT")
+      if previous_root do
+        System.put_env("DEV_HUB_PUBLIC_ROOT", previous_root)
+      else
+        System.delete_env("DEV_HUB_PUBLIC_ROOT")
+      end
 
-      if previous_managed,
-        do: System.put_env("DEV_HUB_MANAGED_ENVIRONMENT", previous_managed),
-        else: System.delete_env("DEV_HUB_MANAGED_ENVIRONMENT")
+      if previous_managed do
+        System.put_env("DEV_HUB_MANAGED_ENVIRONMENT", previous_managed)
+      else
+        System.delete_env("DEV_HUB_MANAGED_ENVIRONMENT")
+      end
     end)
 
     Application.put_env(:groupher_server, :env, :dev)

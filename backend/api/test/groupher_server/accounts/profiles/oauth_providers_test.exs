@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Accounts.OauthProviders do
   use ExUnit.Case, async: false
 
-  alias GroupherServer.Accounts.Profiles.OauthProviders
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.OauthProviders
 
   test "lists configured public providers and keeps e2e internal and admitted" do
     previous = Application.get_env(:groupher_server, :oauth_provider_states)

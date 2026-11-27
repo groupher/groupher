@@ -1,7 +1,8 @@
 defmodule GroupherServer.ManagedPublishConfigTest do
   use ExUnit.Case, async: false
 
-  alias GroupherServer.CMS.Gate.RateLimit.Publish.Config
+  alias GroupherServer.CMS
+  alias CMS.Gate.RateLimit.Publish.Config
 
   test "managed limits apply only to development, never test or production" do
     original_env = Application.get_env(:groupher_server, :env)
