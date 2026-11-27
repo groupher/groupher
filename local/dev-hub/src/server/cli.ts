@@ -12,7 +12,7 @@ import { PortlessManager } from './portless.ts'
 import { REPO_ROOT } from './services.ts'
 
 const USAGE =
-  'Usage: pnpm devhub status | logs <id> | start <id> [chain|related|self] | stop <id> | restart <id> | url <id> | ensure | setup | doctor [--service <id>] [--json]'
+  'Usage: pnpm devhub identity [--page] | status | logs <id> | start <id> [chain|related|self] | stop <id> | restart <id> | url <id> | ensure | setup | doctor [--service <id>] [--json]'
 
 const legacyPortOccupied = () =>
   new Promise<boolean>((resolve, reject) => {
@@ -252,7 +252,8 @@ export async function runHubCommand(
       origin,
     )
   }
-  const [action, id, mode, ...extra] = args
+  const verifyPage = args.length === 2 && args[0] === 'identity' && args[1] === '--page'
+  const [action, id, mode, ...extra] = verifyPage ? ['identity'] : args
   if (!action || extra.length) throw new Error(USAGE)
   if (['ensure', 'setup'].includes(action) && !id) {
     if (route.mode === 'control-only')
@@ -260,9 +261,10 @@ export async function runHubCommand(
     await new PortlessManager().ensure(action === 'setup')
     return { ready: true }
   }
+  if (action === 'identity' && (id || mode)) throw new Error(USAGE)
   if (
-    !['status', 'logs', 'start', 'stop', 'restart', 'url'].includes(action) ||
-    (action === 'status' ? Boolean(id) : !id) ||
+    !['identity', 'status', 'logs', 'start', 'stop', 'restart', 'url'].includes(action) ||
+    (['identity', 'status'].includes(action) ? Boolean(id) : !id) ||
     (mode && (action !== 'start' || !['chain', 'related', 'self'].includes(mode)))
   )
     throw new Error(USAGE)
@@ -324,6 +326,20 @@ export async function runHubCommand(
       identity.apiVersion !== 1)
   ) {
     throw new Error('Hub identity does not match this checkout registration.')
+  }
+
+  if (action === 'identity') {
+    if (!route.instanceId) throw new Error('Legacy Hub identity is not a registered instance.')
+    if (verifyPage) {
+      const response = await request(new URL('/', origin), { signal: AbortSignal.timeout(5000) })
+      if (!response.ok || !response.headers.get('content-type')?.includes('text/html'))
+        throw new Error('The Hub page is unavailable.')
+      const { extractPageIdentity } = await import('./page-identity.ts')
+      const page = extractPageIdentity(await response.text())
+      if (page.repoRoot !== identity.repoRoot || page.instanceId !== identity.instanceId)
+        throw new Error('The Hub page identity does not match its registered instance.')
+    }
+    return identity
   }
 
   const snapshot = (): Promise<THubSnapshot> => call<THubSnapshot>('/api/services')

@@ -32,6 +32,9 @@ inspire: fe.dev.inspire
 # local development hub
 dev:
 	pnpm devhub up
+	@if [ "$$(uname -s)" = Darwin ] && [ -d '/Applications/Groupher Dev Hub.app' ]; then \
+		open -n -a '/Applications/Groupher Dev Hub.app' --args --repo-root "$$(pwd -P)"; \
+	fi
 
 dev.hub:
 	pnpm devhub foreground

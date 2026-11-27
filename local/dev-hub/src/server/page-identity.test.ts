@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { embedPageIdentity } from './page-identity.ts'
+import { embedPageIdentity, extractPageIdentity } from './page-identity.ts'
 
 test('page identity cannot escape its non-executable JSON element', () => {
   const identity = {
@@ -15,5 +15,7 @@ test('page identity cannot escape its non-executable JSON element', () => {
   assert.ok(payload)
   assert.deepEqual(JSON.parse(payload), identity)
   assert.ok(!html.includes('<script>alert(1)</script>'))
+  assert.deepEqual(extractPageIdentity(html), identity)
+  assert.throws(() => extractPageIdentity(html + html), /one instance/)
   assert.throws(() => embedPageIdentity('<body></body>', identity), /head element/)
 })

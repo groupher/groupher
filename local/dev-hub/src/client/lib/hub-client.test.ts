@@ -6,6 +6,7 @@ import {
   controlService,
   createHubIdentityGuard,
   saveServiceEnvironment,
+  verifyDesktopPageIdentity,
 } from './hub-client.ts'
 
 test('mutations bind to the identity observed immediately before the request', async () => {
@@ -60,6 +61,30 @@ test('a page rejects a replacement before its first identity query completes', a
   )
   await assert.rejects(guard.initialize(), /instance changed/)
   await assert.rejects(guard.mutationHeaders(), /instance changed/)
+})
+
+test('a desktop tab rejects a page served by a different checkout or instance', () => {
+  const identity = { instanceId: 'instance-a', repoRoot: '/checkout/a' }
+  assert.doesNotThrow(() =>
+    verifyDesktopPageIdentity(identity, '?devhubInstance=instance-a&devhubRoot=%2Fcheckout%2Fa'),
+  )
+  assert.throws(
+    () =>
+      verifyDesktopPageIdentity(identity, '?devhubInstance=instance-b&devhubRoot=%2Fcheckout%2Fa'),
+    /different/,
+  )
+  assert.throws(
+    () => verifyDesktopPageIdentity(identity, '?devhubInstance=instance-a'),
+    /different/,
+  )
+  assert.throws(
+    () =>
+      verifyDesktopPageIdentity(
+        identity,
+        '?devhubInstance=instance-a&devhubInstance=instance-a&devhubRoot=%2Fcheckout%2Fa',
+      ),
+    /different/,
+  )
 })
 
 test('a legacy Hub without an instance identity remains read-only', async () => {

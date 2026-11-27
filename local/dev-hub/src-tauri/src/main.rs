@@ -1,14 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{
+    collections::{BTreeMap, HashSet},
     ffi::OsString,
     io::{Error, ErrorKind},
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Mutex,
-    },
+    sync::Mutex,
     thread,
 };
 
@@ -24,20 +22,50 @@ const MAIN_MIN_HEIGHT: f64 = 640.0;
 
 #[derive(Default)]
 struct LauncherState {
-    hub_url: Mutex<Option<Url>>,
-    ensuring: AtomicBool,
+    tabs: Mutex<BTreeMap<String, serde_json::Value>>,
+    ensuring: Mutex<HashSet<String>>,
+    error: Mutex<Option<String>>,
+    requested_focus: Mutex<Option<String>>,
 }
 
 fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
-            show_main_window(app)
+        .plugin(tauri_plugin_single_instance::init(|app, args, _| {
+            show_main_window(app);
+            match explicit_repo_root(args.into_iter().skip(1).map(OsString::from)) {
+                Ok(Some(root)) => start_hub_ensure(app.clone(), root),
+                Ok(None) => {}
+                Err(error) => desktop_error(app, &error.to_string()),
+            }
         }))
         .setup(|app| {
             app.manage(LauncherState::default());
-            start_hub_ensure(app.handle().clone());
+            match repo_root() {
+                Ok(root) => {
+                    start_hub_ensure(app.handle().clone(), root.clone());
+                    discover_running_hubs(app.handle().clone(), root);
+                }
+                Err(error) => desktop_error(app.handle(), &error.to_string()),
+            }
             Ok(())
+        })
+        .on_page_load(|webview, payload| {
+            if webview.label() == "main"
+                && payload.event() == tauri::webview::PageLoadEvent::Finished
+            {
+                let focus = webview
+                    .app_handle()
+                    .try_state::<LauncherState>()
+                    .and_then(|state| {
+                        state
+                            .requested_focus
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner())
+                            .clone()
+                    });
+                sync_tabs(webview.app_handle(), focus.as_deref());
+            }
         })
         .on_window_event(|window, event| {
             if window.label() == "main" {
@@ -57,36 +85,66 @@ fn main() {
     });
 }
 
-fn start_hub_ensure(app: tauri::AppHandle) {
+fn start_hub_ensure(app: tauri::AppHandle, requested_root: PathBuf) {
+    let root = match requested_root.canonicalize() {
+        Ok(root) => root,
+        Err(error) => {
+            desktop_error(
+                &app,
+                &format!("Could not locate {}: {error}", requested_root.display()),
+            );
+            return;
+        }
+    };
+    let key = root.to_string_lossy().into_owned();
     let state = app.state::<LauncherState>();
-    if state.ensuring.swap(true, Ordering::AcqRel) {
+    *state
+        .requested_focus
+        .lock()
+        .unwrap_or_else(|e| e.into_inner()) = Some(key.clone());
+    *state
+        .error
+        .lock()
+        .unwrap_or_else(|error| error.into_inner()) = None;
+    let mut ensuring = state
+        .ensuring
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    if !ensuring.insert(key.clone()) {
+        drop(ensuring);
+        sync_tabs(&app, Some(&key));
         return;
     }
+    drop(ensuring);
+    {
+        let mut tabs = state.tabs.lock().unwrap_or_else(|error| error.into_inner());
+        tabs.entry(key.clone())
+            .or_insert_with(|| tab_value(&root, "loading", None, None));
+    }
+    sync_tabs(&app, Some(&key));
 
     thread::spawn(move || {
-        set_launcher_status(&app, "Starting the Dev Hub…");
-        match ensure_hub() {
-            Ok(url) => {
-                let state = app.state::<LauncherState>();
-                *state
-                    .hub_url
-                    .lock()
-                    .unwrap_or_else(|error| error.into_inner()) = Some(url.clone());
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.navigate(url);
-                    show_window(&window);
-                }
-            }
-            Err(error) => fail_launcher(&app, &error),
-        }
-        app.state::<LauncherState>()
+        let result = ensure_hub(&root);
+        let tab = match result {
+            Ok(url) => tab_value(&root, "ready", Some(url.as_str()), None),
+            Err(error) => tab_value(&root, "error", None, Some(&error)),
+        };
+        let state = app.state::<LauncherState>();
+        state
+            .tabs
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .insert(key.clone(), tab);
+        state
             .ensuring
-            .store(false, Ordering::Release);
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .remove(&key);
+        sync_tabs(&app, None);
     });
 }
 
-fn ensure_hub() -> Result<Url, String> {
-    let root = repo_root().map_err(|error| format!("Could not locate the repository: {error}"))?;
+fn ensure_hub(root: &Path) -> Result<Url, String> {
     let output = Command::new("/bin/zsh")
         .args(["-lc", "exec pnpm --silent devhub up"])
         .current_dir(&root)
@@ -103,7 +161,87 @@ fn ensure_hub() -> Result<Url, String> {
             message
         });
     }
-    parse_hub_url(&String::from_utf8_lossy(&output.stdout), &root)
+    read_hub(root)
+}
+
+fn read_hub(root: &Path) -> Result<Url, String> {
+    let output = Command::new("/bin/zsh")
+        .args(["-lc", "exec pnpm --silent devhub identity --page"])
+        .current_dir(root)
+        .env("PATH", launcher_path())
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| format!("Could not verify Dev Hub in {}: {error}", root.display()))?;
+    if !output.status.success() {
+        let message = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+        return Err(if message.is_empty() {
+            format!("Dev Hub page verification failed ({})", output.status)
+        } else {
+            message
+        });
+    }
+    let identity: serde_json::Value =
+        serde_json::from_slice(&output.stdout).map_err(|_| "Dev Hub returned invalid identity.")?;
+    let mut url = parse_hub_url(&String::from_utf8_lossy(&output.stdout), root)?;
+    let instance = identity["instanceId"]
+        .as_str()
+        .filter(|value| !value.is_empty())
+        .ok_or("Dev Hub returned no instance identity.")?;
+    let root = root.to_str().ok_or("Checkout path is not valid UTF-8.")?;
+    url.query_pairs_mut()
+        .append_pair("devhubInstance", instance)
+        .append_pair("devhubRoot", root);
+    Ok(url)
+}
+
+fn discover_running_hubs(app: tauri::AppHandle, root: PathBuf) {
+    thread::spawn(move || {
+        let output = Command::new("/bin/zsh")
+            .args(["-lc", "exec pnpm --silent devhub doctor --json"])
+            .current_dir(&root)
+            .env("PATH", launcher_path())
+            .stdin(Stdio::null())
+            .output();
+        let Ok(output) = output else { return };
+        if !output.status.success() {
+            return;
+        }
+        let Ok(report) = serde_json::from_slice::<serde_json::Value>(&output.stdout) else {
+            return;
+        };
+        let Some(environments) = report["environments"].as_array() else {
+            return;
+        };
+        for environment in environments {
+            if environment["reportedPhase"] != "running" {
+                continue;
+            }
+            let Some(path) = environment["root"].as_str() else {
+                continue;
+            };
+            let candidate = PathBuf::from(path);
+            if candidate == root || !candidate.is_absolute() {
+                continue;
+            }
+            let result = if environment["ownership"] == "verified" {
+                match candidate.canonicalize() {
+                    Ok(actual) if actual == candidate => read_hub(&candidate),
+                    _ => Err("Checkout path cannot be verified.".to_owned()),
+                }
+            } else {
+                Err("Checkout ownership cannot be verified.".to_owned())
+            };
+            let tab = match result {
+                Ok(url) => tab_value(&candidate, "ready", Some(url.as_str()), None),
+                Err(error) => tab_value(&candidate, "error", None, Some(&error)),
+            };
+            let key = candidate.to_string_lossy().into_owned();
+            let state = app.state::<LauncherState>();
+            let mut tabs = state.tabs.lock().unwrap_or_else(|error| error.into_inner());
+            tabs.entry(key).or_insert(tab);
+        }
+        sync_tabs(&app, None);
+    });
 }
 
 fn parse_hub_url(output: &str, expected_root: &Path) -> Result<Url, String> {
@@ -200,17 +338,7 @@ fn show_main_window(app: &tauri::AppHandle) {
 }
 
 fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<WebviewWindow> {
-    let saved = app
-        .state::<LauncherState>()
-        .hub_url
-        .lock()
-        .unwrap_or_else(|error| error.into_inner())
-        .clone();
-    let url = match saved {
-        Some(url) => WebviewUrl::External(url),
-        None => WebviewUrl::App("index.html".into()),
-    };
-    let window = WebviewWindowBuilder::new(app, "main", url)
+    let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .title("Groupher Dev Hub")
         .transparent(false)
         .shadow(true)
@@ -230,23 +358,59 @@ fn show_window(window: &WebviewWindow) {
     let _ = window.set_focus();
 }
 
-fn set_launcher_status(app: &tauri::AppHandle, message: &str) {
-    eval_launcher(app, "setStatus", message);
+fn tab_value(
+    root: &Path,
+    status: &str,
+    url: Option<&str>,
+    error: Option<&str>,
+) -> serde_json::Value {
+    let name = root
+        .file_name()
+        .unwrap_or(root.as_os_str())
+        .to_string_lossy();
+    let branch = Command::new("git")
+        .args(["branch", "--show-current"])
+        .current_dir(root)
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_owned())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| "detached".to_owned());
+    serde_json::json!({"root": root.to_string_lossy(), "name": name, "branch": branch, "status": status, "url": url, "error": error})
 }
 
-fn fail_launcher(app: &tauri::AppHandle, message: &str) {
-    show_main_window(app);
-    eval_launcher(app, "fail", message);
-}
-
-fn eval_launcher(app: &tauri::AppHandle, method: &str, message: &str) {
+fn sync_tabs(app: &tauri::AppHandle, focus: Option<&str>) {
+    let Some(state) = app.try_state::<LauncherState>() else {
+        return;
+    };
+    let tabs: Vec<_> = state
+        .tabs
+        .lock()
+        .unwrap_or_else(|error| error.into_inner())
+        .values()
+        .cloned()
+        .collect();
     let Some(window) = app.get_webview_window("main") else {
         return;
     };
-    let Ok(message) = serde_json::to_string(message) else {
-        return;
-    };
-    let _ = window.eval(format!("window.__DEV_HUB_LAUNCHER__?.{method}({message})"));
+    let error = state
+        .error
+        .lock()
+        .unwrap_or_else(|error| error.into_inner())
+        .clone();
+    let payload = serde_json::json!({"tabs": tabs, "focus": focus, "error": error});
+    let _ = window.eval(format!("window.__DEV_HUB_DESKTOP__?.sync({payload})"));
+}
+
+fn desktop_error(app: &tauri::AppHandle, message: &str) {
+    if let Some(state) = app.try_state::<LauncherState>() {
+        *state
+            .error
+            .lock()
+            .unwrap_or_else(|error| error.into_inner()) = Some(message.to_owned());
+        sync_tabs(app, None);
+    }
 }
 
 #[cfg(test)]

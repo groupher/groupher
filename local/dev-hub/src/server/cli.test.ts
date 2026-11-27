@@ -4,6 +4,7 @@ import test from 'node:test'
 
 import { runHubCommand as run } from './cli.ts'
 import { REPO_ROOT } from './services.ts'
+import { embedPageIdentity } from './page-identity.ts'
 
 const runHubCommand = (args: string[], request: typeof fetch) =>
   run(args, request, undefined, async () => ({
@@ -57,6 +58,61 @@ test('a Hub from another worktree cannot be controlled', async () => {
   const { calls, request } = fixture(tmpdir())
   await assert.rejects(runHubCommand(['restart', 'dash'], request), /another worktree/)
   assert.equal(calls.length, 1)
+})
+
+test('identity reports only a verified registered instance without starting services', async () => {
+  const route = {
+    origin: 'http://127.0.0.1:4312',
+    instanceId: 'instance-a',
+    mode: 'full' as const,
+    role: 'primary' as const,
+  }
+  const identity = {
+    repoRoot: REPO_ROOT,
+    apiOrigin: route.origin,
+    instanceId: route.instanceId,
+    mode: route.mode,
+    role: route.role,
+    apiVersion: 1,
+  }
+  const calls: string[] = []
+  const request: typeof fetch = async (input) => {
+    calls.push(new URL(String(input)).pathname)
+    return Response.json(identity)
+  }
+  assert.deepEqual(await run(['identity'], request, undefined, async () => route), identity)
+  assert.deepEqual(calls, ['/api/identity'])
+  const pageRequest: typeof fetch = async (input) =>
+    new URL(String(input)).pathname === '/api/identity'
+      ? Response.json(identity)
+      : new Response(embedPageIdentity('<head></head>', identity), {
+          headers: { 'content-type': 'text/html' },
+        })
+  assert.deepEqual(
+    await run(['identity', '--page'], pageRequest, undefined, async () => route),
+    identity,
+  )
+  const wrongPage: typeof fetch = async (input) =>
+    new URL(String(input)).pathname === '/api/identity'
+      ? Response.json(identity)
+      : new Response(
+          embedPageIdentity('<head></head>', { ...identity, instanceId: 'replacement' }),
+          { headers: { 'content-type': 'text/html' } },
+        )
+  await assert.rejects(
+    run(['identity', '--page'], wrongPage, undefined, async () => route),
+    /page identity does not match/,
+  )
+  await assert.rejects(
+    run(
+      ['identity'],
+      async () => Response.json({ ...identity, instanceId: 'replacement' }),
+      undefined,
+      async () => route,
+    ),
+    /does not match/,
+  )
+  await assert.rejects(runHubCommand(['identity'], fixture().request), /Legacy Hub identity/)
 })
 
 test('URL lookup rechecks the environment and returns only the canonical URL', async () => {

@@ -37,6 +37,24 @@ const readResponseError = async (response: Response, fallback: string): Promise<
 
 type THubIdentity = { instanceId: string; repoRoot: string } | null
 
+/** Verify the desktop tab's intended instance before accepting the served page. */
+export function verifyDesktopPageIdentity(
+  identity: Exclude<THubIdentity, null>,
+  search: string,
+): void {
+  const params = new URLSearchParams(search)
+  const ids = params.getAll('devhubInstance')
+  const roots = params.getAll('devhubRoot')
+  if (ids.length === 0 && roots.length === 0) return
+  if (
+    ids.length !== 1 ||
+    roots.length !== 1 ||
+    ids[0] !== identity.instanceId ||
+    roots[0] !== identity.repoRoot
+  )
+    throw new Error('This desktop tab points to a different Dev Hub instance.')
+}
+
 function pageIdentity(): THubIdentity | undefined {
   if (typeof document === 'undefined') return undefined
   const element = document.getElementById('dev-hub-page-identity')
@@ -46,19 +64,23 @@ function pageIdentity(): THubIdentity | undefined {
       throw new Error('The Dev Hub page has no instance identity. Reload after updating the Hub.')
     return undefined
   }
+  let parsed: Partial<Exclude<THubIdentity, null>>
   try {
-    const parsed = JSON.parse(element.textContent || '') as Partial<Exclude<THubIdentity, null>>
-    if (
-      typeof parsed.instanceId === 'string' &&
-      parsed.instanceId &&
-      typeof parsed.repoRoot === 'string' &&
-      parsed.repoRoot
-    )
-      return { instanceId: parsed.instanceId, repoRoot: parsed.repoRoot }
+    parsed = JSON.parse(element.textContent || '')
   } catch {
-    // Invalid document metadata is not a legacy identity.
+    throw new Error('The Dev Hub page has invalid instance identity.')
   }
-  throw new Error('The Dev Hub page has invalid instance identity.')
+  if (
+    !parsed ||
+    typeof parsed.instanceId !== 'string' ||
+    !parsed.instanceId ||
+    typeof parsed.repoRoot !== 'string' ||
+    !parsed.repoRoot
+  )
+    throw new Error('The Dev Hub page has invalid instance identity.')
+  const identity = { instanceId: parsed.instanceId, repoRoot: parsed.repoRoot }
+  verifyDesktopPageIdentity(identity, window.location.search)
+  return identity
 }
 
 /** Bind a page to the instance that served it; a reused port must not retarget its writes. */

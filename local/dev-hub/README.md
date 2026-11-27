@@ -58,12 +58,12 @@ Dev Hub 把这些知识固化为服务定义，并提供一个只监听 `127.0.0
 
 在仓库根目录运行：
 
-| 命令           | 用途                  | 运行内容                                                                                            |
-| -------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
-| `make dev.dev` | 开发 Dev Hub 本身     | 启动 Vite HMR 页面（`4310`）和独立 API（`4311`），修改 React、CSS 或 Node 代码时使用                |
-| `make dev`     | 确保当前 checkout 的 Hub 运行 | 通过受管入口复用或启动 Hub；首次启动完整环境时构建页面，地址由实例登记决定，不自动打开桌面窗口 |
-| `make dev.hub` | 前台运行当前 checkout 的 Hub | 已有常驻实例时拒绝启动；Ctrl+C 只停止本命令启动的实例 |
-| `make dev.app` | 构建并安装 macOS 应用 | 安装项目依赖、构建 production 页面和 Tauri `.app`、替换 `/Applications/Groupher Dev Hub.app` 并启动 |
+| 命令           | 用途                          | 运行内容                                                                                            |
+| -------------- | ----------------------------- | --------------------------------------------------------------------------------------------------- |
+| `make dev.dev` | 开发 Dev Hub 本身             | 启动 Vite HMR 页面（`4310`）和独立 API（`4311`），修改 React、CSS 或 Node 代码时使用                |
+| `make dev`     | 确保当前 checkout 的 Hub 运行 | 通过受管入口复用或启动 Hub；macOS 已安装桌面应用时，同时请求打开当前 checkout 的标签页              |
+| `make dev.hub` | 前台运行当前 checkout 的 Hub  | 已有常驻实例时拒绝启动；Ctrl+C 只停止本命令启动的实例                                               |
+| `make dev.app` | 构建并安装 macOS 应用         | 安装项目依赖、构建 production 页面和 Tauri `.app`、替换 `/Applications/Groupher Dev Hub.app` 并启动 |
 
 ### 推荐的日常开发流程
 
@@ -77,7 +77,9 @@ make dev.dev
 make dev.app
 ```
 
-切换到 `make dev.app` 前必须先停止使用旧端口的 `make dev.dev`。桌面启动器通过当前 checkout 的受管 CLI 查找或启动 Hub，并核验返回的路径和本机地址；它不会接管 4310 上的旧实例。当前桌面只有单个环境视图，多 worktree tab 仍是[后续方案](../../docs/architecture/dev-hub-multi-worktree.md#第二阶段--一个桌面窗口每个-worktree-一个-tab)。
+切换到 `make dev.app` 前必须先停止使用旧端口的 `make dev.dev`。桌面启动器通过当前 checkout 的受管 CLI 查找或启动 Hub，并核验返回的路径和本机地址；它不会接管 4310 上的旧实例。多 worktree 标签页的原生窗口验收仍待完成，详见[实施记录](../../docs/architecture/dev-hub-multi-worktree.md#第二阶段--一个桌面窗口每个-worktree-一个-tab)。
+
+标签页和 checkout 参数转交需要重新构建并安装本版本桌面应用；已安装的旧版应用不会自动获得这些能力。Hub 或页面版本过旧时，对应标签页会显示诊断。
 
 平时只使用 Dev Hub、不修改它时，直接从 Raycast、Spotlight 或 `/Applications` 打开 **Groupher Dev Hub** 即可，不需要先打开终端。
 
