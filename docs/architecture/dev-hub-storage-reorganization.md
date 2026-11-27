@@ -48,6 +48,7 @@ $TMPDIR/groupher-dev-hub/<工作树标识>/
 - Assets Worker 和 Edge Router 使用 Cloudflare Vite 插件的 `persistState` 指定持久状态目录，避免向 Vite 传递不支持的 `--persist-to` 参数。Assets Worker 身份链路通过；Edge Router 的本地健康检查通过。
 - Linux 和 Windows 的路径选择有单测覆盖，尚未在对应系统实机验证。
 - 旧 `.data` 已删除；新 profile 均写入用户数据目录。
+- Hub 页面构建保留输出目录中已有的带哈希资源：运行中的 Hub 可能仍缓存旧入口，已打开的页面也可能稍后加载旧分块。构建会替换当前入口及同名静态文件，因此测试新构建仍应使用独立输出目录；旧资源会累积，只能在确认没有运行中的 Hub 或页面依赖它们后清理。
 
 ## 待验收的存储操作
 
