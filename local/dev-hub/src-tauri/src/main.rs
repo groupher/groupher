@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{
+    ffi::OsString,
+    io::{Error, ErrorKind},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     sync::{
@@ -136,12 +138,41 @@ fn parse_hub_url(output: &str, expected_root: &Path) -> Result<Url, String> {
 }
 
 fn repo_root() -> std::io::Result<PathBuf> {
+    if let Some(root) = explicit_repo_root(std::env::args_os().skip(1))? {
+        return root.canonicalize();
+    }
     if let Some(configured_root) = std::env::var_os("GROUPHER_REPO_ROOT") {
         return PathBuf::from(configured_root).canonicalize();
     }
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../..")
         .canonicalize()
+}
+
+fn explicit_repo_root(
+    args: impl IntoIterator<Item = OsString>,
+) -> std::io::Result<Option<PathBuf>> {
+    let mut args = args.into_iter();
+    let mut root = None;
+    while let Some(arg) = args.next() {
+        if arg == "--repo-root" {
+            if root.is_some() {
+                return Err(Error::new(ErrorKind::InvalidInput, "duplicate --repo-root"));
+            }
+            let value = args
+                .next()
+                .ok_or_else(|| Error::new(ErrorKind::InvalidInput, "missing --repo-root path"))?;
+            let path = PathBuf::from(value);
+            if !path.is_absolute() {
+                return Err(Error::new(
+                    ErrorKind::InvalidInput,
+                    "--repo-root must be an absolute path",
+                ));
+            }
+            root = Some(path);
+        }
+    }
+    Ok(root)
 }
 
 fn launcher_path() -> String {
@@ -220,7 +251,8 @@ fn eval_launcher(app: &tauri::AppHandle, method: &str, message: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_hub_url;
+    use super::{explicit_repo_root, parse_hub_url};
+    use std::ffi::OsString;
     use std::path::Path;
 
     #[test]
@@ -233,5 +265,26 @@ mod tests {
         assert!(parse_hub_url(&output.replace("full", "control-only"), root).is_err());
         assert!(parse_hub_url(&output.replace("/checkout/a", "/checkout/b"), root).is_err());
         assert!(parse_hub_url("{}", root).is_err());
+    }
+
+    #[test]
+    fn parses_only_one_explicit_absolute_checkout() {
+        let args = |values: &[&str]| values.iter().map(OsString::from).collect::<Vec<_>>();
+        assert_eq!(
+            explicit_repo_root(args(&["--repo-root", "/checkout/b"]))
+                .unwrap()
+                .unwrap(),
+            Path::new("/checkout/b")
+        );
+        assert!(explicit_repo_root(args(&["--repo-root"])).is_err());
+        assert!(explicit_repo_root(args(&["--repo-root", "relative"])).is_err());
+        assert!(explicit_repo_root(args(&[
+            "--repo-root",
+            "/checkout/a",
+            "--repo-root",
+            "/checkout/b"
+        ]))
+        .is_err());
+        assert!(explicit_repo_root(args(&[])).unwrap().is_none());
     }
 }
