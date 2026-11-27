@@ -17,7 +17,6 @@ defmodule GroupherServer.Seed.Cleanup.Run do
   alias CMS.Model.{
     Community,
     CommunityAdmin,
-    CommunityLifecycle,
     GlobalPassport
   }
 
@@ -141,15 +140,12 @@ defmodule GroupherServer.Seed.Cleanup.Run do
             archive(community, data.users)
           end)
           |> steps(data.admins, "remove_admin", fn member ->
-            owned? = Enum.any?(data.communities, fn {c, _} -> c.id == member.community_id end)
-            lifecycle = Repo.get_by(CommunityLifecycle, community_id: member.community_id)
+            owned = Enum.find(data.communities, fn {c, _} -> c.id == member.community_id end)
 
             if retained_lord?(member, data) do
               {:ok, :retained}
             else
-              if owned? and
-                   (is_nil(lifecycle) or
-                      lifecycle.state not in [:archived, :pending_destroy, :destroy]) do
+              if owned != nil and not archived_owned?(owned, data.users) do
                 {:error, :owned_community_archive_pending}
               else
                 user = Map.fetch!(data.users, member.user_id)
@@ -218,19 +214,17 @@ defmodule GroupherServer.Seed.Cleanup.Run do
         end
       end)
 
-    {communities, ownership_errors} =
-      Enum.reduce(bindings, {[], []}, fn binding, {communities, errors} ->
-        Enum.reduce(binding.raw["communities"] || [], {communities, errors}, fn id,
-                                                                                {owned, issues} ->
-          case Repo.get(Community, id) do
-            nil ->
-              {owned, issues}
-
-            %Community{user_id: owner} = community when owner == binding.user_id ->
+    {communities, unavailable_communities} =
+      Enum.reduce(bindings, {[], []}, fn binding, {communities, unavailable} ->
+        Enum.reduce(binding.raw["communities"] || [], {communities, unavailable}, fn id,
+                                                                                     {owned,
+                                                                                      issues} ->
+          case read_owned_community(id, Map.get(users, binding.user_id)) do
+            {:ok, %Community{user_id: owner} = community} when owner == binding.user_id ->
               {[{community, binding} | owned], issues}
 
             _ ->
-              {owned, ["community_ownership_changed" | issues]}
+              {owned, [%{communityId: id, owner: binding.raw["alias"]} | issues]}
           end
         end)
       end)
@@ -258,7 +252,7 @@ defmodule GroupherServer.Seed.Cleanup.Run do
       end)
 
     global_rows = Repo.all(from(g in GlobalPassport, where: g.user_id in ^ids))
-    blockers = ownership_errors
+    blockers = if unavailable_communities == [], do: [], else: ["owned_community_unavailable"]
 
     blockers =
       if unexpected_identity?, do: ["unexpected_oauth_identity" | blockers], else: blockers
@@ -310,6 +304,7 @@ defmodule GroupherServer.Seed.Cleanup.Run do
       users: users,
       bindings: bindings,
       communities: Enum.uniq_by(communities, fn {c, _} -> c.id end),
+      unavailable_communities: unavailable_communities,
       blockers: Enum.uniq(blockers),
       admins: admins,
       globals: global_rows,
@@ -363,9 +358,8 @@ defmodule GroupherServer.Seed.Cleanup.Run do
   defp summarize(data) do
     communities =
       Enum.flat_map(data.communities, fn {community, _} ->
-        case Repo.get_by(CommunityLifecycle, community_id: community.id) do
-          %CommunityLifecycle{state: state}
-          when state in [:archived, :pending_destroy, :destroy] ->
+        case community.lifecycle do
+          %{state: state} when state in [:archived, :pending_destroy, :destroy] ->
             []
 
           _ ->
@@ -381,9 +375,10 @@ defmodule GroupherServer.Seed.Cleanup.Run do
           GroupherServer.Seed.Run.present(Map.fetch!(data.users, binding.user_id), binding)
         end),
       communities_to_archive: communities,
+      communities_unavailable: data.unavailable_communities,
       communities_retained:
         Enum.map(data.communities, fn {community, _} ->
-          lifecycle = Repo.get_by(CommunityLifecycle, community_id: community.id)
+          lifecycle = community.lifecycle
 
           %{
             slug: community.slug,
@@ -512,15 +507,38 @@ defmodule GroupherServer.Seed.Cleanup.Run do
   end
 
   defp archive(community, users) do
-    case Repo.get_by(CommunityLifecycle, community_id: community.id) do
-      %CommunityLifecycle{state: state} when state in [:archived, :pending_destroy, :destroy] ->
-        {:ok, :already_archived}
+    user = Map.fetch!(users, community.user_id)
+
+    with {:ok, %{user_id: owner} = current} when owner == user.id <-
+           read_owned_community(community.id, user) do
+      case current.lifecycle do
+        %{state: state} when state in [:archived, :pending_destroy, :destroy] ->
+          {:ok, :already_archived}
+
+        _ ->
+          CMS.request_community_destruction(current, user,
+            command_id: Ecto.UUID.generate(),
+            allowed_member_user_ids: users |> Map.keys() |> Enum.sort()
+          )
+      end
+    else
+      _ -> {:error, :owned_community_unavailable}
+    end
+  end
+
+  defp read_owned_community(id, %User{} = user) do
+    CMS.fetch_community(id, user, policy_mode: :owner, inc_views: false)
+  end
+
+  defp read_owned_community(_, _), do: {:error, :owned_community_unavailable}
+
+  defp archived_owned?({community, binding}, users) do
+    case read_owned_community(community.id, Map.get(users, binding.user_id)) do
+      {:ok, %{user_id: owner, lifecycle: %{state: state}}} ->
+        owner == binding.user_id and state in [:archived, :pending_destroy, :destroy]
 
       _ ->
-        CMS.request_community_destruction(community, Map.fetch!(users, community.user_id),
-          command_id: Ecto.UUID.generate(),
-          allowed_member_user_ids: users |> Map.keys() |> Enum.sort()
-        )
+        false
     end
   end
 

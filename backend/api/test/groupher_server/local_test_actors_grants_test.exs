@@ -499,12 +499,19 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
 
     assert {:error, _} = CMS.community_members_outside?(community.ref, [owner.id], owner)
 
-    assert {:ok, %{status: "blocked", blockers: blockers, communities_retained: retained}} =
+    assert {:ok,
+            %{
+              status: "blocked",
+              blockers: blockers,
+              communities_retained: retained,
+              communities_unavailable: unavailable
+            }} =
              GroupherServer.Seed.Cleanup.Run.apply("fixture-test")
 
-    assert "owned_community_membership_unavailable" in blockers
-    assert [%{communityRef: ref, lifecycle: :destroy}] = retained
-    assert ref == community.ref
+    assert "owned_community_unavailable" in blockers
+    assert retained == []
+    assert [%{communityId: id, owner: "owner"}] = unavailable
+    assert id == community.id
     assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "owner")
   end
 
@@ -520,6 +527,35 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
              GroupherServer.Seed.Cleanup.Run.apply("fixture-test")
 
     assert "admin_memberships_unavailable" in blockers
+    assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "owner")
+  end
+
+  test "cleanup blocks when a run Community has a different owner" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, new_owner} = db_insert(:user)
+    register(owner, "owner")
+
+    assert {:ok, created} =
+             Repo.transact_result(fn ->
+               GroupherServer.Seed.Community.Create.run("fixture-test", %{
+                 "owner" => "owner",
+                 "slug" => "seed-transferred-owner"
+               })
+             end)
+
+    community = Repo.get_by!(CMS.Model.Community, ref: created.communityRef)
+    community |> Ecto.Changeset.change(user_id: new_owner.id) |> Repo.update!()
+
+    assert {:ok, %{status: "blocked", blockers: blockers, communities_unavailable: unavailable}} =
+             GroupherServer.Seed.Cleanup.Run.apply("fixture-test")
+
+    assert "owned_community_unavailable" in blockers
+    assert [%{communityId: id, owner: "owner"}] = unavailable
+    assert id == community.id
+
+    assert %{state: :active} =
+             Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
+
     assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "owner")
   end
 

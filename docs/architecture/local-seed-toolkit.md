@@ -10,11 +10,13 @@
 
 GraphQL resolver、seed、未来的 API 和 MCP 都只通过所属 Context 公开的业务入口执行产品动作。各适配器负责取得真实 actor 和转换参数。Context 负责权限、生命周期、版本校验、事务及适用的 Command Receipt。seed 的 run、账号别名和资源归属沿用本地开发库中的 fixture 绑定记录；外部调用者的身份取自认证凭据或委托授权。详见[多入口架构](cms-multi-entry-boundary.md)及[Context 根接口约定](backend-context-convention-over-configuration.md)。
 
-当前仍有读取边界待收口：社区 slug 冲突分类、清理时的社区归属及生命周期检查，以及开发专用 lord/global grant 兼容操作仍直接读取业务表。账号绑定、run 锁和清理报告属于本地工具自身状态；不应把这些工具记录变成产品 API。清理查询迁移时须保留对所有者变更、外来成员与不可读终态的失败关闭行为，不能为消除直接读取而增加绕过 Gate 的公开入口。
+社区 slug 冲突分类以及开发专用 lord/global grant 兼容操作仍直接读取业务表，按下文限定为本地例外。账号绑定、run 锁和清理报告属于本地工具自身状态；不应把这些工具记录变成产品 API。清理社区归属和生命周期使用 owner 的 Context 读取，不为开发工具增加绕过 Gate 的公开入口。
 
 slug 冲突分类保留为开发专用例外：受管入口核验本地管理身份、环境及实际数据库后，fixture 才读取占用和生命周期，仅返回占用或保留状态，不返回对方社区内容。该代码位于 `dev/`，不编译进生产或 `seed_prod`；正式 API、MCP 和普通用户仍遵守原有读取权限。
 
 清理通过 Accounts 公开的关联身份投影核对测试账号；只有非空公开引用与本 run 的绑定一致时才确认其归属。若绑定的公开引用为空或存在其他身份，清理报告阻塞并保留账号及会话，不能以空引用相等认领资源；当前数据库约束禁止 `NULL` 引用。
+
+清理用绑定中的社区 ID 和 owner 通过 `CMS.fetch_community/3` 的 owner 读取模式核验归属与生命周期；归档前再次读取并核对 owner。社区不存在、owner 已变更或当前生命周期不可读时，报告 `owned_community_unavailable`，在 `communities_unavailable` 中列出绑定的社区 ID 和 owner 别名，保持 run 开放，不猜测生命周期或归档该社区。
 
 本人社区管理员关系列表通过 Gate 的 admin 读取范围检查；如果某条关系指向当前 actor 不可读取的社区，接口返回权限错误而不返回部分列表。清理据此报告 `admin_memberships_unavailable` 并保持 run 开放，不能把被隐藏的关系误当成已清理。
 
@@ -94,7 +96,7 @@ backend/api/dev/
 | run 创建社区时生成的初始 lord                | 公开 create 返回社区。seed 在同一外层事务内以 owner 调用公开的 `CMS.get_current_community_admin_membership(community.ref, owner)`，核对返回的 `is_lord`，将其 `member_id` 与 community ref、owner 一起登记。该入口直接查询当前 actor，避免依赖分页；查询或绑定失败时回滚。清理核对归属和外来成员，以公开的 `request_destroy` 请求归档，再读回生命周期。首批可达的 `archived` 允许恢复，初始 lord 按策略保留。 |
 | 兼容命令在共享社区（如 home）授予的测试 lord | 授权时在同一事务记录 community ref、合成账号、member ID 及本次是新增还是复用。同一 run 再次 grant 须沿用首次登记的归属。仅回收本 run 新增且仍匹配的关系；首次调用前已存在且有明确基线的 lord 按策略保留。                                                                                                                                                                                                     |
 
-首批只验收通过根 Context 可达的归档，不为 seed 暴露调度或销毁操作。若读到其他流程已推进到 `pending_destroy` 或 `destroy`，报告实际状态并保留初始 lord；终态回收留待后续批次。run 封存与测试会话撤销仍按清理流程执行。[请求销毁的业务入口](../../backend/api/lib/groupher_server/cms/communities/commands/request_destroy.ex) · [归档与恢复](../../backend/api/lib/groupher_server/cms/communities/lifecycle.ex) · [成员查询投影](../../backend/api/lib/groupher_server/cms/communities/admins/query.ex)
+首批只验收通过根 Context 可达的归档，不为 seed 暴露调度或销毁操作。若其他流程已推进到 `pending_destroy` 或 `destroy`，只有 owner 的 Context 允许读取时才报告实际状态并保留初始 lord；不可读时报告上述阻塞，保持 run 开放。终态回收留待后续批次。[请求销毁的业务入口](../../backend/api/lib/groupher_server/cms/communities/commands/request_destroy.ex) · [归档与恢复](../../backend/api/lib/groupher_server/cms/communities/lifecycle.ex) · [成员查询投影](../../backend/api/lib/groupher_server/cms/communities/admins/query.ex)
 
 生成最终清理清单时替换现有逐行 `remove_admin` 分派。已归档社区的初始 lord、共享社区有基线的既有 lord 只进入保留清单；来源未知的关系进入受阻清单。应回收的普通成员走公开 Remove，只有本 run 新增且归属已核实的共享社区测试 lord 才进入专用回收。删除时在事务内锁定并复核成员，同步更新管理员计数和活动记录。
 
