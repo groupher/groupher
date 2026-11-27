@@ -9,9 +9,11 @@ Follow the repository’s [working agreements](../../../AGENTS.md) for assessmen
 
 ## Prioritize the acceptance path
 
-- For a multi-step task, identify the real workflow the user expects to verify, the intended commit scope, and any required environment or authorization. Check the step most likely to invalidate the design or block delivery first. Request any required authorization early and separately for each action.
-- When the main acceptance path is blocked, resolve the blocker or report the missing prerequisite before expanding into exception cases. Continue independent checks that advance the same acceptance outcome.
-- Report how far the real workflow ran, where it stopped, and what evidence is missing. Before submitting, verify the exact changes intended for delivery independently of unrelated worktree changes.
+- Identify the shortest workflow that proves the user's requested outcome and its environment prerequisites. Run it end to end before exploring exception cases. For a write, use the real product entry point, then refresh or issue a fresh read as the intended reader and verify the saved change. Record unrelated findings for separate work.
+- Before expensive validation, pin the candidate to a commit SHA or, for uncommitted work, a base SHA plus the exact patch being tested, including relevant new files. Record results against that candidate.
+- Before widening an investigation, name the acceptance step it blocks, a testable cause, and the smallest check that distinguishes it from another plausible cause. State which result would justify investigating further. If the check only reproduces the known symptom, choose a check that can distinguish the causes or advance an independent, authorized deliverable.
+- In each progress update, say what new evidence changed or ruled out, which acceptance step remains blocked, and what result would change the next decision. Identify any deliverable that can still proceed. Before submitting, verify the intended changes independently of unrelated worktree changes.
+- Before repeating a full suite, state which change or new evidence makes the previous result insufficient and why a focused check cannot answer the question. Use focused tests while iterating and run the required suite on the final candidate.
 
 ## Prepare worktree dependencies
 
