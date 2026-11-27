@@ -20,6 +20,14 @@ defmodule GroupherServer.CMS.Articles.CoAuthors do
 
   alias CMS.Model.{ArticleCoAuthor, ArticleCoAuthorRequest}
 
+  @doc "Lists only the authenticated actor's Article co-author memberships."
+  def list_own_memberships(%User{} = actor), do: Query.own_memberships(actor)
+  def list_own_memberships(_), do: {:error, :permission_denied}
+
+  @doc "Lists pending co-author requests the actor initiated or received."
+  def list_own_pending_requests(%User{} = actor), do: Query.own_pending_requests(actor)
+  def list_own_pending_requests(_), do: {:error, :permission_denied}
+
   @doc "Pages the current Article co-author roster for an authorized Article manager."
   def members(article_id, %User{} = actor, pagi_input) do
     with {:ok, article} <- Query.load_article(article_id) do

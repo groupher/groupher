@@ -9,7 +9,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
   """
   import Ecto.Query
   alias GroupherServer.{CMS, Repo, LocalTestActors}
-  alias CMS.Model.{Article, ArticleCoAuthor, Author, Community, CommunityAdmin}
+  alias CMS.Model.{Community, CommunityAdmin}
   alias CMS.Communities.Admins
 
   def configure(run, %{"alias" => name, "community" => slug, "role" => "lord"}) do
@@ -100,19 +100,16 @@ defmodule GroupherServer.LocalTestActors.Grants do
       ) do
     with {:ok, subject, _} <- GroupherServer.Seed.Run.actor(run, name),
          {:ok, manager, _} <- GroupherServer.Seed.Run.actor(run, by),
-         {:ok, _} <- Ecto.UUID.cast(article_id),
-         %Article{} = article <- Repo.get(Article, article_id),
-         {:ok, normalized} <- CMS.passport_validate_permissions(:article, permissions) do
-      author = Repo.get_by(Author, user_id: subject.id)
-
-      member =
-        if author, do: Repo.get_by(ArticleCoAuthor, article_id: article.id, author_id: author.id)
+         {:ok, article_id} <- Ecto.UUID.cast(article_id),
+         {:ok, normalized} <- CMS.passport_validate_permissions(:article, permissions),
+         {:ok, memberships} <- CMS.list_own_article_co_author_memberships(subject) do
+      member = Enum.find(memberships, &(&1.article_id == article_id))
 
       case member do
         nil ->
           with {:ok, request} <-
                  CMS.create_article_co_author_request(
-                   article.id,
+                   article_id,
                    subject.login,
                    :invite,
                    normalized,
@@ -132,7 +129,7 @@ defmodule GroupherServer.LocalTestActors.Grants do
                        subject,
                        Ecto.UUID.generate()
                      ) do
-                CMS.get_current_article_co_author_permissions(article.id, subject)
+                CMS.get_current_article_co_author_permissions(article_id, subject)
               end
             end
           else
@@ -140,21 +137,20 @@ defmodule GroupherServer.LocalTestActors.Grants do
             {:error, _} = error -> error
           end
 
-        %ArticleCoAuthor{} = member ->
+        member when is_map(member) ->
           with {:ok, _} <-
                  CMS.update_article_co_author_permissions(
-                   article.id,
-                   member.id,
+                   article_id,
+                   member.member_id,
                    member.revision,
                    normalized,
                    manager,
                    Ecto.UUID.generate()
                  ) do
-            CMS.get_current_article_co_author_permissions(article.id, subject)
+            CMS.get_current_article_co_author_permissions(article_id, subject)
           end
       end
     else
-      nil -> {:error, :article_not_found}
       :error -> {:error, :invalid_article_id}
       {:error, _} = error -> error
     end

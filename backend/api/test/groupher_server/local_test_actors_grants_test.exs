@@ -634,6 +634,13 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
     member = Repo.get_by!(ArticleCoAuthor, article_id: article.id, author_id: author.id)
     assert member.permissions == @permissions
 
+    assert {:ok, [%{member_id: member_id, article_id: article_id, revision: revision}]} =
+             CMS.list_own_article_co_author_memberships(subject)
+
+    assert {member_id, article_id, revision} == {member.id, article.id, member.revision}
+    {:ok, outsider} = db_insert(:user)
+    assert {:ok, []} = CMS.list_own_article_co_author_memberships(outsider)
+
     assert Repo.get_by(ArticleCoAuthorEvent,
              article_id: article.id,
              member_id: member.id,
@@ -677,6 +684,12 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
 
     assert request.status == :pending
     refute Repo.get_by(Author, user_id: subject.id)
+    assert {:ok, [%{id: request_id}]} = CMS.list_own_pending_article_co_author_requests(owner)
+    assert request_id == request.id
+    assert {:ok, [%{id: ^request_id}]} = CMS.list_own_pending_article_co_author_requests(subject)
+    {:ok, outsider} = db_insert(:user)
+    assert {:ok, []} = CMS.list_own_pending_article_co_author_requests(outsider)
+    assert {:ok, %{pending_requests: 1}} = GroupherServer.Seed.Cleanup.Run.report("fixture-test")
   end
 
   defp register(user, name, run \\ "fixture-test") do

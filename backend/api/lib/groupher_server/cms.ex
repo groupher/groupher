@@ -134,6 +134,16 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles.CoAuthors,
     as: :requests
 
+  @doc "Lists the authenticated actor's own Article co-author memberships."
+  defdelegate list_own_article_co_author_memberships(actor),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :list_own_memberships
+
+  @doc "Lists pending Article co-author requests initiated or received by the actor."
+  defdelegate list_own_pending_article_co_author_requests(actor),
+    to: GroupherServer.CMS.Articles.CoAuthors,
+    as: :list_own_pending_requests
+
   @doc "Returns the actor's effective Article permissions."
   defdelegate get_current_article_co_author_permissions(article_id, actor),
     to: GroupherServer.CMS.Articles.CoAuthors,

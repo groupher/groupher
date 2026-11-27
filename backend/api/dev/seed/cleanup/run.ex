@@ -15,9 +15,6 @@ defmodule GroupherServer.Seed.Cleanup.Run do
   alias Accounts.Model.{OauthProvider, User}
 
   alias CMS.Model.{
-    ArticleCoAuthor,
-    ArticleCoAuthorRequest,
-    Author,
     Community,
     CommunityAdmin,
     CommunityLifecycle,
@@ -311,21 +308,8 @@ defmodule GroupherServer.Seed.Cleanup.Run do
       globals: global_rows,
       legacy_grants: legacy_grants,
       admin_requests: own_pending_admin_requests(users),
-      article_requests:
-        Repo.all(
-          from(r in ArticleCoAuthorRequest,
-            where: r.status == :pending and (r.subject_user_id in ^ids or r.created_by_id in ^ids)
-          )
-        ),
-      coauthors:
-        Repo.all(
-          from(m in ArticleCoAuthor,
-            join: a in Author,
-            on: a.id == m.author_id,
-            where: a.user_id in ^ids,
-            select: {m, a.user_id}
-          )
-        )
+      article_requests: own_pending_co_author_requests(users),
+      coauthors: own_co_author_memberships(users)
     }
   end
 
@@ -334,6 +318,25 @@ defmodule GroupherServer.Seed.Cleanup.Run do
     |> Map.values()
     |> Enum.flat_map(fn user ->
       {:ok, requests} = CMS.list_own_pending_community_admin_requests(user)
+      requests
+    end)
+    |> Enum.uniq_by(& &1.id)
+  end
+
+  defp own_co_author_memberships(users) do
+    users
+    |> Map.values()
+    |> Enum.flat_map(fn user ->
+      {:ok, memberships} = CMS.list_own_article_co_author_memberships(user)
+      Enum.map(memberships, &{&1, user.id})
+    end)
+  end
+
+  defp own_pending_co_author_requests(users) do
+    users
+    |> Map.values()
+    |> Enum.flat_map(fn user ->
+      {:ok, requests} = CMS.list_own_pending_article_co_author_requests(user)
       requests
     end)
     |> Enum.uniq_by(& &1.id)
