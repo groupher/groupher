@@ -92,25 +92,54 @@ test('desktop shell refuses a URL that does not match the tab checkout', async (
 })
 
 test('desktop opens allowed URLs only for the active verified frame', async () => {
-  const html = await readFile(new URL('../../src-tauri/bootstrap/index.html', import.meta.url), 'utf8')
+  const html = await readFile(
+    new URL('../../src-tauri/bootstrap/index.html', import.meta.url),
+    'utf8',
+  )
   const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'https://desktop.localhost/' })
   const calls: unknown[] = []
   Object.assign(dom.window, {
-    __TAURI_INTERNALS__: { invoke: (...args: unknown[]) => { calls.push(args); return Promise.resolve() } },
+    __TAURI_INTERNALS__: {
+      invoke: (...args: unknown[]) => {
+        calls.push(args)
+        return Promise.resolve()
+      },
+    },
   })
   try {
-    dom.window.__DEV_HUB_DESKTOP__.sync({ tabs: [{
-      root: '/checkout/b', name: 'b', branch: 'feature', status: 'ready',
-      url: 'http://127.0.0.1:4313/?devhubInstance=b&devhubRoot=%2Fcheckout%2Fb',
-    }], focus: '/checkout/b' })
+    dom.window.__DEV_HUB_DESKTOP__.sync({
+      tabs: [
+        {
+          root: '/checkout/b',
+          name: 'b',
+          branch: 'feature',
+          status: 'ready',
+          url: 'http://127.0.0.1:4313/?devhubInstance=b&devhubRoot=%2Fcheckout%2Fb',
+        },
+      ],
+      focus: '/checkout/b',
+    })
     const frame = dom.window.document.querySelector('iframe')!
-    const send = (origin: string, url: string, source: MessageEventSource | null = frame.contentWindow) =>
-      dom.window.dispatchEvent(new dom.window.MessageEvent('message', { origin, source, data: { type: 'groupher-devhub-open-url', url } }))
+    const send = (
+      origin: string,
+      url: string,
+      source: MessageEventSource | null = frame.contentWindow,
+    ) =>
+      dom.window.dispatchEvent(
+        new dom.window.MessageEvent('message', {
+          origin,
+          source,
+          data: { type: 'groupher-devhub-open-url', url },
+        }),
+      )
     send('http://127.0.0.1:4313', 'https://dash.groupher-b.localhost/')
     send('http://127.0.0.1:4312', 'https://dash.groupher-b.localhost/')
     send('http://127.0.0.1:4313', 'https://evil.example/')
     send('http://127.0.0.1:4313', 'https://dash.groupher-b.localhost/', null)
-    assert.equal(JSON.stringify(calls), JSON.stringify([['plugin:opener|open_url', { url: 'https://dash.groupher-b.localhost/' }]]))
+    assert.equal(
+      JSON.stringify(calls),
+      JSON.stringify([['plugin:opener|open_url', { url: 'https://dash.groupher-b.localhost/' }]]),
+    )
   } finally {
     dom.window.close()
   }
