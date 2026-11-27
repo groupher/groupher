@@ -428,6 +428,18 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
     assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "linked")
   end
 
+  test "clean refuses an identity whose public reference cannot prove ownership" do
+    {:ok, user} = db_insert(:user)
+    register(user, "legacy")
+    binding = Repo.get_by!(OauthProvider, provider_id: "fixture-test/legacy")
+    binding |> Ecto.Changeset.change(public_ref: "") |> Repo.update!()
+
+    assert {:ok, %{status: "blocked", blockers: ["unexpected_oauth_identity"]}} =
+             GroupherServer.Seed.Cleanup.Run.apply("fixture-test")
+
+    assert {:ok, _, _} = GroupherServer.Seed.Run.actor("fixture-test", "legacy")
+  end
+
   test "clean report is read-only; apply removes only run grants and retains shared community/content" do
     {community, public, _, owner} = mock_article(:post)
     {:ok, subject} = db_insert(:user)

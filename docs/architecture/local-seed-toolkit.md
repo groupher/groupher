@@ -12,6 +12,8 @@ GraphQL resolver、seed、未来的 API 和 MCP 都只通过所属 Context 公�
 
 当前仍有读取边界待收口：社区 slug 冲突分类、清理时的社区归属、生命周期及外来成员检查，以及开发专用 lord/global grant 兼容操作仍直接读取业务表。账号绑定、run 锁和清理报告属于本地工具自身状态；不应把这些工具记录变成产品 API。清理查询迁移时须保留对所有者变更、外来成员与不可读终态的失败关闭行为，不能为消除直接读取而增加绕过 Gate 的公开入口。
 
+清理通过 Accounts 公开的关联身份投影核对测试账号；只有非空公开引用与本 run 的绑定一致时才确认其归属。若绑定的公开引用为空或存在其他身份，清理报告阻塞并保留账号及会话，不能以空引用相等认领资源；当前数据库约束禁止 `NULL` 引用。
+
 以建社区为例，resolver 从认证上下文取得用户，调用 `CMS.create_community(attrs, user, command_id)`。本地 CLI 传递 run 和 `--owner` 别名，由受管 Phoenix 验证管理请求、解析真实用户，再通过 seed 动作调用同一函数；社区创建 fixture 已改为使用这个公开入口。社区与成员权限首批接口已切换为动词在前的名称，resolver 和 seed 使用同一个公开入口。其余接口的问题、候选名和迁移顺序见业务批次的命名审计 `docs/architecture/resolver-context-api-naming-audit.md`。首批接口见[本文对照表](#首批动作与-context-入口)。[现有 resolver](../../backend/api/lib/groupher_server_web/resolvers/cms/communities.ex) · 社区创建实现（`backend/api/dev/seed/community/create.ex`）
 
 ### 同一业务用例如何接入不同入口

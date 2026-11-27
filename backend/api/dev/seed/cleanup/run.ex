@@ -235,14 +235,17 @@ defmodule GroupherServer.Seed.Cleanup.Run do
         end)
       end)
 
-    oauth = Repo.all(from(o in OauthProvider, where: o.user_id in ^ids))
-
     unexpected_identity? =
-      Enum.any?(oauth, fn o ->
-        not Enum.any?(
-          bindings,
-          &(&1.id == o.id and &1.raw["tool"] == "local-test-actor-v1" and &1.raw["alias"] != nil)
-        )
+      Enum.any?(users, fn {user_id, user} ->
+        {:ok, %{entries: entries}} = Accounts.profiles_linked_oauth_accounts(user.login)
+
+        Enum.any?(entries, fn entry ->
+          not Enum.any?(bindings, fn binding ->
+            is_binary(entry.public_ref) and entry.public_ref != "" and binding.user_id == user_id and
+              binding.public_ref == entry.public_ref and
+              binding.raw["tool"] == "local-test-actor-v1" and binding.raw["alias"] != nil
+          end)
+        end)
       end)
 
     foreign_members? =
