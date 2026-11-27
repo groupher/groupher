@@ -52,6 +52,16 @@ test('a page cannot control a replacement Hub on the same port', async () => {
   await assert.rejects(guard.mutationHeaders(), /instance changed/)
 })
 
+test('a page rejects a replacement before its first identity query completes', async () => {
+  const page = { instanceId: 'instance-a', repoRoot: '/checkout/a' }
+  const guard = createHubIdentityGuard(
+    async () => Response.json({ instanceId: 'instance-b', repoRoot: '/checkout/b', apiVersion: 1 }),
+    () => page,
+  )
+  await assert.rejects(guard.initialize(), /instance changed/)
+  await assert.rejects(guard.mutationHeaders(), /instance changed/)
+})
+
 test('a legacy Hub without an instance identity remains read-only', async () => {
   const guard = createHubIdentityGuard(async () =>
     Response.json({ repoRoot: '/checkout/a', apiOrigin: 'http://127.0.0.1:4310' }),

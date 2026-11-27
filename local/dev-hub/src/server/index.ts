@@ -26,6 +26,7 @@ import { ServiceConfigError, ServiceConfigReader } from './config-reader.ts'
 import { verifyManagedDatabase } from './database-ready.ts'
 import { verifyStartingRun, readRegisteredRun } from './environment-registry.ts'
 import { GitMonitor, GitMonitorError } from './git-monitor.ts'
+import { embedPageIdentity } from './page-identity.ts'
 import {
   ISOLATED_CORE_SERVICE_IDS,
   isolatedServiceDefinitions,
@@ -383,8 +384,12 @@ app.get('/api/events', (context) => {
 
 if (!apiOnly) {
   app.use('/assets/*', serveStatic({ root: clientRoot }))
-  const indexHtml = await readFile(indexHtmlPath, 'utf8')
-  app.get('*', (context) => context.html(indexHtml))
+  const template = await readFile(indexHtmlPath, 'utf8')
+  const indexHtml = managedIdentity ? embedPageIdentity(template, managedIdentity) : template
+  app.get('*', (context) => {
+    context.header('Cache-Control', 'no-store')
+    return context.html(indexHtml)
+  })
 }
 
 if (managedIdentity) {

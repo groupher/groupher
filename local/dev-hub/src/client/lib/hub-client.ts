@@ -37,8 +37,35 @@ const readResponseError = async (response: Response, fallback: string): Promise<
 
 type THubIdentity = { instanceId: string; repoRoot: string } | null
 
-/** Bind a page to its first verified instance; a reused port must not retarget its writes. */
-export function createHubIdentityGuard(request: typeof fetch = (...args) => fetch(...args)) {
+function pageIdentity(): THubIdentity | undefined {
+  if (typeof document === 'undefined') return undefined
+  const element = document.getElementById('dev-hub-page-identity')
+  if (!element) {
+    const port = Number(window.location.port)
+    if (port >= 4312 && port <= 4339)
+      throw new Error('The Dev Hub page has no instance identity. Reload after updating the Hub.')
+    return undefined
+  }
+  try {
+    const parsed = JSON.parse(element.textContent || '') as Partial<Exclude<THubIdentity, null>>
+    if (
+      typeof parsed.instanceId === 'string' &&
+      parsed.instanceId &&
+      typeof parsed.repoRoot === 'string' &&
+      parsed.repoRoot
+    )
+      return { instanceId: parsed.instanceId, repoRoot: parsed.repoRoot }
+  } catch {
+    // Invalid document metadata is not a legacy identity.
+  }
+  throw new Error('The Dev Hub page has invalid instance identity.')
+}
+
+/** Bind a page to the instance that served it; a reused port must not retarget its writes. */
+export function createHubIdentityGuard(
+  request: typeof fetch = (...args) => fetch(...args),
+  readPageIdentity: () => THubIdentity | undefined = () => undefined,
+) {
   let initial: Promise<THubIdentity> | undefined
 
   const readIdentity = async (): Promise<THubIdentity> => {
@@ -64,7 +91,19 @@ export function createHubIdentityGuard(request: typeof fetch = (...args) => fetc
     return null
   }
 
-  const initialize = () => (initial ??= readIdentity())
+  const initialize = () =>
+    (initial ??= (async () => {
+      const expected = readPageIdentity()
+      const current = await readIdentity()
+      if (
+        expected !== undefined &&
+        (expected?.instanceId !== current?.instanceId || expected?.repoRoot !== current?.repoRoot)
+      )
+        throw new Error(
+          'The Dev Hub instance changed. Reload this page before controlling services.',
+        )
+      return current
+    })())
   const mutationHeaders = async (): Promise<Record<string, string>> => {
     const expected = await initialize()
     const current = await readIdentity()
@@ -78,7 +117,7 @@ export function createHubIdentityGuard(request: typeof fetch = (...args) => fetc
   return { initialize, mutationHeaders }
 }
 
-const identityGuard = createHubIdentityGuard()
+const identityGuard = createHubIdentityGuard((...args) => fetch(...args), pageIdentity)
 export const initializeHubIdentity = identityGuard.initialize
 const mutationHeaders = identityGuard.mutationHeaders
 
