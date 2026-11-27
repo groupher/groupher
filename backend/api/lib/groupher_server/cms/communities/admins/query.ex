@@ -167,6 +167,8 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
          where: a.user_id == ^user_id,
          select: %{
            member_id: a.id,
+           user_id: a.user_id,
+           community_id: c.id,
            community: c.slug,
            community_ref: c.ref,
            is_lord: a.is_lord,

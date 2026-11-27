@@ -157,11 +157,9 @@ defmodule GroupherServer.Seed.Cleanup.Run do
                 if member.is_lord do
                   remove_admin(member, user)
                 else
-                  community = Repo.get!(Community, member.community_id)
-
                   CMS.remove_community_admin(
-                    community.ref,
-                    member.id,
+                    member.community_ref,
+                    member.member_id,
                     member.revision,
                     user,
                     Ecto.UUID.generate()
@@ -283,7 +281,7 @@ defmodule GroupherServer.Seed.Cleanup.Run do
         do: ["global_grant_provenance_unknown" | blockers],
         else: blockers
 
-    admins = Repo.all(from(a in CommunityAdmin, where: a.user_id in ^ids))
+    admins = own_admin_memberships(users)
     data = %{bindings: bindings, communities: communities}
 
     blockers =
@@ -321,6 +319,15 @@ defmodule GroupherServer.Seed.Cleanup.Run do
       requests
     end)
     |> Enum.uniq_by(& &1.id)
+  end
+
+  defp own_admin_memberships(users) do
+    users
+    |> Map.values()
+    |> Enum.flat_map(fn user ->
+      {:ok, memberships} = CMS.list_own_community_admin_memberships(user)
+      memberships
+    end)
   end
 
   defp own_co_author_memberships(users) do
@@ -375,7 +382,8 @@ defmodule GroupherServer.Seed.Cleanup.Run do
         end),
       admins: length(data.admins),
       admins_to_remove: Enum.count(data.admins, &(not retained_lord?(&1, data))),
-      retained_lords: Enum.filter(data.admins, &retained_lord?(&1, data)) |> Enum.map(& &1.id),
+      retained_lords:
+        Enum.filter(data.admins, &retained_lord?(&1, data)) |> Enum.map(& &1.member_id),
       coauthors: length(data.coauthors),
       global_grants: length(data.globals) + data.legacy_grants,
       global_grants_to_restore: Enum.count(data.bindings, &global_active?/1),
@@ -465,27 +473,27 @@ defmodule GroupherServer.Seed.Cleanup.Run do
     |> Repo.update()
   end
 
-  defp retained_lord?(%CommunityAdmin{is_lord: false}, _data), do: false
+  defp retained_lord?(%{is_lord: false}, _data), do: false
 
   defp retained_lord?(member, data) do
     Enum.any?(data.bindings, fn binding ->
       owned = binding.raw["community_lords"] || %{}
       grants = binding.raw["lord_grants"] || %{}
-      grant = grants[Integer.to_string(member.id)]
+      grant = grants[Integer.to_string(member.member_id)]
 
       binding.user_id == member.user_id and
-        (owned[Integer.to_string(member.community_id)] == member.id or
+        (owned[Integer.to_string(member.community_id)] == member.member_id or
            (is_map(grant) and grant["created"] == false and
               grant["community_id"] == member.community_id and grant["user_id"] == member.user_id))
     end)
   end
 
-  defp unverified_lord?(%CommunityAdmin{is_lord: false}, _data), do: false
+  defp unverified_lord?(%{is_lord: false}, _data), do: false
 
   defp unverified_lord?(member, data) do
     not retained_lord?(member, data) and
       not Enum.any?(data.bindings, fn binding ->
-        grant = (binding.raw["lord_grants"] || %{})[Integer.to_string(member.id)]
+        grant = (binding.raw["lord_grants"] || %{})[Integer.to_string(member.member_id)]
 
         binding.user_id == member.user_id and is_map(grant) and grant["created"] == true and
           grant["community_id"] == member.community_id and grant["user_id"] == member.user_id
@@ -514,7 +522,7 @@ defmodule GroupherServer.Seed.Cleanup.Run do
 
       case Repo.one(
              from(a in CommunityAdmin,
-               where: a.id == ^member.id and a.user_id == ^user.id,
+               where: a.id == ^member.member_id and a.user_id == ^user.id,
                lock: "FOR UPDATE"
              )
            ) do
