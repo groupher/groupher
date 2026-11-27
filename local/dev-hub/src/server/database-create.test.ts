@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -10,6 +11,7 @@ import { createManagedDatabase } from './database-create.ts'
 import { dropManagedDatabase } from './database-drop.ts'
 import { inspectManagedDatabase } from './database-inspect.ts'
 import { migrateManagedDatabase } from './database-migrate.ts'
+import { openReadOnlyDatabase } from './database-read-only.ts'
 import {
   databaseCommentStatement,
   databaseTargetForEnvironment,
@@ -354,6 +356,7 @@ test(
     const secondary = path.join(temp, 'secondary')
     const registry = path.join(temp, 'registry')
     let target: ReturnType<typeof databaseTargetForEnvironment> | undefined
+    const orphanRoles: string[] = []
     const psql = (sql: string) =>
       execFileSync(
         'psql',
@@ -384,6 +387,65 @@ test(
       target = databaseTargetForEnvironment(registered, 'test')
       await createManagedDatabase(secondary, 'test', registry, { PATH: process.env.PATH })
       await createManagedDatabase(secondary, 'test', registry, { PATH: process.env.PATH })
+      await mkdir(path.join(secondary, 'backend/api/priv/repo/migrations'), { recursive: true })
+      execFileSync(
+        'psql',
+        [
+          '-X',
+          '-q',
+          '-v',
+          'ON_ERROR_STOP=1',
+          '-h',
+          '127.0.0.1',
+          '-U',
+          'postgres',
+          '-d',
+          target.database,
+          '-c',
+          'CREATE TABLE public.reader_probe (id integer); INSERT INTO public.reader_probe VALUES (1)',
+        ],
+        { env: { ...process.env, PGPASSWORD: 'postgres' } },
+      )
+      const attempts = await Promise.allSettled([
+        openReadOnlyDatabase(secondary, 'test', registry, { PATH: process.env.PATH }),
+        openReadOnlyDatabase(secondary, 'test', registry, { PATH: process.env.PATH }),
+      ])
+      const readers = attempts.flatMap((result) =>
+        result.status === 'fulfilled' ? [result.value] : [],
+      )
+      try {
+        const failure = attempts.find((result) => result.status === 'rejected')
+        if (failure?.status === 'rejected') throw failure.reason
+        assert.deepEqual(
+          await Promise.all(
+            readers.map((reader) => reader.query('SELECT id FROM public.reader_probe')),
+          ),
+          ['1', '1'],
+        )
+        await assert.rejects(
+          readers[0].query(
+            'WITH x AS (DELETE FROM public.reader_probe RETURNING id) SELECT * FROM x',
+          ),
+          /read-only/,
+        )
+        await assert.rejects(
+          readers[0].query("SELECT set_config('role','postgres',true)"),
+          /permission denied/,
+        )
+        await assert.rejects(
+          readers[0].query('SELECT 1; DELETE FROM public.reader_probe'),
+          /one SELECT/,
+        )
+        await assert.rejects(
+          dropManagedDatabase(secondary, 'test', registry, { PATH: process.env.PATH }),
+          /session is still active/,
+        )
+        assert.equal(await readers[0].query('SELECT count(*) FROM public.reader_probe'), '1')
+      } finally {
+        const closures = await Promise.allSettled(readers.map((reader) => reader.close()))
+        const failure = closures.find((result) => result.status === 'rejected')
+        if (failure?.status === 'rejected') throw failure.reason
+      }
       const guard = path.resolve('../../backend/api/config/linked_checkout_guard.exs')
       const check = (extraEnv: NodeJS.ProcessEnv = {}) =>
         execFileSync(
@@ -425,6 +487,68 @@ test(
         `SELECT shobj_description(oid, 'pg_database') FROM pg_database WHERE datname = '${target.database}'`,
       )
       verifyDatabaseOwnership(target, { ...target, comment })
+      const createOrphan = (grantOnTarget = false) => {
+        const role = `groupher_inspect_${randomBytes(12).toString('hex')}`
+        orphanRoles.push(role)
+        const marker = JSON.stringify({
+          namespace: 'groupher-devhub-reader',
+          worktreeId: target!.worktreeId,
+          database: target!.database,
+          ownerPid: 2147483647,
+        })
+        psql(
+          `CREATE ROLE "${role}" LOGIN VALID UNTIL '2100-01-01'; COMMENT ON ROLE "${role}" IS '${marker}'`,
+        )
+        if (grantOnTarget)
+          execFileSync(
+            'psql',
+            [
+              '-X',
+              '-q',
+              '-v',
+              'ON_ERROR_STOP=1',
+              '-h',
+              '127.0.0.1',
+              '-U',
+              'postgres',
+              '-d',
+              target!.database,
+              '-c',
+              `GRANT USAGE ON SCHEMA public TO "${role}"; GRANT SELECT ON public.reader_probe TO "${role}"`,
+            ],
+            { env: { ...process.env, PGPASSWORD: 'postgres' } },
+          )
+        return role
+      }
+      const orphan = createOrphan(true)
+      const targetSql = (sql: string) =>
+        execFileSync(
+          'psql',
+          [
+            '-X',
+            '-qAt',
+            '-v',
+            'ON_ERROR_STOP=1',
+            '-h',
+            '127.0.0.1',
+            '-U',
+            'postgres',
+            '-d',
+            target!.database,
+            '-c',
+            sql,
+          ],
+          { env: { ...process.env, PGPASSWORD: 'postgres' }, encoding: 'utf8' },
+        ).trim()
+      targetSql(
+        `CREATE TABLE public.reader_owned_probe (id integer); ALTER TABLE public.reader_owned_probe OWNER TO "${orphan}"`,
+      )
+      await assert.rejects(
+        dropManagedDatabase(secondary, 'test', registry, { PATH: process.env.PATH }),
+        /cannot be dropped/,
+      )
+      assert.equal(targetSql("SELECT to_regclass('public.reader_owned_probe') IS NOT NULL"), 't')
+      targetSql('ALTER TABLE public.reader_owned_probe OWNER TO postgres')
       const dropped = await dropManagedDatabase(
         secondary,
         'test',
@@ -433,6 +557,8 @@ test(
         path.join(temp, 'reports'),
       )
       assert.equal(dropped.alreadyDropped, false)
+      assert.equal(psql(`SELECT count(*) FROM pg_roles WHERE rolname = '${orphan}'`), '0')
+      const orphanAfterDrop = createOrphan()
       assert.equal(
         (
           await dropManagedDatabase(
@@ -445,6 +571,7 @@ test(
         ).alreadyDropped,
         true,
       )
+      assert.equal(psql(`SELECT count(*) FROM pg_roles WHERE rolname = '${orphanAfterDrop}'`), '0')
     } finally {
       if (target) {
         const comment = psql(
@@ -455,6 +582,7 @@ test(
           psql(`DROP DATABASE "${target.database}"`)
         }
       }
+      for (const role of orphanRoles) psql(`DROP ROLE IF EXISTS "${role}"`)
       await rm(temp, { recursive: true, force: true })
     }
   },

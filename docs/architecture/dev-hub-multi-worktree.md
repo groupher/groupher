@@ -68,7 +68,11 @@ Hub 是 worktree 级的常驻进程，由 `pnpm devhub` 管理。终端、CLI �
 
 拟扩展 `status/doctor` 的文本及 JSON 输出，包含真实路径、HEAD、instanceId、服务和产品 URL、dev/test 库、已应用及待执行迁移、阻塞原因。所有日常 CLI 入口从调用目录选环境；拟提供 `pnpm devhub db status` 与 `pnpm devhub db inspect`，后者打开经核验的只读数据库会话，默认 dev，可显式选 test。脱敏输出足以定位目标，无需复制 DSN 或自行拼端口。
 
-当前 `db status` 和 `db inspect` 均返回经归属核验的目标库、已应用版本、当前 checkout 的待执行迁移和库中存在但本 checkout 未提供的版本；可交互的只读数据库会话尚未实现。
+当前 `db status` 返回经归属核验的目标库、已应用版本、当前 checkout 的待执行迁移和库中存在但本 checkout 未提供的版本。终端执行 `pnpm devhub db inspect [--target dev|test]` 会打开只读查询会话；非交互脚本可使用 `--sql 'SELECT …'`，或用 `--interactive` 从标准输入逐行查询。非 TTY 且不带查询参数时，`db inspect` 保持返回迁移摘要。
+
+只读查询先核验本机目标和归属，使用临时 PostgreSQL 登录角色，仅授予目标库现有 schema 的读取权限，并在只读事务中执行。每行只接受一条 SELECT、WITH、SHOW、EXPLAIN 或 VALUES；可用末尾分号，语句内部的分号和 psql 元命令不支持。会话最多使用一小时，正常退出或 Ctrl+C 会撤销授权并删除角色；异常退出的角色在过期后可由后续会话回收，也会在受管删库前核验并回收。活跃会话会阻止删库。SQL 中主动调用的数据库函数可能产生事务之外的外部效果，该入口不作为执行不可信 SQL 的沙箱。
+
+建立会话时短暂使用现有 `database-create.lock`；如进程在持锁期间被强制终止，该锁可能需要人工核验后恢复。只读入口会在锁目录写入操作和进程信息；缺少信息或归属不明时不要自动删除锁。
 
 当前 `doctor` 已报告 checkout 真实路径和 HEAD、登记的实例和端口、已验证实例报告的服务状态与产品 URL、可核验数据库的迁移摘要、Portless 诊断及分项阻塞原因；它不展示私有登记凭据。服务状态来自 Hub 快照，不代表独立完成了端到端请求验证。主环境测试库的只读状态查询按已登记的主 checkout、标准本机库名及实际连接身份核验；已有 Dev Hub 标记时还须核对本 checkout 的认领记录及原备注。该查询不会认领库；需要显式认领时使用 `pnpm devhub db adopt-primary --target test`，可用同一命令加 `--revert` 恢复认领前备注。普通主环境 `mix test` 仍沿用既有目标选择，标记核验用于受管数据库命令，不改变普通测试的启动前提。
 

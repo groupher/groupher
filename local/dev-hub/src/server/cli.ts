@@ -361,15 +361,25 @@ export async function runHubCommand(
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    const result = await runHubCommand(process.argv.slice(2))
-    console.log(typeof result === 'string' ? result : JSON.stringify(result, null, 2))
+    const args = process.argv.slice(2)
     if (
-      result &&
-      typeof result === 'object' &&
-      'status' in result &&
-      ['partial', 'blocked'].includes(String(result.status))
-    )
-      process.exitCode = 1
+      args[0] === 'db' &&
+      args[1] === 'inspect' &&
+      (process.stdin.isTTY || args.includes('--interactive') || args.includes('--sql'))
+    ) {
+      const { runReadOnlyDatabaseCli } = await import('./database-read-only-cli.ts')
+      await runReadOnlyDatabaseCli(REPO_ROOT, args.slice(2))
+    } else {
+      const result = await runHubCommand(args)
+      console.log(typeof result === 'string' ? result : JSON.stringify(result, null, 2))
+      if (
+        result &&
+        typeof result === 'object' &&
+        'status' in result &&
+        ['partial', 'blocked'].includes(String(result.status))
+      )
+        process.exitCode = 1
+    }
   } catch (error) {
     if (process.argv.includes('--json')) {
       const runIndex = process.argv.indexOf('--run')

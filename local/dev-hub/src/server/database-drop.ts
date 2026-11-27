@@ -9,6 +9,7 @@ import {
   type TDatabaseTargetFile,
 } from './database-ownership.ts'
 import { localAdminQuery } from './database-postgres.ts'
+import { cleanTargetReaders } from './database-read-only.ts'
 import { readRegisteredState } from './environment-registry.ts'
 import { registryRoot, userDataRoot } from './storage-paths.ts'
 import { resolveCheckout } from './worktree-identity.ts'
@@ -58,7 +59,10 @@ export async function dropManagedDatabase(
     const result = await admin(
       `SELECT json_build_object('database', datname, 'comment', shobj_description(oid, 'pg_database'))::text FROM pg_database WHERE datname = '${target.database}'`,
     )
-    if (!result) return { target, alreadyDropped: true }
+    if (!result) {
+      if (!execute) await cleanTargetReaders(target, environment, true, false)
+      return { target, alreadyDropped: true }
+    }
     const actual = JSON.parse(result) as { database: string; comment: string | null }
     verifyDatabaseOwnership(target, { ...actual, hostname: target.hostname, port: target.port })
     const exists = await database("SELECT to_regclass('account.oauth_providers') IS NOT NULL")
@@ -92,6 +96,7 @@ export async function dropManagedDatabase(
       )
     )
       throw new Error('Fixture cleanup is incomplete; preserve the database and run cleanup first.')
+    if (!execute) await cleanTargetReaders(target, environment, true)
     const reports = reportDirectory || path.join(userDataRoot(identity.root), 'cleanup-reports')
     await mkdir(reports, { recursive: true, mode: 0o700 })
     const reportPath = path.join(reports, `${target.database}-${randomUUID()}.json`)

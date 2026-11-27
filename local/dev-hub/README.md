@@ -38,6 +38,10 @@ pnpm devhub url dash
 依赖配置取自当前 checkout，运行中的 Hub 可能尚未加载本次代码变更。
 `--json` 供脚本使用；诊断不会启动服务或修改数据库。
 
+需要查库时，使用 `pnpm devhub db inspect --target dev` 进入只读查询，或用
+`pnpm devhub db inspect --target test --sql 'SELECT …'` 执行单条查询。目标核验、
+临时角色回收及 SQL 限制见[多 worktree 数据库方案](../../docs/architecture/dev-hub-multi-worktree.md)。
+
 根 `pnpm dev:*`、各应用的公开 `dev` 脚本和 Make public target 都转交 Dev Hub；Hub
 内部通过 `:managed`/`.managed` 启动具体工具。不要绕过 Hub 直接运行 Vite、Phoenix、
 `cf dev`、Wrangler 或临时端口命令。需要新增开发 listener 时，先在

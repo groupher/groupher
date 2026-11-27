@@ -29,6 +29,23 @@ const NAME = /^[a-z][a-z0-9_]{0,62}$/
 const RUN = /^[a-z][a-z0-9-]{0,39}$/
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1'])
 
+/** Reject deployment environments and ambiguous connection URLs before managed database operations. */
+export function assertManagedDatabaseEnvironment(environment: NodeJS.ProcessEnv): void {
+  if (
+    environment.CI === 'true' ||
+    ['NODE_ENV', 'MIX_ENV', 'ENVIRONMENT', 'CLOUDFLARE_ENV'].some(
+      (key) =>
+        !['', 'dev', 'development', 'local', 'test'].includes(
+          environment[key]?.trim().toLowerCase() || '',
+        ),
+    )
+  ) {
+    throw new Error('Managed database operations require a local development environment.')
+  }
+  if (environment.DATABASE_URL)
+    throw new Error('DATABASE_URL conflicts with a managed local target.')
+}
+
 /** Allocate names from a registered identity, independently of PostgreSQL's identifier rules. */
 export function databaseTargetForEnvironment(
   environment: { role: 'primary' | 'secondary'; slug: string; worktreeId: string },
@@ -77,17 +94,7 @@ export function resolveDatabaseTarget(
     throw new Error('Database target is not registered.')
   const target: TDatabaseTarget = { ...selection, purpose, worktreeId }
   validateDatabaseTarget(target)
-  if (
-    environment.CI === 'true' ||
-    ['NODE_ENV', 'MIX_ENV', 'ENVIRONMENT', 'CLOUDFLARE_ENV'].some(
-      (key) =>
-        !['', 'dev', 'development', 'local', 'test'].includes(
-          environment[key]?.trim().toLowerCase() || '',
-        ),
-    )
-  ) {
-    throw new Error('Managed database operations require a local development environment.')
-  }
+  assertManagedDatabaseEnvironment(environment)
   const names =
     purpose === 'dev'
       ? ['DB_NAME', 'DB_HOST', 'DB_PORT']
@@ -97,8 +104,6 @@ export function resolveDatabaseTarget(
     if (environment[names[i]] && environment[names[i]] !== expected[i])
       throw new Error(`Conflicting ${names[i]} override.`)
   }
-  if (environment.DATABASE_URL)
-    throw new Error('DATABASE_URL conflicts with a managed local target.')
   return target
 }
 

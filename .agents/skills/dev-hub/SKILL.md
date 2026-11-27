@@ -35,6 +35,13 @@ Keep the current branch/worktree as the default under [AGENTS.md](../../../AGENT
 
 ## Operate Through Hub
 
+For local database inspection, use `pnpm devhub db inspect --target dev --sql 'SELECT …'`
+for a single query, or `--interactive` for one read statement per line. The target is
+verified against the current checkout; the temporary database role is read-only and
+normal exit removes it. Use `--target test` for the test database. This is not a
+sandbox for untrusted SQL or database functions with external side effects. See the
+[multi-worktree database contract](../../../docs/architecture/dev-hub-multi-worktree.md).
+
 ```bash
 pnpm devhub start <service-id>
 pnpm devhub restart <service-id>

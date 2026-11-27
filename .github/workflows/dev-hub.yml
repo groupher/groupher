@@ -29,6 +29,18 @@ jobs:
   validate:
     name: Validate Dev Hub
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +65,11 @@ jobs:
 
       - name: Test Dev Hub
         run: pnpm --filter @groupher/local-dev-hub run test
+
+      - name: Test isolated database operations
+        env:
+          GROUPHER_DB_PROVISION_INTEGRATION: '1'
+        run: pnpm --filter @groupher/local-dev-hub exec node --import tsx --test src/server/database-create.test.ts src/server/database-read-only.test.ts
 
       - name: Type-check Dev Hub
         run: pnpm --filter @groupher/local-dev-hub run type-check
