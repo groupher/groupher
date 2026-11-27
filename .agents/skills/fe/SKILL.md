@@ -15,6 +15,8 @@ Start at the affected host route. Use the [directory guide](../../../docs/rules/
 
 Review the changed component together with its Salon and immediate consumers. Apply the [component conventions](../../../docs/rules/fe.md#组件拆分), [style rules](../../../docs/rules/fe.md#class-书写), and [constant and spec ownership](../../../docs/rules/fe.md#constant-与-spec). Check accessible names, keyboard operation, visible focus and reduced motion when changing interactions.
 
+For motion, touch behavior, or layouts that break with real content, consult the relevant section of [UI interaction checks](references/ui-interaction.md).
+
 ## Routing and Semantics
 
 - Ordinary navigation is a link. Use a button for state changes, mutation controls, or flows that must intercept navigation.
