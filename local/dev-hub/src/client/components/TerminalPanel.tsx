@@ -40,7 +40,7 @@ export function TerminalPanel({ service, onClose }: TProps) {
         <div className='terminal-panel-actions'>
           <span className='terminal-panel-hint'>
             <Keyboard aria-hidden='true' />
-            Ctrl+C in make dev stops all Hub-managed services
+            pnpm devhub down stops this environment
           </span>
           {openUrl && !disconnected && ['running', 'external'].includes(service.status) ? (
             <a

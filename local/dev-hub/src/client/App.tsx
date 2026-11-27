@@ -175,7 +175,7 @@ export function App() {
         <footer className='site-footer'>
           <span>Local only · 127.0.0.1</span>
           <span>
-            <kbd>Ctrl+C</kbd> stops every managed process
+            <kbd>pnpm devhub down</kbd> stops this environment
           </span>
         </footer>
 
