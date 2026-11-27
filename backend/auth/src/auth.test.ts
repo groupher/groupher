@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 
-import { AUTH_ERROR } from '@groupher/contracts/auth'
+import { AUTH_ERROR, getAuthCookieNames } from '@groupher/contracts/auth'
 import { exportJWK, generateKeyPair } from 'jose'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -14,8 +14,10 @@ import {
   createAuthRequestHandler,
   normalizePhoenixErrorCode,
   PhoenixBrowserSessionError,
+  OauthRegistrationRequired,
   refreshBrowserSession,
   toCanonicalAuthRequest,
+  useSecureCookies,
 } from './auth'
 
 const browserSession = {
@@ -93,6 +95,49 @@ describe('Auth core integration', () => {
     expect(normalizePhoenixErrorCode(code)).toBeUndefined()
   })
 
+  it('reads the unlink mutation result returned by Phoenix', async () => {
+    vi.resetModules()
+    const secret = 'auth-test-secret'
+    const { privateKey } = await generateKeyPair('RS256', { extractable: true })
+    const signingJwk = { ...(await exportJWK(privateKey)), alg: 'RS256', kid: 'auth-test-key' }
+    vi.stubEnv('SERVICE_AUTH_CLIENT_ID', 'auth-test')
+    vi.stubEnv('SERVICE_AUTH_CLIENT_SECRET', secret)
+    vi.stubEnv('SERVICE_AUTH_ISSUER', 'https://auth.test')
+    vi.stubEnv(
+      'SERVICE_AUTH_RESOURCES_JSON',
+      JSON.stringify({ 'https://api.groupher.com/auth': 'phoenix:auth-api' }),
+    )
+    vi.stubEnv(
+      'SERVICE_AUTH_CLIENTS_JSON',
+      JSON.stringify([
+        {
+          allowedAudiences: ['phoenix:auth-api'],
+          allowedScopes: ['auth:oauth:unlink'],
+          clientId: 'auth-test',
+          clientRef: 'auth-test-client',
+          credentialHashes: [`sha256:${createHash('sha256').update(secret).digest('hex')}`],
+          serviceName: 'auth',
+          status: 'active',
+        },
+      ]),
+    )
+    vi.stubEnv('SERVICE_AUTH_SIGNING_JWK', JSON.stringify(signingJwk))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          data: {
+            unlinkOauthIdentity: { entries: [{ provider: 'github', publicRef: 'remaining' }] },
+          },
+        }),
+      ),
+    )
+    const { unlinkOauthIdentity } = await import('./auth')
+    await expect(unlinkOauthIdentity('user-token', 'removed')).resolves.toEqual([
+      { provider: 'github', publicRef: 'remaining' },
+    ])
+  })
+
   it('normalizes internal Hono requests to the canonical OAuth origin', () => {
     const request = toCanonicalAuthRequest(
       new Request('http://127.0.0.1:3004/api/auth/callback/github?code=abc'),
@@ -141,6 +186,44 @@ describe('Auth core integration', () => {
     expect(buildPhoenixTokenCookie('phoenix-token')).toContain('HttpOnly')
   })
 
+  it('passes the verified Linux DO identity to Phoenix', async () => {
+    const exchangeIdentity = vi.fn(async () => browserSession)
+    const jwt = buildAuthConfig({ signinOauth: exchangeIdentity }).callbacks?.jwt
+    if (!jwt) throw new Error('JWT callback is required.')
+
+    await jwt({
+      token: {},
+      account: { provider: 'linuxdo', providerAccountId: '123', type: 'oauth' },
+      profile: { id: '123', username: 'alice', name: 'Alice' },
+      trigger: 'signIn',
+      user: { id: '123' },
+    })
+
+    expect(exchangeIdentity).toHaveBeenCalledWith({
+      provider: 'linuxdo',
+      providerId: '123',
+      login: 'alice',
+      nickname: 'Alice',
+      avatar: undefined,
+    })
+  })
+
+  it('rejects unknown providers instead of interpreting them as GitHub', async () => {
+    const exchangeIdentity = vi.fn(async () => browserSession)
+    const jwt = buildAuthConfig({ signinOauth: exchangeIdentity }).callbacks?.jwt
+    if (!jwt) throw new Error('JWT callback is required.')
+    await expect(
+      jwt({
+        token: {},
+        account: { provider: 'unknown', providerAccountId: '123', type: 'oauth' },
+        profile: { id: '123', login: 'alice' },
+        trigger: 'signIn',
+        user: { id: '123' },
+      }),
+    ).rejects.toThrow('Unsupported OAuth provider')
+    expect(exchangeIdentity).not.toHaveBeenCalled()
+  })
+
   it('serializes a readable signed-in hint cookie without exposing the token', () => {
     const cookie = buildSignedInHintCookie()
 
@@ -187,6 +270,44 @@ describe('Auth core integration', () => {
     expect(cookie).toContain('__Host-groupher-auth.session-token=auth-session')
     expect(cookie).toContain('groupher-auth.token=phoenix-token')
     expect(cookie).toContain('groupher-auth.signed-in=1')
+  })
+
+  it('redirects a verified identity needing a name without clearing the existing session', async () => {
+    const handler = createAuthRequestHandler({
+      authCore: async (_request, config) => {
+        try {
+          await config.callbacks!.jwt!({
+            token: {},
+            account: { provider: 'github', providerAccountId: '42', type: 'oauth' },
+            profile: { id: '42', login: 'alice' },
+            trigger: 'signIn',
+            user: { id: '42' },
+          })
+        } catch {
+          return new Response(null, {
+            status: 302,
+            headers: { 'set-cookie': '__Host-groupher-auth.session-token=; Max-Age=0' },
+          })
+        }
+        throw new Error('Expected registration to interrupt sign-in')
+      },
+      signinOauth: async () => {
+        throw new OauthRegistrationRequired('flow-ref', 'alice')
+      },
+    })
+    const response = await handler(
+      new Request('https://auth.groupher.localhost/api/auth/callback/github', {
+        headers: {
+          cookie: `${getAuthCookieNames(useSecureCookies).callbackUrl}=${encodeURIComponent('https://community.groupher.localhost/home/post?sort=latest#comments')}`,
+        },
+      }),
+    )
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe(
+      'https://community.groupher.localhost/home/post?sort=latest&oauthRegistration=required#comments',
+    )
+    expect(response.headers.get('set-cookie')).toContain('groupher-auth.registration=flow-ref')
+    expect(response.headers.get('set-cookie')).not.toContain('session-token')
   })
 
   it('does not create a half-login state when Auth.js fails to issue a Session', async () => {

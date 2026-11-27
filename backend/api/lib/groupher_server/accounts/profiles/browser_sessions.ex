@@ -48,11 +48,14 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
         last_seen_at: now
       })
 
-    with {:ok, session} <- %BrowserSession{} |> BrowserSession.changeset(attrs) |> Repo.insert(),
-         {:ok, token, _claims} <-
-           BrowserAccess.encode(user, session.ref, absolute_expires_at, now) do
-      {:ok, browser_signin_result(token, session)}
-    end
+    Repo.transact_result(fn ->
+      with {:ok, session} <-
+             %BrowserSession{} |> BrowserSession.changeset(attrs) |> Repo.insert(log: false),
+           {:ok, token, _claims} <-
+             BrowserAccess.encode(user, session.ref, absolute_expires_at, now) do
+        {:ok, browser_signin_result(token, session)}
+      end
+    end)
   end
 
   @doc """
@@ -72,7 +75,8 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
          DateTime.diff(deadline, now) <= @absolute_ttl_seconds do
       Repo.transact_result(fn ->
         with {:ok, result} <- create(user, metadata),
-             session <- Repo.get_by!(BrowserSession, ref: result.browser_session_ref),
+             session <-
+               Repo.get_by!(BrowserSession, [ref: result.browser_session_ref], log: false),
              {:ok, _} <-
                session
                |> Ecto.Changeset.change(absolute_expires_at: DateTime.truncate(deadline, :second))
@@ -110,6 +114,36 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
            |> Ecto.Changeset.change(last_refreshed_at: now, last_seen_at: now)
            |> Repo.update() do
       {:ok, browser_signin_result(token, session)}
+    end
+  end
+
+  @doc """
+  Checks the exact active session under a row lock and requires authentication within ten minutes.
+
+  ## Examples
+
+      BrowserSessions.require_recent(session_ref, user.id)
+  """
+  def require_recent(ref, user_id) when is_binary(ref) do
+    now = DateTime.utc_now()
+
+    session =
+      BrowserSession
+      |> where([session], session.ref == ^ref)
+      |> lock("FOR UPDATE")
+      |> Repo.one(log: false)
+
+    case session do
+      %BrowserSession{status: :active, user_id: ^user_id} = session ->
+        if DateTime.compare(session.absolute_expires_at, now) == :gt and
+             DateTime.diff(now, session.inserted_at, :second) in 0..599 do
+          {:ok, session}
+        else
+          {:error, :recent_authentication_required}
+        end
+
+      _ ->
+        {:error, :recent_authentication_required}
     end
   end
 
@@ -187,7 +221,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
         session.user_id == ^user_id and session.ref == ^ref and session.status == :active and
           session.absolute_expires_at > ^now
     )
-    |> Repo.exists?()
+    |> Repo.exists?(log: false)
   end
 
   def active_for_user?(_user_id, _ref), do: false
@@ -268,7 +302,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
     BrowserSession
     |> where([session], session.ref == ^ref)
     |> preload(:user)
-    |> Repo.one()
+    |> Repo.one(log: false)
     |> case do
       %BrowserSession{status: :revoked} ->
         {:error, ErrorCat.session_revoked()}
@@ -289,7 +323,9 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
     from(session in BrowserSession, where: session.ref == ^ref and session.status == :active)
-    |> Repo.update_all(set: [status: :revoked, revoked_at: now, revoked_reason: reason])
+    |> Repo.update_all([set: [status: :revoked, revoked_at: now, revoked_reason: reason]],
+      log: false
+    )
     |> case do
       {1, _} -> {:ok, :revoked}
       _ -> {:ok, :already_revoked}

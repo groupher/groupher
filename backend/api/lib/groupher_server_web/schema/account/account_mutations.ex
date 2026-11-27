@@ -47,12 +47,24 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
     end
 
     @desc "Sign in through the Auth service with an OAuth identity and return browser session credentials."
-    field :signin_oauth, :browser_signin_result do
+    field :signin_oauth, :oauth_signin_result do
       arg(:provider, non_null(:oauth_provider_input))
       arg(:browser_session, :browser_session_metadata_input)
+      arg(:flow_ref, non_null(:string))
+      arg(:return_to, :string)
 
       middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:signin")
       resolve(&R.Accounts.Sessions.signin_oauth/3)
+    end
+
+    @desc "Complete an OAuth registration with a chosen login."
+    field :complete_oauth_registration, :browser_signin_result do
+      arg(:flow_ref, non_null(:string))
+      arg(:login, non_null(:string))
+      arg(:browser_session, :browser_session_metadata_input)
+
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:oauth:register")
+      resolve(&R.Accounts.Sessions.complete_oauth_registration/3)
     end
 
     @desc "Issue a fresh access token for an active browser session through the Auth service."
@@ -88,16 +100,48 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       resolve(&R.Accounts.Sessions.revoke_other_browser_sessions/3)
     end
 
-    @desc "Link a verified provider identity to the signed-in user and return the updated bindings."
-    field :link_oauth_identity, non_null(:linked_oauth_accounts) do
+    field :oauth_link_start, :done do
+      arg(:ref, non_null(:string))
+      arg(:browser_session_ref, non_null(:string))
+      arg(:provider, non_null(:string))
+      arg(:code_verifier, non_null(:string))
+      arg(:nonce, non_null(:string))
+      arg(:return_to, non_null(:string))
+      middleware(M.DelegatedScope, audience: "phoenix:auth-api", scope: "auth:oauth:flow")
+      resolve(&R.Accounts.Sessions.oauth_link_start/3)
+    end
+
+    field :oauth_link_claim, :oauth_link_claim do
+      arg(:ref, non_null(:string))
+      arg(:browser_session_ref, non_null(:string))
+      arg(:provider, non_null(:string))
+      arg(:nonce, non_null(:string))
+      middleware(M.DelegatedScope, audience: "phoenix:auth-api", scope: "auth:oauth:flow")
+      resolve(&R.Accounts.Sessions.oauth_link_claim/3)
+    end
+
+    field :oauth_link_verified, :oauth_link_result do
+      arg(:ref, non_null(:string))
+      arg(:browser_session_ref, non_null(:string))
       arg(:identity, non_null(:verified_oauth_identity_input))
+      middleware(M.DelegatedScope, audience: "phoenix:auth-api", scope: "auth:oauth:flow")
+      resolve(&R.Accounts.Sessions.oauth_link_verified/3)
+    end
 
-      middleware(M.DelegatedScope,
-        audience: "phoenix:auth-api",
-        scope: "auth:oauth:link"
-      )
+    field :oauth_link_cancel, :done do
+      arg(:ref, non_null(:string))
+      arg(:browser_session_ref, non_null(:string))
+      middleware(M.DelegatedScope, audience: "phoenix:auth-api", scope: "auth:oauth:flow")
+      resolve(&R.Accounts.Sessions.oauth_link_cancel/3)
+    end
 
-      resolve(&R.Accounts.Sessions.link_oauth_identity/3)
+    field :oauth_link_confirm, :oauth_link_result do
+      arg(:ref, non_null(:string))
+      arg(:browser_session_ref, non_null(:string))
+      arg(:provider, non_null(:string))
+      arg(:provider_id, non_null(:string))
+      middleware(M.DelegatedScope, audience: "phoenix:auth-api", scope: "auth:oauth:flow")
+      resolve(&R.Accounts.Sessions.oauth_link_confirm/3)
     end
 
     @desc "Remove the specified OAuth binding and return the remaining bindings."

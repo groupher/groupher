@@ -1,6 +1,8 @@
 # OAuth 帐户链接和取消链接
 
-> 状态：设计方案；本文件不暗示任何实施。
+> 状态：本地实现与验收进行中。Phoenix 管理短期流程、近期认证与绑定事务，Auth 处理平台授权和换码。GitHub 使用独立 Link 回调，Linux DO 共用登录回调；具体进度和未完成验收以[多平台 OAuth 方案](./multi-provider-oauth-plan.md)为准。 新增平台和接入收敛以[多平台 OAuth V2](./multi-provider-oauth-v2.md)为后续实施依据。
+>
+> 下方历史设计与阶段记录保留原讨论。具体接口和当前实现以[多平台 OAuth 方案](./multi-provider-oauth-plan.md)及生成的 GraphQL schema 为准。
 >
 > 本文档涵盖链接和取消链接外部 OAuth 身份
 > 已通过身份验证的 Groupher 用户。初始登录和 Browser Session
@@ -9,9 +11,7 @@
 
 ## 目标
 
-Groupher用户需要管理多个外部登录身份而无需
-创建重复的 Groupher 用户，允许外部身份移动
-用户之间，或者让浏览器提供的提供商数据成为身份证明。
+Groupher 用户可以管理多个外部登录身份，无需创建重复账号。外部身份不能在站内用户之间自动转移；平台身份必须由 Auth 验证，不能直接信任浏览器提供的数据。
 
 目标合约必须明确回答五个问题：
 
@@ -138,7 +138,7 @@ Phoenix 现在仅公开 Auth 范围的账户管理合约：
 
 ```graphql
 linkedOauthAccounts: LinkedOauthAccounts!
-linkOauthIdentity(identity: VerifiedOauthIdentityInput!): LinkedOauthAccounts!
+oauthLinkStart / oauthLinkClaim / oauthLinkVerified / oauthLinkConfirm / oauthLinkCancel
 unlinkOauthIdentity(publicRef: ID!): LinkedOauthAccounts!
 ```
 
@@ -146,13 +146,11 @@ unlinkOauthIdentity(publicRef: ID!): LinkedOauthAccounts!
 
 ```text
 audience phoenix:auth-api
-scope    auth:oauth:read | auth:oauth:link | auth:oauth:unlink
+scope    auth:oauth:read | auth:oauth:flow | auth:oauth:unlink
 delegated current user
 ```
 
-Auth 是唯一的预期呼叫者。剩下的不完整部分是
-提供者授权编排，在之前获取经过验证的身份
-呼叫`linkOauthIdentity`。
+Auth 是唯一的预期调用者。Auth 完成平台授权换码后保存待确认身份，Phoenix 在用户确认时重新检查并写入绑定。
 
 ## 目前的问题
 
@@ -168,7 +166,7 @@ Phoenix直接用于帐户链接或取消链接。
 ```text
 service:auth
 audience phoenix:auth-api
-scope    auth:oauth:link | auth:oauth:unlink | auth:oauth:read
+scope    auth:oauth:flow | auth:oauth:unlink | auth:oauth:read
 ```
 
 ### 2.浏览器可以描述身份但无法证明它
@@ -517,7 +515,7 @@ Phoenix身份交换：
 
 ```text
 no valid link intent -> signinOauth
-valid link intent    -> linkOauthIdentity for current delegated user
+valid link intent    -> verified identity -> user confirmation -> transactional link
 ```
 
 格式错误、过期、已消耗、提供者不匹配或 Session 不匹配
@@ -710,7 +708,7 @@ audience phoenix:auth-api
 
 ```text
 auth:oauth:read
-auth:oauth:link
+auth:oauth:flow
 auth:oauth:unlink
 ```
 
@@ -1177,6 +1175,8 @@ Auth通过`AUTH_OAUTH_RATE_LIMITER`将独立逻辑桶应用到：
 - 添加规范的链接帐户预测和机器可读错误。
 
 ### 第 3 阶段：添加 Auth 编排
+
+> 历史阶段记录：下述 Durable Object 和 `auth:oauth:link` 为当时设计，当前流程使用 Phoenix `oauth_flows` 和 `auth:oauth:flow`，以文首状态说明及 V2 为准。
 
 - 帐户列表/链接/取消链接 HTTP 端点在规范 Auth 中实现。
 - 短暂的、一次性的链接意图保存在持久对象中，并且

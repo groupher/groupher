@@ -17,6 +17,25 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
   import GroupherServerWeb.Schema.Helper.Queries
 
   object :account_queries do
+    field :oauth_link_summary, :oauth_link_summary do
+      arg(:ref, non_null(:string))
+      arg(:browser_session_ref, non_null(:string))
+      middleware(M.DelegatedScope, audience: "phoenix:auth-api", scope: "auth:oauth:flow")
+      resolve(&R.Accounts.Sessions.oauth_link_summary/3)
+    end
+
+    @desc "Available public OAuth providers and their admission states."
+    field :oauth_providers, non_null(list_of(non_null(:oauth_provider_status))) do
+      resolve(&R.Accounts.Sessions.oauth_providers/3)
+    end
+
+    @desc "Read a pending OAuth registration summary through Auth."
+    field :oauth_registration_summary, :oauth_registration_summary do
+      arg(:flow_ref, non_null(:string))
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:oauth:flow")
+      resolve(&R.Accounts.Sessions.oauth_registration_summary/3)
+    end
+
     @desc "List browser sessions for the account identified by the current session reference. Auth service only."
     field :browser_sessions, non_null(:browser_session_page) do
       arg(:browser_session_ref, non_null(:string))

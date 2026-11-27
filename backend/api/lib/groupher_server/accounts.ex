@@ -185,11 +185,6 @@ defmodule GroupherServer.Accounts do
     to: GroupherServer.Accounts.Profiles,
     as: :default_community_suggestions
 
-  @doc "Delegates GroupherServer.Accounts.Profiles.link_oauth_identity/2 through the Accounts Context boundary."
-  defdelegate profiles_link_oauth_identity(arg1, arg2),
-    to: GroupherServer.Accounts.Profiles,
-    as: :link_oauth_identity
-
   @doc "Delegates GroupherServer.Accounts.Profiles.linked_oauth_accounts/1 through the Accounts Context boundary."
   defdelegate profiles_linked_oauth_accounts(arg1),
     to: GroupherServer.Accounts.Profiles,
@@ -267,13 +262,49 @@ defmodule GroupherServer.Accounts do
     to: GroupherServer.Accounts.Profiles,
     as: :session_state
 
-  @doc "Delegates GroupherServer.Accounts.Profiles.signin_oauth/1 through the Accounts Context boundary."
-  defdelegate profiles_signin_oauth(arg1), to: GroupherServer.Accounts.Profiles, as: :signin_oauth
-
-  @doc "Delegates GroupherServer.Accounts.Profiles.signin_oauth/2 through the Accounts Context boundary."
-  defdelegate profiles_signin_oauth(arg1, arg2),
+  defdelegate profiles_signin_oauth(provider, metadata, ref, return_to),
     to: GroupherServer.Accounts.Profiles,
     as: :signin_oauth
+
+  defdelegate complete_oauth_registration(ref, login, metadata),
+    to: GroupherServer.Accounts.Profiles,
+    as: :complete_oauth_registration
+
+  defdelegate oauth_flows_cleanup_expired(),
+    to: GroupherServer.Accounts.Profiles.OauthFlows,
+    as: :cleanup_expired
+
+  defdelegate oauth_registration_summary(ref),
+    to: GroupherServer.Accounts.Profiles.OauthFlows,
+    as: :registration_summary
+
+  defdelegate oauth_link_start(user, attrs),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :start
+
+  defdelegate oauth_link_claim(user, ref, session, provider, nonce),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :claim
+
+  defdelegate oauth_link_verified(user, ref, session, identity),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :verified
+
+  defdelegate oauth_link_summary(user, ref, session),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :summary
+
+  defdelegate oauth_link_cancel(user, ref, session),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :cancel
+
+  defdelegate oauth_link_confirm(user, ref, session, provider, provider_id),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :confirm
+
+  defdelegate oauth_provider_list(),
+    to: GroupherServer.Accounts.Profiles.OauthProviders,
+    as: :public_list
 
   @doc "Delegates GroupherServer.Accounts.Profiles.subscribed_communities/3 through the Accounts Context boundary."
   defdelegate profiles_subscribed_communities(arg1, arg2, arg3),

@@ -38,7 +38,64 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
 
   @doc "Signs in with the provider identity and optional browser metadata, returning session credentials."
   def signin_oauth(_root, %{provider: provider} = args, _info) do
-    Accounts.profiles_signin_oauth(provider, Map.get(args, :browser_session, %{}))
+    Accounts.profiles_signin_oauth(
+      provider,
+      Map.get(args, :browser_session, %{}),
+      args.flow_ref,
+      Map.get(args, :return_to)
+    )
+  end
+
+  @doc "Completes an OAuth registration using its verified flow."
+  def complete_oauth_registration(_root, args, _info) do
+    Accounts.complete_oauth_registration(
+      args.flow_ref,
+      args.login,
+      Map.get(args, :browser_session, %{})
+    )
+  end
+
+  @doc "Returns the summary of a pending registration flow to Auth."
+  def oauth_registration_summary(_root, %{flow_ref: ref}, _info) do
+    Accounts.oauth_registration_summary(ref)
+  end
+
+  @doc "Lists public OAuth providers and their admission states."
+  def oauth_providers(_root, _args, _info) do
+    {:ok, Accounts.oauth_provider_list()}
+  end
+
+  def oauth_link_start(_root, args, %{context: %{cur_user: user}}) do
+    case Accounts.oauth_link_start(user, args) do
+      {:ok, _} -> {:ok, %{done: true}}
+      error -> error
+    end
+  end
+
+  def oauth_link_claim(_root, args, %{context: %{cur_user: user}}) do
+    Accounts.oauth_link_claim(user, args.ref, args.browser_session_ref, args.provider, args.nonce)
+  end
+
+  def oauth_link_verified(_root, args, %{context: %{cur_user: user}}) do
+    Accounts.oauth_link_verified(user, args.ref, args.browser_session_ref, args.identity)
+  end
+
+  def oauth_link_summary(_root, args, %{context: %{cur_user: user}}) do
+    Accounts.oauth_link_summary(user, args.ref, args.browser_session_ref)
+  end
+
+  def oauth_link_cancel(_root, args, %{context: %{cur_user: user}}) do
+    Accounts.oauth_link_cancel(user, args.ref, args.browser_session_ref)
+  end
+
+  def oauth_link_confirm(_root, args, %{context: %{cur_user: user}}) do
+    Accounts.oauth_link_confirm(
+      user,
+      args.ref,
+      args.browser_session_ref,
+      args.provider,
+      args.provider_id
+    )
   end
 
   @doc "Refreshes the access token by session reference and translates session errors for GraphQL."
@@ -82,11 +139,6 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
   @doc "Lists OAuth bindings for the signed-in user's login."
   def linked_oauth_accounts(_root, _args, %{context: %{cur_user: cur_user}}) do
     Accounts.profiles_linked_oauth_accounts(cur_user.login)
-  end
-
-  @doc "Links a verified provider identity to the signed-in account and returns its bindings."
-  def link_oauth_identity(_root, %{identity: identity}, %{context: %{cur_user: cur_user}}) do
-    Accounts.profiles_link_oauth_identity(cur_user.login, identity)
   end
 
   @doc "Unlinks the binding identified by public reference from the signed-in account."

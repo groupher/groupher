@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import path from 'node:path'
@@ -9,6 +10,7 @@ import { createHandler } from 'graphql-http/lib/use/http'
 
 import {
   expireAccessTokens,
+  expireAuthRegistrations,
   getAuthState,
   recordProtectedRequest,
   resetAuthState,
@@ -179,6 +181,7 @@ const readJsonBody = (req) =>
 const hasAccessCookie = (cookieHeader) =>
   (cookieHeader || '').split(';').some((part) => part.trim().startsWith('groupher-auth.token='))
 
+const oauthCodes = new Map()
 createServer((req, res) => {
   setCORS(req, res)
 
@@ -213,6 +216,7 @@ createServer((req, res) => {
 
   if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/__e2e/auth/reset') {
     resetAuthState()
+    oauthCodes.clear()
     res.statusCode = 200
     res.setHeader('content-type', 'application/json; charset=utf-8')
     res.end(JSON.stringify({ ok: true }))
@@ -226,11 +230,92 @@ createServer((req, res) => {
     return
   }
 
+  if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/__e2e/auth/expire-registration') {
+    expireAuthRegistrations()
+    res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({ ok: true }))
+    return
+  }
+
   if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/__e2e/auth/expire-access') {
     expireAccessTokens()
     res.statusCode = 200
     res.setHeader('content-type', 'application/json; charset=utf-8')
     res.end(JSON.stringify({ ok: true }))
+    return
+  }
+
+  if (AUTH_E2E_ENABLED && req.method === 'GET' && req.url?.startsWith('/mock-oauth/authorize?')) {
+    const url = new URL(req.url, `http://${req.headers.host}`)
+    const redirect = url.searchParams.get('redirect_uri')
+    const challenge = url.searchParams.get('code_challenge')
+    if (
+      !redirect ||
+      !challenge ||
+      url.searchParams.get('client_id') !== 'e2e-github' ||
+      url.searchParams.get('code_challenge_method') !== 'S256'
+    ) {
+      res.writeHead(400).end('invalid authorization')
+      return
+    }
+    const target = new URL(redirect)
+    if (
+      target.origin !== 'http://auth.groupher.localhost:3104' ||
+      target.pathname !== '/api/auth/callback/github'
+    ) {
+      res.writeHead(400).end('invalid callback')
+      return
+    }
+    const code = randomBytes(24).toString('base64url')
+    oauthCodes.set(code, { challenge, redirect })
+    target.searchParams.set('code', code)
+    const state = url.searchParams.get('state')
+    if (state) target.searchParams.set('state', state)
+    res.writeHead(302, { location: target.toString(), 'cache-control': 'no-store' }).end()
+    return
+  }
+  if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/mock-oauth/token') {
+    let body = ''
+    req.on('data', (chunk) => {
+      body += chunk
+    })
+    req.on('end', () => {
+      const data = new URLSearchParams(body)
+      const item = oauthCodes.get(data.get('code'))
+      oauthCodes.delete(data.get('code'))
+      if (
+        !item ||
+        !(
+          (data.get('client_id') === 'e2e-github' &&
+            data.get('client_secret') === 'e2e-github-secret') ||
+          req.headers.authorization ===
+            `Basic ${Buffer.from('e2e-github:e2e-github-secret').toString('base64')}`
+        ) ||
+        data.get('redirect_uri') !== item.redirect ||
+        createHash('sha256')
+          .update(data.get('code_verifier') || '')
+          .digest('base64url') !== item.challenge
+      ) {
+        res
+          .writeHead(400, { 'content-type': 'application/json' })
+          .end(JSON.stringify({ error: 'invalid_grant' }))
+        return
+      }
+      res
+        .writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' })
+        .end(JSON.stringify({ access_token: 'e2e-oauth-access', token_type: 'bearer' }))
+    })
+    return
+  }
+  if (AUTH_E2E_ENABLED && req.method === 'GET' && req.url === '/mock-oauth/user') {
+    if (req.headers.authorization !== 'Bearer e2e-oauth-access') return res.writeHead(401).end()
+    res.writeHead(200, { 'content-type': 'application/json' }).end(
+      JSON.stringify({
+        id: 12345,
+        login: 'e2e_taken',
+        name: 'E2E User',
+        email: 'e2e@example.test',
+      }),
+    )
     return
   }
 
@@ -275,7 +360,7 @@ createServer((req, res) => {
         access_token: 'e2e-service-token',
         expires_in: 600,
         scope:
-          'auth:session:signin auth:session:read auth:session:refresh auth:session:revoke auth:oauth:read auth:oauth:link auth:oauth:unlink',
+          'auth:session:signin auth:session:read auth:session:refresh auth:session:revoke auth:oauth:read auth:oauth:flow auth:oauth:register auth:oauth:unlink',
         token_type: 'Bearer',
       }),
     )

@@ -5,7 +5,7 @@ import {
 } from '@groupher/contracts/auth'
 import type { PagiInput, PagiPage } from '@groupher/contracts/pagination'
 
-import { AUTH_ENDPOINT } from '~/const/oauth'
+import { AUTH_ENDPOINT, isOauthProvider } from '~/const/oauth'
 import type { TOauthProvider } from '~/spec'
 
 import { logout } from '../signal'
@@ -105,6 +105,19 @@ const requestError = async (response: Response, operation: string): Promise<Auth
   })
 }
 
+/** Loads the currently admitted OAuth providers. */
+export const listOauthProviders = async (): Promise<
+  Array<{ provider: TOauthProvider; state: 'open' | 'existing' }>
+> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/platforms`)
+  if (!response.ok) throw new Error('OAuth providers unavailable.')
+  const data = (await response.json()) as { providers?: Array<{ provider: string; state: string }> }
+  return (data.providers || []).filter(
+    (item): item is { provider: TOauthProvider; state: 'open' | 'existing' } =>
+      isOauthProvider(item.provider) && (item.state === 'open' || item.state === 'existing'),
+  )
+}
+
 /** Starts the canonical Auth OAuth flow without exposing browser credentials. */
 export const signIn = async (
   provider: TOauthProvider,
@@ -127,6 +140,38 @@ export const signIn = async (
   appendHiddenField(form, 'callbackUrl', callbackUrl)
   document.body.append(form)
   form.submit()
+}
+
+/** Reads the OAuth identity awaiting a username without exposing its flow reference. */
+export const readOauthRegistration = async (): Promise<{
+  provider: string
+  suggestedLogin: string | null
+}> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/register`, { credentials: 'include' })
+  if (!response.ok) throw await requestError(response, 'Auth registration')
+  return response.json()
+}
+
+/** Completes the pending registration and receives the signed session cookies. */
+export const completeOauthRegistration = async (login: string): Promise<void> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/register`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { ...stateChangeHeaders(), 'content-type': 'application/json' },
+    body: JSON.stringify({ login }),
+  })
+  if (!response.ok) throw await requestError(response, 'Auth registration')
+}
+
+/** Clears the pending registration cookie. */
+export const cancelOauthRegistration = async (): Promise<void> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/register`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { ...stateChangeHeaders(), 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'cancel' }),
+  })
+  if (!response.ok) throw await requestError(response, 'Auth registration cancellation')
 }
 
 /** Runs the clear auth state operation at the frontend shared boundary. */
@@ -214,6 +259,40 @@ export const listLinkedOauthAccounts = async (): Promise<TLinkedOauthAccount[]> 
   const payload = (await response.json()) as { accounts?: unknown }
   if (!Array.isArray(payload.accounts)) throw new Error('Auth returned invalid linked accounts.')
   return payload.accounts as TLinkedOauthAccount[]
+}
+
+/** Reads the verified identity awaiting confirmation. */
+export const readOauthLinkConfirmation = async (): Promise<{
+  provider: string
+  providerId: string
+  login: string | null
+}> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/accounts/link/confirmation`, {
+    credentials: 'include',
+  })
+  if (!response.ok) throw await requestError(response, 'Auth account link confirmation')
+  return response.json()
+}
+
+/** Cancels the pending link confirmation. */
+export const cancelOauthLink = async (): Promise<void> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/accounts/link/cancel`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: stateChangeHeaders(),
+  })
+  if (!response.ok) throw await requestError(response, 'Auth account link cancellation')
+}
+
+/** Confirms the identity shown to the user. */
+export const confirmOauthLink = async (provider: string, providerId: string): Promise<void> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/accounts/link/confirmation`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { ...stateChangeHeaders(), 'content-type': 'application/json' },
+    body: JSON.stringify({ provider, providerId }),
+  })
+  if (!response.ok) throw await requestError(response, 'Auth account link confirmation')
 }
 
 /** Starts a provider-link flow through Auth and navigates to the provider. */

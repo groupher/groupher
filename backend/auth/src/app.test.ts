@@ -7,10 +7,119 @@ import { AUTH_ROUTE } from '@groupher/route-contract'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createApp, mapBrowserSessionError } from './app'
-import { PhoenixBrowserSessionError } from './auth'
-import { decodeLinkState, MemoryLinkIntentStore } from './link-intent'
+import { PhoenixBrowserSessionError, useSecureCookies } from './auth'
+import { decodeLinkState } from './link-intent'
 
 describe('Auth Hono application', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('returns only registration summary and protects completion against cross-origin requests', async () => {
+    const summary = {
+      provider: 'linuxdo',
+      suggestedLogin: 'alice',
+      returnTo: 'https://dash.groupher.localhost/home',
+    }
+    const session = {
+      accessToken: 'token',
+      accessExpiresAt: '2030-01-01T00:00:00Z',
+      browserSessionRef: 'bs-test',
+      sessionAbsoluteExpiresAt: '2030-01-02T00:00:00Z',
+    }
+    const complete = vi.fn(async () => session)
+    const app = createApp({
+      readOauthRegistration: async () => summary,
+      completeOauthRegistration: complete,
+      createSignedInResponse: async () =>
+        new Response(null, { status: 303, headers: { 'set-cookie': 'session=signed; HttpOnly' } }),
+    })
+    const cookie = `${useSecureCookies ? '__Host-' : ''}groupher-auth.registration=flow-ref`
+    const url = 'https://auth.groupher.localhost/api/auth/register'
+    const page = await app.request(url, { headers: { cookie } })
+    expect(await page.json()).toEqual({ provider: 'linuxdo', suggestedLogin: 'alice' })
+    const submit = (origin: string, csrf: string) =>
+      app.request(url, {
+        method: 'POST',
+        headers: {
+          cookie,
+          origin,
+          [GROUPHER_AUTH_CSRF_HEADER]: csrf,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ login: 'alice' }),
+      })
+    expect((await submit('https://attacker.example', GROUPHER_AUTH_CSRF_VALUE)).status).toBe(403)
+    expect((await submit('https://dash.groupher.localhost', 'bad')).status).toBe(403)
+    const result = await submit('https://dash.groupher.localhost', GROUPHER_AUTH_CSRF_VALUE)
+    expect(result.status).toBe(200)
+    expect(result.headers.get('set-cookie')).toContain('session=signed')
+    expect(result.headers.get('set-cookie')).toContain('Max-Age=0')
+    expect(complete).toHaveBeenCalledOnce()
+  })
+
+  it('allows retry after a failed username and cancels without creating an account', async () => {
+    const complete = vi.fn().mockRejectedValueOnce(new Error('taken'))
+    const app = createApp({
+      readOauthRegistration: async () => ({
+        provider: 'linuxdo',
+        suggestedLogin: 'alice',
+        returnTo: 'https://dash.groupher.localhost/home',
+      }),
+      completeOauthRegistration: complete,
+    })
+    const cookie = `${useSecureCookies ? '__Host-' : ''}groupher-auth.registration=flow-ref`
+    const submit = (body: object) =>
+      app.request('https://auth.groupher.localhost/api/auth/register', {
+        method: 'POST',
+        headers: {
+          cookie,
+          origin: 'https://dash.groupher.localhost',
+          [GROUPHER_AUTH_CSRF_HEADER]: GROUPHER_AUTH_CSRF_VALUE,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+    expect((await submit({ login: 'taken' })).status).toBe(400)
+    const cancelled = await submit({ action: 'cancel' })
+    expect(cancelled.status).toBe(200)
+    expect(cancelled.headers.get('set-cookie')).toContain('Max-Age=0')
+    expect(complete).toHaveBeenCalledTimes(1)
+  })
+
+  it('revokes the browser session if signing the registration cookies fails', async () => {
+    const revoke = vi.fn(async () => undefined)
+    const app = createApp({
+      readOauthRegistration: async () => ({
+        provider: 'linuxdo',
+        suggestedLogin: 'alice',
+        returnTo: 'https://dash.groupher.localhost/home',
+      }),
+      completeOauthRegistration: async () => ({
+        accessToken: 'token',
+        accessExpiresAt: '2030-01-01T00:00:00Z',
+        browserSessionRef: 'bs-test',
+        sessionAbsoluteExpiresAt: '2030-01-02T00:00:00Z',
+      }),
+      createSignedInResponse: async () => {
+        throw new Error('signing failed')
+      },
+      revokeBrowserSession: revoke,
+    })
+    const response = await app.request('https://auth.groupher.localhost/api/auth/register', {
+      method: 'POST',
+      headers: {
+        cookie: `${useSecureCookies ? '__Host-' : ''}groupher-auth.registration=flow-ref`,
+        origin: 'https://dash.groupher.localhost',
+        [GROUPHER_AUTH_CSRF_HEADER]: GROUPHER_AUTH_CSRF_VALUE,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ login: 'alice' }),
+    })
+    expect(response.status).toBe(400)
+    expect(revoke).toHaveBeenCalledWith('bs-test')
+  })
+
   it('keeps local login routes unregistered unless the Node server injects local handlers', async () => {
     vi.stubEnv('LOCAL_TEST_ACTORS_SECRET', 'stale-flag-must-not-register-a-route')
     const headers = {
@@ -78,7 +187,6 @@ describe('Auth Hono application', () => {
     'signin/github',
     'callback/github',
     'signout',
-    'error',
     'verify-request',
     'webauthn-options',
   ])('keeps the official Auth action %s delegated', async (action) => {
@@ -88,8 +196,13 @@ describe('Auth Hono application', () => {
     expect(authHandler).toHaveBeenCalledOnce()
   })
 
-  afterEach(() => {
-    vi.unstubAllEnvs()
+  it('shows a retry page when an OAuth login cannot be completed', async () => {
+    const authHandler = vi.fn(async () => new Response(null, { status: 204 }))
+    const response = await createApp({ authHandler }).request('/api/auth/error?error=Configuration')
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('try signing in again')
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(authHandler).not.toHaveBeenCalled()
   })
 
   it('exposes the service health contract', async () => {
@@ -550,170 +663,217 @@ describe('Auth Hono application', () => {
     expect(unlinkOauthIdentity).toHaveBeenCalledTimes(2)
   })
 
-  it('creates a server-side GitHub link intent and redirects with state and PKCE', async () => {
+  it('rejects an unregistered provider before starting or processing a link', async () => {
+    const start = vi.fn()
+    const app = createApp({ startOauthLink: start })
+    const startResponse = await app.request('/api/auth/accounts/unknown/link', {
+      method: 'POST',
+      headers: {
+        origin: 'https://dash.groupher.localhost',
+        [GROUPHER_AUTH_CSRF_HEADER]: GROUPHER_AUTH_CSRF_VALUE,
+      },
+    })
+    expect(startResponse.status).toBe(400)
+    expect(start).not.toHaveBeenCalled()
+    expect((await app.request('/api/auth/accounts/unknown/callback')).status).toBe(404)
+    expect((await app.request('/api/auth/callback/unknown')).status).toBe(404)
+  })
+
+  it('claims a GitHub callback once and requires explicit confirmation', async () => {
     vi.stubEnv('AUTH_GITHUB_ID', 'github-client')
     vi.stubEnv('AUTH_URL', 'https://auth.groupher.localhost')
-    const store = new MemoryLinkIntentStore()
-
-    const response = await createApp({
-      linkIntentStore: store,
-      readBrowserSession: async () => ({
-        browserSessionRef: 'bs_current',
-        sessionAbsoluteExpiresAt: '2026-11-08T00:00:00.000Z',
-      }),
-    }).request('/api/auth/accounts/github/link', {
-      body: JSON.stringify({
+    const startOauthLink = vi.fn(async () => undefined)
+    const claimOauthLink = vi.fn(async () => ({
+      codeVerifier: 'verifier',
+      returnTo: 'https://dash.groupher.localhost/account/connections',
+    }))
+    const verifyOauthLink = vi.fn(async () => ({
+      status: 'confirm',
+      returnTo: 'https://dash.groupher.localhost/account/connections',
+    }))
+    const confirmOauthLink = vi.fn(async () => ({
+      returnTo: 'https://dash.groupher.localhost/account/connections',
+    }))
+    const app = createApp({
+      startOauthLink,
+      claimOauthLink,
+      verifyOauthLink,
+      confirmOauthLink,
+      readOauthLink: async () => ({
+        provider: 'github',
+        providerId: '42',
+        login: 'octocat',
         returnTo: 'https://dash.groupher.localhost/account/connections',
       }),
-      headers: {
-        cookie: 'groupher-auth.token=phoenix-user-token',
-        'content-type': 'application/json',
-        origin: 'https://dash.groupher.localhost',
-        'x-groupher-csrf': '1',
+      oauthExchanges: {
+        github: async () => ({
+          provider: 'github',
+          providerId: '42',
+          login: 'octocat',
+        }),
       },
-      method: 'POST',
-    })
-
-    expect(response.status).toBe(200)
-    const payload = (await response.json()) as { authorizationUrl: string }
-    const location = new URL(payload.authorizationUrl)
-    expect(location.origin).toBe('https://github.com')
-    expect(location.searchParams.get('client_id')).toBe('github-client')
-    expect(location.searchParams.get('code_challenge_method')).toBe('S256')
-    const state = decodeLinkState(location.searchParams.get('state') || '')
-    expect(state).not.toBeNull()
-    expect(response.headers.get('set-cookie')).toContain('groupher-auth.link-intent=')
-    await expect(store.get(state!.intentRef)).resolves.toMatchObject({
-      browserSessionRef: 'bs_current',
-      provider: 'github',
-      status: 'pending',
-    })
-  })
-
-  it('consumes the link intent once and links the verified callback identity', async () => {
-    vi.stubEnv('AUTH_GITHUB_ID', 'github-client')
-    vi.stubEnv('AUTH_URL', 'https://auth.groupher.localhost')
-    const store = new MemoryLinkIntentStore()
-    const linkOauthIdentity = vi.fn(
-      async (userToken: string, identity: Record<string, unknown>) => {
-        expect(userToken).toBe('phoenix-user-token')
-        expect(identity).toMatchObject({ provider: 'github', providerId: '42', login: 'octocat' })
-        return []
-      },
-    )
-    const app = createApp({
-      exchangeGithubCodeForIdentity: async () => ({
-        login: 'octocat',
-        provider: 'github',
-        providerId: '42',
-      }),
-      linkIntentStore: store,
-      linkOauthIdentity,
       readBrowserSession: async () => ({
         browserSessionRef: 'bs_current',
-        sessionAbsoluteExpiresAt: '2026-11-08T00:00:00.000Z',
+        sessionAbsoluteExpiresAt: '2030-01-01T00:00:00Z',
       }),
     })
-
-    const begin = await app.request('/api/auth/accounts/github/link', {
-      headers: {
-        cookie: 'groupher-auth.token=phoenix-user-token',
-        origin: 'https://dash.groupher.localhost',
-        'x-groupher-csrf': '1',
-      },
-      method: 'POST',
-    })
-    const beginPayload = (await begin.json()) as { authorizationUrl: string }
-    const location = new URL(beginPayload.authorizationUrl)
-    const state = location.searchParams.get('state') || ''
-    const intent = decodeLinkState(state)
-    const cookie = begin.headers.get('set-cookie')?.split(';')[0]
-
-    const callback = await app.request(
-      `/api/auth/accounts/github/callback?code=github-code&state=${encodeURIComponent(state)}`,
-      { headers: { cookie: `${cookie}; groupher-auth.token=phoenix-user-token` } },
-    )
-
-    expect(callback.status).toBe(303)
-    expect(new URL(callback.headers.get('location') || '').searchParams.get('oauthLink')).toBe(
-      'success',
-    )
-    expect(linkOauthIdentity).toHaveBeenCalledTimes(1)
-    await expect(store.get(intent!.intentRef)).resolves.toMatchObject({ status: 'consumed' })
-
-    const replay = await app.request(
-      `/api/auth/accounts/github/callback?code=github-code&state=${encodeURIComponent(state)}`,
-      { headers: { cookie: `${cookie}; groupher-auth.token=phoenix-user-token` } },
-    )
-    expect(replay.status).toBe(303)
-    expect(new URL(replay.headers.get('location') || '').searchParams.get('code')).toBe(
-      'OAUTH_LINK_REPLAYED',
-    )
-  })
-
-  it('refreshes an expired Phoenix token once before retrying callback link', async () => {
-    vi.stubEnv('AUTH_GITHUB_ID', 'github-client')
-    vi.stubEnv('AUTH_URL', 'https://auth.groupher.localhost')
-    const store = new MemoryLinkIntentStore()
-    let linkAttempts = 0
-    const linkOauthIdentity = vi.fn(async () => {
-      linkAttempts += 1
-      if (linkAttempts === 1) {
-        throw new PhoenixBrowserSessionError('Phoenix token expired.', {
-          code: AUTH_ERROR.TOKEN_EXPIRED,
-        })
-      }
-      return []
-    })
-    const refreshedSession = {
-      accessExpiresAt: new Date(Date.now() + 60_000).toISOString(),
-      accessToken: 'phoenix-refreshed-token',
-      browserSessionRef: 'bs_current',
-      sessionAbsoluteExpiresAt: '2026-11-08T00:00:00.000Z',
+    const headers = {
+      cookie: 'groupher-auth.token=phoenix-user-token',
+      origin: 'https://dash.groupher.localhost',
+      'x-groupher-csrf': '1',
     }
-    const refreshBrowserSession = vi.fn(async () => refreshedSession)
+    const begin = await app.request('/api/auth/accounts/github/link', { method: 'POST', headers })
+    expect(begin.status).toBe(200)
+    const location = new URL(
+      ((await begin.json()) as { authorizationUrl: string }).authorizationUrl,
+    )
+    expect(location.searchParams.get('code_challenge_method')).toBe('S256')
+    const state = location.searchParams.get('state') || ''
+    expect(decodeLinkState(state)).not.toBeNull()
+    const cookie = `${begin.headers.get('set-cookie')!.split(';')[0]}; ${headers.cookie}`
+    const callback = await app.request(
+      `/api/auth/accounts/github/callback?code=test&state=${encodeURIComponent(state)}`,
+      { headers: { cookie } },
+    )
+    expect(callback.status).toBe(303)
+    expect(new URL(callback.headers.get('location')!).searchParams.get('oauthLink')).toBe('confirm')
+    expect(callback.headers.get('set-cookie')).toBeNull()
+    expect(claimOauthLink).toHaveBeenCalledOnce()
+    expect(verifyOauthLink).toHaveBeenCalledOnce()
+    expect(confirmOauthLink).not.toHaveBeenCalled()
+    const confirmation = await app.request('/api/auth/accounts/link/confirmation', {
+      headers: { cookie },
+    })
+    expect(await confirmation.json()).toEqual({
+      provider: 'github',
+      providerId: '42',
+      login: 'octocat',
+    })
+    const result = await app.request('/api/auth/accounts/link/confirmation', {
+      method: 'POST',
+      headers: { ...headers, cookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ provider: 'github', providerId: '42' }),
+    })
+    expect(result.status).toBe(200)
+    expect(confirmOauthLink).toHaveBeenCalledOnce()
+  })
+
+  it('offers a retry when a link callback no longer has its initiating session', async () => {
+    const app = createApp({ readBrowserSession: async () => null })
+    const response = await app.request('/api/auth/accounts/github/callback?state=invalid&code=test')
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('/api/auth/error')
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('set-cookie')).toBeNull()
+  })
+
+  it('cancels a failed exchange and returns to the account page', async () => {
+    vi.stubEnv('AUTH_GITHUB_ID', 'github-client')
+    vi.stubEnv('AUTH_URL', 'https://auth.groupher.localhost')
+    const cancelOauthLink = vi.fn(async () => undefined)
     const app = createApp({
-      exchangeGithubCodeForIdentity: async () => ({
-        login: 'octocat',
-        provider: 'github',
-        providerId: '42',
+      startOauthLink: async () => undefined,
+      claimOauthLink: async () => ({
+        codeVerifier: 'wrong',
+        returnTo: 'https://dash.groupher.localhost/',
       }),
-      linkIntentStore: store,
-      linkOauthIdentity,
+      cancelOauthLink,
+      oauthExchanges: {
+        github: async () => {
+          throw new Error('exchange failed')
+        },
+      },
       readBrowserSession: async () => ({
         browserSessionRef: 'bs_current',
-        sessionAbsoluteExpiresAt: '2026-11-08T00:00:00.000Z',
+        sessionAbsoluteExpiresAt: '2030-01-01T00:00:00Z',
       }),
-      refreshBrowserSession,
     })
+    const headers = {
+      cookie: 'groupher-auth.token=phoenix-user-token',
+      origin: 'https://dash.groupher.localhost',
+      'x-groupher-csrf': '1',
+    }
+    const begin = await app.request('/api/auth/accounts/github/link', { method: 'POST', headers })
+    const url = new URL(((await begin.json()) as { authorizationUrl: string }).authorizationUrl)
+    const cookie = `${begin.headers.get('set-cookie')!.split(';')[0]}; ${headers.cookie}`
+    const response = await app.request(
+      `/api/auth/accounts/github/callback?code=test&state=${encodeURIComponent(url.searchParams.get('state')!)}`,
+      { headers: { cookie } },
+    )
+    expect(response.status).toBe(303)
+    expect(new URL(response.headers.get('location')!).searchParams.get('oauthLink')).toBe('error')
+    expect(cancelOauthLink).toHaveBeenCalledOnce()
+    expect(response.headers.get('set-cookie')).not.toContain('groupher-auth.token')
+  })
 
-    const begin = await app.request('/api/auth/accounts/github/link', {
-      headers: {
-        cookie: 'groupher-auth.token=phoenix-user-token',
-        origin: 'https://dash.groupher.localhost',
-        'x-groupher-csrf': '1',
-      },
-      method: 'POST',
+  it('shares the Linux DO callback without routing a regular sign-in into linking', async () => {
+    vi.stubEnv('AUTH_LINUXDO_ID', 'linuxdo-client')
+    vi.stubEnv('AUTH_URL', 'https://auth.groupher.localhost')
+    const authHandler = vi.fn(async () => new Response('normal login'))
+    const claimOauthLink = vi.fn(async () => ({
+      codeVerifier: 'verifier',
+      returnTo: 'https://dash.groupher.localhost/home',
+    }))
+    const exchangeLinuxDoCodeForIdentity = vi.fn(async () => ({
+      provider: 'linuxdo',
+      providerId: '42',
+      login: 'alice',
+      nickname: undefined,
+      avatar: undefined,
+    }))
+    const app = createApp({
+      authHandler,
+      startOauthLink: async () => undefined,
+      claimOauthLink,
+      verifyOauthLink: async () => ({
+        status: 'confirm',
+        returnTo: 'https://dash.groupher.localhost/home',
+      }),
+      oauthExchanges: { linuxdo: exchangeLinuxDoCodeForIdentity },
+      readBrowserSession: async () => ({
+        browserSessionRef: 'bs_current',
+        sessionAbsoluteExpiresAt: '2030-01-01T00:00:00Z',
+      }),
     })
-    const beginPayload = (await begin.json()) as { authorizationUrl: string }
-    const location = new URL(beginPayload.authorizationUrl)
-    const state = location.searchParams.get('state') || ''
-    const cookie = begin.headers.get('set-cookie')?.split(';')[0]
-
-    const callback = await app.request(
-      `/api/auth/accounts/github/callback?code=github-code&state=${encodeURIComponent(state)}`,
-      { headers: { cookie: `${cookie}; groupher-auth.token=phoenix-user-token` } },
+    const headers = {
+      cookie: 'groupher-auth.token=phoenix-user-token',
+      origin: 'https://dash.groupher.localhost',
+      'x-groupher-csrf': '1',
+    }
+    const begin = await app.request('/api/auth/accounts/linuxdo/link', { method: 'POST', headers })
+    const authorization = new URL(
+      ((await begin.json()) as { authorizationUrl: string }).authorizationUrl,
     )
-
-    expect(callback.status).toBe(303)
-    expect(new URL(callback.headers.get('location') || '').searchParams.get('oauthLink')).toBe(
-      'success',
+    expect(authorization.searchParams.get('redirect_uri')).toBe(
+      'https://auth.groupher.localhost/api/auth/callback/linuxdo',
     )
-    expect(refreshBrowserSession).toHaveBeenCalledWith('bs_current')
-    expect(linkOauthIdentity).toHaveBeenCalledTimes(2)
-    expect(callback.headers.get('set-cookie')).toContain(
-      'groupher-auth.token=phoenix-refreshed-token',
+    expect(authorization.searchParams.get('code_challenge_method')).toBe('S256')
+    const cookie = `${begin.headers.get('set-cookie')!.split(';')[0]}; ${headers.cookie}`
+    const ordinary = await app.request(
+      '/api/auth/callback/linuxdo?state=ordinary-state&code=normal',
+      { headers: { cookie } },
     )
+    expect(await ordinary.text()).toBe('normal login')
+    expect(claimOauthLink).not.toHaveBeenCalled()
+    const state = authorization.searchParams.get('state')!
+    const linked = await app.request(
+      `/api/auth/callback/linuxdo?state=${encodeURIComponent(state)}&code=link`,
+      { headers: { cookie } },
+    )
+    expect(linked.status).toBe(303)
+    expect(claimOauthLink).toHaveBeenCalledOnce()
+    expect(exchangeLinuxDoCodeForIdentity).toHaveBeenCalledWith(
+      'link',
+      'https://auth.groupher.localhost/api/auth/callback/linuxdo',
+      'verifier',
+    )
+    expect(linked.headers.get('set-cookie')).toBeNull()
+    const ordinaryAfterLink = await app.request(
+      '/api/auth/callback/linuxdo?state=another-ordinary-state&code=normal',
+      { headers: { cookie } },
+    )
+    expect(await ordinaryAfterLink.text()).toBe('normal login')
+    expect(claimOauthLink).toHaveBeenCalledOnce()
   })
 
   it('rate limits OAuth account operations', async () => {

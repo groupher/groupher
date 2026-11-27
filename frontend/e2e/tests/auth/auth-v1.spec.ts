@@ -1,6 +1,5 @@
 import path from 'node:path'
 
-import { AUTH_ERROR } from '@groupher/contracts/auth'
 import {
   expect,
   type APIRequestContext,
@@ -8,6 +7,8 @@ import {
   type Page,
   test,
 } from '@playwright/test'
+
+import { AUTH_ERROR } from '../../../../packages/contracts/src/auth'
 
 const AUTH_ORIGIN = 'http://auth.groupher.localhost:3104'
 const DASH_ORIGIN = 'http://dash.groupher.localhost:3103'
@@ -115,8 +116,101 @@ const openAccountMenu = async (page: Page): Promise<void> => {
   throw new Error('Account menu did not become interactive after hydration.')
 }
 
+const openGithubLogin = async (page: Page): Promise<void> => {
+  const trigger = page.getByRole('button', { name: /sign in/i }).first()
+  const github = page.getByRole('button', { name: /GitHub/ })
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await trigger.click()
+    try {
+      await expect(github).toBeVisible({ timeout: 2000 })
+      await github.click()
+      return
+    } catch {
+      // The server-rendered sign-in control may precede hydration.
+    }
+  }
+  throw new Error('OAuth login did not become interactive after hydration.')
+}
+
 test.describe('Auth V1 browser protocol', () => {
   test.beforeEach(async ({ request }) => resetStack(request))
+
+  for (const [app, destination] of [
+    ['Dash', `${DASH_ORIGIN}/home/overview`],
+    ['Community', `${COMMUNITY_ORIGIN}/home/post`],
+  ]) {
+    test(`registration form completes and returns to ${app}`, async ({ context, page }) => {
+      await page.goto(destination)
+      await openGithubLogin(page)
+      await expect(page.getByRole('heading', { name: 'Choose a username' })).toBeVisible()
+      await expect(page).toHaveURL(
+        new RegExp(`^${destination.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`),
+      )
+      await page.getByRole('textbox', { name: 'Username' }).fill('e2e_registered')
+      await page.getByRole('button', { name: 'Create account' }).click()
+      await expect(page).toHaveURL(destination)
+      expect((await context.cookies()).some((cookie) => cookie.name === ACCESS_COOKIE)).toBe(true)
+      expect(
+        (await context.cookies()).some(
+          (cookie) => cookie.name === '__Host-groupher-auth.registration',
+        ),
+      ).toBe(false)
+    })
+  }
+
+  test('registration can retry a taken name and cancel without creating a session', async ({
+    context,
+    page,
+  }) => {
+    await page.goto(`${COMMUNITY_ORIGIN}/home/post`)
+    await openGithubLogin(page)
+    await expect(page.getByRole('heading', { name: 'Choose a username' })).toBeVisible()
+    await page.getByRole('textbox', { name: 'Username' }).fill('taken')
+    await page.getByRole('button', { name: 'Create account' }).click()
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Username' })).toHaveValue('taken')
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Choose a username' })).toHaveCount(0)
+    await expect
+      .poll(async () =>
+        (await context.cookies()).some(
+          (cookie) => cookie.name === '__Host-groupher-auth.registration',
+        ),
+      )
+      .toBe(false)
+    expect((await context.cookies()).some((cookie) => cookie.name === ACCESS_COOKIE)).toBe(false)
+  })
+
+  test('registration retries a taken username without restarting authorization', async ({
+    context,
+    page,
+  }) => {
+    await page.goto(`${COMMUNITY_ORIGIN}/home/post`)
+    await openGithubLogin(page)
+    await expect(page.getByRole('heading', { name: 'Choose a username' })).toBeVisible()
+    await page.getByRole('textbox', { name: 'Username' }).fill('taken')
+    await page.getByRole('button', { name: 'Create account' }).click()
+    await expect(page.getByRole('alert')).toBeVisible()
+    await page.getByRole('textbox', { name: 'Username' }).fill('available')
+    await page.getByRole('button', { name: 'Create account' }).click()
+    await expect(page).toHaveURL(`${COMMUNITY_ORIGIN}/home/post`)
+    expect((await context.cookies()).some((cookie) => cookie.name === ACCESS_COOKIE)).toBe(true)
+  })
+
+  test('registration without a flow cookie is rejected', async ({ page }) => {
+    await page.goto(`${COMMUNITY_ORIGIN}/home/post?oauthRegistration=required`)
+    await expect(page.getByRole('alert')).toContainText('Registration expired')
+    await expect(page.getByRole('textbox', { name: 'Username' })).toHaveCount(0)
+  })
+
+  test('expired registration flow asks the user to sign in again', async ({ page, request }) => {
+    await page.goto(`${COMMUNITY_ORIGIN}/home/post`)
+    await openGithubLogin(page)
+    await expect(page.getByRole('heading', { name: 'Choose a username' })).toBeVisible()
+    expect((await request.post(`${MOCK_ORIGIN}/__e2e/auth/expire-registration`)).ok()).toBe(true)
+    await page.reload()
+    await expect(page.getByRole('alert')).toContainText('Registration expired')
+  })
 
   test('P0 protects every Dash route through the shared account boundary', async ({ page }) => {
     await page.goto(`${DASH_ORIGIN}/home/doc/editor?docId=e2e-doc`)

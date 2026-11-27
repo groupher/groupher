@@ -5,7 +5,10 @@
 # is restricted to this project.
 import Config
 
-config :phoenix, :filter_parameters, ["password", "credential"]
+config :phoenix, :filter_parameters, ["password", "credential", "variables"]
+
+config :absinthe, Absinthe.Logger,
+  filter_variables: ["token", "password", "credential", "codeVerifier", "nonce", "ref", "Ref"]
 
 # General application configuration
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
@@ -256,6 +259,7 @@ config :groupher_server, Helper.Scheduler,
     {"@daily", {Helper.Scheduler, :clear_all_cache, []}},
     {"@daily", {Helper.Scheduler, :archive_artiments, []}},
     {"17 * * * *", {Helper.Scheduler, :purge_expired_trash, []}},
+    {"27 * * * *", {Helper.Scheduler, :purge_expired_oauth_flows, []}},
     online_status: [
       # Runs every 20 seconds
       schedule: {:extended, "*/20"},

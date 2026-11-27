@@ -8,27 +8,36 @@
  *     -> OAuth and Phoenix Accounts
  *     -> Session cookies or service token
  */
+
 import {
   AUTH_ERROR,
   GROUPHER_AUTH_CSRF_HEADER,
   GROUPHER_AUTH_CSRF_VALUE,
+  getAuthCookieNames,
 } from '@groupher/contracts/auth'
 import { isPagiInput } from '@groupher/contracts/pagination'
 import { AUTH_ROUTE } from '@groupher/route-contract'
 import { createHealthResponse } from '@groupher/service/health'
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { cors } from 'hono/cors'
 import { serialize } from 'hono/utils/cookie'
 
 import {
   appendPhoenixTokenCookie,
+  startOauthLink,
+  claimOauthLink,
+  verifyOauthLink,
+  readOauthLink,
+  confirmOauthLink,
+  cancelOauthLink,
+  completeOauthRegistration,
+  createSignedInResponse,
+  readOauthRegistration,
   buildAuthCookieClearingHeaders,
-  exchangeGithubCodeForIdentity,
-  githubAuthorizationUrl,
   handleAuthRequest,
   listBrowserSessions,
+  listOauthProviders,
   listLinkedOauthAccounts,
-  linkOauthIdentity,
   readBrowserSession,
   readPhoenixUserToken,
   refreshBrowserSession,
@@ -40,31 +49,32 @@ import {
   useSecureCookies,
   type TLinkedOauthAccount,
 } from './auth'
-import {
-  createLinkIntent,
-  decodeLinkState,
-  DurableLinkIntentStore,
-  encodeLinkState,
-  type TLinkIntentNamespace,
-  type TLinkIntentStore,
-} from './link-intent'
+import { createLinkIntent, decodeLinkState, encodeLinkState } from './link-intent'
+import { OAUTH_PROVIDERS, oauthProvider, type TOauthProvider } from './oauth-providers'
 import { createMemoryRateLimiter, type TRateLimitBinding } from './rate-limit'
 import { issueServiceToken, serviceJwks } from './service-auth'
 
 type TBindings = {
   AUTH_OAUTH_RATE_LIMITER?: TRateLimitBinding
   AUTH_REFRESH_RATE_LIMITER?: TRateLimitBinding
-  LINK_INTENTS?: TLinkIntentNamespace
   SERVICE_TOKEN_RATE_LIMITER?: TRateLimitBinding
 }
 
 type TOptions = {
   authHandler?: (request: Request) => Promise<Response>
+  startOauthLink?: typeof startOauthLink
+  claimOauthLink?: typeof claimOauthLink
+  verifyOauthLink?: typeof verifyOauthLink
+  readOauthLink?: typeof readOauthLink
+  confirmOauthLink?: typeof confirmOauthLink
+  cancelOauthLink?: typeof cancelOauthLink
+  readOauthRegistration?: typeof readOauthRegistration
+  completeOauthRegistration?: typeof completeOauthRegistration
+  createSignedInResponse?: typeof createSignedInResponse
   listBrowserSessions?: typeof listBrowserSessions
+  listOauthProviders?: typeof listOauthProviders
   listLinkedOauthAccounts?: typeof listLinkedOauthAccounts
-  linkOauthIdentity?: typeof linkOauthIdentity
-  exchangeGithubCodeForIdentity?: typeof exchangeGithubCodeForIdentity
-  linkIntentStore?: TLinkIntentStore
+  oauthExchanges?: Partial<{ [K in TOauthProvider]: (typeof OAUTH_PROVIDERS)[K]['exchange'] }>
   readBrowserSession?: typeof readBrowserSession
   refreshBrowserSession?: typeof refreshBrowserSession
   revokeBrowserSession?: typeof revokeBrowserSession
@@ -192,9 +202,17 @@ export const createApp = ({
   authHandler = handleAuthRequest,
   listBrowserSessions: listSessions = listBrowserSessions,
   listLinkedOauthAccounts: listAccounts = listLinkedOauthAccounts,
-  linkOauthIdentity: linkIdentity = linkOauthIdentity,
-  exchangeGithubCodeForIdentity: exchangeGithubIdentity = exchangeGithubCodeForIdentity,
-  linkIntentStore,
+  startOauthLink: startLink = startOauthLink,
+  claimOauthLink: claimLink = claimOauthLink,
+  verifyOauthLink: verifyLink = verifyOauthLink,
+  readOauthLink: readLink = readOauthLink,
+  confirmOauthLink: confirmLink = confirmOauthLink,
+  cancelOauthLink: cancelLink = cancelOauthLink,
+  listOauthProviders: listProviders = listOauthProviders,
+  readOauthRegistration: readRegistration = readOauthRegistration,
+  completeOauthRegistration: completeRegistration = completeOauthRegistration,
+  createSignedInResponse: signedInResponse = createSignedInResponse,
+  oauthExchanges,
   readBrowserSession: readSession = readBrowserSession,
   refreshBrowserSession: refreshSession = refreshBrowserSession,
   revokeBrowserSession: revokeSession = revokeBrowserSession,
@@ -210,8 +228,6 @@ export const createApp = ({
   const fallbackRefreshRateLimiter = createMemoryRateLimiter()
   const fallbackOauthRateLimiter = createMemoryRateLimiter()
   const fallbackServiceTokenRateLimiter = createMemoryRateLimiter()
-  const resolveLinkIntentStore = (env: TBindings): TLinkIntentStore | undefined =>
-    linkIntentStore || (env.LINK_INTENTS ? new DurableLinkIntentStore(env.LINK_INTENTS) : undefined)
   const resolveOauthRateLimiter = (env: TBindings): TRateLimitBinding =>
     oauthRateLimiter || env.AUTH_OAUTH_RATE_LIMITER || fallbackOauthRateLimiter
   const limitOauth = async (env: TBindings, key: string): Promise<boolean> =>
@@ -244,7 +260,11 @@ export const createApp = ({
     return null
   }
   const safeReturnTo = (request: Request, value: unknown): string => {
-    const fallback = request.headers.get('origin') || process.env.AUTH_URL || 'https://groupher.com'
+    const origin = request.headers.get('origin')
+    const fallback =
+      (origin && isAllowedAuthOrigin(origin) ? origin : null) ||
+      process.env.AUTH_URL ||
+      'https://groupher.com'
     if (typeof value !== 'string' || !value.trim()) return fallback
     try {
       const candidate = new URL(value, fallback)
@@ -465,146 +485,199 @@ export const createApp = ({
   })
 
   app.post(AUTH_ROUTE.ACCOUNT_LINK, async (context) => {
-    if (!requireStateChangeOrigin(context)) {
+    if (!requireStateChangeOrigin(context))
       return context.json({ code: AUTH_ERROR.INVALID_ORIGIN }, 400, noStore())
-    }
-
-    const clientKey = clientRateLimitKey(context.req.raw)
-    if (!(await limitOauth(context.env || {}, `oauth:link:client:${clientKey}`))) {
+    if (!(await limitOauth(context.env || {}, `oauth:link:${clientRateLimitKey(context.req.raw)}`)))
       return context.json({ code: AUTH_ERROR.RATE_LIMITED }, 429, retryAfter())
-    }
-
     const provider = context.req.param('provider')
-    if (provider !== 'github')
+    if (!oauthProvider(provider))
       return context.json({ code: AUTH_ERROR.OAUTH_PROVIDER_UNSUPPORTED }, 400, noStore())
-
     const session = await readSession(context.req.raw)
-    if (!session) return context.json({ code: AUTH_ERROR.SESSION_MISSING }, 401, noStore())
-
-    if (!(await limitOauth(context.env || {}, `oauth:link:session:${session.browserSessionRef}`))) {
-      return context.json({ code: AUTH_ERROR.RATE_LIMITED }, 429, retryAfter())
-    }
-
     const userToken = readPhoenixUserToken(context.req.raw)
-    if (!userToken) return context.json({ code: AUTH_ERROR.TOKEN_MISSING }, 401, noStore())
-
-    const store = resolveLinkIntentStore(context.env || {})
-    if (!store) return context.json({ code: AUTH_ERROR.LINK_INTENT_UNAVAILABLE }, 503, noStore())
-
-    let body: unknown = {}
+    if (!session || !userToken)
+      return context.json({ code: AUTH_ERROR.SESSION_MISSING }, 401, noStore())
+    let body: { returnTo?: unknown } = {}
     try {
       body = await context.req.json()
     } catch {
-      // Empty bodies are valid; the request origin is the default return target.
+      /* return to the caller origin */
     }
-
     const intent = createLinkIntent({
       browserSessionRef: session.browserSessionRef,
-      provider,
-      returnTo: safeReturnTo(context.req.raw, (body as { returnTo?: unknown })?.returnTo),
+      provider: provider as TOauthProvider,
+      returnTo: safeReturnTo(context.req.raw, body.returnTo),
     })
-
     try {
-      await store.create(intent)
-      const redirectUri = providerRedirectUri(provider)
-      const location = githubAuthorizationUrl(
+      await startLink(userToken, {
+        ref: intent.intentRef,
+        browserSessionRef: intent.browserSessionRef,
+        provider,
+        codeVerifier: intent.codeVerifier,
+        nonce: intent.nonce,
+        returnTo: intent.returnTo,
+      })
+      const definition = oauthProvider(provider)!
+      const redirectUri =
+        definition.callback === 'separate'
+          ? providerRedirectUri(provider)
+          : new URL(`/api/auth/callback/${provider}`, process.env.AUTH_URL).toString()
+      const authorizationUrl = definition.authorizationUrl(
         encodeLinkState(intent),
         redirectUri,
         intent.codeVerifier,
       )
       context.header('Set-Cookie', setLinkIntentCookie(intent.intentRef))
-      return context.json({ authorizationUrl: location }, 200, noStore())
-    } catch {
-      return context.json({ code: AUTH_ERROR.LINK_INTENT_UNAVAILABLE }, 503, noStore())
+      return context.json({ authorizationUrl }, 200, noStore())
+    } catch (error) {
+      const failure = mapBrowserSessionError(error, AUTH_ERROR.OAUTH_LINK_UNAVAILABLE)
+      return context.json({ code: failure.code }, failure.status, noStore())
     }
   })
 
-  app.get(AUTH_ROUTE.ACCOUNT_CALLBACK, async (context) => {
-    const provider = context.req.param('provider')
-    const state = context.req.query('state')
-    const intentRef = requestCookie(context.req.raw, linkIntentCookie())
-    const decodedState = state ? decodeLinkState(state) : null
-    const store = resolveLinkIntentStore(context.env || {})
-
-    const callbackKey = `${intentRef || decodedState?.intentRef || 'unknown'}:${clientRateLimitKey(context.req.raw)}`
-    if (!(await limitOauth(context.env || {}, `oauth:callback:${callbackKey}`))) {
-      return context.json({ code: AUTH_ERROR.RATE_LIMITED }, 429, retryAfter())
-    }
-
-    if (
-      provider !== 'github' ||
-      !store ||
-      !intentRef ||
-      !decodedState ||
-      decodedState.intentRef !== intentRef
-    ) {
-      return context.json({ code: AUTH_ERROR.OAUTH_LINK_INVALID_INTENT }, 400, noStore())
-    }
-
-    const intent = await store.get(intentRef)
-    if (!intent || intent.provider !== provider || intent.nonce !== decodedState.nonce) {
-      return context.json({ code: AUTH_ERROR.OAUTH_LINK_INVALID_INTENT }, 400, noStore())
-    }
-
-    const redirectWithResult = (
-      params: { result: string; code?: string },
-      refreshedSession?: Awaited<ReturnType<typeof refreshSession>>,
-    ): Response => {
-      const location = new URL(intent.returnTo)
-      location.searchParams.set('oauthLink', params.result)
-      if (params.code) location.searchParams.set('code', params.code)
-      let response = new Response(null, {
-        headers: new Headers({ ...noStore(), location: location.toString() }),
-        status: 303,
-      })
-      if (refreshedSession) response = appendPhoenixTokenCookie(response, refreshedSession)
-      const headers = new Headers(response.headers)
-      headers.append('set-cookie', clearLinkIntentCookie())
-      return new Response(response.body, { headers, status: 303 })
-    }
-
+  const linkCallback = async (
+    context: Context<{ Bindings: TBindings }>,
+    provider: TOauthProvider,
+  ) => {
+    const ref = requestCookie(context.req.raw, linkIntentCookie())
+    const decoded = decodeLinkState(context.req.query('state') || '')
     const session = await readSession(context.req.raw)
     const userToken = readPhoenixUserToken(context.req.raw)
-    if (!session || session.browserSessionRef !== intent.browserSessionRef || !userToken) {
-      return redirectWithResult({ result: 'error', code: AUTH_ERROR.SESSION_MISSING })
+    if (
+      !(await limitOauth(
+        context.env || {},
+        `oauth:callback:${clientRateLimitKey(context.req.raw)}`,
+      ))
+    )
+      return context.json({ code: AUTH_ERROR.RATE_LIMITED }, 429, retryAfter())
+    if (!ref || !decoded || decoded.intentRef !== ref || !session || !userToken) {
+      context.header('Cache-Control', 'no-store')
+      return context.redirect('/api/auth/error', 303)
     }
-
-    const consumed = await store.consume(intentRef)
-    if (!consumed)
-      return redirectWithResult({ result: 'error', code: AUTH_ERROR.OAUTH_LINK_REPLAYED })
-
-    const providerError = context.req.query('error')
-    if (providerError) return redirectWithResult({ result: 'cancelled' })
-
-    const code = context.req.query('code')
-    if (!code) {
-      return redirectWithResult({ result: 'error', code: AUTH_ERROR.OAUTH_LINK_INVALID_CALLBACK })
-    }
-
+    let returnTo: string | undefined
     try {
-      const identity = await exchangeGithubIdentity(
-        code,
-        providerRedirectUri(provider),
-        intent.codeVerifier,
+      const claim = await claimLink(
+        userToken,
+        ref,
+        session.browserSessionRef,
+        provider,
+        decoded.nonce,
       )
-      try {
-        await linkIdentity(userToken, identity)
-        return redirectWithResult({ result: 'success' })
-      } catch (error) {
-        if (
-          !(error instanceof PhoenixBrowserSessionError) ||
-          error.code !== AUTH_ERROR.TOKEN_EXPIRED
-        ) {
-          throw error
-        }
-
-        const refreshed = await refreshSession(intent.browserSessionRef)
-        await linkIdentity(refreshed.accessToken, identity)
-        return redirectWithResult({ result: 'success' }, refreshed)
+      returnTo = claim.returnTo
+      const location = new URL(claim.returnTo)
+      const code = context.req.query('code')
+      if (!code || context.req.query('error')) {
+        await cancelLink(userToken, ref, session.browserSessionRef)
+        location.searchParams.set('oauthLink', 'cancelled')
+        context.header('Set-Cookie', clearLinkIntentCookie())
+        return context.redirect(location.toString(), 303)
       }
+      const definition = OAUTH_PROVIDERS[provider]
+      const redirectUri =
+        definition.callback === 'separate'
+          ? providerRedirectUri(provider)
+          : new URL(`/api/auth/callback/${provider}`, process.env.AUTH_URL).toString()
+      const identity = await (oauthExchanges?.[provider] || definition.exchange)(
+        code,
+        redirectUri,
+        claim.codeVerifier,
+      )
+      const result = await verifyLink(userToken, ref, session.browserSessionRef, identity)
+      location.searchParams.set(
+        'oauthLink',
+        result.status === 'confirm' ? 'confirm' : 'already_linked',
+      )
+      if (result.status !== 'confirm') context.header('Set-Cookie', clearLinkIntentCookie())
+      context.header('Cache-Control', 'no-store')
+      return context.redirect(location.toString(), 303)
+    } catch {
+      if (returnTo) {
+        await cancelLink(userToken, ref, session.browserSessionRef).catch(() => undefined)
+        const location = new URL(returnTo)
+        location.searchParams.set('oauthLink', 'error')
+        context.header('Set-Cookie', clearLinkIntentCookie())
+        context.header('Cache-Control', 'no-store')
+        return context.redirect(location.toString(), 303)
+      }
+      context.header('Cache-Control', 'no-store')
+      return context.redirect('/api/auth/error', 303)
+    }
+  }
+
+  app.get(AUTH_ROUTE.ACCOUNT_CALLBACK, (context) => {
+    const provider = context.req.param('provider')
+    const definition = oauthProvider(provider)
+    if (!definition || definition.callback !== 'separate') return context.notFound()
+    return linkCallback(context, provider as TOauthProvider)
+  })
+
+  app.get('/api/auth/callback/:provider', (context) => {
+    const provider = context.req.param('provider')
+    const definition = oauthProvider(provider)
+    if (!definition) return context.notFound()
+    if (definition.callback !== 'shared' || !(context.req.query('state') || '').startsWith('li_'))
+      return authHandler(context.req.raw)
+    return linkCallback(context, provider as TOauthProvider)
+  })
+
+  app.get('/api/auth/accounts/link/confirmation', async (context) => {
+    const ref = requestCookie(context.req.raw, linkIntentCookie())
+    const session = await readSession(context.req.raw)
+    const userToken = readPhoenixUserToken(context.req.raw)
+    if (!ref || !session || !userToken)
+      return context.json({ code: AUTH_ERROR.SESSION_MISSING }, 401, noStore())
+    try {
+      const summary = await readLink(userToken, ref, session.browserSessionRef)
+      return context.json(
+        { provider: summary.provider, providerId: summary.providerId, login: summary.login },
+        200,
+        noStore(),
+      )
     } catch (error) {
       const failure = mapBrowserSessionError(error, AUTH_ERROR.OAUTH_LINK_UNAVAILABLE)
-      return redirectWithResult({ result: 'error', code: failure.code })
+      return context.json({ code: failure.code }, failure.status, noStore())
+    }
+  })
+
+  app.post('/api/auth/accounts/link/confirmation', async (context) => {
+    if (!requireStateChangeOrigin(context))
+      return context.json({ code: AUTH_ERROR.INVALID_ORIGIN }, 400, noStore())
+    const ref = requestCookie(context.req.raw, linkIntentCookie())
+    const session = await readSession(context.req.raw)
+    const userToken = readPhoenixUserToken(context.req.raw)
+    if (!ref || !session || !userToken)
+      return context.json({ code: AUTH_ERROR.SESSION_MISSING }, 401, noStore())
+    if (
+      !(await limitOauth(context.env || {}, `oauth:confirm:${clientRateLimitKey(context.req.raw)}`))
+    )
+      return context.json({ code: AUTH_ERROR.RATE_LIMITED }, 429, retryAfter())
+    try {
+      const body = await context.req.json<{ provider?: unknown; providerId?: unknown }>()
+      if (typeof body.provider !== 'string' || typeof body.providerId !== 'string')
+        return context.json({ code: AUTH_ERROR.OAUTH_LINK_INVALID_INTENT }, 400, noStore())
+      await confirmLink(userToken, ref, session.browserSessionRef, body.provider, body.providerId)
+      context.header('Set-Cookie', clearLinkIntentCookie())
+      return context.json({ done: true }, 200, noStore())
+    } catch (error) {
+      const failure = mapBrowserSessionError(error, AUTH_ERROR.OAUTH_LINK_UNAVAILABLE)
+      return context.json({ code: failure.code }, failure.status, noStore())
+    }
+  })
+
+  app.post('/api/auth/accounts/link/cancel', async (context) => {
+    if (!requireStateChangeOrigin(context))
+      return context.json({ code: AUTH_ERROR.INVALID_ORIGIN }, 400, noStore())
+    const ref = requestCookie(context.req.raw, linkIntentCookie())
+    const session = await readSession(context.req.raw)
+    const userToken = readPhoenixUserToken(context.req.raw)
+    if (!ref || !session || !userToken)
+      return context.json({ code: AUTH_ERROR.SESSION_MISSING }, 401, noStore())
+    try {
+      await cancelLink(userToken, ref, session.browserSessionRef)
+      context.header('Set-Cookie', clearLinkIntentCookie())
+      return context.json({ done: true }, 200, noStore())
+    } catch (error) {
+      const failure = mapBrowserSessionError(error, AUTH_ERROR.OAUTH_LINK_UNAVAILABLE)
+      return context.json({ code: failure.code }, failure.status, noStore())
     }
   })
 
@@ -743,6 +816,128 @@ export const createApp = ({
     }
     context.header('Cache-Control', 'no-store')
     return new Response(null, { status: 204 })
+  })
+
+  app.get('/api/auth/platforms', async (context) => {
+    try {
+      return context.json({ providers: await listProviders() }, 200, noStore())
+    } catch {
+      return context.json({ code: 'OAUTH_PROVIDERS_UNAVAILABLE' }, 503, noStore())
+    }
+  })
+
+  const registrationCookie = () => `${useSecureCookies ? '__Host-' : ''}groupher-auth.registration`
+  const escapeHtml = (value: string) =>
+    value.replace(
+      /[&<>"']/g,
+      (character) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!,
+    )
+
+  app.get('/api/auth/error', (context) => {
+    const fallback =
+      process.env.NODE_ENV === 'production'
+        ? 'https://groupher.com/'
+        : 'https://community.groupher.localhost/home/post'
+    let target = fallback
+    try {
+      const cookie = requestCookie(
+        context.req.raw,
+        getAuthCookieNames(useSecureCookies).callbackUrl,
+      )
+      if (cookie) {
+        const candidate = new URL(decodeURIComponent(cookie))
+        if (isAllowedAuthOrigin(candidate.origin) && !candidate.username && !candidate.password) {
+          target = candidate.toString()
+        }
+      }
+    } catch {
+      // A malformed or missing return address falls back to the product entry.
+    }
+    context.header('Cache-Control', 'no-store')
+    context.header(
+      'Content-Security-Policy',
+      "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
+    )
+    return context.html(
+      `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in failed</title><style>body{font:16px system-ui;max-width:28rem;margin:12vh auto;padding:1rem;line-height:1.5}</style></head><body><main><h1>Sign in failed</h1><p>The authorization could not be completed. Return to the app and try signing in again.</p><a href="${escapeHtml(target)}">Return to Groupher</a></main></body></html>`,
+    )
+  })
+
+  app.get('/api/auth/register', async (context) => {
+    const ref = requestCookie(context.req.raw, registrationCookie())
+    if (!ref) return context.json({ code: 'REGISTRATION_EXPIRED' }, 400, noStore())
+    if (
+      !(await limitOauth(
+        context.env || {},
+        `oauth:registration:${clientRateLimitKey(context.req.raw)}`,
+      ))
+    ) {
+      return context.json({ code: 'RATE_LIMITED' }, 429, retryAfter())
+    }
+    try {
+      const summary = await readRegistration(ref)
+      return context.json(
+        { provider: summary.provider, suggestedLogin: summary.suggestedLogin },
+        200,
+        noStore(),
+      )
+    } catch {
+      return context.json({ code: 'REGISTRATION_EXPIRED' }, 400, noStore())
+    }
+  })
+
+  app.post('/api/auth/register', async (context) => {
+    if (!requireStateChangeOrigin(context))
+      return context.json({ code: 'FORBIDDEN' }, 403, noStore())
+    const ref = requestCookie(context.req.raw, registrationCookie())
+    if (!ref) return context.json({ code: 'REGISTRATION_EXPIRED' }, 400, noStore())
+    if (
+      !(await limitOauth(
+        context.env || {},
+        `oauth:registration:${clientRateLimitKey(context.req.raw)}`,
+      ))
+    ) {
+      return context.json({ code: 'RATE_LIMITED' }, 429, retryAfter())
+    }
+    const body = (await context.req.json().catch(() => null)) as {
+      login?: unknown
+      action?: unknown
+    } | null
+    const clearCookie = () =>
+      serialize(registrationCookie(), '', {
+        httpOnly: true,
+        secure: useSecureCookies,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 0,
+      })
+    if (body?.action === 'cancel') {
+      context.header('Set-Cookie', clearCookie())
+      return context.json({ done: true }, 200, noStore())
+    }
+    if (typeof body?.login !== 'string' || !body.login.trim() || body.login.length > 30) {
+      return context.json({ code: 'INVALID_LOGIN' }, 400, noStore())
+    }
+    let session: Awaited<ReturnType<typeof completeRegistration>> | undefined
+    try {
+      const summary = await readRegistration(ref)
+      session = await completeRegistration(ref, body.login, {
+        userAgentSummary: context.req.header('user-agent')?.slice(0, 255),
+      })
+      const response = await signedInResponse(
+        session,
+        safeReturnTo(context.req.raw, summary.returnTo),
+      )
+      const headers = new Headers(response.headers)
+      headers.delete('location')
+      headers.set('content-type', 'application/json')
+      headers.append('set-cookie', clearCookie())
+      return new Response(JSON.stringify({ done: true }), { status: 200, headers })
+    } catch {
+      if (session) await revokeSession(session.browserSessionRef).catch(() => undefined)
+      return context.json({ code: 'REGISTRATION_FAILED' }, 400, noStore())
+    }
   })
 
   app.on(['GET', 'POST'], AUTH_ROUTE.ROOT, (context) => authHandler(context.req.raw))

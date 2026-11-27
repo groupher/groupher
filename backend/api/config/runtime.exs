@@ -2,6 +2,23 @@ import Config
 
 import Helper.Utils, only: [get_host_from_url: 1]
 
+oauth_state = fn key, default ->
+  case System.get_env(key, default) do
+    "open" -> :open
+    "existing" -> :existing
+    "closed" -> :closed
+    value -> raise "Invalid #{key}: #{inspect(value)}"
+  end
+end
+
+production = config_env() in [:prod, :seed_prod]
+
+config :groupher_server, :oauth_provider_states, %{
+  "github" => oauth_state.("OAUTH_GITHUB_STATE", "open"),
+  "linuxdo" => oauth_state.("OAUTH_LINUXDO_STATE", if(production, do: "closed", else: "open")),
+  "e2e" => if(production, do: :closed, else: :open)
+}
+
 service_auth_origin =
   if config_env() in [:prod, :seed_prod],
     do: "https://auth.groupher.com",

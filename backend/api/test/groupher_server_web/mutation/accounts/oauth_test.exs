@@ -11,8 +11,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
   @test_service_auth "enabled"
 
   @valid_github_profile mock_attrs(:oauth_profile, %{provider: "github"})
-  @valid_twitter_profile mock_attrs(:oauth_profile, %{provider: "twitter"})
-  @valid_google_profile mock_attrs(:oauth_profile, %{provider: "google"})
+  @valid_linuxdo_profile mock_attrs(:oauth_profile, %{provider: "linuxdo"})
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -31,8 +30,9 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
       ret = guest_conn |> gq_mutation(@query, variables)
 
-      assert is_binary(ret["accessToken"])
-      assert is_binary(ret["browserSessionRef"])
+      assert ret["status"] == "SIGNED_IN"
+      assert is_binary(ret["session"]["accessToken"])
+      assert is_binary(ret["session"]["browserSessionRef"])
 
       oauth_provider =
         Repo.get_by(OauthProvider,
@@ -43,18 +43,19 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       assert is_nil(oauth_provider.raw)
     end
 
-    test "can signin oauth with google", ~m(guest_conn)a do
-      variables = %{provider: gql_oauth_provider(@valid_google_profile)}
+    test "can signin oauth with linuxdo", ~m(guest_conn)a do
+      variables = %{provider: gql_oauth_provider(@valid_linuxdo_profile)}
 
       ret = guest_conn |> gq_mutation(@query, variables)
 
-      assert is_binary(ret["accessToken"])
-      assert is_binary(ret["browserSessionRef"])
+      assert ret["status"] == "SIGNED_IN"
+      assert is_binary(ret["session"]["accessToken"])
+      assert is_binary(ret["session"]["browserSessionRef"])
 
       oauth_provider =
         Repo.get_by(OauthProvider,
-          provider: @valid_google_profile.provider,
-          provider_id: @valid_google_profile.provider_id
+          provider: @valid_linuxdo_profile.provider,
+          provider_id: @valid_linuxdo_profile.provider_id
         )
 
       assert is_nil(oauth_provider.raw)
@@ -70,6 +71,54 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
                GroupherServer.Auth.Contract.service_token_invalid()
              )
     end
+  end
+
+  test "registration requires the dedicated service scope before consuming its flow" do
+    provider = %{
+      provider: "linuxdo",
+      provider_id: "scope-registration",
+      login: "scope_registration"
+    }
+
+    ref = "scope_registration_flow"
+    assert {:ok, _} = Accounts.Profiles.OauthFlows.create_registration(ref, provider, nil)
+
+    query = """
+    mutation($ref: String!, $login: String!) {
+      completeOauthRegistration(flowRef: $ref, login: $login) { browserSessionRef }
+    }
+    """
+
+    actor = %{
+      audience: "phoenix:auth-api",
+      scopes: MapSet.new(["auth:session:signin"]),
+      subject: "service:auth"
+    }
+
+    options = [
+      variables: %{"ref" => ref, "login" => "scope_registration"},
+      context: %{service_actor: actor}
+    ]
+
+    assert {:ok, denied} = Absinthe.run(query, GroupherServerWeb.Schema, options)
+    assert [%{extensions: %{code: code}}] = denied.errors
+
+    assert code ==
+             GroupherServerWeb.ErrorCat.code(GroupherServerWeb.ErrorCat.service_scope_forbidden())
+
+    assert {:ok, _} = Accounts.Profiles.OauthFlows.registration_summary(ref)
+    refute Repo.get_by(OauthProvider, provider: "linuxdo", provider_id: "scope-registration")
+
+    allowed_actor = %{actor | scopes: MapSet.new(["auth:oauth:register"])}
+
+    assert {:ok, %{data: %{"completeOauthRegistration" => %{"browserSessionRef" => session_ref}}}} =
+             Absinthe.run(
+               query,
+               GroupherServerWeb.Schema,
+               Keyword.put(options, :context, %{service_actor: allowed_actor})
+             )
+
+    assert is_binary(session_ref)
   end
 
   describe "[browser session refresh]" do
@@ -110,18 +159,6 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
   end
 
   describe "[canonical oauth accounts]" do
-    @link_query """
-    mutation($identity: VerifiedOauthIdentityInput!) {
-      linkOauthIdentity(identity: $identity) {
-        entries {
-          publicRef
-          provider
-          canUnlink
-        }
-      }
-    }
-    """
-
     @unlink_query """
     mutation($publicRef: ID!) {
       unlinkOauthIdentity(publicRef: $publicRef) {
@@ -134,32 +171,13 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
     }
     """
 
-    test "links and unlinks through the canonical public-ref contract", ~m(user_conn)a do
-      identity = %{
-        provider: @valid_twitter_profile.provider,
-        provider_id: @valid_twitter_profile.provider_id,
-        login: @valid_twitter_profile.login,
-        nickname: @valid_twitter_profile.nickname,
-        avatar: @valid_twitter_profile.avatar
-      }
-
-      linked = user_conn |> gq_mutation(@link_query, %{identity: identity})
-
-      assert [%{"publicRef" => public_ref, "provider" => "twitter", "canUnlink" => false}] =
-               linked["entries"]
-
-      github_identity = %{
-        provider: @valid_github_profile.provider,
-        provider_id: @valid_github_profile.provider_id,
-        login: @valid_github_profile.login,
-        nickname: @valid_github_profile.nickname,
-        avatar: @valid_github_profile.avatar
-      }
-
-      linked = user_conn |> gq_mutation(@link_query, %{identity: github_identity})
-      assert length(linked["entries"]) == 2
-
-      unlinked = user_conn |> gq_mutation(@unlink_query, %{publicRef: public_ref})
+    test "unlinks an existing binding through the public-ref contract", ~m(user_conn user)a do
+      github_identity = Map.put(@valid_github_profile, :login, user.login)
+      linuxdo_identity = Map.put(@valid_linuxdo_profile, :login, user.login)
+      assert {:ok, _} = Accounts.Profiles.link_oauth(user.login, github_identity)
+      assert {:ok, _} = Accounts.Profiles.link_oauth(user.login, linuxdo_identity)
+      binding = Repo.get_by!(OauthProvider, user_id: user.id, provider: "linuxdo")
+      unlinked = user_conn |> gq_mutation(@unlink_query, %{publicRef: binding.public_ref})
       assert [%{"provider" => "github", "canUnlink" => false}] = unlinked["entries"]
     end
   end

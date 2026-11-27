@@ -4,11 +4,10 @@ defmodule GroupherServer.Test.Helper.Schema.OAuth do
   def m(:signin_oauth) do
     """
     mutation($provider: OauthProviderInput!) {
-          signinOauth(provider: $provider) {
-            accessToken
-            accessExpiresAt
-            browserSessionRef
-            sessionAbsoluteExpiresAt
+          signinOauth(provider: $provider, flowRef: "test-flow-ref") {
+            status
+            session { accessToken accessExpiresAt browserSessionRef sessionAbsoluteExpiresAt }
+            registration { suggestedLogin }
           }
         }
     """

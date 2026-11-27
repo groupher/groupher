@@ -102,8 +102,6 @@ defmodule GroupherServer.Accounts.Profiles.Query do
         |> order_by([binding], asc: binding.inserted_at, asc: binding.id)
         |> Repo.all()
 
-      can_unlink = length(bindings) > 1
-
       {:ok,
        %{
          entries:
@@ -114,7 +112,11 @@ defmodule GroupherServer.Accounts.Profiles.Query do
                login: binding.login,
                nickname: binding.nickname,
                avatar: binding.avatar,
-               can_unlink: can_unlink,
+               can_unlink:
+                 Enum.any?(bindings, fn other ->
+                   other.id != binding.id and
+                     Accounts.Profiles.OauthProviders.allow_sign_in?(other.provider)
+                 end),
                linked_at: binding.inserted_at
              }
            end)

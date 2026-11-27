@@ -18,6 +18,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Workflow do
   alias GroupherServer.{Accounts, Repo}
   alias Accounts.Model.{OauthProvider, User}
   alias Accounts.Profiles.Oauth.Persist, as: OauthPersist
+  alias Accounts.Profiles.OauthProviders
 
   alias Helper.{Multi, ORM}
 
@@ -54,6 +55,14 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Workflow do
   end
 
   defp link_missing_identity(user, provider) do
+    if OauthProviders.allow_new_identity?(provider.provider) do
+      link_available_identity(user, provider)
+    else
+      {:error, "OAuth provider does not accept new identities"}
+    end
+  end
+
+  defp link_available_identity(user, provider) do
     case find_user_provider(user, provider.provider) do
       {:ok, _existing} -> {:error, oauth_provider_already_linked_error()}
       {:error, _} -> create_provider_binding(user, provider)
@@ -80,7 +89,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Workflow do
 
     with {:ok, user} <- OauthPersist.lock_user(login),
          {:ok, oauth_provider} <- find_user_oauth_provider(user, provider),
-         {:ok, :pass} <- ensure_multiple_login_methods(user),
+         {:ok, :pass} <- ensure_other_login_method(user, oauth_provider),
          {:ok, _deleted} <- OauthPersist.delete_binding(oauth_provider),
          {:ok, :pass} <- OauthPersist.clear_derived_social(user, oauth_provider) do
       {:ok, user}
@@ -116,7 +125,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Workflow do
   def unlink_identity_in_transaction(login, public_ref) do
     with {:ok, user} <- OauthPersist.lock_user(login),
          {:ok, binding} <- find_user_oauth_identity(user, public_ref),
-         {:ok, :pass} <- ensure_multiple_login_methods(user),
+         {:ok, :pass} <- ensure_other_login_method(user, binding),
          {:ok, _deleted} <- OauthPersist.delete_binding(binding),
          {:ok, :pass} <- OauthPersist.clear_derived_social(user, binding) do
       {:ok, user}
@@ -272,15 +281,18 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Workflow do
     end
   end
 
-  defp ensure_multiple_login_methods(%User{} = user) do
-    provider_count =
-      from(o in OauthProvider, where: o.user_id == ^user.id)
-      |> Repo.aggregate(:count, :id)
+  defp ensure_other_login_method(%User{} = user, binding) do
+    remaining =
+      from(o in OauthProvider,
+        where: o.user_id == ^user.id and o.id != ^binding.id,
+        select: o.provider
+      )
+      |> Repo.all()
 
-    if provider_count <= 1 do
-      {:error, oauth_last_login_method_error()}
-    else
+    if Enum.any?(remaining, &OauthProviders.allow_sign_in?/1) do
       {:ok, :pass}
+    else
+      {:error, oauth_last_login_method_error()}
     end
   end
 

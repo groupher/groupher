@@ -4,7 +4,7 @@ import { buildTopGlowBackground, resolveTopGlow } from '~/lib/topGlow'
 export { cn } from '~/css'
 
 export default function useSalon({ visible, compact = false }) {
-  const { cn, bg, br, zIndex, hover, shadow } = useTwBelt()
+  const { cn, bg, br, fill, zIndex, hover, shadow } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -23,7 +23,7 @@ export default function useSalon({ visible, compact = false }) {
     children: cn(compact ? 'min-h-0' : 'min-h-72', 'h-auto', 'grow', 'overflow-y-auto'),
     //
     closeBox: cn('align-both size-7 absolute top-3.5 right-4 z-10', hover('bg')),
-    closeIcon: cn('size-5', hover('icon'), zIndex('modalCloseBtn')),
+    closeIcon: cn('size-5', fill('digest'), hover('icon'), zIndex('modalCloseBtn')),
     //
     glowLight: 'absolute w-full h-3/5 opacity-65 top-0 left-0 rotate-y-180 pointer-events-none',
     glowLightStyle: (glowType, theme) => {
