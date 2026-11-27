@@ -109,7 +109,7 @@ backend/api/dev/
 
 ### home 与生产 seed
 
-`home/prepare.ex` 在受管入口准入后串行调用共享的 LiteHome。文章、标签与壁纸的准备逻辑仍归 LiteHome；`make be.seed.home` 委托 `pnpm seed home prepare`。本地运行前需先建库并迁移，再启动 Hub、受管 Phoenix、Auth 和 Assets；壁纸上传完成时由运行中的 Phoenix 接收 Assets 回调。数据库和资产端点取自同一已核实环境。受管开发环境将发布间隔设为零并放宽小时、日限额；发布仍经过 Gate 和计数，`MIX_ENV=test` 和生产配置不变。空库连续两次 prepare 及壁纸回调仍需真实环境验收。生产 `MIX_ENV=seed_prod` 继续从原脚本调用共享实现，构建及运行均独立于 `dev/` 和本机 Hub。[LiteHome](../../backend/api/lib/groupher_server/cms/seeds/lite_home.ex) · [Make 入口](../../Makefile) · [生产脚本](../../backend/api/scripts/seed_lite_home_prod.sh)
+`home/prepare.ex` 在受管入口准入后串行调用共享的 LiteHome。文章、标签与壁纸的准备逻辑仍归 LiteHome；`make be.seed.home` 委托 `pnpm seed home prepare`。本地运行前需先建库并迁移，再启动 Hub、受管 Phoenix、Auth 和 Assets；壁纸上传完成时由运行中的 Phoenix 接收 Assets 回调。数据库和资产端点取自同一已核实环境。受管开发环境将发布间隔设为零并放宽小时、日限额；发布仍经过 Gate 和计数，`MIX_ENV=test` 和生产配置不变。空库连续两次 prepare、壁纸回调与页面读回已在独立 B 补测，证据见下方验收记录。生产 `MIX_ENV=seed_prod` 继续从原脚本调用共享实现，构建及运行均独立于 `dev/` 和本机 Hub。[LiteHome](../../backend/api/lib/groupher_server/cms/seeds/lite_home.ex) · [Make 入口](../../Makefile) · [生产脚本](../../backend/api/scripts/seed_lite_home_prod.sh)
 
 ## 命令与资源身份
 
@@ -211,8 +211,10 @@ Runner 在内部区分首次执行和恢复，公开 Context 只返回业务结�
 ## 后续集成验收
 
 1. 待 worktree 登记、数据库及服务端点可按环境解析后，在 A、B 使用相同的 run、alias 和 slug，核对实际落库。预览并清理 B 后，A 原编辑者窗口仍能写主题并从 A 库读回。完整步骤见[双 worktree 验收](dev-hub-multi-worktree.md)。
-2. **home 验收待执行。** 从空开发库执行第一次 prepare，再在同一库执行第二次。读回内容和壁纸，核对资源无重复、资产均属本环境及 Phoenix 已收到上传回调；同时验证测试与生产频控未改变。[此前受频控阻塞的实测](dev-hub-multi-worktree.md#2026-11-26-双-worktree-数据库实测)
+2. **home 受管链路补测。** 从空开发库执行第一次 prepare，再在同一库执行第二次。读回内容和壁纸，核对资源无重复、资产均属本环境及 Phoenix 已收到上传回调；同时验证测试与生产频控未改变。[此前受频控阻塞的实测](dev-hub-multi-worktree.md#2026-11-26-双-worktree-数据库实测)
 
    已在独立 PostgreSQL 实例应用当前 checkout 的 817 条迁移，以受管开发频控连续调用两次 LiteHome，确认社区引用一致，并在另一演练库恢复空库基线。该次关闭壁纸步骤，也没有经过受管 HTTP 入口；完整服务链路仍待验收。演练数据库与独立构建目录已回收。
+
+   2026-11-27 使用合并候选 `e59ca2490`，在空 B 开发库经受管入口连续两次执行 prepare，返回相同社区 ref；读回 7 篇文章、明暗两套壁纸、8 个有效图片资源，8 个 B 本地资产地址均返回 200，Community 页面显示 4 篇预期 Post。Phoenix 与 Assets Hub 使用同一环境的 capability 密钥，上传经 Phoenix 回调完成；资产存储位于 B，未配置 R2。B 服务、数据库和 worktree 已回收。该次覆盖受管 B，不等于完整生产隔离验收。
 
 3. 随跨进程动作交付，在隔离环境发出创建请求，在下游提交前暂停它并终止协调进程。此时申请显式保留须被拒绝，run 仍开放；放行下游提交，再按原 command ID 恢复唯一 ref，验证没有第二次创建。另模拟 fixture 确认写回失败、Receipt 结果过期但身份仍有效、结果及身份均过期，均不得自动重放。对下游已终止且归属仍未明的一项，验证显式保留的原因和证据可读、重复申请读回同一决定、迟到回填仅追加证据、报告部分完成。其他 run 的引用须被拒绝。
