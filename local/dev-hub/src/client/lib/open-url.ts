@@ -10,5 +10,12 @@ export function openUrl(url: URL): void {
     return
   }
 
+  // A managed desktop tab is a subframe; Tauri injects its API only in the shell.
+  const params = new URLSearchParams(window.location.search)
+  if (window.parent !== window && params.has('devhubRoot') && params.has('devhubInstance')) {
+    window.parent.postMessage({ type: 'groupher-devhub-open-url', url: target }, '*')
+    return
+  }
+
   window.open(target, '_blank', 'noopener,noreferrer')
 }

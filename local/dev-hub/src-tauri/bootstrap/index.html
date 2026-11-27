@@ -37,7 +37,7 @@
   </head>
   <body>
     <div class="shell">
-      <nav class="bar" id="tabs" role="tablist" aria-label="Worktrees"></nav>
+      <nav class="bar" id="tabs" role="tablist" aria-label="Worktrees" data-tauri-drag-region></nav>
       <div class="path" id="path"></div>
       <div id="error" role="alert"></div>
       <main class="content" id="panels"><div class="message" id="empty" role="status">Run make dev from a checkout to open its Dev Hub.</div></main>
@@ -51,6 +51,23 @@
       const errorLabel = document.querySelector('#error')
       const empty = document.querySelector('#empty')
       let active = null
+
+      window.addEventListener('message', (event) => {
+        const item = active && tabs.get(active)
+        const frame = item && item.panel.querySelector('iframe')
+        if (!frame || closed.has(active) || event.source !== frame.contentWindow || event.origin !== new URL(item.url).origin) return
+        if (!event.data || event.data.type !== 'groupher-devhub-open-url' || typeof event.data.url !== 'string') return
+        try {
+          const url = new URL(event.data.url)
+          const local = (url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname)) ||
+            (url.protocol === 'https:' && url.hostname.endsWith('.localhost'))
+          const platform = url.protocol === 'https:' && ['dash.cloudflare.com', 'fly.io', 'dashboard.algolia.com'].includes(url.hostname)
+          if ((!local && !platform) || url.username || url.password) return
+          window.__TAURI_INTERNALS__?.invoke('plugin:opener|open_url', { url: url.href }).catch(() => {
+            errorLabel.textContent = 'Could not open the requested address in the default browser.'
+          })
+        } catch { /* Ignore malformed addresses. */ }
+      })
 
       function select(root) {
         if (!tabs.has(root) || closed.has(root)) return
