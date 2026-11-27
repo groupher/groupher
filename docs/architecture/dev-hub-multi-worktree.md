@@ -242,6 +242,8 @@ Phoenix 生产 runtime 允许部署环境显式提供 `SERVICE_AUTH_ISSUER`、`S
 
 Auth 和 Assets Hub 的生产 Node 入口不再读取本地 dotenv；生产进程的身份服务或 Phoenix 地址指向本机、或 Assets Hub 被设为本地存储模式时拒绝启动。它们的单测覆盖这些分支；Worker 配置测试也验证混入本地地址时仍选用生产服务地址。Assets Worker 的现有生产配置仍引用名为 `groupher-assets-dev` 的 R2 与 `groupher-asset-delete-dev` 队列，这是既有配置而非本次新建的隔离资源；实际线上资源归属与读写影响尚未核验，不得因为名称推断隔离，也不得在本次验收中改写它们。[现有绑定](../../backend/assets-hub/cloudflare.config.ts) · [历史状态](../assets-hub/v2.md)
 
+**2026-11-27 Node 生产构建补测。** 用现有 Auth 和 Assets Hub 构建命令的 esbuild 参数，在临时目录分别执行移除三项探针变量、以及注入本地 DB 名、`.localhost` issuer 与测试秘密标记的两组构建；四个 bundle 均生成，均不包含测试标记。Auth 和 Assets Hub 对应生产配置及环境单测分别为 4 项、11 项通过。此检查仍使用当前 checkout，不等于无本地状态的独立构建，也不覆盖 Dash 产物、实际部署注入或 Worker 绑定矩阵。
+
 ## 非目标与风险
 
 ### 非目标
