@@ -518,7 +518,8 @@ defmodule GroupherServer.Seed.Cleanup.Run do
 
       _ ->
         CMS.request_community_destruction(community, Map.fetch!(users, community.user_id),
-          command_id: Ecto.UUID.generate()
+          command_id: Ecto.UUID.generate(),
+          allowed_member_user_ids: users |> Map.keys() |> Enum.sort()
         )
     end
   end

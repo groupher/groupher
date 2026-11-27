@@ -463,6 +463,17 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
 
     assert {:ok, true} = CMS.community_members_outside?(created.communityRef, [owner.id], owner)
 
+    community = Repo.get_by!(CMS.Model.Community, ref: created.communityRef)
+
+    assert {:error, :owned_community_has_foreign_members} =
+             CMS.request_community_destruction(community, owner,
+               command_id: Ecto.UUID.generate(),
+               allowed_member_user_ids: [owner.id]
+             )
+
+    assert %{state: :active} =
+             Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
+
     assert {:ok, %{status: "blocked", blockers: blockers}} =
              GroupherServer.Seed.Cleanup.Run.apply("fixture-test")
 

@@ -20,6 +20,8 @@ slug 冲突分类保留为开发专用例外：受管入口核验本地管理身
 
 社区外来成员检查使用 owner 身份通过 Context 查询；如果社区无法通过 owner 读取范围核验，清理报告 `owned_community_membership_unavailable` 并保持 run 开放。正常允许读取的社区中，只要存在本 run 之外的管理员或订阅者，就报告 `owned_community_has_foreign_members`。
 
+预览和封存前的检查只是快照。清理请求归档时会携带本 run 的账号 ID；归档命令在取得生命周期写锁后、提交前再次检查外来成员。若检查发现外来成员，整个归档事务回滚并报告失败；已开始的订阅先完成时会被该检查发现，归档先持锁时后来的订阅必须等到提交并接受归档态的 Gate 判定。普通产品归档未提供该可选约束时保持原行为。
+
 以建社区为例，resolver 从认证上下文取得用户，调用 `CMS.create_community(attrs, user, command_id)`。本地 CLI 传递 run 和 `--owner` 别名，由受管 Phoenix 验证管理请求、解析真实用户，再通过 seed 动作调用同一函数；社区创建 fixture 已改为使用这个公开入口。社区与成员权限首批接口已切换为动词在前的名称，resolver 和 seed 使用同一个公开入口。其余接口的问题、候选名和迁移顺序见业务批次的命名审计 `docs/architecture/resolver-context-api-naming-audit.md`。首批接口见[本文对照表](#首批动作与-context-入口)。[现有 resolver](../../backend/api/lib/groupher_server_web/resolvers/cms/communities.ex) · 社区创建实现（`backend/api/dev/seed/community/create.ex`）
 
 ### 同一业务用例如何接入不同入口

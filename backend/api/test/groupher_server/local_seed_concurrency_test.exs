@@ -326,6 +326,129 @@ defmodule GroupherServer.LocalSeedConcurrencyTest do
     end)
   end
 
+  test "archive waits for a concurrent subscriber and rolls back when that subscriber is foreign" do
+    run = run_name()
+    other_run = run_name()
+    slug = run_name()
+    parent = self()
+
+    {community, owner, outsider} =
+      Sandbox.unboxed_run(Repo, fn ->
+        assert {:ok, _} = create_actor(run, "owner")
+        assert {:ok, _} = create_actor(other_run, "outsider")
+        assert {:ok, _} = create_community(run, %{"owner" => "owner", "slug" => slug})
+        assert {:ok, owner, _} = GroupherServer.Seed.Run.actor(run, "owner")
+        assert {:ok, outsider, _} = GroupherServer.Seed.Run.actor(other_run, "outsider")
+        {Repo.get_by!(GroupherServer.CMS.Model.Community, slug: slug), owner, outsider}
+      end)
+
+    subscriber =
+      Task.async(fn ->
+        Sandbox.unboxed_run(Repo, fn ->
+          Repo.transact_result(fn ->
+            assert {:ok, _} =
+                     GroupherServer.CMS.subscribe_to_community(
+                       community,
+                       outsider,
+                       Ecto.UUID.generate()
+                     )
+
+            send(parent, {:subscriber_joined, self(), backend_pid()})
+            await_release()
+            {:ok, :subscribed}
+          end)
+        end)
+      end)
+
+    assert_receive {:subscriber_joined, subscriber_pid, subscriber_db}, 15_000
+
+    archive =
+      Task.async(fn ->
+        Sandbox.unboxed_run(Repo, fn ->
+          Repo.checkout(fn ->
+            send(parent, {:archive_started, backend_pid()})
+
+            GroupherServer.CMS.request_community_destruction(community, owner,
+              command_id: Ecto.UUID.generate(),
+              allowed_member_user_ids: [owner.id]
+            )
+          end)
+        end)
+      end)
+
+    assert_receive {:archive_started, archive_db}, 10_000
+    assert_waiting_on(archive_db, subscriber_db)
+    send(subscriber_pid, :release)
+    assert {:ok, :subscribed} = Task.await(subscriber, 15_000)
+    assert {:error, :owned_community_has_foreign_members} = Task.await(archive, 15_000)
+
+    Sandbox.unboxed_run(Repo, fn ->
+      assert %{state: :active} =
+               Repo.get_by!(GroupherServer.CMS.Model.CommunityLifecycle,
+                 community_id: community.id
+               )
+    end)
+  end
+
+  test "a subscriber queued behind archive cannot join the archived Community" do
+    run = run_name()
+    other_run = run_name()
+    slug = run_name()
+    parent = self()
+
+    {community, owner, outsider} =
+      Sandbox.unboxed_run(Repo, fn ->
+        assert {:ok, _} = create_actor(run, "owner")
+        assert {:ok, _} = create_actor(other_run, "outsider")
+        assert {:ok, _} = create_community(run, %{"owner" => "owner", "slug" => slug})
+        assert {:ok, owner, _} = GroupherServer.Seed.Run.actor(run, "owner")
+        assert {:ok, outsider, _} = GroupherServer.Seed.Run.actor(other_run, "outsider")
+        {Repo.get_by!(GroupherServer.CMS.Model.Community, slug: slug), owner, outsider}
+      end)
+
+    archive =
+      Task.async(fn ->
+        Sandbox.unboxed_run(Repo, fn ->
+          Repo.transact_result(fn ->
+            assert {:ok, _} =
+                     GroupherServer.CMS.request_community_destruction(community, owner,
+                       command_id: Ecto.UUID.generate(),
+                       allowed_member_user_ids: [owner.id]
+                     )
+
+            send(parent, {:archive_locked, self(), backend_pid()})
+            await_release()
+            {:ok, :archived}
+          end)
+        end)
+      end)
+
+    assert_receive {:archive_locked, archive_pid, archive_db}, 15_000
+
+    subscriber =
+      Task.async(fn ->
+        Sandbox.unboxed_run(Repo, fn ->
+          Repo.checkout(fn ->
+            send(parent, {:subscriber_started, backend_pid()})
+            GroupherServer.CMS.subscribe_to_community(community, outsider, Ecto.UUID.generate())
+          end)
+        end)
+      end)
+
+    assert_receive {:subscriber_started, subscriber_db}, 10_000
+    assert_waiting_on(subscriber_db, archive_db)
+    send(archive_pid, :release)
+    assert {:ok, :archived} = Task.await(archive, 15_000)
+    assert {:error, _} = Task.await(subscriber, 15_000)
+
+    Sandbox.unboxed_run(Repo, fn ->
+      refute Repo.get_by(GroupherServer.CMS.Model.CommunitySubscriber,
+               community_id: community.id,
+               user_id: outsider.id
+             )
+    end)
+  end
+
   test "empty cleanup fails and a different run stays open after cleanup" do
     first_run = run_name()
     second_run = run_name()
