@@ -77,7 +77,7 @@ config :groupher_server, GroupherServer.Repo,
   database: System.get_env("DB_NAME", "groupher_server_dev"),
   hostname: System.get_env("DB_HOST", "localhost"),
   port: String.to_integer(System.get_env("DB_PORT", "5432")),
-  pool_size: String.to_integer(System.get_env("DB_POOL_SIZE", "10")),
+  pool_size: String.to_integer(System.get_env("DB_POOL_SIZE", "50")),
   queue_target: 5_000
 
 if managed_database do

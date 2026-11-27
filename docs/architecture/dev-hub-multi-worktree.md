@@ -169,7 +169,7 @@ A 使用当前工作目录（含未提交的 OAuth 迁移），临时 B 使用 `
 | B 开发库迁移、回滚、重新迁移                     | 从空库对 `groupher_isolation_b_dev` 依次运行 `make be.migrate`、`make be.rollback`、`make be.migrate`。三次均成功。迁移数依次为 817、816、817，探针版本记录与实际表均随之出现、消失、恢复。                                                                                                                                                                                                                                                    |
 | B 从空开发库迁移后运行 `make be.seed.home`       | 临时让 B 的 Make 入口复用 B 的 Hub 环境，确认 DB 和资产端点指向 B，启动 B 的 Auth、Phoenix 和 Assets Hub。seed 在内容事务内返回 `cms.gate.throttle_interval`（4626）。同一个 seed 账号连续发布文章，开发配置的最短发布间隔为 3 分钟。事务回滚后 B 的 `home` 社区为 0 条，壁纸上传和页面读回尚未验到。见 [LiteHome](../../backend/api/lib/groupher_server/cms/seeds/lite_home.ex) 与[开发使用的发布限额](../../backend/api/config/config.exs)。 |
 
-本地 Phoenix 的默认连接池为 10，可通过本环境的 `DB_POOL_SIZE` 显式调整；变更只在下次启动生效，不会重启正在使用的 A。2026-11-27 补测中，本机 PostgreSQL `max_connections` 为 100，A 旧进程占用 51 个连接，B 使用旧默认值 50 启动时出现 `too_many_connections`。因此数据库隔离还须核对共享 PostgreSQL 的连接容量；独立数据库并不自动隔离服务器级连接上限。
+Dev Hub 受管 Phoenix 的默认连接池为 10，可通过本环境的 `DB_POOL_SIZE` 显式调整；变更只在下次启动生效，不会重启正在使用的 A。`dev.exs` 的非受管默认值仍为 50。2026-11-27 补测中，本机 PostgreSQL `max_connections` 为 100，A 旧进程占用 51 个连接，B 使用旧默认值 50 启动时出现 `too_many_connections`。改用受管默认值后，B 占用 11 个连接，B 重复清理时 A 的测试账号仍可读取。因此数据库隔离还须核对共享 PostgreSQL 的连接容量；独立数据库并不自动隔离服务器级连接上限。
 
 以并行测试结束时为基线，在 B 的迁移、回滚、重新迁移和 seed 失败后逐次比对 schema、普通表的行数与行内容摘要、序列值。一次性实例内 A 的开发库副本和测试库每次都一致。日常 A 的测试库从验收前到结束也一致；日常 A 的开发库只有 Oban 的 `public.oban_jobs`、`public.oban_peers` 和任务序列出现变化，业务表与 schema 一致。
 
