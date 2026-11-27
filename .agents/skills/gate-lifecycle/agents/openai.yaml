@@ -1,0 +1,3 @@
+interface:
+  display_name: "Gate Lifecycle"
+  short_description: "Keep Gate admission and Lifecycle state aligned"

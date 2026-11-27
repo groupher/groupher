@@ -8,6 +8,19 @@
 - 修改时优先遵守项目现有目录结构、命名方式和封装习惯
 - 如果发现规则与当前实现明显冲突，先指出冲突点，再讨论处理方式
 
+## 目录归属
+
+从用户进入的产品页开始找实现。确定哪些宿主消费这次修改，再决定是否提取共享能力。[Core 目录说明](../../frontend/core/README.md)
+
+| 要改的行为                                        | 优先查看                                                                                                                                                                                                                                                                            |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 某个产品的 URL、loader、SSR、服务端请求或部署配置 | 对应宿主。以 Community 和 Dash 为例，路由在 `src/routes/`，服务端代码在 `src/server/`，宿主组件在 `src/components/`。路由定义变更后由工具生成 `routeTree.gen.ts`。                                                                                                                  |
+| 跨宿主使用的控件或业务界面                        | `frontend/core/ui/` 放通用控件，`unit/` 放按产品功能组织的组合组件，`shell/` 放共享外壳，`render/` 放内容渲染器。单一页面的私有组合留在所属模块。                                                                                                                                   |
+| 服务端数据、组件交互和 URL 状态                   | 共享查询、mutation 和失效规则查 `core/query/`，宿主预加载查对应的 `src/query/`（如 Dash、Community）。可分享的筛选条件交给路由，局部交互留在组件或 hook。共享客户端状态看 `core/stores/`，避免再保存一份 Query 结果。[Query 与 Store 边界](../architecture/query-store-boundary.md) |
+| GraphQL 字段、操作、fragment 或生成类型           | 先改源操作，常见位置是 `core/schemas/`。核对 [codegen 输入清单](../../codegen.ts)，运行 `pnpm graphql:codegen`，检查 `core/lib/graphql/generated/` 的变化以及真实消费者。                                                                                                           |
+| 导航和跨应用跳转                                  | 共享导航查看 `core/platform/`，宿主拥有自己的路由树。应用内导航保留客户端路由，跨应用链接按整页导航处理。[链接约定](../architecture/platform/links.md)                                                                                                                              |
+| Widget、测试和模拟服务                            | 嵌入式 Widget 的 loader、Lit 运行时和 Shadow DOM 样式归 `frontend/widget/`。单元测试就近放置，跨应用浏览器流程看 `frontend/e2e/`，模拟 API 看 `frontend/mock-server/`。[Widget 边界](../../frontend/widget/README.md)                                                               |
+
 ## GraphQL 与 Query 命名
 
 - GraphQL operation、fragment、取数函数和 TanStack Query key 的命名遵守 [`naming.md`](./naming.md)
@@ -16,9 +29,8 @@
 
 ## class 书写
 
-- 尽量不要使用 `[]` 这类自定义 Tailwind 写法
-- 这类写法容易增大 class 体积，只有在确实没有合适现成方案时再使用
-- 优先复用项目已有的全局 class，参考 `frontend/core/tailwind/common/utils.css`
+- 写样式前查同类组件的公共 salon、现有 Tailwind utility、主题 token 和[全局 CSS](../../frontend/core/tailwind/common/index.css)，常用语义 class 见 [utils.css](../../frontend/core/tailwind/common/utils.css)。现有能力无法表达时才用 `[xxx]` 任意值
+- 静态样式和有限个状态变体由 salon 返回 class，避免 JSX 内联 `style`。拖拽坐标、实时缩放等只能在运行时确定的连续值，可以传给 CSS 变量或相应的 style 属性，其余样式仍归 salon
 - 注意区分 cn/cnMerge, 前者不会 merge class, 根据场合酌情使用
 - class names 不要放在 `constant.ts`，也不要在组件 JSX 里裸写；样式归对应 `salon`
 - `constant.ts` 只放语义常量、枚举、非样式配置；不要把 `wrapper/item/content` 这类 class map 塞进去
@@ -26,10 +38,11 @@
 
 ## 组件拆分
 
-- 一个文件不要定义多个组件，需要拆分成独立的文件和 salon
+- 一个文件定义一个组件，一个组件负责一件事。当表单、列表项、弹层或某个布局已有独立交互和渲染职责时，拆成具名组件。拆分依据是职责，不设固定行数
 - 拆分组件时，禁止把 `const s = useSalon()` 中的 `s` 作为 props 向下传递
 - 下层组件如果需要 salon 相关能力，应自行引用 `useSalon()`
-- 同目录下组件与对应 salon 的语义名要对齐：组件文件名与其 salon 的用途保持一致，页面组件改名时同步调整引用（例如 `Gradients.tsx` 对应 `salon/gradients.ts`）
+- 平铺的组件文件使用 PascalCase，对应的 salon 文件使用同名 snake_case，例如 [HeaderTemplate.tsx](../../frontend/core/unit/HeaderLinks/HeaderTemplate.tsx) 和 [salon/header_template.ts](../../frontend/core/unit/HeaderLinks/salon/header_template.ts)。组件改名时同步更新 salon 和引用
+- 目录组件使用成对的入口，例如 [HeaderLinks/index.tsx](../../frontend/core/unit/HeaderLinks/index.tsx) 和 [HeaderLinks/salon/index.ts](../../frontend/core/unit/HeaderLinks/salon/index.ts)
 - `salon` 默认 hook 命名统一为 `useSalon()`，新建或重命名模块时优先使用该命名；历史遗留的 `useNavActiveLayoutSalon`、`useInlineTagSalon` 等可继续保留，后续迁移时再统一清理
 - 如果有跨页面可复用的最小控件，按“字段级”抽离：封装为独立组件并拆到 `ui` 目录，包含自身 `salon`
 - 可复用组件内部可引用自己模块内的 `salon/index.ts`，并按需 `import` 上层公共 salon；不得跨组件直接引用其它页面的私有 salon
@@ -38,10 +51,12 @@
 - 如果一个组件有多种 layout / mode，优先拆成独立子组件，各自使用自己的 salon；顶层 `index.tsx` 只负责公共外壳和分发
 - 简单子组件不要过度目录化；优先使用 `Foo.tsx` + `salon/foo.ts`，不要为几行组件创建 `Foo/index.tsx` + `Foo/salon/index.ts`
 - 不要有散落在组件里的 class names, 都收紧到对应的 salon 里去
-- 不要出现裸露的字符串，封装到 ./constant.ts
+- 用户可见文案复用现有 i18n key，需要新增时放入对应产品的语言资源。模式、协议值等有业务含义的字符串归语义常量
 - 工具函数封装到 ./helper.ts, 多模块复用的加在 utils 下
 
 ## constant 与 spec
+
+- 先查现有全局常量、共享类型和生成的契约。含义与所有者一致时直接导入。模块专用的语义常量和跨文件类型分别放在同目录的 `constant.ts` 和 `spec.d.ts`，避免在组件函数内重建或复制。组件自身的运行时状态保留在组件或所属 hook
 
 - `constant.ts` / `constants.ts` 只放运行时语义常量、枚举和非样式配置，不导出
   `type` / `interface`

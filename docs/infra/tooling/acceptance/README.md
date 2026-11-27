@@ -8,4 +8,8 @@
 
 This is an initial map of one journey. It does not cover draft editing, publishing UI, comments, permissions, search, or other Article threads. Add a journey when its real entrypoint, required fixtures and observable success state have been established.
 
-Use the existing local `dev-hub`, `local-test-fixtures` and `test-cleanup` skills for runtime, identity and resource ownership. Agent skills under `.agents/` are local-only; the versioned journey lives here so the acceptance contract can be reviewed and maintained with the product.
+## Local environment acceptance
+
+[Two-worktree acceptance](two-worktrees.md) covers parallel runtimes, login, a real permissioned write and secondary teardown. Record the result against the revisions exercised in each run.
+
+Use the [GrStack browser acceptance procedure](../../../../.agents/skills/grstack/references/verify-community.md) for preparation and evidence. The [cleanup procedure](../../../../.agents/skills/grstack/references/test-cleanup.md) also applies to runs that own databases or temporary worktrees. Maintain the product assertions in the journey files here.

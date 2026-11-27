@@ -1,13 +1,8 @@
----
-name: local-auth-debug
-description: Diagnose local Groupher Auth, browser session, cookie and Dash service-identity failures. Use local-test-fixtures for creating or opening test identities; excludes production auth.
----
-
 # Local Auth Debug
 
-Use [Dev Hub guide](../../../docs/architecture/dev-hub-local-environment.md) for read-only status, logs and runtime recovery. Use [local-test-fixtures](../local-test-fixtures/SKILL.md) to create or sign in a synthetic identity when that state change is authorized. The fixed local-debug/local-passport-admin logins and their flags have been removed.
+Use [Dev Hub guide](../../../../docs/architecture/dev-hub-local-environment.md) for read-only status, logs and runtime recovery. Use [seed](../../seed/SKILL.md) to prepare a synthetic actor. Use the managed browser command for an actor session, or the real login page when testing login itself. The fixed local-debug/local-passport-admin logins and their flags have been removed.
 
-Read [the local identity runbook](../../../docs/auth/local-test-actors.md). Diagnose by boundary:
+Read [the local identity runbook](../../../../docs/auth/local-test-actors.md). Diagnose by boundary:
 
 - Missing fixture route: verify development entrypoint and restart the owning service through Hub. Production and Worker routes must remain absent.
 - `local_test_environment_required` / `local_test_database_required`: fix the actual local runtime or database identity; never add an override.
