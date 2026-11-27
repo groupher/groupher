@@ -70,6 +70,15 @@ test('prepare creates one private stable state and separate service identities',
     first.serviceCredentials['assets-read-worker'].clientId,
     'assets-read-worker-development',
   )
+  const phoenix = SERVICE_DEFINITIONS.find((service) => service.id === 'phoenix')!
+  const assets = SERVICE_DEFINITIONS.find((service) => service.id === 'assets-hub')!
+  const phoenixEnvironment = resolveLocalEnvironment('phoenix', first, phoenix, {})
+  const assetsEnvironment = resolveLocalEnvironment('assets-hub', first, assets, {})
+  assert.ok(phoenixEnvironment.env.ASSETS_HUB_CAPABILITY_SECRET)
+  assert.equal(
+    phoenixEnvironment.env.ASSETS_HUB_CAPABILITY_SECRET,
+    assetsEnvironment.env.ASSETS_HUB_CAPABILITY_SECRET,
+  )
 })
 
 test('preparation uses only the Hub configuration when application dotenv files exist', async (t) => {

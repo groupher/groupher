@@ -502,7 +502,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
         SERVICE_AUTH_JWKS_URL: `${LOCAL_SERVICE_ENDPOINTS.auth}/.well-known/jwks.json`,
         SERVICE_AUTH_TOKEN_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/oauth2/token`,
       },
-      secrets: { PHX_JWT_SECRET: 'phoenix:jwt-secret' },
+      secrets: {
+        PHX_JWT_SECRET: 'phoenix:jwt-secret',
+        ASSETS_HUB_CAPABILITY_SECRET: 'assets-hub:capability-secret',
+      },
       serviceAuth: {
         allowedAudiences: ['assets-hub:internal-api'],
         allowedScopes: [
