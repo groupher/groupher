@@ -308,6 +308,7 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
              end)
 
     assert updated.member_id == replayed.member_id
+    assert {:ok, _json} = Jason.encode(updated)
     assert updated.revision == replayed.revision
     assert replayed.subsequent_update == false
     second_change = Map.put(change, "key", "update-again")

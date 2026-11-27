@@ -79,6 +79,7 @@ defmodule GroupherServer.Seed.Admin.Membership do
 
   defp present(:set_permissions, entry, result) do
     result
+    |> Map.take([:member_id, :user_id, :is_lord, :permissions, :revision])
     |> Map.put(:command_status, "completed")
     |> Map.put(:subsequent_update, result.revision > entry["revision"] + 1)
   end
