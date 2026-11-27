@@ -6,7 +6,7 @@ Use the [feature map](../../../../docs/infra/tooling/acceptance/README.md) to se
 
 - Follow [dev-hub](../../dev-hub/SKILL.md) for status, doctor, canonical URLs and any required service operation. Preserve the existing service set. A running process or healthy proxy alone does not prove the app is usable.
 - Follow [seed](../../seed/SKILL.md) for synthetic actors, owner-bound Articles and separate browser profiles. Data-dependent Community journeys use `/home/xx`. Do not edit existing users' content.
-- Record the branch, commit, initial services and owned resources in `.playwright/<run>/cleanup.md` before creating fixtures. Use a fresh run name for each completed acceptance; retries of the same unfinished setup retain the same run and inputs.
+- Use the [acceptance record template](../../../../docs/infra/tooling/acceptance/README.md#reusable-acceptance-record) for browser and cross-worktree acceptance. Record the branch, commit, initial services and owned resources in `.playwright/<run>/cleanup.md` before creating fixtures. Use a fresh run name for each completed acceptance; retries of the same unfinished setup retain the same run and inputs.
 - Check the selected actor and Community through the fixture tool before driving the page. If setup returns HTML, inspect the owning service logs; do not treat it as an auth failure or bypass the managed runtime.
 
 ## Drive and prove

@@ -124,20 +124,16 @@ test('admin invitation and acceptance require explicit actor and key', () => {
   )
 })
 
-test('theme scenario targets the managed fixture command', () => {
-  const args = mapSeedCommand([
-    'scenario',
-    'theme-permissions',
-    '--run',
-    'demo',
-    '--community',
-    'theme-demo',
-  ])
-  assert.equal(parseLocalTestCommand(args).command, 'scenario.theme-permissions')
-  assert.throws(
-    () => parseLocalTestCommand(mapSeedCommand(['scenario', 'theme-permissions', '--run', 'demo'])),
-    /community/,
-  )
+test('named cases map to managed fixture commands', () => {
+  for (const [name, command] of [
+    ['theme-edit-permission', 'case.theme-edit-permission'],
+    ['admin-invitation-pending', 'case.admin-invitation-pending'],
+    ['admin-invitation-accepted', 'case.admin-invitation-accepted'],
+  ]) {
+    const input = ['case', name, '--run', 'demo', '--community', 'demo-community']
+    assert.equal(parseLocalTestCommand(mapSeedCommand(input)).command, command)
+    assert.throws(() => parseLocalTestCommand(mapSeedCommand(input.slice(0, 4))), /community/)
+  }
 })
 
 test('unconfirmed cleanup requires an explicit apply and reason', () => {

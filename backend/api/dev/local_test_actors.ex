@@ -81,7 +81,9 @@ defmodule GroupherServer.LocalTestActors do
               "admin.accept",
               "admin.set-permissions",
               "admin.remove",
-              "scenario.theme-permissions"
+              "case.theme-edit-permission",
+              "case.admin-invitation-pending",
+              "case.admin-invitation-accepted"
             ] do
     if Enum.any?(Run.bindings(run), &(&1.raw["status"] != "active")) do
       {:error, :local_test_run_closed}
@@ -133,8 +135,14 @@ defmodule GroupherServer.LocalTestActors do
   defp dispatch("admin.remove", run, input),
     do: GroupherServer.Seed.Admin.Remove.run(run, input)
 
-  defp dispatch("scenario.theme-permissions", run, input),
-    do: GroupherServer.Seed.Scenario.ThemePermissions.run(run, input)
+  defp dispatch("case.theme-edit-permission", run, input),
+    do: GroupherServer.Seed.Cases.ThemeEditPermission.run(run, input)
+
+  defp dispatch("case.admin-invitation-pending", run, input),
+    do: GroupherServer.Seed.Cases.AdminInvitation.run(run, input, :pending)
+
+  defp dispatch("case.admin-invitation-accepted", run, input),
+    do: GroupherServer.Seed.Cases.AdminInvitation.run(run, input, :accepted)
 
   defp dispatch("actor.check", run, %{"alias" => name, "community" => slug} = input) do
     with {:ok, user, binding} <- Run.actor(run, name),

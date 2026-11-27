@@ -8,6 +8,7 @@ import { verifyRunningHub } from './control-lifecycle.ts'
 import { inspectManagedDatabase } from './database-inspect.ts'
 import { inspectRegisteredEnvironments, readRegisteredState } from './environment-registry.ts'
 import { runPortless } from './portless.ts'
+import { SERVICE_DEFINITIONS, type TServiceDefinition } from './services.ts'
 import { registryRoot } from './storage-paths.ts'
 import { resolveCheckout, type TCheckoutIdentity } from './worktree-identity.ts'
 
@@ -56,6 +57,96 @@ async function inspectStoragePath(candidate: string) {
   }
 }
 
+/** Summarize the configured start chain against a verified service snapshot. */
+export function diagnoseServiceDependencies(
+  serviceId: string,
+  definitions: readonly TServiceDefinition[],
+  snapshot: unknown,
+) {
+  const byId = new Map(definitions.map((definition) => [definition.id, definition]))
+  if (!byId.has(serviceId)) throw new Error(`Unknown service: ${serviceId}`)
+  const states = new Map<string, Record<string, unknown>>()
+  if (Array.isArray(snapshot)) {
+    for (const item of snapshot) {
+      if (item && typeof item === 'object' && typeof item.id === 'string') states.set(item.id, item)
+    }
+  }
+  const required = new Set<string>()
+  const optional = new Set<string>()
+  const visit = (id: string, isOptional: boolean, seen: Set<string>) => {
+    const key = `${isOptional ? 'optional' : 'required'}:${id}`
+    if (seen.has(key)) return
+    seen.add(key)
+    const policy = byId.get(id)?.startPolicy
+    for (const next of policy?.requiredDependencies || []) {
+      if (next !== serviceId) (isOptional ? optional : required).add(next)
+      visit(next, isOptional, seen)
+    }
+    for (const next of policy?.optionalDependencies || []) {
+      if (next !== serviceId) optional.add(next)
+      visit(next, true, seen)
+    }
+  }
+  visit(serviceId, false, new Set())
+  // A dependency reached through both paths is required.
+  for (const id of required) optional.delete(id)
+  const describe = (id: string) => {
+    const state = states.get(id)
+    return {
+      id,
+      status: typeof state?.status === 'string' ? state.status : 'unknown',
+      publicUrl: state?.publicUrl ?? null,
+      unavailableReason: state?.unavailableReason ?? null,
+    }
+  }
+  const target = describe(serviceId)
+  const requiredItems = [...required].map(describe)
+  const optionalItems = [...optional].map(describe)
+  const needed = [target, ...requiredItems]
+  const notReady = needed.filter((item) =>
+    ['stopped', 'stopping', 'starting', 'error', 'unavailable'].includes(item.status),
+  )
+  const unknown = needed.filter(
+    (item) => !['running', ...notReady.map((v) => v.status)].includes(item.status),
+  )
+  const nextSteps = notReady.flatMap((item) => {
+    if (item.status === 'unavailable')
+      return [`Inspect ${item.id}: ${item.unavailableReason || 'service unavailable'}.`]
+    if (item.status === 'starting' || item.status === 'stopping')
+      return [`Wait for ${item.id}, then run doctor again.`]
+    if (item.status === 'error') return [`Inspect logs: pnpm devhub logs ${item.id}`]
+    return [`Start through Hub when appropriate: pnpm devhub start ${item.id}`]
+  })
+  if (unknown.length)
+    nextSteps.push('Verify Hub registration and service ownership before taking action.')
+  return {
+    target,
+    required: requiredItems,
+    optional: optionalItems,
+    conclusion: {
+      status: notReady.length ? 'not-ready' : unknown.length ? 'unknown' : 'running',
+      notReady: notReady.map((item) => item.id),
+      unknown: unknown.map((item) => item.id),
+      optionalNotRunning: optionalItems
+        .filter((item) => ['stopped', 'error', 'unavailable'].includes(item.status))
+        .map((item) => item.id),
+      optionalTransitioning: optionalItems
+        .filter((item) => ['starting', 'stopping'].includes(item.status))
+        .map((item) => item.id),
+      optionalUnknown: optionalItems
+        .filter(
+          (item) =>
+            !['running', 'stopped', 'error', 'unavailable', 'starting', 'stopping'].includes(
+              item.status,
+            ),
+        )
+        .map((item) => item.id),
+      nextSteps,
+    },
+    note: 'Service status is a snapshot; it does not verify the complete application workflow.',
+  }
+}
+
 /** Inspect checkout identity and local dependencies without starting or modifying services. */
 export async function diagnoseEnvironment(
   root: string,
@@ -64,6 +155,7 @@ export async function diagnoseEnvironment(
     portless: async () => JSON.parse(await runPortless(['doctor', '--json'])),
     inspect: inspectManagedDatabase,
   },
+  serviceId?: string,
 ) {
   const identity = await resolveCheckout(root)
   const issues: Array<{ component: string; message: string }> = []
@@ -173,6 +265,15 @@ export async function diagnoseEnvironment(
     environments,
     databases,
     services,
+    ...(serviceId
+      ? {
+          serviceDependencies: diagnoseServiceDependencies(
+            serviceId,
+            SERVICE_DEFINITIONS,
+            services,
+          ),
+        }
+      : {}),
     portless,
     issues,
   }

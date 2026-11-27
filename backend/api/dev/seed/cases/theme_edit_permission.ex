@@ -1,4 +1,4 @@
-defmodule GroupherServer.Seed.Scenario.ThemePermissions do
+defmodule GroupherServer.Seed.Cases.ThemeEditPermission do
   @moduledoc """
   Composes actors and real community admin requests for theme authorization.
 
@@ -6,7 +6,7 @@ defmodule GroupherServer.Seed.Scenario.ThemePermissions do
   """
   alias GroupherServer.Seed.{Actor, Admin}
 
-  @doc "Prepares the scenario inside the caller's run-locked transaction."
+  @doc "Prepares the case inside the caller's run-locked transaction."
   def run(run, %{"community" => slug}) when is_binary(slug) do
     with {:ok, owner} <- Actor.Create.run(run, %{"alias" => "owner"}),
          {:ok, editor} <- Actor.Create.run(run, %{"alias" => "editor"}),
@@ -30,7 +30,7 @@ defmodule GroupherServer.Seed.Scenario.ThemePermissions do
   def run(_, _), do: {:error, :invalid_local_test_command}
 
   defp invite(run, slug, alias_name, permissions) do
-    key = "scenario-#{alias_name}"
+    key = "case-#{alias_name}"
 
     with {:ok, _} <-
            Admin.Invite.run(run, %{

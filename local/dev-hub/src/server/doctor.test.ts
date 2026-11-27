@@ -7,14 +7,84 @@ import path from 'node:path'
 import test from 'node:test'
 
 import { databaseTargetForEnvironment } from './database-ownership.ts'
-import { diagnoseEnvironment } from './doctor.ts'
+import { diagnoseEnvironment, diagnoseServiceDependencies } from './doctor.ts'
 import {
   initializePrimary,
   markRunReady,
   registerCheckout,
   reserveRun,
 } from './environment-registry.ts'
+import { SERVICE_DEFINITIONS } from './services.ts'
 import { resolveCheckout } from './worktree-identity.ts'
+
+test('service diagnosis follows the configured dependency chain and reports unavailable states', () => {
+  const report = diagnoseServiceDependencies('dash', SERVICE_DEFINITIONS, [
+    { id: 'dash', status: 'running', publicUrl: 'https://dash.example' },
+    { id: 'phoenix', status: 'stopped' },
+  ])
+  assert.equal(report.target.status, 'running')
+  assert.equal(report.required.find((item) => item.id === 'phoenix')?.status, 'stopped')
+  assert.equal(report.conclusion.status, 'not-ready')
+  assert.ok(report.conclusion.notReady.includes('phoenix'))
+  assert.ok(report.conclusion.nextSteps.some((item) => item.includes('devhub start phoenix')))
+  assert.equal(report.required.find((item) => item.id === 'auth')?.status, 'unknown')
+  assert.ok(report.optional.some((item) => item.id === 'converter'))
+  assert.throws(
+    () => diagnoseServiceDependencies('does-not-exist', SERVICE_DEFINITIONS, []),
+    /Unknown service/,
+  )
+  assert.equal(
+    diagnoseServiceDependencies('dash', SERVICE_DEFINITIONS, null).target.status,
+    'unknown',
+  )
+})
+
+test('required paths take precedence over optional paths throughout the chain', () => {
+  const base = SERVICE_DEFINITIONS.find((item) => item.id === 'dash')!
+  const definition = (
+    id: string,
+    requiredDependencies: string[],
+    optionalDependencies: string[],
+  ) => ({
+    ...base,
+    id,
+    startPolicy: { requiredDependencies, optionalDependencies },
+  })
+  const definitions = [
+    definition('root', ['optional-first', 'required-path'], []),
+    definition('optional-first', [], ['shared']),
+    definition('required-path', ['shared'], []),
+    definition('shared', ['nested'], []),
+    definition('nested', [], []),
+  ]
+  const report = diagnoseServiceDependencies('root', definitions, [])
+  assert.ok(report.required.some((item) => item.id === 'shared'))
+  assert.ok(report.required.some((item) => item.id === 'nested'))
+  assert.equal(
+    report.optional.some((item) => ['shared', 'nested'].includes(item.id)),
+    false,
+  )
+})
+
+test('optional service summary distinguishes stopped, transitioning and unknown states', () => {
+  const base = SERVICE_DEFINITIONS.find((item) => item.id === 'dash')!
+  const ids = ['stopped', 'starting', 'unknown', 'external', 'running']
+  const definitions = [
+    { ...base, id: 'root', startPolicy: { optionalDependencies: ids } },
+    ...ids.map((id) => ({ ...base, id, startPolicy: {} })),
+  ]
+  const report = diagnoseServiceDependencies(
+    'root',
+    definitions,
+    ids.filter((id) => id !== 'unknown').map((id) => ({ id, status: id })),
+  )
+  assert.deepEqual(report.conclusion.optionalNotRunning, ['stopped'])
+  assert.deepEqual(report.conclusion.optionalTransitioning, ['starting'])
+  assert.deepEqual(report.conclusion.optionalUnknown, ['unknown', 'external'])
+  const disconnected = diagnoseServiceDependencies('root', definitions, null)
+  assert.deepEqual(disconnected.conclusion.optionalNotRunning, [])
+  assert.deepEqual(disconnected.conclusion.optionalUnknown, ids)
+})
 
 test('doctor reports ownership and migration state without disclosing the claim', async () => {
   const base = await realpath(await mkdtemp(path.join(tmpdir(), 'groupher-doctor-')))

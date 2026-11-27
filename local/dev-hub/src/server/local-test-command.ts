@@ -189,7 +189,9 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
     'admin.accept': ['run', 'invite', 'as'],
     'admin.set-permissions': ['run', 'community', 'by', 'member', 'key', 'permissions', 'revision'],
     'admin.remove': ['run', 'community', 'by', 'member', 'key', 'revision'],
-    'scenario.theme-permissions': ['run', 'community'],
+    'case.theme-edit-permission': ['run', 'community'],
+    'case.admin-invitation-pending': ['run', 'community'],
+    'case.admin-invitation-accepted': ['run', 'community'],
     'articles.create': ['run', 'as', 'community', 'thread', 'key', 'title', 'markdown', 'publish'],
     'home.prepare': ['run'],
   }
@@ -248,7 +250,7 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
     throw new Error('--owner is required.')
   if (area === 'communities' && action === 'request-destroy' && (!options.by || !options.slug))
     throw new Error('--by and --slug are required.')
-  if (area === 'scenario' && !options.community) throw new Error('--community is required.')
+  if (area === 'case' && !options.community) throw new Error('--community is required.')
   if (
     area === 'admin' &&
     action === 'invite' &&
@@ -314,8 +316,8 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
   }
   return {
     command:
-      area === 'scenario'
-        ? `scenario.${action}`
+      area === 'case'
+        ? `case.${action}`
         : area === 'home'
           ? 'home.prepare'
           : area === 'admin'

@@ -67,7 +67,8 @@ backend/api/dev/
     ├── admin/remove.ex               # 移除 run 拥有且允许清理的成员关系
     ├── admin/membership.ex           # 共用成员操作身份、版本和重试处理
     ├── article/create.ex             # 通过现有 Content Publisher 链准备草稿或创建并发布 Post
-    ├── scenario/theme_permissions.ex # 组合出 owner、可改主题的 editor、无此权限的 limited
+    ├── cases/theme_edit_permission.ex # 组合 owner、可改主题的 editor 和无此权限的 limited
+    ├── cases/admin_invitation.ex      # 组合待接受邀请或已接受的管理员
     ├── cleanup/run.ex                # 预览或执行回收，列出保留、受阻及可重试的资源
     └── home/
         └── prepare.ex                # 核对本地目标，将 DB 与资产端点交给共享的 LiteHome
@@ -79,15 +80,15 @@ backend/api/dev/
 
 下表列出当前可调用的函数。首批九个接口已切换为动词在前的名称，resolver 与 seed 同步使用新名。
 
-| seed 或清理动作                                  | 受管服务端调用的 CMS 根接口                                                                                            |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| 创建社区、请求销毁本次创建的社区                 | `CMS.create_community/3`、`CMS.request_community_destruction/3`                                                        |
-| 查询当前账号的社区成员关系与权限校验             | `CMS.get_current_community_admin_membership/2`、`CMS.passport_validate_permissions/2`                                  |
+| seed 或清理动作                                  | 受管服务端调用的 CMS 根接口                                                                                                      |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| 创建社区、请求销毁本次创建的社区                 | `CMS.create_community/3`、`CMS.request_community_destruction/3`                                                                  |
+| 查询当前账号的社区成员关系与权限校验             | `CMS.get_current_community_admin_membership/2`、`CMS.passport_validate_permissions/2`                                            |
 | 查询本人关系和待处理邀请                         | `CMS.list_own_community_admin_memberships/1`、`CMS.list_own_pending_community_admin_requests/1`，以及对应 Article co-author 接口 |
-| 核对文章归属和已发布快照                         | `CMS.verify_post_creation/2`，按当前 actor 的历史读取权限核验创建与发布证据                                           |
-| 邀请、接受、取消管理员邀请                       | `CMS.create_community_admin_request/6`、`CMS.decide_community_admin_request/6`、`CMS.cancel_community_admin_request/4` |
-| 更新普通管理员权限、移除普通管理员               | `CMS.update_community_admin_permissions/6`、`CMS.remove_community_admin/5`                                             |
-| 清理待决 co-author 邀请、退出 co-author 成员关系 | `CMS.cancel_article_co_author_request/4`、`CMS.leave_article_co_author_role/4`                                         |
+| 核对文章归属和已发布快照                         | `CMS.verify_post_creation/2`，按当前 actor 的历史读取权限核验创建与发布证据                                                      |
+| 邀请、接受、取消管理员邀请                       | `CMS.create_community_admin_request/6`、`CMS.decide_community_admin_request/6`、`CMS.cancel_community_admin_request/4`           |
+| 更新普通管理员权限、移除普通管理员               | `CMS.update_community_admin_permissions/6`、`CMS.remove_community_admin/5`                                                       |
+| 清理待决 co-author 邀请、退出 co-author 成员关系 | `CMS.cancel_article_co_author_request/4`、`CMS.leave_article_co_author_role/4`                                                   |
 
 普通管理员的邀请、授权和移除在单步命令、组合场景及清理中都走表内入口。Remove 负责计数、活动记录，并对 lord 返回 `lord_membership_immutable`。首批沿用受管开发环境专用的测试 lord 回收能力，按成员关系逐项判断归属。[CMS 公开入口](../../backend/api/lib/groupher_server/cms.ex) · [权限 fixture](../../backend/api/dev/local_test_actors/grants.ex) · 清理实现（`backend/api/dev/seed/cleanup/run.ex`）
 
@@ -129,7 +130,7 @@ pnpm seed admin remove --run theme-demo --community theme-demo --by owner --memb
 pnpm seed community request-destroy --run theme-demo --by owner --slug theme-demo
 ```
 
-也可以一次准备完整场景。例如 `pnpm seed scenario theme-permissions --run demo-2 --community theme-demo-2 --json` 会在另一 run 下创建三个测试账号、社区和对应授权。`pnpm seed home prepare` 负责常驻开发内容。普通 run 借用已有的 home 时，只记录和清理本次创建的邀请、授权等资源。
+也可以一次准备典型 case。例如 `pnpm seed case theme-edit-permission --run demo-2 --community theme-demo-2 --json` 会在另一 run 下创建三个测试账号、社区和对应授权；邀请待接受或已接受的 case 见 [seed 命令手册](../../backend/api/dev/seed/README.md#典型测试-case)。`pnpm seed home prepare` 负责常驻开发内容。普通 run 借用已有的 home 时，只记录和清理本次创建的邀请、授权等资源。
 
 ### 每一步怎样识别重试
 

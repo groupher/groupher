@@ -16,7 +16,8 @@ for file <- [
       "seed/community/request_destroy.ex",
       "seed/home/prepare.ex",
       "seed/actor/create.ex",
-      "seed/scenario/theme_permissions.ex"
+      "seed/cases/theme_edit_permission.ex",
+      "seed/cases/admin_invitation.ex"
     ] do
   Code.require_file("../../dev/" <> file, __DIR__)
 end
@@ -142,14 +143,14 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
 
     assert {:ok, first} =
              Repo.transact_result(fn ->
-               GroupherServer.Seed.Scenario.ThemePermissions.run("fixture-test", %{
+               GroupherServer.Seed.Cases.ThemeEditPermission.run("fixture-test", %{
                  "community" => "seed-theme-scenario"
                })
              end)
 
     assert {:ok, second} =
              Repo.transact_result(fn ->
-               GroupherServer.Seed.Scenario.ThemePermissions.run("fixture-test", %{
+               GroupherServer.Seed.Cases.ThemeEditPermission.run("fixture-test", %{
                  "community" => "seed-theme-scenario"
                })
              end)
@@ -162,6 +163,30 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
     assert {:ok, limited_facts} = CMS.Passport.community_facts(limited.id, community.id)
     assert editor_facts.permissions["dashboard.theme.update"]
     refute limited_facts.permissions["dashboard.theme.update"]
+  end
+
+  test "invitation cases distinguish a pending invitation from an accepted administrator" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, invitee} = db_insert(:user)
+    register(owner, "owner")
+    register(invitee, "invitee")
+    input = %{"community" => "seed-invitation-case"}
+
+    run = fn state ->
+      Repo.transact_result(fn ->
+        GroupherServer.Seed.Cases.AdminInvitation.run("fixture-test", input, state)
+      end)
+    end
+
+    assert {:ok, pending} = run.(:pending)
+    assert pending.invitation.status == "pending"
+    assert {:ok, repeated} = run.(:pending)
+    assert repeated.invitation.requestId == pending.invitation.requestId
+    assert {:ok, accepted} = run.(:accepted)
+    assert accepted.invitation.requestId == pending.invitation.requestId
+    assert {:ok, accepted_again} = run.(:accepted)
+    assert accepted_again.invitation.requestId == accepted.invitation.requestId
+    assert {:error, :local_test_case_state_conflict} = run.(:pending)
   end
 
   test "community fixture records owner membership and rejects conflicting reuse" do

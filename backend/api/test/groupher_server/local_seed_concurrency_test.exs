@@ -14,7 +14,8 @@ for file <- [
       "seed/community/create.ex",
       "seed/community/request_destroy.ex",
       "seed/home/prepare.ex",
-      "seed/scenario/theme_permissions.ex",
+      "seed/cases/theme_edit_permission.ex",
+      "seed/cases/admin_invitation.ex",
       "local_test_actors.ex"
     ] do
   Code.require_file("../../dev/" <> file, __DIR__)

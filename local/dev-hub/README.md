@@ -24,10 +24,19 @@ Groupher 不是单进程项目。日常开发可能同时涉及 Community、Dash
 
 ```bash
 pnpm devhub status
+pnpm devhub doctor --service dash --json
 pnpm devhub start dash
 pnpm devhub logs dash
 pnpm devhub url dash
 ```
+
+`doctor --service <id>` 在环境报告中增加该服务的必需和可选启动依赖及其当前状态；
+依赖链来自服务的 `startPolicy`，与启动使用同一配置。Hub 不可验证或未运行时状态为
+`unknown`，不推断服务已停止。状态仅是快照，不能替代登录、请求及业务操作的验收。
+可选依赖的汇总分别列出已停止或不可用、正在启动或停止、状态未知的服务；`external`
+进程的归属未经确认时也归入未知。
+依赖配置取自当前 checkout，运行中的 Hub 可能尚未加载本次代码变更。
+`--json` 供脚本使用；诊断不会启动服务或修改数据库。
 
 根 `pnpm dev:*`、各应用的公开 `dev` 脚本和 Make public target 都转交 Dev Hub；Hub
 内部通过 `:managed`/`.managed` 启动具体工具。不要绕过 Hub 直接运行 Vite、Phoenix、

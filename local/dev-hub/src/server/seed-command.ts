@@ -9,7 +9,9 @@ export const SEED_HELP = `Local development seed commands (run from the intended
   pnpm seed admin set-permissions --run <run> --community <slug> --by <alias> --member <alias> --key <key> --permissions <keys> [--revision <n>]
   pnpm seed admin remove --run <run> --community <slug> --by <alias> --member <alias> --key <key> [--revision <n>]
   pnpm seed article create --run <run> --as <alias> --community <slug> --thread post [--key <key>] [--title <title>] [--markdown <text>] [--publish]
-  pnpm seed scenario theme-permissions --run <run> --community <slug>
+  pnpm seed case theme-edit-permission --run <run> --community <slug>
+  pnpm seed case admin-invitation-pending --run <run> --community <slug>
+  pnpm seed case admin-invitation-accepted --run <run> --community <slug>
   pnpm seed home prepare
   pnpm seed cleanup run --run <run> [--apply]
   pnpm seed cleanup run --run <run> --apply --retain-unconfirmed <operation-ref> --reason <text>
@@ -47,7 +49,9 @@ export function mapSeedCommand(args: string[]): string[] {
     'admin.accept': ['admin', 'accept'],
     'admin.set-permissions': ['admin', 'set-permissions'],
     'admin.remove': ['admin', 'remove'],
-    'scenario.theme-permissions': ['scenario', 'theme-permissions'],
+    'case.theme-edit-permission': ['case', 'theme-edit-permission'],
+    'case.admin-invitation-pending': ['case', 'admin-invitation-pending'],
+    'case.admin-invitation-accepted': ['case', 'admin-invitation-accepted'],
     'article.create': ['articles', 'create'],
     'cleanup.run': ['actors', 'clean'],
     'home.prepare': ['home', 'prepare'],

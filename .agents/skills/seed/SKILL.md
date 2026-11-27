@@ -13,7 +13,7 @@ Use the [seed README](../../../backend/api/dev/seed/README.md) in the checkout u
 | Invite or accept an admin, change permissions or remove a member | [Admin workflow](../../../backend/api/dev/seed/README.md#管理员邀请与权限)                |
 | Prepare an owner-bound draft or published Post                   | [Article creation](../../../backend/api/dev/seed/README.md#创建文章)                      |
 | Archive a run-owned community, preview cleanup or apply it       | [Archive and cleanup](../../../backend/api/dev/seed/README.md#归档与清理)                 |
-| Compare roles with and without permission to change a theme      | [Theme permissions scenario](../../../backend/api/dev/seed/README.md#主题权限场景)        |
+| Prepare theme-edit permissions or an admin invitation case       | [Typical test cases](../../../backend/api/dev/seed/README.md#典型测试-case)               |
 | Prepare persistent development home content                      | [Home setup](../../../backend/api/dev/seed/README.md#常驻-home)                           |
 | Diagnose an article with an unconfirmed dispatch                 | [Recovery and isolated tests](../../../backend/api/dev/seed/README.md#文章恢复与隔离测试) |
 

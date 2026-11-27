@@ -50,13 +50,17 @@ pnpm seed cleanup run --run "$seed_run" --json
 pnpm seed cleanup run --run "$seed_run" --apply --json
 ```
 
-## 主题权限场景
+## 典型测试 case
 
-独立运行。该动作自行创建 owner、editor、limited、一个新社区及已接受的管理员关系。用 editor 和 limited 在同一社区测试修改主题，前者具有 `dashboard.theme.update`，后者没有该权限。
+case 在 `dev/seed/cases/` 组合原子动作，准备可复现的初始状态；具体产品操作仍需在 UI 或真实入口验收。每个 case 使用新的 run 和社区 slug，重试同一 case 保持原参数。
+
+### 主题编辑权限
+
+该 case 创建 owner、editor、limited、一个新社区及已接受的管理员关系。用 editor 和 limited 在同一社区测试修改主题，前者具有 `dashboard.theme.update`，后者没有该权限。
 
 ```sh
 theme_run="theme-$(node -p "require('node:crypto').randomBytes(5).toString('hex')")"
-pnpm seed scenario theme-permissions --run "$theme_run" --community "$theme_run" --json
+pnpm seed case theme-edit-permission --run "$theme_run" --community "$theme_run" --json
 pnpm seed actor list --run "$theme_run" --json
 ```
 
@@ -65,6 +69,22 @@ pnpm seed actor list --run "$theme_run" --json
 ```sh
 pnpm seed cleanup run --run "$theme_run" --json
 pnpm seed cleanup run --run "$theme_run" --apply --json
+```
+
+### 管理员邀请
+
+准备待接受的邀请，适合测试邀请的产品界面；使用 `invitee` 登录后，在 UI 中接受。若只需要一个已经接受的管理员，换用第二条 case 命令；两种状态使用不同的 run。邀请授予 `dashboard.theme.update`，记录的邀请 key 为 `case-invitation`。待接受 case 在邀请已被决定后重跑会报告状态冲突。
+
+```sh
+invite_run="invite-$(node -p "require('node:crypto').randomBytes(5).toString('hex')")"
+pnpm seed case admin-invitation-pending --run "$invite_run" --community "$invite_run" --json
+
+admin_run="admin-$(node -p "require('node:crypto').randomBytes(5).toString('hex')")"
+pnpm seed case admin-invitation-accepted --run "$admin_run" --community "$admin_run" --json
+pnpm seed cleanup run --run "$invite_run" --json
+pnpm seed cleanup run --run "$invite_run" --apply --json
+pnpm seed cleanup run --run "$admin_run" --json
+pnpm seed cleanup run --run "$admin_run" --apply --json
 ```
 
 ## 常驻 home

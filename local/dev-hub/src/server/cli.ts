@@ -12,7 +12,7 @@ import { PortlessManager } from './portless.ts'
 import { REPO_ROOT } from './services.ts'
 
 const USAGE =
-  'Usage: pnpm devhub status | logs <id> | start <id> [chain|related|self] | stop <id> | restart <id> | url <id> | ensure | setup | doctor'
+  'Usage: pnpm devhub status | logs <id> | start <id> [chain|related|self] | stop <id> | restart <id> | url <id> | ensure | setup | doctor [--service <id>] [--json]'
 
 const legacyPortOccupied = () =>
   new Promise<boolean>((resolve, reject) => {
@@ -222,9 +222,17 @@ export async function runHubCommand(
     })
     return { stopped: true, repoRoot: identity.root }
   }
-  if (args[0] === 'doctor' && (args.length === 1 || (args.length === 2 && args[1] === '--json'))) {
+  if (args[0] === 'doctor') {
+    const rest = args.slice(1)
+    const jsonIndex = rest.indexOf('--json')
+    if (jsonIndex !== -1) rest.splice(jsonIndex, 1)
+    if (
+      rest.length !== 0 &&
+      !(rest.length === 2 && rest[0] === '--service' && rest[1] && !rest[1].startsWith('--'))
+    )
+      throw new Error('Usage: pnpm devhub doctor [--service <id>] [--json]')
     const { diagnoseEnvironment } = await import('./doctor.ts')
-    return diagnoseEnvironment(REPO_ROOT)
+    return diagnoseEnvironment(REPO_ROOT, undefined, undefined, rest[1])
   }
   const { resolveHubRoute } = await import('./hub-route.ts')
   const { registryRoot } = await import('./storage-paths.ts')
@@ -236,7 +244,7 @@ export async function runHubCommand(
     const result = await runHubCommand(mapSeedCommand(seedArgs), request, origin, routeResolver)
     return seedArgs.includes('--json') ? formatSeedResult(seedArgs, REPO_ROOT, result) : result
   }
-  if (['actors', 'communities', 'articles', 'admin', 'scenario', 'home'].includes(args[0])) {
+  if (['actors', 'communities', 'articles', 'admin', 'case', 'home'].includes(args[0])) {
     const { runLocalTestCommand } = await import('./local-test-command.ts')
     return runLocalTestCommand(
       args,
