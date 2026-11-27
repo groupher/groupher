@@ -101,15 +101,21 @@ fn ensure_hub() -> Result<Url, String> {
             message
         });
     }
-    parse_hub_url(&String::from_utf8_lossy(&output.stdout))
+    parse_hub_url(&String::from_utf8_lossy(&output.stdout), &root)
 }
 
-fn parse_hub_url(output: &str) -> Result<Url, String> {
+fn parse_hub_url(output: &str, expected_root: &Path) -> Result<Url, String> {
     let start = output.find('{').ok_or("Dev Hub returned no identity.")?;
     let identity: serde_json::Value =
         serde_json::from_str(&output[start..]).map_err(|_| "Dev Hub returned invalid identity.")?;
     if identity["apiVersion"] != 1 || identity["mode"] != "full" {
         return Err("This checkout is not running a full Dev Hub.".to_owned());
+    }
+    let root = identity["repoRoot"]
+        .as_str()
+        .ok_or("Dev Hub returned no checkout identity.")?;
+    if Path::new(root) != expected_root {
+        return Err("Dev Hub returned a different checkout identity.".to_owned());
     }
     let raw = identity["apiOrigin"]
         .as_str()
@@ -215,14 +221,17 @@ fn eval_launcher(app: &tauri::AppHandle, method: &str, message: &str) {
 #[cfg(test)]
 mod tests {
     use super::parse_hub_url;
+    use std::path::Path;
 
     #[test]
     fn accepts_only_a_verified_full_local_hub() {
-        let output = r#"{"apiVersion":1,"mode":"full","apiOrigin":"http://127.0.0.1:4312"}"#;
-        assert_eq!(parse_hub_url(output).unwrap().port(), Some(4312));
-        assert!(parse_hub_url(&output.replace("4312", "4310")).is_err());
-        assert!(parse_hub_url(&output.replace("127.0.0.1", "example.com")).is_err());
-        assert!(parse_hub_url(&output.replace("full", "control-only")).is_err());
-        assert!(parse_hub_url("{}").is_err());
+        let root = Path::new("/checkout/a");
+        let output = r#"{"apiVersion":1,"mode":"full","repoRoot":"/checkout/a","apiOrigin":"http://127.0.0.1:4312"}"#;
+        assert_eq!(parse_hub_url(output, root).unwrap().port(), Some(4312));
+        assert!(parse_hub_url(&output.replace("4312", "4310"), root).is_err());
+        assert!(parse_hub_url(&output.replace("127.0.0.1", "example.com"), root).is_err());
+        assert!(parse_hub_url(&output.replace("full", "control-only"), root).is_err());
+        assert!(parse_hub_url(&output.replace("/checkout/a", "/checkout/b"), root).is_err());
+        assert!(parse_hub_url("{}", root).is_err());
     }
 }
