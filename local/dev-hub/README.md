@@ -57,7 +57,8 @@ Dev Hub 把这些知识固化为服务定义，并提供一个只监听 `127.0.0
 | 命令           | 用途                  | 运行内容                                                                                            |
 | -------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
 | `make dev.dev` | 开发 Dev Hub 本身     | 启动 Vite HMR 页面（`4310`）和独立 API（`4311`），修改 React、CSS 或 Node 代码时使用                |
-| `make dev`     | 运行构建后的 Web 版本 | 先执行 Vite production build，再由 Hono 在 `127.0.0.1:4310` 提供静态页面和 API                      |
+| `make dev`     | 确保当前 checkout 的 Hub 运行 | 通过受管入口复用或启动 Hub；首次启动完整环境时构建页面，地址由实例登记决定，不自动打开桌面窗口 |
+| `make dev.hub` | 前台运行当前 checkout 的 Hub | 已有常驻实例时拒绝启动；Ctrl+C 只停止本命令启动的实例 |
 | `make dev.app` | 构建并安装 macOS 应用 | 安装项目依赖、构建 production 页面和 Tauri `.app`、替换 `/Applications/Groupher Dev Hub.app` 并启动 |
 
 ### 推荐的日常开发流程
@@ -72,7 +73,7 @@ make dev.dev
 make dev.app
 ```
 
-切换到 `make dev.app` 前必须先停止 `make dev.dev`。桌面启动器会健康检查 `127.0.0.1:4310`；如果开发版仍在运行，它会复用现有服务，而不会另外启动 production 版本。
+切换到 `make dev.app` 前必须先停止使用旧端口的 `make dev.dev`。桌面启动器通过当前 checkout 的受管 CLI 查找或启动 Hub，并核验返回的路径和本机地址；它不会接管 4310 上的旧实例。当前桌面只有单个环境视图，多 worktree tab 仍是[后续方案](../../docs/architecture/dev-hub-multi-worktree.md#第二阶段--一个桌面窗口每个-worktree-一个-tab)。
 
 平时只使用 Dev Hub、不修改它时，直接从 Raycast、Spotlight 或 `/Applications` 打开 **Groupher Dev Hub** 即可，不需要先打开终端。
 
@@ -131,12 +132,10 @@ GROUPHER_CARGO_MIRROR=auto make dev.app
 
 ```mermaid
 flowchart LR
-  App["Groupher Dev Hub.app<br/>Tauri + Rust"] --> Health{"4310 健康吗？"}
-  Health -- "是" --> UI["React UI"]
-  Health -- "否" --> Start["启动 Hono server"]
-  Start --> Dist["复用 make dev.app 生成的 dist"]
-  Dist --> Server["Hono server<br/>127.0.0.1:4310"]
-  Server --> UI
+  App["Groupher Dev Hub.app<br/>Tauri + Rust"] --> CLI["当前 checkout 的 pnpm devhub up"]
+  CLI --> Registry["核验登记和实例身份"]
+  Registry --> Server["当前 checkout 的受管 Hub<br/>本机独立地址"]
+  Server --> UI["React UI"]
 
   UI <-- "REST + SSE" --> Server
   Server --> Manager["ServiceManager"]
@@ -146,9 +145,9 @@ flowchart LR
   Server --> Metrics["MetricsStore + ProcessMetricsMonitor"]
 ```
 
-桌面应用本身保持很薄：它负责单实例、窗口生命周期、仓库定位、健康检查和 production Hub 子进程。`make dev.app` 在安装时生成 `dist`；以后冷启动 `.app` 只启动 Hono 服务并复用该产物，不会再次执行 Vite build。真正的服务编排逻辑仍在 Node 端，因此 Web 版本和 `.app` 使用同一套能力。
+桌面应用负责单实例、窗口生命周期和仓库定位；Hub 的发现、启动和身份核验由当前 checkout 的受管 CLI 完成。真正的服务编排逻辑仍在 Node 端，因此 Web 版本和 `.app` 使用同一套能力。首次启动完整 Hub 可能触发页面构建，已有实例则复用。
 
-关闭红色窗口按钮只会隐藏窗口，受管服务继续运行；从应用菜单使用 Quit 或按 `Cmd+Q` 退出时，Tauri 会终止自己启动的 Dev Hub 进程组，Dev Hub 随后清理它管理的各个服务。
+关闭红色窗口按钮只会隐藏窗口；退出桌面应用也不会停止 Hub 或它管理的服务。需要停止当前 checkout 的 Hub 时，显式执行 `pnpm devhub down`；该操作会停止该实例管理的服务，应先确认没有人正在使用。
 
 ## 当前服务图
 
