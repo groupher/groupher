@@ -217,6 +217,24 @@ defmodule GroupherServer.LocalTestArticlesTest do
 
     {:ok, other_user} = db_insert(:user)
 
+    provenance = %{
+      article_id: article.id,
+      working_copy_id: work.id,
+      community_id: community.id,
+      command_id: prepared.command.commandId,
+      snapshot_id: nil,
+      publish: false
+    }
+
+    assert {:ok, %{article_id: article_id}} = CMS.verify_post_creation(provenance, owner)
+    assert article_id == article.id
+
+    assert {:error, :article_history_unavailable} =
+             CMS.verify_post_creation(provenance, other_user)
+
+    assert {:error, :article_history_unavailable} =
+             CMS.verify_post_creation(%{provenance | command_id: Ecto.UUID.generate()}, owner)
+
     assert {:ok, nil} =
              CMS.find_article_creation_by_command(
                prepared.command.commandId,

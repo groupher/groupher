@@ -9,18 +9,7 @@ defmodule GroupherServer.Seed.Article.Create do
   Recording metadata does not create or rewrite an Article, Author or BodyBag.
   Confirmed fixtures return canonical current WorkingCopy identities on repeat.
   """
-  import Ecto.Query
   alias GroupherServer.{CMS, LocalTestActors, Repo}
-
-  alias CMS.Model.{
-    Article,
-    ArticleBinding,
-    ArticleEvent,
-    ArticlePublic,
-    ArticleSnapshot,
-    ArticleWorkingCopy,
-    Author
-  }
 
   alias LocalTestActors.Communities
 
@@ -291,82 +280,34 @@ defmodule GroupherServer.Seed.Article.Create do
   defp recover_confirmed(_, _), do: {:error, :invalid_local_test_article_fixture}
 
   defp canonical(context, entry, article_id, work_id, snapshot_id) do
-    with {:ok, _} <- Ecto.UUID.cast(article_id),
-         {:ok, _} <- Ecto.UUID.cast(work_id),
-         %Article{thread: :post} = article <- Repo.get(Article, article_id),
-         %Author{user_id: owner_id} <- Repo.get(Author, article.author_id),
-         true <- owner_id == context.user.id,
-         %ArticleWorkingCopy{
-           article_id: ^article_id,
-           created_by_id: ^owner_id,
-           scope_type: :default
-         } = work <- Repo.get(ArticleWorkingCopy, work_id),
-         %ArticleBinding{} <-
-           Repo.get_by(ArticleBinding, article_id: article_id, community_id: context.community.id),
-         true <- creation_provenance?(context, entry, article_id, work_id),
-         true <-
-           not context.publish or
-             published_provenance?(context, entry, article, work, snapshot_id) do
-      {:ok,
-       %{
-         articleId: article.id,
-         workingCopyId: work.id,
-         revision: work.revision,
-         ownerLogin: context.user.login,
-         community: context.community.slug,
-         communityRef: context.community.ref,
-         thread: "post",
-         key: context.key,
-         publish: context.publish,
-         snapshotId: snapshot_id
-       }}
-    else
-      _ -> {:error, :local_test_article_provenance_mismatch}
+    input = %{
+      article_id: article_id,
+      working_copy_id: work_id,
+      community_id: context.community.id,
+      command_id: entry["commandId"],
+      snapshot_id: snapshot_id,
+      publish: context.publish
+    }
+
+    case CMS.verify_post_creation(input, context.user) do
+      {:ok, result} ->
+        {:ok,
+         %{
+           articleId: result.article_id,
+           workingCopyId: result.working_copy_id,
+           revision: result.revision,
+           ownerLogin: context.user.login,
+           community: context.community.slug,
+           communityRef: context.community.ref,
+           thread: "post",
+           key: context.key,
+           publish: context.publish,
+           snapshotId: snapshot_id
+         }}
+
+      _ ->
+        {:error, :local_test_article_provenance_mismatch}
     end
-  end
-
-  defp published_provenance?(context, entry, article, work, snapshot_id)
-       when is_binary(snapshot_id) do
-    with {:ok, _} <- Ecto.UUID.cast(snapshot_id),
-         %ArticleSnapshot{
-           id: ^snapshot_id,
-           source_working_copy_id: work_id,
-           causation_command_id: command_id
-         } <- Repo.get(ArticleSnapshot, snapshot_id),
-         true <- work_id == work.id and command_id == entry["commandId"],
-         true <-
-           Repo.exists?(
-             from(e in ArticleEvent,
-               where:
-                 e.article_id == ^article.id and e.after_snapshot_id == ^snapshot_id and
-                   e.type == :publish and
-                   e.actor_id == ^context.user.id and
-                   e.source_community_id == ^context.community.id
-             )
-           ),
-         %ArticlePublic{} = public <- Repo.get(ArticlePublic, article.id),
-         true <- public.snapshot_id == snapshot_id do
-      true
-    else
-      _ -> false
-    end
-  end
-
-  defp published_provenance?(_, _, _, _, _), do: false
-
-  defp creation_provenance?(context, entry, article_id, work_id) do
-    command_id = entry["commandId"]
-
-    Repo.exists?(
-      from(e in ArticleEvent,
-        join: s in ArticleSnapshot,
-        on: s.id == e.after_snapshot_id,
-        where:
-          e.article_id == ^article_id and e.working_copy_id == ^work_id and e.type == :create and
-            e.actor_id == ^context.user.id and e.source_community_id == ^context.community.id and
-            s.causation_command_id == ^command_id and s.source_working_copy_id == ^work_id
-      )
-    )
   end
 
   defp put_entry(context, entry) do

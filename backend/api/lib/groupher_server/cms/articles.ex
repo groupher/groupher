@@ -131,6 +131,11 @@ defmodule GroupherServer.CMS.Articles do
     )
   end
 
+  @doc "Verifies the authorized provenance of an Article creation and published Snapshot."
+  def verify_creation(input, actor) do
+    CMS.Articles.WorkingCopy.History.Query.verify_creation(input, actor)
+  end
+
   @doc "Reads one Article event and its stored-version Diff."
   def history_event(article_id, event_id, actor, opts \\ []) do
     CMS.Articles.WorkingCopy.History.Query.event(article_id, event_id, actor, opts)

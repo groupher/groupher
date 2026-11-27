@@ -718,6 +718,11 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :find_creation_by_command
 
+  @doc "Verifies an authorized Article creation and optional publication."
+  defdelegate verify_post_creation(input, actor),
+    to: GroupherServer.CMS.Articles,
+    as: :verify_creation
+
   @doc "Reads one Article history event through its history permission boundary."
   defdelegate articles_history_event(article_id, event_id, actor, opts),
     to: GroupherServer.CMS.Articles,
