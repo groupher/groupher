@@ -20,12 +20,16 @@ test.afterEach(() => {
 
 test('platform URLs can open public HTTPS destinations in browser mode', () => {
   const calls: unknown[][] = []
+  const browser = {
+    location: { search: '' },
+    open: (...args: unknown[]) => calls.push(args),
+    parent: undefined as unknown,
+  }
+  browser.parent = browser
 
   Object.defineProperty(globalThis, 'window', {
     configurable: true,
-    value: {
-      open: (...args: unknown[]) => calls.push(args),
-    },
+    value: browser,
   })
 
   openPlatformUrl('https://dash.cloudflare.com/')
