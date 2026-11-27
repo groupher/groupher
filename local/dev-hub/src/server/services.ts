@@ -494,7 +494,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
         DB_PORT: '5432',
         DB_USERNAME: 'postgres',
         DB_PASSWORD: 'postgres',
-        DB_POOL_SIZE: '50',
+        DB_POOL_SIZE: '10',
         ASSETS_HUB_BATCH_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
         ASSETS_HUB_DELETE_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.assetsHubRead,
         ASSETS_PUBLIC_ENDPOINT: 'https://assets.groupher.localhost',

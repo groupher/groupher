@@ -35,6 +35,7 @@ test('derives a sibling domain, independent service ports and the owned database
     `http://127.0.0.1:${ports.phoenix}/graphiql`,
   )
   assert.equal(phoenix.localEnvironment?.env?.DB_NAME, database.database)
+  assert.equal(phoenix.localEnvironment?.env?.DB_POOL_SIZE, '10')
   assert.equal(press.localEnvironment?.env?.DB_NAME, database.database)
   assert.ok(!press.localEnvironment?.editableEnvKeys?.includes('DB_NAME'))
   assert.ok(!phoenix.localEnvironment?.externalEnvKeys?.includes('ALGOLIA_ADMIN_API_KEY'))
