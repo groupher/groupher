@@ -274,6 +274,14 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
              end)
 
     assert first.requestId == second.requestId
+
+    assert {:ok, [%{id: request_id}]} = CMS.list_own_pending_community_admin_requests(owner)
+    assert request_id == first.requestId
+    assert {:ok, [%{id: ^request_id}]} = CMS.list_own_pending_community_admin_requests(subject)
+    {:ok, outsider} = db_insert(:user)
+    assert {:ok, []} = CMS.list_own_pending_community_admin_requests(outsider)
+    assert {:ok, %{pending_requests: 1}} = GroupherServer.Seed.Cleanup.Run.report("fixture-test")
+
     accept = %{"alias" => "editor", "invite" => "editor-invite"}
 
     assert {:ok, accepted} =
@@ -288,6 +296,7 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
 
     assert accepted.requestId == first.requestId
     assert repeated.requestId == first.requestId
+    assert {:ok, []} = CMS.list_own_pending_community_admin_requests(owner)
 
     assert {:error, _} =
              Repo.transact_result(fn ->

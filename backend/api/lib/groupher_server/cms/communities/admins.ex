@@ -62,6 +62,10 @@ defmodule GroupherServer.CMS.Communities.Admins do
   def list_own_memberships(%User{} = actor), do: Query.own_memberships(actor)
   def list_own_memberships(_), do: {:error, :permission_denied}
 
+  @doc "Lists pending Admin requests created by or addressed to the actor."
+  def list_own_pending_requests(%User{} = actor), do: Query.own_pending_requests(actor)
+  def list_own_pending_requests(_), do: {:error, :permission_denied}
+
   @doc "Creates an invitation or application from validated GraphQL values."
   def create(community_ref, subject_login, type, permissions, %User{} = actor, command_id) do
     with {:ok, community} <- community(community_ref),

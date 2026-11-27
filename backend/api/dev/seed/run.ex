@@ -5,8 +5,8 @@ defmodule GroupherServer.Seed.Run do
       run + alias -> fixture binding -> authenticated actor identity
   """
   import Ecto.Query
-  alias GroupherServer.Repo
-  alias GroupherServer.Accounts.Model.{OauthProvider, User}
+  alias GroupherServer.{Accounts, Repo}
+  alias Accounts.Model.OauthProvider
 
   @provider "local-test-actor-v1"
   @name ~r/\A[a-z][a-z0-9-]{0,39}\z/
@@ -24,7 +24,7 @@ defmodule GroupherServer.Seed.Run do
            raw: %{"tool" => @provider, "status" => "active", "run" => ^run, "alias" => ^name}
          } = binding <-
            Repo.get_by(OauthProvider, provider: @provider, provider_id: "#{run}/#{name}"),
-         %User{} = user <- Repo.get(User, binding.user_id) do
+         {:ok, user} <- Accounts.front_desk_fresh_user(binding.user_id) do
       {:ok, user, binding}
     else
       _ -> {:error, :local_test_actor_unavailable}

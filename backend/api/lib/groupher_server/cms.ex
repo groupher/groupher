@@ -109,6 +109,11 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Communities.Admins,
     as: :list_own_memberships
 
+  @doc "Lists the actor's own pending Community Admin requests."
+  defdelegate list_own_pending_community_admin_requests(actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :list_own_pending_requests
+
   @doc "Checks whether the actor can manage Community Admins."
   defdelegate check_community_admin_management_access(community_ref, actor),
     to: GroupherServer.CMS.Communities.Admins,

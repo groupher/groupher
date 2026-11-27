@@ -8,7 +8,7 @@ defmodule GroupherServer.LocalTestActors do
   these bindings. No fixture tables or production authorization exceptions exist.
   """
   alias GroupherServer.{Accounts, Repo}
-  alias Accounts.Model.{BrowserSession, User}
+  alias Accounts.Model.BrowserSession
   alias Accounts.Profiles.BrowserSessions
   alias GroupherServer.LocalTestActors.{Communities, Grants}
   alias GroupherServer.Seed.Run
@@ -97,15 +97,15 @@ defmodule GroupherServer.LocalTestActors do
   defp dispatch("actor.list", run, _) do
     Run.bindings(run)
     |> Enum.reduce_while({:ok, []}, fn binding, {:ok, actors} ->
-      user = Repo.get!(User, binding.user_id)
+      result =
+        with {:ok, user} <- Accounts.front_desk_fresh_user(binding.user_id),
+             {:ok, memberships} <- Communities.memberships(user) do
+          {:ok, Map.put(Run.present(user, binding), :communities, memberships)}
+        end
 
-      case Communities.memberships(user) do
-        {:ok, memberships} ->
-          {:cont,
-           {:ok, [Map.put(Run.present(user, binding), :communities, memberships) | actors]}}
-
-        {:error, _} = error ->
-          {:halt, error}
+      case result do
+        {:ok, actor} -> {:cont, {:ok, [actor | actors]}}
+        {:error, _} = error -> {:halt, error}
       end
     end)
     |> case do
@@ -188,19 +188,30 @@ defmodule GroupherServer.LocalTestActors do
     if Enum.any?(Articles.retained(rows), &Articles.unresolved?/1) do
       {:error, :local_test_article_pending}
     else
-      Enum.each(rows, fn binding ->
-        user = Repo.get!(User, binding.user_id)
-        {:ok, _} = BrowserSessions.revoke_other_sessions(user, "local-test-close")
+      result =
+        Enum.reduce_while(rows, {:ok, :pass}, fn binding, _ ->
+          result =
+            with {:ok, user} <- Accounts.front_desk_fresh_user(binding.user_id),
+                 {:ok, _} <- BrowserSessions.revoke_other_sessions(user, "local-test-close"),
+                 {:ok, _} <-
+                   binding
+                   |> Ecto.Changeset.change(
+                     raw: binding.raw |> Articles.cancel_unsent() |> Map.put("status", "closed")
+                   )
+                   |> Repo.update() do
+              {:ok, :pass}
+            end
 
-        {:ok, _} =
-          binding
-          |> Ecto.Changeset.change(
-            raw: binding.raw |> Articles.cancel_unsent() |> Map.put("status", "closed")
-          )
-          |> Repo.update()
-      end)
+          case result do
+            {:ok, _} -> {:cont, result}
+            {:error, _} -> {:halt, result}
+          end
+        end)
 
-      {:ok, %{status: "closed", actors: length(rows)}}
+      case result do
+        {:ok, :pass} -> {:ok, %{status: "closed", actors: length(rows)}}
+        {:error, _} = error -> error
+      end
     end
   end
 

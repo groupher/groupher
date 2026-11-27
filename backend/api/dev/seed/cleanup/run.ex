@@ -20,7 +20,6 @@ defmodule GroupherServer.Seed.Cleanup.Run do
     Author,
     Community,
     CommunityAdmin,
-    CommunityAdminRequest,
     CommunityLifecycle,
     GlobalPassport
   }
@@ -213,7 +212,16 @@ defmodule GroupherServer.Seed.Cleanup.Run do
   defp snapshot(run) do
     bindings = GroupherServer.Seed.Run.bindings(run)
     ids = Enum.map(bindings, & &1.user_id)
-    users = Repo.all(from(u in User, where: u.id in ^ids)) |> Map.new(&{&1.id, &1})
+
+    users =
+      ids
+      |> Enum.uniq()
+      |> Enum.reduce(%{}, fn id, acc ->
+        case Accounts.front_desk_fresh_user(id) do
+          {:ok, user} -> Map.put(acc, id, user)
+          {:error, _} -> acc
+        end
+      end)
 
     {communities, ownership_errors} =
       Enum.reduce(bindings, {[], []}, fn binding, {communities, errors} ->
@@ -302,12 +310,7 @@ defmodule GroupherServer.Seed.Cleanup.Run do
       admins: admins,
       globals: global_rows,
       legacy_grants: legacy_grants,
-      admin_requests:
-        Repo.all(
-          from(r in CommunityAdminRequest,
-            where: r.status == :pending and (r.subject_user_id in ^ids or r.created_by_id in ^ids)
-          )
-        ),
+      admin_requests: own_pending_admin_requests(users),
       article_requests:
         Repo.all(
           from(r in ArticleCoAuthorRequest,
@@ -324,6 +327,16 @@ defmodule GroupherServer.Seed.Cleanup.Run do
           )
         )
     }
+  end
+
+  defp own_pending_admin_requests(users) do
+    users
+    |> Map.values()
+    |> Enum.flat_map(fn user ->
+      {:ok, requests} = CMS.list_own_pending_community_admin_requests(user)
+      requests
+    end)
+    |> Enum.uniq_by(& &1.id)
   end
 
   defp summarize(data) do

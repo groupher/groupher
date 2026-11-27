@@ -179,6 +179,25 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
 
   def own_memberships(_), do: {:error, :permission_denied}
 
+  @doc "Lists pending Admin requests created by or addressed to the actor."
+  def own_pending_requests(%User{id: user_id}) when is_integer(user_id) do
+    {:ok,
+     Repo.all(
+       from(r in CommunityAdminRequest,
+         where:
+           r.status == :pending and (r.subject_user_id == ^user_id or r.created_by_id == ^user_id),
+         select: %{
+           id: r.id,
+           revision: r.revision,
+           subject_user_id: r.subject_user_id,
+           created_by_id: r.created_by_id
+         }
+       )
+     )}
+  end
+
+  def own_pending_requests(_), do: {:error, :permission_denied}
+
   @doc "Maps a CommunityAdmin row into its GraphQL-facing projection."
   def present_admin(%CommunityAdmin{} = admin) do
     %{
