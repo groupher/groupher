@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { openReadOnlyDatabase, readOnlyStatement } from './database-read-only.ts'
+import {
+  openReadOnlyDatabase,
+  readOnlyStatement,
+  redactDatabaseError,
+} from './database-read-only.ts'
 
 test('read-only statements reject additional SQL and psql commands', () => {
   assert.equal(readOnlyStatement(' SELECT 1; '), 'SELECT 1')
@@ -32,4 +36,14 @@ test('read-only inspection rejects production and ambiguous database overrides b
       /local development|DATABASE_URL|PostgreSQL environment/,
     )
   }
+})
+
+test('database errors redact both administrator and temporary reader passwords', () => {
+  assert.equal(
+    redactDatabaseError('admin-secret reader-secret admin-secret', [
+      'admin-secret',
+      'reader-secret',
+    ]),
+    '[redacted] [redacted] [redacted]',
+  )
 })

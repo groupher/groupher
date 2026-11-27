@@ -23,7 +23,15 @@ const revokeReaderGrants = (role: string) => `
     EXECUTE format('REVOKE USAGE ON SCHEMA %I FROM %I', schema_name, ${literal(role)});
   END LOOP;`
 
-type TPsqlOptions = { username: string; password: string; sql: string }
+type TPsqlOptions = { username: string; password: string; sql: string; redact?: string[] }
+
+/** Remove temporary and administrator passwords before reporting a database failure. */
+export function redactDatabaseError(message: string, secrets: string[]): string {
+  for (const secret of secrets) {
+    if (secret) message = message.replaceAll(secret, '[redacted]')
+  }
+  return message
+}
 
 async function psql(target: TDatabaseTarget, options: TPsqlOptions, env: NodeJS.ProcessEnv) {
   if (Object.keys(env).some((key) => key.startsWith('PG') && env[key]))
@@ -79,12 +87,10 @@ async function psql(target: TDatabaseTarget, options: TPsqlOptions, env: NodeJS.
       if (inputError) reject(inputError)
       else if (exceeded) reject(new Error('Database output is too large; narrow the query.'))
       else if (code === 0) resolve()
-      else
-        reject(
-          new Error(
-            stderr.replaceAll(options.password, '[redacted]').trim() || `psql exited ${code}`,
-          ),
-        )
+      else {
+        const message = redactDatabaseError(stderr, [options.password, ...(options.redact || [])])
+        reject(new Error(message.trim() || `psql exited ${code}`))
+      }
     })
   })
   return stdout.trim()
@@ -232,7 +238,7 @@ DO $grant$ DECLARE name text; BEGIN
   END LOOP;
 END $grant$;
 COMMIT;`
-    await psql(target, { ...admin, sql: setup }, env)
+    await psql(target, { ...admin, sql: setup, redact: [password] }, env)
     let closed = false
     return {
       target,
