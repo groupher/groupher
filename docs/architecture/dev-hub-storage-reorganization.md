@@ -53,7 +53,7 @@ $TMPDIR/groupher-dev-hub/<工作树标识>/
 
 **Status 的本地 D1 迁移。** 此前受管 Worker 使用 `DEV_HUB_WORKER_STATE_DIR`，而 `make be.status.db.migrate.local` 只指定 `--local`。现已让[迁移入口](../../ops/status/package.json)使用当前 checkout 的同一状态目录。
 
-本次实现让迁移入口复用 `workerStateRoot`，并在两个一次性路径验证了迁移、重复迁移、隔离及使用相同 D1 数据库标识的 Miniflare `DB` binding 读回。该验证使用临时 Worker，真实受管 Status Worker 的读回及重启验收仍待执行。
+迁移入口复用 `workerStateRoot`，此前已在两个一次性路径验证迁移、重复迁移及使用相同 D1 数据库标识的 Miniflare `DB` binding 隔离。2026-11-28 在 `2e17da443` 的独立 B worktree 实测受管 Status：迁移前 `/api/status` 返回 503，执行 `make be.status.db.migrate.local` 后返回 200；向 B 的本地 D1 写入测试状态，真实 Worker 可以读到，重启后仍可读，重复迁移报告没有待执行迁移。B 的服务、数据库、worktree 与本次创建的 Status 状态目录已回收。A 的 Status 当时处于停止状态，因此尚未验证两个真实 Status Worker 同时运行及相互隔离。
 
 1. 在本次演练专用的空状态目录中，通过上述公开入口迁移，用受管 Status Worker 的实际 `DB` binding 读取[首条迁移](../../ops/status/migrations/0001_current_status.sql)创建的 `service_status` 表。记录工作树、解析出的目录、迁移版本和查询结果。
 2. 重启 Worker 后再次读取；重复迁移应报告已应用。在另一个 checkout 的独立空目录重复，确认 B 迁移前读不到 A 的表、迁移后两边各自可读。验收只使用本地 D1，单环境读回可先独立交付，双环境部分在 Status 支持并发后执行。

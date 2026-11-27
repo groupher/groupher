@@ -172,6 +172,8 @@ Runner 在内部区分首次执行和恢复，公开 Context 只返回业务结�
 
   当前文章准备记录 UTC 时间。重复请求先通过 `CMS.find_article_creation_by_command/3` 按 command ID、操作者和社区，借助尚存的 Receipt 身份及 Article 创建历史查找已提交资源，并检查文章历史读取权限；唯一匹配且通过归属校验时补登记并返回原引用。Receipt 身份已清除时不能使用这条查询确认旧资源。没有匹配时，明确处于 `prepared` 的新协议记录可重复准备；`dispatched` 或旧记录返回 `local_test_article_recovery_required`，不自动重发。缺少可见 Receipt 无法证明已发送请求未提交或已结束；下游终态核对仍待实现。清理预览包含准备时间、发送状态与操作引用。
 
+  2026-11-27 在 `6980ff03c` 的独立 B 实测草稿和已发布 Post：两者经真实 Dash Content Publisher 创建，同 key 重试复用引用，改变输入被拒；清理保留文章。另用临时测试客户端在收到真实 Publisher 成功响应后故意跳过 fixture 登记，再通过公开 CLI 以原 key 重试，找回同一 Article 和 WorkingCopy，第二次重试仍是同一引用，随后清理成功。此测试覆盖已提交但登记前丢响应，不证明无法取得下游终态时可以结束核对；B 服务、库及 worktree 已回收。
+
 - **显式保留（后续批次）。** 预览给出本 run 内唯一的 `operation-ref`。操作者可用 `pnpm seed cleanup run --run <run> --apply --retain-unconfirmed <operation-ref> --reason <text>` 申请结束核对。服务端在清理锁和 run 写锁下核验操作归属及下游终态证据。只有能确认该请求已结束、资源归属仍无法判定时，才在原绑定保存 command ID、摘要、最后观测时间、终态证据、原因及“归属未确认，已保留”的决定。若下游无法提供该证据，拒绝处置。重复申请读回原决定；迟到回填在 run 写锁下复查，已有保留决定时仅追加证据。该项允许封存，清理报告持续标为部分完成，资源保留且不自动重放。
 
   当前预览已列出文章操作引用，申请会核对其属于本 run；由于发布链尚无可供核验的请求终态证据，当前一律返回 `local_test_terminal_evidence_unavailable`，不封存、不修改资源。成功保留的实现和验收仍待后续交付。
