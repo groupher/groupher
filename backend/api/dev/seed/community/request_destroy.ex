@@ -5,34 +5,40 @@ defmodule GroupherServer.Seed.Community.RequestDestroy do
       run owner + slug -> CMS Context -> retained lifecycle result
   """
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, CommunityLifecycle}
 
   def run(run, %{"by" => name, "slug" => slug}) when is_binary(slug) do
     with {:ok, actor, binding} <- GroupherServer.Seed.Run.actor(run, name),
-         %Community{} = community <- Repo.get_by(Community, slug: slug),
+         {:ok, community} <- owned_community(slug, actor),
          true <-
            community.user_id == actor.id and community.id in (binding.raw["communities"] || []),
          {:ok, entry} <- entry(binding, community),
          {:ok, _} <-
            CMS.request_community_destruction(community, actor, command_id: entry["command_id"]),
          {:ok, _} <- store(binding, slug, entry),
-         %CommunityLifecycle{state: state} <-
-           Repo.get_by(CommunityLifecycle, community_id: community.id) do
+         {:ok, current} <- owned_community(slug, actor),
+         %{state: state} <- current.lifecycle do
       {:ok, %{communityRef: community.ref, slug: slug, lifecycle: state}}
     else
-      nil -> {:error, :community_not_found}
       false -> {:error, :local_test_community_not_owned}
       {:error, _} = error -> error
+      _ -> {:error, :local_test_community_lifecycle_changed}
     end
   end
 
   def run(_, _), do: {:error, :invalid_local_test_community}
 
+  defp owned_community(slug, actor) do
+    case CMS.fetch_community(slug, actor, inc_views: false, policy_mode: :owner) do
+      {:ok, community} -> {:ok, community}
+      {:error, _} -> {:error, :local_test_community_not_owned}
+    end
+  end
+
   defp entry(binding, community) do
     case (binding.raw["community_destroy_operations"] || %{})[community.slug] do
       nil ->
-        case Repo.get_by(CommunityLifecycle, community_id: community.id) do
-          %CommunityLifecycle{state: :active} ->
+        case community.lifecycle do
+          %{state: :active} ->
             {:ok, %{"community_id" => community.id, "command_id" => Ecto.UUID.generate()}}
 
           _ ->
