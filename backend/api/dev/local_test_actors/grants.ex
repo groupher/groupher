@@ -37,9 +37,11 @@ defmodule GroupherServer.LocalTestActors.Grants do
       ) do
     with {:ok, subject, _} <- GroupherServer.Seed.Run.actor(run, name),
          {:ok, manager, _} <- GroupherServer.Seed.Run.actor(run, by),
-         %Community{} = community <- Repo.get_by(Community, slug: slug),
-         {:ok, normalized} <- CMS.passport_validate_permissions(:community, permissions) do
-      case Repo.get_by(CommunityAdmin, community_id: community.id, user_id: subject.id) do
+         {:ok, community} <-
+           CMS.fetch_community(slug, manager, inc_views: false, policy_mode: :admin),
+         {:ok, normalized} <- CMS.passport_validate_permissions(:community, permissions),
+         {:ok, current_memberships} <- CMS.list_own_community_admin_memberships(subject) do
+      case Enum.find(current_memberships, &(&1.community_ref == community.ref)) do
         nil ->
           with {:ok, request} <-
                  CMS.create_community_admin_request(
@@ -62,9 +64,9 @@ defmodule GroupherServer.LocalTestActors.Grants do
                        nil,
                        subject,
                        Ecto.UUID.generate()
-                     ) do
-                {:ok,
-                 %{community: slug, memberships: LocalTestActors.Communities.memberships(subject)}}
+                     ),
+                   {:ok, memberships} <- LocalTestActors.Communities.memberships(subject) do
+                {:ok, %{community: slug, memberships: memberships}}
               end
             end
           else
@@ -72,22 +74,21 @@ defmodule GroupherServer.LocalTestActors.Grants do
             {:error, _} = error -> error
           end
 
-        %CommunityAdmin{} = member ->
+        member when is_map(member) ->
           with {:ok, _} <-
                  CMS.update_community_admin_permissions(
                    community.ref,
-                   member.id,
+                   member.member_id,
                    member.revision,
                    normalized,
                    manager,
                    Ecto.UUID.generate()
-                 ) do
-            {:ok,
-             %{community: slug, memberships: LocalTestActors.Communities.memberships(subject)}}
+                 ),
+               {:ok, memberships} <- LocalTestActors.Communities.memberships(subject) do
+            {:ok, %{community: slug, memberships: memberships}}
           end
       end
     else
-      nil -> {:error, :community_not_found}
       {:error, _} = error -> error
     end
   end

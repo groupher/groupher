@@ -95,11 +95,23 @@ defmodule GroupherServer.LocalTestActors do
   defp dispatch("actor.create", run, input), do: GroupherServer.Seed.Actor.Create.run(run, input)
 
   defp dispatch("actor.list", run, _) do
-    {:ok,
-     Enum.map(Run.bindings(run), fn binding ->
-       user = Repo.get!(User, binding.user_id)
-       Map.put(Run.present(user, binding), :communities, Communities.memberships(user))
-     end)}
+    Run.bindings(run)
+    |> Enum.reduce_while({:ok, []}, fn binding, {:ok, actors} ->
+      user = Repo.get!(User, binding.user_id)
+
+      case Communities.memberships(user) do
+        {:ok, memberships} ->
+          {:cont,
+           {:ok, [Map.put(Run.present(user, binding), :communities, memberships) | actors]}}
+
+        {:error, _} = error ->
+          {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, actors} -> {:ok, Enum.reverse(actors)}
+      {:error, _} = error -> error
+    end
   end
 
   defp dispatch("community.create", run, input),

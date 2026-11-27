@@ -486,7 +486,17 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
     assert {:ok, facts} = CMS.Passport.community_facts(subject.id, community.id)
     assert facts.is_lord
     assert facts.revision == 1
-    assert LocalTestActors.Communities.memberships(subject) |> length() == 1
+    assert {:ok, memberships} = LocalTestActors.Communities.memberships(subject)
+    assert length(memberships) == 1
+
+    assert {:ok, [%{community_ref: ref, is_lord: true, member_id: member_id}]} =
+             CMS.list_own_community_admin_memberships(subject)
+
+    assert ref == community.ref
+    assert is_integer(member_id)
+    {:ok, outsider} = db_insert(:user)
+    assert {:ok, []} = CMS.list_own_community_admin_memberships(outsider)
+    assert {:error, :permission_denied} = CMS.list_own_community_admin_memberships(nil)
 
     {:ok, ordinary} = db_insert(:user)
     register(ordinary, "ordinary")

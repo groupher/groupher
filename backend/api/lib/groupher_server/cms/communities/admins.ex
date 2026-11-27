@@ -58,6 +58,10 @@ defmodule GroupherServer.CMS.Communities.Admins do
 
   def page_requests(_, _, _), do: {:error, :permission_denied}
 
+  @doc "Lists only the authenticated actor's own Community Admin memberships."
+  def list_own_memberships(%User{} = actor), do: Query.own_memberships(actor)
+  def list_own_memberships(_), do: {:error, :permission_denied}
+
   @doc "Creates an invitation or application from validated GraphQL values."
   def create(community_ref, subject_login, type, permissions, %User{} = actor, command_id) do
     with {:ok, community} <- community(community_ref),

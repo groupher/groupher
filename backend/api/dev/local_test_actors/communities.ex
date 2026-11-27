@@ -4,9 +4,7 @@ defmodule GroupherServer.LocalTestActors.Communities do
 
       test actor -> community membership -> current permission facts
   """
-  import Ecto.Query
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, CommunityAdmin}
+  alias GroupherServer.CMS
 
   def require_admin(user, slug) when is_binary(slug) do
     with {:ok, community} <-
@@ -28,19 +26,17 @@ defmodule GroupherServer.LocalTestActors.Communities do
   def require_admin(_, _), do: {:error, :local_test_community_admin_required}
 
   def memberships(user) do
-    Repo.all(
-      from(a in CommunityAdmin,
-        join: c in Community,
-        on: c.id == a.community_id,
-        where: a.user_id == ^user.id,
-        select: %{
-          community: c.slug,
-          communityRef: c.ref,
-          isLord: a.is_lord,
-          permissions: a.permissions,
-          revision: a.revision
-        }
-      )
-    )
+    with {:ok, memberships} <- CMS.list_own_community_admin_memberships(user) do
+      {:ok,
+       Enum.map(memberships, fn member ->
+         %{
+           community: member.community,
+           communityRef: member.community_ref,
+           isLord: member.is_lord,
+           permissions: member.permissions,
+           revision: member.revision
+         }
+       end)}
+    end
   end
 end

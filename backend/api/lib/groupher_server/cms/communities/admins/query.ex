@@ -157,6 +157,28 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
 
   def current_member(_, _), do: {:error, :invalid_community}
 
+  @doc "Lists the authenticated actor's own Community Admin memberships."
+  def own_memberships(%User{id: user_id}) when is_integer(user_id) do
+    {:ok,
+     Repo.all(
+       from(a in CommunityAdmin,
+         join: c in Community,
+         on: c.id == a.community_id,
+         where: a.user_id == ^user_id,
+         select: %{
+           member_id: a.id,
+           community: c.slug,
+           community_ref: c.ref,
+           is_lord: a.is_lord,
+           permissions: a.permissions,
+           revision: a.revision
+         }
+       )
+     )}
+  end
+
+  def own_memberships(_), do: {:error, :permission_denied}
+
   @doc "Maps a CommunityAdmin row into its GraphQL-facing projection."
   def present_admin(%CommunityAdmin{} = admin) do
     %{

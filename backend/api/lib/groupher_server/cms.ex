@@ -104,6 +104,11 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Communities.Admins,
     as: :current
 
+  @doc "Lists the authenticated actor's own Community Admin memberships."
+  defdelegate list_own_community_admin_memberships(actor),
+    to: GroupherServer.CMS.Communities.Admins,
+    as: :list_own_memberships
+
   @doc "Checks whether the actor can manage Community Admins."
   defdelegate check_community_admin_management_access(community_ref, actor),
     to: GroupherServer.CMS.Communities.Admins,
