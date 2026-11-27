@@ -5,7 +5,6 @@ defmodule GroupherServer.Seed.Admin.Invite do
       run bindings + stable key -> Context invitation -> recorded request
   """
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Community
 
   def run(run, %{
         "by" => by,
@@ -17,7 +16,8 @@ defmodule GroupherServer.Seed.Admin.Invite do
       when is_binary(key) and byte_size(key) > 0 and byte_size(key) <= 40 and is_map(permissions) do
     with {:ok, actor, binding} <- GroupherServer.Seed.Run.actor(run, by),
          {:ok, subject, _} <- GroupherServer.Seed.Run.actor(run, to),
-         %Community{} = community <- Repo.get_by(Community, slug: slug),
+         {:ok, community} <-
+           CMS.fetch_community(slug, actor, inc_views: false, policy_mode: :admin),
          {:ok, normalized} <- CMS.passport_validate_permissions(:community, permissions),
          {:ok, entry} <- entry(run, key, community, actor, subject, normalized),
          {:ok, request} <-
@@ -36,7 +36,6 @@ defmodule GroupherServer.Seed.Admin.Invite do
          {:ok, _} <- store(binding, key, saved) do
       {:ok, %{requestId: request.id, revision: request.revision, status: request.status}}
     else
-      nil -> {:error, :community_not_found}
       {:error, _} = error -> error
     end
   end

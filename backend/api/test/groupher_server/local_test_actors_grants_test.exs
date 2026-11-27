@@ -289,6 +289,16 @@ defmodule GroupherServer.LocalTestActorsGrantsTest do
     assert accepted.requestId == first.requestId
     assert repeated.requestId == first.requestId
 
+    assert {:error, _} =
+             Repo.transact_result(fn ->
+               GroupherServer.Seed.Admin.Invite.run("fixture-test", %{
+                 input
+                 | "by" => "editor",
+                   "to" => "owner",
+                   "key" => "editor-forbidden"
+               })
+             end)
+
     change = %{
       "by" => "owner",
       "member" => "editor",

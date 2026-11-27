@@ -5,14 +5,14 @@ defmodule GroupherServer.Seed.Admin.Membership do
       run actor + operation key -> CMS Context -> stored command identity
   """
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Community
 
   def run(action, run, %{"by" => by, "member" => name, "community" => slug, "key" => key} = input)
       when action in [:set_permissions, :remove] and is_binary(key) and byte_size(key) > 0 and
              byte_size(key) <= 40 do
     with {:ok, actor, binding} <- GroupherServer.Seed.Run.actor(run, by),
          {:ok, subject, _} <- GroupherServer.Seed.Run.actor(run, name),
-         %Community{} = community <- Repo.get_by(Community, slug: slug),
+         {:ok, community} <-
+           CMS.fetch_community(slug, actor, inc_views: false, policy_mode: :admin),
          {:ok, permissions} <- permissions(action, input),
          identity <- %{
            "action" => Atom.to_string(action),
@@ -27,7 +27,6 @@ defmodule GroupherServer.Seed.Admin.Membership do
          {:ok, _} <- store(binding, key, entry) do
       {:ok, present(action, entry, result)}
     else
-      nil -> {:error, :community_not_found}
       {:error, _} = error -> error
     end
   end
