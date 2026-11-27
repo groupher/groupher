@@ -1,6 +1,7 @@
 name: Backend unit tests
 on:
   push:
+    branches: [dev, main]
     paths:
       - 'backend/api/**'
       - 'backend/auth/**'
