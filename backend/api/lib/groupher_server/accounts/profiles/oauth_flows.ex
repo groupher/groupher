@@ -124,7 +124,8 @@ defmodule GroupherServer.Accounts.Profiles.OauthFlows do
           Repo.rollback(:invalid_oauth_flow)
         end
 
-        provider = Oauth.normalize_oauth_provider(flow.identity) |> Map.put(:login, login)
+        provider =
+          Oauth.normalize_oauth_provider(flow.identity) |> Map.put(:registration_login, login)
 
         unless OauthProviders.allow_new_identity?(provider.provider) do
           Repo.rollback(:oauth_provider_closed)

@@ -58,6 +58,7 @@ defmodule GroupherServer.Test.Accounts.OauthFlows do
     assert is_binary(session.browser_session_ref)
     binding = Repo.get_by!(OauthProvider, provider: "linuxdo", provider_id: "flow-123")
     assert Repo.get!(User, binding.user_id).login == "oauth_flow_test"
+    assert binding.login == existing.login
     assert Repo.get_by!(OauthFlow, ref: ref).status == "consumed"
     assert {:error, :invalid_oauth_flow} = OauthFlows.registration_summary(ref)
 
@@ -81,6 +82,20 @@ defmodule GroupherServer.Test.Accounts.OauthFlows do
     second = Repo.get_by!(BrowserSession, ref: second_session.browser_session_ref)
     assert second.user_id == binding.user_id
     assert {:error, :invalid_oauth_flow} = OauthFlows.complete_registration(ref, "duplicate", %{})
+  end
+
+  test "chosen registration login does not replace the verified GitHub login" do
+    provider = %{provider: "github", provider_id: "github-rename-id", login: "github_original"}
+    ref = "github-rename-flow"
+
+    assert {:ok, _} = OauthFlows.create_registration(ref, provider, nil)
+    assert {:ok, _} = OauthFlows.complete_registration(ref, "groupher_chosen", %{})
+
+    binding = Repo.get_by!(OauthProvider, provider: "github", provider_id: provider.provider_id)
+    user = User |> Repo.get!(binding.user_id) |> Repo.preload(:social)
+    assert user.login == "groupher_chosen"
+    assert binding.login == "github_original"
+    assert user.social.github == "https://github.com/github_original"
   end
 
   test "session creation failure after registration permits reauthorization to the committed user" do

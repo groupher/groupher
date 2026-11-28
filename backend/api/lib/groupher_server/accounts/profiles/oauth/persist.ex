@@ -166,8 +166,9 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Persist do
 
   defp registration_login(profile) do
     profile
-    |> Map.get(:login)
+    |> Map.get(:registration_login)
     |> blank_to_nil()
+    |> Kernel.||(profile |> Map.get(:login) |> blank_to_nil())
     |> Kernel.||(profile |> Map.get(:nickname) |> blank_to_nil())
     |> Kernel.||(profile |> Map.get(:email) |> email_local_part())
     |> Kernel.||("oauth_" <> to_string(profile.provider_id))
