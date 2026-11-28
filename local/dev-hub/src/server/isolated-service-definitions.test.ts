@@ -43,6 +43,18 @@ test('derives a sibling domain, independent service ports and the owned database
   assert.equal(press.localEnvironment?.env?.DB_NAME, database.database)
   assert.ok(!press.localEnvironment?.editableEnvKeys?.includes('DB_NAME'))
   assert.ok(!phoenix.localEnvironment?.externalEnvKeys?.includes('ALGOLIA_ADMIN_API_KEY'))
+  const inheritedSearch = {
+    ALGOLIA_APPLICATION_ID: 'production-app-probe',
+    ALGOLIA_SEARCH_API_KEY: 'production-search-probe',
+    ALGOLIA_ADMIN_API_KEY: 'production-admin-probe',
+    ALGOLIA_INDEX_NAME: 'production-index-probe',
+  }
+  const phoenixEnvironment = createSpawnEnvironment(phoenix, inheritedSearch, {
+    env: phoenix.localEnvironment!.env!,
+  })
+  for (const key of Object.keys(inheritedSearch)) {
+    assert.equal(phoenixEnvironment[key], undefined, `${key} must not reach secondary Phoenix`)
+  }
   const assetsEnvironment = createSpawnEnvironment(
     assets,
     { ASSETS_R2_ENDPOINT: 'https://production.example', ASSETS_R2_ACCESS_KEY_ID: 'secret' },
