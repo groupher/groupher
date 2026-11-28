@@ -47,6 +47,29 @@ afterEach(async () => {
 })
 
 describe('LocalObjectStore', () => {
+  it('keeps the same object key isolated across local roots, including deletion', async () => {
+    const storeA = await createStore()
+    const storeB = await createStore()
+    const key = 'communities/home/generated/fixture.webp'
+    const bodyA = Buffer.from('environment-a')
+    const bodyB = Buffer.from('environment-b')
+
+    await Promise.all([
+      storeA.createUpload(uploadCapability(bodyA)),
+      storeB.createUpload(uploadCapability(bodyB)),
+    ])
+    await Promise.all([
+      storeA.putUpload('upload-1', bodyA, 'image/webp'),
+      storeB.putUpload('upload-1', bodyB, 'image/webp'),
+    ])
+
+    await expect(storeA.getObjectBytes(key)).resolves.toEqual(bodyA)
+    await expect(storeB.getObjectBytes(key)).resolves.toEqual(bodyB)
+    await storeB.deleteObject(key)
+    await expect(storeB.objectExists(key)).resolves.toBe(false)
+    await expect(storeA.getObjectBytes(key)).resolves.toEqual(bodyA)
+  })
+
   it('verifies the declared checksum before storing bytes', async () => {
     const store = await createStore()
     const expected = Buffer.from('expected')

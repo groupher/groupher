@@ -268,6 +268,8 @@ Auth 和 Assets Hub 的生产 Node 入口不再读取本地 dotenv；生产进�
 
 secondary Phoenix 的进程环境测试向 Hub 父环境注入虚构 Algolia 应用、索引和读写凭据，核对四项均未传给受管子进程；该检查不发网络请求，不能代替完整外部写入捕获验收。[隔离配置测试](../../local/dev-hub/src/server/isolated-service-definitions.test.ts)
 
+本地 Assets 对象存储测试在两个一次性目录并发写入相同 object key 和 upload ref、分别读回不同内容，随后删除 B 的对象并确认 A 的内容仍在；测试结束回收两个目录。这覆盖 provider 的目录隔离和删除行为，不代替两套受管服务的外部请求捕获。[本地存储测试](../../backend/assets-hub/src/local-storage.test.ts)
+
 **2026-11-27 Node 生产构建补测。** 用现有 Auth 和 Assets Hub 构建命令的 esbuild 参数，在临时目录分别执行移除三项探针变量、以及注入本地 DB 名、`.localhost` issuer 与测试秘密标记的两组构建；四个 bundle 均生成，均不包含测试标记。Auth 和 Assets Hub 对应生产配置及环境单测分别为 4 项、11 项通过。此检查仍使用当前 checkout，不等于无本地状态的独立构建，也不覆盖 Dash 产物、实际部署注入或 Worker 绑定矩阵。
 
 **2026-11-28 Node 正式构建复测。** 在候选 `3810ffb7c` 的独立 B checkout 复用 pnpm 缓存，以空临时 HOME 和禁止出站网络执行 Auth、Assets Hub 各自的 `pnpm --filter … run build`。无污染和注入本机数据库、`.localhost` issuer、Auth 地址及合成秘密两组共四次均成功；合成秘密未出现在 bundle，同一应用两组 bundle 的 SHA-256 一致。Auth 的生产边界、配置、环境和本地登录测试共 11 项通过；Assets Hub 的生产配置、环境及本地存储测试共 14 项通过。B 随后回收。本次未启动生产进程或核验实际部署注入与线上资源。
