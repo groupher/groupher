@@ -254,6 +254,8 @@ Phoenix 生产 runtime 允许部署环境显式提供 `SERVICE_AUTH_ISSUER`、`S
 
 服务令牌验证器使用两套独立合成 RSA 密钥与 issuer 双向测试：每侧接受自身令牌、拒绝另一侧令牌。该测试只覆盖 Phoenix 验证器的隔离，不代表其他服务或实际部署密钥已经验收。[验证器测试](../../backend/api/test/groupher_server_web/service_auth_verifier_test.exs)
 
+浏览器访问令牌使用两份随机合成环境密钥双向测试：每侧接受自己的签名并拒绝另一侧签名。该测试验证 Phoenix 的浏览器访问令牌验签，不代替实际 A、B 之间交换 Cookie 或请求头的验收。[浏览器令牌测试](../../backend/api/test/helper/guardian_browser_environment_isolation_test.exs)
+
 本次用临时构建目录和合成配置执行 Phoenix `prod` 编译及 `mix run --no-start`：干净配置读取生产默认 issuer，且不加载开发 fixture 模块或路由；注入同级 `.localhost` issuer 时在应用启动前拒绝。另用配置测试覆盖 prod、seed_prod 的 issuer/JWKS/token 三项本地地址。没有启动应用、连接数据库或线上服务；临时构建目录已删除。
 
 Auth 和 Assets Hub 的生产 Node 入口不再读取本地 dotenv；生产进程的身份服务或 Phoenix 地址指向本机、或 Assets Hub 被设为本地存储模式时拒绝启动。它们的单测覆盖这些分支；Worker 配置测试也验证混入本地地址时仍选用生产服务地址。Assets Worker 的现有生产配置仍引用名为 `groupher-assets-dev` 的 R2 与 `groupher-asset-delete-dev` 队列，这是既有配置而非本次新建的隔离资源；实际线上资源归属与读写影响尚未核验，不得因为名称推断隔离，也不得在本次验收中改写它们。[现有绑定](../../backend/assets-hub/cloudflare.config.ts) · [历史状态](../assets-hub/v2.md)
