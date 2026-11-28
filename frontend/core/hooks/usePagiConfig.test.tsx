@@ -76,3 +76,27 @@ it('hydrates the request-selected mobile mode even on a wide viewport', async ()
   expect(error).not.toHaveBeenCalled()
   await act(async () => root.unmount())
 })
+
+it('hydrates the desktop SSR selection before applying a compact viewport', async () => {
+  width(1024)
+  const error = vi.fn()
+  function Probe() {
+    const { config } = usePagiConfig(preference, 'xx')
+    return <span>{config.mode}</span>
+  }
+  const container = document.createElement('div')
+  const tree = (
+    <PaginationDeviceContext.Provider value={false}>
+      <Probe />
+    </PaginationDeviceContext.Provider>
+  )
+  container.innerHTML = renderToString(tree)
+  expect(container.textContent).toBe('PAGE')
+  let root: ReturnType<typeof hydrateRoot>
+  await act(async () => {
+    root = hydrateRoot(container, tree, { onRecoverableError: error })
+  })
+  expect(container.textContent).toBe('INFINITE_SCROLL')
+  expect(error).not.toHaveBeenCalled()
+  await act(async () => root.unmount())
+})

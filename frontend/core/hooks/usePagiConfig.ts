@@ -16,15 +16,15 @@ export default function usePagiConfig(preference: TPagiPreference, scope: string
     // A new collection chooses again; resizing an active collection preserves its position.
     let layout: boolean | null = null
     return () => {
-      if (requestDevice !== null) return requestDevice
-      layout ??= readPagiMobileLayout()
+      if (requestDevice === true) return true
+      layout ??= readPagiMobileLayout() ?? requestDevice
       return layout
     }
   }, [scope, requestDevice])
   const mobile = useSyncExternalStore(
     subscribe,
     snapshot,
-    requestDevice === null ? serverSnapshot : snapshot,
+    requestDevice === null ? serverSnapshot : () => requestDevice,
   )
   return { config: toEffectivePagiConfig(preference, mobile === true), ready: mobile !== null }
 }
