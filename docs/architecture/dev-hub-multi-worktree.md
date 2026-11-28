@@ -201,6 +201,8 @@ Dev Hub 受管 Phoenix 的默认连接池为 10，可通过本环境的 `DB_POOL
 
 **2026-11-27 合并 case 与 home 补测。** 在合并候选 `e59ca2490` 的空 B 库和本地 Assets 上，两次 `pnpm seed home prepare` 返回相同 ref；核对 7 篇文章、两套壁纸、8 个图片，8 个本地资产地址均返回 200，Community 的 home 页面显示 4 篇预期 Post。首次尝试时 Phoenix 未获 Hub 的 Assets capability 密钥，修复注入后重新创建空库并通过。主题编辑权限、待接受邀请和已接受邀请三个 case 经受管入口创建，核对权限及待处理状态，预览并清理均成功；待接受邀请的前端交互尚未验收。`doctor --service assets-hub` 在依赖运行时报告 `running`，停止 B 的 Phoenix 后报告 `not-ready`。B 的服务、dev/test 库、登记、worktree 和本地资产已回收；测试仅针对 B，不代替生产隔离验收。
 
+**2026-11-28 主题权限 UI 补测。** 使用候选 `24533ed52` 的临时 B，创建独立 dev/test 库并迁移 dev，启动 Dash 依赖后运行 `theme-edit-permission` case。核对 owner 为 lord，editor 有 `dashboard.theme.update`，limited 无该权限；两人分别以真实会话打开 B 的主题页面。editor 从 Default 选择 Claude 并保存，重新进入页面仍为 Claude；limited 刷新后选择 Solarized 并保存，Dash 记录服务端返回 `PassportError: your passport not qualified`，再次刷新仍为 Claude，B 的只读 DB 查询也读到 `claude`。清理预览无阻塞，apply 返回 `cleaned`，移除两名普通管理员、归档社区并保留初始 lord；B 服务、两库、登记、浏览器及 worktree 已回收，保留删库报告。A 的五项原有服务在回收后仍运行；A 的 `db inspect` 因主库认领记录缺失而拒绝，未核实 A 库中对应 slug。此轮只证明 B 的 UI 权限与清理，不代替完整双向 UI 写入和 A 原会话验收。
+
 以下场景使用现有[本地账号命令](../auth/local-test-actors.md)。先记录 A 原有 Hub、服务、库、浏览器与资产基线，保持 A 的窗口可用；在 B 从空开发库完成上一节迁移与 seed 后再操作 fixture。两边各自记录 checkout 真实路径、HEAD、instanceId、服务进程归属、实际库、迁移版本与产品 URL。示例 run 和 slug 仅供本轮使用；重跑已封存的场景时，两边同步换一对未占用的 run 和 slug。另用一次性 checkout 验证孤儿、primary 交接和回滚，避免占用正在调试的 A。
 
 **1. 从各自终端运行同一组命令。** 同名 run、alias、slug 故意制造碰撞。每个环境分别执行：
