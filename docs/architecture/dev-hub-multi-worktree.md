@@ -268,6 +268,8 @@ Phoenix 生产 runtime 允许部署环境显式提供 `SERVICE_AUTH_ISSUER`、`S
 
 同日在候选 `fe6b41f27` 用空临时 HOME、独立构建目录和禁止出站网络执行 `MIX_ENV=prod mix release`，复用本机 Mix/Hex 缓存及当前 checkout 的依赖。release 的 `eval` 在干净和混入本地 DB 名、主机及 fixture 开关的两组环境中都读取合成部署 DB、使用生产默认 issuer，且不包含开发 fixture 模块和路由；release 中 817 个迁移文件与当前源码文件名及 SHA-256 均一致。执行 release 的 `bin/migrate` 并注入本地 issuer 时，在启动配置阶段被拒绝；全程使用合成目标并禁止网络，没有执行数据库迁移。本次不代表实际部署环境注入或真实生产迁移已验收。
 
+同日只读核对 API 的部署元信息：仓库工作流通过 Fly 远端构建并使用 release 迁移入口；当前运行实例的普通环境配置中没有 `DB_HOST`、`DB_NAME` 或 Dev Hub 标记。Fly secret 清单显示数据库 URL 和服务令牌端点通过 secret 提供，但不返回值，不能据此判断实际目标；本次没有登录机器、读取 secret 值或修改线上资源。部署元信息是当时的快照，不代替部署时核验。
+
 Auth 和 Assets Hub 的生产 Node 入口不再读取本地 dotenv；生产进程的身份服务或 Phoenix 地址指向本机、或 Assets Hub 被设为本地存储模式时拒绝启动。它们的单测覆盖这些分支；Worker 配置测试也验证混入本地地址时仍选用生产服务地址。Assets Worker 的现有生产配置仍引用名为 `groupher-assets-dev` 的 R2 与 `groupher-asset-delete-dev` 队列，这是既有配置而非本次新建的隔离资源；实际线上资源归属与读写影响尚未核验，不得因为名称推断隔离，也不得在本次验收中改写它们。[现有绑定](../../backend/assets-hub/cloudflare.config.ts) · [历史状态](../assets-hub/v2.md)
 
 secondary Phoenix 的进程环境测试向 Hub 父环境注入虚构 Algolia 应用、索引和读写凭据，核对四项均未传给受管子进程；该检查不发网络请求，不能代替完整外部写入捕获验收。[隔离配置测试](../../local/dev-hub/src/server/isolated-service-definitions.test.ts)
