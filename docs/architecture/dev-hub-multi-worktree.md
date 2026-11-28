@@ -272,6 +272,8 @@ secondary Phoenix 的进程环境测试向 Hub 父环境注入虚构 Algolia 应
 
 2026-11-28 尝试对候选 `91663e981` 的临时 B 使用 macOS 沙箱限制出站：沙箱内本机 Phoenix 健康检查可读，保留地址的连接返回权限错误，子进程同样受到限制。但在该沙箱下通过 `pnpm devhub up` 启动 B 两次均报 `spawn EPERM`，未进入 seed 或资产操作。进一步检查发现系统 `/bin/ps` 带 setuid，独立执行时即使沙箱策略为 `allow default` 也返回 `Operation not permitted`；Dev Hub 的进程身份核验依赖 `ps`，这是可能的阻塞点，但尚未跟踪到该次失败的具体子进程。因此不能把这次尝试视为真实 B 的外部写入捕获通过。B 的两库、登记和 worktree 已回收，A 原服务仍运行。
 
+同日对 `3e5e39822` 补测：Hub 正常运行，临时测试包装仅将其通过 Make 启动的 B 服务进程置于禁止非本机出站的 macOS 沙箱中；五个服务的启动日志均确认保留地址的连接被拒绝。B 开发库迁移、`theme-edit-permission` 的建社区和授权、home 初始化及该场景的预览和清理均完成，home 在 B 的本地存储目录生成文件；清理报告保留初始 lord。B 两库、登记和 worktree 已回收，A 的五个服务仍运行。Hub、CLI 和共享 Portless 不受此沙箱约束，本次也没有捕获全部出站尝试，因此不将其作为完整网络外发审计或线上资源验收。
+
 **2026-11-27 Node 生产构建补测。** 用现有 Auth 和 Assets Hub 构建命令的 esbuild 参数，在临时目录分别执行移除三项探针变量、以及注入本地 DB 名、`.localhost` issuer 与测试秘密标记的两组构建；四个 bundle 均生成，均不包含测试标记。Auth 和 Assets Hub 对应生产配置及环境单测分别为 4 项、11 项通过。此检查仍使用当前 checkout，不等于无本地状态的独立构建，也不覆盖 Dash 产物、实际部署注入或 Worker 绑定矩阵。
 
 **2026-11-28 Node 正式构建复测。** 在候选 `3810ffb7c` 的独立 B checkout 复用 pnpm 缓存，以空临时 HOME 和禁止出站网络执行 Auth、Assets Hub 各自的 `pnpm --filter … run build`。无污染和注入本机数据库、`.localhost` issuer、Auth 地址及合成秘密两组共四次均成功；合成秘密未出现在 bundle，同一应用两组 bundle 的 SHA-256 一致。Auth 的生产边界、配置、环境和本地登录测试共 11 项通过；Assets Hub 的生产配置、环境及本地存储测试共 14 项通过。B 随后回收。本次未启动生产进程或核验实际部署注入与线上资源。
