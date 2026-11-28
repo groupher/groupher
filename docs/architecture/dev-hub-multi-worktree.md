@@ -254,6 +254,8 @@ Phoenix 生产 runtime 允许部署环境显式提供 `SERVICE_AUTH_ISSUER`、`S
 
 服务令牌验证器使用两套独立合成 RSA 密钥与 issuer 双向测试：每侧接受自身令牌、拒绝另一侧令牌。该测试只覆盖 Phoenix 验证器的隔离，不代表其他服务或实际部署密钥已经验收。[验证器测试](../../backend/api/test/groupher_server_web/service_auth_verifier_test.exs)
 
+**2026-11-28 实际服务凭据交换。** 使用候选 `00fbc2669` 的 A 和临时 B，通过各自本地 Auth 用受管 Press 服务身份获取 `press:site:read` 令牌，再向两侧本机 Phoenix 的 `pressSiteManifest` 查询交叉发送。A、B 各自令牌分别读回 A 的 home 和 B 的测试社区；两种跨环境请求均返回“service identity could not be verified”，没有返回目标社区。密钥和令牌仅在测试进程内使用。B 的测试 run 清理返回 `cleaned`，社区归档，B 服务、两库、登记和 worktree 已回收；A 原服务保持运行。此验证覆盖本地 Press → Phoenix 身份链，不代表所有服务或生产部署凭据已验收。
+
 浏览器访问令牌使用两份随机合成环境密钥双向测试：每侧接受自己的签名并拒绝另一侧签名。该测试验证 Phoenix 的浏览器访问令牌验签，不代替实际 A、B 之间交换 Cookie 或请求头的验收。[浏览器令牌测试](../../backend/api/test/helper/guardian_browser_environment_isolation_test.exs)
 
 **2026-11-28 实际用户凭据交换。** 使用候选 `f9f85875c` 的 A 和临时 B，分别通过各自受管 Auth 为不同的测试 editor 建立真实会话。以本机 HTTPS 请求把同名 Cookie 放到接收方：各自 Auth 会话检查返回 204，跨环境均返回 401；各自 Phoenix 浏览器访问 Cookie 在 `/api/graphql` 的 `me` 查询读回对应账号，跨环境两方向均返回匿名 `me`（GraphQL HTTP 状态为 200）。凭据仅保存在测试进程内。两侧 run 已清理，B 服务、两库、登记与 worktree 已回收，A 原服务保持运行；A 的账号和归档社区按清理策略保留。该次是 HTTP 级 Cookie 交换，不是浏览器自动发送跨域 Cookie 的测试；同 profile 隔离见上文。
