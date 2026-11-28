@@ -178,6 +178,8 @@ Runner 在内部区分首次执行和恢复，公开 Context 只返回业务结�
 
   当前预览已列出文章操作引用，申请会核对其属于本 run；由于发布链尚无可供核验的请求终态证据，当前一律返回 `local_test_terminal_evidence_unavailable`，不封存、不修改资源。成功保留的实现和验收仍待后续交付。
 
+  本次交付以正常创建、授权和清理为准；无法确认下游结果的极端中断不作为本次阻塞项，继续保持上述拒绝清理的保护，不为其新增跨服务协议。
+
 - **并发清理。** `pnpm seed cleanup run --run theme-demo` 仅在只读一致性快照中生成预览，不取得 run 写锁、不封存、不阻塞创建。预览只代表读取时刻；加 `--apply` 后重新核验。受管入口在 Guard 后将预览单独分派；执行清理时在取得写锁后确定最终快照并封存，避免遗漏并发写入。顺序如下。[普通写入与封存](../../backend/api/dev/local_test_actors.ex) · 清理实现（`backend/api/dev/seed/cleanup/run.ex`）
   1. 普通创建在事务内取得 `local-test-actors:<run>` 写锁，检查整个 run 的绑定后再写。任一绑定为 `closed` 即拒绝该 run 的新业务写入，包括创建从未出现过的 alias。
   2. 清理先取得 `local-test-clean:<run>` 专用锁，再在短事务内取得同一把写锁。先检查 run 和阻塞项：空 run 返回“未找到 run”，有阻塞项或已经取得发送权且仍待核对的操作则返回原因，保持绑定状态。仅在检查通过后，才在该事务内确定最终快照、取消尚未发送的 `prepared` 文章操作，并将本 run 的 fixture 绑定 `raw["status"]` 置为 `closed`。封存后 `article.begin` 无法取得发送权。
