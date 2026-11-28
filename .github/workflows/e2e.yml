@@ -97,6 +97,7 @@ jobs:
         timeout-minutes: 5
         env:
           CI: true
+          DEBUG: pw:webserver
         run: pnpm run test:e2e:dash
 
       - name: Upload Playwright report
