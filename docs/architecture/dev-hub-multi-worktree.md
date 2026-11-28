@@ -256,6 +256,8 @@ Auth 和 Assets Hub 的生产 Node 入口不再读取本地 dotenv；生产进�
 
 **2026-11-27 Node 生产构建补测。** 用现有 Auth 和 Assets Hub 构建命令的 esbuild 参数，在临时目录分别执行移除三项探针变量、以及注入本地 DB 名、`.localhost` issuer 与测试秘密标记的两组构建；四个 bundle 均生成，均不包含测试标记。Auth 和 Assets Hub 对应生产配置及环境单测分别为 4 项、11 项通过。此检查仍使用当前 checkout，不等于无本地状态的独立构建，也不覆盖 Dash 产物、实际部署注入或 Worker 绑定矩阵。
 
+**2026-11-28 Node 正式构建复测。** 在候选 `3810ffb7c` 的独立 B checkout 复用 pnpm 缓存，以空临时 HOME 和禁止出站网络执行 Auth、Assets Hub 各自的 `pnpm --filter … run build`。无污染和注入本机数据库、`.localhost` issuer、Auth 地址及合成秘密两组共四次均成功；合成秘密未出现在 bundle，同一应用两组 bundle 的 SHA-256 一致。Auth 的生产边界、配置、环境和本地登录测试共 11 项通过；Assets Hub 的生产配置、环境及本地存储测试共 14 项通过。B 随后回收。本次未启动生产进程或核验实际部署注入与线上资源。
+
 **2026-11-28 Dash 生产构建补测。** 在 B 的独立 checkout 和空 HOME 下，禁止出站网络执行真实生产构建；Worker 配置使用生产 API、Auth 及 secret binding，客户端使用生产 Auth 地址。混入本地 `NEXT_PUBLIC_AUTH_ENDPOINT` 时，原配置会将其写入生产客户端；修复后构建在输出前拒绝该地址，并保留合法生产覆盖。无该污染值的生产构建再次通过。没有部署或连接线上服务；实际部署环境注入仍需按既有发布流程核对。
 
 Dash Worker 的配置测试验证污染的本地 API 和身份服务地址不会覆盖生产端点，但源码同时在生产模式读取父环境的 `DASH_DEFAULT_COMMUNITY`；这个行为在 `dev` 基线已存在，也可能是部署方有意使用的覆盖项。若构建进程继承该本地值，生产默认社区会随之改变；完整矩阵在确认部署注入方式并隔离本地与正式覆盖之前仍未通过，本批不擅自删除原有生产覆盖能力。
