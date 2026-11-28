@@ -190,6 +190,8 @@ Runner 在内部区分首次执行和恢复，公开 Context 只返回业务结�
 
 以下丢响应测试共用同一机制：测试客户端收到指定操作的成功响应后丢弃一次，让调用方按原操作身份重试。
 
+2026-11-28 使用候选 `5f05b607d` 的临时 B 补测受管 CLI 重试：邀请及接受各执行两次，分别返回同一 request ID，接受后的 revision 均为 2；权限更新重试返回同一 member ID 和 revision 3；移除及其重试均返回成功，移除后用原 key 重试更新返回 `command_result_unavailable`。B 开发库只读核对有 1 条邀请、1 个初始 lord、0 个普通管理员。该次保存了首次成功输出并再次发出相同命令，未模拟网络断连或核对活动记录数。清理返回 `cleaned`，B 的服务、两库、登记与 worktree 已回收，A 的五个服务仍运行。
+
 1. 分别从 GraphQL 和 seed 经同一 Context 入口建社区，核对 owner、初始 lord、默认设置与生命周期。各丢弃一次成功响应，GraphQL 重用原 command ID，seed 显式传回相同的 `--slug`、owner 和输入，均恢复各自的原社区引用。
 2. 从普通终端调用 CLI，分别验证缺少管理凭据、目标库不符时在业务写入前失败。取得合法管理身份后，受限账号仍须被业务权限拒绝。
 3. 走真实邀请、接受和授权流程。GraphQL 和受管 seed 均验证受限成员修改权限被拒、合法授权人提交过期 revision 得到版本冲突。分别丢弃 invite、accept、set-permissions、remove 的一次成功响应，再用各自原 key 重试。invite 和 accept 核对原 request ID 及请求状态，set-permissions 核对成员 ID、当前 revision 和权限，remove 核对 `removed: true`，每步只产生一次业务效果。另以两个不同 key 连续更新同一成员，再重试第一步，CLI 须报告操作已完成及成员当前的后续版本。测试通过丢弃前已收到的成功响应确认首次调用已提交，并核对重试前后的 revision 和活动记录数相同。移除成员后再重试第一次更新，须返回 `command_result_unavailable` 且成员仍不存在。
