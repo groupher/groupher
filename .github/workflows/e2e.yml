@@ -87,6 +87,12 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
+      - name: Check Dash readiness target
+        env:
+          CI: true
+          E2E_APP: dash
+        run: pnpm --filter @groupher/local-dev-hub exec node --import tsx --test ../../frontend/e2e/playwright-config.test.ts
+
       - name: Run e2e
         timeout-minutes: 5
         env:

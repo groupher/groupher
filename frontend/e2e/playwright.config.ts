@@ -22,6 +22,7 @@ type TWebServer = {
     timeout: number
   }
   reuseExistingServer: boolean
+  stdout?: 'pipe' | 'ignore'
   timeout: number
   url: string
 }
@@ -40,6 +41,7 @@ const webServerCommand = (command: string) =>
     ? {
         command: 'exec node frontend/e2e/ci-web-server.mjs',
         env: { E2E_SERVER_COMMAND: command },
+        stdout: 'pipe' as const,
       }
     : { command }
 
@@ -165,7 +167,7 @@ const webServer: TWebServer[] = communityStack
           ...webServerCommand(cmd),
           cwd: repoRoot,
           gracefulShutdown,
-          url,
+          url: app === 'dash' ? `http://127.0.0.1:${dashPort}/health` : url,
           // Reusing an already-running server can accidentally run tests against the wrong app.
           reuseExistingServer: false,
           timeout: 120_000,
