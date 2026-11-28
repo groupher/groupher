@@ -270,7 +270,7 @@ secondary Phoenix 的进程环境测试向 Hub 父环境注入虚构 Algolia 应
 
 本地 Assets 对象存储测试在两个一次性目录并发写入相同 object key 和 upload ref、分别读回不同内容，随后删除 B 的对象并确认 A 的内容仍在；测试结束回收两个目录。这覆盖 provider 的目录隔离和删除行为，不代替两套受管服务的外部请求捕获。[本地存储测试](../../backend/assets-hub/src/local-storage.test.ts)
 
-2026-11-28 尝试对候选 `91663e981` 的临时 B 使用 macOS 沙箱限制出站：沙箱内本机 Phoenix 健康检查可读，保留地址的连接返回权限错误，子进程同样受到限制。但在该沙箱下通过 `pnpm devhub up` 启动 B 两次均报 `spawn EPERM`，未进入 seed 或资产操作；因此不能把这次尝试视为真实 B 的外部写入捕获通过。B 的两库、登记和 worktree 已回收，A 原服务仍运行。
+2026-11-28 尝试对候选 `91663e981` 的临时 B 使用 macOS 沙箱限制出站：沙箱内本机 Phoenix 健康检查可读，保留地址的连接返回权限错误，子进程同样受到限制。但在该沙箱下通过 `pnpm devhub up` 启动 B 两次均报 `spawn EPERM`，未进入 seed 或资产操作。进一步检查发现系统 `/bin/ps` 带 setuid，独立执行时即使沙箱策略为 `allow default` 也返回 `Operation not permitted`；Dev Hub 的进程身份核验依赖 `ps`，这是可能的阻塞点，但尚未跟踪到该次失败的具体子进程。因此不能把这次尝试视为真实 B 的外部写入捕获通过。B 的两库、登记和 worktree 已回收，A 原服务仍运行。
 
 **2026-11-27 Node 生产构建补测。** 用现有 Auth 和 Assets Hub 构建命令的 esbuild 参数，在临时目录分别执行移除三项探针变量、以及注入本地 DB 名、`.localhost` issuer 与测试秘密标记的两组构建；四个 bundle 均生成，均不包含测试标记。Auth 和 Assets Hub 对应生产配置及环境单测分别为 4 项、11 项通过。此检查仍使用当前 checkout，不等于无本地状态的独立构建，也不覆盖 Dash 产物、实际部署注入或 Worker 绑定矩阵。
 
