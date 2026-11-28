@@ -11,12 +11,12 @@ import { createManagedDatabase } from './database-create.ts'
 import { dropManagedDatabase } from './database-drop.ts'
 import { inspectManagedDatabase } from './database-inspect.ts'
 import { migrateManagedDatabase } from './database-migrate.ts'
-import { openReadOnlyDatabase } from './database-read-only.ts'
 import {
   databaseCommentStatement,
   databaseTargetForEnvironment,
   verifyDatabaseOwnership,
 } from './database-ownership.ts'
+import { openReadOnlyDatabase } from './database-read-only.ts'
 import { initializePrimary, registerCheckout, reserveRun } from './environment-registry.ts'
 import { resolveCheckout } from './worktree-identity.ts'
 
@@ -65,6 +65,59 @@ test('provisioning records only databases with matching ownership', async () => 
     assert.deepEqual(primaryStatus.pending, [
       { version: '20261126000000', file: '20261126000000_pending.exs' },
     ])
+    const primaryDevStatus = await inspectManagedDatabase(
+      primary,
+      'dev',
+      registry,
+      { DB_HOST: 'localhost' },
+      async (database, sql) => {
+        assert.equal(database, 'target')
+        if (sql.includes('current_database()'))
+          return JSON.stringify({
+            database: 'groupher_server_dev',
+            port: 5432,
+            address: '127.0.0.1',
+            comment: null,
+          })
+        if (sql.includes('to_regclass')) return 'f'
+        throw new Error('Unexpected SQL')
+      },
+    )
+    assert.equal(primaryDevStatus.target.database, 'groupher_server_dev')
+    await assert.rejects(
+      inspectManagedDatabase(primary, 'dev', registry, { DB_NAME: 'other' }, async () => {
+        throw new Error('a conflicting target must be rejected before connecting')
+      }),
+      /Conflicting DB_NAME/,
+    )
+    await assert.rejects(
+      inspectManagedDatabase(primary, 'dev', registry, {}, async () =>
+        JSON.stringify({
+          database: 'groupher_server_dev',
+          port: 5432,
+          address: '192.0.2.1',
+          comment: null,
+        }),
+      ),
+      /does not match the local target/,
+    )
+    await assert.rejects(
+      inspectManagedDatabase(primary, 'dev', registry, {}, async () =>
+        JSON.stringify({
+          database: 'groupher_server_dev',
+          port: 5432,
+          address: '127.0.0.1',
+          comment: JSON.stringify({
+            namespace: 'groupher-devhub',
+            formatVersion: 1,
+            worktreeId: (await resolveCheckout(primary)).worktreeId,
+            purpose: 'dev',
+            previousComment: null,
+          }),
+        }),
+      ),
+      /adoption record is unavailable/,
+    )
     await assert.rejects(
       inspectManagedDatabase(
         primary,

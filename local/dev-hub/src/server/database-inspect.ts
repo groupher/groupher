@@ -23,9 +23,11 @@ export async function inspectManagedDatabase(
 ) {
   const identity = await resolveCheckout(root)
   const registration = await readRegisteredState(directory, identity)
-  const primaryTest = registration.environment.role === 'primary' && purpose === 'test'
-  const target = primaryTest
-    ? databaseTargetForEnvironment(registration.environment, 'test')
+  const primary = registration.environment.role === 'primary'
+  if (primary && !identity.isMainWorktree)
+    throw new Error('Only a registered primary checkout can inspect a primary database.')
+  const target = primary
+    ? databaseTargetForEnvironment(registration.environment, purpose)
     : await verifyManagedDatabase(
         identity.root,
         purpose,
@@ -36,16 +38,16 @@ export async function inspectManagedDatabase(
   const query = execute
     ? (sql: string) => execute('target', sql)
     : localAdminQuery(target, environment, target.database)
-  if (primaryTest) {
+  if (primary) {
+    const hostKey = purpose === 'dev' ? 'DB_HOST' : 'TEST_DB_HOST'
     const normalizedEnvironment =
-      environment.TEST_DB_HOST &&
-      ['localhost', '127.0.0.1', '::1'].includes(environment.TEST_DB_HOST)
-        ? { ...environment, TEST_DB_HOST: target.hostname }
+      environment[hostKey] && ['localhost', '127.0.0.1', '::1'].includes(environment[hostKey]!)
+        ? { ...environment, [hostKey]: target.hostname }
         : environment
     resolveDatabaseTarget(
-      { version: 1, worktreeId: identity.worktreeId, targets: { test: target } },
+      { version: 1, worktreeId: identity.worktreeId, targets: { [purpose]: target } },
       identity.worktreeId,
-      'test',
+      purpose,
       normalizedEnvironment,
     )
     const actual = JSON.parse(
@@ -58,12 +60,12 @@ export async function inspectManagedDatabase(
       actual.port !== target.port ||
       !['127.0.0.1', '::1'].includes(actual.address)
     )
-      throw new Error('Primary test database connection does not match the local target.')
+      throw new Error(`Primary ${purpose} database connection does not match the local target.`)
     if (parseDatabaseComment(actual.comment)) {
       verifyDatabaseOwnership(target, { ...actual, hostname: target.hostname })
       await verifyManagedDatabase(
         identity.root,
-        'test',
+        purpose,
         directory,
         normalizedEnvironment,
         execute ? (sql) => execute('admin', sql) : undefined,
