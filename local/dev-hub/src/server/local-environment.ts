@@ -5,17 +5,18 @@
  */
 
 import { createHash, createHmac, generateKeyPairSync, randomBytes } from 'node:crypto'
-import { chmod, lstat, mkdir, open, readFile, realpath, rename, rm, stat } from 'node:fs/promises'
+import { chmod, mkdir, open, readFile, realpath, rename, rm, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
-import { parseEnv } from 'node:util'
 
 import { REPO_ROOT, SERVICE_DEFINITIONS, type TServiceDefinition } from './services.ts'
+import { workerRoot } from './storage-paths.ts'
 
 export const MANAGED_ENV_KEYS = new Set([
   'AUTH_COOKIE_DOMAIN',
   'AUTH_LOCAL_ADMIN_LOGIN_ENABLED',
   'AUTH_LOCAL_LOGIN_ENABLED',
+  'AUTH_TEST_ALLOWED_ORIGINS',
   'AUTH_URL',
   'ASSETS_HUB_BATCH_ENDPOINT',
   'ASSETS_HUB_CAPABILITY_SECRET',
@@ -26,7 +27,10 @@ export const MANAGED_ENV_KEYS = new Set([
   'ASSETS_HUB_ENDPOINT',
   'ASSETS_PUBLIC_ENDPOINT',
   'API_SITE',
+  'ALGOLIA_APPLICATION_ID',
+  'ALGOLIA_INDEX_NAME',
   'APPLY_SITE',
+  'COMMUNITY_SITE',
   'AUTH_SITE',
   'IMPORT_APP_ENDPOINT',
   'IMPORT_PREVIEW_SECRET',
@@ -43,12 +47,16 @@ export const MANAGED_ENV_KEYS = new Set([
   'DB_USERNAME',
   'DEV_HUB_SERVICE_AUTH_PROBE',
   'DEV_HUB_MANAGED_ENVIRONMENT',
+  'DEV_HUB_PUBLIC_ROOT',
   'DEV_HUB_LOCAL_ADMIN_LOGIN_ENABLED',
   'DEV_HUB_WORKER_ENV_FILE',
   'DEV_HUB_WORKER_STATE_DIR',
   'DOCUMENT_CONVERTER_APP_ENDPOINT',
   'ENVIRONMENT',
   'GRAPHQL_ENDPOINT',
+  'GROUPHER_MANAGED_MIGRATION_DATABASE',
+  'GROUPHER_MANAGED_MIGRATION_HOST',
+  'GROUPHER_MANAGED_MIGRATION_PORT',
   'LANDING_SITE',
   'METRIC_IP_SALT',
   'LOCAL_TEST_ACTORS_SECRET',
@@ -100,41 +108,10 @@ for (const definition of SERVICE_DEFINITIONS) {
     MANAGED_ENV_KEYS.add(key)
 }
 
-export const LOCAL_ENVIRONMENT_STATE_RELATIVE_PATH =
-  'local/dev-hub/.data/local-environment/state.json'
-export const LOCAL_ENVIRONMENT_DIRECTORY_RELATIVE_PATH = 'local/dev-hub/.data/local-environment'
-export const LOCAL_WORKER_DIRECTORY_RELATIVE_PATH = 'local/dev-hub/.data/local-environment/workers'
-export const LOCAL_ENVIRONMENT_MIGRATION_INPUT_FILES = [
-  'backend/auth/.env',
-  'backend/auth/.env.development',
-  'backend/auth/.env.local',
-  'frontend/dash/.env',
-  'frontend/dash/.env.development',
-  'frontend/dash/.env.local',
-  'backend/api/.env.local',
-  'backend/assets-hub/.env',
-  'backend/import/.env',
-  'backend/import/.env.development',
-  'backend/import/.env.local',
-  'backend/press/.env',
-] as const
+export const LOCAL_ENVIRONMENT_DIRECTORY_RELATIVE_PATH = 'local/dev-hub/config'
 const STATE_FORMAT_VERSION = 1 as const
 const LOCK_WAIT_MS = 10_000
 const LOCK_POLL_MS = 100
-const LEGACY_IDENTITY_KEYS = new Set([
-  'NEXTAUTH_SECRET',
-  'PHX_JWT_SECRET',
-  'SERVICE_AUTH_CLIENTS_JSON',
-  'SERVICE_AUTH_CLIENTS_JSON_ADDITIONS',
-  'SERVICE_AUTH_CLIENTS_JSON_EXTRA',
-  'SERVICE_AUTH_CLIENTS_JSON_IMPORT',
-  'SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE',
-  'SERVICE_AUTH_CLIENT_ID',
-  'SERVICE_AUTH_CLIENT_SECRET',
-  'SERVICE_AUTH_RESOURCES_JSON',
-  'SERVICE_AUTH_SIGNING_JWK',
-])
-
 export type TLocalServiceCredential = {
   allowedAudiences: string[]
   allowedScopes: string[]
@@ -169,7 +146,7 @@ export const localEnvironmentPaths = (repoRoot = REPO_ROOT) => {
   return {
     directory,
     lock: path.join(directory, 'state.lock'),
-    state: path.join(directory, 'state.json'),
+    state: path.join(directory, 'service-identity.json'),
   }
 }
 
@@ -177,30 +154,26 @@ export const localWorkerEnvironmentPaths = (serviceId: string, repoRoot = REPO_R
   if (!/^[a-z0-9][a-z0-9-]*$/.test(serviceId)) {
     throw new LocalEnvironmentError(`Invalid worker service id: ${serviceId}.`)
   }
-  const directory = path.join(repoRoot, LOCAL_WORKER_DIRECTORY_RELATIVE_PATH, serviceId)
+  const directory = path.join(workerRoot(repoRoot), serviceId)
   return {
     directory,
     envFile: path.join(directory, '.env'),
   }
 }
 
-export const ensureLocalWorkerStateDirectory = async (
-  serviceId: string,
-  repoRoot = REPO_ROOT,
-): Promise<{ directory: string }> => {
-  const paths = localWorkerEnvironmentPaths(serviceId, repoRoot)
-  await mkdir(paths.directory, { recursive: true, mode: 0o700 })
-  await chmod(paths.directory, 0o700)
-  return { directory: paths.directory }
-}
-
 export const writeLocalWorkerEnvironment = async (
   serviceId: string,
   environment: Record<string, string>,
   repoRoot = REPO_ROOT,
+  runId?: string,
 ): Promise<{ envFile: string; directory: string }> => {
-  const paths = localWorkerEnvironmentPaths(serviceId, repoRoot)
-  await ensureLocalWorkerStateDirectory(serviceId, repoRoot)
+  const base = localWorkerEnvironmentPaths(serviceId, repoRoot)
+  if (runId && !/^[a-zA-Z0-9-]+$/.test(runId))
+    throw new LocalEnvironmentError('Invalid worker run id.')
+  const directory = runId ? path.join(base.directory, runId) : base.directory
+  const paths = { directory, envFile: path.join(directory, '.env') }
+  await mkdir(directory, { recursive: true, mode: 0o700 })
+  await chmod(directory, 0o700)
   const serialized = Object.entries(environment)
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([key, value]) => {
@@ -292,7 +265,7 @@ export const prepareLocalEnvironment = async (
   const pending = inFlightPreparations.get(paths.state)
   if (pending) return pending
 
-  const preparation = withLock(paths, root, environment, options)
+  const preparation = withLock(paths, root, options)
   inFlightPreparations.set(paths.state, preparation)
   try {
     return await preparation
@@ -388,7 +361,6 @@ export const createSpawnEnvironment = (
 const withLock = async (
   paths: ReturnType<typeof localEnvironmentPaths>,
   repoRoot: string,
-  environment: Record<string, string | undefined>,
   options: { lockWaitMs?: number; processIsAlive?: (pid: number) => boolean },
 ): Promise<TLocalEnvironmentState> => {
   await mkdir(paths.directory, { recursive: true, mode: 0o700 })
@@ -401,38 +373,12 @@ const withLock = async (
       if (reconciled !== existing) await writeStateAtomically(paths.state, reconciled)
       return reconciled
     }
-    await assertLegacyIdentityMigrated(repoRoot)
     const state = createInitialState(repoRoot)
     await writeStateAtomically(paths.state, state)
     return state
   } finally {
     await lockFile.close()
     await rm(paths.lock, { force: true })
-  }
-}
-
-const assertLegacyIdentityMigrated = async (repoRoot: string): Promise<void> => {
-  const found: string[] = []
-  for (const relativePath of LOCAL_ENVIRONMENT_MIGRATION_INPUT_FILES) {
-    const file = path.join(repoRoot, relativePath)
-    try {
-      const fileStat = await lstat(file)
-      if (fileStat.isSymbolicLink()) {
-        throw new LocalEnvironmentError(
-          `Refusing to inspect symlinked migration input ${relativePath}.`,
-        )
-      }
-      const parsed = parseEnv(await readFile(file, 'utf8'))
-      if (Object.keys(parsed).some((key) => LEGACY_IDENTITY_KEYS.has(key))) found.push(relativePath)
-    } catch (error) {
-      if (error instanceof LocalEnvironmentError) throw error
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
-    }
-  }
-  if (found.length > 0) {
-    throw new LocalEnvironmentError(
-      `Existing local identity values need explicit migration before Dev Hub can initialize: ${found.join(', ')}. Run the documented migration --check, review it, then --apply.`,
-    )
   }
 }
 

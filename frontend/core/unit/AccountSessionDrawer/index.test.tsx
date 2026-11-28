@@ -15,7 +15,7 @@ vi.mock('~/auth', () => ({
   revokeOtherSessions: state.others,
 }))
 vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: state.accountScope }) }))
-vi.mock('~/ui/Drawer', () => ({
+vi.mock('~/ui/Modal', () => ({
   default: ({ children, show }) => (show ? <div>{children}</div> : null),
 }))
 vi.mock('~/ui/Pagi', () => ({

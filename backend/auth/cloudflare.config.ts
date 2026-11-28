@@ -59,6 +59,8 @@ export default defineConfig(({ mode }) => {
         NODE_ENV: bindings.text('production'),
         AUTH_GITHUB_ID: bindings.secret(),
         AUTH_GITHUB_SECRET: bindings.secret(),
+        AUTH_LINUXDO_ID: bindings.secret(),
+        AUTH_LINUXDO_SECRET: bindings.secret(),
         NEXTAUTH_SECRET: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON_IMPORT: bindings.secret(),

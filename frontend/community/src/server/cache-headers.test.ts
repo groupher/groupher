@@ -25,6 +25,13 @@ describe('Community response cache tags', () => {
     ])
   })
 
+  it('preserves private device-dependent HTML when child loaders add public tags', () => {
+    responseHeaders.set('cache-control', 'private, no-store')
+    setPublicCacheHeaders(['community[home]'])
+    expect(responseHeaders.get('cache-control')).toBe('private, no-store')
+    expect(responseHeaders.get('cache-tag')).toBe('community[home]')
+  })
+
   it('accepts repeated header values from the response context', () => {
     expect(mergeCacheTags(['community[home]', 'community[home]-doc-tree'], [])).toEqual([
       'community[home]',

@@ -36,7 +36,7 @@ function serializeValue(value: string): string {
 }
 
 export const serviceEnvironmentPath = (definition: TServiceDefinition, repoRoot = REPO_ROOT) =>
-  path.join(localEnvironmentPaths(repoRoot).directory, 'services', definition.id, 'local-dev.env')
+  path.join(localEnvironmentPaths(repoRoot).directory, `${definition.id}.env`)
 
 function validateValues(
   definition: TServiceDefinition,

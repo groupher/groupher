@@ -65,6 +65,30 @@ defmodule GroupherServerWeb.ServiceAuthVerifierTest do
              other_key |> token() |> Verifier.verify()
   end
 
+  test "rejects service tokens from the other environment in both directions", %{key: key_a} do
+    key_b = JOSE.JWK.generate_key({:rsa, 2048})
+    issuer_a = "https://auth-a.example.test"
+    issuer_b = "https://auth-b.example.test"
+    token_a = token(key_a, %{"iss" => issuer_a})
+    token_b = token(key_b, %{"iss" => issuer_b})
+
+    for {own_key, own_issuer, own_token, other_token} <- [
+          {key_a, issuer_a, token_a, token_b},
+          {key_b, issuer_b, token_b, token_a}
+        ] do
+      {_, public_jwk} = own_key |> JOSE.JWK.to_public() |> JOSE.JWK.to_map()
+
+      Application.put_env(:groupher_server, Verifier,
+        issuer: own_issuer,
+        audiences: ["phoenix:press-api"],
+        jwks: %{"keys" => [Map.put(public_jwk, "kid", "service-test-key")]}
+      )
+
+      assert {:ok, _} = Verifier.verify(own_token)
+      assert {:error, %ErrorCat.Error{}} = Verifier.verify(other_token)
+    end
+  end
+
   test "preserves retryable JWKS failures", %{key: key} do
     Application.put_env(:groupher_server, Verifier,
       issuer: "https://auth.groupher.test",

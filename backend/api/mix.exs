@@ -135,7 +135,8 @@ defmodule GroupherServer.Mixfile do
   defp aliases do
     [
       "ecto.setup": ["ecto.create", "ecto.migrate"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "ecto.drop": &guarded_ecto_drop/1,
+      "ecto.reset": &guarded_ecto_reset/1,
       test: ["ecto.create --quiet", "ecto.migrate", "test"],
       "test.coverage": ["coveralls.html"],
       "test.coverage.short": ["coveralls"],
@@ -163,5 +164,67 @@ defmodule GroupherServer.Mixfile do
         "phx.digest"
       ]
     ]
+  end
+
+  defp guarded_ecto_drop(args) do
+    Mix.Task.run("loadconfig")
+    target = Application.get_env(:groupher_server, :managed_database_target)
+
+    cond do
+      Mix.env() in [:dev, :test] and target ->
+        if Enum.any?(args, &(&1 not in ["--quiet", "--no-compile", "--no-deps-check"])) do
+          Mix.raise("Managed database drop does not support force or custom repository options.")
+        end
+
+        run_devhub_database!(["drop", "--target", Atom.to_string(Mix.env())])
+
+      Mix.env() in [:dev, :test] ->
+        config = Application.get_env(:groupher_server, GroupherServer.Repo, [])
+        database = config[:database]
+
+        temporary? =
+          is_binary(database) and
+            (String.starts_with?(database, "groupher_migration_smoke_") or
+               String.starts_with?(database, "groupher_passport_ref_migration_")) and
+            not File.exists?(
+              Path.expand("../../local/dev-hub/config/checkout-claim.json", __DIR__)
+            )
+
+        unless temporary? and config[:hostname] in ["localhost", "127.0.0.1", "::1"] and
+                 is_nil(config[:url]) do
+          Mix.raise("Refusing to drop an unowned or primary development database.")
+        end
+
+        Mix.Task.run("ecto.drop", args)
+
+      true ->
+        Mix.Task.run("ecto.drop", args)
+    end
+  end
+
+  defp guarded_ecto_reset(args) do
+    Mix.Task.run("loadconfig")
+
+    if Mix.env() in [:dev, :test] and
+         Application.get_env(:groupher_server, :managed_database_target) do
+      guarded_ecto_drop(args)
+      run_devhub_database!(["create", "--target", Atom.to_string(Mix.env())])
+      Mix.Task.run("ecto.migrate", [])
+    else
+      guarded_ecto_drop(args)
+      Mix.Task.run("ecto.setup", [])
+    end
+  end
+
+  defp run_devhub_database!(args) do
+    {_, status} =
+      System.cmd("pnpm", ["devhub", "db" | args],
+        cd: Path.expand("../..", __DIR__),
+        into: IO.stream(:stdio, :line),
+        stderr_to_stdout: true
+      )
+
+    if status != 0, do: Mix.raise("Managed database operation failed.")
+    :ok
   end
 end

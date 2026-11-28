@@ -115,7 +115,10 @@ const isSharedCoreAssetRoute = (pathname: string): boolean =>
   pathname.startsWith('/icons/') ||
   pathname.startsWith('/wallpaper/')
 
-const isAppHost = (host: string, app: string): boolean => host.startsWith(`${app}.`)
+const isAppHost = (host: string, app: string): boolean => {
+  const root = managedLocalRoot()
+  return root ? host.split(':')[0].toLowerCase() === `${app}.${root}` : host.startsWith(`${app}.`)
+}
 
 /** Reports whether landing host at the gateway boundary. */
 export const isLandingHost = (host: string): boolean => isAppHost(host, APP.LANDING)
@@ -129,10 +132,20 @@ export const isApplyHost = (host: string): boolean => isAppHost(host, APP.APPLY)
 /** Reports whether community host at the gateway boundary. */
 export const isCommunityHost = (host: string): boolean => isAppHost(host, APP.COMMUNITY)
 
+const managedLocalRoot = (): string | null => {
+  const root = process.env.DEV_HUB_PUBLIC_ROOT || ''
+  return process.env.NODE_ENV !== 'production' &&
+    process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' &&
+    /^groupher-[a-z0-9]+(?:-[a-z0-9]+)*\.localhost$/.test(root)
+    ? root
+    : null
+}
+
 /** Reports whether platform root host at the gateway boundary. */
 export const isPlatformRootHost = (host: string): boolean => {
   const hostname = host.split(':')[0].toLowerCase()
-  return (PLATFORM_ROOT_HOSTS as readonly string[]).includes(hostname)
+  const root = managedLocalRoot()
+  return root ? hostname === root : (PLATFORM_ROOT_HOSTS as readonly string[]).includes(hostname)
 }
 
 /** Reports whether press route at the gateway boundary. */
@@ -219,7 +232,7 @@ const publicTarget = (
     pathname,
     method,
     customDomainCommunities: customDomainCommunities(),
-    platformHosts: PLATFORM_ROOT_HOSTS,
+    platformHosts: managedLocalRoot() ? [managedLocalRoot()!] : PLATFORM_ROOT_HOSTS,
   })
 
   if (resolved.targetKind === 'not-found' || resolved.targetKind === 'health') {

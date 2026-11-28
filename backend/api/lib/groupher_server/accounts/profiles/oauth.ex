@@ -62,6 +62,16 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     to: GroupherServer.Accounts.Profiles.Oauth.Workflow
 
   @doc """
+  Registers with a chosen Groupher login while preserving provider identity.
+
+  ## Examples
+
+      Accounts.Profiles.Oauth.register_in_transaction(provider_payload, "chosen_login")
+  """
+  defdelegate register_in_transaction(arg1, arg2),
+    to: GroupherServer.Accounts.Profiles.Oauth.Workflow
+
+  @doc """
   Delegates registration_result/1 to the owning implementation.
 
   ## Examples

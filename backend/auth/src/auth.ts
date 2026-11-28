@@ -8,10 +8,10 @@
  *     -> OAuth provider / Phoenix Accounts
  *     -> Session cookies or service token
  */
-import { createHash } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 
 import { Auth, type AuthConfig, setEnvDefaults } from '@auth/core'
-import GitHub from '@auth/core/providers/github'
+import { encode } from '@auth/core/jwt'
 import {
   AUTH_ERROR,
   GROUPHER_AUTH_SIGNED_IN_COOKIE,
@@ -19,23 +19,22 @@ import {
   getAuthCookieNames,
   getAuthSessionCookieName,
 } from '@groupher/contracts/auth'
-import { LOCAL_PHOENIX_GRAPHQL_ENDPOINT } from '@groupher/contracts/endpoint'
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
 import type { PagiInput, PagiPage } from '@groupher/contracts/pagination'
 import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 import { serialize } from 'hono/utils/cookie'
 
-import './env'
 import { buildHostOnlyAuthCookies } from '../cookie-config'
 import { resolveAuthRedirect } from '../redirect-url'
+import { resolvePhoenixGraphqlEndpoint } from './env'
+import { OAUTH_PROVIDERS, oauthProvider } from './oauth-providers'
 import { issueServiceToken } from './service-auth'
 
 const AUTH_BASE_PATH = '/api/auth'
 export const ACCESS_TOKEN_MAX_AGE = 60 * 30
 export const BROWSER_SESSION_MAX_AGE = 60 * 60 * 24 * 90
 export const BROWSER_SESSION_USER_AGENT_MAX_LENGTH = 255
-const PHOENIX_GRAPHQL_ENDPOINT =
-  process.env.PHOENIX_GRAPHQL_ENDPOINT?.trim() || LOCAL_PHOENIX_GRAPHQL_ENDPOINT
+const PHOENIX_GRAPHQL_ENDPOINT = resolvePhoenixGraphqlEndpoint(process.env)
 const PHOENIX_AUTH_RESOURCE = 'https://api.groupher.com/auth'
 let serviceTokenProvider: TServiceAuthClient | undefined
 
@@ -59,12 +58,11 @@ export const useSecureCookies =
 
 const SIGNIN_OAUTH_MUTATION = `
   "Sign in with an OAuth provider and return token info."
-  mutation SigninOauth($provider: OauthProviderInput!, $browserSession: BrowserSessionMetadataInput) {
-    signinOauth(provider: $provider, browserSession: $browserSession) {
-      accessToken
-      accessExpiresAt
-      browserSessionRef
-      sessionAbsoluteExpiresAt
+  mutation SigninOauth($provider: OauthProviderInput!, $browserSession: BrowserSessionMetadataInput, $flowRef: String!, $returnTo: String) {
+    signinOauth(provider: $provider, browserSession: $browserSession, flowRef: $flowRef, returnTo: $returnTo) {
+      status
+      registration { suggestedLogin }
+      session { accessToken accessExpiresAt browserSessionRef sessionAbsoluteExpiresAt }
     }
   }
 `
@@ -98,7 +96,11 @@ type TBrowserSessionMetadata = {
 
 type TSigninOauthResponse = {
   data?: {
-    signinOauth?: Partial<TBrowserSigninResult> | null
+    signinOauth?: {
+      status?: string
+      session?: Partial<TBrowserSigninResult> | null
+      registration?: { suggestedLogin?: string | null } | null
+    } | null
   }
   errors?: Array<{
     extensions?: { code?: unknown }
@@ -124,6 +126,7 @@ type TAuthDependencies = {
   signinOauth?: (
     provider: Record<string, unknown>,
     metadata?: TBrowserSessionMetadata,
+    returnTo?: string,
   ) => Promise<TBrowserSigninResult>
 }
 
@@ -133,6 +136,8 @@ type TAuthRequestDependencies = {
   authCore?: TAuthCore
   signinOauth?: TAuthDependencies['signinOauth']
   revokeBrowserSession?: (ref: string) => Promise<void>
+  providers?: AuthConfig['providers']
+  resolveRedirect?: typeof resolveAuthRedirect
 }
 
 export type TBrowserAuthSession = {
@@ -168,101 +173,23 @@ export type TLinkedOauthAccount = {
   linkedAt: string
 }
 
-export type TVerifiedGithubIdentity = {
-  provider: 'github'
-  providerId: string
-  login?: string
-  nickname?: string
-  avatar?: string
-  email?: string
-  bio?: string
-  city?: string
-  company?: string
-}
-
-/** Runs the github authorization url operation at the auth boundary. */
-export const githubAuthorizationUrl = (
-  state: string,
-  redirectUri: string,
-  codeVerifier: string,
-): string => {
-  const clientId = process.env.AUTH_GITHUB_ID?.trim()
-  if (!clientId) throw new Error('GitHub OAuth is not configured.')
-
-  const url = new URL('https://github.com/login/oauth/authorize')
-  url.searchParams.set('client_id', clientId)
-  url.searchParams.set('redirect_uri', redirectUri)
-  url.searchParams.set('state', state)
-  url.searchParams.set(
-    'code_challenge',
-    createHash('sha256').update(codeVerifier).digest('base64url'),
-  )
-  url.searchParams.set('code_challenge_method', 'S256')
-  url.searchParams.set('scope', 'read:user user:email')
-  return url.toString()
-}
-
-/** Runs the exchange github code for identity operation at the auth boundary. */
-export const exchangeGithubCodeForIdentity = async (
-  code: string,
-  redirectUri: string,
-  codeVerifier: string,
-): Promise<TVerifiedGithubIdentity> => {
-  const clientId = process.env.AUTH_GITHUB_ID?.trim()
-  const clientSecret = process.env.AUTH_GITHUB_SECRET?.trim()
-  if (!clientId || !clientSecret) throw new Error('GitHub OAuth is not configured.')
-
-  const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      code_verifier: codeVerifier,
-      redirect_uri: redirectUri,
-    }),
-    headers: { accept: 'application/json', 'content-type': 'application/json' },
-    method: 'POST',
-  })
-  if (!tokenResponse.ok) throw new Error('GitHub OAuth token exchange failed.')
-  const tokenPayload = (await tokenResponse.json()) as { access_token?: unknown; error?: unknown }
-  if (typeof tokenPayload.access_token !== 'string' || !tokenPayload.access_token) {
-    throw new Error('GitHub OAuth token exchange failed.')
-  }
-
-  const profileResponse = await fetch('https://api.github.com/user', {
-    headers: {
-      accept: 'application/vnd.github+json',
-      authorization: `Bearer ${tokenPayload.access_token}`,
-      'user-agent': 'groupher-auth',
-    },
-  })
-  if (!profileResponse.ok) throw new Error('GitHub profile lookup failed.')
-  const profile = (await profileResponse.json()) as Record<string, unknown>
-  if (typeof profile.id !== 'number' && typeof profile.id !== 'string') {
-    throw new Error('GitHub profile is invalid.')
-  }
-
-  const stringField = (key: string): string | undefined =>
-    typeof profile[key] === 'string' && profile[key] ? (profile[key] as string) : undefined
-
-  return {
-    avatar: stringField('avatar_url'),
-    bio: stringField('bio'),
-    city: stringField('location'),
-    company: stringField('company'),
-    email: stringField('email'),
-    login: stringField('login'),
-    nickname: stringField('name'),
-    provider: 'github',
-    providerId: String(profile.id),
+/** Signals that a verified identity needs a user-selected login. */
+export class OauthRegistrationRequired extends Error {
+  constructor(
+    readonly flowRef: string,
+    readonly suggestedLogin: string | null,
+  ) {
+    super('OAuth registration requires a login.')
   }
 }
 
-/** Runs the signin oauth operation at the auth boundary. */
+/** Resolves a verified identity into a session or a registration flow. */
 export const signinOauth = async (
   provider: Record<string, unknown>,
   browserSession: TBrowserSessionMetadata = {},
+  returnTo?: string,
 ): Promise<TBrowserSigninResult> => {
+  const flowRef = randomBytes(32).toString('base64url')
   const serviceToken = await authServiceToken('auth:session:signin')
 
   const response = await fetch(PHOENIX_GRAPHQL_ENDPOINT, {
@@ -273,7 +200,7 @@ export const signinOauth = async (
     },
     body: JSON.stringify({
       query: SIGNIN_OAUTH_MUTATION,
-      variables: { browserSession, provider },
+      variables: { browserSession, provider, flowRef, returnTo },
     }),
     cache: 'no-store',
   })
@@ -287,8 +214,13 @@ export const signinOauth = async (
     throw new Error(payload.errors[0]?.message || 'Phoenix OAuth request failed.')
   }
 
-  const result = payload.data?.signinOauth
+  const signin = payload.data?.signinOauth
+  if (signin?.status === 'REGISTRATION_REQUIRED') {
+    throw new OauthRegistrationRequired(flowRef, signin.registration?.suggestedLogin ?? null)
+  }
+  const result = signin?.session
   if (
+    signin?.status !== 'SIGNED_IN' ||
     !result ||
     typeof result.accessToken !== 'string' ||
     typeof result.accessExpiresAt !== 'string' ||
@@ -306,7 +238,12 @@ export const buildAuthConfig = ({
   onPhoenixSignin = () => undefined,
   onSessionToken = () => undefined,
   signinOauth: exchangeIdentity = signinOauth,
-}: TAuthDependencies = {}): AuthConfig => {
+  providers = Object.values(OAUTH_PROVIDERS).map((provider) => provider.auth()),
+  resolveRedirect = resolveAuthRedirect,
+}: TAuthDependencies & {
+  providers?: AuthConfig['providers']
+  resolveRedirect?: typeof resolveAuthRedirect
+} = {}): AuthConfig => {
   const config = {
     basePath: AUTH_BASE_PATH,
     secret: process.env.NEXTAUTH_SECRET,
@@ -317,10 +254,10 @@ export const buildAuthConfig = ({
       strategy: 'jwt',
       maxAge: BROWSER_SESSION_MAX_AGE,
     },
-    providers: [GitHub],
+    providers,
     callbacks: {
       async redirect({ url, baseUrl }) {
-        return resolveAuthRedirect({
+        return resolveRedirect({
           url,
           baseUrl,
           sharedDomain: process.env.AUTH_COOKIE_DOMAIN,
@@ -329,24 +266,9 @@ export const buildAuthConfig = ({
       async jwt({ token, account, profile }) {
         if (!account || !profile) return token
 
-        const githubProfile = profile as typeof profile & {
-          avatar_url?: string
-          bio?: string
-          company?: string
-          location?: string
-          login?: string
-        }
-        const provider = {
-          provider: account.provider,
-          providerId: account.providerAccountId,
-          login: githubProfile.login,
-          nickname: githubProfile.name,
-          avatar: githubProfile.avatar_url,
-          bio: githubProfile.bio,
-          country: '',
-          city: githubProfile.location,
-          company: githubProfile.company,
-        }
+        const definition = oauthProvider(account.provider)
+        if (!definition) throw new Error('Unsupported OAuth provider.')
+        const provider = definition.identity(profile, account.providerAccountId)
 
         const browserSession = await exchangeIdentity(provider)
         onPhoenixSignin(browserSession)
@@ -627,23 +549,6 @@ const LINKED_OAUTH_ACCOUNTS_QUERY = `
   }
 `
 
-const LINK_OAUTH_IDENTITY_MUTATION = `
-  "Link a verified OAuth identity through canonical Auth."
-  mutation LinkOauthIdentity($identity: VerifiedOauthIdentityInput!) {
-    linkOauthIdentity(identity: $identity) {
-      entries {
-        publicRef
-        provider
-        login
-        nickname
-        avatar
-        canUnlink
-        linkedAt
-      }
-    }
-  }
-`
-
 const UNLINK_OAUTH_IDENTITY_MUTATION = `
   "Unlink one OAuth binding through canonical Auth."
   mutation UnlinkOauthIdentity($publicRef: ID!) {
@@ -707,6 +612,221 @@ const callPhoenix = async <TData>(
   return payload.data
 }
 
+/** Reads public provider admission from Phoenix. */
+export const listOauthProviders = async () => {
+  const data = await callPhoenix<{ oauthProviders: Array<{ provider: string; state: string }> }>(
+    `query OauthProviders { oauthProviders { provider state } }`,
+    {},
+    'auth:oauth:flow',
+  )
+  if (!Array.isArray(data.oauthProviders)) throw new Error('OAuth providers unavailable.')
+  return data.oauthProviders
+}
+
+type TLinkFlowStart = {
+  ref: string
+  browserSessionRef: string
+  provider: string
+  codeVerifier: string
+  nonce: string
+  returnTo: string
+}
+
+/** Starts a link flow for the delegated user and browser session. */
+export const startOauthLink = async (userToken: string, input: TLinkFlowStart) => {
+  const data = await callPhoenix<{ oauthLinkStart: { done: boolean } }>(
+    `mutation OauthLinkStart($ref: String!, $browserSessionRef: String!, $provider: String!, $codeVerifier: String!, $nonce: String!, $returnTo: String!) {
+      oauthLinkStart(ref: $ref, browserSessionRef: $browserSessionRef, provider: $provider, codeVerifier: $codeVerifier, nonce: $nonce, returnTo: $returnTo) { done }
+    }`,
+    input,
+    'auth:oauth:flow',
+    userToken,
+  )
+  if (!data.oauthLinkStart?.done) throw new Error('OAuth link could not start.')
+}
+
+/** Claims one callback exchange and retrieves its verifier. */
+export const claimOauthLink = async (
+  userToken: string,
+  ref: string,
+  browserSessionRef: string,
+  provider: string,
+  nonce: string,
+) => {
+  const data = await callPhoenix<{ oauthLinkClaim: { codeVerifier: string; returnTo: string } }>(
+    `mutation OauthLinkClaim($ref: String!, $browserSessionRef: String!, $provider: String!, $nonce: String!) {
+      oauthLinkClaim(ref: $ref, browserSessionRef: $browserSessionRef, provider: $provider, nonce: $nonce) { codeVerifier returnTo }
+    }`,
+    { ref, browserSessionRef, provider, nonce },
+    'auth:oauth:flow',
+    userToken,
+  )
+  if (!data.oauthLinkClaim?.codeVerifier) throw new Error('OAuth link claim failed.')
+  return data.oauthLinkClaim
+}
+
+/** Stores a verified identity for explicit confirmation. */
+export const verifyOauthLink = async (
+  userToken: string,
+  ref: string,
+  browserSessionRef: string,
+  identity: Record<string, unknown>,
+) => {
+  const data = await callPhoenix<{ oauthLinkVerified: { status: string; returnTo: string } }>(
+    `mutation OauthLinkVerified($ref: String!, $browserSessionRef: String!, $identity: VerifiedOauthIdentityInput!) {
+      oauthLinkVerified(ref: $ref, browserSessionRef: $browserSessionRef, identity: $identity) { status returnTo }
+    }`,
+    { ref, browserSessionRef, identity },
+    'auth:oauth:flow',
+    userToken,
+  )
+  if (!data.oauthLinkVerified) throw new Error('OAuth link verification failed.')
+  return data.oauthLinkVerified
+}
+
+/** Reads the pending identity for the initiating session. */
+export const readOauthLink = async (userToken: string, ref: string, browserSessionRef: string) => {
+  const data = await callPhoenix<{
+    oauthLinkSummary: {
+      provider: string
+      providerId: string
+      login: string | null
+      returnTo: string
+    }
+  }>(
+    `query OauthLinkSummary($ref: String!, $browserSessionRef: String!) {
+      oauthLinkSummary(ref: $ref, browserSessionRef: $browserSessionRef) { provider providerId login returnTo }
+    }`,
+    { ref, browserSessionRef },
+    'auth:oauth:flow',
+    userToken,
+  )
+  if (!data.oauthLinkSummary) throw new Error('OAuth link unavailable.')
+  return data.oauthLinkSummary
+}
+
+/** Cancels the pending identity confirmation. */
+export const cancelOauthLink = async (
+  userToken: string,
+  ref: string,
+  browserSessionRef: string,
+) => {
+  const data = await callPhoenix<{ oauthLinkCancel: { done: boolean } }>(
+    `mutation OauthLinkCancel($ref: String!, $browserSessionRef: String!) {
+      oauthLinkCancel(ref: $ref, browserSessionRef: $browserSessionRef) { done }
+    }`,
+    { ref, browserSessionRef },
+    'auth:oauth:flow',
+    userToken,
+  )
+  if (!data.oauthLinkCancel?.done) throw new Error('OAuth link cancellation failed.')
+}
+
+/** Confirms the displayed identity and consumes its link flow. */
+export const confirmOauthLink = async (
+  userToken: string,
+  ref: string,
+  browserSessionRef: string,
+  provider: string,
+  providerId: string,
+) => {
+  const data = await callPhoenix<{ oauthLinkConfirm: { returnTo: string } }>(
+    `mutation OauthLinkConfirm($ref: String!, $browserSessionRef: String!, $provider: String!, $providerId: String!) {
+      oauthLinkConfirm(ref: $ref, browserSessionRef: $browserSessionRef, provider: $provider, providerId: $providerId) { returnTo }
+    }`,
+    { ref, browserSessionRef, provider, providerId },
+    'auth:oauth:flow',
+    userToken,
+  )
+  if (!data.oauthLinkConfirm) throw new Error('OAuth link confirmation failed.')
+  return data.oauthLinkConfirm
+}
+
+/** Reads the pending registration summary through its opaque reference. */
+export const readOauthRegistration = async (flowRef: string) => {
+  const data = await callPhoenix<{
+    oauthRegistrationSummary: {
+      provider: string
+      suggestedLogin: string | null
+      returnTo: string | null
+    }
+  }>(
+    `query OauthRegistrationSummary($flowRef: String!) {
+      oauthRegistrationSummary(flowRef: $flowRef) { provider suggestedLogin returnTo }
+    }`,
+    { flowRef },
+    'auth:oauth:flow',
+  )
+  if (!data.oauthRegistrationSummary) throw new Error('OAuth registration unavailable.')
+  return data.oauthRegistrationSummary
+}
+
+/** Completes registration and returns Phoenix session credentials. */
+export const completeOauthRegistration = async (
+  flowRef: string,
+  login: string,
+  browserSession: TBrowserSessionMetadata,
+) => {
+  const data = await callPhoenix<{ completeOauthRegistration: TBrowserSigninResult }>(
+    `mutation CompleteOauthRegistration($flowRef: String!, $login: String!, $browserSession: BrowserSessionMetadataInput) {
+      completeOauthRegistration(flowRef: $flowRef, login: $login, browserSession: $browserSession) {
+        accessToken accessExpiresAt browserSessionRef sessionAbsoluteExpiresAt
+      }
+    }`,
+    { flowRef, login, browserSession },
+    'auth:oauth:register',
+  )
+  const session = data.completeOauthRegistration
+  if (
+    !session ||
+    !session.accessToken ||
+    !session.browserSessionRef ||
+    !session.sessionAbsoluteExpiresAt ||
+    !session.accessExpiresAt
+  ) {
+    throw new Error('Phoenix returned an invalid browser session.')
+  }
+  return session
+}
+
+/** Signs the Auth session and Phoenix cookies after registration. */
+export const createSignedInResponse = async (
+  session: TBrowserSigninResult,
+  location: string,
+): Promise<Response> => {
+  const secret = process.env.NEXTAUTH_SECRET?.trim()
+  if (!secret) throw new Error('Auth session secret is not configured.')
+  const cookieName = getAuthSessionCookieName(useSecureCookies)
+  const maxAge = Math.max(
+    1,
+    Math.min(
+      BROWSER_SESSION_MAX_AGE,
+      Math.floor((Date.parse(session.sessionAbsoluteExpiresAt) - Date.now()) / 1000),
+    ),
+  )
+  const token = await encode({
+    secret,
+    salt: cookieName,
+    maxAge,
+    token: {
+      browserSessionRef: session.browserSessionRef,
+      sessionAbsoluteExpiresAt: session.sessionAbsoluteExpiresAt,
+    },
+  })
+  const headers = new Headers({ location, 'cache-control': 'no-store' })
+  headers.append(
+    'set-cookie',
+    serialize(cookieName, token, {
+      httpOnly: true,
+      secure: useSecureCookies,
+      sameSite: 'lax',
+      path: '/',
+      maxAge,
+    }),
+  )
+  return appendPhoenixTokenCookie(new Response(null, { status: 303, headers }), session)
+}
+
 const linkedAccountsResult = (data: {
   linkedOauthAccounts?: { entries?: unknown }
 }): TLinkedOauthAccount[] => {
@@ -727,33 +847,19 @@ export const listLinkedOauthAccounts = async (userToken: string): Promise<TLinke
     ),
   )
 
-/** Runs the link oauth identity operation at the auth boundary. */
-export const linkOauthIdentity = async (
-  userToken: string,
-  identity: Record<string, unknown>,
-): Promise<TLinkedOauthAccount[]> =>
-  linkedAccountsResult(
-    await callPhoenix<{ linkedOauthAccounts?: { entries?: unknown } }>(
-      LINK_OAUTH_IDENTITY_MUTATION,
-      { identity },
-      'auth:oauth:link',
-      userToken,
-    ),
-  )
-
 /** Runs the unlink oauth identity operation at the auth boundary. */
 export const unlinkOauthIdentity = async (
   userToken: string,
   publicRef: string,
-): Promise<TLinkedOauthAccount[]> =>
-  linkedAccountsResult(
-    await callPhoenix<{ linkedOauthAccounts?: { entries?: unknown } }>(
-      UNLINK_OAUTH_IDENTITY_MUTATION,
-      { publicRef },
-      'auth:oauth:unlink',
-      userToken,
-    ),
+): Promise<TLinkedOauthAccount[]> => {
+  const data = await callPhoenix<{ unlinkOauthIdentity?: { entries?: unknown } }>(
+    UNLINK_OAUTH_IDENTITY_MUTATION,
+    { publicRef },
+    'auth:oauth:unlink',
+    userToken,
   )
+  return linkedAccountsResult({ linkedOauthAccounts: data.unlinkOauthIdentity })
+}
 
 /** Runs the refresh browser session operation at the auth boundary. */
 export const refreshBrowserSession = async (ref: string): Promise<TBrowserSigninResult> => {
@@ -836,19 +942,54 @@ export const createAuthRequestHandler = ({
   authCore = callAuthCore,
   signinOauth: exchangeIdentity = signinOauth,
   revokeBrowserSession: revokeSession = revokeBrowserSession,
+  providers,
+  resolveRedirect = resolveAuthRedirect,
 }: TAuthRequestDependencies = {}) => {
   return async (request: Request): Promise<Response> => {
     let browserSession: TBrowserSigninResult | undefined
+    let registration: OauthRegistrationRequired | undefined
+    const authUrl = process.env.AUTH_URL || new URL(request.url).origin
+    const callbackCookieName = getAuthCookieNames(useSecureCookies).callbackUrl
+    const callbackCookie = request.headers
+      .get('cookie')
+      ?.split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(`${callbackCookieName}=`))
+    let returnTo = authUrl
+    try {
+      const value = callbackCookie?.slice(callbackCookieName.length + 1)
+      if (value)
+        returnTo = resolveRedirect({
+          url: decodeURIComponent(value),
+          baseUrl: authUrl,
+          sharedDomain: process.env.AUTH_COOKIE_DOMAIN,
+        })
+    } catch {
+      returnTo = authUrl
+    }
     const config = buildAuthConfig({
+      providers,
+      resolveRedirect,
       onPhoenixSignin: (result) => {
         browserSession = result
       },
-      signinOauth: (provider) =>
-        exchangeIdentity(provider, {
-          userAgentSummary:
-            request.headers.get('user-agent')?.slice(0, BROWSER_SESSION_USER_AGENT_MAX_LENGTH) ||
-            undefined,
-        }),
+      signinOauth: async (provider) => {
+        try {
+          return await exchangeIdentity(
+            provider,
+            {
+              userAgentSummary:
+                request.headers
+                  .get('user-agent')
+                  ?.slice(0, BROWSER_SESSION_USER_AGENT_MAX_LENGTH) || undefined,
+            },
+            returnTo,
+          )
+        } catch (error) {
+          if (error instanceof OauthRegistrationRequired) registration = error
+          throw error
+        }
+      },
     })
     let response: Response
     try {
@@ -857,7 +998,32 @@ export const createAuthRequestHandler = ({
       if (browserSession) {
         await revokeSession(browserSession.browserSessionRef).catch(() => undefined)
       }
-      throw error
+      if (!registration) throw error
+      response = new Response(null, { status: 303 })
+    }
+
+    if (registration) {
+      const registrationReturn = new URL(returnTo)
+      registrationReturn.searchParams.set('oauthRegistration', 'required')
+      const headers = new Headers({
+        location: registrationReturn.toString(),
+        'cache-control': 'no-store',
+      })
+      headers.append(
+        'set-cookie',
+        serialize(
+          `${useSecureCookies ? '__Host-' : ''}groupher-auth.registration`,
+          registration.flowRef,
+          {
+            httpOnly: true,
+            secure: useSecureCookies,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 600,
+          },
+        ),
+      )
+      return new Response(null, { status: 303, headers })
     }
 
     if (browserSession && !issuedAuthSession(response)) {

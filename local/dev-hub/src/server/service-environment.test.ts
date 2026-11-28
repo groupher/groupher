@@ -31,7 +31,7 @@ test('read-only configuration shows defaults without initializing state or files
   const { root, store } = await fixture(t)
   const result = await store.get('phoenix')
   assert.equal(result.appliesOn, 'next-start')
-  assert.match(result.filePath, /services\/phoenix\/local-dev\.env$/)
+  assert.match(result.filePath, /config\/phoenix\.env$/)
   assert.deepEqual(
     result.entries.find((item) => item.key === 'DB_NAME'),
     {

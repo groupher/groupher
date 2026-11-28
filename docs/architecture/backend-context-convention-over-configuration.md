@@ -99,12 +99,14 @@ runtime / Context A
   root Facade。
 - root `FrontDesk` 通过 `Accounts` / `CMS` 根 Facade 委托，不直接返回或暴露内部 seam module。
 
-Context 根 API 使用能力前缀避免冲突，例如：
+Context 根 API 用清晰的动作和资源名称避免冲突。业务动作优先使用动词开头、完整资源名和符合实际基数的单复数；保留请求、成员、资源范围等影响语义的限定词。迁移前检查整个 Context 的现有导出与所有调用方，逐批直接切换。尚未迁移的能力前缀名称按既有调用保留，不能据此引入新别名：
 
 ```elixir
 CMS.articles_page(:post, filter)
 Accounts.profiles_user(user)
 PublicCache.cloudflare_purge(tags)
+CMS.create_community(attrs, user, command_id)
+CMS.remove_community_admin(community_ref, member_id, revision, actor, command_id)
 ```
 
 ## 4. Facade 实现

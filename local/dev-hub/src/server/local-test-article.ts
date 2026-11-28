@@ -8,10 +8,14 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
+import type { Browser } from '@playwright/test'
+
+import { LocalFixtureError } from './local-test-error.ts'
 import { verifyLocalTestViewer } from './local-test-viewer.ts'
 import { REPO_ROOT } from './services.ts'
 
-type TActor = { run: string; alias: string; community: string }
+type TActor = { run: string; alias: string; community: string; publicRoot?: string }
+type TArticleReferences = { articleId: string; workingCopyId?: string; snapshotId?: string }
 type TPrepared = {
   ownerLogin: string
   publish: boolean
@@ -27,8 +31,46 @@ type TPrepared = {
   }
 }
 
+/** Retry a lost local dispatch acknowledgement with the same attempt identity. */
+export async function beginArticleDispatch(
+  call: (input: Record<string, unknown>) => Promise<unknown>,
+  input: Record<string, unknown>,
+): Promise<void> {
+  const begin = async () => {
+    const result = await call(input)
+    if (
+      typeof input.commandId !== 'string' ||
+      input.commandId.length === 0 ||
+      typeof input.attemptId !== 'string' ||
+      input.attemptId.length === 0 ||
+      !result ||
+      typeof result !== 'object' ||
+      !('status' in result) ||
+      result.status !== 'dispatched' ||
+      !('commandId' in result) ||
+      result.commandId !== input.commandId
+    )
+      throw new Error('Invalid Article dispatch acknowledgement.')
+  }
+  try {
+    await begin()
+  } catch (error) {
+    if (error instanceof LocalFixtureError) throw error
+    await begin()
+  }
+}
+
 /** Signs in one registered synthetic actor and submits only a fixed Article creation action. */
-export const createLocalArticle = async (actor: TActor, prepared: TPrepared) => {
+export const createLocalArticle = async (
+  actor: TActor,
+  prepared: TPrepared,
+  beginDispatch: () => Promise<void>,
+  launchBrowser?: () => Promise<Browser>,
+  record?: (references: TArticleReferences) => Promise<void>,
+) => {
+  const root = actor.publicRoot || 'groupher.localhost'
+  if (!/^groupher(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?\.localhost$/.test(root))
+    throw new Error('Invalid local browser environment.')
   if (
     prepared.command.action !==
       (prepared.publish ? 'article.create_and_publish' : 'article.create') ||
@@ -36,40 +78,62 @@ export const createLocalArticle = async (actor: TActor, prepared: TPrepared) => 
     prepared.command.target.community !== actor.community
   )
     throw new Error('Invalid local Article fixture intent.')
-  const require = createRequire(path.join(REPO_ROOT, 'package.json'))
-  const { chromium } = require('@playwright/test') as typeof import('@playwright/test')
-  const browser = await chromium.launch({ channel: 'chrome', headless: true })
+  const browser = await (
+    launchBrowser ||
+    (async () => {
+      const require = createRequire(path.join(REPO_ROOT, 'package.json'))
+      const { chromium } = require('@playwright/test') as typeof import('@playwright/test')
+      return chromium.launch({ channel: 'chrome', headless: true })
+    })
+  )()
   let page: Awaited<ReturnType<typeof browser.newPage>> | undefined
   try {
     page = await browser.newPage()
-    await page.goto('https://dash.groupher.localhost/health', { waitUntil: 'domcontentloaded' })
+    await page.goto(`https://dash.${root}/health`, { waitUntil: 'domcontentloaded' })
     const status = await page.evaluate(async (actor) => {
-      const response = await fetch('https://auth.groupher.localhost/api/auth/test-login', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
-        body: JSON.stringify({ localActor: { ...actor, app: 'dash' } }),
-      })
+      const response = await fetch(
+        `https://auth.${actor.publicRoot || 'groupher.localhost'}/api/auth/test-login`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
+          body: JSON.stringify({
+            localActor: {
+              run: actor.run,
+              alias: actor.alias,
+              community: actor.community,
+              app: 'dash',
+            },
+          }),
+        },
+      )
       return response.status
     }, actor)
     if (status !== 204) throw new Error(`Local Article login was rejected (${status}).`)
     await page.evaluate(verifyLocalTestViewer, prepared.ownerLogin)
-    const result = await page.evaluate(async ({ command, publish }) => {
-      const response = await fetch('/api/content/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
-        body: JSON.stringify(command),
-      })
-      const payload = await response.json()
-      if (!response.ok || payload.ok !== true)
-        return { error: String(payload.error?.code || 'publisher_failed'), status: response.status }
-      return {
-        articleId: payload.result?.articleId,
-        workingCopyId: publish ? undefined : payload.result?.id,
-        revision: publish ? undefined : payload.result?.revision,
-        snapshotId: publish ? payload.result?.snapshotId : undefined,
-      }
-    }, { command: prepared.command, publish: prepared.publish })
+    await beginDispatch()
+    const result = await page.evaluate(
+      async ({ command, publish }) => {
+        const response = await fetch('/api/content/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
+          body: JSON.stringify(command),
+        })
+        const payload = await response.json()
+        if (!response.ok || payload.ok !== true)
+          return {
+            error: String(payload.error?.code || 'publisher_failed'),
+            status: response.status,
+          }
+        return {
+          articleId: payload.result?.articleId,
+          workingCopyId: publish ? undefined : payload.result?.id,
+          revision: publish ? undefined : payload.result?.revision,
+          snapshotId: publish ? payload.result?.snapshotId : undefined,
+        }
+      },
+      { command: prepared.command, publish: prepared.publish },
+    )
     if ('error' in result)
       throw new Error(
         `Article Content Publisher rejected the fixture (${result.status}: ${result.error}).`,
@@ -85,49 +149,58 @@ export const createLocalArticle = async (actor: TActor, prepared: TPrepared) => 
       throw new Error('Article Content Publisher returned an invalid fixture result.')
     let workingCopyId = result.workingCopyId
     if (prepared.publish) {
-      const workingCopies = await page.evaluate(async ({ articleId, community }) => {
-        const response = await fetch('/api/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
-          body: JSON.stringify({
-            query: `query LocalTestArticleWorkingCopies($articleId: ID!, $community: String!) {
+      const workingCopies = await page.evaluate(
+        async ({ articleId, community }) => {
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
+            body: JSON.stringify({
+              query: `query LocalTestArticleWorkingCopies($articleId: ID!, $community: String!) {
               articleWorkingCopies(articleId: $articleId, community: $community) {
                 id articleId scopeType revision
               }
             }`,
-            variables: { articleId, community },
-          }),
-        })
-        const payload = await response.json()
-        if (!response.ok || payload.errors?.length)
-          throw new Error('Could not verify the published Article WorkingCopy.')
-        return payload.data?.articleWorkingCopies as
-          | Array<{ id: string; articleId: string; scopeType: string; revision: number }>
-          | undefined
-      }, { articleId: result.articleId, community: actor.community })
+              variables: { articleId, community },
+            }),
+          })
+          const payload = await response.json()
+          if (!response.ok || payload.errors?.length)
+            throw new Error('Could not verify the published Article WorkingCopy.')
+          return payload.data?.articleWorkingCopies as
+            | Array<{ id: string; articleId: string; scopeType: string; revision: number }>
+            | undefined
+        },
+        { articleId: result.articleId, community: actor.community },
+      )
       const defaults = (workingCopies ?? []).filter(
         (workingCopy) =>
           workingCopy.articleId === result.articleId && workingCopy.scopeType === 'default',
       )
       if (defaults.length !== 1 || typeof defaults[0].id !== 'string')
-        throw new Error('Article Content Publisher did not expose one canonical default WorkingCopy.')
+        throw new Error(
+          'Article Content Publisher did not expose one canonical default WorkingCopy.',
+        )
       workingCopyId = defaults[0].id
     }
-    return {
+    const references = {
       articleId: result.articleId,
       workingCopyId,
       ...(prepared.publish ? { snapshotId: result.snapshotId } : {}),
     }
+    // Persist provenance before browser shutdown: a close failure must not leave
+    // a successful Publisher response needlessly unrecorded.
+    if (record) await record(references)
+    return references
   } finally {
     // Revoke this temporary browser session, independently of any open actor profile.
     await page
-      ?.evaluate(async () => {
-        await fetch('https://auth.groupher.localhost/api/auth/logout', {
+      ?.evaluate(async (localRoot) => {
+        await fetch(`https://auth.${localRoot}/api/auth/logout`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'X-Groupher-CSRF': '1' },
         })
-      })
+      }, root)
       .catch(() => {})
     await browser.close()
   }

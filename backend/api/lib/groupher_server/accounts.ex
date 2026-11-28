@@ -47,12 +47,12 @@ defmodule GroupherServer.Accounts do
     as: :add_result
 
   @doc "Delegates GroupherServer.Accounts.CollectFolders.create/2 through the Accounts Context boundary."
-  defdelegate collect_folders_create(arg1, arg2),
+  defdelegate create_collect_folder(arg1, arg2),
     to: GroupherServer.Accounts.CollectFolders,
     as: :create
 
   @doc "Delegates GroupherServer.Accounts.CollectFolders.delete/1 through the Accounts Context boundary."
-  defdelegate collect_folders_delete(arg1),
+  defdelegate delete_collect_folder(arg1),
     to: GroupherServer.Accounts.CollectFolders,
     as: :delete
 
@@ -93,12 +93,12 @@ defmodule GroupherServer.Accounts do
     as: :remove_in_transaction
 
   @doc "Delegates GroupherServer.Accounts.CollectFolders.update/2 through the Accounts Context boundary."
-  defdelegate collect_folders_update(arg1, arg2),
+  defdelegate update_collect_folder(arg1, arg2),
     to: GroupherServer.Accounts.CollectFolders,
     as: :update
 
   @doc "Delegates GroupherServer.Accounts.Fans.follow/2 through the Accounts Context boundary."
-  defdelegate fans_follow(arg1, arg2), to: GroupherServer.Accounts.Fans, as: :follow
+  defdelegate follow_user(arg1, arg2), to: GroupherServer.Accounts.Fans, as: :follow
 
   @doc "Delivers one typed Fans effect from a background worker."
   defdelegate fans_deliver_event(type, user_id, from_user_id),
@@ -106,27 +106,27 @@ defmodule GroupherServer.Accounts do
     as: :deliver_event
 
   @doc "Delegates GroupherServer.Accounts.Fans.paged_followers/3 through the Accounts Context boundary."
-  defdelegate fans_paged_followers(arg1, arg2, arg3),
+  defdelegate page_followers(arg1, arg2, arg3),
     to: GroupherServer.Accounts.Fans,
     as: :paged_followers
 
   @doc "Delegates GroupherServer.Accounts.Fans.paged_followers/4 through the Accounts Context boundary."
-  defdelegate fans_paged_followers(arg1, arg2, arg3, arg4),
+  defdelegate page_followers(arg1, arg2, arg3, arg4),
     to: GroupherServer.Accounts.Fans,
     as: :paged_followers
 
   @doc "Delegates GroupherServer.Accounts.Fans.paged_followings/3 through the Accounts Context boundary."
-  defdelegate fans_paged_followings(arg1, arg2, arg3),
+  defdelegate page_followed_users(arg1, arg2, arg3),
     to: GroupherServer.Accounts.Fans,
     as: :paged_followings
 
   @doc "Delegates GroupherServer.Accounts.Fans.paged_followings/4 through the Accounts Context boundary."
-  defdelegate fans_paged_followings(arg1, arg2, arg3, arg4),
+  defdelegate page_followed_users(arg1, arg2, arg3, arg4),
     to: GroupherServer.Accounts.Fans,
     as: :paged_followings
 
   @doc "Delegates GroupherServer.Accounts.Fans.undo_follow/2 through the Accounts Context boundary."
-  defdelegate fans_undo_follow(arg1, arg2), to: GroupherServer.Accounts.Fans, as: :undo_follow
+  defdelegate unfollow_user(arg1, arg2), to: GroupherServer.Accounts.Fans, as: :undo_follow
 
   @doc "Delegates GroupherServer.Accounts.FrontDesk.fresh_user/1 through the Accounts Context boundary."
   defdelegate front_desk_fresh_user(arg1), to: GroupherServer.Accounts.FrontDesk, as: :fresh_user
@@ -185,23 +185,18 @@ defmodule GroupherServer.Accounts do
     to: GroupherServer.Accounts.Profiles,
     as: :default_community_suggestions
 
-  @doc "Delegates GroupherServer.Accounts.Profiles.link_oauth_identity/2 through the Accounts Context boundary."
-  defdelegate profiles_link_oauth_identity(arg1, arg2),
-    to: GroupherServer.Accounts.Profiles,
-    as: :link_oauth_identity
-
   @doc "Delegates GroupherServer.Accounts.Profiles.linked_oauth_accounts/1 through the Accounts Context boundary."
   defdelegate profiles_linked_oauth_accounts(arg1),
     to: GroupherServer.Accounts.Profiles,
     as: :linked_oauth_accounts
 
   @doc "Delegates GroupherServer.Accounts.Profiles.paged_users/2 through the Accounts Context boundary."
-  defdelegate profiles_paged_users(arg1, arg2),
+  defdelegate page_users(arg1, arg2),
     to: GroupherServer.Accounts.Profiles,
     as: :paged_users
 
   @doc "Delegates GroupherServer.Accounts.Profiles.paged_users/3 through the Accounts Context boundary."
-  defdelegate profiles_paged_users(arg1, arg2, arg3),
+  defdelegate page_users(arg1, arg2, arg3),
     to: GroupherServer.Accounts.Profiles,
     as: :paged_users
 
@@ -248,7 +243,7 @@ defmodule GroupherServer.Accounts do
     as: :revoke_browser_session_public
 
   @doc "Delegates GroupherServer.Accounts.Profiles.revoke_browser_session/1 through the Accounts Context boundary."
-  defdelegate profiles_revoke_browser_session(arg1),
+  defdelegate revoke_browser_session(arg1),
     to: GroupherServer.Accounts.Profiles,
     as: :revoke_browser_session
 
@@ -267,13 +262,49 @@ defmodule GroupherServer.Accounts do
     to: GroupherServer.Accounts.Profiles,
     as: :session_state
 
-  @doc "Delegates GroupherServer.Accounts.Profiles.signin_oauth/1 through the Accounts Context boundary."
-  defdelegate profiles_signin_oauth(arg1), to: GroupherServer.Accounts.Profiles, as: :signin_oauth
-
-  @doc "Delegates GroupherServer.Accounts.Profiles.signin_oauth/2 through the Accounts Context boundary."
-  defdelegate profiles_signin_oauth(arg1, arg2),
+  defdelegate profiles_signin_oauth(provider, metadata, ref, return_to),
     to: GroupherServer.Accounts.Profiles,
     as: :signin_oauth
+
+  defdelegate complete_oauth_registration(ref, login, metadata),
+    to: GroupherServer.Accounts.Profiles,
+    as: :complete_oauth_registration
+
+  defdelegate oauth_flows_cleanup_expired(),
+    to: GroupherServer.Accounts.Profiles.OauthFlows,
+    as: :cleanup_expired
+
+  defdelegate oauth_registration_summary(ref),
+    to: GroupherServer.Accounts.Profiles.OauthFlows,
+    as: :registration_summary
+
+  defdelegate oauth_link_start(user, attrs),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :start
+
+  defdelegate oauth_link_claim(user, ref, session, provider, nonce),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :claim
+
+  defdelegate oauth_link_verified(user, ref, session, identity),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :verified
+
+  defdelegate oauth_link_summary(user, ref, session),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :summary
+
+  defdelegate oauth_link_cancel(user, ref, session),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :cancel
+
+  defdelegate oauth_link_confirm(user, ref, session, provider, provider_id),
+    to: GroupherServer.Accounts.Profiles.OauthLinks,
+    as: :confirm
+
+  defdelegate oauth_provider_list(),
+    to: GroupherServer.Accounts.Profiles.OauthProviders,
+    as: :public_list
 
   @doc "Delegates GroupherServer.Accounts.Profiles.subscribed_communities/3 through the Accounts Context boundary."
   defdelegate profiles_subscribed_communities(arg1, arg2, arg3),
@@ -281,12 +312,12 @@ defmodule GroupherServer.Accounts do
     as: :subscribed_communities
 
   @doc "Delegates GroupherServer.Accounts.Profiles.unlink_oauth_identity/2 through the Accounts Context boundary."
-  defdelegate profiles_unlink_oauth_identity(arg1, arg2),
+  defdelegate unlink_oauth_identity(arg1, arg2),
     to: GroupherServer.Accounts.Profiles,
     as: :unlink_oauth_identity
 
   @doc "Delegates GroupherServer.Accounts.Profiles.update_profile/2 through the Accounts Context boundary."
-  defdelegate profiles_update_profile(arg1, arg2),
+  defdelegate update_profile(arg1, arg2),
     to: GroupherServer.Accounts.Profiles,
     as: :update_profile
 
@@ -324,7 +355,7 @@ defmodule GroupherServer.Accounts do
   defdelegate search_user(arg1), to: GroupherServer.Accounts.Search, as: :user
 
   @doc "Delegates GroupherServer.Accounts.Upvotes.paged_articles/3 through the Accounts Context boundary."
-  defdelegate upvotes_paged_articles(arg1, arg2, arg3),
+  defdelegate page_upvoted_articles(arg1, arg2, arg3),
     to: GroupherServer.Accounts.Upvotes,
     as: :paged_articles
 

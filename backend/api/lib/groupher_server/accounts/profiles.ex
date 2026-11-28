@@ -133,11 +133,21 @@ defmodule GroupherServer.Accounts.Profiles do
 
   ## Examples
 
-      Accounts.Profiles.signin_oauth(provider_payload, %{ip: ip_address})
+      Accounts.Profiles.signin_oauth(provider_payload, %{}, flow_ref, return_to)
   """
-  @spec signin_oauth(map(), map()) :: T.domain_res(map())
-  def signin_oauth(provider, browser_session_metadata \\ %{}) do
-    Commands.SignInOauth.run(provider, browser_session_metadata)
+  def signin_oauth(provider, metadata, flow_ref, return_to) do
+    Commands.SignInOauth.run(provider, metadata, flow_ref, return_to)
+  end
+
+  @doc """
+  Completes a verified OAuth registration and creates a browser session.
+
+  ## Examples
+
+      Accounts.Profiles.complete_oauth_registration(flow_ref, "alice", %{})
+  """
+  def complete_oauth_registration(ref, login, metadata) do
+    Accounts.Profiles.OauthFlows.complete_registration(ref, login, metadata)
   end
 
   @doc """
@@ -252,18 +262,6 @@ defmodule GroupherServer.Accounts.Profiles do
   """
   @spec linked_oauth_accounts(String.t()) :: T.domain_res(map())
   def linked_oauth_accounts(login), do: Query.linked_oauth_accounts(login)
-
-  @doc """
-  Links one provider identity using its login and verified provider data.
-
-  ## Examples
-
-      Accounts.Profiles.link_oauth_identity("alice", provider_payload)
-  """
-  @spec link_oauth_identity(String.t(), map()) :: T.domain_res(map())
-  def link_oauth_identity(login, provider) do
-    Commands.LinkOauthIdentity.run(login, provider)
-  end
 
   @doc """
   Unlinks one OAuth identity by its public reference.

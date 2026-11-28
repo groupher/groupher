@@ -9,7 +9,18 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.Articles.WorkingCopy.Diff
-  alias CMS.Model.{Article, ArticleEvent, ArticleSnapshot, ArticleWorkingCopy}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    ArticleEvent,
+    ArticlePublic,
+    ArticleSnapshot,
+    ArticleWorkingCopy,
+    Author
+  }
+
+  alias CMS.Model.CommandReceipt
   alias Accounts.Model.User
 
   @default_limit 20
@@ -115,6 +126,124 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.History.Query do
   end
 
   def paged_events(_article_id, _actor, _opts), do: {:error, :article_history_unavailable}
+
+  @doc "Finds the caller's authorized Article creation associated with one command identity."
+  def find_creation_by_command(command_id, community_id, %User{id: user_id} = actor)
+      when is_integer(community_id) and is_integer(user_id) do
+    with {:ok, command_id} <- cast_uuid(command_id) do
+      initiator_key = Integer.to_string(user_id)
+
+      matches =
+        Repo.all(
+          from(receipt in CommandReceipt,
+            join: event in ArticleEvent,
+            on: event.operation_ref == receipt.operation_ref,
+            join: snapshot in ArticleSnapshot,
+            on: snapshot.id == event.after_snapshot_id,
+            where:
+              receipt.initiator_type == "user" and receipt.initiator_key == ^initiator_key and
+                receipt.command_id == ^command_id and snapshot.causation_command_id == ^command_id and
+                event.type == :create and
+                event.actor_id == ^user_id and event.source_community_id == ^community_id,
+            select: {event.article_id, event.working_copy_id},
+            limit: 2
+          )
+        )
+
+      case matches do
+        [] ->
+          {:ok, nil}
+
+        [{article_id, work_id}] ->
+          with {:ok, article} <- load_article(article_id),
+               {:ok, :pass} <- authorize(article, actor, CMS.GateAction.article_history_read()) do
+            snapshot_id =
+              case Repo.get(ArticlePublic, article_id) do
+                %ArticlePublic{snapshot_id: id} -> id
+                nil -> nil
+              end
+
+            {:ok, %{article_id: article_id, working_copy_id: work_id, snapshot_id: snapshot_id}}
+          end
+
+        _ ->
+          {:error, :article_history_unavailable}
+      end
+    end
+  end
+
+  def find_creation_by_command(_, _, _), do: {:error, :article_history_unavailable}
+
+  @doc "Verifies an Article creation and optional published Snapshot against its immutable history."
+  def verify_creation(
+        %{
+          article_id: article_id,
+          working_copy_id: work_id,
+          community_id: community_id,
+          command_id: command_id,
+          snapshot_id: snapshot_id,
+          publish: publish
+        },
+        %User{id: user_id} = actor
+      )
+      when is_integer(community_id) and is_integer(user_id) and is_boolean(publish) do
+    with {:ok, article_id} <- cast_uuid(article_id),
+         {:ok, work_id} <- cast_uuid(work_id),
+         {:ok, command_id} <- cast_uuid(command_id),
+         {:ok, %Article{thread: :post} = article} <- load_article(article_id),
+         {:ok, :pass} <- authorize(article, actor, CMS.GateAction.article_history_read()),
+         %Author{user_id: ^user_id} <- Repo.get(Author, article.author_id),
+         %ArticleWorkingCopy{
+           article_id: ^article_id,
+           created_by_id: ^user_id,
+           scope_type: :default
+         } = work <- Repo.get(ArticleWorkingCopy, work_id),
+         %ArticleBinding{} <-
+           Repo.get_by(ArticleBinding, article_id: article_id, community_id: community_id),
+         true <- creation_event?(article_id, work_id, community_id, user_id, command_id),
+         true <-
+           not publish or
+             published_event?(article_id, work_id, community_id, user_id, command_id, snapshot_id) do
+      {:ok, %{article_id: article.id, working_copy_id: work.id, revision: work.revision}}
+    else
+      _ -> {:error, :article_history_unavailable}
+    end
+  end
+
+  def verify_creation(_, _), do: {:error, :article_history_unavailable}
+
+  defp creation_event?(article_id, work_id, community_id, user_id, command_id) do
+    Repo.exists?(
+      from(e in ArticleEvent,
+        join: s in ArticleSnapshot,
+        on: s.id == e.after_snapshot_id,
+        where:
+          e.article_id == ^article_id and e.working_copy_id == ^work_id and e.type == :create and
+            e.actor_id == ^user_id and e.source_community_id == ^community_id and
+            s.causation_command_id == ^command_id and s.source_working_copy_id == ^work_id
+      )
+    )
+  end
+
+  defp published_event?(article_id, work_id, community_id, user_id, command_id, snapshot_id) do
+    with {:ok, snapshot_id} <- cast_uuid(snapshot_id),
+         %ArticleSnapshot{source_working_copy_id: ^work_id, causation_command_id: ^command_id} <-
+           Repo.get(ArticleSnapshot, snapshot_id),
+         true <-
+           Repo.exists?(
+             from(e in ArticleEvent,
+               where:
+                 e.article_id == ^article_id and e.after_snapshot_id == ^snapshot_id and
+                   e.type == :publish and e.actor_id == ^user_id and
+                   e.source_community_id == ^community_id
+             )
+           ),
+         %ArticlePublic{snapshot_id: ^snapshot_id} <- Repo.get(ArticlePublic, article_id) do
+      true
+    else
+      _ -> false
+    end
+  end
 
   @doc "Returns one event only when it belongs to the authorized Article."
   def event(article_id, event_id, actor, opts \\ [])

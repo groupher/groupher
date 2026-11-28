@@ -8,6 +8,7 @@ local/**/dist/
 backend/**/dist/
 infra/**/dist/
 local/**/.data/
+local/dev-hub/config/
 **/target/
 **/*.app/
 local/dev-hub/src-tauri/gen/schemas/
@@ -160,8 +161,29 @@ backend/api/priv/pipeline_graph.json
 /docs/feature/article/evidence/
 .agignore
 
-# AI agent / skills (local only)
+# Project skills are shared. Other agent tooling stays local.
 .agents/
+!/.agents/
+/.agents/*
+!/.agents/skills/
+/.agents/skills/*
+!/.agents/skills/grstack/
+!/.agents/skills/dev-hub/
+!/.agents/skills/seed/
+!/.agents/skills/db-migration-rehearsal/
+!/.agents/skills/fe/
+!/.agents/skills/cms-assets/
+!/.agents/skills/gate-lifecycle/
+!/.agents/skills/content-publisher/
+!/.agents/skills/import/
+/.agents/skills/*/*
+!/.agents/skills/*/SKILL.md
+!/.agents/skills/*/references/
+/.agents/skills/*/references/*
+!/.agents/skills/*/references/*.md
+!/.agents/skills/*/agents/
+/.agents/skills/*/agents/*
+!/.agents/skills/*/agents/openai.yaml
 .codegraph/
 .codex/
 .cursor/

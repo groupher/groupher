@@ -23,8 +23,16 @@ import {
   isBrowserMetricOriginAllowed,
 } from './browser-origins.ts'
 import { ServiceConfigError, ServiceConfigReader } from './config-reader.ts'
+import { verifyManagedDatabase } from './database-ready.ts'
+import { verifyStartingRun, readRegisteredRun } from './environment-registry.ts'
 import { GitMonitor, GitMonitorError } from './git-monitor.ts'
+import { embedPageIdentity } from './page-identity.ts'
+import {
+  ISOLATED_CORE_SERVICE_IDS,
+  isolatedServiceDefinitions,
+} from './isolated-service-definitions.ts'
 import { prepareLocalEnvironment } from './local-environment.ts'
+import { cleanAbandonedBrowserRuns } from './local-test-browser.ts'
 import { MetricsStore } from './metrics-store.ts'
 import { PortlessManager } from './portless.ts'
 import { ServiceManager, ServiceManagerError } from './process-manager.ts'
@@ -33,10 +41,13 @@ import {
   buildHubHostAllowlist,
   isAllowedHubHost,
   isAllowedRequestOrigin,
+  isAllowedInstanceMutation,
 } from './request-guards.ts'
 import { serviceEnvironmentRoutes } from './service-environment-routes.ts'
 import { ServiceEnvironmentStore } from './service-environment.ts'
 import { REPO_ROOT, SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts'
+import { registryRoot, userDataRoot } from './storage-paths.ts'
+import { resolveCheckout } from './worktree-identity.ts'
 
 const host = '127.0.0.1'
 const port = Number.parseInt(process.env.DEV_HUB_PORT || '4310', 10)
@@ -47,23 +58,73 @@ const apiOnly = process.env.DEV_HUB_API_ONLY === 'true'
 const devHubRoot = fileURLToPath(new URL('../../', import.meta.url))
 const clientRoot = path.join(devHubRoot, 'dist/client')
 const indexHtmlPath = path.join(clientRoot, 'index.html')
-const metricsRoot = path.join(devHubRoot, '.data/metrics')
+const metricsRoot = path.join(userDataRoot(REPO_ROOT), 'metrics')
 const hubOrigins = new Set([
   origin,
   webOrigin,
   `http://localhost:${port}`,
   `http://localhost:${webPort}`,
 ])
-const browserOriginsByService = buildBrowserOriginsByService(SERVICE_DEFINITIONS)
+const instanceId = process.env.DEV_HUB_INSTANCE_ID
+const managedIdentity = instanceId
+  ? await (async () => {
+      const checkout = await resolveCheckout(REPO_ROOT)
+      const environment = await verifyStartingRun(
+        registryRoot(),
+        checkout,
+        instanceId,
+        port,
+        'full',
+      )
+      return {
+        repoRoot: checkout.root,
+        apiOrigin: origin,
+        instanceId,
+        role: environment.role,
+        mode: 'full',
+        apiVersion: 1,
+      }
+    })()
+  : null
+
+let serviceDefinitions = SERVICE_DEFINITIONS
+if (managedIdentity?.role === 'secondary') {
+  const checkout = await resolveCheckout(REPO_ROOT)
+  const run = await readRegisteredRun(registryRoot(), checkout)
+  if (!run?.servicePorts) throw new Error('Secondary service ports are not reserved.')
+  const database = await verifyManagedDatabase(REPO_ROOT, 'dev')
+  await verifyManagedDatabase(REPO_ROOT, 'test')
+  serviceDefinitions = isolatedServiceDefinitions(
+    SERVICE_DEFINITIONS,
+    (await verifyStartingRun(registryRoot(), checkout, instanceId!, port, 'full')).slug,
+    run.servicePorts,
+    database,
+  ).map((service) =>
+    ISOLATED_CORE_SERVICE_IDS.has(service.id)
+      ? service
+      : {
+          ...service,
+          command: undefined,
+          unavailableReason: 'This service is not yet enabled for secondary environments.',
+        },
+  )
+}
+const browserOriginsByService = buildBrowserOriginsByService(serviceDefinitions)
 const browserOrigins = collectBrowserOrigins(browserOriginsByService)
 const hubHosts = buildHubHostAllowlist(port, webPort)
-const serviceIds = new Set(SERVICE_DEFINITIONS.map((definition) => definition.id))
-
-const portless = new PortlessManager()
+const serviceIds = new Set(serviceDefinitions.map((definition) => definition.id))
+const portless = new PortlessManager(
+  managedIdentity?.role === 'secondary'
+    ? serviceDefinitions.filter((definition) => definition.command)
+    : serviceDefinitions,
+  undefined,
+  registryRoot(),
+  managedIdentity?.role === 'secondary',
+)
 console.info('Checking Portless HTTPS proxy and canonical aliases…')
 await portless.ensure()
 const manager = new ServiceManager(
-  SERVICE_DEFINITIONS,
+  serviceDefinitions,
   origin,
   undefined,
   undefined,
@@ -72,12 +133,20 @@ const manager = new ServiceManager(
     await portless.ensure()
     return prepareLocalEnvironment()
   },
+  REPO_ROOT,
 )
-const configReader = new ServiceConfigReader(SERVICE_DEFINITIONS)
-const environmentStore = new ServiceEnvironmentStore(SERVICE_DEFINITIONS)
+const configReader = new ServiceConfigReader(serviceDefinitions)
+const environmentStore = new ServiceEnvironmentStore(serviceDefinitions)
 const gitMonitor = new GitMonitor(REPO_ROOT)
-const metricsStore = new MetricsStore(metricsRoot, SERVICE_DEFINITIONS)
-await Promise.all([manager.initialize(), gitMonitor.initialize(), metricsStore.initialize()])
+const metricsStore = new MetricsStore(metricsRoot, serviceDefinitions)
+await Promise.all([
+  manager.initialize(),
+  gitMonitor.initialize(),
+  metricsStore.initialize(),
+  cleanAbandonedBrowserRuns().catch((error) => {
+    console.error('Could not clean abandoned test browsers.', error)
+  }),
+])
 const processMetricsMonitor = new ProcessMetricsMonitor(manager, metricsStore)
 processMetricsMonitor.start()
 
@@ -94,22 +163,46 @@ app.use(
   '/api/browser-metrics',
   cors({
     origin: (requestOrigin) => (browserOrigins.has(requestOrigin) ? requestOrigin : null),
-    allowHeaders: ['Content-Type'],
+    allowHeaders: ['Content-Type', 'X-Groupher-Instance-Id'],
     allowMethods: ['POST', 'OPTIONS'],
     maxAge: 86_400,
   }),
 )
 
+app.use(
+  '/api/identity',
+  cors({
+    origin: (requestOrigin) => (browserOrigins.has(requestOrigin) ? requestOrigin : null),
+    allowMethods: ['GET', 'OPTIONS'],
+  }),
+)
+
 app.use('/api/*', async (context, next) => {
   const requestOrigin = context.req.header('origin')
-  const allowed = context.req.path === '/api/browser-metrics' ? browserOrigins : hubOrigins
+  const allowed =
+    context.req.path === '/api/browser-metrics'
+      ? browserOrigins
+      : context.req.path === '/api/identity'
+        ? new Set([...browserOrigins, ...hubOrigins])
+        : hubOrigins
   if (!isAllowedRequestOrigin(requestOrigin, allowed)) {
     return context.json({ error: 'Cross-origin Dev Hub access is not allowed.' }, 403)
+  }
+  if (
+    !isAllowedInstanceMutation(
+      context.req.method,
+      managedIdentity?.instanceId,
+      context.req.header('x-groupher-instance-id'),
+    )
+  ) {
+    return context.json({ error: 'Hub instance identity mismatch.' }, 409)
   }
   await next()
 })
 
-app.get('/api/identity', (context) => context.json({ repoRoot: REPO_ROOT, apiOrigin: origin }))
+app.get('/api/identity', (context) =>
+  context.json(managedIdentity || { repoRoot: REPO_ROOT, apiOrigin: origin }),
+)
 
 app.post('/api/environment/ensure', async (context) => {
   try {
@@ -291,10 +384,23 @@ app.get('/api/events', (context) => {
 
 if (!apiOnly) {
   app.use('/assets/*', serveStatic({ root: clientRoot }))
-  const indexHtml = await readFile(indexHtmlPath, 'utf8')
-  app.get('*', (context) => context.html(indexHtml))
+  const template = await readFile(indexHtmlPath, 'utf8')
+  const indexHtml = managedIdentity ? embedPageIdentity(template, managedIdentity) : template
+  app.get('*', (context) => {
+    context.header('Cache-Control', 'no-store')
+    return context.html(indexHtml)
+  })
 }
 
+if (managedIdentity) {
+  await verifyStartingRun(
+    registryRoot(),
+    await resolveCheckout(REPO_ROOT),
+    managedIdentity.instanceId,
+    port,
+    'full',
+  )
+}
 const server = serve({ fetch: app.fetch, hostname: host, port })
 console.log(`\u001b[38;5;75mDev Hub is ready at ${origin}\u001b[0m`)
 

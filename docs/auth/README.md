@@ -3,6 +3,11 @@
 前端当前用户、Passport、Gate 以及 Dash、Community、Apply 的不同首屏认证策略见
 [`前端 Account、Passport 与 Gate`](../architecture/frontend-account-passport-gate.md)。
 
+进行中的方案：[多平台 OAuth 登录、手动 Link 与用户名冲突](./multi-provider-oauth-plan.md)，
+记录 GitHub/Linux DO 本地实现、验证和生产开放前的待办。
+后续方案：[多平台 OAuth V2：平台接入收敛与流程验收](./multi-provider-oauth-v2.md)，
+作为新增平台和接入收敛的后续实施依据；原方案未被替代的协议、安全和验收约束继续有效。
+
 > 运行形态：生产为 Cloudflare Worker；本地为独立 Node/Hono + `@auth/core` 应用
 >
 > UI：独立的系统级登录 UI
@@ -122,11 +127,7 @@ callback handler 的 Auth 子应用，而不是 Landing/Main 的公开入口：
 https://auth.groupher.com/api/auth/callback/github
 ```
 
-这是当前架构的正式配置，不是 workaround。GitHub OAuth App 的 callback allowlist
-校验发生在 provider 侧，必须与发起授权时传给 GitHub 的 `redirect_uri` 完全一致。
-线上发起授权时使用 `auth.groupher.com`，因此 GitHub App 也必须登记
-`auth.groupher.com` 的 callback。平台根域的 edge-router 或本地 Gateway 上的
-`/api/auth/*` 转发都不能改变这个 canonical callback。
+GitHub OAuth App 支持最多 10 条 redirect URI，可逐条设置通配匹配。Groupher 选用精确匹配：在开发应用分别登记登录和 Link 的完整 URI，并关闭两条地址的通配匹配。Link 的路由为 `/api/auth/accounts/github/callback`。GitHub 登录和 Link 及 Linux DO 两种流程已于 2026-11-25 完成本地真实浏览器授权换码，具体证据及限制见 [Auth 本地验证记录](../../backend/auth/README.md#local-oauth-verification)。生产应用与预览环境的授权往返仍待分别验证。[GitHub 更新说明](https://github.blog/changelog/2026-08-14-multiple-redirect-uris-and-token-refresh-for-oauth-apps/)
 
 生产 Auth Worker 的 `AUTH_URL` 必须固定为 `https://auth.groupher.com`，它决定 Auth.js
 生成的 provider `redirect_uri`，也是 V1 credentialed browser API 的唯一入口。

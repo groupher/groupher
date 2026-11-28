@@ -41,4 +41,9 @@ defmodule Helper.Scheduler do
   def purge_expired_trash do
     CMS.trash_purge_due()
   end
+
+  @doc "Deletes expired OAuth registration and link flows."
+  def purge_expired_oauth_flows do
+    GroupherServer.Accounts.oauth_flows_cleanup_expired()
+  end
 end

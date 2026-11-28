@@ -1,7 +1,7 @@
 import ArticlePageBoundary from '@community/components/ArticlePageBoundary'
 import { loadArticleSurface } from '@community/query/articleSurface'
 import { communityPublicPath } from '@community/server/public-path'
-import { Outlet, createFileRoute, redirect, useLocation } from '@tanstack/react-router'
+import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
 import URL_PARAM from '~/const/url_param'
@@ -17,6 +17,7 @@ export const Route = createFileRoute('/$community/changelog/_layout')({
       params.community,
       'changelogs',
       location.searchStr,
+      context.requestContext.mobilePagination,
     )
     if (result.resetPage && new URLSearchParams(location.searchStr).has(URL_PARAM.PAGE)) {
       const search = new URLSearchParams(location.searchStr)
@@ -39,15 +40,15 @@ export const Route = createFileRoute('/$community/changelog/_layout')({
 
 function ChangelogListLayout() {
   const { community } = Route.useParams()
-  const { recovery } = Route.useLoaderData()
-  const { searchStr } = useLocation()
+  const { recovery, recoveredSearch } = Route.useLoaderData()
   return (
     <ArticleListStoreProvider initData={{ thread: THREAD.CHANGELOG }}>
       <ArticlePageBoundary
-        key={`${community}:changelogs:${recovery}:${searchStr}`}
+        key={`${community}:changelogs`}
         community={community}
         surface='changelogs'
         recovery={recovery}
+        recoveredSearch={recoveredSearch}
       >
         <PagedChangelogsProvider>
           <ChangelogThread />

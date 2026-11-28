@@ -2,13 +2,60 @@ import Config
 
 import Helper.Utils, only: [get_host_from_url: 1]
 
+if config_env() == :dev and System.get_env("DEV_HUB_MANAGED_ENVIRONMENT") == "true" do
+  config :groupher_server, :managed_publish_throttle,
+    interval_minutes: 0,
+    hour_limit: 1_000,
+    day_limit: 1_000
+end
+
+if config_env() == :dev and
+     GroupherLinkedCheckoutGuard.resolve!(Path.expand("../../..", __DIR__), :dev) do
+  config :groupher_server, :web_analysis, api_token: nil
+end
+
+oauth_state = fn key, default ->
+  case System.get_env(key, default) do
+    "open" -> :open
+    "existing" -> :existing
+    "closed" -> :closed
+    value -> raise "Invalid #{key}: #{inspect(value)}"
+  end
+end
+
+production = config_env() in [:prod, :seed_prod]
+
+if production do
+  for key <- ~w(SERVICE_AUTH_ISSUER SERVICE_AUTH_JWKS_URL SERVICE_AUTH_TOKEN_ENDPOINT),
+      value = System.get_env(key),
+      is_binary(value),
+      host = URI.parse(value).host,
+      is_binary(host) do
+    host = String.downcase(host)
+
+    if host == "localhost" or String.ends_with?(host, ".localhost") or
+         String.starts_with?(host, "127.") or host == "::1" do
+      raise "#{key} must not target a local development service in production"
+    end
+  end
+end
+
+config :groupher_server, :oauth_provider_states, %{
+  "github" => oauth_state.("OAUTH_GITHUB_STATE", "open"),
+  "linuxdo" => oauth_state.("OAUTH_LINUXDO_STATE", if(production, do: "closed", else: "open")),
+  "e2e" => if(production, do: :closed, else: :open)
+}
+
 service_auth_origin =
   if config_env() in [:prod, :seed_prod],
     do: "https://auth.groupher.com",
     else: "http://127.0.0.1:3004"
 
 if System.get_env("WEB_ANALYSIS_API_TOKEN") do
-  config :groupher_server, :web_analysis, api_token: System.get_env("WEB_ANALYSIS_API_TOKEN")
+  if config_env() != :dev or
+       not GroupherLinkedCheckoutGuard.resolve!(Path.expand("../../..", __DIR__), :dev) do
+    config :groupher_server, :web_analysis, api_token: System.get_env("WEB_ANALYSIS_API_TOKEN")
+  end
 end
 
 config :groupher_server, :ai,

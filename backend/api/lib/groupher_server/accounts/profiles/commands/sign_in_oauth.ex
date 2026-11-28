@@ -12,15 +12,15 @@ defmodule GroupherServer.Accounts.Profiles.Commands.SignInOauth do
   use GroupherServer.CommandPipeline
 
   alias GroupherServer.Accounts
-  alias Accounts.Profiles.{BrowserSessions, Effects, Oauth}
+  alias Accounts.Profiles.{BrowserSessions, Effects, Oauth, OauthFlows, OauthProviders}
   alias Helper.ORM.AdvisoryLock
 
   @pipeline operation: :accounts_profile_sign_in_oauth,
             access: :open,
             target: :provider,
-            params: [:browser_session_metadata]
+            params: [:browser_session_metadata, :flow_ref, :return_to]
 
-  direct_pipeline execute_pipeline(provider, browser_session_metadata) do
+  direct_pipeline execute_pipeline(provider, browser_session_metadata, flow_ref, return_to) do
     prepare(fn ->
       provider = Oauth.normalize_oauth_provider(provider)
 
@@ -38,10 +38,18 @@ defmodule GroupherServer.Accounts.Profiles.Commands.SignInOauth do
              AdvisoryLock.acquire!("oauth:#{provider.provider}:#{provider.provider_id}") do
         case Oauth.find_oauth_provider(provider) do
           {:ok, %{user: user}} ->
-            {:ok, Map.merge(state, %{user: user, newly_registered: false})}
+            if OauthProviders.allow_sign_in?(provider.provider) do
+              {:ok, Map.merge(state, %{user: user, newly_registered: false})}
+            else
+              {:error, "OAuth provider is closed"}
+            end
 
           {:error, _reason} ->
-            {:ok, state}
+            if OauthProviders.allow_new_identity?(provider.provider) do
+              {:ok, state}
+            else
+              {:error, "OAuth provider does not accept new identities"}
+            end
         end
       end
     end)
@@ -51,31 +59,55 @@ defmodule GroupherServer.Accounts.Profiles.Commands.SignInOauth do
         {:ok, state}
 
       %{provider: provider}, _operation_ref ->
-        case Oauth.register_in_transaction(provider) do
-          {:ok, user} ->
-            {:ok, %{provider: provider, user: user, newly_registered: true}}
+        login = Map.get(provider, :login)
 
-          {:error, {step, reason}} when step in [:create_user, :create_profile] ->
-            case Oauth.find_oauth_provider(provider) do
-              {:ok, %{user: user}} ->
-                {:ok, %{provider: provider, user: user, newly_registered: false}}
+        if is_binary(login) do
+          {:ok, :acquired} = AdvisoryLock.acquire!("oauth-login:#{login}")
+        end
 
-              {:error, _lookup_reason} ->
-                {:error, reason}
-            end
-
-          {:error, {_step, reason}} ->
-            {:error, reason}
+        if OauthFlows.available_login?(login) do
+          register(provider)
+        else
+          case OauthFlows.create_registration(flow_ref, provider, return_to) do
+            {:ok, _flow} -> {:ok, %{registration_required: true, suggested_login: login}}
+            {:error, reason} -> {:error, reason}
+          end
         end
     end)
 
-    present(fn %{user: user, newly_registered: newly_registered} ->
-      if newly_registered do
-        _ = Effects.oauth_registration_completed(user)
-      end
+    present(fn
+      %{registration_required: true, suggested_login: login} ->
+        {:ok, %{status: "REGISTRATION_REQUIRED", registration: %{suggested_login: login}}}
 
-      BrowserSessions.create(user, browser_session_metadata)
+      %{user: user, newly_registered: newly_registered} ->
+        if newly_registered do
+          _ = Effects.oauth_registration_completed(user)
+        end
+
+        case BrowserSessions.create(user, browser_session_metadata) do
+          {:ok, session} -> {:ok, %{status: "SIGNED_IN", session: session}}
+          {:error, reason} -> {:error, reason}
+        end
     end)
+  end
+
+  defp register(provider) do
+    case Oauth.register_in_transaction(provider) do
+      {:ok, user} ->
+        {:ok, %{provider: provider, user: user, newly_registered: true}}
+
+      {:error, {step, reason}} when step in [:create_user, :create_profile] ->
+        case Oauth.find_oauth_provider(provider) do
+          {:ok, %{user: user}} ->
+            {:ok, %{provider: provider, user: user, newly_registered: false}}
+
+          {:error, _lookup_reason} ->
+            {:error, reason}
+        end
+
+      {:error, {_step, reason}} ->
+        {:error, reason}
+    end
   end
 
   @doc """
@@ -85,7 +117,7 @@ defmodule GroupherServer.Accounts.Profiles.Commands.SignInOauth do
 
       Accounts.Profiles.Commands.SignInOauth.run(provider, %{user_agent: "browser"})
   """
-  def run(provider, browser_session_metadata \\ %{}) do
-    execute_pipeline(provider, browser_session_metadata)
+  def run(provider, browser_session_metadata, flow_ref, return_to) do
+    execute_pipeline(provider, browser_session_metadata, flow_ref, return_to)
   end
 end

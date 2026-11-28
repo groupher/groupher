@@ -14,23 +14,23 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
 
   @doc "Fetches a community by slug for the optional viewer, honoring the requested view-count flag."
   def community(_root, %{slug: slug, inc_views: inc_views}, %{context: %{cur_user: user}}) do
-    CMS.communities_fetch(slug, user, inc_views: inc_views)
+    CMS.fetch_community(slug, user, inc_views: inc_views)
   end
 
   def community(_root, %{slug: slug, inc_views: inc_views}, _info) do
-    CMS.communities_fetch(slug, inc_views: inc_views)
+    CMS.fetch_community(slug, inc_views: inc_views)
   end
 
   @doc "Pages communities using the supplied filter and optional viewer."
   def paged_communities(_root, args, %{context: context}) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.communities_paged(Map.get(args, :filter) || %{}, pagi, Map.get(context, :cur_user))
+      CMS.page_communities(Map.get(args, :filter) || %{}, pagi, Map.get(context, :cur_user))
     end
   end
 
   @doc "Creates a community for the signed-in actor, passing command identity separately from attributes."
   def create_community(_root, args, %{context: %{cur_user: user}}) do
-    CMS.communities_create(Map.delete(args, :command_id), user, args[:command_id])
+    CMS.create_community(Map.delete(args, :command_id), user, args[:command_id])
   end
 
   @doc "Updates the resolved community with the supplied attributes and command identity."
@@ -40,27 +40,27 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
         %{context: %{cur_user: user}}
       ) do
     params = Map.drop(args, [:community, :command_id])
-    CMS.communities_update(community, params, user, args[:command_id])
+    CMS.update_community(community, params, user, args[:command_id])
   end
 
   @doc "Submits the actor's request to destroy the community rather than deleting it directly."
   def request_destroy_community(_root, %{community: %Community{} = community} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.communities_request_destroy(community, user, command_id: args[:command_id])
+    CMS.request_community_destruction(community, user, command_id: args[:command_id])
   end
 
   @doc "Checks whether the requested community slug is available."
   def check_community_name(_root, %{slug: slug}, _info) do
-    CMS.communities_check_name(slug)
+    CMS.check_community_slug_availability(slug)
   end
 
   @doc "Lists the community categories in the CMS catalog."
-  def categories(_root, _args, _info), do: CMS.communities_categories()
+  def categories(_root, _args, _info), do: CMS.list_community_categories()
 
   @doc "Creates a category with a title and slug in the supplied community context."
   def create_category(_root, ~m(community title slug command_id)a, %{context: %{cur_user: user}}) do
-    CMS.communities_create_category(
+    CMS.create_community_category(
       %{community: community, title: title, slug: slug},
       user,
       command_id
@@ -71,25 +71,25 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
   def delete_category(_root, %{community: community, id: id, command_id: command_id}, %{
         context: %{cur_user: user}
       }) do
-    CMS.communities_delete_category(community, id, user, command_id)
+    CMS.delete_community_category(community, id, user, command_id)
   end
 
   @doc "Updates a category's title by ID in the supplied community context."
   def update_category(_root, ~m(community id title command_id)a, %{context: %{cur_user: user}}) do
-    CMS.communities_update_category(community, %{id: id, title: title}, user, command_id)
+    CMS.update_community_category(community, %{id: id, title: title}, user, command_id)
   end
 
   @doc "Assigns an existing category to the community identified by the input."
   def set_category(_root, ~m(community category_id command_id)a, %{context: %{cur_user: user}}) do
     with {:ok, community} <- resolve_community(community) do
-      CMS.communities_set_category(community, category_id, user, command_id)
+      CMS.assign_community_category(community, category_id, user, command_id)
     end
   end
 
   @doc "Removes the category assignment without deleting the category."
   def unset_category(_root, ~m(community category_id command_id)a, %{context: %{cur_user: user}}) do
     with {:ok, community} <- resolve_community(community) do
-      CMS.communities_unset_category(community, category_id, user, command_id)
+      CMS.unassign_community_category(community, category_id, user, command_id)
     end
   end
 
@@ -103,7 +103,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
           context: %{cur_user: user}
         }
       ) do
-    CMS.communities_create_tag(community, thread, args, user, command_id)
+    CMS.create_community_tag(community, thread, args, user, command_id)
   end
 
   @doc "Creates a tag group for the specified community and thread."
@@ -112,14 +112,14 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
         %{thread: thread, community: community, command_id: command_id} = args,
         %{context: %{cur_user: user}}
       ) do
-    CMS.communities_create_tag_group(community, thread, args, user, command_id)
+    CMS.create_community_tag_group(community, thread, args, user, command_id)
   end
 
   @doc "Updates the tag identified by ID using the submitted attributes."
   def update_community_tag(_root, %{id: id, command_id: command_id} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.communities_update_tag(id, args, user, command_id)
+    CMS.update_community_tag(id, args, user, command_id)
   end
 
   @doc "Updates a tag group by ID within its community and thread."
@@ -128,7 +128,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
         %{id: id, thread: thread, community: community, command_id: command_id} = args,
         %{context: %{cur_user: user}}
       ) do
-    CMS.communities_update_tag_group(community, thread, id, args, user, command_id)
+    CMS.update_community_tag_group(community, thread, id, args, user, command_id)
   end
 
   @doc "Deletes the specified tag group within its community and thread."
@@ -137,40 +137,40 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
         %{id: id, thread: thread, community: community, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.communities_delete_tag_group(community, thread, id, user, command_id)
+    CMS.delete_community_tag_group(community, thread, id, user, command_id)
   end
 
   @doc "Deletes the community tag identified by ID."
   def delete_community_tag(_root, %{id: id, command_id: command_id}, %{context: %{cur_user: user}}) do
-    CMS.communities_delete_tag(id, user, command_id)
+    CMS.delete_community_tag(id, user, command_id)
   end
 
   @doc "Assigns the specified community tag to the resolved article."
   def set_community_tag(_root, ~m(article community_tag_id command_id)a, %{
         context: %{cur_user: user}
       }) do
-    CMS.communities_set_tag(article, community_tag_id, user, command_id)
+    CMS.tag_article(article, community_tag_id, user, command_id)
   end
 
   @doc "Removes the specified tag from the article without deleting the tag."
   def unset_community_tag(_root, ~m(article community_tag_id command_id)a, %{
         context: %{cur_user: user}
       }) do
-    CMS.communities_unset_tag(article, community_tag_id, user, command_id)
+    CMS.untag_article(article, community_tag_id, user, command_id)
   end
 
   @doc "Lists tag groups for the requested community and thread."
   def community_tag_groups(_root, ~m(community thread)a, _info) do
-    CMS.communities_tag_groups(~m(community thread)a)
+    CMS.list_community_tag_groups(~m(community thread)a)
   end
 
   @doc "Reads tag statistics from the parent tag or by community, thread, and slug."
   def community_tag_stats(_root, ~m(community thread slug)a, _info) do
-    CMS.communities_tag_stats(community, thread, slug)
+    CMS.get_community_tag_stats(community, thread, slug)
   end
 
   def community_tag_stats(root, _args, _info) do
-    CMS.communities_tag_stats(root)
+    CMS.get_community_tag_stats(root)
   end
 
   @doc "Returns the supplied group title or name, batching lookups when only a group ID is available."
@@ -197,7 +197,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
         context: %{cur_user: user}
       }) do
     with {:ok, _} <-
-           CMS.communities_reindex_tags_in_group(
+           CMS.reindex_tags_in_group(
              community,
              thread,
              group_id,
@@ -214,7 +214,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
         context: %{cur_user: user}
       }) do
     with {:ok, _} <-
-           CMS.communities_reindex_tags_across_groups(community, thread, tags, user, command_id) do
+           CMS.reindex_tags_across_groups(community, thread, tags, user, command_id) do
       {:ok, %{done: true}}
     end
   end
@@ -224,19 +224,19 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
         context: %{cur_user: user}
       }) do
     with {:ok, _} <-
-           CMS.communities_reindex_tag_groups(community, thread, groups, user, command_id) do
+           CMS.reindex_community_tag_groups(community, thread, groups, user, command_id) do
       {:ok, %{done: true}}
     end
   end
 
   @doc "Subscribes the signed-in user to the resolved community."
   def subscribe_community(_root, ~m(community command_id)a, %{context: %{cur_user: cur_user}}) do
-    CMS.communities_subscribe(community, cur_user, command_id)
+    CMS.subscribe_to_community(community, cur_user, command_id)
   end
 
   @doc "Removes the signed-in user's subscription to the resolved community."
   def unsubscribe_community(_root, ~m(community command_id)a, %{context: %{cur_user: cur_user}}) do
-    CMS.communities_unsubscribe(community, cur_user, command_id)
+    CMS.unsubscribe_from_community(community, cur_user, command_id)
   end
 
   @doc "Pages community subscribers using the requested filter and optional viewer."

@@ -26,26 +26,36 @@ export default defineConfig(({ mode }) => {
           process.env.DASH_DEFAULT_COMMUNITY || (production ? 'dev' : 'home'),
         ),
         IMPORT_APP_ENDPOINT: bindings.text(
-          production ? 'https://import.groupher.com' : 'http://127.0.0.1:8001',
+          production
+            ? 'https://import.groupher.com'
+            : process.env.IMPORT_APP_ENDPOINT || 'http://127.0.0.1:8001',
         ),
         GRAPHQL_ENDPOINT: production
           ? bindings.text('https://api.groupher.com/graphiql')
-          : bindings.text('http://api.groupher.localhost:4001/graphiql'),
+          : bindings.text(
+              process.env.GRAPHQL_ENDPOINT || 'http://api.groupher.localhost:4001/graphiql',
+            ),
         IMPORT_SERVICE_AUTH_RESOURCE: bindings.text('https://import.groupher.com/internal'),
         IMPORT_SERVICE_AUTH_SCOPES: bindings.text('docs:import:proxy'),
         SERVICE_AUTH_CLIENT_ID: bindings.text(
-          production ? 'dash-cloudflare-91f1107ab3' : 'dash-development',
+          production
+            ? 'dash-cloudflare-91f1107ab3'
+            : process.env.SERVICE_AUTH_CLIENT_ID || 'dash-development',
         ),
         SERVICE_AUTH_CLIENT_SECRET: bindings.secret(),
         SERVICE_AUTH_ISSUER: production
           ? bindings.text('https://auth.groupher.com')
-          : bindings.text('http://127.0.0.1:3004'),
+          : bindings.text(process.env.SERVICE_AUTH_ISSUER || 'http://127.0.0.1:3004'),
         SERVICE_AUTH_JWKS_URL: production
           ? bindings.text('https://auth.groupher.com/.well-known/jwks.json')
-          : bindings.text('http://127.0.0.1:3004/.well-known/jwks.json'),
+          : bindings.text(
+              process.env.SERVICE_AUTH_JWKS_URL || 'http://127.0.0.1:3004/.well-known/jwks.json',
+            ),
         SERVICE_AUTH_TOKEN_ENDPOINT: production
           ? bindings.text('https://auth.groupher.com/oauth2/token')
-          : bindings.text('http://127.0.0.1:3004/oauth2/token'),
+          : bindings.text(
+              process.env.SERVICE_AUTH_TOKEN_ENDPOINT || 'http://127.0.0.1:3004/oauth2/token',
+            ),
       },
     },
   }

@@ -3,6 +3,7 @@
 ## Working in This Repository
 
 - Follow the user's authorization and preserve unrelated work in the current worktree. For frontend changes, discuss the approach first unless the user authorizes implementation.
+- For cross-module development, debugging or end-to-end acceptance, start with [GrStack](.agents/skills/grstack/SKILL.md) to select the workflow and its checks.
 - Follow the relevant project workflow documentation, such as [validation](docs/infra/tooling/validation.md), [Dev Hub local environment](docs/architecture/dev-hub-local-environment.md), and [Gate V5](docs/feature/gate/v5.md).
 - Follow [docs/rules/naming.md](docs/rules/naming.md) for cross-project naming, including GraphQL operation and frontend Query names.
 - Select checks based on the changed behavior and its consumers. Start with [the validation matrix](docs/infra/tooling/validation.md); report checks that failed, were blocked, or were not run.
@@ -13,8 +14,9 @@
 - Work in the current local branch and worktree by default. Preserve unrelated staged, unstaged and untracked changes there.
 - Creating a branch/worktree, switching branches/worktrees, or moving the shared Dev Hub runtime to another checkout requires explicit user authorization for that action. Before requesting it, state the concrete obstacle to completing the task in the current checkout and the proposed target. Existing authorization remains valid within its stated scope.
 - A dirty checkout, convenient isolation, parallel work, or loading a skill does not authorize creating or switching branches/worktrees. Permission to implement, test, commit or open a PR does not by itself authorize those actions.
+- Before installing dependencies or compiling in a linked worktree, including one already prepared by someone else, follow [GrStack worktree dependency preparation](.agents/skills/grstack/SKILL.md#prepare-worktree-dependencies). Inspect target-local dependencies and compatible caches first.
 - When parallel work is authorized, default to the same worktree with distinct file ownership. Keep tasks already assigned to a separate worktree in their assigned location; do not move or split other work into it automatically.
-- Treat `pr-integration` and `dev-hub-worktree` as procedures for an explicitly authorized exception, not default development steps. Follow any agreed restoration plan after temporary acceptance.
+- Treat [PR integration](.agents/skills/grstack/references/pr-integration.md) and [shared runtime handoff](.agents/skills/dev-hub/references/shared-runtime-handoff.md) as procedures for an explicitly authorized exception, not default development steps. Follow any agreed restoration plan after temporary acceptance.
 
 ## Backend Test Failure Triage
 

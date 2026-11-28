@@ -13,6 +13,40 @@ defmodule GroupherServer.CMS.Articles.CoAuthors.Query do
   alias Helper.ORM
   alias Helper.ORM.Pagi.Order
 
+  @doc "Lists the actor's own Article co-author memberships."
+  def own_memberships(%User{id: user_id}) when is_integer(user_id) do
+    {:ok,
+     Repo.all(
+       from(member in ArticleCoAuthor,
+         join: author in Author,
+         on: author.id == member.author_id,
+         where: author.user_id == ^user_id,
+         select: %{member_id: member.id, article_id: member.article_id, revision: member.revision}
+       )
+     )}
+  end
+
+  def own_memberships(_), do: {:error, :permission_denied}
+
+  @doc "Lists pending co-author requests the actor initiated or received."
+  def own_pending_requests(%User{id: user_id}) when is_integer(user_id) do
+    {:ok,
+     Repo.all(
+       from(r in ArticleCoAuthorRequest,
+         where:
+           r.status == :pending and (r.subject_user_id == ^user_id or r.created_by_id == ^user_id),
+         select: %{
+           id: r.id,
+           revision: r.revision,
+           subject_user_id: r.subject_user_id,
+           created_by_id: r.created_by_id
+         }
+       )
+     )}
+  end
+
+  def own_pending_requests(_), do: {:error, :permission_denied}
+
   @doc "Pages Article members; only an Article manager sees the full roster and permissions."
   def members(%Article{} = article, %User{} = actor, pagi_input) do
     with {:ok, :pass} <- manager(article, actor),

@@ -47,6 +47,9 @@ explicitly when validating Cloudflare R2/Queue/DO integration. Its local service
 identity comes from Dev Hub private state. Use `.env.example` only to identify
 optional external R2 credentials; never commit them.
 
+The production Node entrypoint reads configuration from the process environment, not local dotenv
+files. It rejects the local storage provider and loopback service targets before serving requests.
+
 ## Related documentation
 
 - [`docs/assets-hub/README.md`](../../docs/assets-hub/README.md)

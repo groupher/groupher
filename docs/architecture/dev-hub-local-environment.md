@@ -1,6 +1,8 @@
 # Dev Hub 统一本地运行环境
 
-> 本地覆盖配置的当前实现见 [Dev Hub 集中本地配置](./dev-hub-local-config.md)：由 Hub 按服务管理 `local-dev.env`，旧应用 dotenv 文件不再是 Hub 的日常配置来源；下文保留统一身份与历史迁移背景。
+> Dev Hub 本地存储路径正在调整，本文中的旧路径及文件名可能已失效。当前实现状态和目标路径见 [Dev Hub 本地存储整理](./dev-hub-storage-reorganization.md)。
+
+> 本地覆盖配置的当前实现见 [Dev Hub 集中本地配置](./dev-hub-local-config.md)：由 Hub 按服务管理 `<serviceId>.env`，应用 dotenv 文件不是 Hub 托管服务的配置来源。
 
 > 状态：实施与验收记录；入口清单和验收矩阵见第 4、6、7 节。
 >
@@ -64,15 +66,15 @@ Press 等调用方分别有自己的本地身份和最小权限；没有服务�
 
 受管配置先由本地环境模块完整解析，再交给应用。旧来源不能覆盖它：
 
-| 现有来源                          | 改动要求                                                                           |
-| --------------------------------- | ---------------------------------------------------------------------------------- |
-| `services.ts` 的 `definition.env` | 身份、issuer、后端地址等受管值转交统一解析；保留无冲突的非敏感静态参数             |
-| `envFallback`                     | 随服务接管删除三处定义，最终删除 readEnvFallback；旧文件只供迁移                   |
-| 父进程环境                        | 继承后删除全仓库受管 key 和已知凭据，保留工具链兼容性；仅按服务重新注入            |
-| 旧 Dash/Auth 初始化器             | 显式迁移其输出后删除旧 writer；setup-auth 只调用统一 prepare，不再写 Auth/Dash env |
-| Make、package scripts、cross-env  | 删除受管 key 的内联赋值，不能在 spawn 后再次覆盖                                   |
-| 应用 dotenv                       | 托管模式跳过应用 dotenv；白名单外部授权从 Hub 集中 `local-dev.env` 读取            |
-| Vite / Cloudflare 配置            | 开发态消费统一 bindings，清除重复默认值；生产加载路径保持独立                      |
+| 现有来源                          | 改动要求                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------- |
+| `services.ts` 的 `definition.env` | 身份、issuer、后端地址等受管值转交统一解析；保留无冲突的非敏感静态参数    |
+| 本地服务覆盖配置                  | 只读取 `config/<serviceId>.env` 中声明允许的键                            |
+| 父进程环境                        | 继承后删除全仓库受管 key 和已知凭据，保留工具链兼容性；仅按服务重新注入   |
+| 服务身份                          | Hub 自动生成并复用 `config/service-identity.json`，无需手动初始化         |
+| Make、package scripts、cross-env  | 删除受管 key 的内联赋值，不能在 spawn 后再次覆盖                          |
+| 应用 dotenv                       | 托管模式跳过应用 dotenv；白名单外部授权从 Hub 集中 `<serviceId>.env` 读取 |
+| Vite / Cloudflare 配置            | 开发态消费统一 bindings，清除重复默认值；生产加载路径保持独立             |
 
 关键约束是“一个 key 有一个 owner”。检查受管 key 的所有旧来源和最终有效值，不能只
 搜索 `services.ts` 的字符串字面量。冲突必须指出服务、key 和来源，不能静默选一个值。
@@ -85,32 +87,13 @@ const filteredParent = filterParentEnvironment(process.env)
 const env = { ...filteredParent, ...definition.env, ...resolved.env }
 ```
 
-迁移时，B2 只在 fixture 启用上述新合并、过滤和冲突断言；live 服务仍走旧加载逻辑，
-不检查也不清理尚未迁移的定义。B3a/B3b 按批次清理来源，但 live 切换要等所有服务
-完成清理和全量检查后一次启用。这样 Auth 不会在自身迁移前被全局断言拦住，也不需要
-per-service 接管标记。prepare 的结果不能写回 Hub 的 `process.env`。
+所有托管服务使用上述合并、过滤和冲突检查。prepare 的结果不会写回 Hub 的 `process.env`。
 
 过滤函数保留父环境的工具链兼容性，删除全仓库已声明的受管 key 和已知凭据，再由
 resolve 按服务注入。检查过滤后的对象，不要求开发者原始 shell 环境没有这些 key。
 生产模式检查必须在过滤前执行；不通过删除 NODE_ENV/CLOUDFLARE_ENV 消除生产标记。
 `filterParentEnvironment` 与冲突断言共用 `local-environment.ts` 导出的同一份受管 key
 集合，不在调用方维护第二份列表。
-
-具体执行顺序固定为：
-
-```text
-B2   fixture enables new path; live services keep old loading
-       |
-B3a  clean Auth / Phoenix / Dash sources; keep live legacy path
-       |
-B3b  clean remaining services; verify every managed service
-       |
-     enable filtered merge + live assertion globally; remove legacy branch
-```
-
-每个服务迁移时同步清理该服务 `definition.env` 的受管值、`envFallback`、受管 dotenv 和命令
-内联赋值，不能只清后两项。B3b 完成时先对全部受管服务检查，再统一启用 live 新路径并
-移除旧分支；不引入 per-service 接管标记。B4 新接入的入口直接遵守统一规则。
 
 配置分三类：
 
@@ -126,7 +109,7 @@ B3b  clean remaining services; verify every managed service
 
 ### 3.2 稳定的单份私有状态
 
-使用已被忽略的 `local/dev-hub/.data/local-environment/state.json`，保存格式版本、仓库
+使用已被忽略的 `local/dev-hub/config/service-identity.json`，保存格式版本、仓库
 realpath、签名/会话等必要开发密钥，以及按 service id 区分的客户端凭据。
 本地测试账号使用从已有私有状态按用途派生的独立凭据，仅注入开发 Auth 和 Phoenix。
 固定 local-debug / local-passport-admin 登录及原 Admin opt-in 已退役；新命令按 run 登记
@@ -134,24 +117,16 @@ realpath、签名/会话等必要开发密钥，以及按 service id 区分的�
 
 - 目录 0700、文件 0600；不提交，不出现在 UI/API/日志/测试报告中。
 - 首次生成，后续启动复用；普通启动不轮换，不写每个应用的 `.env.local`。
-- 同一进程串行准备；跨进程使用一个简单排他文件锁，写临时文件后原子替换 state.json。
+- 同一进程串行准备；跨进程使用一个简单排他文件锁，写临时文件后原子替换 service-identity.json。
   锁内记录 PID 和创建时间，等待最多 10 秒；检查持有进程是否仍存活，超时非零退出并报告
   锁路径及持有者。不能仅凭锁年龄判定失效，不自动删锁；人工确认持有者退出且无写入后
   才能移除遗留锁并重试。状态损坏或工作树不匹配时阻塞，不重新生成掩盖。
 - Auth 得到签名私钥与凭据 hash 注册表；每个应用只得到自己的配置，其他服务通过 JWKS
   公钥验证。Worker 所需文件是可重建的投影，不是另一份权威配置。
-- 迁移前保留一份私有备份，成功后不自动清理用户旧文件。首版不做历史版本、自动回滚和
-  日常轮换；需要重建时安排本地维护窗口，不能在运行中直接删除状态。
+- 首次启动直接生成身份，不扫描或导入应用 dotenv 文件。
 
-备份固定放在 `.data/local-environment/backup/`（相对 Dev Hub 目录）：目录 0700、文件
-0600，按原相对路径保存源文件，并备份已存在的 state.json。只保留这一份迁移备份，不
-覆盖已有备份；再次 apply 若已有完整匹配状态则无操作，其他情况报告冲突。源文件不改写。
-恢复时先停止受影响服务并退出 Hub，恢复旧启动代码/配置来源；若本次切换替换了旧 state
-则从备份恢复，否则移开本次新建 state，然后按记录重启原活动服务并验证鉴权。备份完整
-且候选状态校验成功后才能提交 state，失败保留原状态及诊断，不自动清理备份。
-
-Worker 需要的私有投影固定在 `.data/local-environment/workers/<serviceId>/`，目录 0700、
-文件 0600，按该服务的 resolved 配置重建，不提交、不作为迁移输入、不回写应用
+Worker 需要的私有投影固定在 `$TMPDIR/groupher-dev-hub/<工作树标识>/workers/<serviceId>/<run>/`，目录 0700、
+文件 0600，按该服务的 resolved 配置重建，不提交、不回写应用
 `.dev.vars`/`.env.local`。B2 须为下列三类工具记录实际配置入口、支持的传递 API/参数及
 禁用旧 dotenv 的方式，真实 handler 探针通过后才算交付；不预设它们支持同一个 CLI 参数：
 
@@ -253,12 +228,8 @@ Web、CLI、桌面入口都调用同一准备函数。Restart 停止旧健康实
 Portless 预检。配置改变涉及 Auth 注册表时，明确报告并通过 Hub 重载 Auth 和受影响
 调用方；不能只重启页面服务后宣称就绪。
 
-普通命令沿用 `start/restart/status/logs/url/doctor`。扩展 doctor 展示配置缺项和依赖状态，
-不新增 env 命令族。现有 ensure/setup 明确仍是 Portless 语义；setup-auth 过渡为统一
-本地准备的兼容入口，日常启动自动调用准备函数，不要求开发者手工执行它。
-兼容入口必须调用同一个 prepare、使用同一把状态锁；删除旧 Dash/Auth writer，不再修改
-应用 env。`local-service-auth.test.ts` 改为断言兼容入口复用准备逻辑、重复调用幂等且不写
-两个旧文件，不能只删除旧测试。既有配置的导入仍只由显式迁移脚本执行。
+普通命令沿用 `start/restart/status/logs/url/doctor`。ensure/setup 保持 Portless 语义。
+服务启动时自动准备本地身份，服务配置由 Hub 的配置面板维护。
 
 status/logs/doctor 保持只读：不生成密钥、不起服务、不安装依赖。首次证书信任与 hosts
 初始化仍显式执行 `pnpm portless:setup`，不引入开机自启或每次 sudo。
@@ -324,68 +295,11 @@ missing local config --X--> production fallback
 生产验收检查“本地登录不注册、不可访问”，不要求源码字符串被 tree-shake。无需为此
 改变生产鉴权、部署 secret 或业务代码路径。
 
-## 6. 可审查的实施批次
+## 6. 当前实现
 
-本节定义交付批次和验收条件；执行状态以相应代码、检查结果和审查记录为准。
-不因本文件创建提交；B0 的基线按相关路径单独整理。
-
-| 批次                 | 改动范围与交付物                                                                                                                                           | 通过条件 / 回退                                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| B0 基线与清单        | 记录仓库当前 HEAD 作为 baseline；核对实际消费键、权限、资源，清理失效入口；在 services.test.ts 增加入库入口清单对比；修现有 JSDoc 缺失                     | baseline 可获取、入口差异有测试约束；本次实施不自动创建提交，变更由调用者按路径审阅和提交                           |
-| B1 统一准备函数      | local/dev-hub/src/server/local-environment.ts 及测试；复用服务定义，单份私有状态、注册信息、权威 env、10 秒锁与原子写；交付迁移脚本及 check/apply 失败测试 | 第 7.2 节迁移 fixture 测试及生成/复用/隔离通过；不接管活跃服务，可撤回调用                                          |
-| B2 运行时交付与边界  | 在 fixture 启用固定合并/过滤/断言和 loader/Worker 新路径；落实三类工具交付表；禁用 reveal 并改负向断言，补 Host/Origin 与生产代表应用测试                  | fixture 验证通过且未接管 live 服务仍用原加载方式；不提前清理真实 Auth 的旧值或切换其身份                            |
-| B3a 迁移准备及首条链 | 显式导入并备份；setup-auth 改为同锁 prepare、移除旧 writer；清理 Auth/Phoenix/Dash 的 definition.env 和其他旧来源；live 仍走旧路径                         | 恢复活动服务后鉴权正常；fixture 断言通过；失败按第 3.2 节恢复                                                       |
-| B3b 其余服务接管     | 清理其余服务全部旧受管来源；完成全量检查后统一启用 live 过滤、合并和断言，移除旧分支                                                                       | 全部当前受管服务使用权威配置，definition.env 无受管 key、fallback/helper 清零；正反向鉴权通过；回退遵循 B3a         |
-| B4 入口及文档收口    | Make/pnpm/桌面入口与额外变体收口；更新根 `AGENTS.md`、文档及 skill；documentation.yml 的 dev-hub job 跑 test/type-check                                    | 新入口直接遵守统一规则；Agent 被明确导向 Hub/Portless；入口无递归、清单测试通过；CI 为离线检查，真实 Hub smoke 手动 |
-
-B4 的 CI 落点为 `.github/workflows/documentation.yml` 中独立的 `dev-hub` job：复用
-现有 Node/pnpm 安装约定，两个检查都执行：
-
-```bash
-pnpm --filter @groupher/local-dev-hub run test
-pnpm --filter @groupher/local-dev-hub run type-check
-```
-
-与 documentation job 独立，不因文档检查失败而跳过；不启动 Hub、Portless 或 DB。
-`test:local-environment` 继续手动运行，不加入该 job。同步更新
-[验证矩阵](../infra/tooling/validation.md)。
-
-一次性迁移只读取明确的旧文件，按服务验证本地 issuer、endpoint、client 和凭据匹配，
-不把生产目标或不明授权导入。优先保留有效本地密钥，减少会话和 token 无意义失效；
-旧授权超出声明时报告并评审，不直接复制全部权限。先生成完整配置并校验，切换前保存
-私有备份；中途失败不得让半份配置进入正常启动。
-
-B3a 必须明确迁移旧 `local-service-auth.ts` 的输出：`backend/auth/.env.local` 和
-`frontend/dash/.env.local`；Auth 按现有 `.env`、`.env.development`、`.env.local` 的有效
-优先级读取配置，不能只读最后一个文件就认为注册信息完整。核对以下四个注册表字段与
-`SERVICE_AUTH_RESOURCES_JSON`，去重并验证资源和凭据匹配：
-
-```text
-SERVICE_AUTH_CLIENTS_JSON
-SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE
-SERVICE_AUTH_CLIENTS_JSON_ADDITIONS
-SERVICE_AUTH_CLIENTS_JSON_EXTRA
-```
-
-保留有效 Dash 身份 `dash-development` / `dev-hub-local-dash` 及其匹配 secret，不额外
-轮换、不复制超范围授权；Phoenix、Assets 和其他受影响调用方也按 B0 的来源清单核对。
-旧初始化器完成迁移后退出写入路径，不能与 state.json 同时作为日常配置来源。
-
-一次性迁移脚本由 B1 交付，B3a 在记录原活动服务并停止受影响服务、退出 Hub 后执行。
-先 check 再 apply；普通启动不代替执行者做迁移：
-
-```bash
-pnpm --filter @groupher/local-dev-hub exec tsx scripts/migrate-local-environment.ts --check
-pnpm --filter @groupher/local-dev-hub exec tsx scripts/migrate-local-environment.ts --apply
-```
-
-上述命令由 `local/dev-hub/scripts/migrate-local-environment.ts` 实现，并有旧 Auth/Dash
-配置 fixture 覆盖。`--check` 只输出迁移项和冲突，不写盘；`--apply` 先生成私有备份，
-再提交完整 state。新环境直接初始化；已有内部配置但未迁移时阻塞切换，避免自动生成新
-身份使旧服务失效。
-
-临时兼容只用于已明确的迁移步骤，不能保留为长期 fallback。迁移成功后，普通启动不再
-扫描旧内部凭据；外部授权按白名单处理。删除旧文件属于独立操作，不自动删用户配置。
+Hub 使用 `local/dev-hub/config/` 保存按服务划分的本地配置和共享身份文件。
+服务启动时自动准备并复用身份，托管环境从服务声明与本地覆盖值解析。
+具体目录、清理和验收记录见 [Dev Hub 本地存储整理](./dev-hub-storage-reorganization.md)。
 
 ## 7. 可执行验收
 
@@ -446,17 +360,17 @@ pnpm --filter @groupher/local-dev-hub run test:local-environment
 
 ### 7.2 必须通过的技术验收
 
-| 项目                        | 执行方法                                                                                                                     | 通过标准                                                                                                                                                            |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 空环境与重复启动            | 临时根目录单元测试；另在无旧应用 env 的专用开发 checkout 实测                                                                | 无需预先初始化 Auth env；自动生成内部配置；重启不换密钥。不要删除真实工作树 env 模拟空环境                                                                          |
-| 并发和写失败                | 并发调用、写中断、坏 JSON；模拟持锁进程存活/退出和等待超时                                                                   | 单份有效状态，失败保留旧文件；10 秒内给出锁超时错误与恢复提示，不自动删锁或重建状态                                                                                 |
-| 迁移 check/apply 与失败恢复 | 旧 Auth/Dash env fixture 覆盖四个注册表、资源表、现有 id/ref/secret；执行 check/apply 并注入写失败；B3a 再恢复原活动服务验真 | check 零写入，空环境报告无需迁移、冲突失败；apply 生成 0600 备份和完整 state，重复 apply 无操作；失败旧文件/原 state 不变、没有半份 state；恢复服务后原调用方仍认证 |
-| 身份与来源隔离              | B2 fixture 和 B3 已接管服务注入冲突值；另测接管/未接管混合运行；B3b 结束检查全部当前受管服务                                 | 已接管服务 filteredParent 无受管 key、definition.env 冲突必败、最终值等于 resolved.env；未接管服务加载不变；全部接管后无临时分支                                    |
-| 正反向鉴权                  | 真实 Auth 签发、验证器验签；错误 secret/resource/scope、错 audience 和跨 history origin 测试                                 | 正向 scope 全量覆盖；非法调用被现有协议拒绝；不修改线上状态码语义                                                                                                   |
-| Worker 交付                 | 通过实际 Worker handler 验证其 bindings，检查本地持久化目录                                                                  | 不是只检查父 process.env；R2/D1/Workflow/service bindings 使用声明资源；秘密不进入浏览器 bundle                                                                     |
-| 入口与失败恢复              | Web/CLI/Desktop，代理不可用、慢编译、循环调用检查                                                                            | 统一准备；Auth/Phoenix 无互等；失败不换端口、不起另一份；restart 预检失败保留旧健康进程                                                                             |
-| 秘密与 API                  | fixture secret 测试 reveal、恶意 Host/Origin、无 Origin CLI、合法开发 UI                                                     | API 不返回受管秘密；服务端拒绝非法请求；4310/4311 与正常 CLI 保持可用                                                                                               |
-| 生产隔离                    | Auth/Phoenix/Assets/Dash 按下表执行两组构建及生产入口/配置测试；本地状态写操作测试 NODE_ENV/CLOUDFLARE_ENV 等生产选择        | 不依赖私有状态，产物无本地秘密；生产模式拒绝本地状态写入，本地登录不注册/不可访问                                                                                   |
+| 项目                 | 执行方法                                                                                                              | 通过标准                                                                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 空环境与重复启动     | 临时根目录单元测试；另在无旧应用 env 的专用开发 checkout 实测                                                         | 无需预先初始化 Auth env；自动生成内部配置；重启不换密钥。不要删除真实工作树 env 模拟空环境                                       |
+| 并发和写失败         | 并发调用、写中断、坏 JSON；模拟持锁进程存活/退出和等待超时                                                            | 单份有效状态，失败保留旧文件；10 秒内给出锁超时错误与恢复提示，不自动删锁或重建状态                                              |
+| 配置初始化与失败恢复 | 临时目录中验证初始化、重复准备及写失败                                                                                | 重复准备复用身份；写失败不留下半份 state；应用 dotenv 文件不参与身份初始化                                                       |
+| 身份与来源隔离       | B2 fixture 和 B3 已接管服务注入冲突值；另测接管/未接管混合运行；B3b 结束检查全部当前受管服务                          | 已接管服务 filteredParent 无受管 key、definition.env 冲突必败、最终值等于 resolved.env；未接管服务加载不变；全部接管后无临时分支 |
+| 正反向鉴权           | 真实 Auth 签发、验证器验签；错误 secret/resource/scope、错 audience 和跨 history origin 测试                          | 正向 scope 全量覆盖；非法调用被现有协议拒绝；不修改线上状态码语义                                                                |
+| Worker 交付          | 通过实际 Worker handler 验证其 bindings，检查本地持久化目录                                                           | 不是只检查父 process.env；R2/D1/Workflow/service bindings 使用声明资源；秘密不进入浏览器 bundle                                  |
+| 入口与失败恢复       | Web/CLI/Desktop，代理不可用、慢编译、循环调用检查                                                                     | 统一准备；Auth/Phoenix 无互等；失败不换端口、不起另一份；restart 预检失败保留旧健康进程                                          |
+| 秘密与 API           | fixture secret 测试 reveal、恶意 Host/Origin、无 Origin CLI、合法开发 UI                                              | API 不返回受管秘密；服务端拒绝非法请求；4310/4311 与正常 CLI 保持可用                                                            |
+| 生产隔离             | Auth/Phoenix/Assets/Dash 按下表执行两组构建及生产入口/配置测试；本地状态写操作测试 NODE_ENV/CLOUDFLARE_ENV 等生产选择 | 不依赖私有状态，产物无本地秘密；生产模式拒绝本地状态写入，本地登录不注册/不可访问                                                |
 
 生产构建使用专用随机测试 secret，不用真实生产 secret；只执行现有 build 或明确的
 部署 dry-run，不执行发布。拿两套独立测试 keyset 验证跨环境 token 拒绝，不访问线上

@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { dsbKeys } from '~/query'
 import { commentQueries } from '~/query/comment'
@@ -109,14 +109,7 @@ it('does not fail the route when comment prefetch targets a hidden article', asy
   expect(loadComments).toHaveBeenCalledOnce()
 })
 
-const testViewportWidth = window.innerWidth
-beforeEach(() => Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 }))
-afterEach(() =>
-  Object.defineProperty(window, 'innerWidth', { configurable: true, value: testViewportWidth }),
-)
-
 it('uses the mobile preference for a phone or tablet entry', async () => {
-  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 768 })
   const client = new QueryClient()
   client.setQueryData(dsbKeys.slug('home'), {
     pagiMode: 'PAGE',
@@ -124,24 +117,26 @@ it('uses the mobile preference for a phone or tablet entry', async () => {
     pagiRevision: 2,
   })
   loadComments.mockResolvedValue(result)
-  await prefetchComments(client, 'home', 'POST', '1')
+  await prefetchComments(client, 'home', 'POST', '1', '', true)
   expect(loadComments.mock.lastCall?.[0].data.pagi).toEqual({
     cursor: { first: 20, configRevision: 2 },
   })
 })
 
-it('does not prefetch an assumed desktop list when SSR lacks a viewport', async () => {
+it('prefetches the desktop fallback without a device hint', async () => {
   vi.stubGlobal('window', undefined)
+  loadComments.mockResolvedValue(result)
   try {
     await prefetchComments(new QueryClient(), 'home', 'POST', '1')
-    expect(loadComments).not.toHaveBeenCalled()
+    expect(loadComments.mock.lastCall?.[0].data.pagi).toMatchObject({ offset: { page: 1 } })
   } finally {
     vi.unstubAllGlobals()
   }
 })
 
-it('keeps cursor links for client resolution when SSR has no viewport', async () => {
+it('prefetches saved cursor links during SSR', async () => {
   vi.stubGlobal('window', undefined)
+  loadComments.mockResolvedValue(result)
   try {
     await prefetchComments(
       new QueryClient(),
@@ -150,7 +145,7 @@ it('keeps cursor links for client resolution when SSR has no viewport', async ()
       '1',
       '?commentsApi=cursor&commentsAfter=opaque',
     )
-    expect(loadComments).not.toHaveBeenCalled()
+    expect(loadComments.mock.lastCall?.[0].data.pagi).toMatchObject({ cursor: { after: 'opaque' } })
   } finally {
     vi.unstubAllGlobals()
   }

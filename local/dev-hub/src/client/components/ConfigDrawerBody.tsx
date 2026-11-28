@@ -1,7 +1,7 @@
 import type { TServiceConfigManifest } from '@shared/contracts'
 import { AlertCircle } from 'lucide-react'
 
-import type { useServiceConfig } from '@/hooks/useServiceConfig'
+import { ENVIRONMENT_FILE_ID, type useServiceConfig } from '@/hooks/useServiceConfig'
 
 import { ConfigFileList } from './ConfigFileList'
 import { ConfigFileView } from './ConfigFileView'
@@ -46,10 +46,10 @@ export function ConfigDrawerBody({ manifest, config }: TProps) {
         <button
           type='button'
           className='config-environment-tab'
-          aria-pressed={config.selectedFileId === 'local-dev.env'}
-          onClick={() => config.selectFile('local-dev.env')}
+          aria-pressed={config.selectedFileId === ENVIRONMENT_FILE_ID}
+          onClick={() => config.selectFile(ENVIRONMENT_FILE_ID)}
         >
-          local-dev.env
+          {manifest.serviceId}.env
         </button>
         <ConfigFileList
           files={manifest.files}
@@ -67,7 +67,7 @@ export function ConfigDrawerBody({ manifest, config }: TProps) {
           </section>
         ) : null}
       </aside>
-      {config.selectedFileId === 'local-dev.env' ? (
+      {config.selectedFileId === ENVIRONMENT_FILE_ID ? (
         <ServiceEnvironmentEditor key={manifest.serviceId} serviceId={manifest.serviceId} />
       ) : config.selectedFile ? (
         <ConfigFileView

@@ -102,6 +102,14 @@ export const PATTERN_WALLPAPER = {
     image: '/wallpaper/picture/backiee-9.webp',
     preview: '/wallpaper/picture-preview/backiee-9.webp',
   },
+  'crayon-stickers-dark': {
+    image: '/wallpaper/picture/crayon-stickers-dark.webp',
+    preview: '/wallpaper/picture-preview/crayon-stickers-dark.webp',
+  },
+  'crayon-stickers-light': {
+    image: '/wallpaper/picture/crayon-stickers-light.webp',
+    preview: '/wallpaper/picture-preview/crayon-stickers-light.webp',
+  },
   'mint-1': {
     image: '/wallpaper/picture/mint-1.webp',
     preview: '/wallpaper/picture-preview/mint-1.webp',

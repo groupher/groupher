@@ -384,7 +384,6 @@ const checkElixirSharedFunctions = () => {
       'accounts/profiles/commands/link_oauth.ex',
       'accounts/profiles/commands/unlink_oauth.ex',
       'accounts/profiles/commands/sign_in_oauth.ex',
-      'accounts/profiles/commands/link_oauth_identity.ex',
       'accounts/profiles/commands/unlink_oauth_identity.ex',
       'accounts/achievements/persist.ex',
       'accounts/achievements/commands/achieve.ex',

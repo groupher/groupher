@@ -577,3 +577,30 @@ test('Import identity and environment contracts agree across managed services', 
   assert.equal(resources['https://api.groupher.com/content-import'], undefined)
   assert.ok(Object.keys(env).every((key) => !key.startsWith('CONTENT_IMPORT_')))
 })
+
+test('Auth development identity grants the current OAuth flow scopes', () => {
+  const auth = SERVICE_DEFINITIONS.find((definition) => definition.id === 'auth')
+  const config = auth?.localEnvironment
+  assert.ok(config?.externalEnvKeys?.includes('AUTH_LINUXDO_ID'))
+  assert.ok(config?.externalEnvKeys?.includes('AUTH_LINUXDO_SECRET'))
+  assert.deepEqual(config?.serviceAuth?.allowedAudiences, ['phoenix:auth-api'])
+  assert.ok(config?.serviceAuth?.allowedScopes.includes('auth:oauth:flow'))
+  assert.ok(config?.serviceAuth?.allowedScopes.includes('auth:oauth:register'))
+  assert.ok(!config?.serviceAuth?.allowedScopes.includes('auth:oauth:link'))
+})
+
+test('Vite-based Workers receive managed persistence without unsupported cf dev options', () => {
+  for (const [directory, script, port] of [
+    ['backend/assets-hub', 'dev:read-worker:managed', 8787],
+    ['infra/edge-router', 'dev:managed', 8788],
+  ] as const) {
+    const manifest = JSON.parse(readFileSync(`${REPO_ROOT}/${directory}/package.json`, 'utf8'))
+    assert.equal(
+      manifest.scripts[script],
+      `cf dev --mode development -- --host 127.0.0.1 --port ${port}`,
+    )
+    const viteConfig = readFileSync(`${REPO_ROOT}/${directory}/vite.config.ts`, 'utf8')
+    assert.match(viteConfig, /persistState:/)
+    assert.match(viteConfig, /path: process\.env\.DEV_HUB_WORKER_STATE_DIR/)
+  }
+})

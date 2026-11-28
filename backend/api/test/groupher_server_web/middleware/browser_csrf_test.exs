@@ -1,5 +1,5 @@
 defmodule GroupherServerWeb.Middleware.BrowserCsrfTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   import Plug.Conn
   import Plug.Test
@@ -54,6 +54,48 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrfTest do
 
     assert conn.halted
     assert conn.status == 400
+  end
+
+  test "admits only this managed development environment's sibling domains" do
+    previous_env = Application.get_env(:groupher_server, :env)
+    previous_root = System.get_env("DEV_HUB_PUBLIC_ROOT")
+    previous_managed = System.get_env("DEV_HUB_MANAGED_ENVIRONMENT")
+
+    on_exit(fn ->
+      Application.put_env(:groupher_server, :env, previous_env)
+
+      if previous_root do
+        System.put_env("DEV_HUB_PUBLIC_ROOT", previous_root)
+      else
+        System.delete_env("DEV_HUB_PUBLIC_ROOT")
+      end
+
+      if previous_managed do
+        System.put_env("DEV_HUB_MANAGED_ENVIRONMENT", previous_managed)
+      else
+        System.delete_env("DEV_HUB_MANAGED_ENVIRONMENT")
+      end
+    end)
+
+    Application.put_env(:groupher_server, :env, :dev)
+    System.put_env("DEV_HUB_PUBLIC_ROOT", "groupher-feature-login.localhost")
+    System.put_env("DEV_HUB_MANAGED_ENVIRONMENT", "true")
+    query = %{"query" => "mutation Update { updateProfile(profile: {}) { id } }"}
+
+    headers = fn origin ->
+      [
+        {"content-type", "application/json"},
+        {"origin", origin},
+        {"x-groupher-csrf", "1"}
+      ]
+    end
+
+    refute request(:post, query, headers.("https://dash.groupher-feature-login.localhost")).halted
+    assert request(:post, query, headers.("https://dash.groupher-other.localhost")).halted
+    assert request(:post, query, headers.("https://dash.groupher.localhost")).halted
+    assert request(:post, query, headers.("http://dash.groupher-feature-login.localhost")).halted
+    Application.put_env(:groupher_server, :env, :prod)
+    assert request(:post, query, headers.("https://dash.groupher-feature-login.localhost")).halted
   end
 
   test "uses operationName when a document contains multiple operations" do

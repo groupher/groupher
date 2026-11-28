@@ -13,6 +13,7 @@ let tokenSequence = 0
 let sessions = new Map()
 let accessTokens = new Map()
 let stats = {}
+let registrations = new Map()
 
 const resetStats = () => ({
   protectedCalls: 0,
@@ -28,6 +29,7 @@ export const resetAuthState = () => {
   sessions = new Map()
   accessTokens = new Map()
   stats = resetStats()
+  registrations = new Map()
 }
 
 resetAuthState()
@@ -198,3 +200,23 @@ export const getAuthState = () => ({
   sessions: [...sessions.values()].map((session) => ({ ...session })),
   stats: { ...stats },
 })
+
+/** Stores the pending mock registration under Auth's generated flow reference. */
+export const createAuthRegistration = (ref, identity, returnTo) => {
+  registrations.set(ref, { provider: identity.provider, suggestedLogin: identity.login, returnTo })
+  return {
+    status: 'REGISTRATION_REQUIRED',
+    session: null,
+    registration: { suggestedLogin: identity.login },
+  }
+}
+/** Reads a pending registration in the isolated mock stack. */
+export const readAuthRegistration = (ref) => registrations.get(ref) || null
+/** Expires registrations for an isolated browser test. */
+export const expireAuthRegistrations = () => registrations.clear()
+/** Consumes a pending mock registration and issues its test session. */
+export const completeAuthRegistration = (ref, login, metadata) => {
+  if (!registrations.has(ref)) return null
+  registrations.delete(ref)
+  return createAuthSession({ login }, metadata || {})
+}

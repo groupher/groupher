@@ -1,5 +1,7 @@
 # Groupher Dev Hub
 
+> Dev Hub 本地存储路径正在调整，本文中的旧路径及文件名可能已失效。当前实现状态和目标路径见 [Dev Hub 本地存储整理](../../docs/architecture/dev-hub-storage-reorganization.md)。
+
 Groupher Dev Hub 是 Groupher monorepo 的本地开发控制台。它把分散在不同目录、端口和终端里的前后端服务集中到一个界面中，负责启动与停止进程、展示日志、识别端口占用、观察运行指标，并把 Git 状态、配置文件和服务依赖关系放在同一处。
 
 ![Groupher Dev Hub 服务列表](./docs/dev-hub-overview.png)
@@ -22,10 +24,23 @@ Groupher 不是单进程项目。日常开发可能同时涉及 Community、Dash
 
 ```bash
 pnpm devhub status
+pnpm devhub doctor --service dash --json
 pnpm devhub start dash
 pnpm devhub logs dash
 pnpm devhub url dash
 ```
+
+`doctor --service <id>` 在环境报告中增加该服务的必需和可选启动依赖及其当前状态；
+依赖链来自服务的 `startPolicy`，与启动使用同一配置。Hub 不可验证或未运行时状态为
+`unknown`，不推断服务已停止。状态仅是快照，不能替代登录、请求及业务操作的验收。
+可选依赖的汇总分别列出已停止或不可用、正在启动或停止、状态未知的服务；`external`
+进程的归属未经确认时也归入未知。
+依赖配置取自当前 checkout，运行中的 Hub 可能尚未加载本次代码变更。
+`--json` 供脚本使用；诊断不会启动服务或修改数据库。
+
+需要查库时，使用 `pnpm devhub db inspect --target dev` 进入只读查询，或用
+`pnpm devhub db inspect --target test --sql 'SELECT …'` 执行单条查询。目标核验、
+临时角色回收及 SQL 限制见[多 worktree 数据库方案](../../docs/architecture/dev-hub-multi-worktree.md)。
 
 根 `pnpm dev:*`、各应用的公开 `dev` 脚本和 Make public target 都转交 Dev Hub；Hub
 内部通过 `:managed`/`.managed` 启动具体工具。不要绕过 Hub 直接运行 Vite、Phoenix、
@@ -43,11 +58,12 @@ Dev Hub 把这些知识固化为服务定义，并提供一个只监听 `127.0.0
 
 在仓库根目录运行：
 
-| 命令           | 用途                  | 运行内容                                                                                            |
-| -------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
-| `make dev.dev` | 开发 Dev Hub 本身     | 启动 Vite HMR 页面（`4310`）和独立 API（`4311`），修改 React、CSS 或 Node 代码时使用                |
-| `make dev`     | 运行构建后的 Web 版本 | 先执行 Vite production build，再由 Hono 在 `127.0.0.1:4310` 提供静态页面和 API                      |
-| `make dev.app` | 构建并安装 macOS 应用 | 安装项目依赖、构建 production 页面和 Tauri `.app`、替换 `/Applications/Groupher Dev Hub.app` 并启动 |
+| 命令           | 用途                          | 运行内容                                                                                            |
+| -------------- | ----------------------------- | --------------------------------------------------------------------------------------------------- |
+| `make dev.dev` | 开发 Dev Hub 本身             | 启动 Vite HMR 页面（`4310`）和独立 API（`4311`），修改 React、CSS 或 Node 代码时使用                |
+| `make dev`     | 确保当前 checkout 的 Hub 运行 | 通过受管入口复用或启动 Hub；macOS 已安装桌面应用时，同时请求打开当前 checkout 的标签页              |
+| `make dev.hub` | 前台运行当前 checkout 的 Hub  | 已有常驻实例时拒绝启动；Ctrl+C 只停止本命令启动的实例                                               |
+| `make dev.app` | 构建并安装 macOS 应用         | 安装项目依赖、构建 production 页面和 Tauri `.app`、替换 `/Applications/Groupher Dev Hub.app` 并启动 |
 
 ### 推荐的日常开发流程
 
@@ -61,7 +77,9 @@ make dev.dev
 make dev.app
 ```
 
-切换到 `make dev.app` 前必须先停止 `make dev.dev`。桌面启动器会健康检查 `127.0.0.1:4310`；如果开发版仍在运行，它会复用现有服务，而不会另外启动 production 版本。
+切换到 `make dev.app` 前必须先停止使用旧端口的 `make dev.dev`。桌面启动器通过当前 checkout 的受管 CLI 查找或启动 Hub，并核验返回的路径和本机地址；它不会接管 4310 上的旧实例。多 worktree 标签页的原生窗口验收仍待完成，详见[实施记录](../../docs/architecture/dev-hub-multi-worktree.md#第二阶段--一个桌面窗口每个-worktree-一个-tab)。
+
+标签页和 checkout 参数转交需要重新构建并安装本版本桌面应用；已安装的旧版应用不会自动获得这些能力。Hub 或页面版本过旧时，对应标签页会显示诊断。
 
 平时只使用 Dev Hub、不修改它时，直接从 Raycast、Spotlight 或 `/Applications` 打开 **Groupher Dev Hub** 即可，不需要先打开终端。
 
@@ -120,12 +138,10 @@ GROUPHER_CARGO_MIRROR=auto make dev.app
 
 ```mermaid
 flowchart LR
-  App["Groupher Dev Hub.app<br/>Tauri + Rust"] --> Health{"4310 健康吗？"}
-  Health -- "是" --> UI["React UI"]
-  Health -- "否" --> Start["启动 Hono server"]
-  Start --> Dist["复用 make dev.app 生成的 dist"]
-  Dist --> Server["Hono server<br/>127.0.0.1:4310"]
-  Server --> UI
+  App["Groupher Dev Hub.app<br/>Tauri + Rust"] --> CLI["当前 checkout 的 pnpm devhub up"]
+  CLI --> Registry["核验登记和实例身份"]
+  Registry --> Server["当前 checkout 的受管 Hub<br/>本机独立地址"]
+  Server --> UI["React UI"]
 
   UI <-- "REST + SSE" --> Server
   Server --> Manager["ServiceManager"]
@@ -135,9 +151,9 @@ flowchart LR
   Server --> Metrics["MetricsStore + ProcessMetricsMonitor"]
 ```
 
-桌面应用本身保持很薄：它负责单实例、窗口生命周期、仓库定位、健康检查和 production Hub 子进程。`make dev.app` 在安装时生成 `dist`；以后冷启动 `.app` 只启动 Hono 服务并复用该产物，不会再次执行 Vite build。真正的服务编排逻辑仍在 Node 端，因此 Web 版本和 `.app` 使用同一套能力。
+桌面应用负责单实例、窗口生命周期和仓库定位；Hub 的发现、启动和身份核验由当前 checkout 的受管 CLI 完成。真正的服务编排逻辑仍在 Node 端，因此 Web 版本和 `.app` 使用同一套能力。首次启动完整 Hub 可能触发页面构建，已有实例则复用。
 
-关闭红色窗口按钮只会隐藏窗口，受管服务继续运行；从应用菜单使用 Quit 或按 `Cmd+Q` 退出时，Tauri 会终止自己启动的 Dev Hub 进程组，Dev Hub 随后清理它管理的各个服务。
+关闭红色窗口按钮只会隐藏窗口；退出桌面应用也不会停止 Hub 或它管理的服务。需要停止当前 checkout 的 Hub 时，显式执行 `pnpm devhub down`；该操作会停止该实例管理的服务，应先确认没有人正在使用。
 
 ## 当前服务图
 
@@ -263,13 +279,13 @@ local/dev-hub/
 
 ## 本地端口与数据
 
-| 内容                          | 默认位置                                |
-| ----------------------------- | --------------------------------------- |
-| production Hub / 桌面应用后端 | `http://127.0.0.1:4310`                 |
-| `make dev.dev` Vite 页面      | `http://127.0.0.1:4310`                 |
-| `make dev.dev` API            | `http://127.0.0.1:4311`                 |
-| 指标数据                      | `local/dev-hub/.data/metrics`           |
-| 桌面启动日志                  | Tauri 的应用日志目录中的 `launcher.log` |
+| 内容                          | 默认位置                                                |
+| ----------------------------- | ------------------------------------------------------- |
+| production Hub / 桌面应用后端 | `http://127.0.0.1:4310`                                 |
+| `make dev.dev` Vite 页面      | `http://127.0.0.1:4310`                                 |
+| `make dev.dev` API            | `http://127.0.0.1:4311`                                 |
+| 指标数据                      | 用户数据目录下的 `Groupher/DevHub/<工作树标识>/metrics` |
+| 桌面启动日志                  | Tauri 的应用日志目录中的 `launcher.log`                 |
 
 Dev Hub 只监听 loopback 地址，不应改为局域网或公网服务。配置读取、Git patch 和进程控制接口都按“仅本机开发者可访问”的边界设计。
 
@@ -291,6 +307,6 @@ cargo test --manifest-path local/dev-hub/src-tauri/Cargo.toml --locked
 
 ## 集中本地配置
 
-服务配置抽屉的 `local-dev.env` 页面支持查看配置来源、编辑允许的本地参数和重置覆盖值。配置保存在 Hub 私有的 `services/<serviceId>/local-dev.env`；内部身份与密钥继续由 `state.json` 管理。保存只影响该服务的下次启动，不自动重启或运行迁移。已有项目 `.env*` 仅作参考；外部凭据需要按服务白名单迁入面板。详见 [集中本地配置](../../docs/architecture/dev-hub-local-config.md)。
+服务配置抽屉的 `<serviceId>.env` 页面支持查看配置来源、编辑允许的本地参数和重置覆盖值。配置保存在 Hub 私有的 `local/dev-hub/config/<serviceId>.env`；内部身份与密钥继续由 `service-identity.json` 管理。保存只影响该服务的下次启动，不自动重启或运行迁移。已有项目 `.env*` 仅作参考；外部凭据需要按服务白名单迁入面板。详见 [集中本地配置](../../docs/architecture/dev-hub-local-config.md)。
 
 隔离浏览器验收：`pnpm --filter @groupher/local-dev-hub run test:environment-ui`，不接管当前 Hub 或应用服务。

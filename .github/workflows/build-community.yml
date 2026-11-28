@@ -3,6 +3,11 @@ name: Build frontend community
 on:
   pull_request:
     paths:
+      - '.github/workflows/build-community.yml'
+      - 'frontend/e2e/**'
+      - 'frontend/mock-server/**'
+      - 'packages/**'
+      - 'backend/api/schema.graphql'
       - 'frontend/community/**'
       - 'frontend/core/**'
       - 'package.json'
@@ -11,6 +16,11 @@ on:
     branches:
       - dev
     paths:
+      - '.github/workflows/build-community.yml'
+      - 'frontend/e2e/**'
+      - 'frontend/mock-server/**'
+      - 'packages/**'
+      - 'backend/api/schema.graphql'
       - 'frontend/community/**'
       - 'frontend/core/**'
       - 'package.json'
@@ -41,3 +51,9 @@ jobs:
 
       - name: Build project
         run: pnpm run build:prod:community
+
+      - name: Install Chromium for hydration checks
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Verify Community development SSR against GraphQL fixtures
+        run: pnpm test:ssr:community

@@ -13,6 +13,13 @@ const communityRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.join(communityRoot, '../..')
 const communityPort = Number.parseInt(process.env.PORT || '3007', 10)
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const localRoot =
+  isDevelopment &&
+  process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' &&
+  /^groupher-[a-z0-9]+(?:-[a-z0-9]+)*\.localhost$/.test(process.env.DEV_HUB_PUBLIC_ROOT || '')
+    ? process.env.DEV_HUB_PUBLIC_ROOT
+    : undefined
+const localCommunityHost = localRoot ? `community.${localRoot}` : 'community.groupher.localhost'
 const eagerlyLoadedRouteIds = new Set(['/$community', '/$community/post/_layout'])
 
 export default defineConfig({
@@ -33,10 +40,12 @@ export default defineConfig({
   server: {
     port: communityPort,
     strictPort: true,
-    allowedHosts: ['community.groupher.localhost', 'groupher.localhost'],
+    allowedHosts: localRoot
+      ? [localCommunityHost, localRoot]
+      : ['community.groupher.localhost', 'groupher.localhost'],
     ws: {
       protocol: isDevelopment ? 'ws' : 'wss',
-      host: 'community.groupher.localhost',
+      host: localCommunityHost,
       clientPort: isDevelopment ? communityPort : 443,
       path: '__community_hmr',
     },

@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Communities.Commands.RequestDestroy do
   alias GroupherServer.{Accounts, CMS}
 
   alias CMS.{FrontDesk, Gate}
-  alias CMS.Communities.{ErrorCat, Lifecycle, RequestDestroyConfirmation}
+  alias CMS.Communities.{ErrorCat, Lifecycle, Query, RequestDestroyConfirmation}
   alias CMS.Model.Community
   alias Accounts.Model.User
   alias Helper.T
@@ -36,13 +36,13 @@ defmodule GroupherServer.CMS.Communities.Commands.RequestDestroy do
     gate(fn candidate -> Gate.check_in_transaction(actor, :request_destroy, candidate) end)
 
     change(fn canonical, operation_ref ->
-      Lifecycle.request_destroy(
-        canonical.id,
-        Keyword.put(opts, :operation_ref, operation_ref)
-      )
-      |> case do
-        {:ok, _blocker} -> {:ok, %{community: canonical, operation_ref: operation_ref}}
-        error -> error
+      with {:ok, _blocker} <-
+             Lifecycle.request_destroy(
+               canonical.id,
+               Keyword.put(opts, :operation_ref, operation_ref)
+             ),
+           {:ok, :pass} <- check_members(canonical, opts) do
+        {:ok, %{community: canonical, operation_ref: operation_ref}}
       end
     end)
 
@@ -60,5 +60,25 @@ defmodule GroupherServer.CMS.Communities.Commands.RequestDestroy do
     present(fn confirmation ->
       FrontDesk.community(confirmation.data["community_slug"], mode: :internal)
     end)
+  end
+
+  defp check_members(community, opts) do
+    case Keyword.fetch(opts, :allowed_member_user_ids) do
+      :error ->
+        {:ok, :pass}
+
+      {:ok, ids} when is_list(ids) ->
+        if Enum.all?(ids, &(is_integer(&1) and &1 > 0)) do
+          case Query.members_outside?(community, ids) do
+            {:ok, false} -> {:ok, :pass}
+            {:ok, true} -> {:error, :owned_community_has_foreign_members}
+          end
+        else
+          {:error, :invalid_community_member_ids}
+        end
+
+      {:ok, _} ->
+        {:error, :invalid_community_member_ids}
+    end
   end
 end

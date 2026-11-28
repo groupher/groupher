@@ -31,6 +31,7 @@ export const Route = createFileRoute('/$community/changelog/$id')({
       THREAD.CHANGELOG,
       params.id,
       location.searchStr,
+      context.requestContext.mobilePagination,
     )
     await context.queryClient.ensureQueryData(
       communityQueries.stat(context.queryClient, params.community, THREAD.CHANGELOG, params.id),

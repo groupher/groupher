@@ -28,6 +28,7 @@ test('offset Pagi traverses three seeded pages and keeps the URL position', asyn
 })
 
 test('mobile Pagi loads the next cursor page when scrolling', async ({ page }) => {
+  await page.setExtraHTTPHeaders({ 'sec-ch-ua-mobile': '?1' })
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/home/post')
   await expect(page.getByRole('link', { name: fixtureTitle(60), exact: true })).toBeVisible()

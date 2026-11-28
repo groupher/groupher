@@ -1,0 +1,36 @@
+{
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
+  "overrides": [
+    {
+      "files": ["src/server.tsx", "src/server/**/*", "src/query/**/*", "src/routes/**/*"],
+      "excludeFiles": ["**/*.test.*", "**/*.spec.*"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "window",
+            "property": "innerWidth",
+            "message": "Use request-derived device information for SSR."
+          },
+          {
+            "object": "window",
+            "property": "matchMedia",
+            "message": "Use request-derived device information for SSR."
+          }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "~/lib/pagination/viewport",
+                "importNames": ["readPagiMobileLayout"],
+                "message": "This helper reads the browser viewport. Use request-derived device information for SSR."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

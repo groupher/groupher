@@ -134,13 +134,13 @@ Public/Binding 可见性初始化与写入、Moderate command、i18n、salon、�
 
 ### 生成契约
 
-| 文件                                                                                                   | 定位（源码行 / 文档说明）                                                            | 处理方向                                                                                             |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| [frontend/core/lib/graphql/generated/graphql.ts](../../frontend/core/lib/graphql/generated/graphql.ts) | 4357, 4358, 4359, 4483, 4484, 4485, 4642, 4643, 4644, 4673, 4674, 4675 …             | 修改 schema/query/Command 来源后重新生成，不手工维持旧协议                                           |
-| [frontend/core/lib/graphql/generated/gql.ts](../../frontend/core/lib/graphql/generated/gql.ts)         | 112, 118, 129, 445, 457, 479, 1317, 1318, 1353, 1354, 1419, 1420                     | 修改 schema/query/Command 来源后重新生成，不手工维持旧协议                                           |
-| `backend/api/priv/pipeline_graph.json`（被 `.gitignore` 排除的本地生成产物）                           | 14539, 14546, 14553, 81249, 81928, 82600, 83482, 83517, 83531, 83538, 83545, 83559 … | 由 pipeline graph 生成任务本地重建；不作为仓库内可点击证据，也不提交忽略产物                         |
-| [backend/api/priv/pipeline_contracts.json](../../backend/api/priv/pipeline_contracts.json)             | 450, 451                                                                             | 修改来源后重新生成，移除旧字段/operation；不手工制造兼容                                             |
-| [backend/api/schema.graphql](../../backend/api/schema.graphql)                                         | pending：2621, 2655, 2684, 2714, 3706；meta：3327–3329, 3680–3682, 4341–4344         | 从来源删除 Article.pending 与旧审核 meta 后重新生成；3225 是 Community.pending，保留，不纳入删除定位 |
+| 文件                                                                                       | 定位（源码行 / 文档说明）                                                            | 处理方向                                                                                             |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `frontend/core/lib/graphql/generated/graphql.ts`（[生成配置](../../codegen.ts)）           | 4357, 4358, 4359, 4483, 4484, 4485, 4642, 4643, 4644, 4673, 4674, 4675 …             | 修改 schema/query/Command 来源后重新生成，不手工维持旧协议                                           |
+| `frontend/core/lib/graphql/generated/gql.ts`（[生成配置](../../codegen.ts)）               | 112, 118, 129, 445, 457, 479, 1317, 1318, 1353, 1354, 1419, 1420                     | 修改 schema/query/Command 来源后重新生成，不手工维持旧协议                                           |
+| `backend/api/priv/pipeline_graph.json`（被 `.gitignore` 排除的本地生成产物）               | 14539, 14546, 14553, 81249, 81928, 82600, 83482, 83517, 83531, 83538, 83545, 83559 … | 由 pipeline graph 生成任务本地重建；不作为仓库内可点击证据，也不提交忽略产物                         |
+| [backend/api/priv/pipeline_contracts.json](../../backend/api/priv/pipeline_contracts.json) | 450, 451                                                                             | 修改来源后重新生成，移除旧字段/operation；不手工制造兼容                                             |
+| [backend/api/schema.graphql](../../backend/api/schema.graphql)                             | pending：2621, 2655, 2684, 2714, 3706；meta：3327–3329, 3680–3682, 4341–4344         | 从来源删除 Article.pending 与旧审核 meta 后重新生成；3225 是 Community.pending，保留，不纳入删除定位 |
 
 ### 旧专用测试
 

@@ -2,229 +2,178 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="data:," />
-    <title>Starting Groupher Dev Hub</title>
+    <title>Groupher Dev Hub</title>
     <style>
-      :root {
-        color-scheme: light dark;
-        font-family:
-          -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-        font-synthesis: none;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        height: 100%;
-      }
-
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: #f2f1ee;
-        color: #242424;
-      }
-
-      .window-frame {
-        align-items: center;
-        background:
-          radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.92), transparent 38%),
-          #f2f1ee;
-        contain: paint;
-        display: flex;
-        height: 100%;
-        justify-content: center;
-        overflow: hidden;
-        position: relative;
-      }
-
-      .window-drag-region {
-        position: fixed;
-        z-index: 1;
-        top: 0;
-        right: 0;
-        left: 0;
-        height: 36px;
-      }
-
-      main {
-        align-items: center;
-        display: flex;
-        flex-direction: column;
-        max-width: 420px;
-        padding: 40px;
-        text-align: center;
-      }
-
-      .mark {
-        align-items: center;
-        background: #272727;
-        border-radius: 20px;
-        box-shadow:
-          0 0 0 1px rgba(0, 0, 0, 0.08),
-          0 8px 24px rgba(0, 0, 0, 0.1);
-        color: #f8f8f5;
-        display: flex;
-        flex-direction: column;
-        font-family: "SFMono-Regular", Consolas, monospace;
-        font-size: 13px;
-        font-weight: 700;
-        height: 72px;
-        justify-content: center;
-        letter-spacing: 1.6px;
-        line-height: 17px;
-        margin-bottom: 28px;
-        width: 72px;
-      }
-
-      h1 {
-        font-size: 20px;
-        font-weight: 650;
-        letter-spacing: -0.02em;
-        line-height: 1.25;
-        margin: 0;
-        text-wrap: balance;
-      }
-
-      #status {
-        color: rgba(36, 36, 36, 0.58);
-        font-size: 13px;
-        line-height: 1.55;
-        margin: 9px 0 0;
-        min-height: 20px;
-        text-wrap: pretty;
-      }
-
-      .progress {
-        background: rgba(36, 36, 36, 0.08);
-        border-radius: 999px;
-        height: 3px;
-        margin-top: 26px;
-        overflow: hidden;
-        width: 148px;
-      }
-
-      .progress::after {
-        animation: progress 1.25s ease-in-out infinite;
-        background: #4f8f74;
-        border-radius: inherit;
-        content: "";
-        display: block;
-        height: 100%;
-        transform: translateX(-100%);
-        width: 52%;
-      }
-
-      .error .progress {
-        display: none;
-      }
-
-      .error .mark {
-        background: #9b4b45;
-      }
-
-      .error #status {
-        color: rgba(101, 39, 35, 0.78);
-        max-width: 380px;
-        user-select: text;
-      }
-
-      @keyframes progress {
-        0% {
-          transform: translateX(-100%);
-        }
-        55% {
-          transform: translateX(94%);
-        }
-        100% {
-          transform: translateX(194%);
-        }
-      }
-
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body { color: #242424; background: #f2f1ee; font: 13px -apple-system, BlinkMacSystemFont, sans-serif; }
+      .shell { display: flex; flex-direction: column; height: 100%; }
+      .bar { display: flex; align-items: center; gap: 4px; min-height: 48px; padding: 5px 12px 5px 86px; overflow-x: auto; border-bottom: 1px solid #d7d7d2; }
+      .tab { display: flex; align-items: center; flex: 0 0 auto; max-width: 260px; border-radius: 7px; }
+      .tab[data-selected="true"] { background: #fff; box-shadow: 0 1px 3px #0002; }
+      button { font: inherit; color: inherit; cursor: pointer; }
+      .select { min-width: 0; border: 0; background: transparent; padding: 6px 7px 6px 10px; text-align: left; }
+      .select strong, .select small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .select small { color: #676763; margin-top: 2px; }
+      .close { border: 0; background: transparent; font-size: 17px; padding: 4px 8px; }
+      button:focus-visible { outline: 2px solid #317b5e; outline-offset: 1px; }
+      .content { flex: 1; min-height: 0; }
+      .panel, iframe { width: 100%; height: 100%; border: 0; }
+      .tab[hidden], .panel[hidden] { display: none; }
+      .message { padding: 32px; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .path { font-size: 12px; color: #676763; padding: 5px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px solid #e1e1dc; }
+      #error { color: #9b4038; padding: 6px 12px; }
+      #error:empty { display: none; }
       @media (prefers-color-scheme: dark) {
-        body {
-          background: #1d1d1c;
-        }
-
-        .window-frame {
-          background:
-            radial-gradient(circle at 50% 18%, rgba(66, 66, 64, 0.55), transparent 38%),
-            #1d1d1c;
-        }
-
-        body {
-          color: #f3f3ef;
-        }
-
-        .mark {
-          background: #f1f1ed;
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-          color: #272727;
-        }
-
-        #status {
-          color: rgba(243, 243, 239, 0.55);
-        }
-
-        .progress {
-          background: rgba(255, 255, 255, 0.09);
-        }
-
-        .progress::after {
-          background: #72b596;
-        }
-
-        .error .mark {
-          background: #d68a82;
-          color: #2d1715;
-        }
-
-        .error #status {
-          color: rgba(244, 173, 165, 0.85);
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .progress::after {
-          animation-duration: 2.5s;
-        }
+        body { color: #eee; background: #202020; }
+        .bar, .path { border-color: #404040; }
+        .tab[data-selected="true"] { background: #383838; }
+        .select small, .path { color: #bdbdb7; }
+        #error { color: #efaaa3; }
       }
     </style>
   </head>
   <body>
-    <div class="window-frame">
-      <div class="window-drag-region" data-tauri-drag-region="deep" aria-hidden="true"></div>
-      <main id="launcher">
-        <div class="mark" aria-hidden="true">
-          <span>DEV</span>
-          <span>HUB</span>
-        </div>
-        <h1>Starting Groupher Dev Hub</h1>
-        <p id="status" role="status" aria-live="polite">Checking the local service…</p>
-        <div class="progress" aria-hidden="true"></div>
-      </main>
+    <div class="shell">
+      <nav class="bar" id="tabs" role="tablist" aria-label="Worktrees" data-tauri-drag-region></nav>
+      <div class="path" id="path"></div>
+      <div id="error" role="alert"></div>
+      <main class="content" id="panels"><div class="message" id="empty" role="status">Run make dev from a checkout to open its Dev Hub.</div></main>
     </div>
-
     <script>
-      const launcher = document.querySelector("#launcher")
-      const status = document.querySelector("#status")
+      const tabs = new Map()
+      const closed = new Set()
+      const tabList = document.querySelector('#tabs')
+      const panels = document.querySelector('#panels')
+      const pathLabel = document.querySelector('#path')
+      const errorLabel = document.querySelector('#error')
+      const empty = document.querySelector('#empty')
+      let active = null
 
-      window.__DEV_HUB_LAUNCHER__ = {
-        setStatus(message) {
-          status.textContent = message
+      window.addEventListener('message', (event) => {
+        const item = active && tabs.get(active)
+        const frame = item && item.panel.querySelector('iframe')
+        if (!frame || closed.has(active) || event.source !== frame.contentWindow || event.origin !== new URL(item.url).origin) return
+        if (!event.data || event.data.type !== 'groupher-devhub-open-url' || typeof event.data.url !== 'string') return
+        try {
+          const url = new URL(event.data.url)
+          const local = (url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname)) ||
+            (url.protocol === 'https:' && url.hostname.endsWith('.localhost'))
+          const platform = url.protocol === 'https:' && ['dash.cloudflare.com', 'fly.io', 'dashboard.algolia.com'].includes(url.hostname)
+          if ((!local && !platform) || url.username || url.password) return
+          window.__TAURI_INTERNALS__?.invoke('plugin:opener|open_url', { url: url.href }).catch(() => {
+            errorLabel.textContent = 'Could not open the requested address in the default browser.'
+          })
+        } catch { /* Ignore malformed addresses. */ }
+      })
+
+      function select(root) {
+        if (!tabs.has(root) || closed.has(root)) return
+        active = root
+        for (const [key, item] of tabs) {
+          const selected = key === root && !closed.has(key)
+          item.tab.dataset.selected = String(selected)
+          item.button.setAttribute('aria-selected', String(selected))
+          item.button.tabIndex = selected ? 0 : -1
+          item.panel.hidden = !selected
+        }
+        const item = tabs.get(root)
+        pathLabel.textContent = `${item.data.root} · ${item.data.branch}`
+        empty.hidden = true
+      }
+
+      function remove(root) {
+        const item = tabs.get(root)
+        if (!item) return
+        closed.add(root)
+        item.tab.hidden = true
+        item.panel.hidden = true
+        if (active === root) {
+          active = null
+          const next = [...tabs.keys()].find((key) => !closed.has(key))
+          if (next) { select(next); tabs.get(next).button.focus() }
+          else { pathLabel.textContent = ''; empty.hidden = false; tabList.tabIndex = -1; tabList.focus() }
+        }
+      }
+
+      function update(data) {
+        let item = tabs.get(data.root)
+        if (!item) {
+          const tab = document.createElement('div')
+          tab.className = 'tab'
+          tab.setAttribute('role', 'presentation')
+          const button = document.createElement('button')
+          button.className = 'select'
+          button.type = 'button'
+          button.setAttribute('role', 'tab')
+          button.id = `tab-${tabs.size}`
+          const name = document.createElement('strong')
+          const branch = document.createElement('small')
+          button.append(name, branch)
+          button.addEventListener('click', () => select(data.root))
+          button.addEventListener('keydown', (event) => {
+            if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return
+            const visible = [...tabs.keys()].filter((key) => !closed.has(key))
+            const offset = event.key === 'ArrowRight' ? 1 : -1
+            const next = visible[(visible.indexOf(data.root) + offset + visible.length) % visible.length]
+            if (next) { event.preventDefault(); select(next); tabs.get(next).button.focus() }
+          })
+          const close = document.createElement('button')
+          close.className = 'close'
+          close.type = 'button'
+          close.textContent = '×'
+          close.setAttribute('aria-label', `Close ${data.name} tab`)
+          close.addEventListener('click', () => remove(data.root))
+          tab.append(button, close)
+          const panel = document.createElement('section')
+          panel.className = 'panel'
+          panel.hidden = true
+          panel.setAttribute('role', 'tabpanel')
+          panel.id = `panel-${tabs.size}`
+          button.setAttribute('aria-controls', panel.id)
+          panel.setAttribute('aria-labelledby', button.id)
+          tabList.append(tab)
+          panels.append(panel)
+          item = { tab, button, name, branch, panel, data: null, url: null }
+          tabs.set(data.root, item)
+        }
+        item.data = data
+        item.tab.hidden = closed.has(data.root)
+        item.name.textContent = data.name
+        item.branch.textContent = data.branch
+        item.button.title = data.root
+        if (data.status === 'ready' && data.url !== item.url) {
+          const url = new URL(data.url)
+          if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || Number(url.port) < 4312 || Number(url.port) > 4339 || url.username || url.password || url.pathname !== '/' || url.searchParams.getAll('devhubRoot').length !== 1 || url.searchParams.get('devhubRoot') !== data.root || url.searchParams.getAll('devhubInstance').length !== 1 || !url.searchParams.get('devhubInstance')) throw new Error('Invalid Hub URL')
+          const frame = document.createElement('iframe')
+          frame.title = `Dev Hub: ${data.root}`
+          frame.referrerPolicy = 'no-referrer'
+          frame.src = url.href
+          item.panel.replaceChildren(frame)
+          item.url = data.url
+        } else if (data.status !== 'ready') {
+          const message = document.createElement('div')
+          message.className = 'message'
+          message.setAttribute('role', data.status === 'error' ? 'alert' : 'status')
+          message.textContent = data.status === 'error' ? `${data.root}\n${data.error}\nRun make dev from this checkout to retry.` : `Starting ${data.root}…`
+          item.panel.replaceChildren(message)
+          item.url = null
+        }
+      }
+
+      window.__DEV_HUB_DESKTOP__ = {
+        sync(payload) {
+          try {
+            errorLabel.textContent = payload.error || ''
+            for (const data of payload.tabs) update(data)
+            if (payload.focus) { closed.delete(payload.focus); const item = tabs.get(payload.focus); if (item) item.tab.hidden = false; select(payload.focus) }
+            else if (active && !closed.has(active)) select(active)
+            else { const first = [...tabs.keys()].find((key) => !closed.has(key)); if (first) select(first) }
+          } catch (error) { errorLabel.textContent = error instanceof Error ? error.message : String(error) }
         },
-        fail(message) {
-          launcher.classList.add("error")
-          document.title = "Groupher Dev Hub could not start"
-          status.textContent = message
-        },
+        error(message) { errorLabel.textContent = message },
       }
     </script>
   </body>

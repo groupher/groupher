@@ -17,6 +17,39 @@ defmodule GroupherServer.Repo do
 
   @dialyzer {:nowarn_function, rollback: 1}
 
+  @impl true
+  def init(_type, options) do
+    migration_database = System.get_env("GROUPHER_MANAGED_MIGRATION_DATABASE")
+
+    if migration_database && Application.get_env(:groupher_server, :env) in [:dev, :test] do
+      expected_port = Integer.parse(System.get_env("GROUPHER_MANAGED_MIGRATION_PORT", ""))
+      expected_host = System.get_env("GROUPHER_MANAGED_MIGRATION_HOST")
+
+      unless options[:database] == migration_database and options[:hostname] == expected_host and
+               expected_port == {options[:port], ""} and
+               Enum.all?([:url, :socket, :socket_dir], &is_nil(options[&1])) do
+        raise "Repository options conflict with the verified migration target."
+      end
+    end
+
+    case Application.get_env(:groupher_server, :managed_database_target) do
+      nil ->
+        {:ok, options}
+
+      expected ->
+        matching =
+          Enum.all?([:database, :hostname, :port, :username], fn key ->
+            Keyword.get(options, key) == Keyword.fetch!(expected, key)
+          end)
+
+        if matching and Enum.all?([:url, :socket, :socket_dir], &is_nil(options[&1])) do
+          {:ok, options}
+        else
+          raise "Repository options conflict with the managed database target."
+        end
+    end
+  end
+
   @doc """
   Runs a business transaction whose callback returns a tagged result.
 

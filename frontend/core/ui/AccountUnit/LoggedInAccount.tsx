@@ -5,7 +5,7 @@
  */
 
 import { useRouter } from '@tanstack/react-router'
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
 
 import { ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
@@ -20,6 +20,7 @@ import { Link } from '~/platform'
 import type { TSpace, TUser } from '~/spec'
 import ImgFallback from '~/ui/ImgFallback'
 import Tooltip from '~/ui/Tooltip'
+import AccountConnections from '~/unit/AccountConnections'
 import AccountSessionDrawer from '~/unit/AccountSessionDrawer'
 import MyReports from '~/unit/AlertWall/MyReports'
 
@@ -35,12 +36,18 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
   const { t } = useTrans()
   const router = useRouter()
   const [showSessions, setShowSessions] = useState(false)
+  const [showConnections, setShowConnections] = useState(false)
+
+  useEffect(() => {
+    if (new URL(window.location.href).searchParams.has('oauthLink')) setShowConnections(true)
+  }, [])
   const [showReports, setShowReports] = useState(false)
 
   const { avatar, nickname } = user
 
   return (
     <>
+      <AccountConnections show={showConnections} onClose={() => setShowConnections(false)} />
       <AccountSessionDrawer show={showSessions} onClose={() => setShowSessions(false)} />
       <MyReports show={showReports} onClose={() => setShowReports(false)} />
       <Tooltip
@@ -50,7 +57,6 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
           <div className={s.panel}>
             <div className={s.baseInfo}>
               <div className={s.userName}>{nickname}</div>
-              <div className={s.loginBy}>{t('account.menu.via_github')}</div>
             </div>
             <div className={s.menuBar}>
               <div className={s.menuTitle}>{t('account.menu.settings')}</div>
@@ -59,6 +65,9 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
             <div className={s.menuBar}>
               <div className={s.menuTitle}>{t('account.menu.profile')}</div>
             </div>
+            <button type='button' className={s.menuBar} onClick={() => setShowConnections(true)}>
+              <span className={s.menuTitle}>{t('account.connections.title')}</span>
+            </button>
             <button
               type='button'
               aria-label='Login & devices'

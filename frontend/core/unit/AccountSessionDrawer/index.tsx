@@ -11,7 +11,7 @@ import { useState } from 'react'
 
 import { listSessions, revokeOtherSessions, revokeSession } from '~/auth'
 import DesktopSVG from '~/icons/Desktop'
-import Drawer from '~/ui/Drawer'
+import Modal from '~/ui/Modal'
 
 import useSalon from './salon'
 
@@ -78,7 +78,7 @@ export default function AccountSessionDrawer({ show, onClose }: TProps) {
   }
 
   return (
-    <Drawer show={show} onClose={onClose}>
+    <Modal show={show} onClose={onClose} width='min(28rem, calc(100vw - 2rem))' showCloseBtn>
       <div className={s.wrapper}>
         <header className={s.header}>
           <h2 className={s.title}>Login &amp; devices</h2>
@@ -178,6 +178,6 @@ export default function AccountSessionDrawer({ show, onClose }: TProps) {
         </div>
       </div>
       <Pagi pageInfo={query.data?.pageInfo} onChange={position.setPage} />
-    </Drawer>
+    </Modal>
   )
 }

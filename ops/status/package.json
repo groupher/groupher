@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --dir ../.. devhub start status",
-    "dev:managed": "wrangler dev --port 8793 --env-file \"$DEV_HUB_WORKER_ENV_FILE\" --persist-to \"$DEV_HUB_WORKER_STATE_DIR\"",
-    "db:migrate:local": "wrangler d1 migrations apply groupher-status --local",
+    "dev:managed": "wrangler dev --local --port \"$PORT\" --env-file \"$DEV_HUB_WORKER_ENV_FILE\" --persist-to \"$DEV_HUB_WORKER_STATE_DIR\"",
+    "db:migrate:local": "pnpm --filter @groupher/local-dev-hub exec tsx src/server/status-migrate.ts",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "deploy:dry-run": "wrangler deploy --dry-run",

@@ -1,5 +1,8 @@
 import Config
 
+Code.require_file("linked_checkout_guard.exs", __DIR__)
+managed_database = GroupherLinkedCheckoutGuard.resolve!(Path.expand("../../..", __DIR__), :dev)
+
 config :groupher_server, :pagination_cursor_keyring,
   current_version: 1,
   current_key:
@@ -76,6 +79,11 @@ config :groupher_server, GroupherServer.Repo,
   port: String.to_integer(System.get_env("DB_PORT", "5432")),
   pool_size: String.to_integer(System.get_env("DB_POOL_SIZE", "50")),
   queue_target: 5_000
+
+if managed_database do
+  config :groupher_server, :managed_database_target, managed_database
+  config :groupher_server, GroupherServer.Repo, managed_database
+end
 
 config :groupher_server, :assets_hub,
   capability_secret:

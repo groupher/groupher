@@ -199,7 +199,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
   end
 
   def doc_public_tree(_root, %{community: community}, _info) do
-    with {:ok, community} <- CMS.communities_fetch(community, inc_views: false) do
+    with {:ok, community} <- CMS.fetch_community(community, inc_views: false) do
       CMS.doc_tree_read_public(community)
     end
   end
@@ -217,7 +217,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
         %{community: community} = args,
         %{context: %{cur_user: user}}
       ) do
-    with {:ok, community} <- CMS.communities_fetch(community, inc_views: false) do
+    with {:ok, community} <- CMS.fetch_community(community, inc_views: false) do
       CMS.doc_cover_read(community, doc_cover_view(args), user)
     end
   end

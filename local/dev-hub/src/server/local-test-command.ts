@@ -1,8 +1,8 @@
 /** Local fixture CLI. No target URL, database override or force option is accepted. */
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 
 import { localTestActorsSecret, prepareLocalEnvironment } from './local-environment.ts'
-import { createLocalArticle } from './local-test-article.ts'
+import { beginArticleDispatch, createLocalArticle } from './local-test-article.ts'
 import {
   cleanActorBrowsers,
   closeActorBrowsers,
@@ -13,11 +13,12 @@ import {
   type TActorUIOperation,
   type TActorUIRole,
 } from './local-test-browser.ts'
+import { articleDispatchError, LocalFixtureError } from './local-test-error.ts'
 
 type TOptions = Record<string, string | boolean>
 const NAME = /^[a-z][a-z0-9-]{0,39}$/
 const USAGE =
-  'Usage: pnpm devhub actors create|list|grant|open|ui|close|clean --run <name> ... | communities create --run <name> --owner <alias> [--slug <slug>] | articles create --run <name> --as <alias> --community <slug> --thread post [--key <key>] [--publish]'
+  'Usage: pnpm devhub actors create|list|grant|open|ui|close|clean|browsers-clean --run <name> ... | communities create --run <name> --owner <alias> [--slug <slug>] | articles create --run <name> --as <alias> --community <slug> --thread post [--key <key>] [--publish]'
 
 const UI_OPERATIONS = ['snapshot', 'navigate', 'click', 'fill', 'press', 'assert-text'] as const
 const UI_ROLES = [
@@ -105,6 +106,7 @@ export const runCheckedActorUI = async (
     community: string
     app: 'dash' | 'community'
     operation: TActorUIOperation
+    publicRoot?: string
   },
   call: (body: Record<string, unknown>) => Promise<any>,
   operate: typeof operateActorBrowser = operateActorBrowser,
@@ -123,6 +125,7 @@ export const runCheckedActorUI = async (
       login: String(actor.login),
       app: input.app,
       headless: false,
+      ...(input.publicRoot ? { publicRoot: input.publicRoot } : {}),
     },
     input.operation,
   )
@@ -178,9 +181,19 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
       'text',
     ],
     'actors.close': ['run'],
-    'actors.clean': ['run', 'apply'],
+    'actors.clean': ['run', 'apply', 'retain-unconfirmed', 'reason'],
+    'actors.browsers-clean': ['run'],
     'communities.create': ['run', 'owner', 'slug', 'title'],
+    'communities.request-destroy': ['run', 'by', 'slug'],
+    'admin.invite': ['run', 'community', 'by', 'to', 'key', 'permissions'],
+    'admin.accept': ['run', 'invite', 'as'],
+    'admin.set-permissions': ['run', 'community', 'by', 'member', 'key', 'permissions', 'revision'],
+    'admin.remove': ['run', 'community', 'by', 'member', 'key', 'revision'],
+    'case.theme-edit-permission': ['run', 'community'],
+    'case.admin-invitation-pending': ['run', 'community'],
+    'case.admin-invitation-accepted': ['run', 'community'],
     'articles.create': ['run', 'as', 'community', 'thread', 'key', 'title', 'markdown', 'publish'],
+    'home.prepare': ['run'],
   }
   const allowed = commands[`${area}.${action}`]
   if (!allowed) throw new Error(USAGE)
@@ -199,7 +212,19 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
   }
   if (typeof options.run !== 'string' || !NAME.test(options.run))
     throw new Error('A valid --run is required (lowercase letters, digits and hyphens; max 40).')
-  for (const key of ['as', 'alias', 'owner', 'by']) {
+  if (action === 'clean' && (options['retain-unconfirmed'] || options.reason)) {
+    if (
+      options.apply !== true ||
+      typeof options['retain-unconfirmed'] !== 'string' ||
+      typeof options.reason !== 'string' ||
+      !options.reason.trim() ||
+      Buffer.byteLength(options.reason) > 1000
+    )
+      throw new Error(
+        '--retain-unconfirmed requires --apply and a nonempty --reason (max 1000 bytes).',
+      )
+  }
+  for (const key of ['as', 'alias', 'owner', 'by', 'to', 'member']) {
     if (
       options[key] !== undefined &&
       (typeof options[key] !== 'string' || !NAME.test(options[key] as string))
@@ -221,7 +246,43 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
       throw new Error('--key is not allowed.')
     parseActorUIOperation(options.op, options)
   }
-  if (area === 'communities' && !options.owner) throw new Error('--owner is required.')
+  if (area === 'communities' && action === 'create' && !options.owner)
+    throw new Error('--owner is required.')
+  if (area === 'communities' && action === 'request-destroy' && (!options.by || !options.slug))
+    throw new Error('--by and --slug are required.')
+  if (area === 'case' && !options.community) throw new Error('--community is required.')
+  if (
+    area === 'admin' &&
+    action === 'invite' &&
+    (!options.community || !options.by || !options.to || !options.key || !options.permissions)
+  )
+    throw new Error('--community, --by, --to, --key and --permissions are required.')
+  if (area === 'admin' && action === 'invite' && !NAME.test(String(options.key)))
+    throw new Error('Invalid --key.')
+  if (
+    area === 'admin' &&
+    action === 'accept' &&
+    (!options.as || !options.invite || !NAME.test(String(options.invite)))
+  )
+    throw new Error('--as and a valid --invite are required.')
+  if (area === 'admin' && ['set-permissions', 'remove'].includes(action)) {
+    if (
+      !options.community ||
+      !options.by ||
+      !options.member ||
+      !options.key ||
+      !NAME.test(String(options.key))
+    )
+      throw new Error('--community, --by, --member and a valid --key are required.')
+    if (action === 'set-permissions' && !options.permissions)
+      throw new Error('--permissions is required.')
+    if (
+      options.revision &&
+      (!/^[1-9]\d*$/.test(String(options.revision)) ||
+        !Number.isSafeInteger(Number(options.revision)))
+    )
+      throw new Error('--revision must be a positive integer.')
+  }
   if (area === 'articles') {
     if (!options.as || !options.community)
       throw new Error('--as and --community are required for Article fixtures.')
@@ -255,13 +316,52 @@ export const parseLocalTestCommand = (args: string[]): { command: string; option
   }
   return {
     command:
-      area === 'actors'
-        ? `actor.${action}`
-        : area === 'articles'
-          ? 'article.create'
-          : 'community.create',
+      area === 'case'
+        ? `case.${action}`
+        : area === 'home'
+          ? 'home.prepare'
+          : area === 'admin'
+            ? `admin.${action}`
+            : area === 'actors'
+              ? `actor.${action}`
+              : area === 'articles'
+                ? 'article.create'
+                : `community.${action}`,
     options,
   }
+}
+
+/** Resolve Phoenix from this Hub's snapshot without permitting a remote fixture destination. */
+export const localFixtureEndpoint = (services: Array<{ id: string; localUrl?: string | null }>) => {
+  const phoenix = services.find((service) => service.id === 'phoenix')
+  if (!phoenix?.localUrl) throw new Error('The current Hub did not provide a Phoenix endpoint.')
+  const url = new URL(phoenix.localUrl)
+  if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || !url.port)
+    throw new Error('The Phoenix fixture endpoint must be an explicit loopback address.')
+  return new URL('/__local-test/actors', url).toString()
+}
+
+/** Read the exact sibling domain assigned by the current Hub to Auth and the app. */
+export const localPublicRoot = (
+  services: Array<{ id: string; url?: string | null }>,
+  app: 'dash' | 'community',
+) => {
+  const authUrl = services.find((service) => service.id === 'auth')?.url
+  const appUrl = services.find((service) => service.id === app)?.url
+  if (!authUrl || !appUrl) throw new Error('The current Hub did not provide local browser URLs.')
+  const auth = new URL(authUrl)
+  const appOrigin = new URL(appUrl)
+  const root = auth.hostname.startsWith('auth.') ? auth.hostname.slice(5) : ''
+  if (
+    auth.protocol !== 'https:' ||
+    appOrigin.protocol !== 'https:' ||
+    auth.port ||
+    appOrigin.port ||
+    !/^groupher(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?\.localhost$/.test(root) ||
+    appOrigin.hostname !== `${app}.${root}`
+  )
+    throw new Error('Browser URLs do not belong to one local environment.')
+  return root
 }
 
 export const runLocalTestCommand = async (
@@ -271,21 +371,34 @@ export const runLocalTestCommand = async (
 ): Promise<unknown> => {
   assertLocalTestTarget(origin)
   const { command, options } = parseLocalTestCommand(args)
-  const status = (await checkHub()) as Array<{ id: string; status: string }>
+  const status = (await checkHub()) as Array<{
+    id: string
+    status: string
+    url?: string | null
+    localUrl?: string | null
+  }>
+  if (command === 'actor.browsers-clean') {
+    await cleanActorBrowsers(String(options.run))
+    return { cleaned: true }
+  }
   const app = options.app === 'community' ? 'community' : 'dash'
   const required =
-    command === 'actor.open' || command === 'article.create'
-      ? ['phoenix', 'auth', app]
-      : command === 'actor.ui'
-        ? ['phoenix', app]
-        : ['phoenix']
+    command === 'home.prepare'
+      ? ['phoenix', 'auth', 'assets-hub']
+      : command === 'article.create'
+        ? ['phoenix', 'auth', 'dash']
+        : command === 'actor.open'
+          ? ['phoenix', 'auth', app]
+          : command === 'actor.ui'
+            ? ['phoenix', app]
+            : ['phoenix']
   for (const id of required) {
     if (!status.some((service) => service.id === id && service.status === 'running'))
       throw new Error(`Start ${id} through pnpm devhub start ${id} first.`)
   }
   const state = await prepareLocalEnvironment()
   const call = async (body: Record<string, unknown>): Promise<any> => {
-    const result = await fetch('http://127.0.0.1:4001/__local-test/actors', {
+    const result = await fetch(localFixtureEndpoint(status), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -300,7 +413,19 @@ export const runLocalTestCommand = async (
         'Development fixture route is unavailable. Restart Phoenix through Dev Hub after updating it.',
       )
     const payload = await result.json()
-    if (!result.ok) throw new Error(`Local fixture rejected: ${payload.error || result.status}`)
+    if (!result.ok) {
+      const code = typeof payload.error === 'string' ? payload.error : String(result.status)
+      const details =
+        payload.details && typeof payload.details === 'object' && !Array.isArray(payload.details)
+          ? payload.details
+          : undefined
+      const recoveryCode = [
+        'local_test_article_recovery_required',
+        'local_test_article_pending',
+        'local_test_terminal_evidence_unavailable',
+      ].includes(code)
+      throw new LocalFixtureError(code, recoveryCode ? { ...details, run: options.run } : details)
+    }
     return payload.data
   }
   if (command === 'actor.create') {
@@ -319,14 +444,40 @@ export const runLocalTestCommand = async (
     return created
   }
   if (command === 'article.create') {
+    const publicRoot = localPublicRoot(status, 'dash')
     const input = { ...options, alias: options.as }
-    const prepared = await call({ ...input, command: 'article.prepare' })
+    const prepared = await call({ ...input, command: 'article.prepare', protocol: 2 })
     if (prepared.existing) return prepared.existing
-    const created = await createLocalArticle(
-      { run: String(options.run), alias: String(options.as), community: String(options.community) },
-      prepared,
-    )
-    return call({ ...input, ...created, command: 'article.record' })
+    const attemptId = randomUUID()
+    let dispatchAttempted = false
+    try {
+      let recorded: unknown
+      await createLocalArticle(
+        {
+          run: String(options.run),
+          alias: String(options.as),
+          community: String(options.community),
+          publicRoot,
+        },
+        prepared,
+        async () => {
+          dispatchAttempted = true
+          await beginArticleDispatch(call, {
+            ...input,
+            command: 'article.begin',
+            commandId: prepared.command.commandId,
+            attemptId,
+          })
+        },
+        undefined,
+        async (created) => {
+          recorded = await call({ ...input, ...created, command: 'article.record' })
+        },
+      )
+      return recorded
+    } catch (error) {
+      throw articleDispatchError(error, options.run, dispatchAttempted)
+    }
   }
   if (command === 'actor.open') {
     const actor = await call({
@@ -342,6 +493,7 @@ export const runLocalTestCommand = async (
       login: actor.login,
       app,
       headless: options.headless === true,
+      publicRoot: localPublicRoot(status, app),
     })
   }
   if (command === 'actor.ui') {
@@ -353,17 +505,24 @@ export const runLocalTestCommand = async (
         community: String(options.community),
         app,
         operation,
+        publicRoot: localPublicRoot(status, app),
       },
       call,
     )
   }
   if (command === 'actor.close') {
     const result = await call({ command })
-    await closeActorBrowsers(String(options.run))
+    await cleanActorBrowsers(String(options.run))
     return result
   }
   if (command === 'actor.clean') {
-    const result = await call({ command, apply: options.apply === true })
+    const result = await call({
+      command,
+      apply: options.apply === true,
+      ...(options['retain-unconfirmed']
+        ? { 'retain-unconfirmed': options['retain-unconfirmed'], reason: options.reason }
+        : {}),
+    })
     if (options.apply === true && result.status === 'cleaned')
       await cleanActorBrowsers(String(options.run))
     else if (options.apply === true && result.status === 'partial')
@@ -371,6 +530,7 @@ export const runLocalTestCommand = async (
     return result
   }
   const body: Record<string, unknown> = { ...options, command, alias: options.as }
+  if (options.revision !== undefined) body.revision = Number(options.revision)
   delete body.as
   if (options.permissions !== undefined)
     body.permissions = Object.fromEntries(

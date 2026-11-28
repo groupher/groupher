@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm --dir ../.. devhub start edge-router",
     "dev:local": "pnpm --dir ../.. devhub start edge-router",
-    "dev:managed": "cf dev --mode development --port 8788 --persist-to \"$DEV_HUB_WORKER_STATE_DIR\"",
+    "dev:managed": "cf dev --mode development -- --host 127.0.0.1 --port 8788",
     "test": "pnpm exec vitest --config vitest.config.mts run",
     "type-check": "pnpm run types && pnpm --workspace-root exec tsc --noEmit --project infra/edge-router/tsconfig.json",
     "types": "cf workers types --mode production --no-include-runtime",

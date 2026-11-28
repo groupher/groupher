@@ -9,18 +9,18 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Relationships do
 
   @doc "Makes the signed-in viewer follow the resolved user."
   def follow(_root, %{user: user}, %{context: %{cur_user: cur_user}}) do
-    Accounts.fans_follow(cur_user, user)
+    Accounts.follow_user(cur_user, user)
   end
 
   @doc "Removes the viewer's follow relationship with the resolved user."
   def undo_follow(_root, %{user: user}, %{context: %{cur_user: cur_user}}) do
-    Accounts.fans_undo_follow(cur_user, user)
+    Accounts.unfollow_user(cur_user, user)
   end
 
   @doc "Lists accounts following the resolved user, including follow state for the viewer."
   def paged_followers(_root, %{user: user} = args, %{context: context}) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      Accounts.fans_paged_followers(
+      Accounts.page_followers(
         user,
         Map.get(args, :filter) || %{},
         pagi,
@@ -32,7 +32,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Relationships do
   @doc "Lists accounts the resolved user follows, including follow state for the viewer."
   def paged_followings(_root, %{user: user} = args, %{context: context}) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      Accounts.fans_paged_followings(
+      Accounts.page_followed_users(
         user,
         Map.get(args, :filter) || %{},
         pagi,
@@ -44,23 +44,23 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Relationships do
   @doc "Lists articles upvoted by the resolved user, with filtering and pagination."
   def paged_upvoted_articles(_root, %{user: user} = args, _info) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      Accounts.upvotes_paged_articles(user, Map.get(args, :filter) || %{}, pagi)
+      Accounts.page_upvoted_articles(user, Map.get(args, :filter) || %{}, pagi)
     end
   end
 
   @doc "Creates a collection folder owned by the signed-in user."
   def create_collect_folder(_root, attrs, %{context: %{cur_user: cur_user}}) do
-    Accounts.collect_folders_create(attrs, cur_user)
+    Accounts.create_collect_folder(attrs, cur_user)
   end
 
   @doc "Updates the collection folder identified by the supplied ID and attributes."
   def update_collect_folder(_root, %{id: id} = attrs, _) do
-    Accounts.collect_folders_update(id, attrs)
+    Accounts.update_collect_folder(id, attrs)
   end
 
   @doc "Deletes a collection folder by ID through Accounts."
   def delete_collect_folder(_root, %{id: id}, _) do
-    Accounts.collect_folders_delete(id)
+    Accounts.delete_collect_folder(id)
   end
 
   @doc "Adds the resolved article to a folder for the viewer and returns the command result."

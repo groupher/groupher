@@ -2,8 +2,13 @@ import { API_ROUTE, AUTH_ROUTE } from '@groupher/route-contract'
 
 export const SOCIAL = {
   GITHUB: 'github',
+  LINUXDO: 'linuxdo',
   // GOOGLE: 'google'
 } as const
+
+/** Rejects provider IDs not supported by this frontend build. */
+export const isOauthProvider = (value: string): value is (typeof SOCIAL)[keyof typeof SOCIAL] =>
+  Object.values(SOCIAL).some((provider) => provider === value)
 
 const defaultAuthEndpoint =
   process.env.NODE_ENV === 'production'

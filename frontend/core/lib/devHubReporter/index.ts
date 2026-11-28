@@ -70,9 +70,10 @@ function createReporter(serviceId: string, hubUrl: string): TReporterHandle {
     reporting = true
 
     try {
+      const instanceHeaders = await readHubInstanceHeaders(hubUrl, controller.signal)
       const response = await fetch(`${hubUrl}/api/browser-metrics`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...instanceHeaders },
         body: JSON.stringify({
           serviceId,
           pageId,
@@ -111,6 +112,25 @@ function createReporter(serviceId: string, hubUrl: string): TReporterHandle {
       window.clearInterval(interval)
     },
   }
+}
+
+async function readHubInstanceHeaders(
+  hubUrl: string,
+  signal: AbortSignal,
+): Promise<Record<string, string>> {
+  let response: Response
+  try {
+    response = await fetch(`${hubUrl}/api/identity`, { signal, cache: 'no-store' })
+  } catch {
+    // Legacy hubs do not expose identity across origins.
+    return {}
+  }
+  if (!response.ok) throw new Error('Could not verify Dev Hub identity.')
+  const identity = (await response.json()) as { apiVersion?: unknown; instanceId?: unknown }
+  if (identity.apiVersion === undefined && identity.instanceId === undefined) return {}
+  if (identity.apiVersion !== 1 || typeof identity.instanceId !== 'string' || !identity.instanceId)
+    throw new Error('Invalid Dev Hub identity.')
+  return { 'X-Groupher-Instance-Id': identity.instanceId }
 }
 
 function createLongTaskObserver(

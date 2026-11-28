@@ -1,0 +1,3 @@
+interface:
+  display_name: "Groupher FE"
+  short_description: "Apply Groupher frontend architecture and UI conventions"

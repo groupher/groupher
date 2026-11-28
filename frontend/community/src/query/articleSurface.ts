@@ -4,9 +4,8 @@ import URL_PARAM from '~/const/url_param'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { mergeCursorArticlePages } from '~/lib/pagination/merge'
 import { articlePageEntries } from '~/lib/pagination/merge'
-import { resolvePagiPosition, toEffectivePagiConfig } from '~/lib/pagination/params'
+import { toEffectivePagiConfig } from '~/lib/pagination/params'
 import { recordPaginationEvent } from '~/lib/pagination/telemetry'
-import { hasExplicitPagiPosition, readPagiMobileLayout } from '~/lib/pagination/viewport'
 import {
   articleQueryKeys,
   communityQueries as coreCommunityQueries,
@@ -57,24 +56,45 @@ export const resetArticleSurface = (client: QueryClient, community: string, surf
   })
 }
 
+/** Rejects malformed envelopes before the SSR list request. */
+export const isMalformedCursor = (cursor: string): boolean => {
+  try {
+    if (!cursor || cursor.length > 8192 || !/^[A-Za-z0-9_-]+$/.test(cursor)) return true
+    const envelope = JSON.parse(atob(cursor.replace(/-/g, '+').replace(/_/g, '/')))
+    return (
+      !envelope ||
+      typeof envelope !== 'object' ||
+      !envelope.payload ||
+      typeof envelope.signature !== 'string'
+    )
+  } catch {
+    return true
+  }
+}
+
 const prefetchSurface = async (
   client: QueryClient,
   community: string,
   surface: TSurface,
   search: string,
+  mobile = false,
 ) => {
-  const mobile = readPagiMobileLayout()
-  const bootstrapConfig = toEffectivePagiConfig(
-    client.getQueryData<TDsb>(dsbKeys.slug(community)),
-    mobile === true,
-  )
-  const { config } = resolvePagiPosition(bootstrapConfig, new URLSearchParams(search))
-  if (
-    mobile === null &&
-    !(config.api === 'offset' && hasExplicitPagiPosition(new URLSearchParams(search)))
-  )
-    return
-  const filter = getPagedArticlesParams(community, new URLSearchParams(search), config.defaultSize)
+  let config = toEffectivePagiConfig(client.getQueryData<TDsb>(dsbKeys.slug(community)), mobile)
+  const position = new URLSearchParams(search)
+  const after = position.get('after')
+  const invalidCursor = after !== null && isMalformedCursor(after)
+  const page = position.get('page')
+  const pageNumber = Number(page)
+  const invalidPage = page !== null && (!Number.isSafeInteger(pageNumber) || pageNumber < 1)
+  const incompatible = invalidCursor || invalidPage || (config.api === 'cursor' && pageNumber > 1)
+  if (after && !incompatible && config.api === 'offset') {
+    config = { ...config, api: 'cursor', mode: 'LOAD_MORE' }
+  }
+  if (incompatible) {
+    position.delete('page')
+    position.delete('after')
+  }
+  const filter = getPagedArticlesParams(community, position, config.defaultSize)
   let chunks: readonly (readonly { innerId?: string | number | null }[])[]
   if (config.api === 'cursor') {
     const result =
@@ -143,6 +163,7 @@ const prefetchSurface = async (
       ),
     )
   }
+  return incompatible ? position.toString() : undefined
 }
 
 /** Prefetches a finite/infinite surface, with one revision-only restart and a recoverable shell. */
@@ -151,18 +172,40 @@ export const loadArticleSurface = async (
   community: string,
   surface: TSurface,
   search: string,
+  mobile = false,
 ) => {
   try {
-    await prefetchSurface(client, community, surface, search)
-    return { recovery: null, resetPage: false }
+    const recoveredSearch = await prefetchSurface(client, community, surface, search, mobile)
+    return { recovery: null, resetPage: false, recoveredSearch }
   } catch (error) {
+    const position = new URLSearchParams(search)
+    const codes = (error as { errors?: { extensions?: { code?: number } }[] })?.errors
+    if (
+      (position.has('after') || position.has('page')) &&
+      Array.isArray(codes) &&
+      codes.length > 0 &&
+      codes.every(({ extensions }) =>
+        [4200, 4201, 4202, 4203, 4204, 4205, 4207].includes(Number(extensions?.code)),
+      )
+    ) {
+      position.delete('page')
+      position.delete('after')
+      const recoveredSearch = position.toString()
+      try {
+        await prefetchSurface(client, community, surface, recoveredSearch, mobile)
+        return { recovery: null, resetPage: false, recoveredSearch }
+      } catch {
+        resetArticleSurface(client, community, surface)
+        return { recovery: 'list' as const, resetPage: false, recoveredSearch }
+      }
+    }
     if (isPaginationRevisionMismatch(error)) {
       try {
         await refreshArticleBootstrap(client, community)
         resetArticleSurface(client, community, surface)
         const start = new URLSearchParams(search)
         start.delete(URL_PARAM.PAGE)
-        await prefetchSurface(client, community, surface, start.toString())
+        await prefetchSurface(client, community, surface, start.toString(), mobile)
         return { recovery: null, resetPage: true }
       } catch {
         recordPaginationEvent({ surface, event: 'ssr_failure', attempt: 2 })

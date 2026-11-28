@@ -1,5 +1,10 @@
+import { GraphQLError } from 'graphql'
+
 import {
   createAuthSession,
+  createAuthRegistration,
+  readAuthRegistration,
+  completeAuthRegistration,
   listAuthSessions,
   refreshAuthSession,
   revokeAuthSession,
@@ -404,6 +409,8 @@ const makePost = (idx, community = 'home') => {
 export const resolvers = {
   RootQueryType: {
     ...ticketQueries,
+    oauthProviders: () => [{ provider: 'github', state: 'open' }],
+    oauthRegistrationSummary: (_parent, args) => readAuthRegistration(args.flowRef),
     doc: (_parent, { article }) => ({
       ...makePost(Number(article.innerId), article.community),
       innerId: String(article.innerId),
@@ -453,8 +460,9 @@ export const resolvers = {
       ),
     postPage: (_parent, args) => {
       const community = args?.filter?.community ?? 'home'
-      const entries = Array.from({ length: community === 'home' ? 3 : 2 }, (_, i) =>
-        makePost(i + 1, community),
+      const entries = Array.from(
+        { length: community === 'pagi-hash' ? 21 : community === 'home' ? 3 : 2 },
+        (_, i) => makePost(i + 1, community),
       )
       return { ...mockPage(entries, args.pagi, `posts:${community}`), pinnedEntries: [] }
     },
@@ -466,12 +474,23 @@ export const resolvers = {
   },
   RootMutationType: {
     ...ticketMutations,
+    completeOauthRegistration: (_parent, args) => {
+      if (args.login === 'taken') throw new GraphQLError('Username is taken')
+      return completeAuthRegistration(args.flowRef, args.login, args.browserSession)
+    },
     refreshBrowserSession: (_parent, args) => refreshAuthSession(args.browserSessionRef),
     revokeBrowserSession: (_parent, args) => revokeAuthSession(args.browserSessionRef),
     revokeBrowserSessionPublic: (_parent, args) =>
       revokeAuthSessionPublic(args.browserSessionRef, args.publicRef),
     revokeOtherBrowserSessions: (_parent, args) => revokeOtherAuthSessions(args.browserSessionRef),
-    signinOauth: (_parent, args) => createAuthSession(args.provider, args.browserSession),
+    signinOauth: (_parent, args) =>
+      args.provider.provider === 'github'
+        ? createAuthRegistration(args.flowRef, args.provider, args.returnTo)
+        : {
+            status: 'SIGNED_IN',
+            session: createAuthSession(args.provider, args.browserSession),
+            registration: null,
+          },
   },
 }
 

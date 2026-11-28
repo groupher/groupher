@@ -32,7 +32,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Profiles do
   @doc "Lists user profiles with the supplied filter, pagination, and optional viewer."
   def paged_users(_root, args, %{context: context}) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      Accounts.profiles_paged_users(
+      Accounts.page_users(
         Map.get(args, :filter) || %{},
         pagi,
         Map.get(context, :cur_user)
@@ -56,7 +56,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Profiles do
         profile
       end
 
-    Accounts.profiles_update_profile(cur_user, profile)
+    Accounts.update_profile(cur_user, profile)
   end
 
   @doc "Lists a user's published articles for one thread with the request's filters and viewer."

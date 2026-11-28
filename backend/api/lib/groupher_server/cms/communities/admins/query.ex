@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
 
   alias GroupherServer.{CMS, Accounts, Repo}
   alias Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
   alias CMS.Model.{Community, CommunityAdmin, CommunityAdminRequest}
   alias Helper.ORM
   alias Helper.ORM.Pagi.Order
@@ -156,6 +157,63 @@ defmodule GroupherServer.CMS.Communities.Admins.Query do
   end
 
   def current_member(_, _), do: {:error, :invalid_community}
+
+  @doc "Lists the authenticated actor's own Community Admin memberships."
+  def own_memberships(%User{id: user_id} = actor) when is_integer(user_id) do
+    case CMS.Gate.scope(Community, actor, :read, CommunityContext.admin()) do
+      %Ecto.Query{} = visible ->
+        memberships =
+          Repo.all(
+            from(a in CommunityAdmin,
+              join: c in subquery(visible),
+              on: c.id == a.community_id,
+              where: a.user_id == ^user_id,
+              select: %{
+                member_id: a.id,
+                user_id: a.user_id,
+                community_id: c.id,
+                community: c.slug,
+                community_ref: c.ref,
+                is_lord: a.is_lord,
+                permissions: a.permissions,
+                revision: a.revision
+              }
+            )
+          )
+
+        total = Repo.aggregate(from(a in CommunityAdmin, where: a.user_id == ^user_id), :count)
+
+        if length(memberships) == total do
+          {:ok, memberships}
+        else
+          {:error, :permission_denied}
+        end
+
+      _ ->
+        {:error, :permission_denied}
+    end
+  end
+
+  def own_memberships(_), do: {:error, :permission_denied}
+
+  @doc "Lists pending Admin requests created by or addressed to the actor."
+  def own_pending_requests(%User{id: user_id}) when is_integer(user_id) do
+    {:ok,
+     Repo.all(
+       from(r in CommunityAdminRequest,
+         where:
+           r.status == :pending and (r.subject_user_id == ^user_id or r.created_by_id == ^user_id),
+         select: %{
+           id: r.id,
+           revision: r.revision,
+           subject_user_id: r.subject_user_id,
+           created_by_id: r.created_by_id
+         }
+       )
+     )}
+  end
+
+  def own_pending_requests(_), do: {:error, :permission_denied}
 
   @doc "Maps a CommunityAdmin row into its GraphQL-facing projection."
   def present_admin(%CommunityAdmin{} = admin) do

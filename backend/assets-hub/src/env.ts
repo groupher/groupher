@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url'
 
 import dotenv from 'dotenv'
 
+import { validateProductionAssetsEnvironment } from './environment-policy'
+
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const localIdentityKeys = ['SERVICE_AUTH_CLIENT_ID', 'SERVICE_AUTH_CLIENT_SECRET'] as const
 
@@ -27,6 +29,10 @@ export const loadAssetsHubEnvironment = (
   environment: Record<string, string | undefined> = process.env,
   root = packageRoot,
 ): void => {
+  if (environment.NODE_ENV === 'production' || environment.ENVIRONMENT === 'production') {
+    validateProductionAssetsEnvironment(environment)
+    return
+  }
   if (environment.DEV_HUB_MANAGED_ENVIRONMENT === 'true') return
 
   const fileEnvironment: Record<string, string> = {}
@@ -40,6 +46,9 @@ export const loadAssetsHubEnvironment = (
   for (const [key, value] of Object.entries(fileEnvironment)) {
     if (!environment[key]?.trim()) environment[key] = value
   }
+
+  if (environment.NODE_ENV === 'production' || environment.ENVIRONMENT === 'production')
+    throw new Error('Production mode must be supplied by the process, not local dotenv.')
 
   const localRuntime = environment.ASSETS_HUB_RUNTIME === 'local'
   if (localRuntime) {

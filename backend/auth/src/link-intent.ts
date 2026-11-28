@@ -11,6 +11,8 @@
 
 import { randomBytes } from 'node:crypto'
 
+import { oauthProvider, type TOauthProvider } from './oauth-providers'
+
 export const LINK_INTENT_TTL_SECONDS = 10 * 60
 
 export type TLinkIntent = {
@@ -19,29 +21,10 @@ export type TLinkIntent = {
   expiresAt: string
   intentRef: string
   nonce: string
-  provider: 'github'
+  provider: TOauthProvider
   returnTo: string
   browserSessionRef: string
   status: 'pending' | 'consumed'
-}
-
-export interface TLinkIntentStore {
-  create(intent: TLinkIntent): Promise<void>
-  get(intentRef: string): Promise<TLinkIntent | null>
-  consume(intentRef: string, now?: number): Promise<TLinkIntent | null>
-}
-
-export interface TLinkIntentNamespace {
-  idFromName(name: string): TLinkIntentObjectId
-  get(id: TLinkIntentObjectId): TLinkIntentObjectStub
-}
-
-export interface TLinkIntentObjectId {
-  toString(): string
-}
-
-export interface TLinkIntentObjectStub {
-  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>
 }
 
 export interface TLinkIntentStorage {
@@ -66,7 +49,7 @@ export const createLinkIntent = ({
   now = Date.now(),
 }: {
   browserSessionRef: string
-  provider: 'github'
+  provider: TOauthProvider
   returnTo: string
   now?: number
 }): TLinkIntent => {
@@ -108,7 +91,8 @@ const decodeIntent = (value: unknown): TLinkIntent | null => {
     typeof intent.codeVerifier !== 'string' ||
     typeof intent.browserSessionRef !== 'string' ||
     typeof intent.returnTo !== 'string' ||
-    intent.provider !== 'github' ||
+    typeof intent.provider !== 'string' ||
+    !oauthProvider(intent.provider) ||
     (intent.status !== 'pending' && intent.status !== 'consumed') ||
     typeof intent.createdAt !== 'string' ||
     Number.isNaN(Date.parse(intent.createdAt)) ||
@@ -118,65 +102,6 @@ const decodeIntent = (value: unknown): TLinkIntent | null => {
     return null
   }
   return intent as TLinkIntent
-}
-
-const requestFor = (path: string, method: string, body?: unknown): Request =>
-  new Request(`https://auth.internal${path}`, {
-    body: body === undefined ? undefined : JSON.stringify(body),
-    headers: body === undefined ? undefined : { 'content-type': 'application/json' },
-    method,
-  })
-
-export class DurableLinkIntentStore implements TLinkIntentStore {
-  constructor(private readonly namespace: TLinkIntentNamespace) {}
-
-  private stub(intentRef: string): TLinkIntentObjectStub {
-    return this.namespace.get(this.namespace.idFromName(intentRef))
-  }
-
-  async create(intent: TLinkIntent): Promise<void> {
-    const response = await this.stub(intent.intentRef).fetch(requestFor('/intent', 'PUT', intent))
-    if (!response.ok) throw new Error('Link intent storage is unavailable.')
-  }
-
-  async get(intentRef: string): Promise<TLinkIntent | null> {
-    if (!isValidIntentRef(intentRef)) return null
-    const response = await this.stub(intentRef).fetch(requestFor('/intent', 'GET'))
-    if (response.status === 404) return null
-    if (!response.ok) throw new Error('Link intent storage is unavailable.')
-    return decodeIntent(await response.json())
-  }
-
-  async consume(intentRef: string, now = Date.now()): Promise<TLinkIntent | null> {
-    if (!isValidIntentRef(intentRef)) return null
-    const response = await this.stub(intentRef).fetch(requestFor('/consume', 'POST', { now }))
-    if (response.status === 404 || response.status === 409) return null
-    if (!response.ok) throw new Error('Link intent storage is unavailable.')
-    return decodeIntent(await response.json())
-  }
-}
-
-/** Test-only adapter; production uses DurableLinkIntentStore. */
-export class MemoryLinkIntentStore implements TLinkIntentStore {
-  private readonly records = new Map<string, TLinkIntent>()
-
-  async create(intent: TLinkIntent): Promise<void> {
-    this.records.set(intent.intentRef, intent)
-  }
-
-  async get(intentRef: string): Promise<TLinkIntent | null> {
-    return this.records.get(intentRef) || null
-  }
-
-  async consume(intentRef: string, now = Date.now()): Promise<TLinkIntent | null> {
-    const intent = this.records.get(intentRef)
-    if (!intent || intent.status !== 'pending' || Date.parse(intent.expiresAt) <= now) {
-      return null
-    }
-    const consumed = { ...intent, status: 'consumed' as const }
-    this.records.set(intentRef, consumed)
-    return consumed
-  }
 }
 
 export class LinkIntentObject {

@@ -28,6 +28,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist/client',
-    emptyOutDir: true,
+    // A running Hub caches its index and may still serve references to an older build.
+    emptyOutDir: false,
   },
 })

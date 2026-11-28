@@ -14,6 +14,12 @@ const localEnvironment = {
   SERVICE_AUTH_TOKEN_ENDPOINT: 'http://auth.groupher.localhost:3004/oauth2/token',
 }
 
+it('rejects production requests configured with the local asset provider', () => {
+  expect(() => createApp({ environment: { ...localEnvironment, NODE_ENV: 'production' } })).toThrow(
+    'ASSETS_HUB_RUNTIME=local is unavailable in production.',
+  )
+})
+
 const preflight = (path: string, method: string) =>
   createApp({ environment: localEnvironment }).request(path, {
     headers: {

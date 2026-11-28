@@ -28,6 +28,8 @@ type TWorkerEnv = {
   AUTH_COOKIE_DOMAIN?: string
   AUTH_GITHUB_ID?: string
   AUTH_GITHUB_SECRET?: string
+  AUTH_LINUXDO_ID?: string
+  AUTH_LINUXDO_SECRET?: string
   AUTH_URL?: string
   NEXTAUTH_SECRET?: string
   NODE_ENV?: string

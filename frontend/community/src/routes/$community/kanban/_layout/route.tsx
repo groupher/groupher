@@ -4,15 +4,14 @@ import { Outlet, createFileRoute } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
 import { toEffectivePagiConfig } from '~/lib/pagination/params'
-import { readPagiMobileLayout } from '~/lib/pagination/viewport'
 import { dsbKeys } from '~/query'
 import type { TDsb } from '~/spec'
 import KanbanThread from '~/unit/KanbanThread'
 
 export const Route = createFileRoute('/$community/kanban/_layout')({
-  loader: ({ context, params }) => {
-    const mobile = readPagiMobileLayout()
-    if (mobile === null) return
+  loader: async ({ context, params, parentMatchPromise }) => {
+    await parentMatchPromise
+    const mobile = context.requestContext.mobilePagination
     const config = toEffectivePagiConfig(
       context.queryClient.getQueryData<TDsb>(dsbKeys.slug(params.community)),
       mobile,

@@ -371,6 +371,44 @@ defmodule GroupherServerWeb.Schema.Account.Spec do
     field(:source_contribute, :source_contribute)
   end
 
+  object :oauth_registration_required do
+    field(:suggested_login, :string)
+  end
+
+  object :oauth_link_claim do
+    field(:code_verifier, non_null(:string))
+    field(:return_to, :string)
+  end
+
+  object :oauth_link_result do
+    field(:status, :string)
+    field(:return_to, :string)
+  end
+
+  object :oauth_link_summary do
+    field(:provider, non_null(:string))
+    field(:provider_id, non_null(:string))
+    field(:login, :string)
+    field(:return_to, :string)
+  end
+
+  object :oauth_registration_summary do
+    field(:provider, non_null(:string))
+    field(:suggested_login, :string)
+    field(:return_to, :string)
+  end
+
+  object :oauth_provider_status do
+    field(:provider, non_null(:string))
+    field(:state, non_null(:string))
+  end
+
+  object :oauth_signin_result do
+    field(:status, non_null(:string))
+    field(:session, :browser_signin_result)
+    field(:registration, :oauth_registration_required)
+  end
+
   object :browser_signin_result do
     @desc "Access token issued for the browser session."
     field(:access_token, :string)

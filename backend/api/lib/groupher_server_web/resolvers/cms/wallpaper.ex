@@ -17,7 +17,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Wallpaper do
         %{community: %Community{} = community, input: input},
         %{context: %{cur_user: %User{} = user}}
       ) do
-    CMS.wallpaper_publish(community, input, user)
+    CMS.publish_wallpaper(community, input, user)
   end
 
   @doc "Prepares a wallpaper upload for the community using the actor and submitted upload details."
@@ -26,7 +26,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Wallpaper do
         %{community: %Community{} = community, input: input},
         %{context: %{cur_user: %User{} = user}}
       ) do
-    CMS.wallpaper_prepare_upload(community, input, user)
+    CMS.prepare_wallpaper_upload(community, input, user)
   end
 
   @doc "Restores the requested wallpaper snapshot for the community on behalf of the signed-in user."
@@ -35,6 +35,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Wallpaper do
         %{community: %Community{} = community, input: input},
         %{context: %{cur_user: %User{} = user}}
       ) do
-    CMS.wallpaper_restore_snapshot(community, input, user)
+    CMS.restore_wallpaper_snapshot(community, input, user)
   end
 end

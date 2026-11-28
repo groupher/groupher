@@ -1,16 +1,23 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { StrictMode } from 'react'
+import { StrictMode, useContext } from 'react'
 import { renderToString } from 'react-dom/server'
 import { beforeEach, expect, it, vi } from 'vitest'
 
-const recovery = vi.hoisted(() => ({ refresh: vi.fn(), reset: vi.fn(), navigate: vi.fn() }))
+import { ArticleListSearchContext } from '~/hooks/useArticleListSearch'
+
+const recovery = vi.hoisted(() => ({
+  refresh: vi.fn(),
+  reset: vi.fn(),
+  navigate: vi.fn(),
+  location: { pathname: '/home/post', searchStr: '', hash: '' },
+}))
 vi.mock('../query/articleSurface', () => ({
   refreshArticleBootstrap: recovery.refresh,
   resetArticleSurface: recovery.reset,
 }))
 vi.mock('@tanstack/react-router', () => ({
-  useLocation: () => ({ pathname: '/home/post', searchStr: '' }),
+  useLocation: () => recovery.location,
   useNavigate: () => recovery.navigate,
 }))
 vi.mock('~/ui/Buttons/Button', () => ({
@@ -26,9 +33,14 @@ vi.mock('~/ui/Buttons/Button', () => ({
   ),
 }))
 
+vi.mock('./PositionResetNotice', () => ({ default: () => <p>Position reset</p> }))
+
 import ArticlePageBoundary from './ArticlePageBoundary'
 
-beforeEach(() => vi.resetAllMocks())
+beforeEach(() => {
+  vi.resetAllMocks()
+  recovery.location = { pathname: '/home/post', searchStr: '', hash: '' }
+})
 
 it('hydrates the failure shell, refreshing bootstrap before mounting any list child', async () => {
   const client = new QueryClient()
@@ -108,4 +120,69 @@ it('does not reset or navigate the abandoned surface when bootstrap resolves aft
   await act(async () => complete())
   expect(recovery.reset).not.toHaveBeenCalled()
   expect(recovery.navigate).not.toHaveBeenCalled()
+})
+
+it('clears the invalid position and releases the recovered search after navigation', async () => {
+  recovery.location = {
+    pathname: '/home/post',
+    searchStr: '?after=invalid&order=publish',
+    hash: 'section',
+  }
+  function Probe() {
+    const recovered = useContext(ArticleListSearchContext)
+    return <span data-testid='recovered'>{recovered ?? 'current URL'}</span>
+  }
+  const makeTree = () => (
+    <QueryClientProvider client={client}>
+      <ArticlePageBoundary
+        community='home'
+        surface='posts'
+        recovery={null}
+        recoveredSearch='order=publish'
+      >
+        <Probe />
+      </ArticlePageBoundary>
+    </QueryClientProvider>
+  )
+  const client = new QueryClient()
+  const view = render(makeTree())
+  expect(recovery.navigate).toHaveBeenCalledWith({
+    href: '/home/post?order=publish#section',
+    replace: true,
+  })
+  expect(screen.getByTestId('recovered').textContent).toBe('order=publish')
+  recovery.location = { pathname: '/home/post', searchStr: '?order=publish', hash: 'section' }
+  view.rerender(makeTree())
+  await act(async () => {})
+  expect(screen.getByTestId('recovered').textContent).toBe('current URL')
+  recovery.location = { pathname: '/home/post', searchStr: '?order=UPVOTES', hash: 'section' }
+  view.rerender(makeTree())
+  expect(screen.getByTestId('recovered').textContent).toBe('current URL')
+  expect(recovery.navigate).toHaveBeenCalledTimes(1)
+  expect(screen.getByText('Position reset')).toBeTruthy()
+})
+
+it('cleans a confirmed invalid position while showing the list error', () => {
+  recovery.location = {
+    pathname: '/home/post',
+    searchStr: '?after=invalid&order=publish',
+    hash: 'section',
+  }
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <ArticlePageBoundary
+        community='home'
+        surface='posts'
+        recovery='list'
+        recoveredSearch='order=publish'
+      >
+        List
+      </ArticlePageBoundary>
+    </QueryClientProvider>,
+  )
+  expect(recovery.navigate).toHaveBeenCalledWith({
+    href: '/home/post?order=publish#section',
+    replace: true,
+  })
+  expect(screen.queryByText('List')).toBeNull()
 })

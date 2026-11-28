@@ -74,6 +74,20 @@ defmodule GroupherServer.CMS.Communities do
   @spec fetch(String.t(), User.t(), keyword()) :: T.domain_res(Community.t())
   def fetch(slug, %User{} = user, opt), do: fetch_for_viewer(slug, user, opt)
 
+  @doc "Checks for Community members outside a user set after owner-scoped admission."
+  def members_outside?(community_ref, excluded_ids, %User{} = actor)
+      when is_binary(community_ref) and is_list(excluded_ids) do
+    if Enum.all?(excluded_ids, &(is_integer(&1) and &1 > 0)) do
+      with {:ok, community} <- FrontDesk.community({:ref, community_ref}, actor, mode: :owner) do
+        Query.members_outside?(community, excluded_ids)
+      end
+    else
+      {:error, :invalid_community_member_ids}
+    end
+  end
+
+  def members_outside?(_, _, _), do: {:error, :permission_denied}
+
   defp fetch_for_viewer(slug, actor, opts) do
     with {:ok, mode} <- read_mode(opts),
          {:ok, community} <- read_community(slug, actor, mode),

@@ -5,7 +5,10 @@
 # is restricted to this project.
 import Config
 
-config :phoenix, :filter_parameters, ["password", "credential"]
+config :phoenix, :filter_parameters, ["password", "credential", "variables"]
+
+config :absinthe, Absinthe.Logger,
+  filter_variables: ["token", "password", "credential", "codeVerifier", "nonce", "ref", "Ref"]
 
 # General application configuration
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
@@ -256,6 +259,7 @@ config :groupher_server, Helper.Scheduler,
     {"@daily", {Helper.Scheduler, :clear_all_cache, []}},
     {"@daily", {Helper.Scheduler, :archive_artiments, []}},
     {"17 * * * *", {Helper.Scheduler, :purge_expired_trash, []}},
+    {"27 * * * *", {Helper.Scheduler, :purge_expired_oauth_flows, []}},
     online_status: [
       # Runs every 20 seconds
       schedule: {:extended, "*/20"},
@@ -317,6 +321,19 @@ import_config "#{config_env()}.exs"
 
 if File.exists?("config/#{config_env()}.secret.exs") do
   import_config "#{config_env()}.secret.exs"
+end
+
+secondary_dev? =
+  config_env() == :dev and
+    not is_nil(GroupherLinkedCheckoutGuard.resolve!(Path.expand("../../..", __DIR__), :dev))
+
+if secondary_dev? do
+  # A secondary checkout must not index or provision against shared services,
+  # even if a local secret config contains credentials from another environment.
+  config :groupher_server, :search_artiments,
+    platform: GroupherServer.CMS.SearchArtiments.Disabled
+
+  config :groupher_server, :web_analysis_policy, provision_on_community_create: false
 end
 
 # Configure esbuild (the version is required)

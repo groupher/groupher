@@ -9,17 +9,29 @@ import { redact } from '@tanstack/redact/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+import { buildAuthEndpoint } from './build-auth-endpoint.ts'
+
 const dashRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.join(dashRoot, '../..')
 const dashPort = Number.parseInt(process.env.PORT || '3005', 10)
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const isProductionBuild = !isDevelopment || process.env.CLOUDFLARE_ENV === 'production'
+const localRoot =
+  isDevelopment &&
+  process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' &&
+  /^groupher-[a-z0-9]+(?:-[a-z0-9]+)*\.localhost$/.test(process.env.DEV_HUB_PUBLIC_ROOT || '')
+    ? process.env.DEV_HUB_PUBLIC_ROOT
+    : undefined
+const localDashHost = localRoot ? `dash.${localRoot}` : 'dash.groupher.localhost'
 
 export default defineConfig({
   // Managed local runs consume Hub-injected values, not project dotenv files.
   envDir: process.env.DEV_HUB_MANAGED_ENVIRONMENT === 'true' ? false : undefined,
   base: process.env.NODE_ENV === 'production' ? 'https://dash.groupher.com/' : '/',
   define: {
-    'process.env.NEXT_PUBLIC_AUTH_ENDPOINT': JSON.stringify(process.env.NEXT_PUBLIC_AUTH_ENDPOINT),
+    'process.env.NEXT_PUBLIC_AUTH_ENDPOINT': JSON.stringify(
+      buildAuthEndpoint(process.env.NEXT_PUBLIC_AUTH_ENDPOINT, isProductionBuild),
+    ),
   },
   publicDir: path.join(dashRoot, 'public'),
   resolve: {
@@ -35,10 +47,12 @@ export default defineConfig({
   server: {
     port: dashPort,
     strictPort: true,
-    allowedHosts: ['dash.groupher.localhost', 'groupher.localhost'],
+    allowedHosts: localRoot
+      ? [localDashHost, localRoot]
+      : ['dash.groupher.localhost', 'groupher.localhost'],
     ws: {
       protocol: isDevelopment ? 'ws' : 'wss',
-      host: 'dash.groupher.localhost',
+      host: localDashHost,
       clientPort: isDevelopment ? dashPort : 443,
       path: '__dash_hmr',
     },

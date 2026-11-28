@@ -59,6 +59,10 @@ test('Dash needs explicit community and actor; grants cannot mix scopes or privi
 })
 
 test('cleanup requires explicit apply and accepts no force or remote target', () => {
+  assert.equal(
+    parseLocalTestCommand(['actors', 'browsers-clean', '--run', 'demo']).command,
+    'actor.browsers-clean',
+  )
   assert.equal(parseLocalTestCommand(['actors', 'clean', '--run', 'demo']).options.apply, undefined)
   assert.equal(
     parseLocalTestCommand(['actors', 'clean', '--run', 'demo', '--apply']).options.apply,
@@ -204,6 +208,9 @@ test('actor UI checks run/alias/community permission before operating the select
   assert.equal(operated, false)
 })
 
- test("allows an exact unnamed textbox for bounded editor input", () => {
-  assert.deepEqual(parseActorUIOperation("fill", { role: "textbox", name: "", value: "Queue body" }), { op: "fill", role: "textbox", name: "", value: "Queue body" })
+test('allows an exact unnamed textbox for bounded editor input', () => {
+  assert.deepEqual(
+    parseActorUIOperation('fill', { role: 'textbox', name: '', value: 'Queue body' }),
+    { op: 'fill', role: 'textbox', name: '', value: 'Queue body' },
+  )
 })

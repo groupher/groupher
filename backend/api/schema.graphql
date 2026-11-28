@@ -4,6 +4,14 @@ schema {
 }
 
 type RootQueryType {
+  oauthLinkSummary(ref: String!, browserSessionRef: String!): OauthLinkSummary
+
+  "Available public OAuth providers and their admission states."
+  oauthProviders: [OauthProviderStatus!]!
+
+  "Read a pending OAuth registration summary through Auth."
+  oauthRegistrationSummary(flowRef: String!): OauthRegistrationSummary
+
   "List browser sessions for the account identified by the current session reference. Auth service only."
   browserSessions(browserSessionRef: String!, pagi: PagiInput): BrowserSessionPage!
 
@@ -543,7 +551,12 @@ type RootMutationType {
   updateProfile(profile: UserProfileInput!, social: SocialInput): User
 
   "Sign in through the Auth service with an OAuth identity and return browser session credentials."
-  signinOauth(provider: OauthProviderInput!, browserSession: BrowserSessionMetadataInput): BrowserSigninResult
+  signinOauth(
+    provider: OauthProviderInput!, browserSession: BrowserSessionMetadataInput, flowRef: String!, returnTo: String
+  ): OauthSigninResult
+
+  "Complete an OAuth registration with a chosen login."
+  completeOauthRegistration(flowRef: String!, login: String!, browserSession: BrowserSessionMetadataInput): BrowserSigninResult
 
   "Issue a fresh access token for an active browser session through the Auth service."
   refreshBrowserSession(browserSessionRef: String!): BrowserSigninResult
@@ -557,8 +570,17 @@ type RootMutationType {
   "Revoke the account's other browser sessions and keep the current session."
   revokeOtherBrowserSessions(browserSessionRef: String!): Done
 
-  "Link a verified provider identity to the signed-in user and return the updated bindings."
-  linkOauthIdentity(identity: VerifiedOauthIdentityInput!): LinkedOauthAccounts!
+  oauthLinkStart(
+    ref: String!, browserSessionRef: String!, provider: String!, codeVerifier: String!, nonce: String!, returnTo: String!
+  ): Done
+
+  oauthLinkClaim(ref: String!, browserSessionRef: String!, provider: String!, nonce: String!): OauthLinkClaim
+
+  oauthLinkVerified(ref: String!, browserSessionRef: String!, identity: VerifiedOauthIdentityInput!): OauthLinkResult
+
+  oauthLinkCancel(ref: String!, browserSessionRef: String!): Done
+
+  oauthLinkConfirm(ref: String!, browserSessionRef: String!, provider: String!, providerId: String!): OauthLinkResult
 
   "Remove the specified OAuth binding and return the remaining bindings."
   unlinkOauthIdentity(publicRef: ID!): LinkedOauthAccounts!
@@ -10823,6 +10845,44 @@ type Achievement {
 
   "Parts of the project to which the user has contributed."
   sourceContribute: SourceContribute
+}
+
+type OauthRegistrationRequired {
+  suggestedLogin: String
+}
+
+type OauthLinkClaim {
+  codeVerifier: String!
+  returnTo: String
+}
+
+type OauthLinkResult {
+  status: String
+  returnTo: String
+}
+
+type OauthLinkSummary {
+  provider: String!
+  providerId: String!
+  login: String
+  returnTo: String
+}
+
+type OauthRegistrationSummary {
+  provider: String!
+  suggestedLogin: String
+  returnTo: String
+}
+
+type OauthProviderStatus {
+  provider: String!
+  state: String!
+}
+
+type OauthSigninResult {
+  status: String!
+  session: BrowserSigninResult
+  registration: OauthRegistrationRequired
 }
 
 type BrowserSigninResult {

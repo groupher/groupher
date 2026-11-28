@@ -382,10 +382,13 @@ export class MetricsStore {
   private async rotateTo(day: string): Promise<void> {
     if (this.currentDay) await this.flush()
 
+    const cutoff = new Date(this.now())
+    cutoff.setDate(cutoff.getDate() - 6)
+    const oldestDay = localDayKey(cutoff.getTime())
     const entries = await readdir(this.rootDir, { withFileTypes: true })
     await Promise.all(
       entries
-        .filter((entry) => entry.name !== day)
+        .filter((entry) => /^\d{4}-\d{2}-\d{2}$/.test(entry.name) && entry.name < oldestDay)
         .map((entry) => rm(path.join(this.rootDir, entry.name), { force: true, recursive: true })),
     )
 

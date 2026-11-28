@@ -1,5 +1,8 @@
 import Config
 
+Code.require_file("linked_checkout_guard.exs", __DIR__)
+managed_database = GroupherLinkedCheckoutGuard.resolve!(Path.expand("../../..", __DIR__), :test)
+
 config :groupher_server, :allow_test_service_auth, true
 config :groupher_server, :mentions_graph_key, "test-mentions-graph-key-with-32-bytes"
 
@@ -49,6 +52,11 @@ config :groupher_server, GroupherServer.Repo,
   queue_target: 5_000,
   queue_interval: 1_000,
   pool: Ecto.Adapters.SQL.Sandbox
+
+if managed_database do
+  config :groupher_server, :managed_database_target, managed_database
+  config :groupher_server, GroupherServer.Repo, managed_database
+end
 
 config :groupher_server, :github_oauth,
   client_id: "3b4281c5e54ffd801f85",

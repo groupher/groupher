@@ -78,7 +78,7 @@ describe('pagination params adapter', () => {
   })
 })
 
-it('preserves explicit links when administrators switch defaults', () => {
+it('preserves explicit comment links when administrators switch defaults', () => {
   const config = {
     api: 'cursor' as const,
     mode: 'LOAD_MORE' as const,
@@ -87,19 +87,6 @@ it('preserves explicit links when administrators switch defaults', () => {
     defaultSize: 20,
     maxSize: 100,
   }
-  expect(resolvePagiPosition(config, new URLSearchParams('page=3'))).toMatchObject({
-    page: 3,
-    config: { api: 'offset', mode: 'PAGE', revision: 9 },
-  })
-  expect(
-    resolvePagiPosition(
-      { ...config, api: 'offset', mode: 'PAGE' },
-      new URLSearchParams('pagiApi=cursor&after=signed'),
-    ),
-  ).toMatchObject({
-    initialAfter: 'signed',
-    config: { api: 'cursor', mode: 'LOAD_MORE', revision: 9 },
-  })
   expect(
     resolvePagiPosition(config, new URLSearchParams('commentsPage=2'), {
       api: 'commentsApi',
@@ -123,7 +110,7 @@ it.each(['PAGE', 'LOAD_MORE', 'INFINITE_SCROLL'] as const)(
   },
 )
 
-it('resolves separate desktop/mobile defaults and preserves explicit saved positions', () => {
+it('resolves separate desktop/mobile defaults', () => {
   const preference = {
     pagiMode: 'PAGE',
     pagiMobileMode: 'INFINITE_SCROLL',
@@ -135,11 +122,4 @@ it('resolves separate desktop/mobile defaults and preserves explicit saved posit
     mode: 'INFINITE_SCROLL',
   })
   expect(mobile).toMatchObject({ api: 'cursor', mode: 'INFINITE_SCROLL', revision: 7 })
-  expect(resolvePagiPosition(mobile, new URLSearchParams('page=4'))).toMatchObject({
-    config: { api: 'offset', mode: 'PAGE' },
-    page: 4,
-  })
-  expect(
-    resolvePagiPosition(toEffectivePagiConfig(preference), new URLSearchParams('after=opaque')),
-  ).toMatchObject({ config: { api: 'cursor' }, initialAfter: 'opaque' })
 })

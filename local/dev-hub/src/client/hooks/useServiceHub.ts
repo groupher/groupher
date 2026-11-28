@@ -12,6 +12,7 @@ import {
   connectHub,
   controlService,
   fetchSnapshot,
+  initializeHubIdentity,
   type TServiceControlAction,
 } from '@/lib/hub-client'
 import { projectDisconnectedServices } from '@/lib/service-connection-state'
@@ -87,32 +88,37 @@ export function useServiceHub(): TServiceHub {
 
   useEffect(() => {
     const controller = new AbortController()
-    const disconnect = connectHub({
-      onSnapshot: (snapshot) => {
-        commitServices(snapshot.services)
-        setRelations(snapshot.relations)
-        setGit(snapshot.git)
-        setMetricsByService(snapshot.metrics)
-        setMetricNotices(snapshot.metricNotices)
-        setLoading(false)
-      },
-      onStatus: updateService,
-      onGit: setGit,
-      onMetrics: (serviceId, metrics) => {
-        setMetricsByService((current) => ({ ...current, [serviceId]: metrics }))
-      },
-      onMetricNotices: setMetricNotices,
-      onConnectionChange: updateConnection,
-    })
+    let disconnect = () => {}
+    void initializeHubIdentity()
+      .then(() => {
+        if (controller.signal.aborted) return
+        disconnect = connectHub({
+          onSnapshot: (snapshot) => {
+            commitServices(snapshot.services)
+            setRelations(snapshot.relations)
+            setGit(snapshot.git)
+            setMetricsByService(snapshot.metrics)
+            setMetricNotices(snapshot.metricNotices)
+            setLoading(false)
+          },
+          onStatus: updateService,
+          onGit: setGit,
+          onMetrics: (serviceId, metrics) => {
+            setMetricsByService((current) => ({ ...current, [serviceId]: metrics }))
+          },
+          onMetricNotices: setMetricNotices,
+          onConnectionChange: updateConnection,
+          onIdentityError: setError,
+        })
 
-    void fetchSnapshot(controller.signal)
-      .then((snapshot) => {
-        commitServices(snapshot.services)
-        setRelations(snapshot.relations)
-        setGit(snapshot.git)
-        setMetricsByService(snapshot.metrics)
-        setMetricNotices(snapshot.metricNotices)
-        setLoading(false)
+        return fetchSnapshot(controller.signal).then((snapshot) => {
+          commitServices(snapshot.services)
+          setRelations(snapshot.relations)
+          setGit(snapshot.git)
+          setMetricsByService(snapshot.metrics)
+          setMetricNotices(snapshot.metricNotices)
+          setLoading(false)
+        })
       })
       .catch((cause: unknown) => {
         if (controller.signal.aborted) return

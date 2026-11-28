@@ -1,4 +1,6 @@
 export default {
+  'pagination.return_to_pages': 'Return to paginated list',
+  'pagination.position_reset': 'This list position is unavailable. Showing the first page.',
   'mentions_graph.title': 'Mentions',
   'mentions_graph.graph': 'Directed mention relationships',
   'mentions_graph.links': 'Mention relationships as a list',

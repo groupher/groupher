@@ -2,8 +2,8 @@ import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
 import TYPE from '~/const/type'
+import useArticleListSearch from '~/hooks/useArticleListSearch'
 import { useArticleStatesByChunks } from '~/hooks/useArticleStates'
-import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { normalizePaginationError } from '~/lib/pagination/errors'
 import { Q } from '~/query'
@@ -25,7 +25,7 @@ export const usePagedPostsInput = (
   config: TEffectivePagiConfig,
 ): { pagedParams: TPagedArticlesParams } => {
   const { slug } = useCommunity()
-  const searchParams = useURLSearchParams()
+  const searchParams = useArticleListSearch()
   return { pagedParams: getPagedArticlesParams(slug, searchParams, config.defaultSize) }
 }
 
