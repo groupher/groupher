@@ -180,8 +180,11 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Workflow do
   concurrent first-registration race without opening a nested transaction.
   """
   @spec register_in_transaction(map()) :: {:ok, User.t()} | {:error, {atom(), term()}}
-  def register_in_transaction(oauth_profile) do
-    with {:ok, user} <- tag_registration(:create_user, OauthPersist.create_user(oauth_profile)),
+  @spec register_in_transaction(map(), String.t() | nil) ::
+          {:ok, User.t()} | {:error, {atom(), term()}}
+  def register_in_transaction(oauth_profile, chosen_login \\ nil) do
+    with {:ok, user} <-
+           tag_registration(:create_user, OauthPersist.create_user(oauth_profile, chosen_login)),
          {:ok, _binding} <-
            tag_registration(:create_profile, OauthPersist.create_profile(user, oauth_profile)),
          {:ok, _social} <-

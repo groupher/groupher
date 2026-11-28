@@ -52,10 +52,13 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Persist do
       Accounts.Profiles.Oauth.Persist.create_user(provider_payload)
   """
   @spec create_user(map()) :: {:ok, User.t()} | {:error, term()}
-  def create_user(profile) do
+  @spec create_user(map(), String.t() | nil) :: {:ok, User.t()} | {:error, term()}
+  def create_user(profile, chosen_login \\ nil) do
+    login = blank_to_nil(chosen_login) || registration_login(profile)
+
     attrs = %{
-      login: registration_login(profile),
-      nickname: Map.get(profile, :nickname) || registration_login(profile),
+      login: login,
+      nickname: Map.get(profile, :nickname) || login,
       avatar:
         Map.get(profile, :avatar) || "https://static.groupher.com/icons/cmd/alien_user3.svg",
       bio: profile |> Map.get(:bio, ""),
@@ -166,9 +169,8 @@ defmodule GroupherServer.Accounts.Profiles.Oauth.Persist do
 
   defp registration_login(profile) do
     profile
-    |> Map.get(:registration_login)
+    |> Map.get(:login)
     |> blank_to_nil()
-    |> Kernel.||(profile |> Map.get(:login) |> blank_to_nil())
     |> Kernel.||(profile |> Map.get(:nickname) |> blank_to_nil())
     |> Kernel.||(profile |> Map.get(:email) |> email_local_part())
     |> Kernel.||("oauth_" <> to_string(profile.provider_id))

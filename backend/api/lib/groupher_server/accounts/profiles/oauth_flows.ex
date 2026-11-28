@@ -124,8 +124,7 @@ defmodule GroupherServer.Accounts.Profiles.OauthFlows do
           Repo.rollback(:invalid_oauth_flow)
         end
 
-        provider =
-          Oauth.normalize_oauth_provider(flow.identity) |> Map.put(:registration_login, login)
+        provider = Oauth.normalize_oauth_provider(flow.identity)
 
         unless OauthProviders.allow_new_identity?(provider.provider) do
           Repo.rollback(:oauth_provider_closed)
@@ -145,7 +144,7 @@ defmodule GroupherServer.Accounts.Profiles.OauthFlows do
           {:error, _reason} -> {:ok, :available}
         end
 
-        case Oauth.register_in_transaction(provider) do
+        case Oauth.register_in_transaction(provider, login) do
           {:ok, user} ->
             flow
             |> Ecto.Changeset.change(status: "consumed", identity: nil)
