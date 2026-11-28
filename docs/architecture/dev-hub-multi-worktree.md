@@ -203,6 +203,8 @@ Dev Hub 受管 Phoenix 的默认连接池为 10，可通过本环境的 `DB_POOL
 
 **2026-11-28 主题权限 UI 补测。** 使用候选 `24533ed52` 的临时 B，创建独立 dev/test 库并迁移 dev，启动 Dash 依赖后运行 `theme-edit-permission` case。核对 owner 为 lord，editor 有 `dashboard.theme.update`，limited 无该权限；两人分别以真实会话打开 B 的主题页面。editor 从 Default 选择 Claude 并保存，重新进入页面仍为 Claude；limited 刷新后选择 Solarized 并保存，Dash 记录服务端返回 `PassportError: your passport not qualified`，再次刷新仍为 Claude，B 的只读 DB 查询也读到 `claude`。清理预览无阻塞，apply 返回 `cleaned`，移除两名普通管理员、归档社区并保留初始 lord；B 服务、两库、登记、浏览器及 worktree 已回收，保留删库报告。A 的五项原有服务在回收后仍运行；A 的 `db inspect` 因主库认领记录缺失而拒绝，未核实 A 库中对应 slug。此轮只证明 B 的 UI 权限与清理，不代替完整双向 UI 写入和 A 原会话验收。
 
+**2026-11-28 双环境主题 UI 补测。** 候选 `67dcd5e8e` 的 A、临时 B 用同名 run 和 slug 创建各自的主题权限 case，社区引用及账号不同。两侧 editor 并行通过 Dash 保存不同主题：A 为 Claude，B 为 Solarized；两侧 limited 刷新后尝试对换主题，均返回权限不足，随后 editor 刷新仍读到各自原值，B 只读数据库确认 `solarized`。B 清理时 A 原 editor 会话保存 HN 并刷新读回；停止 B 后同一 A 会话再次保存 Default 并刷新读回，均未重新登录。两侧清理预览无阻塞，apply 均返回 `cleaned`，普通管理员移除、社区归档且初始 lord 保留；B 服务、dev/test 库、登记、浏览器和 worktree 已回收，保留删库报告，A 五项原有服务仍运行。A 的受管 dev 库只读入口因缺少主库认领记录未能直接查询；此轮也未交换停止方向或验证验收前已有的 A 浏览器会话。
+
 以下场景使用现有[本地账号命令](../auth/local-test-actors.md)。先记录 A 原有 Hub、服务、库、浏览器与资产基线，保持 A 的窗口可用；在 B 从空开发库完成上一节迁移与 seed 后再操作 fixture。两边各自记录 checkout 真实路径、HEAD、instanceId、服务进程归属、实际库、迁移版本与产品 URL。示例 run 和 slug 仅供本轮使用；重跑已封存的场景时，两边同步换一对未占用的 run 和 slug。另用一次性 checkout 验证孤儿、primary 交接和回滚，避免占用正在调试的 A。
 
 **1. 从各自终端运行同一组命令。** 同名 run、alias、slug 故意制造碰撞。每个环境分别执行：
