@@ -54,10 +54,12 @@ $TMPDIR/groupher-dev-hub/<工作树标识>/
 
 **Status 的本地 D1 迁移。** 此前受管 Worker 使用 `DEV_HUB_WORKER_STATE_DIR`，而 `make be.status.db.migrate.local` 只指定 `--local`。现已让[迁移入口](../../ops/status/package.json)使用当前 checkout 的同一状态目录。
 
-迁移入口复用 `workerStateRoot`，此前已在两个一次性路径验证迁移、重复迁移及使用相同 D1 数据库标识的 Miniflare `DB` binding 隔离。2026-11-28 在 `2e17da443` 的独立 B worktree 实测受管 Status：迁移前 `/api/status` 返回 503，执行 `make be.status.db.migrate.local` 后返回 200；向 B 的本地 D1 写入测试状态，真实 Worker 可以读到，重启后仍可读，重复迁移报告没有待执行迁移。B 的服务、数据库、worktree 与本次创建的 Status 状态目录已回收。A 的 Status 当时处于停止状态，因此尚未验证两个真实 Status Worker 同时运行及相互隔离。
+迁移入口复用 `workerStateRoot`，此前已在两个一次性路径验证迁移、重复迁移及使用相同 D1 数据库标识的 Miniflare `DB` binding 隔离。2026-11-28 在 `2e17da443` 的独立 B worktree 实测受管 Status：迁移前 `/api/status` 返回 503，执行 `make be.status.db.migrate.local` 后返回 200；向 B 的本地 D1 写入测试状态，真实 Worker 可以读到，重启后仍可读，重复迁移报告没有待执行迁移。B 的服务、数据库、worktree 与本次创建的 Status 状态目录已回收。该次 A 的 Status 处于停止状态。
+
+同日以候选 `78f2a9a5b` 补测两个受管 Status Worker：A、B 分别迁移自己的本地 D1，向相同服务 ID 写入不同状态；同时运行时 A 读到 `up` / 11 ms，B 读到 `down` / 22 ms。重启 B 后两边读数不变，两边重复迁移均报告无待执行迁移。验收后 A 的 Status 恢复为原来的停止状态，移除本次新建的 A Status 状态目录；B 的服务、数据库、登记、worktree 和本次 Status 状态目录回收，保留数据库清理报告。
 
 1. 在本次演练专用的空状态目录中，通过上述公开入口迁移，用受管 Status Worker 的实际 `DB` binding 读取[首条迁移](../../ops/status/migrations/0001_current_status.sql)创建的 `service_status` 表。记录工作树、解析出的目录、迁移版本和查询结果。
-2. 重启 Worker 后再次读取；重复迁移应报告已应用。在另一个 checkout 的独立空目录重复，确认 B 迁移前读不到 A 的表、迁移后两边各自可读。验收只使用本地 D1，单环境读回可先独立交付，双环境部分在 Status 支持并发后执行。
+2. 重启 Worker 后再次读取；重复迁移应报告已应用。在另一个 checkout 的独立空目录重复，确认 B 迁移前读不到 A 的表、迁移后两边各自可读。验收只使用本地 D1。
 3. 仅回收演练创建的目录，保留既有 Worker 状态。部署和远端 D1 迁移继续使用现有生产入口；通过本地配置测试核对调用目标，无需执行远端命令。
 
 **工作树退役。** 浏览器、指标和 Worker 状态可能在删除 checkout 后继续存在。`doctor` 会列出登记的 checkout、归属状态和浏览器、指标、Worker 状态及运行目录；路径缺失或归属无法确认时只报告，不自动继承或递归清除。若数据根目录是符号链接，子目录标为待核验，不跟随它判断目录内容。登记中的运行阶段只代表登记快照，不代表进程存活。[诊断实现](../../local/dev-hub/src/server/doctor.ts) · [登记核验](../../local/dev-hub/src/server/environment-registry.ts)
