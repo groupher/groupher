@@ -264,7 +264,9 @@ Phoenix 生产 runtime 允许部署环境显式提供 `SERVICE_AUTH_ISSUER`、`S
 
 本次用临时构建目录和合成配置执行 Phoenix `prod` 编译及 `mix run --no-start`：干净配置读取生产默认 issuer，且不加载开发 fixture 模块或路由；注入同级 `.localhost` issuer 时在应用启动前拒绝。另用配置测试覆盖 prod、seed_prod 的 issuer/JWKS/token 三项本地地址。没有启动应用、连接数据库或线上服务；临时构建目录已删除。
 
-2026-11-28 在候选 `16d3611d3` 进一步用空临时 HOME 和独立构建目录、禁止网络出站执行 `MIX_ENV=prod mix compile`，再以 `mix run --no-start --no-compile` 分别检查干净环境和混入本地 DB 名、主机及 fixture 开关的环境。两组均从合成的部署 `DATABASE_URL` 取数据库目标、使用生产默认 issuer，且开发 fixture 模块和路由均不存在。两组复用本机 Mix/Hex 缓存与当前 checkout 的依赖；没有启动应用或连接数据库。本次未模拟 B 的完整私有配置，也未验证生产 release、迁移或实际部署注入。
+2026-11-28 在候选 `16d3611d3` 进一步用空临时 HOME 和独立构建目录、禁止网络出站执行 `MIX_ENV=prod mix compile`，再以 `mix run --no-start --no-compile` 分别检查干净环境和混入本地 DB 名、主机及 fixture 开关的环境。两组均从合成的部署 `DATABASE_URL` 取数据库目标、使用生产默认 issuer，且开发 fixture 模块和路由均不存在。两组复用本机 Mix/Hex 缓存与当前 checkout 的依赖；没有启动应用或连接数据库。本次未模拟 B 的完整私有配置，也未验证实际部署注入。
+
+同日在候选 `fe6b41f27` 用空临时 HOME、独立构建目录和禁止出站网络执行 `MIX_ENV=prod mix release`，复用本机 Mix/Hex 缓存及当前 checkout 的依赖。release 的 `eval` 在干净和混入本地 DB 名、主机及 fixture 开关的两组环境中都读取合成部署 DB、使用生产默认 issuer，且不包含开发 fixture 模块和路由；release 中 817 个迁移文件与当前源码文件名及 SHA-256 均一致。执行 release 的 `bin/migrate` 并注入本地 issuer 时，在启动配置阶段被拒绝；全程使用合成目标并禁止网络，没有执行数据库迁移。本次不代表实际部署环境注入或真实生产迁移已验收。
 
 Auth 和 Assets Hub 的生产 Node 入口不再读取本地 dotenv；生产进程的身份服务或 Phoenix 地址指向本机、或 Assets Hub 被设为本地存储模式时拒绝启动。它们的单测覆盖这些分支；Worker 配置测试也验证混入本地地址时仍选用生产服务地址。Assets Worker 的现有生产配置仍引用名为 `groupher-assets-dev` 的 R2 与 `groupher-asset-delete-dev` 队列，这是既有配置而非本次新建的隔离资源；实际线上资源归属与读写影响尚未核验，不得因为名称推断隔离，也不得在本次验收中改写它们。[现有绑定](../../backend/assets-hub/cloudflare.config.ts) · [历史状态](../assets-hub/v2.md)
 
