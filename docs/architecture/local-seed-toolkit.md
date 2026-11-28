@@ -36,7 +36,7 @@ slug 冲突分类保留为开发专用例外：受管入口核验本地管理身
 | 已登录网页调用 GraphQL          | 浏览器随请求发送登录 Cookie。服务端验证用户会话，将当前用户放入 resolver 的认证上下文。                                                                                                                                                                                                      |
 | 未来 API / MCP / agent          | 客户端携带获发的访问凭据。agent 代表用户操作时，由服务端验证委托 token，确定它能代表谁、能执行哪些操作以及可访问哪些资源。Context 仍按该用户的实际业务权限作出决定。                                                                                                                         |
 
-第一批限定在已确认的主 checkout 和既有单环境。CLI 核对 Hub 的 repoRoot，受管 Phoenix 通过现有 Guard 核对标准本地开发库。管理凭据无效、目标不符或所需服务未运行时，在业务写入前返回错误。多 worktree 的登记、库内标记和 Phoenix 端点解析由后续批次交付。开发身份注册、按 run 选取合成账号和 fixture 回收只在已准入的本地管理路径使用；正式 API/MCP 的操作者始终来自认证上下文。建测试账号和为它开启浏览器会话是两个独立操作。[管理客户端](../../local/dev-hub/src/server/local-test-command.ts) · [管理请求鉴权](../../backend/api/dev/local_test_actors/controller.ex) · 开发库准入（`backend/api/dev/seed/target.ex`）
+首批先在主 checkout 验收；后续已接入多 worktree 的登记、库内标记和受管 Phoenix 端点解析，双环境实测范围见[多 worktree 方案](dev-hub-multi-worktree.md)。CLI 核对 Hub 的 repoRoot，受管 Phoenix 通过 Guard 核对当前环境的实际开发库。管理凭据无效、目标不符或所需服务未运行时，在业务写入前返回错误。开发身份注册、按 run 选取合成账号和 fixture 回收只在已准入的本地管理路径使用；正式 API/MCP 的操作者始终来自认证上下文。建测试账号和为它开启浏览器会话是两个独立操作。[管理客户端](../../local/dev-hub/src/server/local-test-command.ts) · [管理请求鉴权](../../backend/api/dev/local_test_actors/controller.ex) · 开发库准入（`backend/api/dev/seed/target.ex`）
 
 本地 agent 准备测试数据时使用 `pnpm seed`。面向用户的 agent 代用户建社区时，经正式 API 或 MCP 携带用户或委托身份调用同一个 CMS 用例。正式入口独立于本机 Hub、pnpm 与 fixture run。接入工作集中在凭据与委托校验、参数映射和结果映射。用同一组业务契约用例验证允许、拒绝、过期 revision、丢失响应后的重试。若新增入口还要复制权限判定、事务或 Receipt 恢复，应先把缺失的行为收进 Context，再接入口。
 

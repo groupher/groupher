@@ -22,7 +22,7 @@ $TMPDIR/groupher-dev-hub/<工作树标识>/
 └── workers/<服务名>/<run>/            # Hub 为开发工具生成的临时环境文件
 ```
 
-当前共享路径函数对 checkout 真实路径取 SHA-256 摘要前 16 位；符号链接归一及新 checkout 不能继承旧登记已有单测，实际双 worktree 验收仍待执行。见[路径实现](../../local/dev-hub/src/server/storage-paths.ts)。Linux 使用 XDG 数据目录，Windows 使用 LOCALAPPDATA。Auth 的 OAuth 凭据通过 Dev Hub 配置面板维护。
+当前共享路径函数对 checkout 真实路径取 SHA-256 摘要前 16 位；符号链接归一及新 checkout 不能继承旧登记已有单测，实际双 worktree 的浏览器、数据库及本地 D1 隔离见[多 worktree 实测](dev-hub-multi-worktree.md)。见[路径实现](../../local/dev-hub/src/server/storage-paths.ts)。Linux 使用 XDG 数据目录，Windows 使用 LOCALAPPDATA。Auth 的 OAuth 凭据通过 Dev Hub 配置面板维护。
 
 ## 清理规则
 
@@ -64,4 +64,4 @@ $TMPDIR/groupher-dev-hub/<工作树标识>/
 
 **工作树退役。** 浏览器、指标和 Worker 状态可能在删除 checkout 后继续存在。`doctor` 会列出登记的 checkout、归属状态和浏览器、指标、Worker 状态及运行目录；路径缺失或归属无法确认时只报告，不自动继承或递归清除。若数据根目录是符号链接，子目录标为待核验，不跟随它判断目录内容。登记中的运行阶段只代表登记快照，不代表进程存活。[诊断实现](../../local/dev-hub/src/server/doctor.ts) · [登记核验](../../local/dev-hub/src/server/environment-registry.ts)
 
-PostgreSQL 开发库、测试库、临时库以及 fixture 的回收条件见[多 worktree 方案](dev-hub-multi-worktree.md)。双 worktree 的并行测试、迁移回滚及空库 seed 结果见[数据库实测](dev-hub-multi-worktree.md#2026-11-26-双-worktree-数据库实测)。该次演练使用一次性 PostgreSQL 实例；后续仍需验证自动选库、成功 seed 和 fixture 回收。
+PostgreSQL 开发库、测试库、临时库以及 fixture 的回收条件见[多 worktree 方案](dev-hub-multi-worktree.md)。双 worktree 的并行测试和迁移回滚见[数据库实测](dev-hub-multi-worktree.md#2026-11-26-双-worktree-数据库实测)；后续实测记录了受管环境自动选库、空库 home 准备和 fixture 回收。各次验收的范围及生产隔离尚未完成的部分以该文档为准。
